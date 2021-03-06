@@ -26,9 +26,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -90,8 +89,6 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
     ArrayList<PsiReference> array = new ArrayList<>();
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     for (PsiReference ref : refs) {
       PsiElement refElement = ref.getElement();
       if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
@@ -99,7 +96,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       }
       if (!array.isEmpty()) {
         PsiReference[] refsForWriting = array.toArray(PsiReference.EMPTY_ARRAY);
-        highlightManager.addOccurrenceHighlights(editor, refsForWriting, attributes, true, null);
+        highlightManager.addOccurrenceHighlights(editor, refsForWriting, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
         String message =  RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.REPLACE_TEMP_WITH_QUERY);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -148,7 +145,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
               PsiDeclarationStatement declaration = (PsiDeclarationStatement) local.getParent();
               declaration.delete();
 
-              highlightManager.addOccurrenceHighlights(editor, exprs, attributes, true, null);
+              highlightManager.addOccurrenceHighlights(editor, exprs, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
             } catch (IncorrectOperationException e) {
               LOG.error(e);
             }
@@ -181,7 +178,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("replace.temp.with.query.title");
   }
 }

@@ -21,17 +21,8 @@
     <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
                  description="package search service config url" restartRequired="true"/>
 
-    <registryKey key="packagesearch.timeout.multiplier" defaultValue="1.2"
-                 description="Exponential backoff multiplyer when package search service request failed" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
-                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.initial" defaultValue="10000"
-                 description="initial backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
-                 description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
+    <registryKey key="packagesearch.timeout" defaultValue="15000"
+                 description="timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
 
   </extensions>
 

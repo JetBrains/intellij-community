@@ -6,6 +6,7 @@ import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
 import com.intellij.grazie.grammar.strategy.StrategyUtils
 import com.intellij.grazie.utils.isAtEnd
 import com.intellij.grazie.utils.isAtStart
+import com.intellij.lang.Language
 import com.intellij.lang.dtd.DTDLanguage
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.xhtml.XHTMLLanguage
@@ -16,12 +17,13 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.xml.*
 
 class XmlGrammarCheckingStrategy : GrammarCheckingStrategy {
-  companion object {
-    private val ENABLED_DIALECTS = setOf(XMLLanguage::class, HTMLLanguage::class, XHTMLLanguage::class, DTDLanguage::class)
+  private fun Language.isDialectEnabled() = when (this::class) {
+    XMLLanguage::class, HTMLLanguage::class, XHTMLLanguage::class, DTDLanguage::class -> true
+    else -> false
   }
 
-  override fun isMyContextRoot(element: PsiElement) = element.language::class in ENABLED_DIALECTS &&
-                                                      element.parents.all { it !is XmlProlog } &&
+  override fun isMyContextRoot(element: PsiElement) = element.language.isDialectEnabled() &&
+                                                      element.parents(false).all { it !is XmlProlog } &&
                                                       getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
   override fun getContextRootTextDomain(root: PsiElement) = when (root) {

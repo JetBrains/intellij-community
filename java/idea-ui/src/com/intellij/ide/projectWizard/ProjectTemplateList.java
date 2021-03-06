@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -39,7 +41,7 @@ public class ProjectTemplateList extends JPanel {
     super(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
 
-    GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<ProjectTemplate>(new ListItemDescriptorAdapter<ProjectTemplate>() {
+    GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<ProjectTemplate>() {
       @NotNull
       @Override
       public String getTextFor(ProjectTemplate value) {
@@ -61,7 +63,7 @@ public class ProjectTemplateList extends JPanel {
           myTextLabel.setDisabledIcon(IconLoader.getDisabledIcon(icon));
         }
         myTextLabel.setEnabled(myList.isEnabled());
-        myTextLabel.setBorder(JBUI.Borders.empty(3, 3, 3, 3));
+        myTextLabel.setBorder(JBUI.Borders.empty(3));
       }
     };
     myList.setCellRenderer(renderer);
@@ -71,17 +73,21 @@ public class ProjectTemplateList extends JPanel {
   }
 
   private void updateSelection() {
-    myDescriptionPane.setText("");
-    ProjectTemplate template = getSelectedTemplate();
-    if (template != null) {
-      String description = template.getDescription();
-      if (StringUtil.isNotEmpty(description)) {
-        description = "<html><body><font " +
-                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + description +
-                      "</font></body></html>";
-        myDescriptionPane.setText(description);
-      }
+    final ProjectTemplate template = getSelectedTemplate();
+    if (template == null || StringUtil.isEmpty(template.getDescription())) {
+      myDescriptionPane.setText("");
+      return;
     }
+
+    final String description = template.getDescription();
+
+    HtmlChunk.Element fontTag = HtmlChunk.tag("font").addRaw(description);
+    if (!SystemInfo.isMac) {
+      fontTag = fontTag.attr("face", "Verdana")
+        .attr("size","-1");
+    }
+    final HtmlChunk.Element descriptionHtml = new HtmlBuilder().append(fontTag).wrapWithHtmlBody();
+    myDescriptionPane.setText(descriptionHtml.toString());
   }
 
   public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
@@ -130,7 +136,7 @@ public class ProjectTemplateList extends JPanel {
     });
   }
 
-  public JBList getList() {
+  public JBList<ProjectTemplate> getList() {
     return myList;
   }
 
@@ -144,9 +150,9 @@ public class ProjectTemplateList extends JPanel {
 
   @TestOnly
   boolean setSelectedTemplate(@NotNull String name) {
-    ListModel model1 = myList.getModel();
+    ListModel<ProjectTemplate> model1 = myList.getModel();
     for (int j = 0; j < model1.getSize(); j++) {
-      if (name.equals(((ProjectTemplate)model1.getElementAt(j)).getName())) {
+      if (name.equals(model1.getElementAt(j).getName())) {
         myList.setSelectedIndex(j);
         return true;
       }

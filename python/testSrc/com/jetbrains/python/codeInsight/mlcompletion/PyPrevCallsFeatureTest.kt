@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.mlcompletion
 
+import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PrevCallsModelsProviderService
 
 class PyPrevCallsFeatureTest: PyMlCompletionTestCase() {
@@ -65,7 +66,7 @@ class PyPrevCallsFeatureTest: PyMlCompletionTestCase() {
                                     notExpectedFeatures: List<String>) {
     assertTrue(PrevCallsModelsProviderService.instance.haveModelForQualifier(moduleName))
 
-    doWithInstalledProviders { _, elementFeaturesProvider ->
+    doWithInstalledProviders(PyContextFeatureProvider(), PyElementFeatureProvider(), PythonLanguage.INSTANCE) { _, elementFeaturesProvider ->
       invokeCompletion()
 
       val selected = myFixture.lookupElements!!.find { it.lookupString == elementName }

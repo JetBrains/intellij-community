@@ -15,21 +15,23 @@
  */
 package com.intellij.designer.model;
 
+import org.jetbrains.annotations.Nls;
+
 import javax.swing.*;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class QuickFix implements Runnable {
-  private final String myName;
+  private final @Nls String myName;
   private final Icon myIcon;
 
-  public QuickFix(String name, Icon icon) {
+  public QuickFix(@Nls String name, Icon icon) {
     myName = name;
     myIcon = icon;
   }
 
-  public final String getName() {
+  public final @Nls String getName() {
     return myName;
   }
 

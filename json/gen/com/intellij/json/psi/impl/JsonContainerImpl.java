@@ -16,6 +16,7 @@ public class JsonContainerImpl extends JsonValueImpl implements JsonContainer {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitContainer(this);
   }

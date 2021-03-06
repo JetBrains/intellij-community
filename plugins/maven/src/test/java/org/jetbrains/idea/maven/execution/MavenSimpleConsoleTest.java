@@ -142,8 +142,8 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
 
   private static void doTest(boolean showSpyOutput, String[] text, String expected) {
     StringBuilder actual = new StringBuilder();
-    MavenExternalExecutor.MavenSimpleConsoleEventsBuffer buffer =
-      new MavenExternalExecutor.MavenSimpleConsoleEventsBuffer((l, k) -> actual.append(l), showSpyOutput);
+    MavenSimpleConsoleEventsBuffer buffer =
+      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.append(l), showSpyOutput);
     for (String s : text) {
       buffer.addText(s, Key.create("test"));
     }

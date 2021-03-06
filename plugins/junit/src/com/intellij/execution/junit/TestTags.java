@@ -4,6 +4,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
@@ -31,7 +32,7 @@ class TestTags extends TestObject {
       getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
     final String tags = getConfiguration().getPersistentData().getTags();
     if (StringUtil.isEmptyOrSpaces(tags)) {
-      throw new RuntimeConfigurationError("Tags are not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("tags.are.not.specified.error.message"));
     }
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     if (getSourceScope() == null) {
@@ -71,12 +72,12 @@ class TestTags extends TestObject {
   }
 
   private static void invalidTagException(String tag) throws RuntimeConfigurationWarning {
-    throw new RuntimeConfigurationWarning("Tag name [" + tag + "] must be syntactically valid");
+    throw new RuntimeConfigurationWarning(JUnitBundle.message("tag.name.0.must.be.syntactically.valid.warning", tag));
   }
 
   @Override
   public String suggestActionName() {
-    return "Tests of " + getConfiguration().getPersistentData().getCategory();
+    return JUnitBundle.message("action.text.test.tags", getConfiguration().getPersistentData().getTags());
   }
 
   @Override

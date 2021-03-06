@@ -2,50 +2,55 @@
 package git4idea.config
 
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotification
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
 
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
                          @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
-                         fixOption: ErrorNotifier.FixOption) {
+                         fixOption: ErrorNotifier.FixOption?) {
     val notification = createNotification(text, description)
-    notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
-      fixOption.fix()
-    })
+    if (fixOption != null) {
+      notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
+        fixOption.fix()
+      })
+    }
     GitExecutableProblemsNotifier.notify(project, notification)
   }
 
   private fun createNotification(text: String, description: String?): BadGitExecutableNotification {
     return BadGitExecutableNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId, null,
                                         getErrorTitle(text, description), null, getErrorMessage(text, description),
-                                        NotificationType.ERROR, null)
+                                        NotificationType.ERROR, NotificationListener.UrlOpeningListener(false))
   }
 
   override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
     GitExecutableProblemsNotifier.notify(project, createNotification(text, null))
   }
 
-  override fun executeTask(@Nls(capitalization = Nls.Capitalization.Title) title: String, cancellable: Boolean, action: () -> Unit) {
-    ProgressManager.getInstance().run(object: Task.Backgroundable(project, title, cancellable) {
+  override fun executeTask(@NlsContexts.ProgressTitle title: String, cancellable: Boolean, action: () -> Unit) {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, cancellable) {
       override fun run(indicator: ProgressIndicator) {
         action()
       }
     })
   }
 
-  override fun changeProgressTitle(@Nls(capitalization = Nls.Capitalization.Title) text: String) {
+  override fun changeProgressTitle(@NlsContexts.ProgressTitle text: String) {
     ProgressManager.getInstance().progressIndicator?.text = text
   }
 
-  override fun showMessage(@Nls(capitalization = Nls.Capitalization.Sentence) text: String) {
-    VcsNotifier.getInstance(project).notifyInfo(text)
+  override fun showMessage(@NlsContexts.NotificationContent text: String) {
+    VcsNotifier.getInstance(project).notifyInfo(null, "", text)
   }
 
   override fun hideProgress() {

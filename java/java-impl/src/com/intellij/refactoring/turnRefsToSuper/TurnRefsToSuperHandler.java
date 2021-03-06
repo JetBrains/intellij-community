@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -77,7 +78,7 @@ public class TurnRefsToSuperHandler implements RefactoringActionHandler, Context
     new TurnRefsToSuperDialog(project, subClass, basesList).show();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("use.interface.where.possible.title");
   }
 }

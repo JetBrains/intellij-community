@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -37,7 +38,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  */
 public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static final Set<String> MEMBER_METHOD_NAMES = ContainerUtil.immutableSet(GET_FIELD, GET_DECLARED_FIELD,
+  private static final Set<String> MEMBER_METHOD_NAMES = Set.of(GET_FIELD, GET_DECLARED_FIELD,
                       GET_METHOD, GET_DECLARED_METHOD,
                       GET_CONSTRUCTOR, GET_DECLARED_CONSTRUCTOR);
 
@@ -191,7 +192,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
             }
             return;
           }
-          final PsiMethod matchingMethod = matchMethod(methods, arguments, 1);
+          final PsiMethod matchingMethod = matchMethod(callExpression, methods, arguments, 1);
           if (matchingMethod == null) {
             if (reportUnresolvedMembersOf(ownerClass)) {
               holder.registerProblem(nameExpression, JavaBundle.message(
@@ -223,7 +224,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
       final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
       final PsiModifierListOwner constructorOrClass;
       if (methods.length != 0) {
-        constructorOrClass = matchMethod(methods, arguments, 0);
+        constructorOrClass = matchMethod(callExpression, methods, arguments, 0);
       }
       else {
         // implicit constructor
@@ -260,9 +261,12 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
   }
 
   @Nullable
-  private static PsiMethod matchMethod(PsiMethod[] methods, PsiExpression[] arguments, int argumentOffset) {
+  private static PsiMethod matchMethod(@NotNull PsiMethodCallExpression callExpression,
+                                       PsiMethod[] methods,
+                                       PsiExpression[] arguments,
+                                       int argumentOffset) {
     final JavaReflectionInvocationInspection.Arguments methodArguments =
-      JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, true);
+      JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, MethodCallUtils.isVarArgCall(callExpression));
     if (methodArguments == null) {
       return null;
     }

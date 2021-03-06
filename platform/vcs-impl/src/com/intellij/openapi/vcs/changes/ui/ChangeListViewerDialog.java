@@ -3,26 +3,18 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
+import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.util.Function;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +24,8 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-
 public class ChangeListViewerDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(ChangeListViewerDialog.class);
-
-  private final JBLoadingPanel myLoadingPanel;
+  private final LoadingChangesPanel myLoadingPanel;
   private final CommittedChangeListPanel myChangesPanel;
 
   public ChangeListViewerDialog(@NotNull Project project) {
@@ -67,8 +55,8 @@ public class ChangeListViewerDialog extends DialogWrapper {
     myChangesPanel.setChangeList(changeList);
     myChangesPanel.getChangesBrowser().getViewer().selectFile(toSelect);
 
-    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
-    myLoadingPanel.add(myChangesPanel, BorderLayout.CENTER);
+    StatusText emptyText = myChangesPanel.getChangesBrowser().getViewer().getEmptyText();
+    myLoadingPanel = new LoadingChangesPanel(myChangesPanel, emptyText, getDisposable());
 
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.message("close.action.name"));
@@ -85,33 +73,15 @@ public class ChangeListViewerDialog extends DialogWrapper {
   }
 
   public void loadChangesInBackground(@NotNull ThrowableComputable<? extends ChangelistData, ? extends VcsException> computable) {
-    StatusText emptyText = myChangesPanel.getChangesBrowser().getViewer().getEmptyText();
-    emptyText.setText("");
-
-    Function<ProgressIndicator, Runnable> task = progressIndicator -> {
-      try {
-        ChangelistData result = computable.compute();
-        return () -> {
-          myLoadingPanel.stopLoading();
-          myChangesPanel.setChangeList(result.changeList);
-          myChangesPanel.getChangesBrowser().getViewer().selectFile(result.toSelect);
-          emptyText.setText(DiffBundle.message("diff.count.differences.status.text", 0));
-        };
+    myLoadingPanel.loadChangesInBackground(computable, (result) -> {
+      if (result != null) {
+        myChangesPanel.setChangeList(result.changeList);
+        myChangesPanel.getChangesBrowser().getViewer().selectFile(result.toSelect);
       }
-      catch (ProcessCanceledException e) {
-        return EmptyRunnable.INSTANCE;
+      else {
+        myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
       }
-      catch (Exception e) {
-        LOG.warn(e);
-        return () -> {
-          myLoadingPanel.stopLoading();
-          myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
-          emptyText.setText(notNullize(e.getMessage(), "Can't load changes"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-        };
-      }
-    };
-    ProgressIndicator indicator = BackgroundTaskUtil.executeAndTryWait(task, () -> myLoadingPanel.startLoading());
-    Disposer.register(getDisposable(), () -> indicator.cancel());
+    });
   }
 
   @Override
@@ -139,7 +109,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
   /**
    * @param description Text that is added to the top of this dialog. May be null - then no description is shown.
    */
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@Nullable @NlsContexts.Label String description) {
     myChangesPanel.setDescription(description);
   }
 

@@ -2,19 +2,21 @@
 package com.intellij.codeInsight.externalAnnotation.location
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonSyntaxException
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.text.VersionComparatorUtil
 
 class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
-  private val myPluginId = PluginManagerCore.CORE_ID
+  private val myPluginId = PluginManagerCore.JAVA_PLUGIN_ID
   private val knownAnnotations: Map<String, Map<VersionRange, AnnotationsLocation>> by lazy { buildAnnotations() }
 
   override fun getLocations(project: Project,
@@ -34,17 +36,23 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
 
   private fun buildAnnotations(): Map<String, Map<VersionRange, AnnotationsLocation>> {
     val extensionsRootType = ExtensionsRootType.getInstance()
-    val annotationsFile = extensionsRootType.findResource(myPluginId, "predefinedExternalAnnotations.json")
-                          ?: extensionsRootType.run {
-                            extractBundledResources(myPluginId, "")
-                            findResource(myPluginId, "predefinedExternalAnnotations.json")
-                          }
-                          ?: return emptyMap()
+    var annotationsFile = extensionsRootType.findResource(myPluginId, "predefinedExternalAnnotations.json")
+    if (annotationsFile?.exists() != true) {
+      extensionsRootType.extractBundledResources(myPluginId, "")
+      annotationsFile = extensionsRootType.findResource(myPluginId, "predefinedExternalAnnotations.json")
+      if (annotationsFile?.exists() != true) {
+        return emptyMap()
+      }
+    }
 
     val gsonBuilder = GsonBuilder()
     gsonBuilder.registerTypeAdapter(VersionRange::class.java, VersionRangeTypeAdapter())
-    val raw: Array<RepositoryDescriptor> =
+    val raw: Array<RepositoryDescriptor> = try {
       gsonBuilder.create().fromJson(FileUtil.loadFile(annotationsFile, Charsets.UTF_8), Array<RepositoryDescriptor>::class.java)
+    } catch (e: JsonSyntaxException) {
+      LOG.warn("Failed to load annotations repositories descriptors", e)
+      emptyArray()
+    }
 
 
     return raw.asSequence()
@@ -61,6 +69,10 @@ class JBBundledAnnotationsProvider : AnnotationsLocationProvider {
               }
           }
       }.toMap()
+  }
+
+  companion object {
+    val LOG = logger<JBBundledAnnotationsProvider>()
   }
 
   private data class RepositoryDescriptor(val repositoryUrl: String, val artifacts: Array<AnnotationMatcher>) {

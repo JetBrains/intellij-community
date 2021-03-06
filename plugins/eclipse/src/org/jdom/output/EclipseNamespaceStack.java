@@ -71,9 +71,6 @@ import java.util.Stack;
  */
 public class EclipseNamespaceStack {
 
-    private static final String CVS_ID =
-      "@(#) $RCSfile: NamespaceStack.java,v $ $Revision: 1.13 $ $Date: 2004/02/06 09:28:32 $ $Name: jdom_1_0 $";
-
     /** The prefixes available */
     private final Stack prefixes;
 
@@ -144,10 +141,10 @@ public class EclipseNamespaceStack {
      */
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        String sep = System.getProperty("line.separator");
-        buf.append("Stack: " + prefixes.size() + sep);
+        String sep = System.lineSeparator();
+        buf.append("Stack: ").append(prefixes.size()).append(sep);
         for (int i = 0; i < prefixes.size(); i++) {
-            buf.append(prefixes.elementAt(i) + "&" + uris.elementAt(i) + sep);
+            buf.append(prefixes.elementAt(i)).append('&').append(uris.elementAt(i)).append(sep);
         }
         return buf.toString();
     }

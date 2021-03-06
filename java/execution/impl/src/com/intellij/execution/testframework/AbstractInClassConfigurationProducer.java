@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.util;
 
@@ -24,6 +10,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -32,13 +19,13 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -46,8 +33,10 @@ import java.util.regex.Pattern;
 /**
  * @author ilyas
  */
-public class LibrariesUtil {
+public final class LibrariesUtil {
   public static final String SOME_GROOVY_CLASS = "org.codehaus.groovy.control.CompilationUnit";
+  @NlsSafe private static final String LIB = "lib";
+  @NlsSafe private static final String EMBEDDABLE = "embeddable";
 
   private LibrariesUtil() {
   }
@@ -56,7 +45,7 @@ public class LibrariesUtil {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
-    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new THashSet<>()));
+    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new HashSet<>()));
 
     return libraries.toArray(Library.EMPTY_ARRAY);
   }
@@ -135,7 +124,7 @@ public class LibrariesUtil {
       if (local != null) {
         final VirtualFile parent = local.getParent();
         if (parent != null) {
-          if (("lib".equals(parent.getName()) || "embeddable".equals(parent.getName())) && parent.getParent() != null) {
+          if ((LIB.equals(parent.getName()) || EMBEDDABLE.equals(parent.getName())) && parent.getParent() != null) {
             return parent.getParent().getPath();
           }
           return parent.getPath();
@@ -157,7 +146,7 @@ public class LibrariesUtil {
         if (realFile.exists()) {
           File parentFile = realFile.getParentFile();
           if (parentFile != null) {
-            if ("lib".equals(parentFile.getName())) {
+            if (LIB.equals(parentFile.getName())) {
               return parentFile.getParent();
             }
             return parentFile.getPath();
@@ -195,7 +184,7 @@ public class LibrariesUtil {
       final File emb = new File(embeddable);
       if (emb.exists()) {
         final File parent = emb.getParentFile();
-        if ("embeddable".equals(parent.getName()) || "lib".equals(parent.getName())) {
+        if (EMBEDDABLE.equals(parent.getName()) || LIB.equals(parent.getName())) {
           return parent.getParent();
         }
         return parent.getPath();

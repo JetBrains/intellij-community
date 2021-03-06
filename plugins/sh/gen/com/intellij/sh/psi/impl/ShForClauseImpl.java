@@ -20,6 +20,7 @@ public class ShForClauseImpl extends ShCompositeElementImpl implements ShForClau
     visitor.visitForClause(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
@@ -89,6 +90,12 @@ public class ShForClauseImpl extends ShCompositeElementImpl implements ShForClau
   @Nullable
   public PsiElement getRightDoubleParen() {
     return findChildByType(RIGHT_DOUBLE_PAREN);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIn() {
+    return findChildByType(IN);
   }
 
 }

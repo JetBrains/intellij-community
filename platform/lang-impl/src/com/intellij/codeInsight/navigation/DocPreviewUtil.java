@@ -6,6 +6,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ import java.util.regex.Pattern;
  *
  * @author Denis Zhdanov
  */
-public class DocPreviewUtil {
+public final class DocPreviewUtil {
 
   private static final TIntHashSet ALLOWED_LINK_SEPARATORS = new TIntHashSet();
   static {
@@ -44,7 +45,7 @@ public class DocPreviewUtil {
    * There is a possible situation then that we have two replacements where one key is a simple name and another one is a fully qualified
    * one. We want to apply {@code 'from fully qualified name'} replacement first then.
    */
-  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
+  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull String o1, @NotNull String o2) {
       String shortName1 = extractShortName(o1);
@@ -84,7 +85,9 @@ public class DocPreviewUtil {
    * @param fullText                   full documentation text (if available)
    */
   @NotNull
-  public static String buildPreview(@NotNull final String header, @Nullable final String qName, @Nullable final String fullText) {
+  public static @Nls String buildPreview(@NotNull @Nls final String header,
+                                         @Nullable final String qName,
+                                         @Nullable @Nls final String fullText) {
     if (fullText == null) {
       return header;
     }
@@ -114,7 +117,7 @@ public class DocPreviewUtil {
     List<TextRange> modifiedRanges = new ArrayList<>();
     List<String> sortedReplacements = new ArrayList<>(links.keySet());
     sortedReplacements.sort(REPLACEMENTS_COMPARATOR);
-    StringBuilder buffer = new StringBuilder(header);
+    @Nls StringBuilder buffer = new StringBuilder(header);
     replace(buffer, "\n", "<br/>", modifiedRanges);
     for (String replaceFrom : sortedReplacements) {
       replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), replaceFrom), modifiedRanges);

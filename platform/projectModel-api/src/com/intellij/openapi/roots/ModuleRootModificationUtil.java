@@ -1,38 +1,27 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 
-public class ModuleRootModificationUtil {
+public final class ModuleRootModificationUtil {
   public static void addContentRoot(@NotNull Module module, @NotNull String path) {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }
@@ -135,18 +124,65 @@ public class ModuleRootModificationUtil {
   }
 
   public static void updateModel(@NotNull Module module, @NotNull Consumer<? super ModifiableRootModel> task) {
+    modifyModel(module, model -> {
+      task.consume(model);
+      return Boolean.TRUE;
+    });
+  }
+
+  public static void modifyModel(@NotNull Module module, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
     ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
-      task.consume(model);
-
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        if (module.isDisposed()) return;
-        WriteAction.run(model::commit);
-      });
+      if (modifier.apply(model)) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          if (!module.isDisposed()) {
+            WriteAction.run(model::commit);
+          }
+        });
+      }
     }
     finally {
       if (!model.isDisposed()) {
         model.dispose();
+      }
+    }
+  }
+
+  public static void batchUpdateModels(@NotNull Collection<Module> modules, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
+    MultiMap<Project, Module> modulesByProject = ContainerUtil.groupBy(modules, Module::getProject);
+    for (Map.Entry<Project, Collection<Module>> entry : modulesByProject.entrySet()) {
+      batchUpdateModels(entry.getKey(), entry.getValue(), modifier);
+    }
+  }
+
+  private static void batchUpdateModels(@NotNull Project project, @NotNull Collection<Module> modules, @NotNull Function<? super ModifiableRootModel, Boolean> modifier) {
+    Collection<ModifiableRootModel> modifiableModels = ReadAction.compute(() -> {
+      return ContainerUtil.map(modules, module -> ModuleRootManager.getInstance(module).getModifiableModel());
+    });
+    Collection<ModifiableRootModel> toCommit = new HashSet<>();
+    try {
+      for (ModifiableRootModel model : modifiableModels) {
+        if (modifier.apply(model)) {
+          toCommit.add(model);
+        }
+      }
+
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        WriteAction.run(() -> {
+          ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(() -> {
+            for (ModifiableRootModel rootModel : toCommit) {
+              if (!rootModel.getModule().isDisposed()) {
+                rootModel.commit();
+              }
+            }
+          });
+        });
+      });
+    } finally {
+      for (ModifiableRootModel model : modifiableModels) {
+        if (!model.isDisposed()) {
+          model.dispose();
+        }
       }
     }
   }

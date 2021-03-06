@@ -20,17 +20,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.testFramework.Parameterized;
-import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TestLocationDataRule implements GetDataRule {
+public final class TestLocationDataRule implements GetDataRule {
   @Nullable
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
@@ -66,7 +63,7 @@ public class TestLocationDataRule implements GetDataRule {
             if (word.length() < 5) {
               continue;
             }
-            final Set<PsiFile> files = new THashSet<>();
+            final Set<PsiFile> files = new HashSet<>();
             searchHelper.processAllFilesWithWordInLiterals(word, testScope, new CommonProcessors.CollectProcessor<>(files));
             if (resultFiles == null) {
               resultFiles = files;
@@ -107,10 +104,10 @@ public class TestLocationDataRule implements GetDataRule {
                                       String fileName,
                                       String nameWithoutExtension,
                                       PsiClass aClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, TestDataPath.class.getName());
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, TestFrameworkConstants.TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME);
     if (annotation != null) {
       final Location parameterizedLocation =
-        PsiMemberParameterizedLocation.getParameterizedLocation(aClass, "[" + fileName + "]", Parameterized.class.getName());
+        PsiMemberParameterizedLocation.getParameterizedLocation(aClass, "[" + fileName + "]", TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME);
       if (parameterizedLocation != null) {
         return parameterizedLocation;
       }

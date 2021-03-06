@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -11,7 +11,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MethodReturnFixFactory extends ArgumentFixerActionFactory {
+public final class MethodReturnFixFactory extends ArgumentFixerActionFactory {
   public static final ArgumentFixerActionFactory INSTANCE = new MethodReturnFixFactory();
 
   private MethodReturnFixFactory() {}
@@ -24,6 +24,7 @@ public class MethodReturnFixFactory extends ArgumentFixerActionFactory {
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
     PsiType type = GenericsUtil.getVariableTypeByExpressionType(toType);
+    if (PsiType.NULL.equals(type)) return null;
 
     return JavaPsiFacade.getElementFactory(expression.getProject())
       .createExpressionFromText("(" + type.getCanonicalText() + ")null", expression);

@@ -16,18 +16,16 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.AbstractReparseTestCase;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
@@ -36,7 +34,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setFileType(StdFileTypes.XML);
+    setFileType(XmlFileType.INSTANCE);
   }
 
   public void test1() {
@@ -172,7 +170,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   }
 
   public void testXml() {
-    setFileType(StdFileTypes.XML);
+    setFileType(XmlFileType.INSTANCE);
     String text2 = "</root>";
     final String text1 = "<root>/n";
     prepareFile(text1, text2);
@@ -180,6 +178,20 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     PsiElement element = myDummyFile.findElementAt(10);
     assert element != null;
     assertNotNull(element.getTextRange());
+  }
+
+  public void testNoExceptionsDummyIdentifierMovementWithSpace() {
+    setFileType(XmlFileType.INSTANCE);
+    String text1 = "<rf oot><xc></root>";
+    String text2 = "<root><f xc></root>"; // moved "f " to another place
+    prepareFile(text1, "");
+    Document document = myDummyFile.getViewProvider().getDocument();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      ((XmlFile)myDummyFile).getRootTag().replace(XmlElementFactory.getInstance(getProject()).createTagFromText(text2));
+    });
+    PsiTestUtil.checkFileStructure(myDummyFile);
+    assertEquals(text2, myDummyFile.getText());
+    assertEquals(text2, document.getText());
   }
 
 }

@@ -15,6 +15,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -86,9 +87,16 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
           fixes.add(new AddVariableInitializerFix(field));
         }
 
-        holder.registerProblem(anchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        reportProblem(holder, anchor, message, fixes);
       }
     };
+  }
+
+  protected void reportProblem(@NotNull ProblemsHolder holder,
+                               PsiElement anchor,
+                               @InspectionMessage String message,
+                               List<LocalQuickFix> fixes) {
+    holder.registerProblem(anchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
   private static boolean isWrittenInSetup(PsiField field) {

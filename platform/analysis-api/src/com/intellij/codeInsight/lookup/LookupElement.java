@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.util.ClassConditionKey;
@@ -15,6 +16,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * An item shown in a {@link Lookup} suggestion list, most often produced by code completion or live templates.
  * A typical way to create lookup element is to use {@link LookupElementBuilder}.
  * Another way is to subclass it. Use the latter way only if you need it to implement some additional interface, to modify equals/hashCode
  * or other advanced logic.
@@ -25,13 +27,26 @@ import java.util.Set;
 public abstract class LookupElement extends UserDataHolderBase {
   public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];
 
+  /**
+   * @return the string which will be inserted into the editor when this lookup element is chosen
+   */
   @NotNull
   public abstract String getLookupString();
 
+  /**
+   * @return a set of strings which will be matched against the prefix typed by the user.
+   * If none of them match, this item won't be suggested to the user.
+   * The returned set must contain {@link #getLookupString()}.
+   * @see #isCaseSensitive()
+   */
   public Set<String> getAllLookupStrings() {
     return Collections.singleton(getLookupString());
   }
 
+  /**
+   * @return some object that this lookup element represents, often a {@link PsiElement} or another kind of symbol.
+   * This is mostly used by extensions analyzing the lookup elements, e.g. for sorting purposes.
+   */
   @NotNull
   public Object getObject() {
     return this;
@@ -59,6 +74,11 @@ public abstract class LookupElement extends UserDataHolderBase {
     return null;
   }
 
+  /**
+   * @return whether this lookup element is still valid (can be rendered, inserted, queried for {@link #getObject()}.
+   * A lookup element may become invalidated if e.g. its underlying PSI becomes invalidated.
+   * @see PsiElement#isValid()
+   */
   public boolean isValid() {
     final Object object = getObject();
     if (object instanceof PsiElement) {
@@ -67,6 +87,18 @@ public abstract class LookupElement extends UserDataHolderBase {
     return true;
   }
 
+  /**
+   * Performs changes after the current lookup element is chosen by the user.<p/>
+   *
+   * When this method is invoked, the lookup string is already inserted into the editor.
+   * In addition, the document is committed, unless {@link #requiresCommittedDocuments()} returns false.<p/>
+   *
+   * This method is invoked inside a write action. If you need to show dialogs,
+   * please do that inside {@link InsertionContext#setLaterRunnable}.
+   *
+   * @param context an object containing useful information about the circumstances of insertion
+   * @see LookupElementDecorator#withInsertHandler(LookupElement, InsertHandler)
+   */
   public void handleInsert(@NotNull InsertionContext context) {
   }
 
@@ -76,8 +108,11 @@ public abstract class LookupElement extends UserDataHolderBase {
    */
   public boolean requiresCommittedDocuments() {
     return true;
-  } 
+  }
 
+  /**
+   * @return the policy determining the auto-insertion behavior when this is the only matching item produced by completion contributors
+   */
   public AutoCompletionPolicy getAutoCompletionPolicy() {
     return AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }
@@ -113,7 +148,7 @@ public abstract class LookupElement extends UserDataHolderBase {
   @Nullable
   public <T> T as(ClassConditionKey<T> conditionKey) {
     //noinspection unchecked
-    return conditionKey.isInstance(this) ? (T) this : null;
+    return conditionKey.isInstance(this) ? (T)this : null;
   }
 
   /**
@@ -126,6 +161,10 @@ public abstract class LookupElement extends UserDataHolderBase {
     return clazz.isInstance(this) ? (T) this : null;
   }
 
+  /**
+   * @return whether prefix matching should be done case-sensitively for this lookup element
+   * @see #getAllLookupStrings()
+   */
   public boolean isCaseSensitive() {
     return true;
   }

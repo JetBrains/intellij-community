@@ -258,6 +258,9 @@ public class ClassElement extends CompositeElement implements Constants {
       case ChildRole.IMPLEMENTS_LIST:
         return findChildByType(IMPLEMENTS_LIST);
 
+      case ChildRole.PERMITS_LIST:
+        return findChildByType(PERMITS_LIST);
+
       case ChildRole.TYPE_PARAMETER_LIST:
         return findChildByType(TYPE_PARAMETER_LIST);
 
@@ -365,6 +368,9 @@ public class ClassElement extends CompositeElement implements Constants {
     }
     else if (i == IMPLEMENTS_LIST) {
       return ChildRole.IMPLEMENTS_LIST;
+    }
+    else if (i == PERMITS_LIST) {
+      return ChildRole.PERMITS_LIST;
     }
     else if (ElementType.CLASS_KEYWORD_BIT_SET.contains(i)) {
       return getChildRole(child, ChildRole.CLASS_OR_INTERFACE_KEYWORD);

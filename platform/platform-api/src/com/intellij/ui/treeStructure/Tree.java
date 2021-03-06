@@ -1,18 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -36,6 +34,19 @@ import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessa
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
+  /**
+   * Force the following strategy for selection on the right click:
+   * <ul>
+   *   <li> If set to <b>false</b> or <b>true</b> and the only one path selected - change selection to the path under the mouse hover. </li>
+   *   <li> If set to <b>false</b> and the multiple paths selected - do not change selection. </li>
+   *   <li> If set to <b>true</b> and the multiple paths selected - do not change selection unless selected some path outside the current selection. </li>
+   * </ul>
+   *
+   * Such strategy similar to {@link com.intellij.ui.table.JBTable}
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
+
   private final StatusText myEmptyText;
   private final ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -326,7 +337,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       TreePath path = getPathForRow(row);
-      Color color = path == null ? null : getFileColorForPath(path);
+      Color color = path == null ? null : SlowOperations.allowSlowOperations(() -> getFileColorForPath(path));
       if (color != null) {
         Rectangle bounds = getRowBounds(row);
         g.setColor(color);
@@ -475,7 +486,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         }
 
-        if (first == null || last == null) continue;
+        if (first == null) continue;
         Rectangle firstBounds = getPathBounds(getPath(first));
 
         if (isExpanded(getPath(last))) {
@@ -588,7 +599,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (row < 0) {
       super.collapsePath(path);
     }
-    else {
+    else if (!isAlwaysExpanded(path)) {
       ArrayDeque<TreePath> deque = new ArrayDeque<>();
       deque.addFirst(path);
       while (++row < getRowCount()) {
@@ -598,6 +609,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       deque.forEach(super::collapsePath);
     }
+  }
+
+  private boolean isAlwaysExpanded(TreePath path) {
+    return path != null && TreeUtil.getNodeDepth(this, path) <= 0;
   }
 
   private static class MySelectionModel extends DefaultTreeSelectionModel {
@@ -628,6 +643,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void mousePressed(MouseEvent event) {
       setPressed(event, true);
 
+      if (Boolean.FALSE.equals(UIUtil.getClientProperty(event.getSource(), AUTO_SELECT_ON_MOUSE_PRESSED))
+          && getSelectionModel().getSelectionCount() > 1) {
+        return;
+      }
       if (!SwingUtilities.isLeftMouseButton(event) &&
           (SwingUtilities.isRightMouseButton(event) || SwingUtilities.isMiddleMouseButton(event))) {
         TreePath path = getClosestPathForLocation(event.getX(), event.getY());
@@ -761,7 +780,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     TreePath[] selection = getSelectionPaths();
     if (selection == null) return;
 
@@ -847,6 +866,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         Rectangle bounds = getPathBounds(path);
         if (bounds != null) {
           component.setBounds(bounds); // initialize size to layout complex renderer
+          component.doLayout();
           return SwingUtilities.getDeepestComponentAt(component, x - bounds.x, y - bounds.y);
         }
       }

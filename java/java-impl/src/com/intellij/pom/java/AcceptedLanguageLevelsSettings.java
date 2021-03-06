@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.ide.IdeBundle;
@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
@@ -87,7 +86,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
             NOTIFICATION_GROUP.createNotification(
               JavaBundle.message("java.preview.features.alert.title"),
               JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(),
-                                        "<br/><br/><a href=''accept''>" + JavaBundle.message("java.preview.features.accept.notification.link") + "</a>"),
+                                        "<br/><br/><a href='accept'>" + JavaBundle.message("java.preview.features.accept.notification.link") + "</a>"),
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -102,14 +101,12 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
         if (!previewLevels.isEmpty() &&
             !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
           Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
-          assert languageLevel.isPresent();
           int previewFeature = languageLevel.get().toJavaVersion().feature;
           Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
-            JavaBundle.message("java.preview.features.notification.message"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
-            NotificationType.WARNING);
-          notification.addAction(new NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
+            NotificationType.WARNING, null);
+          notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.do.not.show.again")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
               PropertiesComponent.getInstance(project).setValue(IGNORE_USED_PREVIEW_FEATURES,true);
@@ -144,7 +141,6 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           else {
             LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
             projectExtension.setLanguageLevel(languageLevel);
-            projectExtension.setDefault(false);
           }
         }
       });
@@ -165,7 +161,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
   }
 
   private static AcceptedLanguageLevelsSettings getSettings() {
-    return ServiceManager.getService(AcceptedLanguageLevelsSettings.class);
+    return ApplicationManager.getApplication().getService(AcceptedLanguageLevelsSettings.class);
   }
 
   @Nullable
@@ -215,7 +211,6 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
       LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
       if (!isLanguageLevelAccepted(projectExtension.getLanguageLevel())) {
         projectExtension.setLanguageLevel(highestAcceptedLevel);
-        projectExtension.setDefault(false);
       }
     });
   }

@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -95,14 +94,22 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
-    return JBIterable.<ScriptEngineFactory>empty()
-      .append(new ScriptEngineManager().getEngineFactories()) // bundled factories from java modules (Nashorn)
-      .append(new ScriptEngineManager(AllPluginsLoader.INSTANCE).getEngineFactories()) // from plugins (Kotlin)
+    // bundled factories from java modules (Groovy) and from plugins
+    return JBIterable.of(PluginManagerCore.getPlugins())
+      .flatten(o1 -> {
+        try {
+          return new ScriptEngineManager(o1.getPluginClassLoader()).getEngineFactories();
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+          return null;
+        }
+      })
       .unique(o -> o.getClass().getName())
       .toMap(factory -> {
         Class<? extends ScriptEngineFactory> aClass = factory.getClass();
         ClassLoader classLoader = aClass.getClassLoader();
-        IdeaPluginDescriptor plugin = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
+        PluginDescriptor plugin = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginDescriptor() : null;
         return new EngineInfo(factory.getEngineName(),
                               factory.getEngineVersion(),
                               factory.getLanguageName(),
@@ -115,8 +122,10 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
   private static @Nullable IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngineFactory scriptEngineFactory,
                                                                  @Nullable ClassLoader loader) {
-    if (scriptEngineFactory == null) return null;
-    EngineImpl engine = new EngineImpl(scriptEngineFactory, ObjectUtils.notNull(loader, AllPluginsLoader.INSTANCE));
+    if (scriptEngineFactory == null) {
+      return null;
+    }
+    IdeScriptEngine engine = new EngineImpl(scriptEngineFactory, loader == null ? AllPluginsLoader.INSTANCE : loader);
     redirectOutputToLog(engine);
 
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(scriptEngineFactory.getClass());
@@ -127,23 +136,37 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   }
 
   private static void redirectOutputToLog(@NotNull IdeScriptEngine engine) {
-    class Log extends Writer {
-      final boolean error;
-      Log(boolean error) {this.error = error;}
-      @Override public void flush() throws IOException { }
-      @Override public void close() throws IOException { }
-      @Override public void write(char[] cbuf, int off, int len) throws IOException {
-        while (len > 0 && Character.isWhitespace(cbuf[off + len - 1])) len --;
+    final class Log extends Writer {
+      private final boolean error;
+
+      private Log(boolean error) {
+        this.error = error;
+      }
+
+      @Override
+      public void flush() { }
+
+      @Override
+      public void close() { }
+
+      @Override
+      public void write(char[] cbuf, int off, int len) {
+        while (len > 0 && Character.isWhitespace(cbuf[off + len - 1])) len--;
         if (len == 0) return;
         String s = new String(cbuf, off, len);
-        if (error) LOG.warn(s); else LOG.info(s);
+        if (error) {
+          LOG.warn(s);
+        }
+        else {
+          LOG.info(s);
+        }
       }
     }
     engine.setStdOut(new Log(false));
     engine.setStdErr(new Log(true));
   }
 
-  static class EngineImpl implements IdeScriptEngine {
+  static final class EngineImpl implements IdeScriptEngine {
     private final ScriptEngine myEngine;
     private final ClassLoader myLoader;
 
@@ -239,7 +262,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       long hash = StringHash.calc(base);
 
       Class<?> c = null;
-      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader
+      ClassLoader guess1 = myLuckyGuess.get(hash);   // cached loader or "this" if not found
       ClassLoader guess2 = myLuckyGuess.get(0L);     // last recently used
       for (ClassLoader loader : JBIterable.of(guess1, guess2)) {
         if (loader == this) throw new ClassNotFoundException(name);
@@ -254,7 +277,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       if (c == null) {
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           ClassLoader l = descriptor.getPluginClassLoader();
-          if (l == null || l == guess1 || l == guess2) continue;
+          if (l == null || !hasBase && (l == guess1 || l == guess2)) continue;
           try {
             if (hasBase) {
               l.loadClass(base);

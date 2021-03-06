@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -37,7 +37,7 @@ public class TextMateBundlesListPanel implements Disposable {
   private Collection<TextMateBundlesChangeStateListener> myListeners = new ArrayList<>();
 
   public TextMateBundlesListPanel() {
-    myBundlesList = new CheckBoxList<BundleConfigBean>(new CheckBoxListListener() {
+    myBundlesList = new CheckBoxList<>(new CheckBoxListListener() {
       @Override
       public void checkBoxSelectionChanged(int index, boolean value) {
         BundleConfigBean itemAt = myBundlesList.getItemAt(index);
@@ -53,11 +53,11 @@ public class TextMateBundlesListPanel implements Disposable {
         if (isBuiltin(bean)) {
           return TextMateBundle.message("title.built.in");
         }
-        return bean != null ? bean.getPath() : null;
+        return bean != null ? FileUtil.toSystemDependentName(bean.getPath()) : null;
       }
     };
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    new ListSpeedSearch<>(myBundlesList, (Function<JCheckBox, String>)box -> box.getText());
+    new ListSpeedSearch<>(myBundlesList, box -> box.getText());
   }
 
   private static boolean isBuiltin(BundleConfigBean bean) {
@@ -90,7 +90,11 @@ public class TextMateBundlesListPanel implements Disposable {
           return;
         }
         String message = StringUtil.join(bundlesToDelete, JCheckBox::getText, "\n");
-        if (Messages.showYesNoDialog(message, TextMateBundle.message("textmate.remove.title", bundlesToDelete.size()), CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), null) != Messages.YES) {
+        if (MessageDialogBuilder.yesNo(TextMateBundle.message("textmate.remove.title", bundlesToDelete.size()), message)
+              .yesText(CommonBundle.message("button.remove"))
+              .noText(CommonBundle.getCancelButtonText())
+              .icon(null)
+              .show() != Messages.YES) {
           return;
         }
         ListUtil.removeSelectedItems(myBundlesList);

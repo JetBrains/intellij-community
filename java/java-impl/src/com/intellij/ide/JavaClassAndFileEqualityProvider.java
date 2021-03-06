@@ -3,28 +3,26 @@ package com.intellij.ide;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
 import com.intellij.ide.actions.searcheverywhere.*;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaClassAndFileEqualityProvider implements SEResultsEqualityProvider {
-  @NotNull
+public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
+
   @Override
-  public SEEqualElementsActionType compareItems(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
+  protected boolean areEqual(@NotNull SearchEverywhereFoundElementInfo newItemInfo,
+                             @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
     PsiElement newElementPsi = PsiElementsEqualityProvider.toPsi(newItemInfo.getElement());
     PsiElement alreadyFoundPsi = PsiElementsEqualityProvider.toPsi(alreadyFoundItemInfo.getElement());
 
-    if (newElementPsi == null || alreadyFoundPsi == null) {
-      return SEEqualElementsActionType.DO_NOTHING;
-    }
-
-    if (isClassAndFile(newItemInfo, alreadyFoundItemInfo) && isSameFile(newElementPsi, alreadyFoundPsi)) {
-      return newItemInfo.priority > alreadyFoundItemInfo.priority ? SEEqualElementsActionType.REPLACE : SEEqualElementsActionType.SKIP;
-    }
-
-    return SEEqualElementsActionType.DO_NOTHING;
+    return newElementPsi != null && alreadyFoundPsi != null
+           && newElementPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+           && alreadyFoundPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
+           && isClassAndFile(newItemInfo, alreadyFoundItemInfo)
+           && isSameFile(newElementPsi, alreadyFoundPsi);
   }
 
   private static boolean isClassAndFile(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {

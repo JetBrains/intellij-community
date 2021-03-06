@@ -4,12 +4,11 @@ package com.intellij.internal.statistic.utils
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.internal.statistic.utils.PluginInfoDetector.isPluginFromOfficialJbPluginRepo
 import com.intellij.internal.statistic.utils.PluginInfoDetector.isSafeToReportFrom
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Getter
@@ -24,8 +23,8 @@ import java.util.concurrent.TimeUnit
 fun getPluginInfo(clazz: Class<*>): PluginInfo {
   val classLoader = clazz.classLoader
   return when {
-    classLoader is PluginClassLoader -> {
-      getPluginInfoByDescriptor(classLoader.pluginDescriptor ?: return unknownPlugin)
+    classLoader is PluginAwareClassLoader -> {
+      getPluginInfoByDescriptor(classLoader.pluginDescriptor)
     }
     PluginManagerCore.isRunningFromSources() && !PluginManagerCore.isUnitTestMode -> {
       builtFromSources
@@ -94,12 +93,12 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 enum class PluginType {
   PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES, JB_UPDATED_BUNDLED;
 
-  private fun isPlatformOrJBBundled(): Boolean {
+  fun isPlatformOrJetBrainsBundled(): Boolean {
     return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
   }
 
   fun isDevelopedByJetBrains(): Boolean {
-    return isPlatformOrJBBundled() || this == JB_NOT_BUNDLED
+    return isPlatformOrJetBrainsBundled() || this == JB_NOT_BUNDLED
   }
 
   fun isSafeToReport(): Boolean {
@@ -117,25 +116,20 @@ fun findPluginTypeByValue(value: String): PluginType? {
 }
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
-
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
    */
-  fun isDevelopedByJetBrains(): Boolean {
-    return type.isDevelopedByJetBrains()
-  }
+  fun isDevelopedByJetBrains() = type.isDevelopedByJetBrains()
 
   /**
    * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
    */
-  fun isSafeToReport(): Boolean {
-    return type.isSafeToReport()
-  }
+  fun isSafeToReport() = type.isSafeToReport()
 }
 
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
 val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null, null)
-val notListedPlugin: PluginInfo = PluginInfo(PluginType.NOT_LISTED, null, null)
+private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
 
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
 val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)
@@ -166,7 +160,7 @@ object PluginInfoDetector {
   }
 
   private fun getPluginInfoProvider(): PluginInfoProvider? {
-    return ApplicationManager.getApplication()?.let { ServiceManager.getService(PluginInfoProvider::class.java) }
+    return ApplicationManager.getApplication()?.let { ApplicationManager.getApplication().getService(PluginInfoProvider::class.java) }
   }
 
   /**

@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -105,7 +106,7 @@ public final class GradleManager
       final Project project = pair.first;
       final String projectPath = pair.second;
       GradleSettings settings = GradleSettings.getInstance(project);
-      GradleInstallationManager gradleInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
+      GradleInstallationManager gradleInstallationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
       File gradleHome = gradleInstallationManager.getGradleHome(project, projectPath);
       String localGradlePath = null;
       if (gradleHome != null) {
@@ -136,6 +137,9 @@ public final class GradleManager
                                                                    settings.isOfflineWork());
       final String rootProjectPath = projectLevelSettings != null ? projectLevelSettings.getExternalProjectPath() : projectPath;
       final String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
+      if (!StringUtil.isEmpty(javaHome)) {
+        LOG.info("Instructing gradle to use java from " + javaHome);
+      }
       result.setJavaHome(javaHome);
       String ideProjectPath;
       if (project.getBasePath() == null ||
@@ -287,6 +291,11 @@ public final class GradleManager
     return myAutoImportDelegate.getAffectedExternalProjectFiles(projectPath, project);
   }
 
+  @Override
+  public boolean isApplicable(@Nullable ProjectResolverPolicy resolverPolicy) {
+    return myAutoImportDelegate.isApplicable(resolverPolicy);
+  }
+
   @NotNull
   @Override
   public FileChooserDescriptor getExternalProjectDescriptor() {
@@ -367,7 +376,7 @@ public final class GradleManager
                   sourceSetDataNode.getData().useExternalCompilerOutput(delegatedBuild);
                 }
               }
-              ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, project, true);
+              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, project, true);
             });
           }
         });

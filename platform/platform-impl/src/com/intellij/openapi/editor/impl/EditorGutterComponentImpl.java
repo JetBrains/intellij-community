@@ -9,7 +9,10 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.dnd.*;
+import com.intellij.ide.dnd.DnDDragStartBean;
+import com.intellij.ide.dnd.DnDImage;
+import com.intellij.ide.dnd.DnDNativeTarget;
+import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -20,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -32,6 +36,7 @@ import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,19 +47,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
@@ -65,13 +64,11 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -126,6 +123,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+  private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
+
   private static final JBValueGroup JBVG = new JBValueGroup();
   private static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
   private static final JBValue FREE_PAINTERS_LEFT_AREA_WIDTH = JBVG.value(8);
@@ -139,7 +138,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
-  @Nullable private Int2ObjectOpenHashMap<List<GutterMark>> myLineToGutterRenderers;
+  @Nullable private Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
@@ -149,7 +148,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
   private int myTextAnnotationExtraSize;
-  final IntArrayList myTextAnnotationGutterSizes = new IntArrayList();
+  final IntList myTextAnnotationGutterSizes = new IntArrayList();
   final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
@@ -159,7 +158,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myShowDefaultGutterPopup = true;
   private boolean myCanCloseAnnotations = true;
   @Nullable private ActionGroup myCustomGutterPopupGroup;
-  private final TIntObjectHashMap<Color> myTextFgColors = new TIntObjectHashMap<>();
+  private final Int2ObjectMap<Color> myTextFgColors = new Int2ObjectOpenHashMap<>();
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
@@ -247,7 +246,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             final int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
               e.setDropPossible(true);
-              e.setCursor(draggableObject.getCursor(line, e.getAction().getActionId()));
+              e.setCursor(draggableObject.getCursor(line, myEditor.getVirtualFile(), e.getAction().getActionId()));
             }
           }
         }
@@ -263,7 +262,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
         return true;
       })
-      .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
+      .setImageProvider(info -> {
         // [tav] temp workaround for JRE-224
         boolean inUserScale = !SystemInfo.isWindows || !StartupUiUtil.isJreHiDPI(myEditor.getComponent());
         Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
@@ -314,18 +313,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void paintComponent(Graphics g_) {
     Rectangle clip = g_.getClipBounds();
-
     Graphics2D g = (Graphics2D)getComponentGraphics(g_);
+
+    if (myEditor.isDisposed()) {
+      g.setColor(EditorImpl.getDisposedBackground());
+      g.fillRect(clip.x, clip.y, clip.width, clip.height);
+      return;
+    }
+
     AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
 
     EditorUIUtil.setupAntialiasing(g);
     Color backgroundColor = getBackground();
-
-    if (myEditor.isDisposed()) {
-      g.setColor(myEditor.getDisposedBackground());
-      g.fillRect(clip.x, clip.y, clip.width, clip.height);
-      return;
-    }
 
     int startVisualLine;
     int endVisualLine;
@@ -347,6 +346,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       startVisualLine = myEditor.offsetToVisualLine(firstVisibleOffset);
       endVisualLine = myEditor.offsetToVisualLine(lastVisibleOffset);
+    }
+
+    if (firstVisibleOffset > lastVisibleOffset) {
+      LOG.error("Unexpected painting range: (" + firstVisibleOffset + ":" + lastVisibleOffset
+                + "), visual line range: (" + startVisualLine + ":" + endVisualLine
+                + "), clip: " + clip + ", focus range: " + focusModeRange);
     }
 
     // paint all backgrounds
@@ -449,6 +454,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     if (w == 0) return;
 
+    int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
+
     AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
@@ -467,11 +474,34 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
         int annotationSize = myTextAnnotationGutterSizes.getInt(i);
 
+        int logicalLine = -1;
+        Color bg = null;
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-          int logLine = visLinesIterator.getDisplayedLogicalLine();
           int y = visLinesIterator.getY();
-          paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
+          int bgLineHeight = lineHeight;
+          boolean paintText = !visLinesIterator.startsWithSoftWrap() || y <= viewportStartY;
+
+          if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line annotation
+            y = viewportStartY;
+          }
+          else if (viewportStartY < y && y < viewportStartY + lineHeight && visLinesIterator.startsWithSoftWrap()) {
+            // avoid drawing bg over the "sticky" line above, or over a possible gap in the gutter below (e.g. code vision)
+            bgLineHeight = y - viewportStartY;
+            y = viewportStartY + lineHeight;
+          }
+
+          if (paintText || logicalLine == -1) {
+            logicalLine = visLinesIterator.getDisplayedLogicalLine();
+            bg = gutterProvider.getBgColor(logicalLine, myEditor);
+          }
+          if (bg != null) {
+            g.setColor(bg);
+            g.fillRect(x, y, annotationSize, bgLineHeight);
+          }
+          if (paintText) {
+            paintAnnotationLine(g, gutterProvider, logicalLine, x, y);
+          }
 
           visLinesIterator.advance();
         }
@@ -485,13 +515,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y, int width, int height) {
+  private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y) {
     String s = gutterProvider.getLineText(line, myEditor);
-    final Color bg = gutterProvider.getBgColor(line, myEditor);
-    if (bg != null) {
-      g.setColor(bg);
-      g.fillRect(x, y, width, height);
-    }
     if (!StringUtil.isEmpty(s)) {
       g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(line, myEditor)));
       EditorFontType style = gutterProvider.getStyle(line, myEditor);
@@ -503,10 +528,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private Font getFontForText(String text, EditorFontType style) {
     Font font = myEditor.getColorsScheme().getFont(style);
-    if (font.canDisplayUpTo(text) != -1) {
-      font = UIUtil.getFontWithFallback(font);
-    }
-    return font;
+    return UIUtil.getFontWithFallbackIfNeeded(font, text);
   }
 
   private void paintFoldingTree(@NotNull Graphics g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
@@ -593,17 +615,21 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Color colorUnderCaretRow = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR);
     Font font = getFontForLineNumbers();
     g.setFont(font);
+    int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
       int caretLogicalLine = myEditor.getCaretModel().getLogicalPosition().line;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-        if (!visLinesIterator.startsWithSoftWrap()) {
+        if (!visLinesIterator.startsWithSoftWrap() || visLinesIterator.getY() <= viewportStartY) {
           int logicalLine = visLinesIterator.getDisplayedLogicalLine();
           Integer lineToDisplay = converter.convert(myEditor, logicalLine + 1);
           if (lineToDisplay != null) {
-            int startY = visLinesIterator.getY();
+            int y = visLinesIterator.getY();
+            if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line number
+              y = viewportStartY;
+            }
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
               g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
@@ -622,7 +648,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
             g.drawString(s,
                          textOffset,
-                         startY + myEditor.getAscent());
+                         y + myEditor.getAscent());
           }
         }
         visLinesIterator.advance();
@@ -667,9 +693,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
     MarkupIterator<RangeHighlighterEx> docHighlighters =
-      myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset, true, false);
+      myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset, true);
     MarkupIterator<RangeHighlighterEx> editorHighlighters =
-      myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset, true, false);
+      myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset, true);
 
     try {
       RangeHighlighterEx lastDocHighlighter = null;
@@ -801,16 +827,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationExtraSize = 0;
     if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
 
-    Window frame = SwingUtilities.getWindowAncestor(myEditor.getComponent());
-    if (frame == null) return;
+    Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorComposite.isEditorComposite(c));
+    if (outerContainer == null) return;
 
     EditorSettings settings = myEditor.getSettings();
-    int rightMargin = settings.getRightMargin(myEditor.getProject());
+    Project project = myEditor.getProject();
+    if (project != null && project.isDisposed()) return;
+    int rightMargin = settings.getRightMargin(project);
     if (rightMargin <= 0) return;
 
     JComponent editorComponent = myEditor.getComponent();
     RelativePoint point = new RelativePoint(editorComponent, new Point(0, 0));
-    Point editorLocationInWindow = point.getPoint(frame);
+    Point editorLocationInWindow = point.getPoint(outerContainer);
 
     int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;
@@ -837,10 +865,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myLineToGutterRenderers = new Int2ObjectOpenHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (renderer == null) {
-        return;
-      }
-      if (!areIconsShown() && !(renderer instanceof NonHideableIconGutterMark)) {
+      if (!shouldBeShown(renderer)) {
         return;
       }
       if (!isHighlighterVisible(highlighter)) {
@@ -865,6 +890,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       // don't allow more than 4 icons per line
       entry.setValue(ContainerUtil.getFirstItems(newValue, 4));
     }
+  }
+
+  private boolean shouldBeShown(@Nullable GutterMark gutterIconRenderer) {
+    return gutterIconRenderer != null && (areIconsShown() || gutterIconRenderer instanceof NonHideableIconGutterMark);
   }
 
   private void calcLineMarkerAreaWidth(boolean canShrink) {
@@ -900,7 +929,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myHasInlaysWithGutterIcons = false;
     myEditor.getInlayModel().getBlockElementsInRange(0, myEditor.getDocument().getTextLength()).forEach(inlay -> {
       GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
-      if (iconRenderer != null && checkDumbAware(iconRenderer) && !EditorUtil.isInlayFolded(inlay)) {
+      if (shouldBeShown(iconRenderer) && checkDumbAware(iconRenderer) && !EditorUtil.isInlayFolded(inlay)) {
         Icon icon = scaleIcon(iconRenderer.getIcon());
         if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
           myHasInlaysWithGutterIcons = true;
@@ -983,7 +1012,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (myHasInlaysWithGutterIcons) {
         Rectangle clip = g.getClipBounds();
         int curY = y;
-        for (Inlay inlay : visLinesIterator.getBlockInlaysAbove()) {
+        for (Inlay<?> inlay : visLinesIterator.getBlockInlaysAbove()) {
           if (curY <= clip.y) break;
           int height = inlay.getHeightInPixels();
           if (height > 0) {
@@ -993,7 +1022,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           }
         }
         curY = y + myEditor.getLineHeight();
-        for (Inlay inlay : visLinesIterator.getBlockInlaysBelow()) {
+        for (Inlay<?> inlay : visLinesIterator.getBlockInlaysBelow()) {
           if (curY >= clip.y + clip.height) break;
           int height = inlay.getHeightInPixels();
           if (height > 0) {
@@ -1007,9 +1036,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private void paintInlayIcon(Inlay inlay, Graphics2D g, int y) {
+  private void paintInlayIcon(Inlay<?> inlay, Graphics2D g, int y) {
     GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
-    if (iconRenderer != null && checkDumbAware(iconRenderer)) {
+    if (shouldBeShown(iconRenderer) && checkDumbAware(iconRenderer)) {
       Icon icon = scaleIcon(iconRenderer.getIcon());
       if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
         int iconWidth = icon.getIconWidth();
@@ -1173,7 +1202,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private int getTextAlignmentShiftForInlayIcon(Icon icon, Inlay inlay) {
+  private int getTextAlignmentShiftForInlayIcon(Icon icon, Inlay<?> inlay) {
     return Math.min(getTextAlignmentShift(icon), inlay.getHeightInPixels() - icon.getIconHeight());
   }
 
@@ -1705,9 +1734,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Point point = pointInfo.iconCenterPosition;
     Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below
                                                                                                          : Balloon.Position.atRight;
-    AtomicReference<String> tooltip = new AtomicReference<>();
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
-                                                                                               IdeBundle.message("progress.title.constructing.tooltip")) {
+    AtomicReference<@NlsContexts.Tooltip String> tooltip = new AtomicReference<>();
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));
@@ -1720,7 +1748,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }, myBackgroundIndicator);
   }
 
-  void showToolTip(@Nullable String toolTip, @NotNull Point location, @NotNull Balloon.Position relativePosition) {
+  void showToolTip(@Nullable @NlsContexts.Tooltip String toolTip, @NotNull Point location, @NotNull Balloon.Position relativePosition) {
     myCalculatingInBackground = null;
     TooltipController controller = TooltipController.getInstance();
     if (toolTip == null || toolTip.isEmpty() || myEditor.isDisposed()) {
@@ -1894,7 +1922,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private boolean isDumbMode() {
     Project project = myEditor.getProject();
-    return project != null && DumbService.isDumb(project);
+    return project != null && !project.isDisposed() && DumbService.isDumb(project);
   }
 
   private boolean checkDumbAware(@NotNull Object possiblyDumbAware) {
@@ -1918,7 +1946,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     action.update(actionEvent);
     if (actionEvent.getPresentation().isEnabledAndVisible()) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
     }
   }
 
@@ -2202,7 +2230,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, true);
         int yDiff = startY - p.y;
         for (int i = inlays.size() - 1; i >= 0; i--) {
-          Inlay inlay = inlays.get(i);
+          Inlay<?> inlay = inlays.get(i);
           int height = inlay.getHeightInPixels();
           if (yDiff <= height) {
             return getPointInfo(inlay, p.y + yDiff - height, cX, p.y);
@@ -2213,7 +2241,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       else {
         List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, false);
         int yDiff = p.y - endY;
-        for (Inlay inlay : inlays) {
+        for (Inlay<?> inlay : inlays) {
           int height = inlay.getHeightInPixels();
           if (yDiff < height) {
             return getPointInfo(inlay, p.y - yDiff, cX, p.y);
@@ -2226,9 +2254,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Nullable
-  private PointInfo getPointInfo(@NotNull Inlay inlay, int inlayY, int x, int y) {
+  private PointInfo getPointInfo(@NotNull Inlay<?> inlay, int inlayY, int x, int y) {
     GutterIconRenderer renderer = inlay.getGutterIconRenderer();
-    if (renderer == null || !checkDumbAware(renderer)) return null;
+    if (!shouldBeShown(renderer) || !checkDumbAware(renderer)) return null;
     Icon icon = scaleIcon(renderer.getIcon());
     int iconHeight = icon.getIconHeight();
     if ((y - inlayY) >= Math.max(iconHeight, myEditor.getLineHeight()) || iconHeight > inlay.getHeightInPixels()) return null;

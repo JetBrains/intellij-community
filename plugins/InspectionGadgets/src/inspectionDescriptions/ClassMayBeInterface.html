@@ -1,13 +1,46 @@
 <html>
 <body>
-Reports <b>abstract</b> classes which can be converted to interfaces.
+Reports <code>abstract</code> classes which can be converted to interfaces.
+Java doesn't support multiple class inheritance while class can implement multiple interfaces,
+so it makes sense to use interfaces wherever possible instead of classes.
 A class may be converted to an interface if it has no superclass (other
-than Object), has no fields declared that are not <b>static</b>, <b>final</b>, and <b>public</b>, and has no
-methods declared that are not <b>public</b> and <b>abstract</b> and no inner classes that are not <b>public</b>.
+than Object), has only <code>public static final</code> fields, <code>public abstract</code> methods, and <code>public</code> inner classes.
 <!-- tooltip end -->
+
+<p>Example:</p>
+<pre><code>
+abstract class Example {
+    public static final int MY_CONST = 42;
+    public abstract void foo();
+}
+
+class Inheritor extends Example {
+    @Override
+    public void foo() {
+        System.out.println(MY_CONST);
+    }
+}
+</code></pre>
+
+<p>After applying the fix:</p>
+
+<pre><code>
+interface Example {
+    int MY_CONST = 42;
+    void foo();
+}
+
+class Inheritor implements Example {
+    @Override
+    public void foo() {
+        System.out.println(MY_CONST);
+    }
+}
+</code></pre>
+
 <p>
-Use the checkbox below to report classes containing <b>static</b> methods and non-abstract methods which can be converted to <b>default</b>
-  methods, when using a language level of 8 or higher .
+  You can configure the inspection to only report classes containing <code>static</code> methods and non-abstract methods which can be converted to
+  <code>default</code> methods (only applicable to language level of 8 or higher).
 <p>
 
 </body>

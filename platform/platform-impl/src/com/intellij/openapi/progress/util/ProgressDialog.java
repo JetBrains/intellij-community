@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -24,7 +25,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ final class ProgressDialog implements Disposable {
 
   ProgressDialog(@NotNull ProgressWindow progressWindow,
                  boolean shouldShowBackground,
-                 @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
+                 @NlsContexts.Button @Nullable String cancelText,
                  @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
     myParentWindow = parentWindow;
@@ -96,6 +97,7 @@ final class ProgressDialog implements Disposable {
     initDialog(cancelText);
   }
 
+  @Contract(pure = true)
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
@@ -108,7 +110,7 @@ final class ProgressDialog implements Disposable {
     return fullText;
   }
 
-  private void initDialog(@Nullable String cancelText) {
+  private void initDialog(@Nullable @NlsContexts.Button String cancelText) {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
@@ -156,7 +158,7 @@ final class ProgressDialog implements Disposable {
     return myPanel;
   }
 
-  void changeCancelButtonText(@NotNull String text) {
+  void changeCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelButton.setText(text);
   }
 
@@ -241,11 +243,14 @@ final class ProgressDialog implements Disposable {
   }
 
   void show() {
-    if (myWasShown) return;
+    if (myWasShown) {
+      return;
+    }
     myWasShown = true;
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    if (myParentWindow == null) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || myParentWindow == null) {
+      return;
+    }
     if (myPopup != null) {
       myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
     }
@@ -262,22 +267,32 @@ final class ProgressDialog implements Disposable {
     }
     myPopup.pack();
 
-    SwingUtilities.invokeLater(() -> {
-      if (myPopup != null && !myPopup.isDisposed()) {
-        myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
-      }
-    });
-
     Disposer.register(myPopup.getDisposable(), () -> myProgressWindow.exitModality());
 
     myPopup.show();
+
+    // 'Light' popup is shown in glass pane, glass pane is 'activating' (becomes visible) in 'invokeLater' call
+    // (see IdeGlassPaneImp.addImpl), requesting focus to cancel button until that time has no effect, as it's not showing.
+    SwingUtilities.invokeLater(() -> {
+      if (myPopup != null && !myPopup.isDisposed()) {
+        Window window = SwingUtilities.getWindowAncestor(myCancelButton);
+        if (window != null) {
+          Component originalFocusOwner = window.getMostRecentFocusOwner();
+          if (originalFocusOwner != null) {
+            Disposer.register(myPopup.getDisposable(), () -> originalFocusOwner.requestFocusInWindow());
+          }
+        }
+        myCancelButton.requestFocusInWindow();
+        myRepaintRunnable.run();
+      }
+    });
   }
 
   private boolean isWriteActionProgress() {
     return myProgressWindow instanceof PotemkinProgress;
   }
 
-  private class MyDialogWrapper extends DialogWrapper {
+  private final class MyDialogWrapper extends DialogWrapper {
     private final boolean myIsCancellable;
 
     MyDialogWrapper(Project project, final boolean cancellable) {
@@ -295,7 +310,7 @@ final class ProgressDialog implements Disposable {
     @Override
     public void doCancelAction() {
       if (myIsCancellable) {
-        super.doCancelAction();
+        ProgressDialog.this.doCancelAction();
       }
     }
 
@@ -313,12 +328,6 @@ final class ProgressDialog implements Disposable {
       else {
         return super.createPeer(parent, canBeParent);
       }
-    }
-
-    @NotNull
-    @Override
-    protected DialogWrapperPeer createPeer(final boolean canBeParent, final boolean applicationModalIfPossible) {
-      return createPeer(null, canBeParent, applicationModalIfPossible);
     }
 
     @NotNull

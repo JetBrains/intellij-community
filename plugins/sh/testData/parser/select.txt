@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -79,7 +80,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('FILENAME')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('*')
       LIST_TERMINATOR

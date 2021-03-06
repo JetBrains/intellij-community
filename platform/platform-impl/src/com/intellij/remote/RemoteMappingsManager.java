@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -16,16 +15,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @State(name = "RemoteMappingsManager", storages = @Storage("remote-mappings.xml"))
-public class RemoteMappingsManager implements PersistentStateComponent<RemoteMappingsManager.State> {
+public final class RemoteMappingsManager implements PersistentStateComponent<RemoteMappingsManager.State> {
   private final State myState = new State();
 
   public static RemoteMappingsManager getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, RemoteMappingsManager.class);
+    return project.getService(RemoteMappingsManager.class);
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 

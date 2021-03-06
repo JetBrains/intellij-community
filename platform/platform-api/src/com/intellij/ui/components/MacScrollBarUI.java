@@ -3,6 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.ID;
@@ -213,7 +214,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private enum Behavior {
     NextPage, JumpToSpot;
 
-    private static final Native<Behavior> CURRENT = new Native<Behavior>() {
+    private static final Native<Behavior> CURRENT = new Native<>() {
       @NotNull
       @Override
       public Behavior produce() {
@@ -247,11 +248,13 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private enum Style {
     Legacy, Overlay;
 
-    private static final Native<Style> CURRENT = new Native<Style>() {
+    private static final Native<Style> CURRENT = new Native<>() {
       @Override
       public void run() {
         Style oldStyle = get();
-        if (!Registry.is("ide.mac.disableMacScrollbars", false) && SystemInfo.isMacOSMountainLion) super.run();
+        if (SystemInfoRt.isMac && !Registry.is("ide.mac.disableMacScrollbars", false)) {
+          super.run();
+        }
         Style newStyle = get();
         if (newStyle != oldStyle) {
           List<MacScrollBarUI> list = new ArrayList<>();

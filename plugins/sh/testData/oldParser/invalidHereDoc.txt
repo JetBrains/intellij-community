@@ -6,7 +6,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('f')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('1')
@@ -28,5 +28,5 @@ SHELL_SCRIPT
                 PsiElement(HEREDOC_MARKER_START)('EOF')
                 PsiElement(\n)('\n')
                 PsiElement(HEREDOC_CONTENT)('  heredoccontent\n      EOF\ndone')
-          PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected
+          PsiErrorElement:'&', '&&', ';', '\n', '|', '|&' or '||' expected
             <empty list>

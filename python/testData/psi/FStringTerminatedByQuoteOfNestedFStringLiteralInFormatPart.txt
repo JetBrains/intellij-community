@@ -23,7 +23,7 @@ PyFile:FStringTerminatedByQuoteOfNestedFStringLiteralInFormatPart.py
                     PsiElement(Py:FSTRING_FRAGMENT_START)('{')
                     PyReferenceExpression: f
                       PsiElement(Py:IDENTIFIER)('f')
-                    PsiErrorElement:} expected
+                    PsiErrorElement:'}' expected
                       <empty list>
               PsiErrorElement:" expected
                 <empty list>

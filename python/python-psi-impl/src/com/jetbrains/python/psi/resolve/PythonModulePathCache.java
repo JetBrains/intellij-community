@@ -16,14 +16,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PythonModulePathCache extends PythonPathCache implements Disposable {
+public final class PythonModulePathCache extends PythonPathCache implements Disposable {
   public static PythonPathCache getInstance(Module module) {
     return module.getService(PythonPathCache.class);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
-  public PythonModulePathCache(final Module module) {
-    final MessageBusConnection connection = module.getMessageBus().connect();
+  public PythonModulePathCache(Module module) {
+    MessageBusConnection connection = module.getProject().getMessageBus().connect(this);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {

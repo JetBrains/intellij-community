@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.IdeBundle;
@@ -16,27 +16,28 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class LargeFileNotificationProvider extends EditorNotifications.Provider {
+public final class LargeFileNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("large.file.editor.notification");
   private static final Key<String> HIDDEN_KEY = Key.create("large.file.editor.notification.hidden");
   private static final String DISABLE_KEY = "large.file.editor.notification.disabled";
 
-  @NotNull
   @Override
-  public Key<EditorNotificationPanel> getKey() {
+  public @NotNull Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
-  @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (!(fileEditor instanceof LargeFileEditorProvider.LargeTextFileEditor)) return null;
+  public @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+    if (!(fileEditor instanceof LargeFileEditorProvider.LargeTextFileEditor)) {
+      return null;
+    }
+
     Editor editor = ((TextEditor)fileEditor).getEditor();
     if (editor.getUserData(HIDDEN_KEY) != null || PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) {
       return null;
     }
 
-    EditorNotificationPanel panel = new EditorNotificationPanel();
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.createActionLabel(IdeBundle.message("action.label.hide.notification"), () -> {
       editor.putUserData(HIDDEN_KEY, "true");
       update(file, project);
@@ -45,8 +46,8 @@ public final class LargeFileNotificationProvider extends EditorNotifications.Pro
       PropertiesComponent.getInstance().setValue(DISABLE_KEY, "true");
       update(file, project);
     });
-    return panel.text(String.format(
-      "The file is too large: %s. Showing a read-only preview of the first %s.",
+    return panel.text(IdeBundle.message(
+      "large.file.preview.notification",
       StringUtil.formatFileSize(file.getLength()),
       StringUtil.formatFileSize(FileUtilRt.LARGE_FILE_PREVIEW_SIZE)
     ));

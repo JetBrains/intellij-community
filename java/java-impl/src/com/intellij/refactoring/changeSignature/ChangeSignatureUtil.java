@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * @author dsl
  */
-public class ChangeSignatureUtil {
+public final class ChangeSignatureUtil {
   private ChangeSignatureUtil() { }
 
   public interface ChildrenGenerator<Parent extends PsiElement, Child extends PsiElement> {

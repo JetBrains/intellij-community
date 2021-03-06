@@ -2,7 +2,6 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.parameterInfo.ParameterFlag;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.Pair;
@@ -11,24 +10,16 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.types.PyCallableType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
 
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
-
-  @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
-  @Override
-  public Object @NotNull [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-  }
 
   @Override
   @Nullable

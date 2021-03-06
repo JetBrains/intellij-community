@@ -26,14 +26,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collection;
 
 public class FileProcessingCompilerStateCache {
   private static final Logger LOG = Logger.getInstance(FileProcessingCompilerStateCache.class);
   private final StateCache<MyState> myCache;
 
   public FileProcessingCompilerStateCache(File storeDirectory, final ValidityStateFactory stateFactory) throws IOException {
-    myCache = new StateCache<MyState>(new File(storeDirectory, "timestamps")) {
+    myCache = new StateCache<>(new File(storeDirectory, "timestamps")) {
       @Override
       public MyState read(DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stateFactory.createValidityState(stream));
@@ -73,10 +72,6 @@ public class FileProcessingCompilerStateCache {
 
   public void force() {
     myCache.force();
-  }
-
-  public Collection<String> getUrls() throws IOException {
-    return myCache.getUrls();
   }
 
   public boolean wipe() {

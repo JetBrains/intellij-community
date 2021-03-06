@@ -13,7 +13,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class SetupJDKFix implements IntentionAction, HighPriorityAction {
+public final class SetupJDKFix implements IntentionAction, HighPriorityAction {
   private static final SetupJDKFix ourInstance = new SetupJDKFix();
 
   public static SetupJDKFix getInstance() {

@@ -3,26 +3,28 @@ package com.intellij.ide.browsers.firefox;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class FirefoxSettings extends BrowserSpecificSettings {
   private String myProfilesIniPath;
-  private String myProfile;
+  private @NlsSafe String myProfile;
 
   public FirefoxSettings() {
   }
 
-  public FirefoxSettings(@Nullable String profilesIniPath, @Nullable String profile) {
+  public FirefoxSettings(@Nullable String profilesIniPath, @NlsSafe @Nullable String profile) {
     myProfilesIniPath = StringUtil.nullize(profilesIniPath);
     myProfile = StringUtil.nullize(profile);
   }
@@ -39,7 +41,7 @@ public final class FirefoxSettings extends BrowserSpecificSettings {
 
   @Nullable
   @Tag("profile")
-  public String getProfile() {
+  public @NlsSafe String getProfile() {
     return myProfile;
   }
 

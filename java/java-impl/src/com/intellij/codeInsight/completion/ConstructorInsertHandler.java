@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -27,7 +27,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -36,6 +38,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -49,7 +52,7 @@ import java.util.List;
 /**
 * @author peter
 */
-public class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
+public final class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
   private static final Logger LOG = Logger.getInstance(ConstructorInsertHandler.class);
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
@@ -75,12 +78,11 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
 
-    final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     if (position == null) return;
-    
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
-    final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
-    final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
+
+    PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
+    boolean inAnonymous = anonymousClass != null && PsiTreeUtil.isAncestor(anonymousClass.getBaseClassReference(), position, false);
     if (delegate instanceof PsiTypeLookupItem) {
       if (context.getDocument().getTextLength() > context.getTailOffset() &&
           context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
@@ -185,7 +187,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       return false;
     }
 
-    PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     return position != null &&
            ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
            context.getCompletionChar() != '(';
@@ -246,7 +248,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
                                                : hasConstructorParameters(psiClass, place);
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
-    
+
     JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
 
     if (constructor != null) {
@@ -309,12 +311,13 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   private static Runnable createOverrideRunnable(final Editor editor, final PsiFile file, final Project project) {
     return () -> {
       TemplateManager.getInstance(project).finishTemplate(editor);
+      if (DumbService.getInstance(project).isDumb()) return;
 
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       final PsiAnonymousClass
         aClass = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiAnonymousClass.class, false);
       if (aClass == null) return;
-      CommandProcessor.getInstance().executeCommand(project, () -> {
+      CommandProcessor.getInstance().executeCommand(project, () -> SlowOperations.allowSlowOperations(() -> {
         final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
         for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
           final CandidateInfo candidate = iterator.next();
@@ -341,7 +344,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
             }
           });
         }
-      }, getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+      }), getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
     };
   }
 
@@ -379,7 +382,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     });
   }
 
-  private static String getCommandName() {
+  private static @NlsContexts.Command String getCommandName() {
     return JavaBundle.message("completion.smart.type.generate.anonymous.body");
   }
 }

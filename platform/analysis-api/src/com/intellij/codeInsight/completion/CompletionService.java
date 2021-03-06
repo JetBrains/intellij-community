@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -32,7 +32,7 @@ public abstract class CompletionService {
   public static final Key<CompletionWeigher> RELEVANCE_KEY = Key.create("completion");
 
   public static CompletionService getCompletionService() {
-    return ServiceManager.getService(CompletionService.class);
+    return ApplicationManager.getApplication().getService(CompletionService.class);
   }
 
   /**
@@ -41,6 +41,7 @@ public abstract class CompletionService {
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
@@ -103,7 +104,7 @@ public abstract class CompletionService {
 
     AtomicBoolean typoTolerant = new AtomicBoolean();
 
-    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<CompletionResult>() {
+    BatchConsumer<CompletionResult> batchConsumer = new BatchConsumer<>() {
       @Override
       public void startBatch() {
         if (consumer instanceof BatchConsumer) {

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ConvertSwitchToIfIntention implements IntentionAction {
+public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOption {
   private final PsiSwitchStatement mySwitchStatement;
 
   public ConvertSwitchToIfIntention(@NotNull PsiSwitchStatement switchStatement) {

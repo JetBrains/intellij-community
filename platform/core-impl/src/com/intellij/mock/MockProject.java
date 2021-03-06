@@ -28,11 +28,6 @@ public class MockProject extends MockComponentManager implements Project {
     super(parent, parentDisposable);
   }
 
-  @Override
-  public boolean isDefault() {
-    return false;
-  }
-
   @NotNull
   @Override
   public Condition<?> getDisposed() {

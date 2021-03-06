@@ -10,8 +10,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
     super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, null);
@@ -19,7 +17,16 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   @Override
   protected void perform(final ConfigurationContext context) {
-    choosePolicy(context).perform(context);
+    RunnerAndConfigurationSettings configuration = context.findExisting();
+    if (configuration == null) {
+      configuration = context.getConfiguration();
+    }
+    choosePolicy(context).perform(configuration, context);
+  }
+
+  @Override
+  protected void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context) {
+    choosePolicy(context).perform(configurationSettings, context);
   }
 
   @Override
@@ -27,40 +34,29 @@ public class CreateAction extends BaseRunConfigurationAction {
     choosePolicy(context).update(presentation, context, actionText);
   }
 
-  private static BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
-    final RunnerAndConfigurationSettings configuration = context.findExisting();
+  private BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
+    final RunnerAndConfigurationSettings configuration = findExisting(context);
     return configuration == null ? Holder.CREATE_AND_EDIT : Holder.EDIT;
   }
 
   private static abstract class BaseCreatePolicy {
     public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
       updateText(presentation, actionText);
-      updateIcon(presentation, context);
     }
-
-    protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
-      if (fromContext != null && fromContext.size() == 1) {
-        //hide fuzzy icon when multiple run configurations are possible
-        presentation.setIcon(fromContext.iterator().next().getConfiguration().getIcon());
-      }
-    }
-
+    
     protected abstract void updateText(final Presentation presentation, final String actionText);
 
-    public abstract void perform(ConfigurationContext context);
+    protected abstract void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context);
   }
 
   private static class CreateAndEditPolicy extends BaseCreatePolicy {
     @Override
     protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText(actionText.length() > 0 ? ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "..."
-                                                   : ExecutionBundle.message("create.run.configuration.action.name"), false);
+      presentation.setText(ExecutionBundle.message("create.run.configuration.action.name"), false);
     }
 
     @Override
-    public void perform(final ConfigurationContext context) {
-      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+    protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
           RunDialog.editConfiguration(context.getProject(), configuration,
                                       ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
@@ -73,14 +69,7 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private static class EditPolicy extends CreateAndEditPolicy {
     @Override
-    protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText(actionText.length() > 0 ? ExecutionBundle.message("edit.run.configuration.for.item.action.name", actionText) + "..."
-                                                   : ExecutionBundle.message("edit.run.configuration.action.name"), false);
-    }
-
-    @Override
-    public void perform(final ConfigurationContext context) {
-      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+    protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         RunDialog.editConfiguration(context.getProject(), configuration,
                                     ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));

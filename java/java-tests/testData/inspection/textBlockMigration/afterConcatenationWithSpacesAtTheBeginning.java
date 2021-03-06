@@ -3,11 +3,12 @@
 class TextBlockMigration {
 
   void concatenationWithSpacesAtTheBeginning() {
-    String body = """
-            <body>
-              <p>
-              </p>
-            </body>""".indent(2);
+      /*1*/
+      String body =/*3*/ """
+              <body>
+                <p>
+                </p>
+              </body>""".indent(2)/*2*/;/*4*/
   }
 
 }

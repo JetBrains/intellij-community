@@ -45,7 +45,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   }
 
   public Self withLocalName(final ElementPattern<String> localName) {
-    return with(new PsiNamePatternCondition<T>("withLocalName", localName) {
+    return with(new PsiNamePatternCondition<>("withLocalName", localName) {
       @Override
       public String getPropertyValue(@NotNull final Object o) {
         return o instanceof XmlElement ? getLocalName((T)o) : null;
@@ -66,7 +66,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<String, ProcessingContext> processor) {
+                                   PairProcessor<? super String, ? super ProcessingContext> processor) {
         return processor.process(getNamespace(t), context);
       }
     });
@@ -74,7 +74,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
 
   public static class XmlAttributePattern extends XmlNamedElementPattern<XmlAttribute, XmlAttributePattern> {
     protected XmlAttributePattern() {
-      super(new InitialPatternCondition<XmlAttribute>(XmlAttribute.class) {
+      super(new InitialPatternCondition<>(XmlAttribute.class) {
         @Override
         public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
           return o instanceof XmlAttribute;
@@ -97,7 +97,7 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
         @Override
         public boolean processValues(XmlAttribute t,
                                      ProcessingContext context,
-                                     PairProcessor<String, ProcessingContext> processor) {
+                                     PairProcessor<? super String, ? super ProcessingContext> processor) {
           return processor.process(t.getValue(), context);
         }
       });

@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,22 +22,25 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AsyncEditorLoader {
+public final class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
   private static final Key<AsyncEditorLoader> ASYNC_LOADER = Key.create("ASYNC_LOADER");
   private static final int SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200;
   private static final int DOCUMENT_COMMIT_WAITING_TIME_MS = 5_000;
+
   @NotNull private final Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final TextEditorImpl myTextEditor;
   @NotNull private final TextEditorComponent myEditorComponent;
   @NotNull private final TextEditorProvider myProvider;
+  @NotNull private static final Logger LOG = Logger.getInstance(AsyncEditorLoader.class);
   private final List<Runnable> myDelayedActions = new ArrayList<>();
   private TextEditorState myDelayedState;
   private final AtomicBoolean myLoadingFinished = new AtomicBoolean();
@@ -78,23 +83,33 @@ public class AsyncEditorLoader {
     }
   }
 
-  private Future<Runnable> scheduleLoading() {
+  private @NotNull Future<Runnable> scheduleLoading() {
     long commitDeadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(DOCUMENT_COMMIT_WAITING_TIME_MS);
 
     // we can't return the result of "nonBlocking" call below because it's only finished on EDT later,
     // but we need to get the result of bg calculation in the same EDT event, if it's quick
     CompletableFuture<Runnable> future = new CompletableFuture<>();
-
     ReadAction
       .nonBlocking(() -> {
         waitForCommit(commitDeadline);
         Runnable runnable = ProgressManager.getInstance().computePrioritized(() -> {
           try {
             return myTextEditor.loadEditorInBackground();
-          } catch (ProcessCanceledException e) {
+          }
+          catch (ProcessCanceledException e) {
             throw e;
-          } catch (Exception e) {
-            Logger.getInstance(AsyncEditorLoader.class).error("Error during async editor loading", e);
+          }
+          catch (IndexOutOfBoundsException e) {
+            // EA-232290 investigation
+            Attachment filePathAttachment = new Attachment("filePath.txt", myTextEditor.getFile().toString());
+            Attachment threadDumpAttachment = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+            threadDumpAttachment.setIncluded(true);
+            LOG.error("Error during async editor loading", e,
+                                                              filePathAttachment, threadDumpAttachment);
+            return null;
+          }
+          catch (Exception e) {
+            LOG.error("Error during async editor loading", e);
             return null;
           }
         });
@@ -143,14 +158,23 @@ public class AsyncEditorLoader {
     return null;
   }
 
-  private void loadingFinished(Runnable continuation) {
-    if (!myLoadingFinished.compareAndSet(false, true)) return;
+  private void loadingFinished(@Nullable Runnable continuation) {
+    if (!myLoadingFinished.compareAndSet(false, true)) {
+      return;
+    }
     myEditor.putUserData(ASYNC_LOADER, null);
 
-    if (myEditorComponent.isDisposed()) return;
+    if (myEditorComponent.isDisposed()) {
+      return;
+    }
 
     if (continuation != null) {
-      continuation.run();
+      try {
+        continuation.run();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     myEditorComponent.loadingFinished();

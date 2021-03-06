@@ -1,0 +1,20 @@
+<html>
+<body>
+Reports calls with no arguments to method that has exactly one parameter.
+This is equivalent to call with <code>null</code>, and that behavior is often confusing and unintended.
+<br>
+Example:
+<br>
+<pre>
+    def foo(String s){}
+
+    foo()
+</pre>
+Will be executed as following:
+<pre>
+    def foo(String s){}
+
+    foo(<b>null</b>)
+</pre>
+</body>
+</html>

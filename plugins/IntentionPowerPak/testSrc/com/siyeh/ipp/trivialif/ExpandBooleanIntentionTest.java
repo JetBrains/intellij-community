@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
@@ -23,7 +23,7 @@ public class ExpandBooleanIntentionTest extends IPPTestCase {
   public void testIncomplete6() { assertIntentionNotAvailable(IntentionPowerPackBundle.message("expand.boolean.return.intention.name")); }
 
   private void doFormattingTest(String intentionText) {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     final int oldValue = settings.IF_BRACE_FORCE;
     try {
       settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;

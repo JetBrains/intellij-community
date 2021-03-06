@@ -1,0 +1,22 @@
+<html>
+<body>
+<p>Reports annotations on the record components that have no effect. This may happen in two cases:</p>
+<ul>
+  <li>Annotation has METHOD target but the corresponding accessor is explicitly defined</li>
+  <li>Annotation has PARAMETER target but the canonical constructor is explicitly defined</li>
+</ul>
+<p>Example:</p>
+<pre>
+@Target(ElementType.METHOD)
+@interface A { }
+  
+// The annotation will not appear in bytecode at all,
+// as it should be propagated to the accessor but accessor is explicitly defined 
+record R(@A int x) {
+  public int x() { return x; }
+}
+</pre>
+<!-- tooltip end -->
+<p><small>New in 2021.1</small></p>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -25,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,29 +54,16 @@ public class EmptyClassInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(annotationsListControl, constraints);
-    constraints.gridy++;
-    constraints.weighty = 0.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    final CheckBox checkBox1 = new CheckBox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"),
-                                                   this, "ignoreClassWithParameterization");
-    panel.add(checkBox1, constraints);
-    constraints.gridy++;
-    final CheckBox checkBox2 = new CheckBox(InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE), this, "ignoreThrowables");
-    panel.add(checkBox2, constraints);
-    constraints.gridy++;
-    final CheckBox checkBox3 = new CheckBox(InspectionGadgetsBundle.message("comments.as.content.option"), this, "commentsAreContent");
-    panel.add(checkBox3, constraints);
+
+    panel.add(annotationsListControl, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("empty.class.ignore.parameterization.option"), "ignoreClassWithParameterization");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.empty.class.ignore.subclasses.option", CommonClassNames.JAVA_LANG_THROWABLE),
+              "ignoreThrowables");
+    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
+
     return panel;
   }
 
@@ -206,7 +192,7 @@ public class EmptyClassInspection extends BaseInspection {
       if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations, 0)) {
         return;
       }
-      if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, "java.lang.Throwable")) {
+      if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
       registerClassError(aClass, aClass);

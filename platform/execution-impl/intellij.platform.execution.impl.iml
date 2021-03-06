@@ -16,5 +16,8 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="jediterm-pty" level="project" />
   </component>
 </module>

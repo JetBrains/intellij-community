@@ -9,7 +9,7 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
+public final class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
   public static final ExtensionPointName<QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters>> EP_NAME = ExtensionPointName.create("com.intellij.annotatedElementsSearch");
   public static final AnnotatedElementsSearch INSTANCE = new AnnotatedElementsSearch();
 

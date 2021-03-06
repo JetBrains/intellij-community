@@ -18,20 +18,23 @@ package com.intellij.project.model.impl.module.content;
 import com.intellij.openapi.roots.SourceFolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolder {
-  private final JpsModuleSourceRoot mySourceRoot;
+  @NotNull
+  private JpsModuleSourceRoot mySourceRoot;
 
-  public JpsSourceFolder(JpsModuleSourceRoot sourceRoot, JpsContentEntry contentEntry) {
+  public JpsSourceFolder(@NotNull JpsModuleSourceRoot sourceRoot, JpsContentEntry contentEntry) {
     super(sourceRoot.getUrl(), contentEntry);
     mySourceRoot = sourceRoot;
   }
 
+  @NotNull
   public JpsModuleSourceRoot getSourceRoot() {
     return mySourceRoot;
   }
@@ -44,8 +47,8 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
   @NotNull
   @Override
   public String getPackagePrefix() {
-    final JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
-    return properties != null ? properties.getData().getPackagePrefix() : "";
+    final @Nullable JavaSourceRootProperties properties = getJavaProperties();
+    return properties != null ? properties.getPackagePrefix() : "";
   }
 
   @Nullable
@@ -77,5 +80,10 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
   @Override
   public JpsModuleSourceRoot getJpsElement() {
     return mySourceRoot;
+  }
+
+  @Override
+  public <P extends JpsElement> void changeType(JpsModuleSourceRootType<P> newType, P properties) {
+    mySourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(mySourceRoot.getUrl(), newType, properties);
   }
 }

@@ -6,12 +6,14 @@ import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -33,14 +35,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
+public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory, Disposable {
   private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = new ConcurrentHashMap<>();
   private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.createConcurrentSoftMap();
 
   public PsiElementFactoryImpl(@NotNull Project project) {
     super(project);
-
-    ((PsiManagerEx)myManager).registerRunnableToRunOnChange(myCachedObjectType::clear);
+    project.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        if (isPhysical) myCachedObjectType.clear();
+      }
+    });
   }
 
   @Override
@@ -50,8 +58,8 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   private PsiClass createArrayClass(LanguageLevel level) {
     String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
-                  "public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
-                  "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
+                  "public static class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
+                  "public static class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
     ensureNonWritable(psiClass);
     PsiFile file = psiClass.getContainingFile();
@@ -548,7 +556,8 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
     replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
 
-    boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalLocals();
+    boolean generateFinalLocals =
+      context != null && JavaFileCodeStyleFacade.forContext(context.getContainingFile()).isGenerateFinalLocals();
     PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, generateFinalLocals);
 
     if (initializer != null) {
@@ -739,5 +748,10 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   private boolean isIdentifier(@NotNull String name) {
     return PsiNameHelper.getInstance(myManager.getProject()).isIdentifier(name);
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }

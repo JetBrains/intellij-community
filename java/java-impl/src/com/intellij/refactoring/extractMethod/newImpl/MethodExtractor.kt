@@ -1,66 +1,140 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.ExpressionOutput
+import com.intellij.refactoring.extractMethod.newImpl.inplace.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
-import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.ConditionalFlow
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.MultiMap
 
 class MethodExtractor {
 
-  private val LOG = Logger.getInstance(MethodExtractor::class.java)
+  data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 
-  fun doExtract(editor: Editor, refactoringName: String, helpId: String) {
-    val project = editor.project ?: return
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+  fun doExtract(file: PsiFile, range: TextRange) {
+    val project = file.project
+    val editor = PsiEditorUtil.findEditor(file) ?: return
+    val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
+    if (activeExtractor != null) {
+      activeExtractor.restartInDialog()
+      return
+    }
     try {
-      val statements = ExtractSelector().suggestElementsToExtract(editor)
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
+      val statements = ExtractSelector().suggestElementsToExtract(file, range)
       if (statements.isEmpty()) {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
       val extractOptions = findExtractOptions(statements)
-      selectTargetClass(extractOptions) { targetOptions ->
-        val options = mapFromDialog(targetOptions, refactoringName, helpId)
-        if (options != null) {
-          fun command() = PostprocessReformattingAspect.getInstance(project).postponeFormattingInside { doRefactoring(options) }
-          CommandProcessor.getInstance().executeCommand(project, ::command, ExtractMethodHandler.getRefactoringName(), null)
+      selectTargetClass(extractOptions) { options ->
+        val targetClass = options.anchor.containingClass ?: throw IllegalStateException("Failed to find target class")
+        val annotate = PropertiesComponent.getInstance(options.project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)
+        val parameters = ExtractParameters(targetClass, range, "", annotate, options.isStatic)
+        val extractor = getDefaultInplaceExtractor(options)
+        if (Registry.`is`("java.refactoring.extractMethod.inplace") && EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+          val popupSettings = createInplaceSettingsPopup(options)
+          val guessedNames = suggestSafeMethodNames(options)
+          val methodName = guessedNames.first()
+          val suggestedNames = guessedNames.takeIf { it.size > 1 }.orEmpty()
+          doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, suggestedNames)
+        }
+        else {
+          extractor.extractInDialog(parameters)
         }
       }
     }
     catch (e: ExtractException) {
       val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
-      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, HelpID.EXTRACT_METHOD)
+      CommonRefactoringUtil.showErrorHint(project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
       showError(editor, e.problems)
     }
+  }
+
+  fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
+    val enabled = Registry.`is`("java.refactoring.extractMethod.newImplementation")
+    val possible = ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())
+    return if (enabled && possible) DefaultMethodExtractor() else LegacyMethodExtractor()
+  }
+
+  fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
+    val unsafeNames = guessMethodName(options)
+    val safeNames = unsafeNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }
+    if (safeNames.isNotEmpty()) return safeNames
+
+    val baseName = unsafeNames.firstOrNull() ?: "extracted"
+    val generatedNames = sequenceOf(baseName) + generateSequence(1) { seed -> seed + 1 }.map { number -> "$baseName$number" }
+    return generatedNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }.take(1).toList()
+  }
+
+  private fun hasConflicts(options: ExtractOptions): Boolean {
+    val (_, method) = prepareRefactoringElements(options)
+    val conflicts = MultiMap<PsiElement, String>()
+    ConflictsUtil.checkMethodConflicts(options.anchor.containingClass, null, method, conflicts)
+    return ! conflicts.isEmpty
+  }
+
+  fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
+    val isStatic = options.isStatic
+    val analyzer = CodeFragmentAnalyzer(options.elements)
+    val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)
+    val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != options.inputParameters.size
+    val showStatic = ! isStatic && optionsWithStatic != null
+    val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
+    val annotationAvailable = ExtractMethodHelper.isNullabilityAvailable(options)
+    return ExtractMethodPopupProvider(
+      annotateDefault = if (hasAnnotation && annotationAvailable) needsNullabilityAnnotations(options.project) else null,
+      makeStaticDefault = if (showStatic) false else null,
+      staticPassFields = makeStaticAndPassFields
+    )
+  }
+
+  fun doInplaceExtract(editor: Editor, extractor: InplaceExtractMethodProvider, parameters: ExtractParameters, settingsPanel: ExtractMethodPopupProvider, suggestedNames: List<String>) {
+    executeRefactoringCommand(parameters.targetClass.project) {
+      InplaceMethodExtractor(editor, parameters, extractor, settingsPanel)
+        .performInplaceRefactoring(LinkedHashSet(suggestedNames))
+    }
+  }
+
+  fun doDialogExtract(options: ExtractOptions){
+    val dialogOptions = mapFromDialog(options, RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD)
+    if (dialogOptions != null) {
+      executeRefactoringCommand(dialogOptions.project) { doRefactoring(dialogOptions) }
+    }
+  }
+
+  private fun executeRefactoringCommand(project: Project, command: () -> Unit){
+    CommandProcessor.getInstance().executeCommand(project, command, ExtractMethodHandler.getRefactoringName(), null)
   }
 
   private fun doRefactoring(options: ExtractOptions) {
@@ -69,15 +143,28 @@ class MethodExtractor {
       beforeData.addElements(options.elements.toTypedArray())
       options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
         .refactoringStarted("refactoring.extract.method", beforeData)
-      val method = extractMethod(options)
+      val extractedElements = extractMethod(options)
       val data = RefactoringEventData()
-      data.addElement(method)
+      data.addElement(extractedElements.method)
       options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
         .refactoringDone("refactoring.extract.method", data)
     }
     catch (e: IncorrectOperationException) {
       LOG.error(e)
     }
+  }
+
+  fun replaceElements(sourceElements: List<PsiElement>, callElements: List<PsiElement>, anchor: PsiMember, method: PsiMethod): ExtractedElements {
+    return WriteAction.compute<ExtractedElements, Throwable> {
+      val addedMethod = anchor.addSiblingAfter(method) as PsiMethod
+      val replacedCallElements = replace(sourceElements, callElements)
+      ExtractedElements(replacedCallElements, addedMethod)
+    }
+  }
+
+  fun extractMethod(extractOptions: ExtractOptions): ExtractedElements {
+    val elementsToExtract = prepareRefactoringElements(extractOptions)
+    return replaceElements(extractOptions.elements, elementsToExtract.callElements, extractOptions.anchor, elementsToExtract.method)
   }
 
   fun doTestExtract(
@@ -93,14 +180,16 @@ class MethodExtractor {
   ): Boolean {
     val project = editor.project ?: return false
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
-    val elements = ExtractSelector().suggestElementsToExtract(editor)
+    val range = ExtractMethodHelper.findEditorSelection(editor) ?: return false
+    val elements = ExtractSelector().suggestElementsToExtract(file, range)
     if (elements.isEmpty()) throw ExtractException("Nothing to extract", file)
     var options = findExtractOptions(elements)
     val analyzer = CodeFragmentAnalyzer(elements)
 
     val candidates = ExtractMethodPipeline.findTargetCandidates(analyzer, options)
     val defaultTargetClass = candidates.firstOrNull { it !is PsiAnonymousClass } ?: candidates.first()
-    options = ExtractMethodPipeline.withTargetClass(analyzer, options, defaultTargetClass) ?: throw ExtractException("Fail", elements.first())
+    options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass ?: defaultTargetClass)
+                                    ?: throw ExtractException("Fail", elements.first())
     options = options.copy(methodName = "newMethod")
     if (isConstructor != options.isConstructor){
       options = ExtractMethodPipeline.asConstructor(analyzer, options) ?: throw ExtractException("Fail", elements.first())
@@ -115,9 +204,6 @@ class MethodExtractor {
     }
     if (returnType != null) {
       options = options.copy(dataOutput = options.dataOutput.withType(returnType))
-    }
-    if (targetClass != null) {
-      options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass) ?: options
     }
     if (disabledParameters.isNotEmpty()) {
       options = options.copy(
@@ -141,26 +227,21 @@ class MethodExtractor {
     val project = editor.project ?: return
     if (ranges.isEmpty()) return
     val highlightManager = HighlightManager.getInstance(project)
-    val colorsManager = EditorColorsManager.getInstance()
-    val attributes = colorsManager.globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)
     ranges.forEach { textRange ->
-      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset, attributes, true, null)
+      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset,
+                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null)
     }
-    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"))
+    WindowManager.getInstance().getStatusBar(project).info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
   }
 
-  fun extractMethod(extractOptions: ExtractOptions): PsiMethod {
+  fun prepareRefactoringElements(extractOptions: ExtractOptions): ExtractedElements {
     val dependencies = withFilteredAnnotations(extractOptions)
     val factory = PsiElementFactory.getInstance(dependencies.project)
     val styleManager = CodeStyleManager.getInstance(dependencies.project)
-    var flowOutput = dependencies.flowOutput
-    if (dependencies.dataOutput is ExpressionOutput && flowOutput is ConditionalFlow) {
-      flowOutput = flowOutput.copy(statements = flowOutput.statements.filterNot { it is PsiReturnStatement })
-    }
     val codeBlock = BodyBuilder(factory)
       .build(
         dependencies.elements,
-        flowOutput,
+        dependencies.flowOutput,
         dependencies.dataOutput,
         dependencies.inputParameters,
         dependencies.disabledParameters,
@@ -189,30 +270,25 @@ class MethodExtractor {
     val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
     val callElements = if (expressionElement != null) {
       callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
-    } else {
+    }
+    else {
       callBuilder.buildCall(methodCall, dependencies.flowOutput, dependencies.dataOutput, dependencies.exposedLocalVariables)
     }
     val formattedCallElements = callElements.map { styleManager.reformat(it) }
 
-    if (needsNullabilityAnnotations(dependencies.project)) {
+    if (needsNullabilityAnnotations(dependencies.project) && ExtractMethodHelper.isNullabilityAvailable(dependencies)) {
       updateMethodAnnotations(method, dependencies.inputParameters)
     }
 
-    var addedMethod: PsiMethod? = null
-    ApplicationManager.getApplication().runWriteAction {
-      addedMethod = dependencies.anchor.addSiblingAfter(method) as PsiMethod
-      replace(dependencies.elements, formattedCallElements)
-    }
-
-    return addedMethod!!
+    return ExtractedElements(formattedCallElements, method)
   }
 
-  private fun replace(source: List<PsiElement>, target: List<PsiElement>) {
+  private fun replace(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
     val sourceAsExpression = source.singleOrNull() as? PsiExpression
     val targetAsExpression = target.singleOrNull() as? PsiExpression
     if (sourceAsExpression != null && targetAsExpression != null) {
-      IntroduceVariableBase.replace(sourceAsExpression, targetAsExpression, sourceAsExpression.project)
-      return
+      val replacedExpression = IntroduceVariableBase.replace(sourceAsExpression, targetAsExpression, sourceAsExpression.project)
+      return listOf(replacedExpression)
     }
 
     val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
@@ -221,14 +297,17 @@ class MethodExtractor {
     else {
       target
     }
-    normalizedTarget.reversed().forEach { statement ->
-      source.last().addSiblingAfter(statement)
-    }
+    val replacedElements = normalizedTarget.reversed().map { statement -> source.last().addSiblingAfter(statement) }.reversed()
     source.first().parent.deleteChildRange(source.first(), source.last())
+    return replacedElements
   }
 
   private fun needsNullabilityAnnotations(project: Project): Boolean {
     return PropertiesComponent.getInstance(project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(MethodExtractor::class.java)
   }
 }
 

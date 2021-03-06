@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ScreenUtil;
@@ -77,7 +78,7 @@ public class CreateFromTemplatePanel {
       if (myMustEnterName && !Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)) {
         attrCount++;
       }
-      Insets insets = (attrCount > 1) ? JBUI.insets(2) : new Insets(0, 0, 0, 0);
+      Insets insets = (attrCount > 1) ? JBUI.insets(2) : JBUI.emptyInsets();
       myScrollPanel.add(myAttrPanel,  new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0, 0));
       if (attrCount > 1) {
         myScrollPanel.add(new JPanel(), new GridBagConstraints(0, 1, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(2), 0, 0));
@@ -87,7 +88,8 @@ public class CreateFromTemplatePanel {
         myMainPanel.add(attrScroll, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(2), 0, 0));
       }
       else {
-        myMainPanel.add(myScrollPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+        myMainPanel.add(myScrollPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                                                              JBUI.emptyInsets(), 0, 0));
       }
     }
     return myMainPanel;
@@ -117,7 +119,7 @@ public class CreateFromTemplatePanel {
   }
 
   private void updateShown() {
-    final Insets insets = new Insets(2, 4, 4, 2);
+    final Insets insets = JBUI.insets(2, 4, 4, 2);
     if(myMustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
       final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
       myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
@@ -152,7 +154,7 @@ public class CreateFromTemplatePanel {
     }
 
     int lastRow = 2;
-    for (String attribute : myUnsetAttributes) {
+    for (@NlsSafe String attribute : myUnsetAttributes) {
       if (attribute.equals(FileTemplate.ATTRIBUTE_NAME)) { // already asked above
         continue;
       }
@@ -197,6 +199,10 @@ public class CreateFromTemplatePanel {
     Properties result = (Properties) predefinedProperties.clone();
     for (Pair<String, JTextField> pair : myAttributes) {
       result.setProperty(pair.first, pair.second.getText());
+    }
+    String fileName = getFileName();
+    if (fileName != null) {
+      result.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
     }
     return result;
   }

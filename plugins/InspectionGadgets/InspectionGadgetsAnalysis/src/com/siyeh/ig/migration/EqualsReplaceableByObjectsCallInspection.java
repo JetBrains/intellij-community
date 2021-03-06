@@ -19,7 +19,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,14 +135,14 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
 
     private boolean processNotNullCheck(PsiBinaryExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
-      final PsiExpression rightOperand = ParenthesesUtils.stripParentheses(expression.getROperand());
+      final PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       if (JavaTokenType.ANDAND.equals(tokenType)) {
         return registerProblem(expression, rightOperand, true);
       }
       else if (JavaTokenType.OROR.equals(tokenType)) {
         if (rightOperand instanceof PsiPrefixExpression &&
             JavaTokenType.EXCL.equals(((PsiPrefixExpression)rightOperand).getOperationTokenType())) {
-          final PsiExpression negatedRightOperand = ParenthesesUtils.stripParentheses(((PsiPrefixExpression)rightOperand).getOperand());
+          final PsiExpression negatedRightOperand = PsiUtil.skipParenthesizedExprDown(((PsiPrefixExpression)rightOperand).getOperand());
           return registerProblem(expression, negatedRightOperand, false);
         }
       }
@@ -241,7 +240,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
 
     private boolean isEquality(PsiExpression expression, boolean equals, PsiExpression part1, PsiExpression part2) {
-      expression = ParenthesesUtils.stripParentheses(expression);
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiBinaryExpression)) {
         return false;
       }
@@ -265,7 +264,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
 
   private static boolean isNotNullExpressionOrConstant(PsiExpression expression) {
     int preventEndlessLoop = 5;
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     while (expression instanceof PsiReferenceExpression) {
       if (--preventEndlessLoop == 0) return false;
       expression = findFinalVariableDefinition((PsiReferenceExpression)expression);
@@ -284,7 +283,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     if (resolved instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)resolved;
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-        return ParenthesesUtils.stripParentheses(variable.getInitializer());
+        return PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
       }
     }
     return null;
@@ -292,11 +291,11 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
 
   private static PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
     final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
-    return expressions.length == 1 ? ParenthesesUtils.stripParentheses(expressions[0]) : null;
+    return expressions.length == 1 ? PsiUtil.skipParenthesizedExprDown(expressions[0]) : null;
   }
 
   private static PsiExpression getQualifierExpression(PsiMethodCallExpression expression) {
-    return ParenthesesUtils.stripParentheses(expression.getMethodExpression().getQualifierExpression());
+    return PsiUtil.skipParenthesizedExprDown(expression.getMethodExpression().getQualifierExpression());
   }
 
   //<editor-fold desc="Helpers">
@@ -312,12 +311,12 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @Nullable
     static Negated create(@Nullable PsiExpression maybeNegatedExpression) {
       boolean equal = true;
-      PsiExpression expression = ParenthesesUtils.stripParentheses(maybeNegatedExpression);
+      PsiExpression expression = PsiUtil.skipParenthesizedExprDown(maybeNegatedExpression);
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         if (JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
           equal = false;
-          expression = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
+          expression = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
         }
       }
       return expression != null ? new Negated(expression, equal) : null;
@@ -338,7 +337,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       final Negated n = Negated.create(maybeNullCheckExpression);
       if (n != null && n.expression instanceof PsiBinaryExpression) {
         PsiBinaryExpression binaryExpression = (PsiBinaryExpression)n.expression;
-        PsiExpression comparedWithNull = ParenthesesUtils.stripParentheses(ExpressionUtils.getValueComparedWithNull(binaryExpression));
+        PsiExpression comparedWithNull = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull(binaryExpression));
         if (comparedWithNull != null) {
           boolean equal = JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType());
           return new NullCheck(comparedWithNull, equal == n.isEqual);

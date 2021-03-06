@@ -6,19 +6,21 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile(DiffBundle.message("label.default.diff.editor.tab.name")) {
+class SimpleDiffVirtualFile(val request: DiffRequest) : DiffVirtualFile(DiffBundle.message("label.default.diff.editor.tab.name")) {
   override fun getName(): String = request.title ?: super.getName()
 
   override fun createProcessor(project: Project): DiffRequestProcessor = MyDiffRequestProcessor(project, request)
+
+  override fun toString(): String = "${super.toString()}:$request"
 
   private class MyDiffRequestProcessor(
     project: Project?,
     val request: DiffRequest
   ) : DiffRequestProcessor(project) {
 
-    @CalledInAwt
+    @RequiresEdt
     @Synchronized
     override fun updateRequest(force: Boolean, scrollToChangePolicy: DiffUserDataKeysEx.ScrollToPolicy?) {
       applyRequest(request, force, scrollToChangePolicy)

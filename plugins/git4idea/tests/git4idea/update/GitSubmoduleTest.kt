@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update
 
 import com.intellij.dvcs.DvcsUtil.getPushSupport
@@ -8,8 +8,8 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.UpdatedFiles
-import com.intellij.openapi.vfs.VfsUtil
 import git4idea.config.UpdateMethod.MERGE
 import git4idea.config.UpdateMethod.REBASE
 import git4idea.push.GitPushOperation
@@ -19,17 +19,20 @@ import git4idea.push.GitRejectedPushUpdateDialog
 import git4idea.push.GitRejectedPushUpdateDialog.REBASE_EXIT_CODE
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import java.io.File
+import java.nio.file.Path
 
 class GitSubmoduleTest : GitSubmoduleTestBase() {
-
   private lateinit var main: GitRepository
   private lateinit var sub: GitRepository
   private lateinit var main2: RepositoryAndParent
-  private lateinit var sub2: File
+  private lateinit var sub2: Path
+
+  private lateinit var dirtyScopeManager: VcsDirtyScopeManager
 
   override fun setUp() {
     super.setUp()
+
+    dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
     // prepare second clone & parent.git
     main2 = createPlainRepo("main")
@@ -37,18 +40,18 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     sub2 = addSubmodule(main2.local, sub3.remote, "sub")
 
     // clone into the project
-    cd(testRoot)
+    cd(testNioRoot)
     git("clone --recurse-submodules ${main2.remote} maintmp")
-    FileUtil.moveDirWithContent(File(testRoot, "maintmp"), VfsUtil.virtualToIoFile(projectRoot))
+    FileUtil.moveDirWithContent(testNioRoot.resolve("maintmp").toFile(), projectRoot.toNioPath().toFile())
     cd(projectRoot)
     setupDefaultUsername()
-    val subFile = File(projectPath, "sub")
+    val subFile = projectNioRoot.resolve("sub")
     cd(subFile)
     setupDefaultUsername()
 
     refresh()
-    main = registerRepo(project, projectPath)
-    sub = registerRepo(project, subFile.path)
+    main = registerRepo(project, projectNioRoot)
+    sub = registerRepo(project, subFile)
   }
 
   fun `test submodule in detached HEAD state is updated via 'git submodule update'`() {
@@ -154,9 +157,27 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     }
   }
 
+  // IDEA-234159
+  fun `test modified submodule is visible in local changes`() {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    echo("a", "content\n")
+    addCommit("in submodule")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    cd(projectPath)
+    assertChanges {
+      modified("sub")
+    }
+  }
+
   private fun insertLogMarker(title: String) {
-    LOG.info("");
+    LOG.info("")
     LOG.info("--------- STARTING ${title.toUpperCase()} -----------")
-    LOG.info("");
+    LOG.info("")
   }
 }

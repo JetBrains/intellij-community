@@ -1,26 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
-public class AdditionalIndexableFileSet implements IndexableFileSet {
+public final class AdditionalIndexableFileSet implements IndexableFileSet {
   @Nullable
   private final Project myProject;
   private final Supplier<IndexableSetContributor[]> myExtensions;
@@ -42,22 +38,18 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
                                                                                               IndexableSetContributorModificationTracker.getInstance()));
   }
 
-  public AdditionalIndexableFileSet() {
-    this(null);
-  }
-
   @NotNull
   private AdditionalIndexableFileSet.AdditionalIndexableRoots collectFilesAndDirectories() {
-    Set<VirtualFile> files = new THashSet<>();
-    Set<VirtualFile> directories = new THashSet<>();
+    Set<VirtualFile> files = new HashSet<>();
+    Map<IndexableSetContributor, Set<VirtualFile>> directories = new HashMap<>();
     for (IndexableSetContributor contributor : myExtensions.get()) {
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
-        (root.isDirectory() ? directories : files).add(root);
+        (root.isDirectory() ? directories.computeIfAbsent(contributor, __ -> new HashSet<>()) : files).add(root);
       }
       if (myProject != null) {
         Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(contributor, myProject);
         for (VirtualFile root : projectRoots) {
-          (root.isDirectory() ? directories : files).add(root);
+          (root.isDirectory() ? directories.computeIfAbsent(contributor, __ -> new HashSet<>()) : files).add(root);
         }
       }
     }
@@ -67,34 +59,46 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   @Override
   public boolean isInSet(@NotNull VirtualFile file) {
     AdditionalIndexableRoots additionalIndexableRoots = myAdditionalIndexableRoots.getValue();
-    return VfsUtilCore.isUnder(file, additionalIndexableRoots.directories) || additionalIndexableRoots.files.contains(file);
-  }
+    if (additionalIndexableRoots.files.contains(file)) {
+      return true;
+    }
 
-  @Override
-  public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull final ContentIterator iterator) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!isInSet(file)) {
-          return false;
-        }
+    for (Map.Entry<IndexableSetContributor, Set<VirtualFile>> entry : additionalIndexableRoots.directories.entrySet()) {
+      IndexableSetContributor contributor = entry.getKey();
+      Set<VirtualFile> directories = entry.getValue();
 
-        if (!file.isDirectory()) {
-          iterator.processFile(file);
-        }
+      VirtualFile dir = findRoot(file, directories);
+      if (dir == null) continue;
 
+      if (contributor.acceptFile(file, dir, myProject)) {
         return true;
       }
-    });
+    }
+    return false;
   }
 
-  private static class AdditionalIndexableRoots {
+  private static VirtualFile findRoot(@NotNull VirtualFile file, @Nullable Set<? extends VirtualFile> roots) {
+    if (roots == null || roots.isEmpty()) return null;
+
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (roots.contains(parent)) {
+        return parent;
+      }
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
+
+  private static final class AdditionalIndexableRoots {
     @NotNull
     private final Set<VirtualFile> files;
     @NotNull
-    private final Set<VirtualFile> directories;
+    private final Map<IndexableSetContributor, Set<VirtualFile>> directories;
 
-    private AdditionalIndexableRoots(@NotNull Set<VirtualFile> files, @NotNull Set<VirtualFile> directories) {
+    private AdditionalIndexableRoots(@NotNull Set<VirtualFile> files,
+                                     @NotNull Map<IndexableSetContributor, Set<VirtualFile>> directories) {
       this.files = files;
       this.directories = directories;
     }

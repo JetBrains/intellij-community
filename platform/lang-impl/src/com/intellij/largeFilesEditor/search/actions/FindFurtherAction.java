@@ -10,14 +10,9 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class FindFurtherAction extends AnAction implements DumbAware {
-
-  private static class Holder {
-    private static final Icon ICON_FIND_ADD_NEXT = AllIcons.Actions.FindAndShowNextMatches;
-    private static final Icon ICON_FIND_ADD_PREV = AllIcons.Actions.FindAndShowPrevMatches;
-  }
-
   private final boolean directionForward;
   private final RangeSearch myRangeSearch;
 
@@ -25,19 +20,19 @@ public class FindFurtherAction extends AnAction implements DumbAware {
     this.directionForward = directionForward;
     this.myRangeSearch = rangeSearch;
 
-    String text;
-    String description;
+    Supplier<String> text;
+    Supplier<String> description;
     Icon icon;
 
     if (directionForward) {
-      text = EditorBundle.message("large.file.editor.find.further.forward.action.text");
-      description = EditorBundle.message("large.file.editor.find.further.forward.action.description");
-      icon = Holder.ICON_FIND_ADD_NEXT;
+      text = EditorBundle.messagePointer("large.file.editor.find.further.forward.action.text");
+      description = EditorBundle.messagePointer("large.file.editor.find.further.forward.action.description");
+      icon = AllIcons.Actions.FindAndShowNextMatches;
     }
     else {
-      text = EditorBundle.message("large.file.editor.find.further.backward.action.text");
-      description = EditorBundle.message("large.file.editor.find.further.backward.action.description");
-      icon = Holder.ICON_FIND_ADD_PREV;
+      text = EditorBundle.messagePointer("large.file.editor.find.further.backward.action.text");
+      description = EditorBundle.messagePointer("large.file.editor.find.further.backward.action.description");
+      icon = AllIcons.Actions.FindAndShowPrevMatches;
     }
 
     getTemplatePresentation().setText(text);

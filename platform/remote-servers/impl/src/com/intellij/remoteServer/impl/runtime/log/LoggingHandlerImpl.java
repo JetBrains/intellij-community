@@ -2,6 +2,7 @@ package com.intellij.remoteServer.impl.runtime.log;
 
 import com.intellij.execution.filters.BrowserHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
@@ -21,8 +22,18 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   private boolean myClosed = false;
 
   public LoggingHandlerImpl(String presentableName, @NotNull Project project) {
+    this(presentableName, project, false);
+  }
+
+  public LoggingHandlerImpl(String presentableName, @NotNull Project project, boolean isViewer) {
     super(presentableName);
-    myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+
+    final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+
+    builder.setViewer(isViewer);
+
+    myConsole = builder.getConsole();
+
     Disposer.register(this, myConsole);
   }
 
@@ -65,6 +76,11 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   }
 
   @Override
+  public void scrollTo(int offset) {
+    myConsole.scrollTo(offset);
+  }
+
+  @Override
   public void clear() {
     myConsole.clear();
   }
@@ -84,6 +100,10 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
 
     public Colored(String presentableName, @NotNull Project project) {
       super(presentableName, project);
+    }
+
+    public Colored(String presentableName, @NotNull Project project, boolean isViewer) {
+      super(presentableName, project, isViewer);
     }
 
     @Override

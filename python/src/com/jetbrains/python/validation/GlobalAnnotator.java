@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,7 +31,7 @@ import java.util.Set;
  */
 public class GlobalAnnotator extends PyAnnotator {
   @Override
-  public void visitPyGlobalStatement(final PyGlobalStatement node) {
+  public void visitPyGlobalStatement(final @NotNull PyGlobalStatement node) {
     PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
       PyParameterList paramList = function.getParameterList();
@@ -52,7 +53,7 @@ public class GlobalAnnotator extends PyAnnotator {
       for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.$0.both.global.and.param", expr_name)).range(expr).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.name.used.both.as.global.and.param", expr_name)).range(expr).create();
         }
       }
     }

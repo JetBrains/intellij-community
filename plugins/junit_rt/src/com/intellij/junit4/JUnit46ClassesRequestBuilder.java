@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.junit4;
 
@@ -23,12 +9,18 @@ import org.junit.runner.Request;
 import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class JUnit46ClassesRequestBuilder {
+public final class JUnit46ClassesRequestBuilder {
   private JUnit46ClassesRequestBuilder() {}
 
-  public static Request getClassesRequest(final String suiteName, Class[] classes, Map classMethods, Class category) {
+  public static Request getClassesRequest(final String suiteName,
+                                          Class<?>[] classes,
+                                          Map<String, Set<String>> classMethods,
+                                          Class<?> category) {
     boolean canUseSuiteMethod = canUseSuiteMethod(classMethods);
     try {
       if (category != null) {
@@ -66,12 +58,11 @@ public class JUnit46ClassesRequestBuilder {
     }
   }
 
-  private static List collectWrappedRunners(Class[] classes) throws InitializationError {
-    final List runners = new ArrayList();
-    final List nonSuiteClasses = new ArrayList();
+  private static List<Runner> collectWrappedRunners(Class<?>[] classes) throws InitializationError {
+    final List<Runner> runners = new ArrayList<Runner>();
+    final List<Class<?>> nonSuiteClasses = new ArrayList<Class<?>>();
     final SuiteMethodBuilder suiteMethodBuilder = new SuiteMethodBuilder();
-    for (int i = 0, length = classes.length; i < length; i++) {
-      Class aClass = classes[i];
+    for (Class<?> aClass : classes) {
       if (suiteMethodBuilder.hasSuiteMethod(aClass)) {
         try {
           runners.add(new ClassAwareSuiteMethod(aClass));
@@ -83,19 +74,16 @@ public class JUnit46ClassesRequestBuilder {
         nonSuiteClasses.add(aClass);
       }
     }
-    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, (Class[])nonSuiteClasses.toArray(new Class[0])));
+    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, nonSuiteClasses.toArray(new Class[0])));
     return runners;
   }
 
-  private static boolean canUseSuiteMethod(Map classMethods) {
-    for (Iterator iterator = classMethods.keySet().iterator(); iterator.hasNext(); ) {
-      Object className = iterator.next();
-      Set methods = (Set) classMethods.get(className);
+  private static boolean canUseSuiteMethod(Map<String, Set<String>> classMethods) {
+    for (Set<String> methods : classMethods.values()) {
       if (methods == null) {
         return true;
       }
-      for (Iterator iterator1 = methods.iterator(); iterator1.hasNext(); ) {
-        String methodName = (String)iterator1.next();
+      for (String methodName : methods) {
         if ("suite".equals(methodName)) {
           return true;
         }

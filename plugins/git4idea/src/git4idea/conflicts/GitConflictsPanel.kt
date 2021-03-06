@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -28,14 +27,17 @@ import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import git4idea.GitNotificationIdsHolder.Companion.CANNOT_RESOLVE_CONFLICT
 import git4idea.GitUtil
+import git4idea.i18n.GitBundle
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitConflict
 import git4idea.repo.GitConflict.ConflictSide
 import git4idea.repo.GitConflict.Status
-import git4idea.repo.GitConflictsHolder
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import git4idea.status.GitStagingAreaHolder
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.util.*
@@ -85,7 +87,8 @@ class GitConflictsPanel(
     }
 
     val connection = project.messageBus.connect(this)
-    connection.subscribe(GitConflictsHolder.CONFLICTS_CHANGE, GitConflictsHolder.ConflictsListener { updateConflicts() })
+    connection.subscribe(GitStagingAreaHolder.TOPIC,
+                         GitStagingAreaHolder.StagingAreaListener { updateConflicts() })
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateConflicts() })
 
     updateConflicts()
@@ -116,7 +119,7 @@ class GitConflictsPanel(
       val repos = GitUtil.getRepositories(project)
       for (repo in repos) {
         if (GitMergeUtil.isReverseRoot(repo)) newReversedRoots.add(repo.root)
-        newConflicts.addAll(repo.conflictsHolder.conflicts)
+        newConflicts.addAll(repo.stagingAreaHolder.allConflicts)
       }
 
       runInEdt {
@@ -139,60 +142,25 @@ class GitConflictsPanel(
 
   fun canShowMergeWindowForSelection(): Boolean {
     val selectedConflicts = getSelectedConflicts()
-    return selectedConflicts.any { mergeHandler.canResolveConflict(it) } &&
-           selectedConflicts.none { getConflictOperationLock(it).isLocked }
+    return selectedConflicts.any { mergeHandler.canResolveConflict(it) && !getConflictOperationLock(it).isLocked }
   }
 
   fun showMergeWindowForSelection() {
-    val conflicts = getSelectedConflicts().filter { mergeHandler.canResolveConflict(it) }.toList()
-    if (conflicts.isEmpty()) return
-
     val reversed = HashSet(reversedRoots)
-
-    for (conflict in conflicts) {
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
-      if (file == null) {
-        VcsNotifier.getInstance(project).notifyError("Can't Resolve Conflict", "Can't find file for ${conflict.filePath}")
-        continue
-      }
-
-      val lock = getConflictOperationLock(conflict)
-      MergeConflictResolveUtil.showMergeWindow(project, file, lock) {
-        mergeHandler.resolveConflict(conflict, file, reversed.contains(conflict.root))
-      }
-    }
+    showMergeWindow(project, mergeHandler, getSelectedConflicts(), reversed::contains)
   }
 
   fun canAcceptConflictSideForSelection(): Boolean {
     val selectedConflicts = getSelectedConflicts()
-    return selectedConflicts.isNotEmpty() &&
-           selectedConflicts.none { getConflictOperationLock(it).isLocked }
+    return selectedConflicts.any { !getConflictOperationLock(it).isLocked }
   }
 
   fun acceptConflictSideForSelection(takeTheirs: Boolean) {
-    val conflicts = getSelectedConflicts()
-    if (conflicts.isEmpty()) return
-
     val reversed = HashSet(reversedRoots)
-
-    val locks = conflicts.map { getConflictOperationLock(it) }
-    if (locks.any { it.isLocked }) return
-    locks.forEach { it.lock() }
-
-    object : Task.Backgroundable(project, StringUtil.pluralize("Resolving Conflict", conflicts.size), true) {
-      override fun run(indicator: ProgressIndicator) {
-        mergeHandler.acceptOneVersion(conflicts, reversed, takeTheirs)
-      }
-
-      override fun onFinished() {
-        locks.forEach { it.unlock() }
-      }
-    }.queue()
+    acceptConflictSide(project, mergeHandler, getSelectedConflicts(), takeTheirs, reversed::contains)
   }
 
-  private fun getConflictOperationLock(conflict: GitConflict): BackgroundableActionLock {
-    return BackgroundableActionLock.getLock(project, conflict.filePath)
-  }
+  private fun getConflictOperationLock(conflict: GitConflict) = getConflictOperationLock(project, conflict)
 
 
   private inner class MainPanel : JPanel(BorderLayout()), DataProvider {
@@ -205,7 +173,67 @@ class GitConflictsPanel(
   }
 
   interface Listener : EventListener {
-    fun onDescriptionChange(description: String) {}
+    fun onDescriptionChange(description: @Nls String) {}
+  }
+}
+
+internal fun getConflictOperationLock(project: Project, conflict: GitConflict): BackgroundableActionLock {
+  return BackgroundableActionLock.getLock(project, conflict.filePath)
+}
+
+internal fun acceptConflictSide(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, takeTheirs: Boolean,
+                                isReversed: (VirtualFile) -> Boolean) {
+  val conflicts = selectedConflicts.filterNot { getConflictOperationLock(project, it).isLocked }.toList()
+  if (conflicts.isEmpty()) return
+
+  val locks = conflicts.map { getConflictOperationLock(project, it) }
+  locks.forEach { it.lock() }
+
+  object : Task.Backgroundable(project, GitBundle.message("conflicts.accept.progress", conflicts.size), true) {
+    override fun run(indicator: ProgressIndicator) {
+      val reversedRoots = conflicts.mapTo(mutableSetOf()) { it.root }.filter(isReversed)
+      handler.acceptOneVersion(conflicts, reversedRoots, takeTheirs)
+    }
+
+    override fun onFinished() {
+      locks.forEach { it.unlock() }
+    }
+  }.queue()
+}
+
+internal fun showMergeWindow(project: Project, handler: GitMergeHandler, selectedConflicts: List<GitConflict>, isReversed: (VirtualFile) -> Boolean) {
+  val conflicts = selectedConflicts.filter { handler.canResolveConflict(it) && !getConflictOperationLock(project, it).isLocked }.toList()
+  if (conflicts.isEmpty()) return
+
+  for (conflict in conflicts) {
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(conflict.filePath.path)
+    if (file == null) {
+      VcsNotifier.getInstance(project).notifyError(CANNOT_RESOLVE_CONFLICT,
+                                                   GitBundle.message("conflicts.merge.window.error.title"),
+                                                   GitBundle.message("conflicts.merge.window.error.message", conflict.filePath))
+      continue
+    }
+
+    val lock = getConflictOperationLock(project, conflict)
+    MergeConflictResolveUtil.showMergeWindow(project, file, lock) {
+      handler.resolveConflict(conflict, file, isReversed(conflict.root))
+    }
+  }
+}
+
+@Nls
+internal fun getConflictType(conflict: GitConflict): String {
+  val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
+  val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
+  return when {
+    oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.both.deleted")
+    oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.both.added")
+    oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> GitBundle.message("conflicts.type.both.modified")
+    oursStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.you")
+    theirsStatus == Status.DELETED -> GitBundle.message("conflicts.type.deleted.by.them")
+    oursStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.you")
+    theirsStatus == Status.ADDED -> GitBundle.message("conflicts.type.added.by.them")
+    else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
   }
 }
 
@@ -234,18 +262,7 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
       appendCount(renderer)
     }
 
-    val oursStatus = conflict.getStatus(ConflictSide.OURS, true)
-    val theirsStatus = conflict.getStatus(ConflictSide.THEIRS, true)
-    val conflictType = when {
-      oursStatus == Status.DELETED && theirsStatus == Status.DELETED -> "both deleted"
-      oursStatus == Status.ADDED && theirsStatus == Status.ADDED -> "both added"
-      oursStatus == Status.MODIFIED && theirsStatus == Status.MODIFIED -> "both modified"
-      oursStatus == Status.DELETED -> "deleted by you"
-      theirsStatus == Status.DELETED -> "deleted by them"
-      oursStatus == Status.ADDED -> "added by you"
-      theirsStatus == Status.ADDED -> "added by them"
-      else -> throw IllegalStateException("ours: $oursStatus; theirs: $theirsStatus")
-    }
+    val conflictType = getConflictType(conflict)
     renderer.append(spaceAndThinSpace() + conflictType, SimpleTextAttributes.GRAYED_ATTRIBUTES)
 
     renderer.setIcon(filePath, filePath.isDirectory || !isLeaf)
@@ -279,16 +296,7 @@ private class MyChangesTree(project: Project)
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
     val groupingSupport = ChangesGroupingSupport(myProject, this, false)
-
-    val propertiesComponent = PropertiesComponent.getInstance(project)
-    groupingSupport.setGroupingKeysOrSkip(propertiesComponent.getValues(GROUPING_KEYS_PROPERTY)?.toSet() ?: setOf(DIRECTORY_GROUPING))
-    groupingSupport.addPropertyChangeListener(PropertyChangeListener {
-      propertiesComponent.setValues(GROUPING_KEYS_PROPERTY, groupingSupport.groupingKeys.toTypedArray())
-
-      val oldSelection = VcsTreeModelData.selected(this).userObjects()
-      rebuildTree()
-      setSelectedChanges(oldSelection)
-    })
+    installGroupingSupport(this, groupingSupport, GROUPING_KEYS_PROPERTY, DIRECTORY_GROUPING)
     return groupingSupport
   }
 

@@ -28,4 +28,8 @@ public interface ActionController<Id> {
   boolean areLongEdgesHidden();
 
   void setLongEdgesHidden(boolean longEdgesHidden);
+
+  default boolean isActionSupported(@NotNull GraphAction action) {
+    return true;
+  }
 }

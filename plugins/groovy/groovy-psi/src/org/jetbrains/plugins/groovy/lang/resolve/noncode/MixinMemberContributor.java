@@ -6,6 +6,7 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -25,7 +26,7 @@ import java.util.Objects;
 /**
  * @author Max Medvedev
  */
-public class MixinMemberContributor {
+public final class MixinMemberContributor {
   public static boolean processClassMixins(@NotNull final PsiType qualifierType,
                                            @NotNull PsiScopeProcessor processor,
                                            @NotNull final PsiElement place,
@@ -64,6 +65,7 @@ public class MixinMemberContributor {
     return true;
   }
 
+  @NonNls
   public static String getOriginInfoForCategory(PsiMethod element) {
     PsiClass aClass = element.getContainingClass();
     if (aClass != null && aClass.getName() != null) {
@@ -72,6 +74,7 @@ public class MixinMemberContributor {
     return "mixed in";
   }
 
+  @NonNls
   public static String getOriginInfoForMixin(@NotNull PsiType subjectType) {
     return "mixed in " + subjectType.getPresentableText();
   }

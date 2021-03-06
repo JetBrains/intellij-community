@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
@@ -43,8 +28,6 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,20 +38,18 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class UnusedLibrariesInspection extends GlobalInspectionTool {
+public final class UnusedLibrariesInspection extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedLibrariesInspection.class);
 
   public boolean IGNORE_LIBRARY_PARTS = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("don.t.report.unused.jars.inside.used.library"), this, "IGNORE_LIBRARY_PARTS");
   }
 
-  @Nullable
   @Override
-  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+  public @NotNull RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new UnusedLibraryGraphAnnotator(refManager);
   }
 
@@ -147,12 +128,12 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   private static void appendUsedRootDependencies(@NotNull Set<VirtualFile> usedRoots,
                                                  VirtualFile @NotNull [] givenRoots) {
     //classes per root
-    Map<VirtualFile, Set<String>> fromClasses = new THashMap<>();
+    Map<VirtualFile, Set<String>> fromClasses = new HashMap<>();
     //classes uses in root, ignoring self & jdk
-    Map<VirtualFile, Set<String>> toClasses = new THashMap<>();
+    Map<VirtualFile, Set<String>> toClasses = new HashMap<>();
     collectClassesPerRoots(givenRoots, fromClasses, toClasses);
 
-    Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<VirtualFile>() {
+    Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<VirtualFile> getNodes() {
@@ -182,8 +163,8 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
                                              Map<VirtualFile, Set<String>> fromClasses,
                                              Map<VirtualFile, Set<String>> toClasses) {
     for (VirtualFile root : givenRoots) {
-      Set<String> fromClassNames = new THashSet<>();
-      Set<String> toClassNames = new THashSet<>();
+      Set<String> fromClassNames = new HashSet<>();
+      Set<String> toClassNames = new HashSet<>();
 
       VfsUtilCore.iterateChildrenRecursively(root, null, fileOrDir -> {
         if (!fileOrDir.isDirectory() && fileOrDir.getName().endsWith(".class")) {
@@ -232,9 +213,8 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     return "UnusedLibrary";
   }
 
-  @Nullable
   @Override
-  public QuickFix getQuickFix(String hint) {
+  public @NotNull QuickFix<?> getQuickFix(String hint) {
     return new RemoveUnusedLibrary(hint, null);
   }
 

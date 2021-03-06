@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.CommonBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -29,7 +30,7 @@ import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
    * @deprecated Use {@link #getActionString()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   protected static  final String ACTION_STRING = "to find usages of";
 
   private final PsiElement[] myElementsToSearch;
@@ -99,7 +101,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     }
     List<PsiElement> elementsToSearch = new ArrayList<>(overrides.length + 1);
     elementsToSearch.add(parameter);
-    int idx = method.getParameterList().getParameterIndex(parameter);
+    int idx = ReadAction.compute(() -> method.getParameterList().getParameterIndex(parameter));
     for (PsiMethod override : overrides) {
       final PsiParameter[] parameters = override.getParameterList().getParameters();
       if (idx < parameters.length) {
@@ -133,14 +135,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final PsiMethod method = (PsiMethod)scope;
         if (PsiUtil.canBeOverridden(method)) {
           final PsiClass aClass = method.getContainingClass();
-          LOG.assertTrue(aClass != null); //Otherwise can not be overriden
+          LOG.assertTrue(aClass != null); //Otherwise can not be overridden
 
-          boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
-          if (!hasOverridden) {
-            hasOverridden = FunctionalExpressionSearch.search(aClass).findFirst() != null;
-          }
-          if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
-            return getParameterElementsToSearch(parameter, method);
+          Boolean hasOverridden = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+            return OverridingMethodsSearch.search(method).findFirst() != null ||
+                   FunctionalExpressionSearch.search(aClass).findFirst() != null;
+          }, JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject());
+          if (hasOverridden != null && hasOverridden.booleanValue() && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
+            return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> getParameterElementsToSearch(parameter, method), JavaBundle.message("progress.title.detect.overridden.methods"), true, getProject()) ;
           }
         }
       }
@@ -158,7 +160,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       if (containingClass != null) {
         String fieldName = field.getName();
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
-        Set<PsiMethod> accessors = new THashSet<>();
+        Set<PsiMethod> accessors = new HashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
         Collection<PsiMethod> methods = Arrays.asList(containingClass.getMethods());
         PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(), methods);
@@ -171,7 +173,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);
           if (doSearch) {
-            final Set<PsiElement> elements = new THashSet<>();
+            final Set<PsiElement> elements = new HashSet<>();
             for (PsiMethod accessor : accessors) {
               ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, getActionString()));
             }
@@ -183,11 +185,12 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     return super.getSecondaryElements();
   }
 
-  private static boolean askShouldSearchAccessors(@NotNull String fieldName) {
-    return Messages.showOkCancelDialog(JavaBundle.message("find.field.accessors.prompt", fieldName),
-                                       JavaBundle.message("find.field.accessors.title"),
-                                       JavaBundle.message("include.accessors"),
-                                       JavaBundle.message("exclude.accessors"), Messages.getQuestionIcon()) == Messages.OK;
+  public static boolean askShouldSearchAccessors(@NotNull String fieldName) {
+    int ret = Messages.showOkCancelDialog(JavaBundle.message("find.field.accessors.prompt", fieldName),
+                                        JavaBundle.message("find.field.accessors.title"),
+                                        JavaBundle.message("include.accessors"),
+                                        JavaBundle.message("exclude.accessors"), Messages.getQuestionIcon());
+    return ret == Messages.OK;
   }
 
   @Override

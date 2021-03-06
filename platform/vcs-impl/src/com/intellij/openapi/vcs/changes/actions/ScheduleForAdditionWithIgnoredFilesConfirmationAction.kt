@@ -9,9 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.ui.Messages.getQuestionIcon
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.VcsBundle.getString
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -22,13 +22,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Functions.identity
 import com.intellij.util.PairConsumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.isEmpty
-import com.intellij.util.containers.notNullize
 import com.intellij.util.containers.stream
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
-import java.util.*
+import one.util.streamex.StreamEx
 import java.util.stream.Stream
 import kotlin.streams.toList
 
@@ -41,7 +40,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val changeStream = e.getData(VcsDataKeys.CHANGES).stream<Change>()
     if (!collectPathsFromChanges(project, changeStream).isEmpty()) return true
 
-    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize<VirtualFile>()
+    val filesStream = StreamEx.of(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).iterator())
     return !collectPathsFromFiles(project, filesStream).isEmpty()
   }
 
@@ -54,7 +53,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val changeStream = e.getData(VcsDataKeys.CHANGES).stream()
     ContainerUtil.addAll(toAdd, collectPathsFromChanges(project, changeStream).iterator())
 
-    val filesStream = e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM).notNullize()
+    val filesStream = StreamEx.of(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).iterator())
     ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, filesStream).iterator())
 
     val unversionedFiles = getUnversionedFiles(e, project).toList()
@@ -63,15 +62,9 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val (ignored, toAddWithoutIgnored) = toAdd.partition(changeListManager::isIgnoredFile)
     val confirmedIgnored =
       confirmAddFilePaths(project, ignored,
-                          { path ->
-                            message(
-                              "confirmation.title.add.ignored.single", if (path.isDirectory) "Directory" else "File")
-                          },
-                          { path ->
-                            message("confirmation.message.add.ignored.single", if (path.isDirectory) "directory" else "file",
-                                    FileUtil.getLocationRelativeToUserHome(path.presentableUrl))
-                          },
-                          getString("confirmation.title.add.ignored.files.or.dirs"))
+                          this::dialogTitle,
+                          this::dialogMessage,
+                          message("confirmation.title.add.ignored.files.or.dirs"))
 
     val addToVcsTask =
       if (toAdd.isNotEmpty()) PairConsumer<ProgressIndicator, MutableList<VcsException>> { _, exceptions ->
@@ -81,6 +74,17 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 
     addUnversioned(project, unversionedFiles, browser, addToVcsTask)
   }
+
+  private fun dialogMessage(path: FilePath): String {
+    val question =
+      if (path.isDirectory) message("confirmation.message.add.ignored.single.directory")
+      else message("confirmation.message.add.ignored.single.file")
+    return question + "\n" + FileUtil.getLocationRelativeToUserHome(path.presentableUrl)
+  }
+
+  private fun dialogTitle(path: FilePath): String =
+    if (path.isDirectory) message("confirmation.title.add.ignored.single.directory")
+    else message("confirmation.title.add.ignored.single.file")
 
   private fun addPathsToVcs(project: Project,
                             toAdd: Collection<FilePath>,
@@ -133,7 +137,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
                         singlePathDialogTitle: (FilePath) -> String,
                         singlePathDialogMessage: (FilePath) -> String,
-                        multiplePathsDialogTitle: @NlsContexts.DialogTitle String): List<FilePath> {
+                        @NlsContexts.DialogTitle multiplePathsDialogTitle: String): List<FilePath> {
   if (paths.isEmpty()) return paths
 
   if (paths.size == 1) {

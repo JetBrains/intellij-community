@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class PathUtilRt {
+public final class PathUtilRt {
   @NotNull
   public static String getFileName(@Nullable String path) {
     if (StringUtilRt.isEmpty(path)) {
@@ -41,13 +41,18 @@ public class PathUtilRt {
   }
 
   private static int getEnd(@NotNull String path) {
-    char c = path.charAt(path.length() - 1);
-    return c == '/' || c == '\\' ? path.length() - 1 : path.length();
+    for (int index = path.length() - 1; index >= 0; --index) {
+      char c = path.charAt(index);
+      if (c != '/' && c != '\\') {
+        return index + 1;
+      }
+    }
+    return path.length() - 1;
   }
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
-    if (path.length() == 0) return "";
+    if (path.isEmpty()) return "";
     int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     if (end == path.length() - 1) {
       end = getLastIndexOfPathSeparator(path, end);
@@ -66,13 +71,14 @@ public class PathUtilRt {
     return path.substring(0, end);
   }
 
-  private static int getLastIndexOfPathSeparator(@NotNull String path, int end) {
-    return Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1));
+  private static int getLastIndexOfPathSeparator(@NotNull CharSequence path, int end) {
+    return Math.max(StringUtilRt.lastIndexOf(path,'/', 0,end - 1), StringUtilRt.lastIndexOf(path, '\\', 0,end - 1));
   }
 
-  private static boolean isWindowsUNCRoot(@NotNull String path, int lastPathSeparatorPosition) {
+  public static boolean isWindowsUNCRoot(@NotNull CharSequence path, int lastPathSeparatorPosition) {
     return Platform.CURRENT == Platform.WINDOWS &&
-           (path.startsWith("//") || path.startsWith("\\\\")) && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
+           (StringUtilRt.startsWith(path, "//") || StringUtilRt.startsWith(path, "\\\\"))
+           && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
   }
 
   @NotNull
@@ -122,7 +128,7 @@ public class PathUtilRt {
    * @param cs     prohibits names which cannot be encoded by this charset (optional).
    */
   public static boolean isValidFileName(@NotNull String name, @NotNull Platform os, boolean strict, @Nullable Charset cs) {
-    if (name.length() == 0 || name.equals(".") || name.equals("..")) {
+    if (name.isEmpty() || name.equals(".") || name.equals("..")) {
       return false;
     }
 
@@ -133,26 +139,21 @@ public class PathUtilRt {
     }
 
     if (os == Platform.WINDOWS && name.length() >= 3 && name.length() <= 4 &&
-        WINDOWS_NAMES.contains(name.toUpperCase(Locale.ENGLISH))) {
+        WINDOWS_RESERVED_NAMES.contains(name.toUpperCase(Locale.ENGLISH))) {
       return false;
     }
 
-    if (cs != null && !(cs.canEncode() && cs.newEncoder().canEncode(name))) {
-      return false;
-    }
-
-    return true;
+    return cs == null || cs.canEncode() && cs.newEncoder().canEncode(name);
   }
 
   private static boolean isValidFileNameChar(char c, Platform os, boolean strict) {
     if (c == '/' || c == '\\') return false;
-    if ((strict || os == Platform.WINDOWS) && (c < 32 || WINDOWS_CHARS.indexOf(c) >= 0)) return false;
-    if (strict && c == ';') return false;
-    return true;
+    if ((strict || os == Platform.WINDOWS) && (c < 32 || WINDOWS_INVALID_CHARS.indexOf(c) >= 0)) return false;
+    return !strict || c != ';';
   }
 
-  private static final String WINDOWS_CHARS = "<>:\"|?*";
-  private static final Set<String> WINDOWS_NAMES = new HashSet<String>(Arrays.asList(
+  private static final String WINDOWS_INVALID_CHARS = "<>:\"|?*";
+  private static final Set<String> WINDOWS_RESERVED_NAMES = new HashSet<String>(Arrays.asList(
     "CON", "PRN", "AUX", "NUL",
     "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
     "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"));

@@ -54,7 +54,7 @@ final class OneElementFMap<V> implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return new Key[] { myKey };
   }
 
@@ -83,7 +83,7 @@ final class OneElementFMap<V> implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap o) {
+  public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
     if (!(o instanceof OneElementFMap)) return false;
 

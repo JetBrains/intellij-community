@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.openapi.rd.GraphicsExKt;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -22,7 +24,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 final class ContentComboLabel extends BaseLabel {
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
@@ -103,6 +105,18 @@ final class ContentComboLabel extends BaseLabel {
   }
 
   @Override
+  protected void paintComponent(Graphics g) {
+    Color bgColor = getTabColor();
+    if (bgColor != null) {
+      int borderThickness = JBUIScale.scale(1);
+      Dimension size = getSize();
+      Rectangle rect = new Rectangle(0, borderThickness, size.width, size.height - 2 * borderThickness);
+      GraphicsExKt.fill2DRect((Graphics2D)g, rect, bgColor);
+    }
+    super.paintComponent(g);
+  }
+
+  @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
     if (isToDrawCombo()) {
@@ -114,8 +128,7 @@ final class ContentComboLabel extends BaseLabel {
   @Nullable
   @Override
   public Content getContent() {
-    ContentManager contentManager = myUi.getContentManager();
-    return contentManager == null ? null : contentManager.getSelectedContent();
+    return myUi.getContentManager().getSelectedContent();
   }
 
   @Override

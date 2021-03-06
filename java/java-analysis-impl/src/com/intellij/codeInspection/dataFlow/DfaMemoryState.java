@@ -128,25 +128,39 @@ public interface DfaMemoryState {
   @Nullable
   PsiType getPsiType(@NotNull DfaValue value);
 
+  /**
+   * @param value to check
+   * @return true if given value is null within this memory state
+   */
+  boolean isNull(DfaValue value);
+
+  /**
+   * @param value to check
+   * @return true if given value is not-null within this memory state
+   */
+  boolean isNotNull(DfaValue value);
+
   void flushFieldsQualifiedBy(@NotNull Set<DfaValue> qualifiers);
 
   void flushFields();
 
   void flushVariable(@NotNull DfaVariableValue variable);
 
-  boolean isNull(DfaValue dfaVar);
-
-  boolean checkNotNullable(@NotNull DfaValue value);
-
-  boolean isNotNull(DfaValue dfaVar);
-
   /**
-   * Ephemeral means a state that was created when considering a method contract and checking if one of its arguments is null.
-   * With explicit null check, that would result in any non-annotated variable being treated as nullable and producing possible NPE warnings later.
-   * With contracts, we don't want this. So the state where this variable is null is marked ephemeral and no NPE warnings are issued for such states. 
+   * Mark this state as ephemeral. See {@link #isEphemeral()} for details.
    */
   void markEphemeral();
-  
+
+  /**
+   * Ephemeral means a state that could be unreachable under normal program execution. Examples of ephemeral states include:
+   * <ul>
+   * <li>State created by method contract processing that checks for null (otherwise, if argument has unknown nullity, this would make it nullable)</li>
+   * <li>State that appears on VM exception path (e.g. catching NPE or CCE)</li>
+   * <li>State that appears when {@linkplain com.intellij.codeInspection.dataFlow.types.DfEphemeralReferenceType an ephemeral value} is stored on the stack</li>
+   * </ul>
+   * The "unsound" warnings (e.g. possible NPE) are not reported if they happen only in ephemeral states, and there's a non-ephemeral state
+   * where the same problem doesn't happen. 
+   */
   boolean isEphemeral();
 
   boolean isEmptyStack();
@@ -158,4 +172,9 @@ public interface DfaMemoryState {
    * @return true if two given values should be compared by content, rather than by reference.
    */
   boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight);
+
+  /**
+   * Widen this memory state on back-branches
+   */
+  void widen();
 }

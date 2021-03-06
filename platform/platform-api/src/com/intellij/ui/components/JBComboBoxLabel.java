@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.PlatformIcons;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -25,7 +26,7 @@ public class JBComboBoxLabel extends JPanel {
     myText.setFont(font);
   }
 
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     myText.setText(text);
   }
 

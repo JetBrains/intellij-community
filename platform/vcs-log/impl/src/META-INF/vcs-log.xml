@@ -1,19 +1,20 @@
 <idea-plugin>
-  <projectListeners>
-    <listener class="com.intellij.vcs.log.impl.VcsToolWindowEditorSynchronizer$MyFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" />
-  </projectListeners>
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
     <extensionPoint name="customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="vcsLogCustomColumn"
+                    interface="com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <changesViewContent tabName="Log"
                         className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
+                        preloaderClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogContentPreloader"
                         displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
@@ -36,12 +37,12 @@
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexProjectStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
-    <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="2"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
+    <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="3"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
@@ -77,12 +78,13 @@
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
 
+    <virtualFileSystem key="vcs-log" implementationClass="com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem"/>
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
     <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
-    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorTabTitleProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.VcsLogBundle">
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
             use-shortcut-of="Find"/>
     <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent">
@@ -92,7 +94,7 @@
       <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log">
+    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
@@ -103,6 +105,8 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDiffPreviewAction" id="Vcs.Log.ShowDiffPreview"/>
+    <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToBottomAction" id="Vcs.Log.MoveDiffPreviewToBottom"/>
+    <action class="com.intellij.vcs.log.ui.actions.MoveDiffPreviewToRightAction" id="Vcs.Log.MoveDiffPreviewToRight"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowChangesFromParentsAction" id="Vcs.Log.ShowChangesFromParents"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
@@ -173,15 +177,19 @@
       <reference id="Vcs.Log.GoToParent"/>
       <separator/>
     </group>
-    <group id="Vcs.Log.Toolbar.LeftCorner"/>
     <group id="Vcs.Log.Toolbar.RightCorner">
       <reference id="Vcs.Log.ResumeIndexing"/>
       <reference id="Vcs.Log.GoToRef"/>
+    </group>
+    <group id="Vcs.Log.Diff.Preview.Location" popup="true" class="com.intellij.vcs.log.ui.actions.DiffPreviewLocationActionGroup">
+      <reference id="Vcs.Log.MoveDiffPreviewToBottom"/>
+      <reference id="Vcs.Log.MoveDiffPreviewToRight"/>
     </group>
     <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Debugger.RestoreLayout" popup="true">
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
+      <reference id="Vcs.Log.Diff.Preview.Location"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
@@ -228,7 +236,7 @@
       <separator/>
     </group>
 
-    <group id="Log.KeymapGroup">
+    <group id="Log.KeymapGroup" searchable="false">
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.Log.CompareRevisions"/>
       <separator/>
@@ -246,6 +254,7 @@
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <reference ref="Vcs.Log.ShowOnlyAffectedChanges"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
+      <reference ref="Vcs.Log.Diff.Preview.Location"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

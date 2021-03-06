@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.util.ReflectionUtilRt;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -36,7 +20,7 @@ import java.lang.reflect.Field;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public class Maven2ModelConverter {
+public final class Maven2ModelConverter {
   @NotNull
   public static MavenModel convertModel(Model model, File localRepository) throws RemoteException {
     Build build = model.getBuild();
@@ -74,7 +58,7 @@ public class Maven2ModelConverter {
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
     result.setPlugins(convertPlugins(model));
 
-    Map<Artifact, MavenArtifact> convertedArtifacts = new THashMap<Artifact, MavenArtifact>();
+    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
     result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
@@ -234,7 +218,7 @@ public class Maven2ModelConverter {
 
   private static List<MavenPlugin> convertPlugins(Model mavenModel) throws RemoteException {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
-    Set<String> pluginKeys = new THashSet<String>();
+    Set<String> pluginKeys = new HashSet<String>();
     Build build = mavenModel.getBuild();
     doConvertPlugins(build, false, result, pluginKeys);
     if (build != null) doConvertPlugins(build.getPluginManagement(), true, result, pluginKeys);
@@ -350,7 +334,7 @@ public class Maven2ModelConverter {
 
   public static Map<String, String> convertToMap(Object object) {
     try {
-      Map<String, String> result = new THashMap<String, String>();
+      Map<String, String> result = new HashMap<String, String>();
       doConvert(object, "", result);
       return result;
     }

@@ -43,7 +43,7 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
 
   @Override
   public void unregisterListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
-    FacetEventsPublisher.getInstance(myProject).registerListener(null, new ProjectWideFacetListenerWrapper<>(listener));
+    FacetEventsPublisher.getInstance(myProject).unregisterListener(null, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override
@@ -52,12 +52,14 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        unregisterListener(listener);
+        if (!myProject.isDisposed()) {
+          unregisterListener(listener);
+        }
       }
     });
   }
 
-  private static class ProjectWideFacetListenerWrapper<F extends Facet<?>> implements ProjectFacetListener<F> {
+  private static final class ProjectWideFacetListenerWrapper<F extends Facet<?>> implements ProjectFacetListener<F> {
     private final @NotNull ProjectWideFacetListener<F> myListener;
 
     private ProjectWideFacetListenerWrapper(@NotNull ProjectWideFacetListener<F> listener) {

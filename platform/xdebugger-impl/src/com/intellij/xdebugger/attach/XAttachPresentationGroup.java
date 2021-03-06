@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +23,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    */
   int getOrder();
 
-  @NotNull
+  @NotNull @Nls
   String getGroupName();
 
   /**
@@ -62,6 +49,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    */
   @Deprecated
   @NotNull
+  @Nls
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
 
@@ -71,6 +59,7 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    * @return a text to be shown on your item, described by info
    */
   @NotNull
+  @Nls
   default String getItemDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return getProcessDisplayText(project, info, dataHolder);
   }
@@ -81,21 +70,8 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
    * @return a description of process to be shown in tooltip of your item, described by info
    */
   @Nullable
+  @Nls
   default String getItemDescription(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
     return null;
-  }
-
-  /**
-   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2020.1)
-   *
-   * Specifies process order in your group
-   *
-   * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
-   *                   and use it for comparison
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  default int compare(@NotNull Project project, @NotNull T a, @NotNull T b, @NotNull UserDataHolder dataHolder) {
-    return compare(a, b);
   }
 }

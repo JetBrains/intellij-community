@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -11,13 +10,14 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 
-public class MethodUpDownUtil {
+public final class MethodUpDownUtil {
   private MethodUpDownUtil() {
   }
 
@@ -29,20 +29,20 @@ public class MethodUpDownUtil {
       }
     }
 
-    Collection<PsiElement> array = new THashSet<>();
+    Collection<PsiElement> array = new HashSet<>();
     addNavigationElements(array, file);
     return offsetsFromElements(array);
   }
 
   public static int[] offsetsFromElements(final Collection<? extends PsiElement> array) {
-    TIntArrayList offsets = new TIntArrayList(array.size());
+    IntList offsets = new IntArrayList(array.size());
     for (PsiElement element : array) {
       int offset = element.getTextOffset();
       assert offset >= 0 : element + " ("+element.getClass()+"); offset: " + offset;
       offsets.add(offset);
     }
-    offsets.sort();
-    return offsets.toNativeArray();
+    offsets.sort(null);
+    return offsets.toIntArray();
   }
 
   private static void addNavigationElements(Collection<? super PsiElement> array, PsiFile element) {

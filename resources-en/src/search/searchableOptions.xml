@@ -5346,8 +5346,6 @@
     <option name="generate" path="ActionManager" hit="Generate GWT Compile Report..." />
     <option name="gwt" path="ActionManager" hit="Generate GWT Compile Report..." />
     <option name="report" path="ActionManager" hit="Generate GWT Compile Report..." />
-    <option name="generate" path="ActionManager" hit="Generate GroovyDoc..." />
-    <option name="groovydoc" path="ActionManager" hit="Generate GroovyDoc..." />
     <option name="generate" path="ActionManager" hit="Generate Hierarchy Visitor..." />
     <option name="hierarchy" path="ActionManager" hit="Generate Hierarchy Visitor..." />
     <option name="visitor" path="ActionManager" hit="Generate Hierarchy Visitor..." />
@@ -15058,9 +15056,9 @@
     <option name="selector" hit="Id selector" />
     <option name="identifier" hit="Identifier" />
     <option name="important" hit="Important" />
-    <option name="code" hit="JS code delimeter" />
-    <option name="delimeter" hit="JS code delimeter" />
-    <option name="js" hit="JS code delimeter" />
+    <option name="code" hit="JS code delimiter" />
+    <option name="delimiter" hit="JS code delimiter" />
+    <option name="js" hit="JS code delimiter" />
     <option name="code" hit="JS code injection" />
     <option name="injection" hit="JS code injection" />
     <option name="js" hit="JS code injection" />

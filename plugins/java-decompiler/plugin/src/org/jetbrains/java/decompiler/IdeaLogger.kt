@@ -1,19 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity.*
 
 class IdeaLogger : IFernflowerLogger() {
-  private val LOG = Logger.getInstance(IdeaDecompiler::class.java)
+  @Suppress("SSBasedInspection")
+  private val LOG = logger<IdeaDecompiler>()
 
   class InternalException(message: String, cause: Throwable) : RuntimeException(message, cause)
 
   private var myClass: String? = null
 
-  override fun writeMessage(message: String, severity: IFernflowerLogger.Severity) {
+  override fun writeMessage(message: String, severity: Severity) {
     val text = extendMessage(message)
     when (severity) {
       ERROR -> LOG.warn(text)
@@ -23,7 +24,7 @@ class IdeaLogger : IFernflowerLogger() {
     }
   }
 
-  override fun writeMessage(message: String, severity: IFernflowerLogger.Severity, t: Throwable) {
+  override fun writeMessage(message: String, severity: Severity, t: Throwable) {
     when (t) {
       is InternalException -> throw t
       is ProcessCanceledException -> throw t

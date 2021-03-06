@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -28,8 +28,7 @@ import java.util.Map.Entry;
 /**
  * @author Alexander Lobas
  */
-@SuppressWarnings("ALL")
-public class PluginPriceService {
+public final class PluginPriceService {
   private static final Logger LOG = Logger.getInstance(PluginPriceService.class);
 
   private static final DecimalFormat FORMAT = new DecimalFormat("###.#");
@@ -39,8 +38,8 @@ public class PluginPriceService {
   private static boolean myPreparing;
 
   public static void getPrice(@NotNull IdeaPluginDescriptor descriptor,
-                              @NotNull Consumer<String> callback,
-                              @NotNull Consumer<String> asyncCallback) {
+                              @NotNull Consumer<? super String> callback,
+                              @NotNull Consumer<? super String> asyncCallback) {
     checkAccess();
 
     String code = descriptor.getProductCode();
@@ -110,7 +109,6 @@ public class PluginPriceService {
   private static Object getPluginPricesJsonObject() throws IOException {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     Url url = Urls.newFromEncoded(instance.getPluginManagerUrl() + "/geo/files/prices");
-
     return HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
       URLConnection connection = request.getConnection();
 

@@ -17,7 +17,9 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
   protected abstract fun apply()
 
-  protected abstract fun isRelevant(path: String): Boolean
+  protected open fun isRelevant(path: String): Boolean = false
+
+  protected open fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean = false
 
   protected abstract fun updateFile(file: VirtualFile, event: VFileEvent)
 
@@ -45,7 +47,7 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
   }
 
   private fun processFile(f: VirtualFile, event: VFileEvent) {
-    if (isRelevant(f.path)) {
+    if (isRelevant(f.path) || isRelevant(f, event)) {
       updateFile(f, event)
     }
   }
@@ -53,7 +55,7 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
   private fun processRecursively(f: VirtualFile, event: VFileEvent) {
     VfsUtilCore.visitChildrenRecursively(f, object : VirtualFileVisitor<Void>() {
       override fun visitFile(f: VirtualFile): Boolean {
-        if (isRelevant(f.path)) {
+        if (isRelevant(f.path) || isRelevant(f, event)) {
           updateFile(f, event)
         }
         return true
@@ -71,26 +73,19 @@ abstract class AsyncFileChangeListenerBase : AsyncFileListener {
 
       when (each) {
         is VFilePropertyChangeEvent -> if (each.isRename) {
-          val oldFile = each.file
-          val parent = oldFile.parent
           before {
-            process(oldFile, each)
+            process(each.file, each)
           }
           after {
-            val newName = each.newValue as String
-            val newFile = parent?.findChild(newName)
-            if (newFile != null) process(newFile, each)
+            process(each.file, each)
           }
         }
         is VFileMoveEvent -> {
-          val oldFile = each.file
-          val name = oldFile.name
           before {
-            process(oldFile, each)
+            process(each.file, each)
           }
           after {
-            val newFile = each.newParent.findChild(name)
-            if (newFile != null) process(newFile, each)
+            process(each.file, each)
           }
         }
         is VFileCopyEvent -> after {

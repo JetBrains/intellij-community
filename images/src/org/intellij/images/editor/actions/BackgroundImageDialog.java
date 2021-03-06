@@ -1,27 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.editor.actions;
 
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.FRAME_PROP;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.Fill;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.createTemporaryBackgroundTransform;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getBackgroundSpec;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.getIdeBackgroundColor;
-import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.repaintAllWindows;
-
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Toggleable;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -34,19 +21,16 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -54,39 +38,24 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import javax.swing.AbstractAction;
-import javax.swing.AbstractButton;
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JSlider;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
-import org.intellij.images.fileTypes.ImageFileTypeManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.*;
+
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
 public class BackgroundImageDialog extends DialogWrapper {
   private static final String EDITOR = "editor";
@@ -120,7 +89,7 @@ public class BackgroundImageDialog extends DialogWrapper {
   private final SimpleEditorPreview myEditorPreview;
   private final JComponent myIdePreview;
 
-  public BackgroundImageDialog(@NotNull Project project, @Nullable String selectedPath) {
+  public BackgroundImageDialog(@NotNull Project project, @Nullable @NlsSafe String selectedPath) {
     super(project, true);
     myProject = project;
     setTitle(IdeBundle.message("dialog.title.background.image"));
@@ -181,7 +150,7 @@ public class BackgroundImageDialog extends DialogWrapper {
 
   @NotNull
   private static JComponent createFramePreview() {
-    EditorEmptyTextPainter painter = ServiceManager.getService(EditorEmptyTextPainter.class);
+    EditorEmptyTextPainter painter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
       @Override
       protected void paintComponent(Graphics g) {
@@ -234,8 +203,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     UIUtil.removeScrollBorder(myPreviewPanel);
     myPreviewPanel.setBorder(new SideBorder(JBColor.border(), SideBorder.ALL));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
-    actionGroup.add(createToggleAction(EDITOR, "Editor and tools"));
-    actionGroup.add(createToggleAction(FRAME, "Empty frame"));
+    actionGroup.add(createToggleAction(EDITOR, IdeBundle.message("toggle.editor.and.tools")));
+    actionGroup.add(createToggleAction(FRAME, IdeBundle.message("toggle.empty.frame")));
     myToolbar = ActionManager.getInstance().createActionToolbar(getTitle(), actionGroup, true);
     JComponent toolbarComponent = myToolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty());
@@ -278,7 +247,7 @@ public class BackgroundImageDialog extends DialogWrapper {
         boolean b = e.getSource() == myOpacitySpinner;
         if (b) {
           int value = (Integer)myOpacitySpinner.getValue();
-          myOpacitySpinner.setValue(Math.min(Math.max(0, value), 100));
+          myOpacitySpinner.setValue(MathUtil.clamp(value, 0, 100));
           myOpacitySlider.setValue(value);
         }
         else {
@@ -297,7 +266,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     myAdjusting = false;
   }
 
-  private AnAction createToggleAction(String target, String text) {
+  private AnAction createToggleAction(String target, @NlsActions.ActionText String text) {
     class A extends IconWithTextAction implements DumbAware, Toggleable {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -338,7 +307,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     updatePreview();
   }
 
-  public void setSelectedPath(String path) {
+  public void setSelectedPath(@NlsSafe String path) {
     if (StringUtil.isEmptyOrSpaces(path)) {
       getComboEditor().setText("");
     }
@@ -562,8 +531,7 @@ public class BackgroundImageDialog extends DialogWrapper {
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getSize();
-        d.width = Math.max(d.width, d.height);
-        d.height = Math.max(d.width, d.height);
+        d.width = d.height = Math.max(d.width, d.height);
         return d;
       }
 

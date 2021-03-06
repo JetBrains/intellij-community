@@ -27,12 +27,9 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
@@ -168,7 +165,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     List<PyParameterInfo> newParamInfos = Arrays.asList(changeInfo.getNewParameters());
     
     final int posVarargIndex = ContainerUtil.indexOf(newParamInfos, info -> isPositionalVarargName(info.getName()));
-    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> "/".equals(info.getName()));
+    final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PySlashParameter.TEXT.equals(info.getName()));
     final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos.get(posVarargIndex).getOldIndex()).isEmpty();
     List<PyExpression> notInsertedVariadicKeywordArgs = ContainerUtil.filter(call.getArguments(), a -> {
       return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
@@ -184,11 +181,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       final boolean defaultShouldBeInlined = beforePositionalOnlyMarker &&
                                              ContainerUtil.exists(newParamInfos.subList(paramIndex + 1, posOnlyMarkerIndex),
                                                                   i -> !i.isNew() && !oldParamIndexToArgs.get(i.getOldIndex()).isEmpty());
-      if (paramName.equals("*")) {
+      if (paramName.equals(PySingleStarParameter.TEXT)) {
         keywordArgsRequired = true;
         continue;
       }
-      if (paramName.equals("/")) {
+      if (paramName.equals(PySlashParameter.TEXT)) {
         continue;
       }
       final String paramDefault = StringUtil.notNullize(info.getDefaultValue());
@@ -254,7 +251,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   private static boolean isPositionalVarargName(@NotNull String paramName) {
-    return !isKeywordVarargName(paramName) && !paramName.equals("*") && paramName.startsWith("*");
+    return !isKeywordVarargName(paramName) && !paramName.equals(PySingleStarParameter.TEXT) && paramName.startsWith("*");
   }
 
   private static boolean isKeywordVarargName(@NotNull String paramName) {

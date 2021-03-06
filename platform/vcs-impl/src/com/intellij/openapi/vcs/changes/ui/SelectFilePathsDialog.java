@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +36,10 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
 
   public SelectFilePathsDialog(@NotNull Project project,
                                @NotNull List<? extends FilePath> originalFiles,
-                               @Nullable String prompt,
+                               @Nullable @NlsContexts.Label String prompt,
                                @Nullable VcsShowConfirmationOption confirmationOption,
-                               @Nullable String okActionName,
-                               @Nullable String cancelActionName,
+                               @Nullable @NlsContexts.Button String okActionName,
+                               @Nullable @NlsContexts.Button String cancelActionName,
                                boolean showCheckboxes) {
     super(project, false, confirmationOption, prompt);
     myFileList = new ChangesTreeImpl.FilePaths(project, showCheckboxes, true, originalFiles);

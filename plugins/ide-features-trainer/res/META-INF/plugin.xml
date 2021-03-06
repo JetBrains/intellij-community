@@ -1,0 +1,122 @@
+<idea-plugin>
+  <id>training</id>
+  <name>IDE Features Trainer</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    <p>
+      Learn basic shortcuts and essential features interactively - right inside the IDE.
+      No need to read long manuals or look for screencasts.
+      Just install this plugin, and open with the <b>Help | IDE Features Trainer</b> menu item.
+    </p>
+    <p/>
+    <p>Found a bug or have a feature to suggest? Welcome to the tracker: <a href="https://youtrack.jetbrains.com/newIssue?project=IFT&description=**Description%3A**%20_Write%20description%20here_%0A%0A**Plugin%20version%3A**%20_Write%20plugin%20version%20here_">https://youtrack.jetbrains.com/issues/IFT</a></p>
+    ]]></description>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <resource-bundle>messages.LearnBundle</resource-bundle>
+
+  <projectListeners>
+    <listener class="training.editor.LearnProjectFileEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
+  <applicationListeners>
+    <listener class="training.statistic.LearnProjectStateListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+
+  <extensionPoints>
+    <extensionPoint name="ift.language.extension"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="training.lang.LangSupport"/>
+    </extensionPoint>
+
+    <extensionPoint name="ift.learning.course" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="training.learn.course.LearningCourse"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.IdeFeaturesTrainerModuleRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.SupportedLanguageRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.ActionIdRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.TaskIdRuleValidator"/>
+    <statistics.validation.customValidationRule
+      implementation="training.statistic.KeymapSchemeRuleValidator"/>
+    <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
+    <applicationService
+      serviceImplementation="training.statistic.LearnProjectState"/>
+
+    <interactiveCourseFactory id="IFTInteractiveCourse" implementation="training.ui.welcomeScreen.IFTInteractiveCourse" order="first"/>
+
+    <applicationService
+      serviceImplementation="training.learn.CourseManager"/>
+    <applicationService
+      serviceImplementation="training.lang.LangManager"/>
+    <applicationService
+      serviceImplementation="training.ui.UISettings"/>
+    <applicationService
+      serviceImplementation="training.learn.lesson.LessonStateBase"/>
+    <toolWindow id="Learn"
+                canCloseContents="true"
+                icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"
+                factoryClass="training.ui.LearnToolWindowFactory"
+    />
+
+    <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
+                             instance="training.ui.FeaturesTrainerSettingsPanel"/>
+
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false" icon="FeaturesTrainerIcons.Img.FeatureTrainer"/>
+  </extensions>
+
+  <actions>
+    <group internal="true" popup="true" id="IFTInternalActions" text="IFT Actions">
+      <action internal="true" id="DumpFeaturesTrainerText" class="training.actions.DumpFeaturesTrainerText"/>
+      <action internal="true" id="AutorunAllLessons" class="training.actions.AutorunAllLessons"/>
+      <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
+      <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
+    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"/>
+    <action id="NextLessonAction" class="training.actions.NextLessonAction"/>
+    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"/>
+    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"/>
+
+    <!-- Help -->
+    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="FeaturesTrainerIcons.Img.FeatureTrainerToolWindow">
+      <add-to-group group-id="HelpMenu" relative-to-action="ShowTips" anchor="after"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ift.help.links"
+                 description="Turn on IFT Help and Resources section"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+    <registryKey key="ift.experimental.lessons"
+                 description="Turn on it to preview incomplete lessons"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
+    <registryKey key="ift.default.restore.delay"
+                 description="Specified default delay in milliseconds before previous task will be restored if something went wrong."
+                 defaultValue="500"
+                 restartRequired="false"/>
+    <registryKey key="ift.show.feedback.link"
+                 description="Whether IFT show feedback link in the modules panel."
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+    <registryKey key="ift.use.scroll.animation"
+                 description="Use scroll animation in IFT lessons."
+                 defaultValue="TRUE"
+                 restartRequired="false"/>
+  </extensions>
+</idea-plugin>

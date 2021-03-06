@@ -4,7 +4,7 @@ package com.intellij.model.search;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolDeclaration;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
@@ -18,7 +18,7 @@ import java.util.List;
 public interface SearchService {
 
   static @NotNull SearchService getInstance() {
-    return ServiceManager.getService(SearchService.class);
+    return ApplicationManager.getApplication().getService(SearchService.class);
   }
 
   /**

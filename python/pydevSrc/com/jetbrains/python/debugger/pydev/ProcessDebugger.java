@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +34,8 @@ public interface ProcessDebugger {
 
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
-  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine) throws PyDebuggerException;
+  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+    throws PyDebuggerException;
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
@@ -44,6 +48,12 @@ public interface ProcessDebugger {
                             int rows,
                             int cols,
                             String format) throws PyDebuggerException;
+
+  @NotNull
+  default DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+    Logger.getInstance(this.getClass()).warn("executeDataViewerCommand is not supported on this ProcessDebugger");
+    return DataViewerCommandResult.NOT_IMPLEMENTED;
+  }
 
   void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
 
@@ -60,6 +70,16 @@ public interface ProcessDebugger {
 
   Collection<PyThreadInfo> getThreads();
 
+  /**
+   * Executes the provided command <i>asynchronously</i> and then waits for the
+   * response <i>synchronously</i> if it is expected for the specific command.
+   * <p>
+   * When the Python script that is being debugged spawns several processes
+   * then the command is executed for each process.
+   *
+   * @param command the debugger command to execute
+   * @see AbstractCommand#isResponseExpected()
+   */
   void execute(@NotNull AbstractCommand command);
 
   void suspendAllThreads();
@@ -101,6 +121,8 @@ public interface ProcessDebugger {
   void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
 
   void setShowReturnValues(boolean isShowReturnValues);
+
+  void setUnitTestDebuggingMode();
 
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
 

@@ -1,4 +1,6 @@
 #!/bin/sh
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
 # ---------------------------------------------------------------------
@@ -19,140 +21,86 @@ message()
   fi
 }
 
-UNAME=$(command -v uname)
-GREP=$(command -v egrep)
-CUT=$(command -v cut)
-READLINK=$(command -v readlink)
-XARGS=$(command -v xargs)
-DIRNAME=$(command -v dirname)
-MKTEMP=$(command -v mktemp)
-RM=$(command -v rm)
-CAT=$(command -v cat)
-SED=$(command -v sed)
-
-if [ -z "$UNAME" ] || [ -z "$GREP" ] || [ -z "$CUT" ] || [ -z "$DIRNAME" ] || [ -z "$MKTEMP" ] || [ -z "$RM" ] || [ -z "$CAT" ] || [ -z "$SED" ]; then
-  message "Required tools are missing - check beginning of \"$0\" file for details."
+if [ -z "$(command -v uname)" ] || [ -z "$(command -v realpath)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ] || \
+   [ -z "$(command -v egrep)" ]; then
+  TOOLS_MSG="Required tools are missing:"
+  for tool in uname realpath egrep dirname cat ; do
+     test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
+  done
+  message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
   exit 1
 fi
 
 # shellcheck disable=SC2034
 GREP_OPTIONS=''
-OS_TYPE=$("$UNAME" -s)
+OS_TYPE=$(uname -s)
+OS_ARCH=$(uname -m)
 
 # ---------------------------------------------------------------------
 # Ensure $IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
-SCRIPT_LOCATION="$0"
-if [ -x "$READLINK" ]; then
-  while [ -L "$SCRIPT_LOCATION" ]; do
-    SCRIPT_LOCATION=$("$READLINK" -e "$SCRIPT_LOCATION")
-  done
-fi
-
-cd "$("$DIRNAME" "$SCRIPT_LOCATION")" || exit 2
-IDE_BIN_HOME=$(pwd)
-IDE_HOME=$("$DIRNAME" "$IDE_BIN_HOME")
-cd "${OLDPWD}" || exit 2
-
+IDE_BIN_HOME=$(dirname "$(realpath "$0")")
+IDE_HOME=$(dirname "${IDE_BIN_HOME}")
+CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
+PRODUCT_VENDOR="__product_vendor__"
 PATHS_SELECTOR="__system_selector__"
 
 # ---------------------------------------------------------------------
-# Locate a JDK installation directory command -v will be used to run the IDE.
-# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, .../jre64, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
+# Locate a JRE installation directory command -v will be used to run the IDE.
+# Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr[-x86], $JDK_HOME, $JAVA_HOME, "java" in $PATH.
 # ---------------------------------------------------------------------
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
-  JDK="$__product_uc___JDK"
+  JRE="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__.jdk")
-  if [ ! -d "$USER_JRE" ]; then
-    USER_JRE="$IDE_HOME/$USER_JRE"
-  fi
+BITS=""
+if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
+  USER_JRE=$(cat "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
-    JDK="$USER_JRE"
+    JRE="$USER_JRE"
   fi
 fi
 
-if [ -z "$JDK" ] && [ "$OS_TYPE" = "Linux" ]; then
-  OS_ARCH=$("$UNAME" -m)
+if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ]; then
   if [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
-    JDK="$IDE_HOME/jbr"
-  fi
-  if [ -z "$JDK" ] && [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
-    JDK="$IDE_HOME/jbr-x86"
+    JRE="$IDE_HOME/jbr"
+  elif [ -d "$IDE_HOME/jbr-x86" ] && "$IDE_HOME/jbr-x86/bin/java" -version > /dev/null 2>&1 ; then
+    JRE="$IDE_HOME/jbr-x86"
   fi
 fi
 
 # shellcheck disable=SC2153
-if [ -z "$JDK" ] && [ -n "$JDK_HOME" ] && [ -x "$JDK_HOME/bin/java" ]; then
-  JDK="$JDK_HOME"
-fi
-
-if [ -z "$JDK" ] && [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
-  JDK="$JAVA_HOME"
-fi
-
-if [ -z "$JDK" ]; then
-  JDK_PATH=$(command -v java)
-
-  if [ -n "$JDK_PATH" ]; then
-    if [ "$OS_TYPE" = "FreeBSD" ] || [ "$OS_TYPE" = "MidnightBSD" ]; then
-      JAVA_LOCATION=$(JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-)
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    elif [ "$OS_TYPE" = "SunOS" ]; then
-      JAVA_LOCATION="/usr/jdk/latest"
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    elif [ "$OS_TYPE" = "Darwin" ]; then
-      JAVA_LOCATION=$(/usr/libexec/java_home)
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
-    fi
-  fi
-
-  if [ -z "$JDK" ] && [ -n "$JDK_PATH" ] && [ -x "$READLINK" ] && [ -x "$XARGS" ]; then
-    JAVA_LOCATION=$("$READLINK" -f "$JDK_PATH")
-    case "$JAVA_LOCATION" in
-      */jre/bin/java)
-        JAVA_LOCATION=$(echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME")
-        if [ ! -d "$JAVA_LOCATION/bin" ]; then
-          JAVA_LOCATION="$JAVA_LOCATION/jre"
-        fi
-        ;;
-      *)
-        JAVA_LOCATION=$(echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME")
-        ;;
-    esac
-    if [ -x "$JAVA_LOCATION/bin/java" ]; then
-      JDK="$JAVA_LOCATION"
-    fi
+if [ -z "$JRE" ]; then
+  if [ -n "$JDK_HOME" ] && [ -x "$JDK_HOME/bin/java" ]; then
+    JRE="$JDK_HOME"
+  elif [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    JRE="$JAVA_HOME"
   fi
 fi
 
-JAVA_BIN="$JDK/bin/java"
-if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
+if [ -z "$JRE" ]; then
+  JAVA_BIN=$(command -v java)
+else
+  JAVA_BIN="$JRE/bin/java"
+fi
+
+if [ -z "$JAVA_BIN" ] || [ ! -x "$JAVA_BIN" ]; then
   X86_JRE_URL="__x86_jre_url__"
   # shellcheck disable=SC2166
   if [ -n "$X86_JRE_URL" ] && [ ! -d "$IDE_HOME/jbr-x86" ] && [ "$OS_ARCH" = "i386" -o "$OS_ARCH" = "i686" ]; then
     message "To run __product_full__ on a 32-bit system, please download 32-bit Java runtime from \"$X86_JRE_URL\" and unpack it into \"jbr-x86\" directory."
   else
-    message "No JDK found. Please validate either __product_uc___JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
+    message "No JRE found. Please make sure \$__product_uc___JDK, \$JDK_HOME, or \$JAVA_HOME point to valid JRE installation."
   fi
   exit 1
 fi
 
-VERSION_LOG=$("$MKTEMP" -t java.version.log.XXXXXX)
-JAVA_TOOL_OPTIONS='' "$JAVA_BIN" -version 2> "$VERSION_LOG"
-"$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
-BITS=$?
-"$RM" -f "$VERSION_LOG"
-test ${BITS} -eq 0 && BITS="64" || BITS=""
+if [ -n "$JRE" ] && [ -r "$JRE/release" ]; then
+  egrep -q -E -e "OS_ARCH=\"(x86_64|amd64)\"" "$JRE/release" && BITS="64" || BITS=""
+else
+  test "${OS_ARCH}" = "x86_64" && BITS="64" || BITS=""
+fi
 
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
@@ -163,35 +111,43 @@ if [ -n "$__product_uc___PROPERTIES" ]; then
 fi
 
 VM_OPTIONS_FILE=""
+USER_VM_OPTIONS_FILE=""
 # shellcheck disable=SC2154
 if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
-  # explicit
+  # 1. $<IDE_NAME>_VM_OPTIONS
   VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
-elif [ -r "$IDE_HOME.vmoptions" ]; then
-  # Toolbox
-  VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
-elif [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions" ]; then
-  # user-overridden
-  VM_OPTIONS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions"
-elif [ -r "$IDE_BIN_HOME/__vm_options__$BITS.vmoptions" ]; then
-  # default, standard installation
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/__vm_options__$BITS.vmoptions"
+elif [ -r "${IDE_HOME}.vmoptions" ]; then
+  # 2. <IDE_HOME>.vmoptions || <IDE_HOME>/bin/<bin_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
+  VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+  if ! egrep -q -e "^-ea$" "${IDE_HOME}.vmoptions" && [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
+    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+  fi
+elif [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions" ]; then
+  # 3. <config_directory>/<bin_name>.vmoptions
+  VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions"
 else
-  # default, universal package
-  test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/$OS_SPECIFIC/__vm_options__$BITS.vmoptions"
+  # 4. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
+  if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
+  else
+    test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
+    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions" ]; then
+      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
+    fi
+  fi
+  if [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions" ]; then
+    if [ -n "$VM_OPTIONS_FILE" ]; then
+      VM_OPTIONS="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+    else
+      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+    fi
+  fi
 fi
 
 VM_OPTIONS=""
-if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=$("$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*")
-  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent"; }; then
-    if [ "$OS_TYPE" = "Linux" ]; then
-      VM_OPTIONS=$(echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\(-linux\)\?\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\2.so|")
-    else
-      VM_OPTIONS=$(echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]*||")
-    fi
-  fi
+if [ -n "$VM_OPTIONS_FILE" ]; then
+  VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | egrep -v -e "^#.*")
 else
   message "Cannot find VM options file"
 fi
@@ -210,10 +166,11 @@ IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
-  "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
-  "-XX:HeapDumpPath=$HOME/java_error_in___product_uc__.hprof" \
-  -Didea.paths.selector=${PATHS_SELECTOR} \
-  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
+  "-Didea.vendor.name=${PRODUCT_VENDOR}" \
+  "-Didea.paths.selector=${PATHS_SELECTOR}" \
+  "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \
   com.intellij.idea.Main \

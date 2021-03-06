@@ -3,9 +3,9 @@ package com.intellij.grazie.ide.fus
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
-internal class GrazieFUSStrategyIDRule : CustomWhiteListRule() {
+internal class GrazieFUSStrategyIDRule : CustomValidationRule() {
   private val defaultEnabledStrategies = setOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -24,14 +25,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public class ReuseVariableDeclarationFix implements IntentionAction {
   private final PsiLocalVariable myVariable;
 
@@ -81,7 +81,9 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
     PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
-    final PsiElement statement = factory.createStatementFromText(myVariable.getName() + " = " + initializer.getText() + ";", null);
+    final PsiElement statement = factory.createStatementFromText(
+      myVariable.getName() + " = " +
+      ExpressionUtils.convertInitializerToExpression(initializer, factory, myVariable.getType()).getText() + ";", null);
     myVariable.getParent().replace(statement);
   }
 
@@ -107,5 +109,10 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ReuseVariableDeclarationFix(PsiTreeUtil.findSameElementInCopy(myVariable, target));
   }
 }

@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -47,7 +48,6 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
@@ -120,6 +120,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     if (file == null || editor == null) return;
 
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+
     LastRunReformatCodeOptionsProvider provider = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
     ReformatCodeRunOptions currentRunOptions = provider.getLastRunOptions(file);
 
@@ -145,7 +147,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   private static DirectoryFormattingOptions getDirectoryFormattingOptions(@NotNull Project project, @NotNull PsiDirectory dir) {
     LayoutDirectoryDialog dialog = new LayoutDirectoryDialog(
       project,
-      CodeInsightBundle.message("process.reformat.code"),
+      CodeStyleBundle.message("process.reformat.code"),
       CodeInsightBundle.message("process.scope.directory", dir.getVirtualFile().getPath()),
       VcsFacade.getInstance().hasChanges(dir)
     );
@@ -163,6 +165,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   public static void reformatDirectory(@NotNull Project project,
                                        @NotNull PsiDirectory dir,
                                        @NotNull DirectoryFormattingOptions options) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(
       project, dir, options.isIncludeSubdirectories(), options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
     );
@@ -189,11 +192,15 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean shouldOptimizeImports = selectedFlags.isOptimizeImports() && !DumbService.getInstance(project).isDumb();
     boolean processOnlyChangedText = selectedFlags.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     AbstractLayoutCodeProcessor processor;
-    if (moduleContext != null)
+    if (moduleContext != null) {
       processor = new ReformatCodeProcessor(project, moduleContext, processOnlyChangedText);
-    else
+    }
+    else {
       processor = new ReformatCodeProcessor(project, processOnlyChangedText);
+    }
 
     registerScopeFilter(processor, selectedFlags.getSearchScope());
     registerFileMaskFilter(processor, selectedFlags.getFileTypeMask());
@@ -338,7 +345,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                                : VcsFacade.getInstance().hasChanges(project);
 
     LayoutProjectCodeDialog dialog =
-      new LayoutProjectCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
+      new LayoutProjectCodeDialog(project, CodeStyleBundle.message("process.reformat.code"), text, enableOnlyVCSChangedRegions);
     if (!dialog.showAndGet()) {
       return null;
     }

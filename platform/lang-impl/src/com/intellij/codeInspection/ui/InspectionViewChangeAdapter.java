@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
@@ -17,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,7 +24,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final Alarm myAlarm;
   private final Set<VirtualFile> myUnPresentEditedFiles = Collections.synchronizedSet(ContainerUtil.createWeakSet());
 
-  private final Set<VirtualFile> myFilesToProcess = new THashSet<>(); // guarded by myFilesToProcess
+  private final Set<VirtualFile> myFilesToProcess = new HashSet<>(); // guarded by myFilesToProcess
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
   private final Alarm myUpdateQueue;
 
@@ -181,7 +180,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
     }, 200);
   }
 
-  private static class CompositeProcessor<X> implements Processor<X> {
+  private static final class CompositeProcessor<X> implements Processor<X> {
     private final Processor<? super X> myFirstProcessor;
     private boolean myFirstFinished;
     private final Processor<? super X> mySecondProcessor;

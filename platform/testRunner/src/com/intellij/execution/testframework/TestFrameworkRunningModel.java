@@ -7,13 +7,14 @@ import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 public interface TestFrameworkRunningModel extends Disposable {
   TestConsoleProperties getProperties();
 
-  void setFilter(Filter<?> filter);
+  void setFilter(@NotNull Filter<?> filter);
 
   boolean isRunning();
 

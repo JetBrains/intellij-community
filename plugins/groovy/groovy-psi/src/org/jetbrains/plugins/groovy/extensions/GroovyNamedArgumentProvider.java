@@ -58,7 +58,7 @@ public abstract class GroovyNamedArgumentProvider {
   public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
                                                                                        @Nullable String argumentName,
                                                                                        boolean forCompletion) {
-    Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<String, NamedArgumentDescriptor>() {
+    Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<>() {
       @Override
       public NamedArgumentDescriptor put(String key, NamedArgumentDescriptor value) {
         NamedArgumentDescriptor oldValue = super.put(key, value);

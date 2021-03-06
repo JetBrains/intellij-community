@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.util.NlsContexts;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class ExperimentalFeatureBooleanOptionDescriptor extends RegistryBooleanOptionDescriptor {
-  public ExperimentalFeatureBooleanOptionDescriptor(String option, String featureId) {
+  public ExperimentalFeatureBooleanOptionDescriptor(@NlsContexts.Label String option, String featureId) {
     super(option, featureId);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -16,11 +16,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -162,9 +159,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               return StringUtil.notNullize(StringUtil.unpluralize(type.getTitle()), type.getTitle());
             }
 
-            @Nullable
             @Override
-            public Icon getIcon() {
+            public @NotNull Icon getIcon() {
               return type.getEnabledIcon();
             }
           });
@@ -200,7 +196,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return getLineBreakpointVariants(project, types, position).thenAsync(variants -> {
       final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
       GuiUtils.invokeLaterIfNeeded(() -> {
-        for (XLineBreakpointType type : types) {
+        for (XLineBreakpointType<?> type : types) {
           if (breakpointManager.findBreakpointAtLine(type, file, line) != null) {
             return;
           }
@@ -214,7 +210,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               @Override
               public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                  updateHighlighter(((JList)e.getSource()).getSelectedValue());
+                  updateHighlighter(((JList<?>)e.getSource()).getSelectedValue());
                 }
               }
 
@@ -233,10 +229,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                     range = lineRange;
                   }
                   if (!range.isEmpty() && range.intersects(lineRange)) {
-                    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-                    TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
                     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
-                      range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                      DebuggerColors.BREAKPOINT_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
                       HighlighterTargetArea.EXACT_RANGE);
                   }
                 }
@@ -264,7 +258,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
             final MySelectionListener selectionListener = new MySelectionListener();
             BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant> step =
-              new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
+              new BaseListPopupStep<>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
                 @NotNull
                 @Override
                 public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {
@@ -306,13 +300,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
             popup.addListSelectionListener(selectionListener);
             popup.show(relativePoint);
-            return;
           }
           else {
             XLineBreakpointType.XLineBreakpointVariant variant = variants.get(0);
             insertBreakpoint(variant.createProperties(), res, breakpointManager, file, line, variant.getType(), temporary);
-            return;
           }
+          return;
         }
         XLineBreakpointType type = types.get(0);
         insertBreakpoint(type.createBreakpointProperties(file, line), res, breakpointManager, file, line, type, temporary);
@@ -336,15 +329,22 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         !ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !ApplicationManager.getApplication().isUnitTestMode() &&
         XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isConfirmBreakpointRemoval()) {
-      StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
+      StringBuilder message = new StringBuilder("<html>").append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
       if (!isEmptyExpression(breakpoint.getConditionExpression())) {
-        message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
-                                               StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression())));
+        message.append("<br>")
+          .append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition"))
+          .append("<br><pre>")
+          .append(StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression()))
+          .append("</pre>");
       }
       if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
-        message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
-                                               StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression())));
+        message.append("<br>")
+          .append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log"))
+          .append("<br><pre>")
+          .append(StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression()))
+          .append("</pre>");
       }
+      //noinspection HardCodedStringLiteral
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
                                       CommonBundle.message("button.remove"),
@@ -461,11 +461,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator() {
-    return (o1, o2) -> {
-      int fileCompare = o1.getFileUrl().compareTo(o2.getFileUrl());
-      if (fileCompare != 0) return fileCompare;
-      return o1.getLine() - o2.getLine();
-    };
+    return Comparator.comparing(XLineBreakpoint<P>::getFileUrl).thenComparingInt(XLineBreakpoint::getLine);
   }
 
   @Nullable

@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +6,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
+import com.intellij.util.io.PersistentMapImpl.CompactionRecordInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -28,7 +27,7 @@ import java.util.PriorityQueue;
 
 import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
-public class PersistentHashMapValueStorage {
+public final class PersistentHashMapValueStorage {
   @Nullable
   private RAReader myCompactionModeReader;
   private volatile long mySize;
@@ -46,8 +45,8 @@ public class PersistentHashMapValueStorage {
   static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
-  public static class CreationTimeOptions {
-    public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
+  public static final class CreationTimeOptions {
+    public static final ThreadLocal<IOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
       new ThreadLocal<>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -60,18 +59,18 @@ public class PersistentHashMapValueStorage {
       }
     };
 
-    private final ExceptionalIOCancellationCallback myExceptionalIOCancellationCallback;
+    private final IOCancellationCallback myIOCancellationCallback;
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
     private final boolean myHasNoChunks;
     private final boolean myDoCompression;
 
-    private CreationTimeOptions(ExceptionalIOCancellationCallback callback,
+    private CreationTimeOptions(IOCancellationCallback callback,
                                 boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
                                 boolean hasNoChunks,
                                 boolean doCompression) {
-      myExceptionalIOCancellationCallback = callback;
+      myIOCancellationCallback = callback;
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
@@ -89,7 +88,7 @@ public class PersistentHashMapValueStorage {
     @NotNull
     CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
-        myExceptionalIOCancellationCallback,
+        myIOCancellationCallback,
         true,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
@@ -106,10 +105,6 @@ public class PersistentHashMapValueStorage {
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
         DO_COMPRESSION.get() == Boolean.TRUE);
     }
-  }
-
-  public interface ExceptionalIOCancellationCallback {
-    void checkCancellation();
   }
 
   @NotNull
@@ -179,7 +174,7 @@ public class PersistentHashMapValueStorage {
   }
 
   public long appendBytes(ByteArraySequence data, long prevChunkAddress) throws IOException {
-    return appendBytes(data.getBytes(), data.getOffset(), data.getLength(), prevChunkAddress);
+    return appendBytes(data.getInternalBuffer(), data.getOffset(), data.getLength(), prevChunkAddress);
   }
 
   public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
@@ -269,11 +264,11 @@ public class PersistentHashMapValueStorage {
   private static final ThreadLocalCachedByteArray myBuffer = new ThreadLocalCachedByteArray();
   private static final int ourBufferLength = 1024;
 
-  private long compactValuesWithoutChunks(@NotNull List<? extends PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
+  private long compactValuesWithoutChunks(@NotNull List<? extends CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage)
     throws IOException {
     //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
     infos
-      .sort((Comparator<PersistentHashMap.CompactionRecordInfo>)(info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
+      .sort((Comparator<CompactionRecordInfo>)(info, info2) -> Comparing.compare(info.valueAddress, info2.valueAddress));
 
     final int fileBufferLength = 256 * 1024;
     final byte[] buffer = new byte[fileBufferLength];
@@ -286,7 +281,7 @@ public class PersistentHashMapValueStorage {
     long readStartOffset = -1;
     int bytesRead = -1;
 
-    for (PersistentHashMap.CompactionRecordInfo info : infos) {
+    for (CompactionRecordInfo info : infos) {
       int recordStartInBuffer = (int)(info.valueAddress - readStartOffset);
 
       if (recordStartInBuffer + 5 > fileBufferLength || readStartOffset == -1) {
@@ -334,12 +329,12 @@ public class PersistentHashMapValueStorage {
     return fragments | ((long)newFragments << 32);
   }
 
-  long compactValues(@NotNull List<? extends PersistentHashMap.CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
+  long compactValues(@NotNull List<? extends CompactionRecordInfo> infos, @NotNull PersistentHashMapValueStorage storage) throws IOException {
     if (myOptions.myHasNoChunks) {
       return compactValuesWithoutChunks(infos, storage);
     }
 
-    PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<>(
+    PriorityQueue<CompactionRecordInfo> records = new PriorityQueue<>(
       infos.size(), (info, info2) -> Comparing.compare(info2.valueAddress, info.valueAddress));
 
     records.addAll(infos);
@@ -364,7 +359,7 @@ public class PersistentHashMapValueStorage {
       myCompactionModeReader.get(readStartOffset, buffer, 0, bytesRead); // buffer contains [readStartOffset, readStartOffset + bytesRead)
 
       while (!records.isEmpty()) {
-        final PersistentHashMap.CompactionRecordInfo info = records.peek();
+        final CompactionRecordInfo info = records.peek();
         if (info.valueAddress >= readStartOffset) {
           if (info.valueAddress >= lastReadOffset) {
             throw new IOException("Value storage is corrupted: value file size:" + mySize + ", readStartOffset:" + readStartOffset +
@@ -417,8 +412,7 @@ public class PersistentHashMapValueStorage {
             }
           }
 
-          final int chunkSizeOutOfBuffer = Math.min(chunkSize,
-                                                    Math.max((int)(info.valueAddress + dataOffset + chunkSize - lastReadOffset), 0));
+          final int chunkSizeOutOfBuffer = MathUtil.clamp((int)(info.valueAddress + dataOffset + chunkSize - lastReadOffset), 0, chunkSize);
           if (chunkSizeOutOfBuffer > 0) {
             if (allRecordsStart != 0) {
               myCompactionModeReader.get(allRecordsStart, accumulatedChunksBuffer, chunkSize - chunkSizeOutOfBuffer, chunkSizeOutOfBuffer);
@@ -487,7 +481,7 @@ public class PersistentHashMapValueStorage {
   }
 
   private int saveAccumulatedDataOnDiskPreservingWriteOrder(PersistentHashMapValueStorage storage,
-                                                            PersistentHashMap.CompactionRecordInfo info,
+                                                            CompactionRecordInfo info,
                                                             long prevChunkAddress,
                                                             byte[] accumulatedChunksData,
                                                             int accumulatedChunkDataLength) throws IOException {
@@ -609,7 +603,7 @@ public class PersistentHashMapValueStorage {
     return chunksCount > 1 && allowedToCompactChunks();
   }
 
-  long compactChunks(PersistentHashMap.ValueDataAppender appender, ReadResult result) throws IOException {
+  long compactChunks(@NotNull ValueDataAppender appender, @NotNull ReadResult result) throws IOException {
     checkCancellation();
     long startedTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
     long newValueOffset;
@@ -622,7 +616,7 @@ public class PersistentHashMapValueStorage {
       myChunksBytesAfterRemoval += stream.size();
     }
     else {
-      newValueOffset = appendBytes(new ByteArraySequence(result.buffer), 0);
+      newValueOffset = appendBytes(ByteArraySequence.create(result.buffer), 0);
       myChunksBytesAfterRemoval += result.buffer.length;
     }
 
@@ -646,7 +640,7 @@ public class PersistentHashMapValueStorage {
 
   // hook for exceptional termination of long io operation
   private void checkCancellation() {
-    if (myOptions.myExceptionalIOCancellationCallback != null) myOptions.myExceptionalIOCancellationCallback.checkCancellation();
+    if (myOptions.myIOCancellationCallback != null) myOptions.myIOCancellationCallback.checkCancelled();
   }
 
   private int readChunkSize(@NotNull DataInputStream in) throws IOException {
@@ -787,7 +781,7 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  private static class ReaderOverFileChannelCache implements RAReader {
+  private static final class ReaderOverFileChannelCache implements RAReader {
     private final Path myPath;
 
     private ReaderOverFileChannelCache(@NotNull Path path) {
@@ -807,7 +801,7 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  private static class FileReader implements RAReader {
+  private static final class FileReader implements RAReader {
     private final FileChannel myFile;
 
     private FileReader(Path file) {

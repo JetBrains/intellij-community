@@ -9,7 +9,7 @@ import org.jetbrains.uast.evaluation.UEvaluationContext
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.evaluation.analyzeAll
 import org.jetbrains.uast.java.JavaUFile
-import org.jetbrains.uast.test.env.assertEqualsToFile
+import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 

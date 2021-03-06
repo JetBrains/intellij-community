@@ -13,14 +13,16 @@ import java.awt.Color
 val LightFileStatus.color: Color?
   get() = getFileStatus().color
 
-fun LightFileStatus.getPresentation(): @Nls String {
+@Nls
+fun LightFileStatus.getPresentation(): String {
   return when (this) {
     LightFileStatus.Blank, is LightFileStatus.NotChanged -> ""
     is LightFileStatus.StatusRecord -> getPresentation()
   }
 }
 
-private fun LightFileStatus.StatusRecord.getPresentation(): @Nls String {
+@Nls
+private fun LightFileStatus.StatusRecord.getPresentation(): String {
   val fileName = PathUtil.getFileName(path)
   if (index == '!' || workTree == '!' || index == '?' || workTree == '?') return "$fileName: ${getPresentation(index)}"
   if (isConflicted()) {

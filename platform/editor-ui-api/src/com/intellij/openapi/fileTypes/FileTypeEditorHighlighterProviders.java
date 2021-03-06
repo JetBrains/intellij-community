@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.KeyedFactoryEPBean;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstance;
@@ -20,7 +17,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
+public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
   public static final ExtensionPointName<KeyedLazyInstance<EditorHighlighterProvider>> EP_NAME = ExtensionPointName.create("com.intellij.editorHighlighterProvider");
   public static final FileTypeEditorHighlighterProviders INSTANCE = new FileTypeEditorHighlighterProviders();
 
@@ -55,21 +52,23 @@ public class FileTypeEditorHighlighterProviders extends FileTypeExtension<Editor
     if (!myEPListenerAdded) {
       myEPListenerAdded = true;
 
-      SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<KeyedFactoryEPBean>() {
-        @Override
-        public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          if (extension.key != null) {
-            invalidateCacheForExtension(extension.key);
-          }
-        }
+      SyntaxHighlighter.EP_NAME.addExtensionPointListener(new MyEPListener(), null);
+    }
+  }
 
-        @Override
-        public void extensionRemoved(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-          if (extension.key != null) {
-            invalidateCacheForExtension(extension.key);
-          }
-        }
-      }, null);
+  private class MyEPListener implements ExtensionPointListener<KeyedFactoryEPBean>, ExtensionPointPriorityListener {
+    @Override
+    public void extensionAdded(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+      if (extension.key != null) {
+        invalidateCacheForExtension(extension.key);
+      }
+    }
+
+    @Override
+    public void extensionRemoved(@NotNull KeyedFactoryEPBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+      if (extension.key != null) {
+        invalidateCacheForExtension(extension.key);
+      }
     }
   }
 }

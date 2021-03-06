@@ -40,7 +40,7 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(CodeStyle.createTestSettings());
-    mySettings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    mySettings = CodeStyle.getSettings(getProject());
     mySettings.AUTODETECT_INDENTS = true;
     DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();
     if (optionsProvider != null) {

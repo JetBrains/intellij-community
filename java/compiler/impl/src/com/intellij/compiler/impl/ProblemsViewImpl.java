@@ -3,6 +3,7 @@ package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ProblemsView;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
@@ -21,6 +22,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +30,7 @@ import java.util.EnumSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author Eugene Zhuravlev
- */
+@SuppressWarnings("IncorrectParentDisposable")
 final class ProblemsViewImpl extends ProblemsView {
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
 
@@ -132,10 +132,12 @@ final class ProblemsViewImpl extends ProblemsView {
     boolean active = panel.getErrorViewStructure().hasMessages(
       EnumSet.of(ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.NOTE));
     toolWindow.setIcon(active ? AllIcons.Toolwindows.Problems : AllIcons.Toolwindows.ProblemsEmpty);
+    //noinspection DialogTitleCapitalization
+    toolWindow.setStripeTitle(IdeBundle.message("toolwindow.stripe.Problems"));
   }
 
   @Override
-  public void setProgress(String text, float fraction) {
+  public void setProgress(@Nls String text, float fraction) {
     ProblemsViewPanel panel = myPanel;
     if (panel == null) {
       myViewUpdater.execute(() -> myPanel.setProgress(text, fraction));
@@ -146,7 +148,7 @@ final class ProblemsViewImpl extends ProblemsView {
   }
 
   @Override
-  public void setProgress(String text) {
+  public void setProgress(@Nls String text) {
     ProblemsViewPanel panel = myPanel;
     if (panel == null) {
       myViewUpdater.execute(() -> myPanel.setProgressText(text));

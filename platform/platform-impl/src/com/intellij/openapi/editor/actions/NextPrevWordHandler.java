@@ -22,23 +22,20 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-class NextPrevWordHandler extends EditorActionHandler {
+class NextPrevWordHandler extends EditorActionHandler.ForEachCaret {
   private final boolean myNext;
   private final boolean myWithSelection;
   private final boolean myInDifferentHumpsMode;
 
   NextPrevWordHandler(boolean next, boolean withSelection, boolean inDifferentHumpsMode) {
-    super(true);
     myNext = next;
     myWithSelection = withSelection;
     myInDifferentHumpsMode = inDifferentHumpsMode;
   }
 
   @Override
-  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (EditorUtil.isPasswordEditor(editor)) {
       int selectionStartOffset = caret.getLeadSelectionOffset();
       caret.moveToOffset(myNext ? editor.getDocument().getTextLength() : 0);

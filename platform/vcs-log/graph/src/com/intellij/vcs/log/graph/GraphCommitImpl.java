@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph;
 
 import com.google.common.primitives.Ints;
@@ -45,7 +45,7 @@ abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> imp
   }
 }
 
-public class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {
+public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {
   @NotNull private final CommitId myId;
   @NotNull private final Object myParents;
 

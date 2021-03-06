@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -41,8 +41,8 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class FormsInstrumenter extends FormsBuilder {
-  public static final String BUILDER_NAME = "forms";
+public final class FormsInstrumenter extends FormsBuilder {
+  public static final @NlsSafe String BUILDER_NAME = "forms";
 
   public FormsInstrumenter() {
     super(BuilderCategory.CLASS_INSTRUMENTER, BUILDER_NAME);
@@ -63,7 +63,7 @@ public class FormsInstrumenter extends FormsBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final Set<File> formsToCompile = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> formsToCompile = FileCollectionFactory.createCanonicalFileSet();
     for (Collection<File> files : srcToForms.values()) {
       formsToCompile.addAll(files);
     }
@@ -71,7 +71,7 @@ public class FormsInstrumenter extends FormsBuilder {
     if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
-        logger.logCompiledFiles(formsToCompile, getPresentableName(), "Compiling forms:");
+        logger.logCompiledFiles(formsToCompile, "forms", "Compiling forms:");
       }
     }
 
@@ -111,7 +111,7 @@ public class FormsInstrumenter extends FormsBuilder {
       }
     }
     finally {
-      context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunk.getPresentableShortName() + "]"));
+      context.processMessage(new ProgressMessage(FormBundle.message("finish.progress.message", chunk.getPresentableShortName())));
     }
 
     return ExitCode.OK;
@@ -132,7 +132,7 @@ public class FormsInstrumenter extends FormsBuilder {
     OutputConsumer outConsumer,
     boolean useDynamicBundles) throws ProjectBuildException {
 
-    final Map<File, Collection<File>> instrumented = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Collection<File>> instrumented = FileCollectionFactory.createCanonicalFileMap();
     final Map<String, File> class2form = new HashMap<>();
 
     final MyNestedFormLoader nestedFormsLoader = new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk), finder);
@@ -159,10 +159,10 @@ public class FormsInstrumenter extends FormsBuilder {
         continue;
       }
       catch (Exception e) {
-        throw new ProjectBuildException("Cannot process form file " + formFile.getAbsolutePath(), e);
+        throw new ProjectBuildException(FormBundle.message("cannot.process.form.file", formFile.getAbsolutePath()), e);
       }
 
-      final String classToBind = rootContainer.getClassToBind();
+      final @NlsSafe String classToBind = rootContainer.getClassToBind();
       if (classToBind == null) {
         continue;
       }
@@ -170,7 +170,7 @@ public class FormsInstrumenter extends FormsBuilder {
       final CompiledClass compiled = findClassFile(outConsumer, classToBind);
       if (compiled == null) {
         context.processMessage(new CompilerMessage(
-          getPresentableName(), BuildMessage.Kind.WARNING, "Class to bind does not exist: " + classToBind, formFile.getAbsolutePath())
+          getPresentableName(), BuildMessage.Kind.WARNING, FormBundle.message("class.to.bind.does.not.exist", classToBind), formFile.getAbsolutePath())
         );
         continue;
       }
@@ -180,7 +180,7 @@ public class FormsInstrumenter extends FormsBuilder {
         context.processMessage(
           new CompilerMessage(
             getPresentableName(), BuildMessage.Kind.WARNING,
-            formFile.getAbsolutePath() + ": The form is bound to the class " + classToBind + ".\nAnother form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class",
+            FormBundle.message("form.is.bound.to.the.class.from.another.form", formFile.getAbsolutePath(), classToBind, alreadyProcessedForm.getAbsolutePath()),
             formFile.getAbsolutePath())
         );
         continue;
@@ -193,7 +193,7 @@ public class FormsInstrumenter extends FormsBuilder {
 
 
       try {
-        context.processMessage(new ProgressMessage("Instrumenting forms... [" + chunk.getPresentableShortName() + "]"));
+        context.processMessage(new ProgressMessage(FormBundle.message("progress.message", chunk.getPresentableShortName())));
 
         final BinaryContent originalContent = compiled.getContent();
         final ClassReader classReader =
@@ -209,8 +209,9 @@ public class FormsInstrumenter extends FormsBuilder {
 
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
         for (final FormErrorInfo warning : warnings) {
+          @NlsSafe String message = warning.getErrorMessage();
           context.processMessage(
-            new CompilerMessage(getPresentableName(), BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath())
+            new CompilerMessage(getPresentableName(), BuildMessage.Kind.WARNING, message, formFile.getAbsolutePath())
           );
         }
 
@@ -223,11 +224,13 @@ public class FormsInstrumenter extends FormsBuilder {
             }
             message.append(formFile.getAbsolutePath()).append(": ").append(error.getErrorMessage());
           }
-          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message.toString()));
+          @NlsSafe String text = message.toString();
+          context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, text));
         }
       }
       catch (Exception e) {
-        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(), formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message(
+          "forms.instrumentation.failed", e.getMessage()), formFile.getAbsolutePath()));
       }
     }
     return instrumented;

@@ -4,11 +4,11 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.ServiceMessageUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -121,37 +121,19 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  protected boolean processServiceMessages(final String text,
-                                           final Key outputType,
-                                           final ServiceMessageVisitor visitor) throws ParseException {
-    String trimmedText = text.trim();
-    if (!trimmedText.startsWith(ServiceMessage.SERVICE_MESSAGE_START) || !trimmedText.endsWith(ServiceMessage.SERVICE_MESSAGE_END)) {
-      return false;
+  protected boolean processServiceMessages(@NotNull String text,
+                                           @NotNull Key<?> outputType,
+                                           @NotNull ServiceMessageVisitor visitor) throws ParseException {
+    ServiceMessage message = ServiceMessageUtil.parse(text.trim(), myValidateServiceMessagesAttributes, true, myTestFrameworkName);
+    if (message != null) {
+      processServiceMessage(message, visitor);
     }
-    Ref<Boolean> success = Ref.create(false);
-    ServiceMessagesParser parser = new ServiceMessagesParser();
-    parser.setValidateRequiredAttributes(myValidateServiceMessagesAttributes);
-    parser.parse(trimmedText, new ServiceMessageParserCallback() {
-      @Override
-      public void regularText(@NotNull String text1) {
-        
-      }
-
-      @Override
-      public void serviceMessage(@NotNull ServiceMessage message) {
-        message.visit(visitor);
-        success.set(true);
-      }
-
-      @Override
-      public void parseException(@NotNull ParseException parseException, @NotNull String text1) {
-        LOG.error("Failed to parse service message", parseException, text1);
-        success.set(false);
-      }
-    });
-    return success.get();
+    return message != null;
   }
 
+  protected void processServiceMessage(@NotNull ServiceMessage message, @NotNull ServiceMessageVisitor visitor) throws ParseException {
+    message.visit(visitor);
+  }
 
   private void fireOnTestStarted(@NotNull TestStartedEvent testStartedEvent) {
     // local variable is used to prevent concurrent modification
@@ -337,12 +319,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   public void onStartTesting() {}
 
   public synchronized void startTesting() {
-    myTestingStartedHandler.run();
     onStartTesting();
     GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onStartTesting();
     }
+  }
+
+  public void setupProcessor() {
+    myTestingStartedHandler.run();
   }
 
   public synchronized void finishTesting() {
@@ -577,6 +562,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         // Since a test reporter may not emit "testingStarted"/"testingFinished" events,
         // startTesting() is already invoked before starting processing messages.
         if (!myFirstTestingStartedEvent) {
+          setupProcessor();
           startTesting();
         }
         myFirstTestingStartedEvent = false;

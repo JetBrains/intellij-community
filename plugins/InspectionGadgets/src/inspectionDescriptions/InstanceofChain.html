@@ -1,10 +1,28 @@
 <html>
 <body>
-Reports any chains of <b>if</b>-<b>else</b> statements all of whose conditions are <b>instanceof</b> expressions
-or class equality expressions (e.g. comparison with <b>String.class</b>).
+Reports any chains of <code>if</code>-<code>else</code> statements all of whose conditions are <code>instanceof</code> expressions
+or class equality expressions (e.g. comparison with <code>String.class</code>).
 Such constructions usually indicate a failure of object-oriented design, which
 dictates that such type-based dispatch should be done via polymorphic method calls rather than explicit chains
 of type tests.
+<p>Example:</p>
+<pre>
+  double getArea(Shape shape) {
+    // Warning: abstraction failure. 
+    // It would be better to declare a getArea() abstract method in the shape interface
+    // and implement it in every inheritor.
+    if (shape instanceof Point) {
+      return 0;
+    }
+    if (shape instanceof Circle) {
+      return Math.PI * Math.pow(((Circle) shape).radius(), 2);
+    }
+    if (shape instanceof Rectangle) {
+      return ((Rectangle) shape).width() * ((Rectangle) shape).height();
+    }
+    throw new IllegalArgumentException();
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to ignore instanceof expressions on library classes.

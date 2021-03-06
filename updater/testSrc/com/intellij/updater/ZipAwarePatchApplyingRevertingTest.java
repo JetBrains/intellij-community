@@ -20,8 +20,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public class ZipAwarePatchApplyingRevertingTest extends PatchApplyingRevertingTest {
@@ -38,8 +39,8 @@ public class ZipAwarePatchApplyingRevertingTest extends PatchApplyingRevertingTe
         createPatch();
         fail("Should have failed to create a patch against empty .jar");
       }
-      catch (IOException e) {
-        assertEquals("Corrupted file: " + targetJar, e.getMessage());
+      catch (IOException | UncheckedIOException e) {
+        assertThat(e.getMessage()).endsWith("Corrupted file: " + targetJar);
       }
       finally {
         FileUtil.delete(targetJar);
@@ -63,8 +64,8 @@ public class ZipAwarePatchApplyingRevertingTest extends PatchApplyingRevertingTe
         createPatch();
         fail("Should have failed to create a patch from empty .jar");
       }
-      catch (IOException e) {
-        assertEquals("Corrupted file: " + sourceJar, e.getMessage());
+      catch (IOException | UncheckedIOException e) {
+        assertThat(e.getMessage()).endsWith("Corrupted file: " + sourceJar);
       }
       finally {
         FileUtil.delete(targetJar);

@@ -3,10 +3,13 @@ package com.intellij.build.output
 
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.util.function.Consumer
 import java.util.regex.Matcher
@@ -19,7 +22,9 @@ import java.util.regex.Pattern
 class KotlincOutputParser : BuildOutputParser {
 
   companion object {
-    private const val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
+    private val COMPILER_MESSAGES_GROUP: @BuildEventsNls.Title String
+      @BuildEventsNls.Title
+      get() = LangBundle.message("build.event.title.kotlin.compiler")
   }
 
   override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
@@ -36,9 +41,9 @@ class KotlincOutputParser : BuildOutputParser {
     val file = File(path)
 
     val fileExtension = file.extension.toLowerCase()
-    if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) {
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), line),
-                        consumer)
+    if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) { //NON-NLS
+      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
+      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
 
     val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
@@ -86,8 +91,8 @@ class KotlincOutputParser : BuildOutputParser {
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), message, details), consumer)
     }
     else {
-      val text = lineWoSeverity.amendNextLinesIfNeeded(reader)
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), text, text), consumer)
+      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
+      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
   }
 
@@ -117,15 +122,16 @@ class KotlincOutputParser : BuildOutputParser {
     val colonIndex1 = indexOf(COLON)
     return colonIndex1 == 0
            || (colonIndex1 >= 0 && substring(0, colonIndex1).startsWithSeverityPrefix()) // Next Kotlin message
-           || StringUtil.startsWith(this, "Note: ") // Next javac info message candidate
-           || StringUtil.startsWith(this, "> Task :") // Next gradle message candidate
-           || StringUtil.containsIgnoreCase(this, "FAILURE")
-           || StringUtil.containsIgnoreCase(this, "FAILED")
+           || StringUtil.startsWith(this, "Note: ") // Next javac info message candidate //NON-NLS
+           || StringUtil.startsWith(this, "> Task :") // Next gradle message candidate //NON-NLS
+           || StringUtil.containsIgnoreCase(this, "FAILURE") //NON-NLS
+           || StringUtil.containsIgnoreCase(this, "FAILED") //NON-NLS
   }
 
   private fun String.startsWithSeverityPrefix() = getMessageKind(this) != MessageEvent.Kind.SIMPLE
 
-  private fun getMessageKind(kind: String) = when (kind) {
+  @NonNls
+  private fun getMessageKind(kind: @NonNls String) = when (kind) {
     "e" -> MessageEvent.Kind.ERROR
     "w" -> MessageEvent.Kind.WARNING
     "i" -> MessageEvent.Kind.INFO
@@ -149,9 +155,10 @@ class KotlincOutputParser : BuildOutputParser {
     return if (this == 1) line.indexOf(COLON, this + 1) else this
   }
 
-  private val KAPT_ERROR_WHILE_ANNOTATION_PROCESSING_MARKER_TEXT =
-    // KaptError::class.java.canonicalName + ": " + KaptError.Kind.ERROR_RAISED.message
-    "org.jetbrains.kotlin.kapt3.diagnostic.KaptError" + ": " + "Error while annotation processing"
+  private val KAPT_ERROR_WHILE_ANNOTATION_PROCESSING_MARKER_TEXT
+    get() =
+      // KaptError::class.java.canonicalName + ": " + KaptError.Kind.ERROR_RAISED.message
+      "org.jetbrains.kotlin.kapt3.diagnostic.KaptError" + ": " + LangBundle.message("kapterror.error.while.annotation.processing")
 
   private fun isKaptErrorWhileAnnotationProcessing(message: MessageEvent): Boolean {
     if (message.kind != MessageEvent.Kind.ERROR) return false
@@ -168,20 +175,23 @@ class KotlincOutputParser : BuildOutputParser {
     return true
   }
 
-  private fun createMessage(parentId: Any, messageKind: MessageEvent.Kind, text: String, detail: String): MessageEvent {
-    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail)
+  private fun createMessage(parentId: Any,
+                            messageKind: MessageEvent.Kind,
+                            text: @BuildEventsNls.Message String,
+                            detail: @BuildEventsNls.Description String): MessageEvent {
+    return MessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail) //NON-NLS
   }
 
   private fun createMessageWithLocation(
     parentId: Any,
     messageKind: MessageEvent.Kind,
-    text: String,
+    text: @BuildEventsNls.Message String,
     file: String,
     lineNumber: Int,
     columnIndex: Int,
-    detail: String
+    detail: @BuildEventsNls.Description String
   ): FileMessageEventImpl {
-    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail,
+    return FileMessageEventImpl(parentId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail, //NON-NLS
                                 FilePosition(File(file), lineNumber - 1, columnIndex - 1))
   }
 

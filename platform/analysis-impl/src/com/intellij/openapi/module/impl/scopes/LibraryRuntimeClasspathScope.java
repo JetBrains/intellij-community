@@ -9,24 +9,26 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ObjectIntHashMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
+public final class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   private final ProjectFileIndex myIndex;
-  private final ObjectIntHashMap<VirtualFile> myEntries = new ObjectIntHashMap<>();
+  private final Object2IntMap<VirtualFile> myEntries=new Object2IntOpenHashMap<>();
 
   public LibraryRuntimeClasspathScope(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     super(project);
+
+    myEntries.defaultReturnValue(-1);
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Set<Sdk> processedSdk = new THashSet<>();
-    final Set<Library> processedLibraries = new THashSet<>();
-    final Set<Module> processedModules = new THashSet<>();
+    final Set<Sdk> processedSdk = new HashSet<>();
+    final Set<Library> processedLibraries = new HashSet<>();
+    final Set<Module> processedModules = new HashSet<>();
     final Condition<OrderEntry> condition = orderEntry -> {
       if (orderEntry instanceof ModuleOrderEntry) {
         final Module module = ((ModuleOrderEntry)orderEntry).getModule();
@@ -67,10 +69,10 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
                             @NotNull Condition<? super OrderEntry> condition) {
     if (!processedModules.add(module)) return;
 
-    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<ObjectIntHashMap<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<>() {
       @Override
-      public ObjectIntHashMap<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry libraryOrderEntry,
-                                                                  final ObjectIntHashMap<VirtualFile> value) {
+      public Object2IntMap<VirtualFile> visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry,
+                                                                       final Object2IntMap<VirtualFile> value) {
         final Library library = libraryOrderEntry.getLibrary();
         if (library != null && processedLibraries.add(library)) {
           addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
@@ -80,16 +82,16 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       @Override
-      public ObjectIntHashMap<VirtualFile> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry moduleSourceOrderEntry,
-                                                                       final ObjectIntHashMap<VirtualFile> value) {
+      public Object2IntMap<VirtualFile> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry moduleSourceOrderEntry,
+                                                                            final Object2IntMap<VirtualFile> value) {
         processedModules.add(moduleSourceOrderEntry.getOwnerModule());
         addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
       }
 
       @Override
-      public ObjectIntHashMap<VirtualFile> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry,
-                                                                 ObjectIntHashMap<VirtualFile> value) {
+      public Object2IntMap<VirtualFile> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry,
+                                                                      Object2IntMap<VirtualFile> value) {
         final Module depModule = moduleOrderEntry.getModule();
         if (depModule != null) {
           addAll(value, ModuleRootManager.getInstance(depModule).getSourceRoots());
@@ -98,8 +100,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       @Override
-      public ObjectIntHashMap<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry jdkOrderEntry,
-                                                              final ObjectIntHashMap<VirtualFile> value) {
+      public Object2IntMap<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry jdkOrderEntry,
+                                                                   final Object2IntMap<VirtualFile> value) {
         final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null && processedSdk.add(jdk)) {
           addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
@@ -112,7 +114,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return myEntries.contains(getFileRoot(file));
+    return myEntries.containsKey(getFileRoot(file));
   }
 
   @Nullable
@@ -131,8 +133,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     if (file1.equals(file2)) return 0;
     final VirtualFile r1 = getFileRoot(file1);
     final VirtualFile r2 = getFileRoot(file2);
-    final int i1 = myEntries.get(r1);
-    final int i2 = myEntries.get(r2);
+    final int i1 = myEntries.getInt(r1);
+    final int i2 = myEntries.getInt(r2);
     if (i1 == i2) return 0;
     if (i1 == -1) return -1;
     if (i2 == -1) return 1;
@@ -144,10 +146,9 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
   public List<VirtualFile> getRoots() {
     if (myEntries.isEmpty()) return Collections.emptyList();
     VirtualFile[] result = new VirtualFile[myEntries.size()];
-    myEntries.forEachEntry((a, b) -> {
-      result[b] = a;
-      return true;
-    });
+    for (Object2IntMap.Entry<VirtualFile> entry : myEntries.object2IntEntrySet()) {
+      result[entry.getIntValue()] = entry.getKey();
+    }
     return Arrays.asList(result);
   }
 
@@ -161,9 +162,10 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     return true;
   }
 
-  private static void addAll(ObjectIntHashMap<? super VirtualFile> entries, VirtualFile[] files) {
+  private static void addAll(Object2IntMap<? super VirtualFile> entries,
+                             VirtualFile[] files) {
     for (VirtualFile file : files) {
-      if (!entries.contains(file)) {
+      if (!entries.containsKey(file)) {
         entries.put(file, entries.size());
       }
     }

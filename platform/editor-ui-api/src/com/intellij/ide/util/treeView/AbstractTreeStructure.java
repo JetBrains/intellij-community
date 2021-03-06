@@ -27,7 +27,7 @@ public abstract class AbstractTreeStructure {
   public static ActionCallback asyncCommitDocuments(@NotNull Project project) {
     if (project.isDisposed()) return ActionCallback.DONE;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    if (!documentManager.hasUncommitedDocuments()) {
+    if (!documentManager.hasEventSystemEnabledUncommittedDocuments()) {
       return ActionCallback.DONE;
     }
     final ActionCallback callback = new ActionCallback();

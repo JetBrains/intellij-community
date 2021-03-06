@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers.hash;
 
+import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +43,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   public HashMap(int capacity, float loadFactor) {
     this.loadFactor = loadFactor;
     clear(capacity);
+    DeprecatedMethodException.report("Use java.util.HashMap instead");
   }
 
   @Override

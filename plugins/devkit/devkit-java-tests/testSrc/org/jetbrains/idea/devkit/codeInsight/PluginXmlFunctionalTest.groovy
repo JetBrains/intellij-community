@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -101,34 +101,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("coreImpl", coreImpl)
   }
 
-  void testListeners() {
-    myFixture.addClass("public class MyCollectionWithoutDefaultCTOR implements java.util.Collection {" +
-                       " public MyCollectionWithoutDefaultCTOR(String something) {}" +
-                       "}")
-    doHighlightingTest("Listeners.xml")
-  }
-
-  // absence of since-build only in DevKit setup: PluginXmlPluginModuleTest.testListenersNoSinceBuild
-  void testListenersPre193() {
-    doHighlightingTest("ListenersPre193.xml")
-  }
-
-  void testListenersOsAttributePre201() {
-    doHighlightingTest("ListenersOsAttributePre201.xml")
-  }
-
-  void testListenersDepends() {
-    myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml")
-    doHighlightingTest("ListenersDepends-dependency.xml")
-  }
-
-  void testListenersNoPluginIdStandalone() {
-    doHighlightingTest("ListenersNoPluginIdStandalone.xml")
+  // Gradle-like setup, but JBList not in Library
+  void testListenerUnresolvedTargetPlatform() {
+    doHighlightingTest("ListenersUnresolvedTargetPlatform.xml")
   }
 
   void testExtensionI18n() {
     doHighlightingTest("extensionI18n.xml",
-                       "extensionI18nBundle.properties")
+            "MyBundle.properties", "AnotherBundle.properties")
   }
 
   void testExtensionsHighlighting() {
@@ -153,6 +133,12 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             <extensionPoint name="custom"/>
         </extensionPoints>
     """)
+    addPluginXml("notInDependencies", """
+        <id>com.intellij.notincluded</id>
+        <extensionPoints>
+            <extensionPoint name="notInDependencies"/>
+        </extensionPoints>
+    """)
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
@@ -161,13 +147,23 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        " @com.intellij.util.xmlb.annotations.Attribute " +
                        " @Experimental public String experimentalAttribute; " +
                        "}")
+    myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval; " +
+                       "@ScheduledForRemoval(inVersion = \"removeVersion\") @Deprecated public class MyScheduledForRemovalEP {}")
+    myFixture.addClass("package foo; import org.jetbrains.annotations.ApiStatus.Internal; " +
+                       "@Internal public class MyInternalEP {" +
+                       " @com.intellij.util.xmlb.annotations.Attribute " +
+                       " @Internal public String internalAttribute; " +
+                       "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
+                       "import com.intellij.openapi.extensions.RequiredElement; " +
                        "public class MyServiceDescriptor { " +
                        "  @Attribute public String serviceImplementation; " +
                        "  @Attribute public java.util.concurrent.TimeUnit timeUnit; " +
                        "  @Attribute public java.lang.Integer integerNullable; " +
-                       "  @Attribute public int intProperty; " +
+                       "  @Attribute public int intPropertyForClass; " +
+                       "  @Attribute @RequiredElement(allowEmpty=true) public String canBeEmptyString; " +
+                       "  @Attribute public boolean forClass; " +
                        "}")
 
     configureByFile()
@@ -464,8 +460,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testPluginWithXInclude() {
+    myFixture.copyFileToProject("pluginWithXInclude.xml", "META-INF/pluginWithXInclude.xml")
+    myFixture.copyFileToProject("pluginWithXInclude-extensionPoints.xml", "META-INF/pluginWithXInclude-extensionPoints.xml")
+    myFixture.copyFileToProject("pluginWithXInclude-extensionPointsWithModule.xml", "META-INF/pluginWithXInclude-extensionPointsWithModule.xml")
     myFixture.enableInspections(new XmlPathReferenceInspection())
-    doHighlightingTest("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml", "pluginWithXInclude-extensionPointsWithModule.xml")
+    doHighlightingTest("META-INF/pluginWithXInclude.xml")
   }
 
   void testPluginXmlInIdeaProjectWithoutVendor() {
@@ -603,6 +602,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   @SuppressWarnings("ComponentNotRegistered")
   void testActionHighlighting() {
     configureByFile()
+    myFixture.copyFileToProject("MyBundle.properties")
+    myFixture.copyFileToProject("AnotherBundle.properties")
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
                                         PackagePrivateActionBase() {}
@@ -726,6 +727,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testProductDescriptor() {
     doHighlightingTest("productDescriptor.xml")
+  }
+
+  void testProductDescriptorWithPlaceholders() {
+    doHighlightingTest("productDescriptorWithPlaceholders.xml")
   }
 
   void testProductDescriptorInvalid() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -20,7 +21,7 @@ public final class CommandLineUtil {
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
   private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
-  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
+  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
@@ -414,11 +415,11 @@ public final class CommandLineUtil {
     return "cmd.exe";
   }
 
-  private static boolean isWinShell(String command) {
+  private static boolean isWinShell(@NonNls String command) {
     return "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
   }
 
-  private static boolean isWinShellScript(String command) {
+  private static boolean isWinShellScript(@NonNls String command) {
     return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat");
   }
 
@@ -437,7 +438,7 @@ public final class CommandLineUtil {
   /**
    * Counts quote parity needed to ^-escape special chars on Windows properly.
    */
-  private static class QuoteFlag {
+  private static final class QuoteFlag {
     private boolean enabled;
 
     private QuoteFlag(boolean value) {

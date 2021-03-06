@@ -28,7 +28,7 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
 
   public void testCast() {
     doMemberTest("public void testThis(java.util.List l) {" +
-                 "  final String[][] ss = (String[][]) l.toArray(/*Array of type 'java.lang.String[][]' expected, 'java.lang.Number[]' found*/new Number[l.size()]/**/);" +
+                 "  final String[][] ss = (String[][]) l.toArray(new Number[l.size()]);" +
                  "}");
   }
 
@@ -99,6 +99,41 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
            "        Stream.of(1, 2.0, 3.0).toArray(/*Array of type 'java.lang.Number[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
            "    }\n" +
            "}");
+  }
+  
+  public void testToArrayGeneric() {
+    doTest("import java.util.*;\n" +
+           "class Test {\n" +
+           "  static <A extends CharSequence> A[] toArray(List<CharSequence> cs) {\n" +
+           "    //noinspection unchecked\n" +
+           "    return (A[]) cs.stream().filter(Objects::nonNull).toArray(CharSequence[]::new);\n" +
+           "  }\n" +
+           "}");
+  }
+  
+  public void testToArrayGeneric2() {
+    doTest("import java.util.*;\n" +
+           "class Test {\n" +
+           "\n" +
+           "    static <A extends CharSequence> A[] toArray2(List<CharSequence> cs) {\n" +
+           "        //noinspection unchecked\n" +
+           "        return (A[]) cs.toArray(new CharSequence[0]);\n" +
+           "    }\n" +
+           "}");
+  }
+  
+  public void testCastNonRaw() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  void test() {\n" +
+           "    List<Foo> list = new ArrayList<>();\n" +
+           "    Bar[] arr2 = (Bar[])list.toArray(new Foo[0]);\n" +
+           "  }\n" +
+           "}\n" +
+           "\n" +
+           "class Foo {}\n" +
+           "class Bar extends Foo {}");
   }
 
   @NotNull

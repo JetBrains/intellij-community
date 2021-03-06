@@ -12,7 +12,9 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.ThreadTracker
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 
 import java.util.concurrent.TimeUnit
@@ -25,7 +27,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
  */
 @CompileStatic
 class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMethods {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
+  private static final Logger LOG = Logger.getInstance(GroovyDebuggerTest.class)
 
   @Override
   Logger getLogger() { LOG }
@@ -61,9 +63,9 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      super.runTest()
+      super.runTestRunnable(testRunnable)
     }
     catch (Throwable e) {
       TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage())

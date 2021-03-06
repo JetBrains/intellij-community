@@ -17,6 +17,9 @@ public interface ShHeredoc extends ShCompositeElement {
   PsiElement getAndAnd();
 
   @Nullable
+  PsiElement getHeredocContent();
+
+  @Nullable
   PsiElement getHeredocMarkerEnd();
 
   @NotNull

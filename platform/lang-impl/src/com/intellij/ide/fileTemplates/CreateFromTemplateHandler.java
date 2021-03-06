@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.find.FindInProjectSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -52,7 +53,16 @@ public interface CreateFromTemplateHandler {
 
   void prepareProperties(@NotNull Map<String, Object> props);
 
+  /**
+   * @deprecated use {@link CreateFromTemplateHandler#prepareProperties(Map, String, FileTemplate, Project)} instead
+   */
+  @Deprecated
   default void prepareProperties(@NotNull Map<String, Object> props, String fileName, @NotNull FileTemplate template) {}
+
+  default void prepareProperties(@NotNull Map<String, Object> props,
+                                 String fileName,
+                                 @NotNull FileTemplate template,
+                                 @NotNull Project project) {}
 
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)

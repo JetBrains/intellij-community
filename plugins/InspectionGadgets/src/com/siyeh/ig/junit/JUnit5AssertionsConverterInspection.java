@@ -33,12 +33,13 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.testFrameworks.AssertHint;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnit5AssertionsConverterInspection extends BaseInspection {
-  private String myFrameworkName = "JUnit5";
+  @NonNls private String myFrameworkName = "JUnit5";
 
-  JUnit5AssertionsConverterInspection(String frameworkName) {
+  JUnit5AssertionsConverterInspection(@NonNls String frameworkName) {
     myFrameworkName = frameworkName;
   }
 
@@ -69,7 +70,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       doCheck(expression,
-              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false),
+              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get),
               psiMethod -> {
                 final PsiClass containingClass = psiMethod.getContainingClass();
                 if (containingClass == null) {
@@ -86,7 +87,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
       doCheck(expression, 
-              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false),
+              () -> AssertHint.create(expression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get),
               psiMethod -> {
                 final PsiClass containingClass = psiMethod.getContainingClass();
                 if (containingClass == null) {
@@ -137,7 +138,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       }
     }
 
-    private boolean absentInJUnit5(PsiMethod psiMethod, String methodName) {
+    private boolean absentInJUnit5(PsiMethod psiMethod, @NonNls String methodName) {
       if ("assertNotEquals".equals(methodName)) {
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         if (parameters.length > 0) {
@@ -151,7 +152,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     }
   }
 
-  private static String getNewAssertClassName(String methodName) {
+  private static String getNewAssertClassName(@NonNls String methodName) {
     if ("assertThat".equals(methodName)) {
       return JUnitCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT;
     }
@@ -175,7 +176,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethodReferenceExpression) {
         AssertHint assertHint =
-          AssertHint.create((PsiMethodReferenceExpression)element, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false);
+          AssertHint.create((PsiMethodReferenceExpression)element, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get);
         if (assertHint != null) {
           replaceQualifier(project, assertHint.getMethod().getName(), (PsiReferenceExpression)element);
         }
@@ -188,12 +189,12 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       }
 
       AssertHint assertHint =
-        AssertHint.create(methodCallExpression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get, false);
+        AssertHint.create(methodCallExpression, AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT::get);
       if (assertHint == null) {
         return;
       }
 
-      String methodName = assertHint.getMethod().getName();
+      @NonNls String methodName = assertHint.getMethod().getName();
       if (!"assertThat".equals(methodName)) {
         PsiExpression message = assertHint.getMessage();
         if (message != null) {

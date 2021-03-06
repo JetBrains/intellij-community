@@ -4,14 +4,15 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.model.psi.UrlReferenceHost;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiReference;
 
-public interface ShLiteral extends ShSimpleCommandElement, PsiNameIdentifierOwner {
+public interface ShLiteral extends ShSimpleCommandElement, UrlReferenceHost, PsiNameIdentifierOwner {
 
   @Nullable
   PsiElement getWord();
 
-  PsiReference[] getReferences();
+  PsiReference @NotNull [] getReferences();
 
 }

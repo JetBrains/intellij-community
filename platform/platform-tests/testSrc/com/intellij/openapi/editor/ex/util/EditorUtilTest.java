@@ -16,8 +16,12 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -59,6 +63,52 @@ public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
     Rectangle newVisibleArea = getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
     assertEquals(oldVisibleArea.x, newVisibleArea.x);
     assertTrue(oldVisibleArea.y < newVisibleArea.y);
+  }
+
+  public void testLogicalLineToYRange() {
+    createEditor("line1\nline2\nlong long line\n");
+    EditorTestUtil.configureSoftWraps(getEditor(), 10);
+    int lineHeight = getEditor().getLineHeight();
+
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p1 = EditorUtil.logicalLineToYRange(getEditor(), 1);
+    assertEquals(lineHeight, p1.first.intervalStart());
+    assertEquals(lineHeight * 2, p1.first.intervalEnd());
+    assertEquals(lineHeight, p1.second.intervalStart());
+    assertEquals(lineHeight * 2, p1.second.intervalEnd());
+
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p2 = EditorUtil.logicalLineToYRange(getEditor(), 2);
+    assertEquals(lineHeight * 2, p2.first.intervalStart());
+    assertEquals(lineHeight * 4, p2.first.intervalEnd());
+    assertEquals(lineHeight * 2, p2.second.intervalStart());
+    assertEquals(lineHeight * 4, p2.second.intervalEnd());
+  }
+
+  public void testLogicalLineToYRangeShared() {
+    createEditor("line1\nline2\n");
+    EditorTestUtil.addFoldRegion(getEditor(), 5, 6, "...", true);
+
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 1);
+    assertEquals(0, p.first.intervalStart());
+    assertEquals(getEditor().getLineHeight(), p.first.intervalEnd());
+    assertNull(p.second);
+  }
+
+  public void testYToLogicalLineRange() {
+    createEditor("line1\nline2\nline3\n");
+    EditorTestUtil.addFoldRegion(getEditor(), 5, 6, "...", true);
+    int lineHeight = getEditor().getLineHeight();
+
+    Interval i1 = EditorUtil.yToLogicalLineRange(getEditor(), lineHeight / 2);
+    assertEquals(0, i1.intervalStart());
+    assertEquals(1, i1.intervalEnd());
+
+    Interval i2 = EditorUtil.yToLogicalLineRange(getEditor(), lineHeight * 3 / 2);
+    assertEquals(2, i2.intervalStart());
+    assertEquals(2, i2.intervalEnd());
+  }
+
+  private void createEditor(String text) {
+    configureFromFileText(getTestName(false) + ".txt", text);
   }
 
   private void createSmallEditor(String text) {

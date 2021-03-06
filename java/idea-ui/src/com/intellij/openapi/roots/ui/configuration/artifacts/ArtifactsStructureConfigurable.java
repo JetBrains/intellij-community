@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -14,12 +13,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -28,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -43,15 +43,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
+public final class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
   private final ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
-  public ArtifactsStructureConfigurable(@NotNull Project project) {
-    super(project, new ArtifactStructureConfigurableState());
-    PackagingElementType.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<PackagingElementType>() {
+  public ArtifactsStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable) {
+    super(projectStructureConfigurable, new ArtifactStructureConfigurableState());
+    PackagingElementType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull PackagingElementType extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (extension instanceof ComplexPackagingElementType && myDefaultSettings.getTypesToShowContent().contains(extension)) {
@@ -60,7 +63,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
           myDefaultSettings.setTypesToShowContent(updated);
         }
       }
-    }, false, this);
+    }, this);
   }
 
   @Override
@@ -71,7 +74,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void init(StructureConfigurableContext context, ModuleStructureConfigurable moduleStructureConfigurable,
                    ProjectLibrariesConfigurable projectLibrariesConfig, GlobalLibrariesConfigurable globalLibrariesConfig) {
     super.init(context);
-    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactAdapter() {
+    myPackagingEditorContext = new ArtifactsStructureConfigurableContextImpl(myContext, myProject, myDefaultSettings, new ArtifactListener() {
       @Override
       public void artifactAdded(@NotNull Artifact artifact) {
         final MyNode node = addArtifactNode(artifact);
@@ -115,7 +118,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   private void updateLibraryElements(final Artifact artifact, final Library library, final String oldName, final String newName) {
     if (ArtifactUtil.processPackagingElements(myPackagingEditorContext.getRootElement(artifact), LibraryElementType.LIBRARY_ELEMENT_TYPE,
-                                              new PackagingElementProcessor<LibraryPackagingElement>() {
+                                              new PackagingElementProcessor<>() {
                                                 @Override
                                                 public boolean process(@NotNull LibraryPackagingElement element,
                                                                        @NotNull PackagingElementPath path) {
@@ -126,7 +129,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
     myPackagingEditorContext.editLayout(artifact, () -> {
       final ModifiableArtifact modifiableArtifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(artifact);
-      ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<LibraryPackagingElement>() {
+      ArtifactUtil.processPackagingElements(modifiableArtifact, LibraryElementType.LIBRARY_ELEMENT_TYPE, new PackagingElementProcessor<>() {
         @Override
         public boolean process(@NotNull LibraryPackagingElement element, @NotNull PackagingElementPath path) {
           if (isResolvedToLibrary(element, library, oldName)) {
@@ -240,10 +243,10 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        final ArtifactType[] types = ArtifactType.getAllTypes();
-        final AnAction[] actions = new AnAction[types.length];
-        for (int i = 0; i < types.length; i++) {
-          actions[i] = createAddArtifactAction(types[i]);
+        List<ArtifactType> types = ArtifactType.getAllTypes();
+        final AnAction[] actions = new AnAction[types.size()];
+        for (int i = 0; i < types.size(); i++) {
+          actions[i] = createAddArtifactAction(types.get(i));
         }
         return actions;
       }
@@ -254,8 +257,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     final List<? extends ArtifactTemplate> templates = type.getNewArtifactTemplates(myPackagingEditorContext);
     final ArtifactTemplate emptyTemplate = new ArtifactTemplate() {
       @Override
-      public String getPresentableName() {
-        return "Empty";
+      public @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
+        return JavaBundle.message("empty.title");
       }
 
       @Override
@@ -311,7 +314,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void disposeUIResources() {
     myPackagingEditorContext.saveEditorSettings();
     super.disposeUIResources();
-    myPackagingEditorContext.disposeUIResources();
+    myPackagingEditorContext.resetModifiableModel();
   }
 
   @Override
@@ -372,7 +375,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     private final ArtifactType myType;
     private final ArtifactTemplate myArtifactTemplate;
 
-    AddArtifactAction(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate, final @NotNull String actionText,
+    AddArtifactAction(@NotNull ArtifactType type, @NotNull ArtifactTemplate artifactTemplate, final @NotNull @NlsActions.ActionText String actionText,
                              final Icon icon) {
       super(actionText, null, icon);
       myType = type;
@@ -385,7 +388,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
-  private class CopyArtifactAction extends AnAction {
+  private final class CopyArtifactAction extends AnAction {
    private CopyArtifactAction() {
       super(CommonBundle.messagePointer("button.copy"), CommonBundle.messagePointer("button.copy"), COPY_ICON);
     }

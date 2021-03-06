@@ -28,6 +28,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class NamespaceDesc {
   public NamespaceDesc(String name,
                        String pkgName,
@@ -76,7 +77,6 @@ public class NamespaceDesc {
   boolean skip;
   String[] pkgNames;
   String enumPkg;
-
 
   public String toString() {
     return "NS:"+name+" "+(skip?"skip":"")+pkgName;

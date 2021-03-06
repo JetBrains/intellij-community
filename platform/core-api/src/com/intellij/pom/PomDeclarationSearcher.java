@@ -26,6 +26,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PomDeclarationSearcher {
   public static final ExtensionPointName<PomDeclarationSearcher> EP_NAME = ExtensionPointName.create("com.intellij.pom.declarationSearcher");
 
-  public abstract void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, Consumer<PomTarget> consumer);
+  public abstract void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer);
 
 }

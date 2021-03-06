@@ -2,9 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.project.Project
-import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
@@ -22,7 +20,7 @@ import javax.swing.Icon
  */
 abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: String) {
 
-  abstract val displayName: String
+  abstract val displayName: String @Nls get
 
   abstract val icon: Icon
 
@@ -30,14 +28,28 @@ abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: Str
 
   abstract fun createDefaultConfig(): C
 
-  fun duplicateConfig(config: C): C = createDefaultConfig().also {
-    XmlSerializerUtil.copyBean(config, it)
-  }
+  open fun initializeNewlyCreated(config: C) {}
 
-  abstract fun createConfigurable(project: Project, config: C): Configurable
+  abstract fun duplicateConfig(config: C): C
 
   open val helpTopic: String? = null
 
   @Suppress("UNCHECKED_CAST")
   internal fun castConfiguration(config: ContributedConfigurationBase) = config as C
+
+  companion object {
+    @JvmStatic
+    fun <Type, Config, State> duplicatePersistentComponent(type: Type, template: Config): Config
+      where Config : PersistentStateComponent<State>,
+            Config : ContributedConfigurationBase,
+            Type : ContributedTypeBase<Config> {
+      return type.createDefaultConfig().also {
+        val state = template.state
+        if (state != null) {
+          it.loadState(state)
+        }
+        it.displayName = template.displayName
+      }
+    }
+  }
 }

@@ -30,7 +30,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.style.ConditionalExpressionGenerator;
 import com.siyeh.ig.style.IfConditionalModel;
 import org.intellij.lang.annotations.Pattern;
@@ -101,6 +103,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
         CommentTracker ct = new CommentTracker();
         String text = generator.generate(ct);
         if (model.getElseExpression().textMatches(text) && !PsiTreeUtil.isAncestor(statement, model.getElseBranch(), false)) {
+          ct.deleteAndRestoreComments(statement);
+        } else if (model.getElseBranch() instanceof PsiDeclarationStatement){
+          ct.replace(model.getElseExpression(), text);
           ct.deleteAndRestoreComments(statement);
         } else {
           ct.replace(model.getThenExpression(), text);

@@ -1,11 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.*
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
+@CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
+  @CompileStatic(TypeCheckingMode.SKIP)
   PyCharmCommunityProperties(String communityHome) {
     platformPrefix = "PyCharmCore"
     customProductCode = "PC"
@@ -30,14 +34,15 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
         withModule("intellij.pycharm.community.customization.impl", mainJarName)
-        withProjectLibraryUnpackedIntoJar("tips-pycharm-community", mainJarName)
       }
     ]
     productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
   }
 
   @Override
+  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
+    context.options.buildStepsToSkip.add(PyCharmBuildOptions.GENERATE_INDICES_AND_STUBS_STEP)
     super.copyAdditionalFiles(context, targetDirectory)
     context.ant.copy(todir: "$targetDirectory/license") {
       fileset(file: "$context.paths.communityHome/LICENSE.txt")
@@ -46,7 +51,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "PyCharmCE${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 

@@ -7,8 +7,8 @@ import org.junit.Before
 open class KotlinGuiTestCase : GuiTestCase() {
 
   @Before
-  override fun setUp() {
-    super.setUp()
+  override fun before() {
+    super.before()
     KotlinTestProperties.useKotlinArtifactFromEnvironment()
   }
 

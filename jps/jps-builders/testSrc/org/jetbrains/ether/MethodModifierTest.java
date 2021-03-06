@@ -51,8 +51,11 @@ public class MethodModifierTest extends IncrementalTestCase {
     doTest();
   }
 
-
   public void testUnsetFinal() {
+    doTest();
+  }
+
+  public void testUnsetAbstractForSAMInterface() {
     doTest();
   }
 

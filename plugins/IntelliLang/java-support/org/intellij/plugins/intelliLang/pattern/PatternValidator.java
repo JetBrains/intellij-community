@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -97,6 +96,7 @@ public class PatternValidator extends LocalInspectionTool {
             // check whether @Subst complies with pattern
             check(expression, holder, true);
           }
+          check(expression, holder, false);
         }
       }
 
@@ -206,12 +206,12 @@ public class PatternValidator extends LocalInspectionTool {
           assert fqn != null;
 
           final String name = StringUtil.getShortName(fqn);
-          holder.registerProblem(expression, MessageFormat.format("Expression ''{0}'' doesn''t match ''{1}'' pattern: {2}", o, name,
-                                                                  pattern.pattern()));
+          holder.registerProblem(expression,
+                                 IntelliLangBundle.message("inspection.message.expression.does.not.match.pattern", o, name, pattern.pattern()));
         }
         else {
           holder.registerProblem(expression,
-                                 MessageFormat.format("Expression ''{0}'' doesn''t match pattern: {1}", o, pattern.pattern()));
+                                 IntelliLangBundle.message("inspection.message.expression.does.not.match.pattern2", o, pattern.pattern()));
         }
       }
     }

@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class GroovyMethodInfo {
+public final class GroovyMethodInfo {
 
   private static volatile Map<String, Map<String, List<GroovyMethodInfo>>> METHOD_INFOS;
   private static Map<String, Map<String, List<GroovyMethodInfo>>> LIGHT_METHOD_INFOS;
@@ -77,7 +77,6 @@ public class GroovyMethodInfo {
           addMethodDescriptor(methodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.className);
         }
         else {
-          assert methodDescriptor.className == null;
           addMethodDescriptor(lightMethodInfos, methodDescriptor, methodDescriptor.getLoaderForClass(), methodDescriptor.lightMethodKey);
         }
       }

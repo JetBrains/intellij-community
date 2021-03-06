@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,7 +64,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
   }
 
   private void setTextRepresentation(@NotNull PathMappingSettings mappingSettings) {
-    final StringBuilder sb = new StringBuilder();
+    @NlsSafe StringBuilder sb = new StringBuilder();
     for (PathMappingSettings.PathMapping mapping : mappingSettings.getPathMappings()) {
       sb.append(mapping.getLocalRoot()).append("=").append(mapping.getRemoteRoot()).append(";");
     }

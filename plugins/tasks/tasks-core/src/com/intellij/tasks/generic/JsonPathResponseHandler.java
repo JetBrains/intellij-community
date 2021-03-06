@@ -4,8 +4,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.InvalidPathException;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.JsonProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +86,8 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     if (list == null) {
       return ContainerUtil.emptyList();
     }
-    return ContainerUtil.getFirstItems(ContainerUtil.map2List(list, o -> o.toString()), max);
+    JsonProvider jsonProvider = Configuration.defaultConfiguration().jsonProvider();
+    return ContainerUtil.getFirstItems(ContainerUtil.map2List(list, o -> jsonProvider.toJson(o)), max);
   }
 
   @Nullable
@@ -96,7 +99,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
       return null;
     }
     if (value instanceof String || value instanceof Number || value instanceof Boolean) {
-      return value.toString();
+      return value.toString(); //NON-NLS
     }
     throw new Exception(String.format("JsonPath expression '%s' should match string value. Got '%s' instead",
                                       selector.getPath(), value));

@@ -4,22 +4,16 @@ package org.jdom;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
 import org.jdom.filter.ElementFilter;
 import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ImmutableElement extends Element {
+import java.util.*;
+
+final class ImmutableElement extends Element {
   private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,
                                                                                        Namespace.NO_NAMESPACE);
   private final Content[] myContent;
@@ -93,9 +87,9 @@ class ImmutableElement extends Element {
 
     if (type == null) {
       return Collections.unmodifiableList(ContainerUtil.map(originAttributes,
-                                                            (Function<Attribute, Attribute>)attribute -> new ImmutableAttribute(interner.internString(attribute.getName()),
-                                                                                                                                                                                  interner.internString(attribute.getValue()),
-                                                                                                                                                                                  attribute.getAttributeType(), attribute.getNamespace())));
+                                                            attribute -> new ImmutableAttribute(interner.internString(attribute.getName()),
+                                                                                                interner.internString(attribute.getValue()),
+                                                                                                attribute.getAttributeType(), attribute.getNamespace())));
     }
     else {
       return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
@@ -114,7 +108,7 @@ class ImmutableElement extends Element {
   }
 
   @Override
-  public <T extends Content> List<T> getContent(final Filter<T> filter) {
+  public <T extends Content> List<T> getContent(@NotNull Filter<T> filter) {
     return (List<T>)ContainerUtil.filter(myContent, filter::matches);
   }
 
@@ -220,8 +214,7 @@ class ImmutableElement extends Element {
       return ((ImmutableSameTypeAttributeList)myAttributes).get(name, ns);
     }
     String uri = namespace.getURI();
-    for (int i = 0; i < myAttributes.size(); i++) {
-      Attribute a = myAttributes.get(i);
+    for (Attribute a : myAttributes) {
       String oldURI = a.getNamespaceURI();
       String oldName = a.getName();
       if (oldURI.equals(uri) && oldName.equals(name)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution;
 
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +54,7 @@ import java.util.function.BooleanSupplier;
 /**
  * @author Roman Chernyatchik
  */
-public class ExecutionHelper {
+public final class ExecutionHelper {
   private static final Logger LOG = Logger.getInstance(ExecutionHelper.class);
 
   private ExecutionHelper() {
@@ -62,7 +63,7 @@ public class ExecutionHelper {
   public static void showErrors(
     @NotNull final Project myProject,
     @NotNull final List<? extends Exception> errors,
-    @NotNull final String tabDisplayName,
+    @NotNull final @NlsContexts.TabTitle String tabDisplayName,
     @Nullable final VirtualFile file) {
     showExceptions(myProject, errors, Collections.emptyList(), tabDisplayName, file);
   }
@@ -71,7 +72,7 @@ public class ExecutionHelper {
     @NotNull final Project myProject,
     @NotNull final List<? extends Exception> errors,
     @NotNull final List<? extends Exception> warnings,
-    @NotNull final String tabDisplayName,
+    @NotNull final @NlsContexts.TabTitle String tabDisplayName,
     @Nullable final VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !errors.isEmpty()) {
       throw new RuntimeException(errors.get(0));
@@ -107,18 +108,26 @@ public class ExecutionHelper {
         openMessagesView(errorTreeView, myProject, tabDisplayName);
       }
       catch (NullPointerException e) {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("Exceptions occurred:");
-        for (final Exception exception : errors) {
-          builder.append("\n");
-          builder.append(exception.getMessage());
+        String errorText = "";
+        if (!errors.isEmpty()) {
+          StringBuilder builder = new StringBuilder();
+          for (final Exception exception : errors) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          errorText = ExecutionBundle.message("exception.error.text") + builder;
         }
-        builder.append("Warnings occurred:");
-        for (final Exception exception : warnings) {
-          builder.append("\n");
-          builder.append(exception.getMessage());
+        String warningText = "";
+        if (!warnings.isEmpty()) {
+          StringBuilder builder = new StringBuilder();
+          for (final Exception exception : warnings) {
+            builder.append("\n");
+            builder.append(exception.getMessage());
+          }
+          warningText = ExecutionBundle.message("warning.error.text") + builder;
         }
-        Messages.showErrorDialog(builder.toString(), ExecutionBundle.message("execution.error"));
+        Messages.showErrorDialog(errorText + (errorText.isEmpty() || warningText.isEmpty() ? "" : "\n") + warningText,
+                                 ExecutionBundle.message("execution.error"));
         return;
       }
 
@@ -148,7 +157,7 @@ public class ExecutionHelper {
 
   public static void showOutput(@NotNull final Project myProject,
                                 @NotNull final ProcessOutput output,
-                                @NotNull final String tabDisplayName,
+                                @NotNull final @NlsContexts.TabTitle String tabDisplayName,
                                 @Nullable final VirtualFile file,
                                 final boolean activateWindow) {
     final String stdout = output.getStdout();
@@ -218,7 +227,7 @@ public class ExecutionHelper {
 
   private static void openMessagesView(@NotNull final ErrorViewPanel errorTreeView,
                                        @NotNull final Project myProject,
-                                       @NotNull final String tabDisplayName) {
+                                       @NotNull final @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
@@ -286,7 +295,7 @@ public class ExecutionHelper {
   public static void selectContentDescriptor(final @NotNull DataContext dataContext,
                                              final @NotNull Project project,
                                              @NotNull Collection<? extends RunContentDescriptor> consoles,
-                                             String selectDialogTitle, final Consumer<? super RunContentDescriptor> descriptorConsumer) {
+                                             @NlsContexts.PopupTitle String selectDialogTitle, final Consumer<? super RunContentDescriptor> descriptorConsumer) {
     if (consoles.size() == 1) {
       RunContentDescriptor descriptor = consoles.iterator().next();
       descriptorConsumer.consume(descriptor);
@@ -386,8 +395,11 @@ public class ExecutionHelper {
     }
   }
 
-  private static Runnable createCancelableExecutionProcess(final ProcessHandler processHandler,
-                                                           final BooleanSupplier cancelableFun) {
+  /**
+   * @param cancelableFun supplier indicating that process should be terminated
+   */
+  private static Runnable createCancelableExecutionProcess(@NotNull ProcessHandler processHandler,
+                                                           @Nullable BooleanSupplier cancelableFun) {
     return new Runnable() {
       private ProgressIndicator myProgressIndicator;
       private final Semaphore mySemaphore = new Semaphore();

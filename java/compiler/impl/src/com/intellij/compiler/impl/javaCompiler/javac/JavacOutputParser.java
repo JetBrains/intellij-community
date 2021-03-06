@@ -17,18 +17,19 @@ package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.OutputParser;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -42,7 +43,7 @@ public class JavacOutputParser extends OutputParser {
   @NonNls private String WARNING_PREFIX = "warning:"; // default value
 
   public JavacOutputParser(Project project) {
-    myTabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    myTabSize = CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // emulate patterns setup if 'embedded' javac is used (javac is started not via JavacRunner)
       addJavacPattern(JavacResourcesReader.MSG_PARSING_STARTED + JavacResourcesReader.CATEGORY_VALUE_DIVIDER + "[parsing started {0}]");
@@ -143,7 +144,7 @@ public class JavacOutputParser extends OutputParser {
           while(true);
 
           if (colNum >= 0){
-            messages = convertMessages(messages);
+            convertMessages(messages);
             String text = StringUtil.join(messages, "\n");
             addMessage(callback, category, text, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum + 1);
             return true;
@@ -168,9 +169,9 @@ public class JavacOutputParser extends OutputParser {
   }
 
 
-  private static List<String> convertMessages(List<String> messages) {
+  private static void convertMessages(@NotNull List<String> messages) {
     if(messages.size() <= 1) {
-      return messages;
+      return;
     }
     final String line0 = messages.get(0);
     final String line1 = messages.get(1);
@@ -187,7 +188,6 @@ public class JavacOutputParser extends OutputParser {
         messages.set(0, line0 + " " + symbol);
       }
     }
-    return messages;
   }
 
   private void addJavacPattern(@NonNls final String line) {

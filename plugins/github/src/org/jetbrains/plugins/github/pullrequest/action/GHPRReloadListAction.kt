@@ -14,14 +14,11 @@ class GHPRReloadListAction
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
-    val context = e.getData(GHPRActionKeys.DATA_CONTEXT)
-    e.presentation.isEnabled = context != null
+    val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER)
+    e.presentation.isEnabled = controller != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRActionKeys.DATA_CONTEXT).apply {
-      listLoader.reset()
-      repositoryDataService.resetData()
-    }
+    e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER).refreshList()
   }
 }

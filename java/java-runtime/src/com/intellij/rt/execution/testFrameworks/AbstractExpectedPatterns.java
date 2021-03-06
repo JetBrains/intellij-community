@@ -26,20 +26,20 @@ public class AbstractExpectedPatterns {
   private static final Pattern ASSERT_EQUALS_PATTERN = Pattern.compile("expected:<(.*)> but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
   private static final Pattern ASSERT_EQUALS_CHAINED_PATTERN = Pattern.compile("but was:<(.*)>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
-  protected static void registerPatterns(String[] patternStrings, List patterns) {
-    for (int i = 0; i < patternStrings.length; i++) {
-      patterns.add(Pattern.compile(patternStrings[i], Pattern.DOTALL | Pattern.CASE_INSENSITIVE));
+  protected static void registerPatterns(String[] patternStrings, List<Pattern> patterns) {
+    for (String string : patternStrings) {
+      patterns.add(Pattern.compile(string, Pattern.DOTALL | Pattern.CASE_INSENSITIVE));
     }
   }
 
-  protected static ComparisonFailureData createExceptionNotification(String message, List patterns) {
+  protected static ComparisonFailureData createExceptionNotification(String message, List<Pattern> patterns) {
     ComparisonFailureData assertEqualsNotification = createExceptionNotification(message, ASSERT_EQUALS_PATTERN);
     if (assertEqualsNotification != null) {
       return ASSERT_EQUALS_CHAINED_PATTERN.matcher(assertEqualsNotification.getExpected()).find() ? null : assertEqualsNotification;
     }
 
-    for (int i = 0; i < patterns.size(); i++) {
-      ComparisonFailureData notification = createExceptionNotification(message, (Pattern)patterns.get(i));
+    for (Pattern pattern : patterns) {
+      ComparisonFailureData notification = createExceptionNotification(message, pattern);
       if (notification != null) {
         return notification;
       }

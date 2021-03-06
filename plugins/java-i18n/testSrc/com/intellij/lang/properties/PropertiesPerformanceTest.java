@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -12,16 +12,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * @author cdr
- */
 @HardwareAgentRequired
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
@@ -34,7 +30,8 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected Module createMainModule() throws IOException {
     String root = PluginPathManager.getPluginHomePath("java-i18n") + "/testData/performance/" + getTestName(true);
-    VirtualFile tempProjectRootDir = PsiTestUtil.createTestProjectStructure(myProject, null, root, myFilesToDelete, false);
+    VirtualFile tempProjectRootDir = createTestProjectStructure(null, root, false, getTempDir());
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     Module module = loadAllModulesUnder(tempProjectRootDir);
     return module != null ? module : super.createMainModule();
   }

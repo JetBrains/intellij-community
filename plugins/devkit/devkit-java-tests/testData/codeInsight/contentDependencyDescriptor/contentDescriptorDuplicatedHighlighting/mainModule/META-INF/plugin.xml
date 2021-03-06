@@ -1,0 +1,11 @@
+<idea-plugin package="mypackage">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <content>
+    <module name="<error descr="Module with such name already exists">anotherModule</error>" package="mypackage.subpackage"/>
+    <module name="<error descr="Module with such name already exists">anotherModule</error>" package="mypackage.subpackage"/>
+  </content>
+
+</idea-plugin>

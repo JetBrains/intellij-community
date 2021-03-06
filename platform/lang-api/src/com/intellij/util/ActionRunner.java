@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -41,6 +42,7 @@ public abstract class ActionRunner {
    * @deprecated use {@link WriteAction#run(ThrowableRunnable)} or {@link WriteAction#compute(ThrowableComputable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T> T runInsideWriteAction(@NotNull final InterruptibleRunnableWithResult<T> runnable) throws Exception {
     return WriteAction.computeAndWait(() -> runnable.run());
   }
@@ -49,6 +51,7 @@ public abstract class ActionRunner {
    * @deprecated use {@link ReadAction#run(ThrowableRunnable)} or {@link ReadAction#compute(ThrowableComputable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void runInsideReadAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
     ReadAction.run(() -> runnable.run());
   }
@@ -65,6 +68,7 @@ public abstract class ActionRunner {
    * @deprecated obsolete API
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public interface InterruptibleRunnableWithResult<T> {
     T run() throws Exception;
   }

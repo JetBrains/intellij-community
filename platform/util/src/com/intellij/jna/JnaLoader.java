@@ -3,12 +3,14 @@ package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.CpuArch;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.NotNull;
 
 public final class JnaLoader {
   private static Boolean ourJnaLoaded = null;
 
-  public static synchronized void load(Logger logger) {
+  public static synchronized void load(@NotNull Logger logger) {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
       try {
@@ -30,4 +32,15 @@ public final class JnaLoader {
     }
     return ourJnaLoaded;
   }
+
+  /**
+   * {@code true}, if JNA's direct mapping feature ({@code Native.register}) is available.
+   * If {@code false}, use JNA's standard library loading ({@code Native.load}) instead.
+   * <p>
+   * Direct mapping currently crashes JRE on function invocation on macOS arm64. Reproducible via JNA's {@code DirectCallbacksTest}.
+   *
+   * @see Native#register
+   * @see Native#load
+   */
+  public static final boolean supportsDirectMapping = !(SystemInfo.isMac && CpuArch.isArm64());
 }

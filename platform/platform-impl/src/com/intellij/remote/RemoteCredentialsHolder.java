@@ -6,6 +6,7 @@ import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -21,7 +22,7 @@ import java.util.Objects;
  * @author michael.golubev
  */
 public class RemoteCredentialsHolder implements MutableRemoteCredentials {
-  private static final String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
+  private static final @NonNls String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
 
   @NonNls public static final String HOST = "HOST";
   @NonNls public static final String PORT = "PORT";
@@ -32,12 +33,13 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   @NonNls public static final String USE_AUTH_AGENT = "USE_AUTH_AGENT";
   @NonNls public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   @NonNls public static final String PASSPHRASE = "PASSPHRASE";
+  @NonNls public static final String CONNECTION_CONFIG_PATCH = "sshConnectionConfigPatch";
 
   @NonNls public static final String SSH_PREFIX = "ssh://";
 
-  private static final Map<AuthType, String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
-                                                                                                AuthType.KEY_PAIR, "passphrase",
-                                                                                                AuthType.OPEN_SSH, "empty");
+  private static final Map<AuthType, @NonNls String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
+                                                                                                        AuthType.KEY_PAIR, "passphrase",
+                                                                                                        AuthType.OPEN_SSH, "empty");
 
   private @NotNull String myHost = "";
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
@@ -49,6 +51,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private boolean myStorePassword;
   private boolean myStorePassphrase;
   private @NotNull AuthType myAuthType = AuthType.PASSWORD;
+  private @Nullable SshConnectionConfigPatch myConnectionConfigPatch;
 
   public RemoteCredentialsHolder() {}
 
@@ -56,7 +59,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     copyFrom(credentials);
   }
 
-  public static String getCredentialsString(@NotNull RemoteCredentials cred) {
+  public static @NlsSafe String getCredentialsString(@NotNull RemoteCredentials cred) {
     return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 
@@ -66,7 +69,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
-  public void setHost(@Nullable String host) {
+  public void setHost(@Nullable @NlsSafe String host) {
     myHost = StringUtil.notNullize(host);
   }
 
@@ -173,6 +176,17 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     myAuthType = authType;
   }
 
+  @Nullable
+  @Override
+  public SshConnectionConfigPatch getConnectionConfigPatch() {
+    return myConnectionConfigPatch;
+  }
+
+  @Override
+  public void setConnectionConfigPatch(@Nullable SshConnectionConfigPatch patch) {
+    myConnectionConfigPatch = patch;
+  }
+
   @NotNull
   public String getSerializedUserName() {
     return StringUtil.notNullize(myUserName);
@@ -228,6 +242,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     to.setPrivateKeyFile(from.getPrivateKeyFile());
     to.setStorePassword(from.isStorePassword());
     to.setStorePassphrase(from.isStorePassphrase());
+    to.setConnectionConfigPatch(from.getConnectionConfigPatch());
   }
 
   public void load(Element element) {
@@ -310,6 +325,9 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       password = null;
     }
     PasswordSafe.getInstance().set(createAttributes(memoryOnly), new Credentials(getUserName(), password));
+
+    // getConnectionConfigPatch() is omitted intentionally.
+    // It's expected that the options will be set with SSH settings by one of `copyTo` calls.
   }
 
   @NotNull
@@ -335,6 +353,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     if (!myPrivateKeyFile.equals(holder.myPrivateKeyFile)) return false;
     if (!Objects.equals(myPassphrase, holder.myPassphrase)) return false;
     if (myAuthType != holder.myAuthType) return false;
+    if (!Objects.equals(myConnectionConfigPatch, holder.myConnectionConfigPatch)) return false;
 
     return true;
   }
@@ -350,6 +369,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     result = 31 * result + (myStorePassword ? 1 : 0);
     result = 31 * result + (myStorePassphrase ? 1 : 0);
     result = 31 * result + myAuthType.hashCode();
+    result = 31 * result + (myConnectionConfigPatch != null ? myConnectionConfigPatch.hashCode() : 0);
     return result;
   }
 }

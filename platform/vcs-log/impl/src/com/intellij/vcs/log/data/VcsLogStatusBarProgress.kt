@@ -15,16 +15,15 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
-import org.jetbrains.annotations.CalledInAwt
 
 class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
                               vcsLogProgress: VcsLogProgress) : Disposable {
-  private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
   private val roots = VcsLogPersistentIndex.getRootsForIndexing(logProviders)
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
@@ -37,7 +36,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     vcsLogProgress.addProgressIndicatorListener(MyProgressListener(), this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun start() {
     alarm.value.addRequest(Runnable {
       if (progress == null) {
@@ -46,7 +45,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }, Registry.intValue("vcs.log.index.progress.delay.millis"))
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun stop() {
     if (alarm.isInitialized()) alarm.value.cancelAllRequests()
     progress?.let { it.finish(it.taskInfo) }
@@ -92,6 +91,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     override fun cancel() {
       val bigRepositoriesList = service<VcsLogBigRepositoriesList>()
       roots.forEach { bigRepositoriesList.addRepository(it) }
+      text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
       LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
       super.cancel()
     }
@@ -105,5 +105,9 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip", vcsName.capitalize())
 
     override fun isCancellable(): Boolean = true
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(VcsLogStatusBarProgress::class.java)
   }
 }

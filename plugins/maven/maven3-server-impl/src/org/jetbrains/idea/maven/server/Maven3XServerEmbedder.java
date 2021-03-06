@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,7 +10,6 @@ import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.commons.cli.ParseException;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -454,7 +453,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   private static Collection<String> collectProfilesIds(List<Profile> profiles) {
-    Collection<String> result = new THashSet<String>();
+    Collection<String> result = new HashSet<String>();
     for (Profile each : profiles) {
       if (each.getId() != null) {
         result.add(each.getId());
@@ -545,7 +544,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     try {
       customizeComponents(token);
 
-      ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
+      ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+      if(artifactFactory instanceof CustomMaven3ArtifactFactory) {
+        ((CustomMaven3ArtifactFactory)artifactFactory).customize();
+      }
+
       ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
@@ -569,7 +572,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public void customizeComponents(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     // replace some plexus components
-    myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
+    if(VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
+      myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
+    }
     myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
     myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
@@ -590,8 +595,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class.getName());
       container.addComponent(pathTranslator, org.apache.maven.model.path.PathTranslator.class, "ide");
 
-      container.addComponent(urlNormalizer, org.apache.maven.model.path.UrlNormalizer.class.getName());
-      container.addComponent(urlNormalizer, org.apache.maven.model.path.UrlNormalizer.class, "ide");
+      container.addComponent(urlNormalizer, UrlNormalizer.class.getName());
+      container.addComponent(urlNormalizer, UrlNormalizer.class, "ide");
 
       StringSearchModelInterpolator interpolator = new CustomMaven3ModelInterpolator2();
       interpolator.setPathTranslator(pathTranslator);
@@ -696,6 +701,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();
+            if (buildingResult.getProblems() != null) {
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                if (problem.getException() != null) {
+                  exceptions.add(problem.getException());
+                }
+                else {
+                  exceptions.add(new RuntimeException(problem.getMessage()));
+                }
+              }
+            }
+
             loadExtensions(project, exceptions);
 
             //Artifact projectArtifact = project.getArtifact();
@@ -973,7 +989,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
+    Set<MavenId> unresolvedArtifacts = new HashSet<MavenId>();
 
     validate(file, result.getExceptions(), problems, unresolvedArtifacts);
 
@@ -1044,8 +1060,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
         if (modelValidationResult != null) {
-          for (Object eachValidationProblem : modelValidationResult.getMessages()) {
-            problems.add(MavenProjectProblem.createStructureProblem(path, (String)eachValidationProblem));
+          for (String eachValidationProblem : modelValidationResult.getMessages()) {
+            problems.add(MavenProjectProblem.createStructureProblem(path, eachValidationProblem));
           }
         }
         else {
@@ -1073,7 +1089,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   private Set<MavenId> retrieveUnresolvedArtifactIds() {
-    Set<MavenId> result = new THashSet<MavenId>();
+    Set<MavenId> result = new HashSet<MavenId>();
     // TODO collect unresolved artifacts
     //((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
     //((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);

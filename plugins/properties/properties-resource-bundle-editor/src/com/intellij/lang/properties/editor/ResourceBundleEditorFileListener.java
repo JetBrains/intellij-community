@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -19,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -33,10 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * @author Dmitry Batkovich
- */
-class ResourceBundleEditorFileListener implements VirtualFileListener {
+final class ResourceBundleEditorFileListener implements VirtualFileListener {
   private static final Logger LOG = Logger.getInstance(ResourceBundleEditorFileListener.class);
   private static final Update FORCE_UPDATE = new Update("FORCE_UPDATE") {
     @Override
@@ -81,7 +76,8 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
   }
 
   private class MyVfsEventsProcessor {
-    private final AtomicReference<Set<EventWithType>> myEventQueue = new AtomicReference<>(ContainerUtil.newConcurrentSet());
+    private final AtomicReference<Set<EventWithType>> myEventQueue =
+      new AtomicReference<>(ContainerUtil.newConcurrentSet());
 
     private final MergingUpdateQueue myUpdateQueue =
       new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
@@ -95,14 +91,10 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
               if (!myEditor.isValid()) return null;
               Runnable toDo = null;
-              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = new NotNullLazyValue<Set<VirtualFile>>() {
-                @NotNull
-                @Override
-                protected Set<VirtualFile> compute() {
-                  return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
-                    .collect(Collectors.toSet());
-                }
-              };
+              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = NotNullLazyValue.lazy(() -> {
+                return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
+                  .collect(Collectors.toSet());
+              });
               for (EventWithType e : myEvents) {
                 if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED && e.getPropertyName().equals(VirtualFile.PROP_NAME))) {
                   if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
@@ -120,13 +112,10 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
                     }
                     if (validFilesCount > 1) {
                       toDo = myEditor::recreateEditorsPanel;
-                    } else {
+                    }
+                    else {
                       toDo = () -> {
-                        final FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
-                        final VirtualFile file = fileEditorManager.getFile(myEditor);
-                        if (file != null) {
-                          fileEditorManager.closeFile(file);
-                        }
+                        FileEditorManager.getInstance(myProject).closeFile(myEditor.getFile());
                       };
                     }
                     break;
@@ -236,7 +225,7 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
     CONTENT_CHANGED, PROPERTY_CHANGED
   }
 
-  private static class EventWithType {
+  private static final class EventWithType {
     @NotNull
     private final EventType myType;
     @NotNull

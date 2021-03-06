@@ -2,10 +2,10 @@
 package com.intellij.openapi.vcs.checkout;
 
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -14,18 +14,14 @@ import java.nio.file.Path;
  */
 final class ProjectDirCheckoutListener implements CheckoutListener {
   @Override
-  public boolean processCheckedOutDirectory(Project project, File directory) {
-    Path dotIdea = directory.toPath().resolve(Project.DIRECTORY_STORE_FOLDER);
+  public boolean processCheckedOutDirectory(@NotNull Project project, @NotNull Path directory) {
+    Path dotIdea = directory.resolve(Project.DIRECTORY_STORE_FOLDER);
     // todo Rider project layout - several.idea.solution-name names
     if (!Files.exists(dotIdea)) {
       return false;
     }
 
-    ProjectUtil.openOrImport(dotIdea.getParent(), new OpenProjectTask(false, project));
+    ProjectManagerEx.getInstanceEx().openProject(directory, OpenProjectTask.withProjectToClose(project));
     return true;
-  }
-
-  @Override
-  public void processOpenedProject(Project lastOpenedProject) {
   }
 }

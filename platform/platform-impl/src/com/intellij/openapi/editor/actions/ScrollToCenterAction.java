@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,22 @@ public class ScrollToCenterAction extends InactiveEditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      boolean savedSetting = EditorSettingsExternalizable.getInstance().isRefrainFromScrolling();
+      boolean overriddenInEditor = false;
+      try {
+        EditorSettingsExternalizable.getInstance().setRefrainFromScrolling(false);
+        if (editor.getSettings().isRefrainFromScrolling()) {
+          overriddenInEditor = true;
+          editor.getSettings().setRefrainFromScrolling(false);
+        }
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
+      finally {
+        EditorSettingsExternalizable.getInstance().setRefrainFromScrolling(savedSetting);
+        if (overriddenInEditor) {
+          editor.getSettings().setRefrainFromScrolling(true);
+        }
+      }
     }
   }
 }

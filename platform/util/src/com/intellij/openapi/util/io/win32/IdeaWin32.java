@@ -2,16 +2,18 @@
 package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.loader.NativeLibraryLoader;
+import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.CRC32;
 
 /**
@@ -27,7 +29,7 @@ public final class IdeaWin32 {
 
   static {
     IdeaWin32 instance = null;
-    if (SystemInfo.isWin2kOrNewer && SystemProperties.getBooleanProperty("idea.use.native.fs.for.win", true)) {
+    if (SystemInfoRt.isWindows && Boolean.parseBoolean(System.getProperty("idea.use.native.fs.for.win", "true"))) {
       try {
         if (!loadBundledLibrary()) {
           NativeLibraryLoader.loadPlatformLibrary("IdeaWin32");
@@ -43,16 +45,22 @@ public final class IdeaWin32 {
   }
 
   private static boolean loadBundledLibrary() throws IOException {
-    String name = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
+    String name = CpuArch.isIntel64() ? "IdeaWin64" : "IdeaWin32";
     URL bundled = IdeaWin32.class.getResource(name + ".dll");
-    if (bundled == null) return false;
-    byte[] content = FileUtil.loadBytes(bundled.openStream());
+    if (bundled == null) {
+      return false;
+    }
+
+    byte[] content = FileUtilRt.loadBytes(bundled.openStream());
     CRC32 crc32 = new CRC32();
-    crc32.update(content);
+    crc32.update(content, 0, content.length);
     long hash = Math.abs(crc32.getValue());
-    File file = new File(FileUtil.getTempDirectory(), name + '.' + hash + ".dll");
-    if (!file.exists()) FileUtil.writeToFile(file, content);
-    System.load(file.getPath());
+    Path file = Paths.get(FileUtilRt.getTempDirectory(), name + '.' + hash + ".dll");
+    if (!Files.exists(file)) {
+      Files.createDirectories(file.getParent());
+      Files.write(file, content);
+    }
+    System.load(file.toString());
     return true;
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -23,12 +9,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -125,8 +111,7 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       myDescLabel = new JLabel();
       myPanel.add(myDescLabel, BorderLayout.EAST);
 
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      Font font = scheme.getFont(EditorFontType.PLAIN);
+      Font font = EditorFontType.getGlobalPlainFont();
       myNameLabel.setFont(font);
       myDescLabel.setFont(font);
     }
@@ -140,7 +125,12 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       myPanel.setBackground(backgroundColor);
 
-      String description = String.format("<html><div WIDTH=%d>%s</div><html>", 400, String.valueOf(descriptor.second));
+      String description =
+        new HtmlBuilder()
+          .append(String.valueOf(descriptor.second))
+          .wrapWith(HtmlChunk.div().attr("WIDTH", "400"))
+          .wrapWith("html")
+          .toString();
       myDescLabel.setText(description);
       myDescLabel.setForeground(LookupCellRenderer.getGrayedForeground(isSelected));
       myDescLabel.setBackground(backgroundColor);

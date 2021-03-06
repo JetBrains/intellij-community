@@ -1,19 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -28,11 +17,12 @@ import java.util.Set;
 /**
  * @author yole
  */
-public abstract class PyPackageManager {
+public abstract class PyPackageManager implements Disposable {
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
   public static final String USE_USER_SITE = "--user";
-  public static final Topic<Listener> PACKAGE_MANAGER_TOPIC = Topic.create("Python package manager", Listener.class);
+  @Topic.AppLevel
+  public static final Topic<Listener> PACKAGE_MANAGER_TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   @NotNull
   public static PyPackageManager getInstance(@NotNull Sdk sdk) {
@@ -101,5 +91,9 @@ public abstract class PyPackageManager {
 
   public interface Listener {
     void packagesRefreshed(@NotNull Sdk sdk);
+  }
+
+  @Override
+  public void dispose() {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -26,15 +27,15 @@ import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
-    if (icon != null && !StartupUiUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
+    if (icon != null && !StartupUiUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection", true) && selected && hasFocus) {
       return IconLoader.getDarkIcon(icon, true);
     }
     return icon;
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-    Object node = TreeUtil.getUserObject(value);
+  public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    @NlsSafe Object node = TreeUtil.getUserObject(value);
 
     if (node instanceof NodeDescriptor) {
       NodeDescriptor<?> descriptor = (NodeDescriptor<?>)node;
@@ -54,7 +55,10 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       Color forcedForeground = presentation.getForcedTextForeground();
       if (coloredText.isEmpty()) {
         String text = presentation.getPresentableText();
-        if (StringUtil.isEmpty(text)) text = value.toString();
+        if (StringUtil.isEmpty(text)) {
+          @NlsSafe String valueSting = value.toString();
+          text = valueSting;
+        }
         text = tree.convertValueToText(text, selected, expanded, leaf, row, hasFocus);
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(
           presentation, forcedForeground != null ? forcedForeground : color, node);
@@ -96,7 +100,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       setToolTipText(presentation.getTooltip());
     }
     else if (value != null) {
-      String text = value.toString();
+      @NlsSafe String text = value.toString();
       if (node instanceof NodeDescriptor) {
         text = node.toString();
       }

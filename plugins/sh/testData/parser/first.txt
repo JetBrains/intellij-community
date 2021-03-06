@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# Simple line count example, using bash')
   PsiElement(\n)('\n')
@@ -630,7 +631,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('name')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         PsiElement($)('$')
         SUBSHELL_COMMAND
@@ -759,7 +760,7 @@ SHELL_SCRIPT
       LITERAL
         PsiElement(word)('entries')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('for')
       PsiWhiteSpace(' ')
       LITERAL
@@ -775,7 +776,7 @@ SHELL_SCRIPT
       LITERAL
         PsiElement(word)('analyzed')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('for')
       PsiWhiteSpace(' ')
       LITERAL
@@ -790,16 +791,16 @@ SHELL_SCRIPT
       LITERAL
         PsiElement(word)('analyzed')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('for')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('done')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('do')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('while')
       PsiWhiteSpace(' ')
       LITERAL

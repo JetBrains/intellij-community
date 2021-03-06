@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -7,10 +7,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
-private val LOG = Logger.getInstance("#com.intellij.internal.statistic.IdeActivity")
+private val LOG = Logger.getInstance(IdeActivity::class.java)
 
 private enum class State { NOT_STARTED, STARTED, FINISHED }
 
@@ -35,18 +36,18 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     if (!LOG.assertTrue(state == State.NOT_STARTED, state.name)) return this
     state = State.STARTED
 
-    val data = createDataWithActivityId().addProject(projectOrNullForApplication)
+    val data = createDataWithActivityId()
     consumer.accept(data)
 
     startedTimestamp = System.nanoTime()
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("started"), data)
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(STARTED_EVENT_ID), data)
     return this
   }
 
   fun stageStarted(stageName: String): IdeActivity {
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
 
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName(stageName), createDataWithActivityId())
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(stageName), createDataWithActivityId())
     return this
   }
 
@@ -54,7 +55,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
 
     val data = createDataWithActivityId().addData("stage_class", stageClass.name)
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("stage"), data)
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName("stage"), data)
     return this
   }
 
@@ -63,7 +64,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     state = State.FINISHED
 
     val duration = TimeoutUtil.getDurationMillis(startedTimestamp)
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("finished"),
+    FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName("finished"),
                                                 createDataWithActivityId().addData("duration_ms", duration))
     return this
   }
@@ -75,10 +76,11 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
 
   companion object {
     private val counter = AtomicInteger(0)
+    const val STARTED_EVENT_ID = "started"
 
     @JvmStatic
     @JvmOverloads
-    fun started(projectOrNullForApplication: Project?, group: String, activityName: String? = null): IdeActivity =
+    fun started(projectOrNullForApplication: Project?, group: @NonNls String, activityName: @NonNls String? = null): IdeActivity =
       IdeActivity(projectOrNullForApplication, group, activityName).started()
   }
 }

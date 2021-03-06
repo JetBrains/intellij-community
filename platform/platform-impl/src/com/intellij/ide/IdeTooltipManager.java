@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.application.options.RegistryManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -438,7 +439,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
     Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
     Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
-    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
+    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : JBUI.CurrentTheme.Tooltip.borderColor();
 
     BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(tooltip.getTipComponent())
       .setFillColor(bg)
@@ -493,7 +494,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
   @SuppressWarnings("UnusedParameters")
   public Color getLinkForeground(boolean awtTooltip) {
-    return JBUI.CurrentTheme.Link.linkColor();
+    return JBUI.CurrentTheme.Link.Foreground.ENABLED;
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -507,9 +508,15 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return StartupUiUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
+
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.
+   */
   @SuppressWarnings("UnusedParameters")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public Color getBorderColor(boolean awtTooltip) {
-    return new JBColor(Gray._160, new Color(91, 93, 95));
+    return JBUI.CurrentTheme.Tooltip.borderColor();
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -667,15 +674,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
 
-  public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
-    return initPane(new Html(text), hintHint, layeredPane);
+  public static JEditorPane initPane(@Tooltip String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
+    return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
-    return initPane(html, hintHint, layeredPane, true);
-  }
-
-  public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane,
+  public static JEditorPane initPane(@Tooltip Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane,
                                      boolean limitWidthToScreen) {
     final Ref<Dimension> prefSize = new Ref<>(null);
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);
@@ -731,7 +734,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     } : new JEditorPane();
 
     HTMLEditorKit kit = new JBHtmlEditorKit() {
-      final HTMLFactory factory = new HTMLFactory() {
+      final HTMLFactory factory = new JBHtmlFactory() {
         @Override
         public View create(Element elem) {
           AttributeSet attrs = elem.getAttributes();

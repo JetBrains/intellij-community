@@ -49,6 +49,10 @@ public abstract class WindowManager {
    */
   public abstract void setAlphaModeEnabled(Window window, boolean state);
 
+  public boolean isNotSuggestAsParent(@NotNull Window window) {
+    return false;
+  }
+
   public abstract void doNotSuggestAsParent(Window window);
 
   /**
@@ -85,10 +89,6 @@ public abstract class WindowManager {
 
   public abstract @Nullable JFrame findVisibleFrame();
 
-  public abstract void addListener(@NotNull WindowManagerListener listener);
-
-  public abstract void removeListener(WindowManagerListener listener);
-
   /**
    * @return {@code true} if full screen mode is supported in current OS.
    */
@@ -96,4 +96,7 @@ public abstract class WindowManager {
   public abstract boolean isFullScreenSupportedInCurrentOS();
 
   public abstract void requestUserAttention(@NotNull IdeFrame frame, boolean critical);
+
+  public void updateDefaultFrameInfoOnProjectClose(@NotNull Project project) {
+  }
 }

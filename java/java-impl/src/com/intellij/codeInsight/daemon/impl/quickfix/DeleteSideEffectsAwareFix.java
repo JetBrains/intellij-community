@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,7 +41,7 @@ import java.util.Objects;
 public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOnPsiElement implements LowPriorityAction {
   private final SmartPsiElementPointer<PsiStatement> myStatementPtr;
   private final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
-  private final String myMessage;
+  private final @IntentionName String myMessage;
   private final boolean myIsAvailable;
 
   public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression) {
@@ -72,7 +73,6 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
                     sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression);
   }
 
-  @Nls
   @NotNull
   @Override
   public String getText() {

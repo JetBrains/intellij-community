@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.extapi.psi;
 
@@ -87,7 +73,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   private volatile SubstrateRef mySubstrateRef;
   private final IElementType myElementType;
 
-  public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType nodeType) {
+  public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType<?,?> nodeType) {
     mySubstrateRef = new SubstrateRef.StubRef(stub);
     myElementType = nodeType;
   }
@@ -151,7 +137,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   private ASTNode failedToBindStubToAst(@NotNull PsiFileImpl file, @NotNull final FileElement fileElement) {
     VirtualFile vFile = file.getVirtualFile();
     StubTree stubTree = file.getStubTree();
-    final String stubString = stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : null;
+    final String stubString = stubTree != null ? ((PsiFileStubImpl<?>)stubTree.getRoot()).printTree() : null;
     final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true,
                                                                     () -> DebugUtil.treeToString(fileElement, true));
 
@@ -177,7 +163,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @NotNull
   private String dumpCreationTraces(@NotNull FileElement fileElement) {
-    final StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
+    @NonNls StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
     traces.append("My creation trace:\n").append(getUserData(CREATION_TRACE));
     traces.append("AST creation traces:\n");
     fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
@@ -199,7 +185,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @SuppressWarnings({"NonConstantStringShouldBeStringBuffer", "StringConcatenationInLoop"})
   private ASTNode notBoundInExistingAst(@NotNull PsiFileImpl file, @NotNull FileElement treeElement) {
-    String message = "file=" + file + "; tree=" + treeElement;
+    @NonNls String message = "file=" + file + "; tree=" + treeElement;
     PsiElement each = this;
     while (each != null) {
       message += "\n each of class " + each.getClass() + "; valid=" + each.isValid();
@@ -255,9 +241,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     catch (PsiInvalidElementAccessException e) {
       if (PsiInvalidElementAccessException.getInvalidationTrace(this) != null) {
         throw new PsiInvalidElementAccessException(this, e);
-      } else {
-        throw e;
       }
+      throw e;
     }
   }
 
@@ -317,14 +302,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       return stub.getParentStub().getPsi();
     }
 
-    return SharedImplUtil.getParent(getNode());
-  }
-
-  /**
-   * @deprecated use {@link #getParent()} instead
-   */
-  @Deprecated
-  protected final PsiElement getParentByTree() {
     return SharedImplUtil.getParent(getNode());
   }
 
@@ -402,7 +379,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * @return a not-null child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
   @NotNull
-  public <S extends StubElement, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
+  public <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
     Psi result = getStubOrPsiChild(elementType);
     if (result == null) {
       throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, false));
@@ -413,7 +390,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  public <S extends StubElement, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, Psi @NotNull [] array) {
+  public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, Psi @NotNull [] array) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked
@@ -433,7 +410,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return children of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  public <S extends StubElement, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<? extends Psi> f) {
+  public <S extends StubElement<?>, Psi extends PsiElement> Psi @NotNull [] getStubOrPsiChildren(@NotNull IStubElementType<S, ? extends Psi> elementType, @NotNull ArrayFactory<? extends Psi> f) {
     T stub = getGreenStub();
     if (stub != null) {
       //noinspection unchecked

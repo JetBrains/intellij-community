@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
 import com.intellij.lang.Language;
@@ -26,7 +26,7 @@ public interface CodeReferenceSearcher {
   /**
    * Returned language is used to restrict effective search scope.
    */
-  @NotNull Language getReferencingLanguage();
+  @NotNull Language getReferencingLanguage(@NotNull Symbol target);
 
   @Nullable SearchRequest getSearchRequest(@NotNull Project project, @NotNull Symbol target);
 
@@ -38,8 +38,5 @@ public interface CodeReferenceSearcher {
    * then obtain needed references from the PSI,
    * then ask the references if they are resolved to the target.
    */
-  @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull Symbol target,
-                                                                           @NotNull PsiElement scope,
-                                                                           @NotNull PsiElement element,
-                                                                           int offsetInElement);
+  @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull Symbol target, @NotNull LeafOccurrence occurrence);
 }

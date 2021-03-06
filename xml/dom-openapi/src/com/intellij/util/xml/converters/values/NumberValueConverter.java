@@ -57,14 +57,14 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    if (s == null) return super.getErrorMessage(s, context);
+    if (s == null) return super.getErrorMessage(null, context);
 
     final boolean isEmpty = s.trim().length() == 0;
     if (isEmpty && myAllowEmpty) return null;
 
     return isEmpty ?
-           XmlDomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
-           XmlDomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
+           XmlDomBundle.message("dom.converter.format.exception.empty.string", myNumberClass.getName()) :
+           XmlDomBundle.message("dom.converter.format.exception", s, myNumberClass.getName());
   }
 
   @NotNull

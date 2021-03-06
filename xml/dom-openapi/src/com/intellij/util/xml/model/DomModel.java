@@ -19,6 +19,7 @@ package com.intellij.util.xml.model;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public interface DomModel<T extends DomElement> {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   T getMergedModel();
 
   @NotNull

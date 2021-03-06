@@ -2,10 +2,14 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -24,7 +28,7 @@ import java.util.List;
 public class Py3CompletionTest extends PyTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   public void testPropertyDecorator() {
@@ -63,6 +67,14 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  public void doNegativeTest() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull("Expected no completion variants, but one item was auto-completed", variants);
+    assertEmpty(variants);
   }
 
   private void doMultiFileTest() {
@@ -170,6 +182,7 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
+    PyModuleNameCompletionContributor.ENABLED = false;
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
@@ -402,7 +415,119 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-33254, PY-12339, PY-40834
   public void testTypedParameterStringPath() {
-    doMultiFileTest();
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionInOrdinaryStringLiterals() {
+    doTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionPreservesParenthesesForCallables() {
+    doTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableBefore36() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doNegativeTest);
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableInByteLiterals() {
+    doNegativeTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableInUnicodeLiterals() {
+    doNegativeTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableInStrFormatCalls() {
+    doNegativeTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionNotAvailableAfterEscapedOpeningBrace() {
+    doNegativeTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionAvailableAfterOpeningBraceFollowingEscapedOne() {
+    doTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionDoesNotDuplicateClosingBrace() {
+    doTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionOnMultipleCaretsDoesNotDuplicatePrefix() {
+    doTest();
+  }
+
+  // PY-42700
+  public void testFStringLikeCompletionDoesNotWorkInStringWithInjections() {
+    doNegativeTest();
+  }
+
+  // EA-232631
+  public void testFStringLikeCompletionNotAvailableInStringElementsInSyntacticallyIllegalPosition() {
+    doNegativeTest();
+  }
+
+  // PY-45459
+  public void testFStringLikeCompletionAvailableRightAfterOpeningBrace() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertTrue(variants.length > 0);
+    assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
+  }
+
+  // PY-46056
+  public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
+    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+  }
+
+  // PY-46056
+  public void testImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
+    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+  }
+
+  // PY-46056
+  public void testFromImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
+    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+  }
+
+  // PY-46056
+  public void testFromImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
+    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+  }
+
+  private void doTestVariantTailText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String tailText) {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile(entryFilePath);
+      LookupElement[] variants = myFixture.completeBasic();
+      assertNotNull(variants);
+      LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals(variantName));
+      assertNotNull(lookupElement);
+      assertEquals(tailText, TestLookupElementPresentation.renderElement(lookupElement).getTailText());
+    });
+  }
+
+  // PY-46054
+  public void testFromImportFromSameDirectoryModule() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("foo_bar/sample.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/foo_bar/sample.after.py");
   }
 
   @Override

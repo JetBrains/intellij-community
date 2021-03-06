@@ -1,20 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -22,10 +17,9 @@ import java.util.function.Function;
  *
  * @see NestingTreeStructureProvider
  */
-public class FileNestingBuilder {
-
+public final class FileNestingBuilder {
   public static FileNestingBuilder getInstance() {
-    return ServiceManager.getService(FileNestingBuilder.class);
+    return ApplicationManager.getApplication().getService(FileNestingBuilder.class);
   }
 
   private long myBaseListModCount = -1;
@@ -41,7 +35,7 @@ public class FileNestingBuilder {
     final long modCount = fileNestingService.getModificationCount();
 
     if (myNestingRules == null || myBaseListModCount != modCount) {
-      myNestingRules = new THashSet<>();
+      myNestingRules = new HashSet<>();
       myBaseListModCount = modCount;
 
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
@@ -109,9 +103,9 @@ public class FileNestingBuilder {
         if (!matchesChild && !matchesParent) continue;
 
         if (baseNameAndRuleToEdge == null) {
-          baseNameAndRuleToEdge = new THashMap<>();
+          baseNameAndRuleToEdge = new HashMap<>();
           parentToChildren = new MultiMap<>();
-          allChildNodes = new THashSet<>();
+          allChildNodes = new HashSet<>();
         }
 
         if (matchesParent) {

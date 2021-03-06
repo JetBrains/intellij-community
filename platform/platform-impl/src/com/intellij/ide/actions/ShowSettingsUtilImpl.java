@@ -12,7 +12,6 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ui.update.Activatable;
@@ -28,17 +27,21 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.intellij.openapi.project.ProjectUtil.currentOrDefaultProject;
+
+// extended externally
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
-  @NotNull
-  private static Project getProject(@Nullable Project project) {
-    return project != null ? project : ProjectManager.getInstance().getDefaultProject();
-  }
-
-  @NotNull
-  public static DialogWrapper getDialog(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable toSelect) {
-    return SettingsDialogFactory.getInstance().create(getProject(project), filterEmptyGroups(groups), toSelect, null);
+  public static @NotNull DialogWrapper getDialog(@Nullable Project project,
+                                                 @NotNull List<? extends ConfigurableGroup> groups,
+                                                 @Nullable Configurable toSelect) {
+    return SettingsDialogFactory.getInstance().create(
+      currentOrDefaultProject(project),
+      filterEmptyGroups(groups),
+      toSelect,
+      null
+    );
   }
 
   /**
@@ -56,20 +59,27 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return all configurables as a plain list except the root configurable group
    */
-  @NotNull
-  public static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
+  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     List<Configurable> list = new ArrayList<>();
-    collect(list, group.getConfigurables());
+
+    for (Configurable configurable : ConfigurableExtensionPointUtil.getConfigurables(
+      withIdeSettings ? project : currentOrDefaultProject(project),
+      withIdeSettings
+    )) {
+      list.add(configurable);
+      if (configurable instanceof Configurable.Composite) {
+        collect(list, ((Configurable.Composite)configurable).getConfigurables());
+      }
+    }
+
     return list;
   }
 
-  private static void collect(List<? super Configurable> list, Configurable... configurables) {
+  private static void collect(@NotNull List<? super Configurable> list, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
-        collect(list, composite.getConfigurables());
+        collect(list, ((Configurable.Composite)configurable).getConfigurables());
       }
     }
   }
@@ -150,7 +160,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }
 
     Configurable configurableToSelect = idToSelect == null ? null : ConfigurableVisitor.findById(idToSelect, Collections.singletonList(group));
-    SettingsDialogFactory.getInstance().create(getProject(project), Collections.singletonList(group), configurableToSelect, filter).show();
+    SettingsDialogFactory.getInstance().create(
+      currentOrDefaultProject(project),
+      Collections.singletonList(group),
+      configurableToSelect,
+      filter
+    ).show();
   }
 
   @Override

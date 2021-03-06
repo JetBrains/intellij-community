@@ -5,5 +5,18 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface PinToTopParentValue : PinToTopValue {
-    fun getTypeName() : String?
+
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+    @Deprecated("Implement property 'tag' instead", ReplaceWith("tag"))
+    @JvmDefault
+    fun getTypeName() : String? = null
+
+    /**
+     * Tag used as identifier of a parent node. Pinned status is determined by checking of presence a 'tag - member name' pair
+     * in [XDebuggerPinToTopManager]
+     */
+    @Suppress("DEPRECATION")
+    @JvmDefault
+    val tag: String?
+        get() = getTypeName()
 }

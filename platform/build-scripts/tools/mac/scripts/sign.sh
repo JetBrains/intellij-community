@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 APP_DIRECTORY=$1
 JB_CERT=$2
 
@@ -30,10 +31,11 @@ for f in \
   "Contents/jbr/Contents/Home/Frameworks" \
   "Contents/jbr/Contents/Frameworks" \
   "Contents/Home/Frameworks" \
+  "Contents/Frameworks" \
   "Contents/plugins" "Contents/lib"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
-      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -perm +111 \) \
+      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "*.tbd" -o -perm +111 \) \
       -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
@@ -46,7 +48,7 @@ log "Signing libraries in jars in $PWD"
 # `-e` prevents `grep -q && printf` loginc
 # with `-o pipefail` there's no input for 'while' loop
 find "$APP_DIRECTORY" -name '*.jar' \
-  -exec sh -c "set -u; unzip -l \"\$0\" | grep -q -e '\.dylib\$' -e '\.jnilib\$' -e '\.so\$' -e '^jattach\$' && printf \"\$0\0\" " {} \; |
+  -exec sh -c "set -u; unzip -l \"\$0\" | grep -q -e '\.dylib\$' -e '\.jnilib\$' -e '\.so\$' -e '\.tbd\$' -e '^jattach\$' && printf \"\$0\0\" " {} \; |
   while IFS= read -r -d $'\0' file; do
     log "Processing libraries in $file"
 
@@ -57,8 +59,9 @@ find "$APP_DIRECTORY" -name '*.jar' \
     cp "$file" jarfolder && (cd jarfolder && jar xf "$filename" && rm "$filename")
 
     find jarfolder \
-      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "jattach" \) \
+      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "*.tbd" -o -name "jattach" \) \
       -exec codesign --timestamp \
+      --force \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
 
@@ -72,10 +75,11 @@ log "Signing other files..."
 for f in \
   "Contents/jdk/Contents/Home/bin" "Contents/jdk/Contents/Home/jre/bin" \
   "Contents/jbr/Contents/Home/bin" \
+  "Contents/Frameworks" \
   "Contents/MacOS" "Contents/bin"; do
   if [ -d "$APP_DIRECTORY/$f" ]; then
     find "$APP_DIRECTORY/$f" \
-      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -perm +111 \) \
+      -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "*.tbd" -o -perm +111 \) \
       -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;

@@ -40,8 +40,8 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    final String left = "left";
-    final String right = "right";
+    final String left = InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.options.item.left");
+    final String right = InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.options.item.right");
     final ComboBox<String> comboBox = new ComboBox<>(new String[]{left, right});
     comboBox.setSelectedIndex(myConstantShouldGoLeft ? 0 : 1);
     comboBox.addItemListener(e -> {

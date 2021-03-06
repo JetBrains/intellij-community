@@ -42,8 +42,15 @@ public @interface State {
   boolean defaultStateAsResource() default false;
 
   /**
-   * Additional export path (relative to application-level configuration root directory).
+   * Additional export directory path (relative to application-level configuration root directory).
    */
+  @NotNull String additionalExportDirectory() default "";
+
+  /**
+   * @deprecated Use {@link #additionalExportDirectory()}.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;
@@ -57,16 +64,16 @@ public @interface State {
    * <p>Enables recording of boolean and numerical fields, if true and statistics is allowed.</p>
    * <br/>
    * <p>Boolean: records not default value of the field.</p>
-   * <p>Numerical: records an event that the value is not default.
+   * <p>Numerical/Enums/Strings: records an event that the value is not default.
    * To record an absolute value of the field, add {@link ReportValue} annotation. </p>
    *
    * <br/>
    * <i>Limitations:</i><ul>
-   * <li>Won't record the value of object, string or enum fields.</li>
+   * <li>Won't record the value of object</li>
    * <li>Won't record fields if state is persisted manually, i.e. the state is {@link org.jdom.Element} </li>
    * </ul>
    */
-  boolean reportStatistic() default false;
+  boolean reportStatistic() default true;
 
   boolean allowLoadInTests() default false;
 

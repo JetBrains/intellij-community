@@ -1,3 +1,3 @@
->```html
-><caret>
->```
+> ```html
+> <caret>
+> ```

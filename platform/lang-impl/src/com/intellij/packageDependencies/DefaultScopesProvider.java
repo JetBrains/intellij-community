@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
@@ -8,12 +8,14 @@ import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
 public final class DefaultScopesProvider extends CustomScopesProviderEx {
+  @SuppressWarnings({"FieldCanBeLocal", "unused"})
   private final Project myProject;
   private final List<NamedScope> myScopes;
 
@@ -38,6 +40,7 @@ public final class DefaultScopesProvider extends CustomScopesProviderEx {
   /**
    * @deprecated use {@link ProblemsScope#INSTANCE} instead
    */
+  @ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   @NotNull
   public NamedScope getProblemsScope() {

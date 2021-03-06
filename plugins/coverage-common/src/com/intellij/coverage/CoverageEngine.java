@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
@@ -13,12 +14,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +47,9 @@ public abstract class CoverageEngine {
    * @param conf Run Configuration
    * @return True if coverage for given run configuration is supported by this engine
    */
-  public abstract boolean isApplicableTo(@Nullable final RunConfigurationBase conf);
+  public abstract boolean isApplicableTo(@NotNull final RunConfigurationBase<?> conf);
 
-  public abstract boolean canHavePerTestCoverage(@Nullable final RunConfigurationBase conf);
+  public abstract boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
@@ -80,7 +84,7 @@ public abstract class CoverageEngine {
    * @return Coverage enabled configuration with engine specific settings
    */
   @NotNull
-  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf);
+  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
@@ -279,7 +283,7 @@ public abstract class CoverageEngine {
                                     int endOffset,
                                     @Nullable LineData lineData) {
     final int hits = lineData == null ? 0 : lineData.getHits();
-    return "Hits: " + hits;
+    return CoverageBundle.message("hits.title", hits);
   }
 
   public abstract List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project);
@@ -314,13 +318,13 @@ public abstract class CoverageEngine {
     return dialog;
   }
 
-  public abstract String getPresentableText();
+  public abstract @NlsActions.ActionText String getPresentableText();
 
   public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
     return false;
   }
 
-  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, Editor editor) {
+  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
     return lines;
   }
 
@@ -329,8 +333,8 @@ public abstract class CoverageEngine {
                                                           final TreeMap<Integer, LineData> lines,
                                                           final boolean coverageByTestApplicable,
                                                           @NotNull final CoverageSuitesBundle coverageSuite,
-                                                          final Function<Integer, Integer> newToOldConverter,
-                                                          final Function<Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
+                                                          final Function<? super Integer, Integer> newToOldConverter,
+                                                          final Function<? super Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
     return CoverageLineMarkerRenderer
       .getRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter,
                    subCoverageActive);
@@ -348,7 +352,13 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  public static String getEditorTitle() {
+  @ApiStatus.Experimental
+  @NotNull
+  public CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
+    return new CoverageEditorAnnotatorImpl(file, editor);
+  }
+
+  public static @TabTitle String getEditorTitle() {
     return CoverageBundle.message("coverage.tab.title");
   }
 

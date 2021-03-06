@@ -7,6 +7,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -28,6 +29,7 @@ public class ClassRepr extends ClassFileRepr {
   private final int myOuterClassName;
   private final boolean myIsLocal;
   private final boolean myIsAnonymous;
+  private final boolean myIsGenerated;
   private boolean myHasInlinedConstants;
 
   public Set<MethodRepr> getMethods() {
@@ -48,6 +50,10 @@ public class ClassRepr extends ClassFileRepr {
 
   public boolean isAnonymous() {
     return myIsAnonymous;
+  }
+
+  public boolean isGenerated() {
+    return myIsGenerated;
   }
 
   public boolean hasInlinedConstants() {
@@ -184,17 +190,9 @@ public class ClassRepr extends ClassFileRepr {
     };
   }
 
-  public int @NotNull [] getSupers() {
-    final int[] result = new int[myInterfaces.size() + 1];
-
-    result[0] = mySuperClass.className;
-
-    int i = 1;
-    for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).className;
-    }
-
-    return result;
+  public Iterable<TypeRepr.ClassType> getSuperTypes() {
+    final Iterable<TypeRepr.ClassType> supers = Iterators.map(myInterfaces, t -> (TypeRepr.ClassType)t);
+    return mySuperClass != null? Iterators.flat(Iterators.asIterable(mySuperClass), supers) : supers;
   }
 
   @Override
@@ -225,17 +223,18 @@ public class ClassRepr extends ClassFileRepr {
                    final int outerClassName,
                    final boolean localClassFlag,
                    final boolean anonymousClassFlag,
-                   final Set<UsageRepr.Usage> usages) {
+                   final Set<UsageRepr.Usage> usages, boolean isGenerated) {
     super(access, sig, name, annotations, fileName, context, usages);
     mySuperClass = TypeRepr.createClassType(context, superClass);
     myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
     myFields = fields;
     myMethods = methods;
-    this.myAnnotationTargets = annotationTargets;
-    this.myRetentionPolicy = policy;
-    this.myOuterClassName = outerClassName;
-    this.myIsLocal = localClassFlag;
-    this.myIsAnonymous = anonymousClassFlag;
+    myAnnotationTargets = annotationTargets;
+    myRetentionPolicy = policy;
+    myOuterClassName = outerClassName;
+    myIsLocal = localClassFlag;
+    myIsAnonymous = anonymousClassFlag;
+    myIsGenerated = isGenerated;
     updateClassUsages(context, usages);
   }
 
@@ -257,6 +256,7 @@ public class ClassRepr extends ClassFileRepr {
       myIsLocal = (flags & LOCAL_MASK) != 0;
       myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
       myHasInlinedConstants = (flags & HAS_INLINED_CONSTANTS_MASK) != 0;
+      myIsGenerated = (flags & IS_GENERATED_MASK) != 0;
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -266,6 +266,7 @@ public class ClassRepr extends ClassFileRepr {
   private static final int LOCAL_MASK = 1;
   private static final int ANONYMOUS_MASK = 2;
   private static final int HAS_INLINED_CONSTANTS_MASK = 4;
+  private static final int IS_GENERATED_MASK = 8;
 
   @Override
   public void save(final DataOutput out) {
@@ -279,7 +280,7 @@ public class ClassRepr extends ClassFileRepr {
       RW.writeUTF(out, myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
       DataInputOutputUtil.writeINT(out, myOuterClassName);
       DataInputOutputUtil.writeINT(
-        out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0) | (myHasInlinedConstants ? HAS_INLINED_CONSTANTS_MASK : 0)
+        out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0) | (myHasInlinedConstants ? HAS_INLINED_CONSTANTS_MASK : 0) | (myIsGenerated ? IS_GENERATED_MASK : 0)
       );
     }
     catch (IOException e) {
@@ -398,6 +399,8 @@ public class ClassRepr extends ClassFileRepr {
     stream.println(myIsAnonymous);
     stream.print("      Has inlined constants: ");
     stream.println(myHasInlinedConstants);
+    stream.print("      IsGenerated: ");
+    stream.println(myIsGenerated);
 
     stream.println("      Fields:");
     final FieldRepr[] fs = myFields.toArray(new FieldRepr[0]);

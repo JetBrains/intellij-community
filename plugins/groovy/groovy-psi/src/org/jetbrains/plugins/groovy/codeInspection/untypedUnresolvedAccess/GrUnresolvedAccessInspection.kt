@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -7,19 +7,17 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message
-import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool
+import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionTool
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker.shouldHighlightAsUnresolved
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isInStaticCompilationContext
 import javax.swing.JComponent
 
-class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool() {
+class GrUnresolvedAccessInspection : GroovyLocalInspectionTool() {
 
   @JvmField
   var myHighlightIfGroovyObjectOverridden = true
@@ -28,13 +26,13 @@ class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool() {
 
   override fun createOptionsPanel(): JComponent? {
     val optionsPanel = MultipleCheckboxOptionsPanel(this)
-    optionsPanel.addCheckbox(message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden")
-    optionsPanel.addCheckbox(message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")
+    optionsPanel.addCheckbox(GroovyBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden")
+    optionsPanel.addCheckbox(GroovyBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")
     return optionsPanel
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    return GroovyPsiElementVisitor(Visitor(UnresolvedReferenceInspectionSink(holder)))
+  override fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor {
+    return Visitor(UnresolvedReferenceInspectionSink(holder))
   }
 
   private inner class Visitor(private val highlightSink: HighlightSink) : GroovyElementVisitor() {

@@ -66,7 +66,7 @@ public class XmlDuplicatedIdInspection extends XmlSuppressableInspectionTool imp
 
   protected void checkValue(XmlAttributeValue value, XmlFile file, XmlRefCountHolder refHolder, XmlTag tag, ProblemsHolder holder) {
     if (refHolder.isValidatable(tag.getParent()) && refHolder.isDuplicateIdAttributeValue(value)) {
-      holder.registerProblem(value, XmlAnalysisBundle.message("duplicate.id.reference"), ProblemHighlightType.GENERIC_ERROR,
+      holder.registerProblem(value, XmlAnalysisBundle.message("xml.inspections.duplicate.id.reference"), ProblemHighlightType.GENERIC_ERROR,
                              ElementManipulators.getValueTextRange(value));
     }
   }

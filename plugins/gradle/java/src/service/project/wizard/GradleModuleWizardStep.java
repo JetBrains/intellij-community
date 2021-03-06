@@ -14,13 +14,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static com.intellij.ide.util.newProjectWizard.AbstractProjectWizard.getNewProjectJdk;
 
 /**
  * @author Vladislav.Soroka
@@ -124,7 +128,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true));
-      throw new ConfigurationException("Please, specify artifactId");
+      throw new ConfigurationException(GradleInspectionBundle.message("dialog.message.please.specify.artifactid"));
     }
 
     return true;
@@ -226,6 +230,9 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
         myContext.setProjectFileDirectory(myProjectOrNull.getBasePath() + '/' + myContext.getProjectName());
       }
     }
+
+    myBuilder.setCreatingNewProject(myContext.isCreatingNewProject());
+    myBuilder.setModuleJdk(ObjectUtils.chooseNotNull(myBuilder.getModuleJdk(), getNewProjectJdk(myContext)));
   }
 
   @Override

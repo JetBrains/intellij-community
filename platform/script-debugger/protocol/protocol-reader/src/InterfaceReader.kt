@@ -1,6 +1,6 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
-import gnu.trove.THashSet
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.JsonField
 import org.jetbrains.jsonProtocol.JsonSubtype
@@ -10,7 +10,6 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
-import java.util.*
 import kotlin.reflect.KCallable
 
 internal fun InterfaceReader(protocolInterfaces: List<Class<*>>): InterfaceReader {
@@ -64,7 +63,7 @@ internal fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter
 }
 
 internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
-  val processed = THashSet<Class<*>>()
+  val processed = HashSet<Class<*>>()
   private val refs = ArrayList<TypeRef<*>>()
   val subtypeCasters = ArrayList<SubtypeCaster>()
 
@@ -163,7 +162,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
           val ref = getTypeRef(type) ?: throw UnsupportedOperationException("Method return type $type (simple class) not supported")
-          ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue)
+          ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
         }
       }
     }

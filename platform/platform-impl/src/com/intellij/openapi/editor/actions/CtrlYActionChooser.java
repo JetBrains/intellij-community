@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -18,9 +18,17 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashSet;
+import java.util.Set;
 
-public class CtrlYActionChooser {
-  private static final String ASK_ABOUT_SHORTCUT = "ask.about.ctrl.y.shortcut";
+public final class CtrlYActionChooser {
+  private static final String ASK_ABOUT_SHORTCUT = "ask.about.ctrl.y.shortcut.v2";
+  private static final Set<String> TARGET_KEYMAPS = new HashSet<>() {{
+    add(KeymapManager.DEFAULT_IDEA_KEYMAP);
+    add(KeymapManager.X_WINDOW_KEYMAP);
+    add(KeymapManager.KDE_KEYMAP);
+    add(KeymapManager.GNOME_KEYMAP);
+  }};
 
   @Nullable
   private static Keymap getCurrentKeymap() {
@@ -81,7 +89,7 @@ public class CtrlYActionChooser {
     Keymap keymap = getCurrentKeymap();
     if (keymap == null) return true;
     Keymap rootKeymap = getRootKeymap(keymap);
-    if (!KeymapManager.DEFAULT_IDEA_KEYMAP.equals(rootKeymap.getName())) return true;
+    if (!TARGET_KEYMAPS.contains(rootKeymap.getName())) return true;
 
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     if (!isCtrlY(event)) return true;

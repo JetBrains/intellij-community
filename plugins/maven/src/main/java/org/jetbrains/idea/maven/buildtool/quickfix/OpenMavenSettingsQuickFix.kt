@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.buildtool.quickfix
 
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture
 class OpenMavenSettingsQuickFix : BuildIssueQuickFix {
   override val id: String = ID
 
-  override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     ApplicationManager.getApplication().invokeLater {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenProjectBundle.message("configurable.MavenSettings.display.name"))
     }

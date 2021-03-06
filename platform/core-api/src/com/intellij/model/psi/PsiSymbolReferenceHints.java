@@ -8,12 +8,20 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiSymbolReferenceHints {
 
   /**
+   * Provider may return only references of type which is assignable to this type.
+   *
+   * @return type of expected reference
+   */
+  default @NotNull Class<? extends PsiSymbolReference> getReferenceClass() {
+    return PsiSymbolReference.class;
+  }
+
+  /**
    * Provider may return only references which could be resolved to symbols of this type if the type is not {@code null}.
    *
    * @return type of expected target symbol
    */
-  @Nullable
-  default Class<? extends Symbol> getTargetClass() {
+  default @Nullable Class<? extends Symbol> getTargetClass() {
     Symbol target = getTarget();
     return target != null ? target.getClass() : null;
   }
@@ -23,8 +31,7 @@ public interface PsiSymbolReferenceHints {
    *
    * @return expected target symbol
    */
-  @Nullable
-  default Symbol getTarget() {
+  default @Nullable Symbol getTarget() {
     return null;
   }
 
@@ -32,19 +39,27 @@ public interface PsiSymbolReferenceHints {
    * Provider may return references which contain specified offset if the offset is greater than or equal to 0;
    * in this case the offset is guaranteed to be within {@code [0, element.getTextLength())}.
    *
-   * @return offset in the element for which references are queried, or {@code null} if the offset doesn't matter
+   * @return offset in the element for which references are queried, or {@code -1} if the offset doesn't matter
    */
-  @Nullable
-  default Integer getOffsetInElement() {
-    return null;
+  default int getOffsetInElement() {
+    return -1;
   }
 
-  @NotNull
-  static PsiSymbolReferenceHints offsetHint(int offsetInElement) {
+  static @NotNull PsiSymbolReferenceHints referenceClassHint(@NotNull Class<? extends PsiSymbolReference> referenceClass) {
+    assert referenceClass != PsiSymbolReference.class;
+    return new PsiSymbolReferenceHints() {
+      @Override
+      public @NotNull Class<? extends PsiSymbolReference> getReferenceClass() {
+        return referenceClass;
+      }
+    };
+  }
+
+  static @NotNull PsiSymbolReferenceHints offsetHint(int offsetInElement) {
     assert offsetInElement >= 0;
     return new PsiSymbolReferenceHints() {
       @Override
-      public Integer getOffsetInElement() {
+      public int getOffsetInElement() {
         return offsetInElement;
       }
     };

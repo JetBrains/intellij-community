@@ -6,6 +6,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 @State(
@@ -15,34 +16,30 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public final class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
-  private final State myState = new State();
+  private @NotNull State myState = new State();
 
   public static PyDebuggerOptionsProvider getInstance(Project project) {
     return project.getService(PyDebuggerOptionsProvider.class);
   }
 
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    myState.myAttachToSubprocess = state.myAttachToSubprocess;
-    myState.mySaveCallSignatures = state.mySaveCallSignatures;
-    myState.mySupportGeventDebugging = state.mySupportGeventDebugging;
-    myState.mySupportQtDebugging = state.mySupportQtDebugging;
-    myState.myPyQtBackend = state.myPyQtBackend;
-    myState.myAttachProcessFilter = state.myAttachProcessFilter;
+    myState = state;
   }
 
   public static class State {
     public boolean myAttachToSubprocess = true;
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
+    public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
-    public String myPyQtBackend = "Auto";
-    public String myAttachProcessFilter = "python";
+    public @NonNls String myPyQtBackend = "auto";
+    public @NonNls String myAttachProcessFilter = "python";
   }
 
 
@@ -68,6 +65,14 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
 
   public void setSupportGeventDebugging(boolean supportGeventDebugging) {
     myState.mySupportGeventDebugging = supportGeventDebugging;
+  }
+
+  public boolean isDropIntoDebuggerOnFailedTest() {
+    return myState.myDropIntoDebuggerOnFailedTests;
+  }
+
+  public void setDropIntoDebuggerOnFailedTest(boolean dropIntoDebuggerOnFailedTest) {
+    myState.myDropIntoDebuggerOnFailedTests = dropIntoDebuggerOnFailedTest;
   }
 
   public boolean isSupportQtDebugging() {

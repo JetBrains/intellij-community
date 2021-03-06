@@ -28,7 +28,7 @@ import java.util.*;
 /**
  * Helper class to collect all used namespaces and their prefixes from an xml document
  */
-public class NamespaceCollector extends XmlRecursiveElementVisitor {
+public final class NamespaceCollector extends XmlRecursiveElementVisitor {
     private static final Logger LOG = Logger.getInstance(NamespaceCollector.class);
 
     public static class CollectedInfo {
@@ -120,7 +120,7 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
     public static CollectedInfo empty() {
       return new CollectedInfo(Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
     }
-    
+
     public static CollectedInfo collectInfo(final XmlFile psiFile) {
         final NamespaceCollector namespaceCollector = new NamespaceCollector();
         final XmlDocument document = psiFile.getDocument();

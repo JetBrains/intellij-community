@@ -4,6 +4,7 @@ package com.intellij.execution.runners;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public abstract class JavaProgramPatcher {
 
   public static void runCustomPatchers(@NotNull JavaParameters javaParameters, @NotNull Executor executor, @NotNull RunProfile runProfile) {
     EP_NAME.forEachExtensionSafe(patcher -> {
-      patcher.patchJavaParameters(executor, runProfile, javaParameters);
+      ReadAction.run(() -> patcher.patchJavaParameters(executor, runProfile, javaParameters));
     });
   }
 }

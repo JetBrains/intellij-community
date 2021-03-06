@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,20 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    super(tree, parent, expression.getExpression(), new XWatchValue(expression, tree, stackFrame));
+    this(tree, parent, expression, stackFrame, expression.getExpression());
+  }
+
+  WatchNodeImpl(@NotNull XDebuggerTree tree,
+                @NotNull WatchesRootNode parent,
+                @NotNull XExpression expression,
+                @Nullable XStackFrame stackFrame,
+                @NotNull String name) {
+    super(tree, parent, name, new XWatchValue(expression, tree, stackFrame));
+    myExpression = expression;
+  }
+
+  protected WatchNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression, XNamedValue value) {
+    super(tree, parent, expression.getExpression(), value);
     myExpression = expression;
   }
 
@@ -43,7 +56,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     return value != null ? value : container;
   }
 
-  void computePresentationIfNeeded() {
+  public void computePresentationIfNeeded() {
     if (getValuePresentation() == null) {
       getValueContainer().computePresentation(this, XValuePlace.TREE);
     }

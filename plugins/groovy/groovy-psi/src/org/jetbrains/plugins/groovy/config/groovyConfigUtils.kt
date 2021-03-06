@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
@@ -13,7 +14,7 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil.SOME_GROOVY_CLASS
 import org.jetbrains.plugins.groovy.util.LibrariesUtil.findJarWithClass
 import java.util.jar.Attributes
 
-fun getSdkVersion(module: Module): String? {
+fun getSdkVersion(module: Module): @NlsSafe String? {
   return CachedValuesManager.getManager(module.project).getCachedValue(module) {
     Result.create(doGetSdkVersion(module), ProjectRootManager.getInstance(module.project))
   }

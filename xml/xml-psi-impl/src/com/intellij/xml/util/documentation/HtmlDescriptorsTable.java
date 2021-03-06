@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @author maxim
  */
-public class HtmlDescriptorsTable {
+public final class HtmlDescriptorsTable {
   public static final Logger LOG = Logger.getInstance(HtmlDescriptorsTable.class);
 
   private static final HashMap<String,HtmlTagDescriptor> ourTagTable = new HashMap<>();
@@ -171,5 +171,9 @@ public class HtmlDescriptorsTable {
 
   public static HtmlAttributeDescriptor getAttributeDescriptor(String attributeName) {
     return ourAttributeTable.get(attributeName);
+  }
+
+  public static boolean isKnownAttributeDescriptor(String attributeName) {
+    return getAttributeDescriptor(attributeName) != null;
   }
 }

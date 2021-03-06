@@ -5,15 +5,20 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.Ref;
-import com.intellij.ui.*;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.*;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,13 +32,13 @@ import java.awt.event.MouseListener;
 import static com.intellij.openapi.editor.colors.EditorColorsUtil.getGlobalOrDefaultColor;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class HintUtil {
+public final class HintUtil {
   /** @deprecated use getInformationColor() */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
   public static final Color INFORMATION_BORDER_COLOR = JBColor.namedColor("InformationHint.borderColor", new JBColor(0xE0E0E0, 0x5C5E61));
   /** @deprecated use getErrorColor() */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Color ERROR_COLOR = new JBColor(0xffdcdc, 0x781732);
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
@@ -75,7 +80,7 @@ public class HintUtil {
   public static JComponent createInformationLabel(@NotNull @HintText String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
-                                                  @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
+                                                  @Nullable Ref<? super Consumer<@Nls String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
     HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
@@ -156,8 +161,7 @@ public class HintUtil {
 
   public static JComponent createErrorLabel(@NotNull @HintText String text,
                                             @Nullable HyperlinkListener hyperlinkListener,
-                                            @Nullable MouseListener mouseListener,
-                                            @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
+                                            @Nullable MouseListener mouseListener) {
     Color bg = getErrorColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
                                       .setTextFg(JBColor.foreground())
@@ -165,13 +169,13 @@ public class HintUtil {
                                       .setAwtTooltip(true);
 
     HintLabel label = createLabel(text, null, bg, hintHint);
-    configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
+    configureLabel(label, hyperlinkListener, mouseListener, null);
     return label;
   }
 
   @NotNull
   public static JComponent createErrorLabel(@NotNull @HintText String text) {
-    return createErrorLabel(text, null, null, null);
+    return createErrorLabel(text, null, null);
   }
 
   @NotNull
@@ -195,37 +199,37 @@ public class HintUtil {
   }
 
   @NotNull
-  public static JLabel createAdComponent(final String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
+  public static JLabel createAdComponent(@NlsContexts.PopupAdvertisement String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setHorizontalAlignment(alignment);
     label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
     label.setBackground(JBUI.CurrentTheme.Advertiser.background());
     label.setOpaque(true);
-    label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
+    label.setFont(RelativeFont.NORMAL.fromResource("Popup.Advertiser.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont()));
     if (bottomText != null) {
       label.setBorder(border);
     }
     return label;
   }
 
-  @NotNull
-  public static String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
+  public static @NotNull @Nls String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
     return prepareHintText(new Html(text), hintHint);
   }
 
-  public static String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
+  public static @NotNull @Nls String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
     String htmlBody = UIUtil.getHtmlBody(text);
-    return String.format(
-      "<html><head>%s</head><body>%s</body></html>",
-      UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
-      htmlBody
-    );
+    String style =
+      UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg());
+    return HtmlChunk.html().children(
+      HtmlChunk.head().addRaw(style),
+      HtmlChunk.body().addRaw(htmlBody)
+    ).toString();
   }
 
   private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,
                                      @Nullable MouseListener mouseListener,
-                                     @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
+                                     @Nullable Ref<? super Consumer<@Nls String>> updatedTextConsumer) {
     if (hyperlinkListener != null) {
       label.myPane.addHyperlinkListener(hyperlinkListener);
     }
@@ -233,7 +237,7 @@ public class HintUtil {
       label.myPane.addMouseListener(mouseListener);
     }
     if (updatedTextConsumer != null) {
-      Consumer<? super String> consumer = s -> {
+      Consumer<@Nls String> consumer = s -> {
         label.myPane.setText(s);
 
         // Force preferred size recalculation.
@@ -244,7 +248,7 @@ public class HintUtil {
     }
   }
 
-  private static class HintLabel extends JPanel {
+  private static final class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
@@ -287,7 +291,7 @@ public class HintUtil {
       repaint();
     }
 
-    public void setText(String s, HintHint hintHint) {
+    public void setText(@NlsContexts.Tooltip String s, HintHint hintHint) {
       clearText();
 
       if (s != null) {

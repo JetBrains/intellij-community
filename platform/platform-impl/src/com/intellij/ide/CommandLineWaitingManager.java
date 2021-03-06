@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.LightEditorInfo;
+import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -13,10 +17,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -24,6 +30,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -44,12 +51,26 @@ public final class CommandLineWaitingManager {
         freeObject(file);
       }
     });
+    LightEditService.getInstance().getEditorManager().addListener(new LightEditorListener() {
+      @Override
+      public void afterClose(@NotNull LightEditorInfo editorInfo) {
+        freeObject(editorInfo.getFile());
+        Path path = editorInfo.getPreferredSavePath();
+        if (path != null) {
+          freeObject(path);
+        }
+      }
+    });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         freeObject(project);
       }
     });
+  }
+
+  public @NotNull Future<CliResult> addHookForPath(@NotNull Path path) {
+    return addHookAndNotify(path, IdeBundle.message("activation.file.is.waiting.notification", path.toString()));
   }
 
   public static @NotNull CommandLineWaitingManager getInstance() {
@@ -65,7 +86,7 @@ public final class CommandLineWaitingManager {
   }
 
   private @NotNull Future<CliResult> addHookAndNotify(@NotNull Object fileOrProject,
-                                                      @NotNull String notificationText) {
+                                                      @NotNull @NlsContexts.NotificationContent String notificationText) {
     LOG.info(notificationText);
 
     final CompletableFuture<CliResult> result = new CompletableFuture<>();
@@ -80,6 +101,14 @@ public final class CommandLineWaitingManager {
     return result;
   }
 
+  public boolean hasHookFor(@NotNull VirtualFile file) {
+    Path path = LightEditUtil.getPreferredSavePathForNonExistentFile(file);
+    if (path != null && myFileOrProjectToCallback.containsKey(path)) {
+      return true;
+    }
+    return myFileOrProjectToCallback.containsKey(file);
+  }
+
   private void freeObject(@NotNull Object fileOrProject) {
     myDismissedObjects.remove(fileOrProject);
     CompletableFuture<CliResult> future = myFileOrProjectToCallback.remove(fileOrProject);
@@ -89,7 +118,7 @@ public final class CommandLineWaitingManager {
     future.complete(CliResult.OK);
   }
 
-  static final class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> {
+  static final class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
     private static final Key<EditorNotificationPanel> KEY = Key.create("CommandLineWaitingNotification");
 
     @Override
@@ -101,7 +130,7 @@ public final class CommandLineWaitingManager {
     public @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
       if (!PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) {
         CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
-        if (manager != null && manager.myFileOrProjectToCallback.containsKey(file) && !manager.myDismissedObjects.contains(file)) {
+        if (manager != null && manager.hasHookFor(file) && !manager.myDismissedObjects.contains(file)) {
           return new MyNotificationPanel(file);
         }
       }

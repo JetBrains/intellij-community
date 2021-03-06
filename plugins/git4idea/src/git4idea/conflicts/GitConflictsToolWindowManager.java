@@ -12,10 +12,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitDefaultMergeDialogCustomizer;
-import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.status.GitStagingAreaHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public final class GitConflictsToolWindowManager implements Disposable {
-  public static final String TAB_NAME = "Conflicts";
-
   @NotNull private final Project myProject;
 
   private final AtomicBoolean myRefreshScheduled = new AtomicBoolean();
@@ -43,11 +42,11 @@ public final class GitConflictsToolWindowManager implements Disposable {
   private void updateToolWindow() {
     myRefreshScheduled.set(false);
     boolean hasConflicts = ContainerUtil.exists(GitRepositoryManager.getInstance(myProject).getRepositories(),
-                                                repo -> !repo.getConflictsHolder().getConflicts().isEmpty());
+                                                repo -> !repo.getStagingAreaHolder().getAllConflicts().isEmpty());
     if (hasConflicts && myContent == null) {
       GitDefaultMergeDialogCustomizer mergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(myProject);
       GitConflictsView panel = new GitConflictsView(myProject, mergeDialogCustomizer);
-      myContent = ContentFactory.SERVICE.getInstance().createContent(panel.getComponent(), TAB_NAME, false);
+      myContent = ContentFactory.SERVICE.getInstance().createContent(panel.getComponent(), GitBundle.message("tab.title.conflicts"), false);
       myContent.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
                             ChangesViewContentManager.TabOrderWeight.REPOSITORY.getWeight() + 1);
       myContent.setCloseable(false);
@@ -69,9 +68,9 @@ public final class GitConflictsToolWindowManager implements Disposable {
     }
   }
 
-  public static class MyConflictsListener implements GitConflictsHolder.ConflictsListener {
+  public static class MyStagingAreaListener implements GitStagingAreaHolder.StagingAreaListener {
     @Override
-    public void conflictsChanged(@NotNull GitRepository repository) {
+    public void stagingAreaChanged(@NotNull GitRepository repository) {
       if (!Registry.is("git.merge.conflicts.toolwindow")) return;
 
       Project project = repository.getProject();

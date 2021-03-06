@@ -183,6 +183,9 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass>
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
       sink.occurrence(PyClassNameIndexInsensitive.KEY, StringUtil.toLowerCase(name));
+      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+        sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
+      }
     }
 
     for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(stub.getPsi())) {

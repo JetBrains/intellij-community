@@ -1,0 +1,47 @@
+# Pytype exclude list. Files will not be tested with pytype.
+
+# pytype has its own version of these files, and thus doesn't mind if it
+# can't parse the typeshed version:
+stdlib/@python2/__builtin__.pyi
+stdlib/@python2/builtins.pyi
+stdlib/@python2/typing.pyi
+stdlib/builtins.pyi
+stdlib/typing.pyi
+
+# third_party stubs with constructs that pytype doesn't yet support:
+stubs/fb303/fb303/FacebookService.pyi
+stubs/scribe/scribe/scribe.pyi
+stubs/attrs/attr/__init__.pyi
+stubs/attrs/attr/converters.pyi
+stubs/attrs/attr/filters.pyi
+stubs/attrs/attr/validators.pyi
+stubs/paramiko/paramiko/_winapi.pyi
+stubs/paramiko/paramiko/win_pageant.pyi
+
+# _pb2.pyi have some constructs that break pytype
+# Eg
+# pytype.pyi.parser.ParseError:   File: "/Users/nipunn/src/typeshed/third_party/2and3/google/protobuf/descriptor_pb2.pyi", line 195
+# b"TypeValue = typing___NewType('TypeValue', builtin___int)"
+stubs/protobuf/google/protobuf/any_pb2.pyi
+stubs/protobuf/google/protobuf/api_pb2.pyi
+stubs/protobuf/google/protobuf/compiler/plugin_pb2.pyi
+stubs/protobuf/google/protobuf/descriptor.pyi
+stubs/protobuf/google/protobuf/descriptor_pb2.pyi
+stubs/protobuf/google/protobuf/duration_pb2.pyi
+stubs/protobuf/google/protobuf/empty_pb2.pyi
+stubs/protobuf/google/protobuf/field_mask_pb2.pyi
+stubs/protobuf/google/protobuf/internal/containers.pyi
+stubs/protobuf/google/protobuf/internal/enum_type_wrapper.pyi
+stubs/protobuf/google/protobuf/internal/extension_dict.pyi
+stubs/protobuf/google/protobuf/json_format.pyi
+stubs/protobuf/google/protobuf/message.pyi
+stubs/protobuf/google/protobuf/message_factory.pyi
+stubs/protobuf/google/protobuf/service.pyi
+stubs/protobuf/google/protobuf/source_context_pb2.pyi
+stubs/protobuf/google/protobuf/struct_pb2.pyi
+stubs/protobuf/google/protobuf/symbol_database.pyi
+stubs/protobuf/google/protobuf/timestamp_pb2.pyi
+stubs/protobuf/google/protobuf/type_pb2.pyi
+stubs/protobuf/google/protobuf/util/json_format_pb2.pyi
+stubs/protobuf/google/protobuf/util/json_format_proto3_pb2.pyi
+stubs/protobuf/google/protobuf/wrappers_pb2.pyi

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -63,7 +64,7 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
  * @see PyPsiUtils for utilities used in Python PSI API
  * @see PyUiUtil for UI-related utilities for Python (available in intellij.python.community.impl)
  */
-public class PyUtil {
+public final class PyUtil {
 
   private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
 
@@ -543,6 +544,10 @@ public class PyUtil {
     return ContainerUtil.filter(resolveResults, resolveResult -> getRate(resolveResult) >= maxRate);
   }
 
+  public static @NotNull <E extends ResolveResult> List<PsiElement> filterTopPriorityElements(@NotNull List<? extends E> resolveResults) {
+    return ContainerUtil.mapNotNull(filterTopPriorityResults(resolveResults), ResolveResult::getElement);
+  }
+
   private static int getMaxRate(@NotNull List<? extends ResolveResult> resolveResults) {
     return resolveResults
       .stream()
@@ -552,7 +557,7 @@ public class PyUtil {
   }
 
   private static int getRate(@NotNull ResolveResult resolveResult) {
-    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
+    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : RatedResolveResult.RATE_NORMAL;
   }
 
   /**
@@ -813,10 +818,15 @@ public class PyUtil {
     if (directory == null) return true;
     VirtualFile vFile = directory.getVirtualFile();
     if (vFile == null) return true;
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(directory.getProject());
-    return Comparing.equal(fileIndex.getClassRootForFile(vFile), vFile) ||
-           Comparing.equal(fileIndex.getContentRootForFile(vFile), vFile) ||
-           Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);
+    Project project = directory.getProject();
+    return isRoot(vFile, project);
+  }
+
+  public static boolean isRoot(@NotNull VirtualFile directory, @NotNull Project project) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    return Comparing.equal(fileIndex.getClassRootForFile(directory), directory) ||
+           Comparing.equal(fileIndex.getContentRootForFile(directory), directory) ||
+           Comparing.equal(fileIndex.getSourceRootForFile(directory), directory);
   }
 
   /**
@@ -835,7 +845,7 @@ public class PyUtil {
     if (!(scope instanceof PyClass) && !(scope instanceof PyFile) && !(scope instanceof PyFunction)) {
       return Collections.emptyList();
     }
-    final Set<String> variables = new HashSet<String>() {
+    final Set<String> variables = new HashSet<>() {
       @Override
       public boolean add(String s) {
         return s != null && super.add(s);
@@ -853,7 +863,7 @@ public class PyUtil {
       }
 
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         if (!node.isQualified()) {
           variables.add(node.getReferencedName());
         }
@@ -964,14 +974,7 @@ public class PyUtil {
    * @see PyNames#isIdentifier(String)
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
-    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
-      if (customPackageIdentifier.isPackage(directory)) {
-        return true;
-      }
-    }
-    if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
-      return true;
-    }
+    if (isExplicitPackage(directory)) return true;
     final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
     if (!level.isPython2()) {
       return true;
@@ -991,6 +994,19 @@ public class PyUtil {
   public static boolean isPackage(@NotNull PsiFileSystemItem anchor, @Nullable PsiElement location) {
     return anchor instanceof PsiFile ? isPackage((PsiFile)anchor) :
            anchor instanceof PsiDirectory && isPackage((PsiDirectory)anchor, location);
+  }
+
+  public static boolean isCustomPackage(@NotNull PsiDirectory directory) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackage(directory)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isExplicitPackage(@NotNull PsiDirectory directory) {
+    return isOrdinaryPackage(directory) || isCustomPackage(directory);
   }
 
   private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
@@ -1091,7 +1107,12 @@ public class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
-      return getSourceRoots(module);
+      Collection<VirtualFile> roots = getSourceRoots(module);
+      ModelBranch branch = ModelBranch.getPsiBranch(foothold);
+      if (branch != null) {
+        return ContainerUtil.map(roots, branch::findFileCopy);
+      }
+      return roots;
     }
     return Collections.emptyList();
   }
@@ -1186,7 +1207,7 @@ public class PyUtil {
     return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
   }
 
-  public static class MethodFlags {
+  public static final class MethodFlags {
 
     private final boolean myIsStaticMethod;
     private final boolean myIsMetaclassMethod;
@@ -1529,17 +1550,7 @@ public class PyUtil {
     }
 
     if (type instanceof PyUnionType) {
-      final List<PyType> types = new ArrayList<>();
-
-      for (PyType pyType : ((PyUnionType)type).getMembers()) {
-        final PyType returnType = getReturnType(pyType, context);
-
-        if (returnType != null) {
-          types.add(returnType);
-        }
-      }
-
-      return PyUnionType.union(types);
+      return PyUnionType.toNonWeakType(((PyUnionType)type).map(member -> getReturnType(member, context)));
     }
 
     return null;
@@ -1647,6 +1658,10 @@ public class PyUtil {
     else {
       function.addBefore(newDecorators, function.getFirstChild());
     }
+  }
+
+  public static boolean isOrdinaryPackage(@NotNull PsiDirectory directory) {
+    return directory.findFile(PyNames.INIT_DOT_PY) != null;
   }
 
   /**
@@ -1783,7 +1798,7 @@ public class PyUtil {
     }
   }
 
-  public static class IterHelper {  // TODO: rename sanely
+  public static final class IterHelper {  // TODO: rename sanely
     private IterHelper() {}
 
     @Nullable

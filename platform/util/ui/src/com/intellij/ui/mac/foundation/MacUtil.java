@@ -1,50 +1,36 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
-import static com.intellij.ui.mac.foundation.Foundation.createSelector;
-import static com.intellij.ui.mac.foundation.Foundation.executeOnMainThread;
-import static com.intellij.ui.mac.foundation.Foundation.getObjcClass;
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
-import static com.intellij.ui.mac.foundation.Foundation.nsString;
-import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
-
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
-import java.awt.AWTEvent;
-import java.awt.ActiveEvent;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dialog;
-import java.awt.EventQueue;
-import java.awt.Frame;
-import java.awt.MenuComponent;
-import java.awt.Toolkit;
-import java.awt.Window;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.JComponent;
-import javax.swing.JList;
-import javax.swing.SwingUtilities;
-import javax.swing.text.JTextComponent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
+
+import static com.intellij.ui.mac.foundation.Foundation.*;
 
 /**
  * @author pegov
  */
-public class MacUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.MacUtil");
-  public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
+public final class MacUtil {
+  private static final Logger LOG = Logger.getInstance(MacUtil.class);
+  private static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 
   private MacUtil() {
   }
@@ -63,10 +49,10 @@ public class MacUtil {
       while (true) {
         // dirty hack: walks through all the windows to find a cocoa window to show sheet for
         final ID window = invoke(windowEnumerator, "nextObject");
-        if (0 == window.intValue()) break;
+        if (ID.NIL.equals(window)) break;
 
         final ID windowTitle = invoke(window, "title");
-        if (windowTitle != null && windowTitle.intValue() != 0) {
+        if (!ID.NIL.equals(windowTitle)) {
           final String titleString = toStringViaUTF8(windowTitle);
           if (Objects.equals(titleString, title)) {
             focusedWindow = window;
@@ -121,15 +107,21 @@ public class MacUtil {
   }
 
   public static boolean isFullKeyboardAccessEnabled() {
-    if (!SystemInfo.isMacOSSnowLeopard) return false;
-    final AtomicBoolean result = new AtomicBoolean();
-    executeOnMainThread(true, true,
-                        () -> result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1));
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
+    AtomicBoolean result = new AtomicBoolean();
+    executeOnMainThread(true, true, () -> {
+      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").booleanValue());
+    });
     return result.get();
   }
 
   public static void adjustFocusTraversal(@NotNull Disposable disposable) {
-    if (!SystemInfo.isMacOSSnowLeopard) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
     final AWTEventListener listener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
@@ -150,26 +142,60 @@ public class MacUtil {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
   }
 
-  public static ID findWindowFromJavaWindow(final Window w) {
-    ID windowId = null;
-    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+  @NotNull
+  public static ID getWindowFromJavaWindow(@Nullable Window w) {
+    if (w == null) {
+      return ID.NIL;
+    }
+    if (SystemInfo.isJetBrainsJvm) {
       try {
-        Class <?> cWindowPeerClass  = AWTAccessor.getComponentAccessor().getPeer(w).getClass();
-        Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(AWTAccessor.getComponentAccessor().getPeer(w));
-        Class <?> cPlatformWindowClass = cPlatformWindow.getClass();
-        Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
-        windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
+        Object cPlatformWindow = getPlatformWindow(w);
+        if (cPlatformWindow != null) {
+          Field ptr = cPlatformWindow.getClass().getSuperclass().getDeclaredField("ptr");
+          ptr.setAccessible(true);
+          return new ID(ptr.getLong(cPlatformWindow));
+        }
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      catch (IllegalAccessException | NoSuchFieldException e) {
         LOG.debug(e);
       }
     }
-    else {
-      String foremostWindowTitle = getWindowTitle(w);
-      windowId = findWindowForTitle(foremostWindowTitle);
+    return ID.NIL;
+  }
+
+  @Nullable
+  public static Object getPlatformWindow(@NotNull Window w) {
+    if (SystemInfo.isJetBrainsJvm) {
+      try {
+        Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
+        Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
+        Method getPeer = componentAccessor.getClass().getMethod("getPeer", Component.class);
+        getPeer.setAccessible(true);
+        Object peer = getPeer.invoke(componentAccessor, w);
+        if (peer != null) {
+          Class<?> cWindowPeerClass = peer.getClass();
+          Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
+          Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
+          if (cPlatformWindow != null) {
+            return cPlatformWindow;
+          }
+        }
+      }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+        LOG.debug(e);
+      }
     }
-    return windowId;
+    return null;
+  }
+
+  public static ID findWindowFromJavaWindow(final Window w) {
+    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
+      ID window = getWindowFromJavaWindow(w);
+      if (!ID.NIL.equals(window)) {
+        return window;
+      }
+    }
+    return findWindowForTitle(getWindowTitle(w));
   }
 
   @Nullable
@@ -185,7 +211,7 @@ public class MacUtil {
   }
 
   @SuppressWarnings("unused")
-  private static class NSActivityOptions {
+  private static final class NSActivityOptions {
     // Used for activities that require the computer to not idle sleep. This is included in NSActivityUserInitiated.
     private static final long idleSystemSleepDisabled = 1L << 20;
 
@@ -197,14 +223,7 @@ public class MacUtil {
     private static final long latencyCritical = 0xFF00000000L;
   }
 
-  public interface Activity {
-    /**
-     * Ends activity, allowing macOS to trigger AppNap (idempotent).
-     */
-    void matrixHasYou();
-  }
-
-  private static final class ActivityImpl extends AtomicReference<ID> implements Activity {
+  private static final class ActivityImpl extends AtomicReference<ID> implements Runnable {
     private static final ID processInfoCls = getObjcClass("NSProcessInfo");
     private static final Pointer processInfoSel = createSelector("processInfo");
     private static final Pointer beginActivityWithOptionsReasonSel = createSelector("beginActivityWithOptions:reason:");
@@ -216,8 +235,13 @@ public class MacUtil {
       super(begin(reason));
     }
 
+    /**
+     * Ends activity, allowing macOS to trigger AppNap (idempotent).
+     */
     @Override
-    public void matrixHasYou() { end(getAndSet(null)); }
+    public void run() {
+      end(getAndSet(null));
+    }
 
     private static ID getProcessInfo() { return invoke(processInfoCls, processInfoSel); }
 
@@ -230,14 +254,16 @@ public class MacUtil {
     }
 
     private static void end(@Nullable ID activityToken) {
-      if (activityToken == null) return;
+      if (activityToken == null) {
+        return;
+      }
       invoke(getProcessInfo(), endActivitySel, activityToken);
       invoke(activityToken, releaseSel);
     }
   }
 
-  public static Activity wakeUpNeo(@NotNull Object reason) {
-    return SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
+  public static @NotNull Runnable wakeUpNeo(@NotNull Object reason) {
+    return new ActivityImpl(reason);
   }
 
   @NotNull

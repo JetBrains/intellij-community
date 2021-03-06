@@ -6,6 +6,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.SortedList;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Provides a way to sort results of multi-resolve.
@@ -72,5 +73,18 @@ public class RatedResolveResult implements ResolveResult {
     List<RatedResolveResult> ret = new SortedList<>((one, another) -> another.getRate() - one.getRate());
     ret.addAll(targets);
     return ret;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RatedResolveResult result = (RatedResolveResult)o;
+    return myRate == result.myRate && Objects.equals(myWhat, result.myWhat);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRate, myWhat);
   }
 }

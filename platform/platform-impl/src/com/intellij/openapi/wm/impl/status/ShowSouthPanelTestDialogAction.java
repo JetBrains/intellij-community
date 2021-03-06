@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -37,8 +36,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
   }
 
   private static class MyDialogWrapper extends DialogWrapper {
-    private final boolean ORIGINAL_ALLOW_MERGE_BUTTONS;
-
     private final Wrapper mySouthPanel = new Wrapper();
 
     private final JButton myRefresh = new JButton("Refresh");
@@ -48,7 +45,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     private final JCheckBox myHasOptionAction = new JCheckBox("Option action", false);
     private final JCheckBox myHasLeftAction = new JCheckBox("Left action", true);
     private final JCheckBox myHasDoNotShowCheckbox = new JCheckBox("'Do not show' checkbox", true);
-    private final JCheckBox myAllowMergeButtons = new JCheckBox("Allow merge buttons", false);
     private final JCheckBox myCompact = new JCheckBox("Compact style", false);
     private final JCheckBox myErrorText = new JCheckBox("Error text", false);
     private final JCheckBox myMoveErrorTextToButtons = new JCheckBox("Move error text to the buttons", false);
@@ -56,13 +52,11 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
 
     MyDialogWrapper(Project project) {
       super(project);
-      ORIGINAL_ALLOW_MERGE_BUTTONS = UISettings.getShadowInstance().getAllowMergeButtons();
       init();
     }
 
     @Override
     protected void dispose() {
-      UISettings.getShadowInstance().setAllowMergeButtons(ORIGINAL_ALLOW_MERGE_BUTTONS);
       super.dispose();
     }
 
@@ -74,9 +68,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
 
       myRefresh.addActionListener(e -> refreshSouthPanel());
 
-      myAllowMergeButtons.setSelected(ORIGINAL_ALLOW_MERGE_BUTTONS);
-      myAllowMergeButtons.addActionListener(e -> UISettings.getShadowInstance().setAllowMergeButtons(myAllowMergeButtons.isSelected()));
-
       myErrorText.addActionListener(e -> setErrorText(myErrorText.isSelected() ? "Error text" : null, myErrorText));
       myCenterButtons.addActionListener(e -> setButtonsAlignment(myCenterButtons.isSelected() ? SwingUtilities.CENTER : SwingUtilities.RIGHT));
 
@@ -87,7 +78,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       panel.add(myHasOptionAction);
       panel.add(myHasLeftAction);
       panel.add(myHasDoNotShowCheckbox);
-      panel.add(myAllowMergeButtons);
       panel.add(myCompact);
       panel.add(myErrorText);
       panel.add(myMoveErrorTextToButtons);

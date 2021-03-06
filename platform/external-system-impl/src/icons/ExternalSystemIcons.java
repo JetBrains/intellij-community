@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class ExternalSystemIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, ExternalSystemIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, ExternalSystemIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon Task = load("/icons/task.svg");
+  /** 16x16 */ public static final @NotNull Icon Task = load("icons/task.svg", 4580749319465007797L, 0);
 }

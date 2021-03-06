@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -51,9 +52,9 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
 
 @Suppress("DEPRECATION")
 private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> {
-  return when {
-    this is NioEventLoopGroup -> NioServerSocketChannel::class.java
-    this is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
+  return when (this) {
+    is NioEventLoopGroup -> NioServerSocketChannel::class.java
+    is io.netty.channel.oio.OioEventLoopGroup -> io.netty.channel.socket.oio.OioServerSocketChannel::class.java
     //  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
     else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
   }
@@ -100,7 +101,7 @@ private fun doConnect(bootstrap: Bootstrap,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): ConnectToChannelResult {
   if (ApplicationManager.getApplication().isDispatchThread) {
-    logger("com.intellij.util.io.netty").error("Synchronous connection to socket shouldn't be performed on EDT.")
+    Logger.getInstance("com.intellij.util.io.netty").error("Synchronous connection to socket shouldn't be performed on EDT.")
   }
 
   var attemptCount = 0
@@ -170,7 +171,7 @@ private fun connectNio(bootstrap: Bootstrap,
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       val cause = future.cause()
       if (cause == null) {
-        return ConnectToChannelResult("Cannot connect: unknown error")
+        return ConnectToChannelResult(IdeUtilIoBundle.message("error.message.cannot.connect.unknown.error"))
       }
       else {
         return ConnectToChannelResult(cause)
@@ -185,24 +186,24 @@ private fun sleep(time: Int): String? {
     Thread.sleep(time.toLong())
   }
   catch (ignored: InterruptedException) {
-    return "Interrupted"
+    return IdeUtilIoBundle.message("error.message.interrupted")
   }
 
   return null
 }
 
 val Channel.uriScheme: String
+  @NlsSafe
   get() = if (pipeline().get(SslHandler::class.java) == null) "http" else "https"
 
 val HttpRequest.host: String?
   get() = headers().getAsString(HttpHeaderNames.HOST)
 
-val HttpRequest.hostName: String?
-  get() {
-    val hostAndPort = headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
-    val portIndex = hostAndPort.lastIndexOf(':')
-    return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
-  }
+fun getHostName(httpRequest: HttpRequest): String? {
+  val hostAndPort = httpRequest.headers().getAsString(HttpHeaderNames.HOST)?.ifBlank { null } ?: return null
+  val portIndex = hostAndPort.lastIndexOf(':')
+  return if (portIndex > 0) hostAndPort.substring(0, portIndex).ifBlank { null } else hostAndPort
+}
 
 val HttpRequest.origin: String?
   get() = headers().getAsString(HttpHeaderNames.ORIGIN)
@@ -211,6 +212,7 @@ val HttpRequest.referrer: String?
   get() = headers().getAsString(HttpHeaderNames.REFERER)
 
 val HttpRequest.userAgent: String?
+  @NlsSafe
   get() = headers().getAsString(HttpHeaderNames.USER_AGENT)
 
 inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
@@ -264,7 +266,7 @@ fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Bool
 }
 
 @Suppress("SpellCheckingInspection")
-private fun isTrustedChromeExtension(url: Url): Boolean {
+private fun isTrustedChromeExtension(@NlsSafe url: Url): Boolean {
   return url.scheme == "chrome-extension" &&
          (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" ||
           url.authority == "offnedcbhjldheanlbojaefbfbllddna" ||
@@ -279,7 +281,7 @@ private val Url.host: String?
   }
 
 @JvmOverloads
-fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
+fun parseAndCheckIsLocalHost(@NlsSafe uri: String?, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
   if (uri == null || uri == "about:blank") {
     return true
   }
@@ -303,8 +305,6 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 }
 
 fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
-
-fun ByteBuf.writeUtf8(data: CharSequence): Int = writeCharSequence(data, Charsets.UTF_8)
 
 class ConnectToChannelResult {
   val channel: Channel?

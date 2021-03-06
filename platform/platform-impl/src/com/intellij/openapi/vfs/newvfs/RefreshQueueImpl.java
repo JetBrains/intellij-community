@@ -14,71 +14,93 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
-import gnu.trove.TLongObjectHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Consumer;
 
-public class RefreshQueueImpl extends RefreshQueue implements Disposable {
+public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
 
-  private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final Executor myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private final Executor myEventProcessingQueue =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", PooledThreadExecutor.INSTANCE, 1, this);
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", AppExecutorUtil.getAppExecutorService(), 1, this);
 
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeBundle.message("file.synchronize.progress"));
   private int myBusyThreads;
-  private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
+  private final Long2ObjectMap<RefreshSessionImpl> mySessions = new Long2ObjectOpenHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
 
-  public void execute(@NotNull RefreshSessionImpl session) {
+  void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      queueSession(session, session.getModality());
+      queueSessionAsync(session, session.getModality());
     }
     else {
       Application app = ApplicationManager.getApplication();
       if (app.isWriteThread()) {
-        ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
-        doScan(session);
-        session.fireEvents(session.getEvents(), null);
+        queueSessionSync(session);
       }
       else {
         if (((ApplicationEx)app).holdsReadLock() || EDT.isCurrentThreadEdt()) {
           LOG.error("Do not perform a synchronous refresh under read lock (except from EDT) - causes deadlocks if there are events to fire.");
           return;
         }
-        queueSession(session, ModalityState.defaultModalityState());
+        queueSessionAsync(session, ModalityState.defaultModalityState());
         session.waitFor();
       }
     }
   }
 
-  private void queueSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
-    myQueue.execute(() -> {
-      startRefreshActivity();
-      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session, HeavyProcessLatch.Type.Refreshing)) {
-        doScan(session);
-      }
-      finally {
-        finishRefreshActivity();
-        if (Registry.is("vfs.async.event.processing")) {
-          scheduleAsynchronousPreprocessing(session, modality);
-        }
-        else {
-          AppUIExecutor.onWriteThread(modality).later().submit(() -> session.fireEvents(session.getEvents(), null));
-        }
-      }
-    });
+  private void queueSessionSync(@NotNull RefreshSessionImpl session) {
+    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    executeRefreshSession(session);
+    fireEventsSync(session);
+  }
+
+  private static void fireEventsSync(@NotNull RefreshSessionImpl session) {
+    session.fireEvents(ContainerUtil.map(session.getEvents(), e -> new CompoundVFileEvent(e)), Collections.emptyList(), false);
+  }
+
+  private void queueSessionAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+    myQueue.execute(() -> executeSession(session, modality));
     myEventCounter.eventHappened(session);
+  }
+
+  private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+    startRefreshActivity();
+    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.title.doing.file.refresh.0", session), HeavyProcessLatch.Type.Syncing)) {
+      executeRefreshSession(session);
+    }
+    finally {
+      finishRefreshActivity();
+      fireEventsAsync(session, modality);
+    }
+  }
+
+  private void fireEventsAsync(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
+    if (isAsyncEventProcessingEnabled()) {
+      scheduleAsynchronousPreprocessing(session, modality);
+    }
+    else {
+      AppUIExecutor.onWriteThread(modality).later().submit(() -> fireEventsSync(session));
+    }
+  }
+
+  private static boolean isAsyncEventProcessingEnabled() {
+    return Registry.is("vfs.async.event.processing");
   }
 
   private void scheduleAsynchronousPreprocessing(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
@@ -113,17 +135,26 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private static Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
-    List<? extends VFileEvent> events = ContainerUtil.filter(session.getEvents(), e -> {
+  private static @NotNull Runnable runAsyncListeners(@NotNull RefreshSessionImpl session) {
+    List<CompoundVFileEvent> events = ContainerUtil.mapNotNull(session.getEvents(), e -> {
       VirtualFile file = e instanceof VFileCreateEvent ? ((VFileCreateEvent)e).getParent() : e.getFile();
-      return file == null || file.isValid();
+      if (file == null || file.isValid()) {
+        return new CompoundVFileEvent(e);
+      }
+      return null;
     });
 
-    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(events);
-    return () -> session.fireEvents(events, appliers);
+    List<VFileEvent> allEvents = ContainerUtil.flatMap(events, e -> {
+      List<VFileEvent> toMap = new SmartList<>(e.getInducedEvents());
+      toMap.add(e.getFileEvent());
+      return toMap;
+    });
+
+    List<AsyncFileListener.ChangeApplier> appliers = AsyncEventSupport.runAsyncListeners(allEvents);
+    return () -> session.fireEvents(events, appliers, true);
   }
 
-  private void doScan(@NotNull RefreshSessionImpl session) {
+  private void executeRefreshSession(@NotNull RefreshSessionImpl session) {
     try {
       updateSessionMap(session, true);
       session.scan();
@@ -133,7 +164,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
-  private void updateSessionMap(@NotNull RefreshSession session, boolean add) {
+  private void updateSessionMap(@NotNull RefreshSessionImpl session, boolean add) {
     long id = session.getId();
     if (id != 0) {
       synchronized (mySessions) {
@@ -149,12 +180,12 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   @Override
   public void cancelSession(long id) {
-    RefreshSession session;
+    RefreshSessionImpl session;
     synchronized (mySessions) {
       session = mySessions.get(id);
     }
-    if (session instanceof RefreshSessionImpl) {
-      ((RefreshSessionImpl)session).cancel();
+    if (session != null) {
+      session.cancel();
     }
   }
 
@@ -165,12 +196,15 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void processSingleEvent(@NotNull VFileEvent event) {
-    new RefreshSessionImpl(Collections.singletonList(event)).launch();
+  public void processSingleEvent(boolean async, @NotNull VFileEvent event) {
+    new RefreshSessionImpl(async, Collections.singletonList(event)).launch();
   }
 
   public static boolean isRefreshInProgress() {
     RefreshQueueImpl refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
+    if (!((BoundedTaskExecutor)refreshQueue.myQueue).isEmpty()) {
+      return true;
+    }
     synchronized (refreshQueue.mySessions) {
       return !refreshQueue.mySessions.isEmpty();
     }
@@ -179,7 +213,16 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @Override
   public void dispose() {
     synchronized (mySessions) {
-      mySessions.forEachValue(session -> { ((RefreshSessionImpl)session).cancel(); return true; });
+      for (RefreshSessionImpl session : mySessions.values()) {
+        session.cancel();
+      }
     }
+  }
+
+  @TestOnly
+  public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    RefreshWorker.ourTestListener = testListener;
+    LocalFileSystemRefreshWorker.setTestListener(testListener);
   }
 }

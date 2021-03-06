@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ListWithSelection;
 
-class FileInfo {
+final class FileInfo {
   private final VirtualFile myFile;
   private final ListWithSelection<HandleType> myHandleType = new ListWithSelection<>();
 

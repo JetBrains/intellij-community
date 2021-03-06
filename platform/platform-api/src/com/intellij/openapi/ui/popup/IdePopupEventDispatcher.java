@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui.popup;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,5 +44,6 @@ public interface IdePopupEventDispatcher {
 
   /** @deprecated use {@link IdePopupEventDispatcher#setRestoreFocusSilently()} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void setRestoreFocusSilentely() {}
 }

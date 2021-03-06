@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
+import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
+import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -16,10 +19,25 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
+import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
 
 object ExtractMethodHelper {
+
+  @JvmStatic
+  fun findEditorSelection(editor: Editor): TextRange? {
+    val selectionModel = editor.selectionModel
+    return if (selectionModel.hasSelection()) TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) else null
+  }
+
+  fun isNullabilityAvailable(extractOptions: ExtractOptions): Boolean {
+    val project = extractOptions.project
+    val scope = extractOptions.elements.first().resolveScope
+    val defaultNullable = NullableNotNullManager.getInstance(project).defaultNullable
+    val annotationClass = JavaPsiFacade.getInstance(project).findClass(defaultNullable, scope)
+    return annotationClass != null
+  }
 
   fun wrapWithCodeBlock(elements: List<PsiElement>): List<PsiCodeBlock> {
     require(elements.isNotEmpty())
@@ -53,18 +71,9 @@ object ExtractMethodHelper {
 
   fun normalizedAnchor(anchor: PsiMember): PsiMember {
     return if (anchor is PsiField) {
-      findLastFieldInDeclaration(anchor)
+      MultipleFieldDeclarationHelper.findLastFieldInGroup(anchor.node).psi as? PsiField ?: anchor
     } else {
       anchor
-    }
-  }
-
-  private fun findLastFieldInDeclaration(field: PsiField): PsiField {
-    val nextSibling = PsiTreeUtil.skipWhitespacesForward(field)
-    return if (PsiUtil.getElementType(nextSibling) == JavaTokenType.COMMA) {
-      PsiTreeUtil.skipWhitespacesForward(nextSibling) as PsiField
-    } else {
-      field
     }
   }
 
@@ -86,13 +95,6 @@ object ExtractMethodHelper {
   private fun findVariableReferences(element: PsiElement): Sequence<PsiVariable> {
     val references = PsiTreeUtil.findChildrenOfAnyType(element, PsiReferenceExpression::class.java)
     return references.asSequence().mapNotNull { reference -> (reference.resolve() as? PsiVariable) }
-  }
-
-  fun <T: PsiElement> findInCopy(firstInSource: PsiElement, firstInCopy: PsiElement, element: T): T {
-    val sourceStartOffset: Int = firstInSource.textRange.startOffset
-    val copyStartOffset: Int = firstInCopy.textRange.startOffset
-    val range = element.textRange.shiftRight(copyStartOffset - sourceStartOffset)
-    return CodeInsightUtil.findElementInRange(firstInCopy.containingFile, range.startOffset, range.endOffset, element.javaClass)
   }
 
   fun hasConflictResolve(name: String?, scopeToIgnore: List<PsiElement>): Boolean {
@@ -189,5 +191,67 @@ object ExtractMethodHelper {
       .flatMap { PsiTreeUtil.findChildrenOfAnyType(it, false, PsiJavaCodeReferenceElement::class.java).asSequence() }
       .mapNotNull { reference -> reference.resolve() }
       .any{ referencedElement -> referencedElement.textRange in scopeRange }
+  }
+
+  fun guessMethodName(options: ExtractOptions): List<String> {
+    val project = options.project
+    val initialMethodNames: MutableSet<String> = LinkedHashSet()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
+    val returnType = options.dataOutput.type
+
+    val expression = options.elements.singleOrNull() as? PsiExpression
+    if (expression != null || returnType !is PsiPrimitiveType) {
+      codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
+        .forEach { name ->
+          initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+        }
+    }
+
+    val outVariable = (options.dataOutput as? VariableOutput)?.variable
+    if (outVariable != null) {
+      val outKind = codeStyleManager.getVariableKind(outVariable)
+      val propertyName = codeStyleManager.variableNameToPropertyName(outVariable.name!!, outKind)
+      val names = codeStyleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, outVariable.type).names
+      names.forEach { name ->
+        initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+      }
+    }
+
+    val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
+    val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
+    fun suggestGetterName(name: String): String {
+      field.name = name
+      return GenerateMembersUtil.suggestGetterName(field)
+    }
+
+    return initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
+      .map { propertyName -> suggestGetterName(propertyName) }
+  }
+}
+
+/**
+ * Tracks [PsiElement] inside the copied or modified tree.
+ */
+class PsiElementMark<T: PsiElement> {
+
+  companion object {
+    fun <T: PsiElement> createMarkers(elements: List<T>): List<PsiElementMark<T>> {
+      return elements.map(::createMarker)
+    }
+
+    fun <T: PsiElement> releaseMarkers(root: PsiElement, marks: List<PsiElementMark<T>>): List<T> {
+      return marks.map { mark -> releaseMarker(root, mark) }
+    }
+
+    fun <T: PsiElement> createMarker(element: T): PsiElementMark<T> {
+      val mark = PsiElementMark<T>()
+      PsiTreeUtil.mark(element, mark)
+      return mark
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T: PsiElement> releaseMarker(root: PsiElement, mark: PsiElementMark<T>): T {
+      return PsiTreeUtil.releaseMark(root, mark) as T
+    }
   }
 }

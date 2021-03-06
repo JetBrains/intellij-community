@@ -16,6 +16,7 @@
 package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
+import com.intellij.codeInspection.dataFlow.MutationSignature
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -29,7 +30,7 @@ import groovy.transform.CompileStatic
 class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test getter"() {
-    assertPure true, """
+    assertPure """
 Object getField() {
   return field;
 }
@@ -37,7 +38,7 @@ Object getField() {
   }
 
   void "test setter"() {
-    assertPure false, """
+    assertImpure """
 void setField(String s) {
   field = s;
 }
@@ -45,7 +46,7 @@ void setField(String s) {
   }
 
   void "test unknown"() {
-    assertPure false, """
+    assertImpure """
 int random() {
   launchMissiles();
   return 2;
@@ -54,7 +55,7 @@ int random() {
   }
 
   void "test print"() {
-    assertPure false, """
+    assertImpure """
 int random() {
   System.out.println("hello");
   return 2;
@@ -63,7 +64,7 @@ int random() {
   }
 
   void "test local var assignment"() {
-    assertPure true, """
+    assertPure """
 int random(boolean b) {
   int i = 4;
   if (b) {
@@ -77,7 +78,7 @@ int random(boolean b) {
   }
 
   void "test local array var assignment"() {
-    assertPure true, """
+    assertPure """
 int[] randomArray() {
   int[] i = new int[0];
   i[0] = random();
@@ -88,7 +89,7 @@ int random() { return 2; }
   }
 
   void "test field array assignment"() {
-    assertPure false, """
+    assertImpure """
 int[] randomArray() {
   i[0] = random();
   return i;
@@ -99,7 +100,7 @@ int random() { return 2; }
   }
 
   void "test field array assignment as local var"() {
-    assertPure false, """
+    assertImpure """
 int[] randomArray() {
   int[] local = i;
   local[0] = random();
@@ -111,7 +112,7 @@ int random() { return 2; }
   }
 
   void "test use explicit pure contract"() {
-    assertPure true, """
+    assertPure """
 int method() {
   return smthPure();
 }
@@ -120,7 +121,7 @@ int method() {
   }
 
   void "test don't analyze more than one call"() {
-    assertPure false, """
+    assertImpure """
 int method() {
   return smthPure(smthPure2());
 }
@@ -130,14 +131,14 @@ int smthPure2() { return 42; }
   }
 
   void "test empty constructor"() {
-    assertPure true, """
+    assertPure """
 public Foo() {
 }
 """
   }
 
   void "test field writes"() {
-    assertPure true, """
+    assertPure """
 int x;
 int y;
 
@@ -150,7 +151,7 @@ public Foo() {
   
   void "test constructor calling"() {
     // IDEA-192251
-    assertPure true, """
+    assertPure """
     private final int i;
     private final int j;
     private final Foo a;
@@ -166,7 +167,7 @@ public Foo() {
   }
 
   void "test delegating field writes"() {
-    assertPure true, """
+    assertPure """
 int x;
 int y;
 
@@ -182,7 +183,7 @@ Foo(int x, int y) {
   }
 
   void "test delegating unknown writes"() {
-    assertPure false, """
+    assertImpure """
 int x;
 int y;
 
@@ -198,7 +199,7 @@ Foo(int x, int y) {
   }
 
   void "test static field writes"() {
-    assertPure false, """
+    assertImpure """
 int x;
 static int y;
 
@@ -210,7 +211,7 @@ public Foo() {
   }
 
   void "test calling constructor with side effects"() {
-    assertPure false, """
+    assertImpure """
     Object newExample() {
         return new Example1();
     }
@@ -224,7 +225,7 @@ public Foo() {
   }
 
   void "test anonymous class initializer"() {
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return new I(){{ created++; }};
     }
@@ -236,7 +237,7 @@ public Foo() {
   }
 
   void "test simple anonymous class creation"() {
-    assertPure true, """
+    assertPure """
     Object smth() {
         return new I(){};
     }
@@ -246,7 +247,7 @@ public Foo() {
   }
 
   void "test anonymous class with constructor side effect"() {
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return new I(){};
     }
@@ -260,7 +261,7 @@ public Foo() {
   }
 
   void "test anonymous class with arguments"() {
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return new I(unknown()){};
     }
@@ -272,7 +273,7 @@ public Foo() {
   }
 
   void "test class with impure initializer creation"() {
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return new I(42);
     }
@@ -287,7 +288,7 @@ public Foo() {
   }
 
   void "test class with impure static initializer creation"() {
-    assertPure true, """
+    assertPure """
     Object smth() {
         return new I(42);
     }
@@ -302,7 +303,7 @@ public Foo() {
   }
 
   void "test class with pure field initializers"() {
-    assertPure true, """
+    assertPure """
     Object smth() {
         return new I(42);
     }
@@ -315,7 +316,7 @@ public Foo() {
   }
 
   void "test class with impure field initializers"() {
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return new I(42);
     }
@@ -328,7 +329,7 @@ public Foo() {
   }
 
   void "test class with superclass"() {
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return new I(42);
     }
@@ -351,15 +352,53 @@ class Another {
   } 
 }
   """)
-    assertPure false, """
+    assertImpure """
     Object smth() {
         return Another.method();
     }
     """
   }
+  
+  void "test increment field"() {
+    assertMutatesThis """
+    int x = 0;
+
+    private void increment() {
+        x++;
+    }
+"""
+  }
+  
+  void "test delegate to setter"() {
+    assertMutatesThis """
+    int x = 0;
+
+    private void foo() {
+        setX(2);
+    }
+    
+    private void setX(int x) {
+        this.x = x;
+    }
+"""
+  }
+  
+  void "test setter in ctor"() {
+    assertPure """
+    int x = 0;
+
+    public Foo() {
+        setX(2);
+    }
+    
+    private void setX(int x) {
+        this.x = x;
+    }
+"""
+  }
 
   void "test plain field read"() {
-    assertPure true, """
+    assertPure """
 int x;
 
 int get() {
@@ -369,7 +408,7 @@ int get() {
   }
 
   void "test volatile field read"() {
-    assertPure false, """
+    assertImpure """
 volatile int x;
 
 int get() {
@@ -379,14 +418,14 @@ int get() {
   }
 
   void "test assertNotNull is pure"() {
-    assertPure true, """
+    assertPure """
 static void assertNotNull(Object val) {
   if(val == null) throw new AssertionError();
 }"""
   }
 
   void "test recursive factorial"() {
-    assertPure true, """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
+    assertPure """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
   }
 
   void "test calling static method with the same signature in the subclass"() {
@@ -424,13 +463,50 @@ class Super {
     assert !JavaMethodContractUtil.isPure(clazz.methods[0])
     assert JavaMethodContractUtil.isPure(clazz.superClass.methods[0])
   }
-
-  private void assertPure(boolean expected, String classBody) {
-    def clazz = myFixture.addClass("final class Foo { $classBody }")
-    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
-    def purity = JavaSourceInference.inferPurity((PsiMethodImpl)clazz.methods[0])
-    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
-    assert expected == purity
+  
+  void "test enum method"() {
+    def clazz = myFixture.addClass """
+enum X {
+  A;
+  
+  Iterable<?> onXyz() {
+    return java.util.Collections.emptyList();
+  }
+}
+"""
+    assert JavaMethodContractUtil.isPure(clazz.methods[0])
+  }
+  
+  void "test enum method with subclass"() {
+    def clazz = myFixture.addClass """
+enum X {
+  A, B {};
+  
+  Iterable<?> onXyz() {
+    return java.util.Collections.emptyList();
+  }
+}
+"""
+    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
   }
 
+  private void assertPure(String classBody) {
+    assertMutationSignature(classBody, MutationSignature.pure())
+  }
+
+  private void assertImpure(String classBody) {
+    assertMutationSignature(classBody, MutationSignature.unknown())
+  }
+
+  private void assertMutatesThis(String classBody) {
+    assertMutationSignature(classBody, MutationSignature.pure().alsoMutatesThis())
+  }
+
+  private void assertMutationSignature(String classBody, MutationSignature expected) {
+    def clazz = myFixture.addClass("final class Foo { $classBody }")
+    assert !((PsiFileImpl)clazz.containingFile).contentsLoaded
+    def signature = JavaSourceInference.inferMutationSignature((PsiMethodImpl)clazz.methods[0])
+    assert !((PsiFileImpl)clazz.containingFile).contentsLoaded
+    assert expected == signature
+  }
 }

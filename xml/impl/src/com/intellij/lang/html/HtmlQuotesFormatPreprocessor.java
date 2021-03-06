@@ -43,7 +43,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     PsiElement psiElement = node.getPsi();
     if (psiElement != null &&
         psiElement.isValid() &&
-        psiElement.getLanguage().is(HTMLLanguage.INSTANCE)) {
+        psiElement.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
       PsiFile file = psiElement.getContainingFile();
       PsiElement fileContext = file.getContext();
       String contextQuote = fileContext != null ? Character.toString(fileContext.getText().charAt(0)) : null;
@@ -88,7 +88,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       myDocument = file.getViewProvider().getDocument();
       switch (style) {
         case Single:
-          myNewQuote = "\'";
+          myNewQuote = "'";
           break;
         case Double:
           myNewQuote = "\"";

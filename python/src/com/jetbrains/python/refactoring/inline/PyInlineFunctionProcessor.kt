@@ -376,13 +376,13 @@ class PyInlineFunctionProcessor(project: Project,
     return myGenerator.createFromText(level, PyAssignmentStatement::class.java, "$uniqueName = $uniqueName")
   }
 
-  override fun getCommandName() = "Inlining ${myFunction.name}"
+  override fun getCommandName() = PyBundle.message("refactoring.inline.function.command.name", myFunction.name)
   override fun getRefactoringId() = PyInlineFunctionHandler.REFACTORING_ID
 
   override fun createUsageViewDescriptor(usages: Array<out UsageInfo>) = object : UsageViewDescriptor {
     override fun getElements(): Array<PsiElement> = arrayOf(myFunction)
-    override fun getProcessedElementsHeader(): String = "Function to inline "
-    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String = "Invocations to be inlined in $filesCount files"
+    override fun getProcessedElementsHeader(): String = PyBundle.message("refactoring.inline.function.function.to.inline")
+    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int): String = PyBundle.message("refactoring.inline.function.invocations.to.be.inlined", filesCount)
     override fun getCommentReferencesText(usagesCount: Int, filesCount: Int): String = ""
   }
 }

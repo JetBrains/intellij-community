@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -72,13 +72,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     myRootPane = rootPane;
     setOpaque(false);
     setVisible(false);
+    setEnabled(false);//Workaround to fix cursor when some semi-transparent 'highlighting area' overrides it to default
     setLayout(null);
     if (installPainters) {
       IdeBackgroundUtil.initFramePainters(this);
       IdeBackgroundUtil.initEditorPainters(this);
     }
 
-    if (SystemInfo.isWindows && Registry.is("ide.window.shadow.painter", false)) {
+    if (SystemInfoRt.isWindows && Registry.is("ide.window.shadow.painter", false)) {
       myWindowShadowPainter = new WindowShadowPainter();
       getPainters().addPainter(myWindowShadowPainter, null);
     }
@@ -123,7 +124,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
 
     Component meComponent = event.getComponent();
-    JMenuBar menuBar = myRootPane.getJMenuBar();
     if (!dispatched && meComponent != null) {
       if (eventWindow != SwingUtilities.getWindowAncestor(myRootPane)) {
         return false;
@@ -132,12 +132,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       int button1 = InputEvent.BUTTON1_MASK | InputEvent.BUTTON1_DOWN_MASK;
       boolean pureMouse1Event = (event.getModifiersEx() | button1) == button1;
       if (pureMouse1Event && event.getClickCount() <= 1 && !event.isPopupTrigger()) {
-        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), myRootPane.getContentPane());
-        if (menuBar != null && menuBar.isVisible()) {
-          point.y += menuBar.getHeight();
-        }
-
-        Component target = SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+        Container parent = myRootPane.getContentPane().getParent();
+        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), parent);
+        Component target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
         dispatched = target instanceof DnDAware && dispatchForDnDAware(event, point, target);
       }
     }
@@ -145,13 +142,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     if (isVisible() && getComponentCount() == 0) {
       boolean cursorSet = false;
       if (meComponent != null) {
-        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), myRootPane.getContentPane());
-        if (menuBar != null && menuBar.isVisible()) {
-          point.y += menuBar.getHeight();
-        }
-
-        final Component target =
-          SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+        Container parent = myRootPane.getContentPane().getParent();
+        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), parent);
+        Component target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
         if (target != null) {
           UIUtil.setCursor(this, target.getCursor());
           cursorSet = true;
@@ -481,11 +474,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     activateIfNeeded();
   }
 
-  @Override
-  public void removeMouseMotionPreprocessor(@NotNull MouseMotionListener listener) {
-    removeListener(listener);
-  }
-
   private void removeListener(@NotNull EventListener listener) {
     if (myMouseListeners.remove(listener)) {
       updateSortedList();
@@ -536,13 +524,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
   }
 
-  @NotNull
-  PaintersHelper getNamedPainters(@NotNull String name) {
+  final @NotNull PaintersHelper getNamedPainters(@NotNull String name) {
     return myNamedPainters.computeIfAbsent(name, key -> new PaintersHelper(this));
   }
 
-  @NotNull
-  private PaintersHelper getPainters() {
+  private @NotNull PaintersHelper getPainters() {
     return getNamedPainters("glass");
   }
 

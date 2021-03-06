@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
@@ -40,9 +41,11 @@ public class ImportNSAction implements QuestionAction {
   private final XmlFile myFile;
   private final PsiElement myElement;
   private final Editor myEditor;
-  private final String myTitle;
+  private final @PopupTitle String myTitle;
 
-  public ImportNSAction(final List<String> namespaces, XmlFile file, @NotNull PsiElement element, Editor editor, final String title) {
+  public ImportNSAction(final List<String> namespaces, XmlFile file,
+                        @NotNull PsiElement element, Editor editor,
+                        final @PopupTitle String title) {
     myNamespaces = namespaces;
     myFile = file;
     myElement = element;
@@ -64,16 +67,17 @@ public class ImportNSAction implements QuestionAction {
                                                    myEditor,
                                                    Collections.singleton(namespace),
                                                    prefix,
-                                                   new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
-                  @Override
-                  public void run(final String s) throws IncorrectOperationException {
-                    PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                    PsiElement element = myFile.findElementAt(marker.getStartOffset());
-                    if (element != null) {
-                      extension.qualifyWithPrefix(s, element, myEditor.getDocument());
-                    }
-                  }
-                }
+                                                   new XmlNamespaceHelper.Runner<>() {
+                                                     @Override
+                                                     public void run(final String s) throws IncorrectOperationException {
+                                                       PsiDocumentManager.getInstance(myFile.getProject())
+                                                         .doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                                                       PsiElement element = myFile.findElementAt(marker.getStartOffset());
+                                                       if (element != null) {
+                                                         extension.qualifyWithPrefix(s, element, myEditor.getDocument());
+                                                       }
+                                                     }
+                                                   }
               );
             }
           );
@@ -84,9 +88,9 @@ public class ImportNSAction implements QuestionAction {
     } else {
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(myNamespaces)
+        .setItemChosenCallback(consumer)
         .setRenderer(XmlNSRenderer.INSTANCE)
         .setTitle(myTitle)
-        .setItemChosenCallback(consumer)
         .createPopup()
         .showInBestPositionFor(myEditor);
     }

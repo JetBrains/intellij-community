@@ -5,6 +5,7 @@ import com.intellij.configurationStore.SerializableScheme
 import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.options.ExternalizableScheme
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import com.maddyhome.idea.copyright.pattern.EntityUtil
@@ -38,6 +39,7 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
 
   // ugly name to preserve compatibility
   @Transient
+  @NlsSafe
   override fun getName(): String = profileName ?: ""
 
   override fun setName(value: String) {

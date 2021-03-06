@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -77,7 +78,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
       return false;
     }
 
-    if (!StdFileTypes.CLASS.equals(psiFile.getFileType()) && !DebuggerUtils.isBreakpointAware(psiFile)) {
+    if (!JavaClassFileType.INSTANCE.equals(psiFile.getFileType()) && !DebuggerUtils.isBreakpointAware(psiFile)) {
       return false;
     }
 

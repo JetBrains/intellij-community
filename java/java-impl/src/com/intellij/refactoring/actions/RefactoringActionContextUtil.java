@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -12,8 +12,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class RefactoringActionContextUtil {
-  public static boolean isJavaClassHeader(@NotNull PsiElement element) {
+public final class RefactoringActionContextUtil {
+  public static boolean isJavaClassHeader(@Nullable PsiElement element) {
+    if (element == null) return false;
     if (element.getLanguage() != JavaLanguage.INSTANCE) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     return psiClass != null && (element == psiClass || element == psiClass.getNameIdentifier() ||
@@ -42,5 +43,14 @@ public class RefactoringActionContextUtil {
     }
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     return PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class) == null;
+  }
+
+  public static boolean isClassWithExtendsOrImplements(@Nullable PsiClass psiClass) {
+    if (psiClass == null) return false;
+    return isNotEmpty(psiClass.getExtendsList()) || isNotEmpty(psiClass.getImplementsList());
+  }
+
+  private static boolean isNotEmpty(@Nullable PsiReferenceList referenceList){
+    return referenceList != null && referenceList.getReferenceElements().length > 0;
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.BasePasswordSafe
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import org.junit.ClassRule
 import org.junit.Rule
@@ -13,31 +13,26 @@ import org.junit.Test
 
 class PasswordSafeKeePassTest {
   companion object {
-    @JvmField
     @ClassRule
-    val projectRule = ApplicationRule()
+    @JvmField val projectRule = ApplicationRule()
   }
 
-  @JvmField
   @Rule
-  val fsRule = InMemoryFsRule()
+  @JvmField val fsRule = InMemoryFsRule()
 
-  @Test
-  fun `erase password - KeePass`() {
+  @Test fun `erase password - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
     doErasePassword(BasePasswordSafe(settings, createKeePassStore()))
   }
 
-  @Test
-  fun `null username - KeePass`() {
+  @Test fun `null username - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
     doNullUsername(BasePasswordSafe(settings, createKeePassStore()))
   }
 
-  @Test
-  fun `overwrite credentials - KeePass`() {
+  @Test fun `overwrite credentials - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
     val ps = BasePasswordSafe(settings, createKeePassStore())
@@ -85,8 +80,8 @@ class PasswordSafeKeePassTest {
                                passwordSafe: PasswordSafe,
                                rewriteWithNull: Boolean) {
     val resultMemoryOnly = passwordSafe.get(attributes)!!
-    Assertions.assertThat(resultMemoryOnly.userName).`as`(description).isEqualTo(newCredentials.userName)
-    val assertThat = Assertions.assertThat(resultMemoryOnly.password).`as`(description)
+    assertThat(resultMemoryOnly.userName).`as`(description).isEqualTo(newCredentials.userName)
+    val assertThat = assertThat(resultMemoryOnly.password).`as`(description)
     if (rewriteWithNull) {
       assertThat.isNullOrEmpty()
     }
@@ -107,8 +102,8 @@ class PasswordSafeKeePassTest {
       val credentials = Credentials(null, "passphrase")
       ps.set(attributes, credentials)
       val saved = ps.get(attributes)!!
-      Assertions.assertThat(saved.password).isEqualTo(credentials.password)
-      Assertions.assertThat(saved.userName).isNullOrEmpty()
+      assertThat(saved.password).isEqualTo(credentials.password)
+      assertThat(saved.userName).isNullOrEmpty()
     }
     finally {
       ps.set(attributes, null)

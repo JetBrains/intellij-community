@@ -1,20 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.FusInputEvent;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionWithDelegate;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +30,14 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
 
-  private final Map<AnAction, String> myOtherActions = ContainerUtil.createWeakMap();
-
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
+    recordCustomActionInvoked(null, actionId, event, context);
+  }
+
+  public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
-    ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(recorded, new FusInputEvent(event, null));
+    ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
   }
 
   @Override
@@ -45,7 +48,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static void recordActionInvoked(@Nullable Project project,
                                          @Nullable AnAction action,
                                          @Nullable AnActionEvent event,
-                                         @NotNull List<EventPair> customData) {
+                                         @NotNull List<EventPair<?>> customData) {
     record(ActionsEventLogGroup.ACTION_INVOKED, project, action, event, customData);
   }
 
@@ -53,35 +56,52 @@ public class ActionsCollectorImpl extends ActionsCollector {
                             @Nullable Project project,
                             @Nullable AnAction action,
                             @Nullable AnActionEvent event,
-                            @Nullable List<EventPair> customData) {
+                            @Nullable List<EventPair<?>> customData) {
     if (action == null) return;
     PluginInfo info = PluginInfoDetectorKt.getPluginInfo(action.getClass());
 
-    List<EventPair> data = new ArrayList<>();
+    List<EventPair<?>> data = new ArrayList<>();
     data.add(EventFields.PluginInfoFromInstance.with(action));
 
     if (event != null) {
-      data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
-      data.add(EventFields.ActionPlace.with(event.getPlace()));
-      data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
+      if (action instanceof ToggleAction) {
+        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(!((ToggleAction)action).isSelected(event)));
+      }
+      data.addAll(actionEventData(event));
+    }
+    if (project != null) {
+      data.add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)));
     }
     if (customData != null) {
       data.addAll(customData);
     }
     addActionClass(data, action, info);
-    eventId.log(project, data.toArray(new EventPair[0]));
+    eventId.log(project, data);
+  }
+
+  public static @NotNull List<@NotNull EventPair<?>> actionEventData(@NotNull AnActionEvent event) {
+    List<EventPair<?>> data = new ArrayList<>();
+    data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
+    data.add(EventFields.ActionPlace.with(event.getPlace()));
+    data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
+    return data;
   }
 
   @NotNull
-  public static String addActionClass(@NotNull List<EventPair> data,
+  public static String addActionClass(@NotNull List<EventPair<?>> data,
                                       @NotNull AnAction action,
                                       @NotNull PluginInfo info) {
     String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
-    String actionId = ((ActionsCollectorImpl)getInstance()).getActionId(info, action);
+    String actionId = getActionId(info, action);
     if (action instanceof ActionWithDelegate) {
       Object delegate = ((ActionWithDelegate<?>)action).getDelegate();
       PluginInfo delegateInfo = PluginInfoDetectorKt.getPluginInfo(delegate.getClass());
-      actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
+      if (delegate instanceof AnAction) {
+        AnAction delegateAction = (AnAction)delegate;
+        actionId = getActionId(delegateInfo, delegateAction);
+      } else {
+        actionId = delegateInfo.isSafeToReport() ? delegate.getClass().getName() : DEFAULT_ID;
+      }
       data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionId));
       data.add(ActionsEventLogGroup.ACTION_PARENT.with(actionClassName));
     }
@@ -95,16 +115,16 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static void addActionClass(@NotNull FeatureUsageData data,
                                       @NotNull AnAction action,
                                       @NotNull PluginInfo info) {
-    List<EventPair> list = new ArrayList<>();
+    List<EventPair<?>> list = new ArrayList<>();
     addActionClass(list, action, info);
-    for (EventPair pair : list) {
+    for (EventPair<?> pair : list) {
       data.addData(pair.component1().getName(), pair.component2().toString());
     }
   }
 
 
   @NotNull
-  private String getActionId(@NotNull PluginInfo pluginInfo, @NotNull AnAction action) {
+  private static String getActionId(@NotNull PluginInfo pluginInfo, @NotNull AnAction action) {
     if (!pluginInfo.isSafeToReport()) {
       return DEFAULT_ID;
     }
@@ -116,7 +136,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
       return action.getClass().getName();
     }
     if (actionId == null) {
-      actionId = myOtherActions.get(action);
+      actionId = ourWhitelist.getDynamicActionId(action);
     }
     return actionId != null ? actionId : action.getClass().getName();
   }
@@ -127,9 +147,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   @Override
   public void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId) {
-    if (canReportActionId(actionId)) {
-      myOtherActions.put(action, actionId);
-    }
+    ourWhitelist.registerDynamicActionId(action, actionId);
   }
 
   public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {

@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
@@ -12,14 +13,13 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.ObjectLinkedOpenHashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -39,7 +39,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -54,7 +53,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -71,38 +71,41 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class JavaBuilder extends ModuleLevelBuilder {
+public final class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBuilder.class);
   private static final String JAVA_EXTENSION = "java";
 
   private static final String USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path";
 
-  public static final String BUILDER_NAME = "java";
+  public static final String BUILDER_ID = "java";
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
 
-  private static final int RETIRE_POLICY_VERSIONS_COUNT = 5;
   private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
+  private static final Key<Set<String>> SHOWN_NOTIFICATIONS = GlobalContextKey.create("_shown_notifications_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
   private static final Key<ModulePathSplitter> MODULE_PATH_SPLITTER = GlobalContextKey.create("_module_path_splitter_");
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
+  private static final String PROC_ONLY_OPTION = "-proc:only";
+  private static final String RELEASE_OPTION = "--release";
+  private static final String TARGET_OPTION = "-target";
+  private static final String PROC_NONE_OPTION = "-proc:none";
+  private static final String PROCESSORPATH_OPTION = "-processorpath";
+  private static final String ENCODING_OPTION = "-encoding";
+  private static final String ENABLE_PREVIEW_OPTION = "--enable-preview";
+  private static final String PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path";
+  private static final String SOURCE_OPTION = "-source";
   private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
-    "-target", "--release",
-    "--boot-class-path", "-bootclasspath",
-    "--class-path", "-classpath", "-cp",
-    "-processorpath", "-sourcepath",
-    "-d",
-    "--module-path", "-p", "--module-source-path"
+    TARGET_OPTION, RELEASE_OPTION, "-d"
   );
   private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
-    "-g", "-deprecation", "-nowarn", "-verbose", "-proc:none", "-proc:only", "-proceedOnError"
+    "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, "-proceedOnError"
   );
-
+  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
+    "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
+  );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
@@ -137,10 +140,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
   }
 
+  @NotNull
+  public static @NlsSafe String getBuilderName() {
+    return "java";
+  }
+
   @Override
   @NotNull
   public String getPresentableName() {
-    return BUILDER_NAME;
+    return StringUtil.capitalize(getBuilderName());
   }
 
   @Override
@@ -152,7 +160,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     MODULE_PATH_SPLITTER.set(context, new ModulePathSplitter(new ExplodedModuleNameFinder(context)));
     JavaCompilingTool compilingTool = JavaBuilderUtil.findCompilingTool(compilerId);
     COMPILING_TOOL.set(context, compilingTool);
+    SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
+    if (!isJavac(compilingTool)) {
+      context.getProjectDescriptor().dataManager.getMappings().setProcessConstantsIncrementally(false);
+    }
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
       if (registrar.isEnabled()) {
@@ -186,7 +198,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (stats.size() == 1) {
       final Map.Entry<String, Collection<String>> entry = stats.entrySet().iterator().next();
       final String compilerName = entry.getKey();
-      context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO, compilerName + " was used to compile java sources"));
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO,
+                                                 JpsBuildBundle.message("build.message.0.was.used.to.compile.java.sources", compilerName)));
       LOG.info(compilerName + " was used to compile " + entry.getValue());
     }
     else {
@@ -195,8 +208,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final Collection<String> moduleNames = entry.getValue();
         context.processMessage(new CompilerMessage("", BuildMessage.Kind.JPS_INFO,
           moduleNames.size() == 1 ?
-          compilerName + " was used to compile [" + moduleNames.iterator().next() + "]" :
-          compilerName + " was used to compile " + moduleNames.size() + " modules"
+          JpsBuildBundle.message("build.message.0.was.used.to.compile.1", compilerName, moduleNames.iterator().next()) :
+          JpsBuildBundle.message("build.message.0.was.used.to.compile.1.modules", compilerName, moduleNames.size())
         ));
         LOG.info(compilerName + " was used to compile " + moduleNames);
       }
@@ -227,8 +240,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                           @NotNull OutputConsumer outputConsumer,
                           @NotNull JavaCompilingTool compilingTool) throws ProjectBuildException, IOException {
     try {
-      final Set<File> filesToCompile = new ObjectLinkedOpenHashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-
+      Set<File> filesToCompile = FileCollectionFactory.createCanonicalFileLinkedSet();
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
         if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
           filesToCompile.add(file);
@@ -254,14 +266,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled() && !filesToCompile.isEmpty()) {
-          logger.logCompiledFiles(filesToCompile, BUILDER_NAME, "Compiling files:");
+          logger.logCompiledFiles(filesToCompile, BUILDER_ID, "Compiling files:");
         }
       }
 
       if (javaModulesCount > 1) {
-        String prefix = "Cannot compile a module cycle with multiple module-info.java files: ";
-        String message = chunk.getModules().stream().map(JpsModule::getName).collect(Collectors.joining(", ", prefix, ""));
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        @NlsSafe String modules = chunk.getModules().stream().map(JpsModule::getName).collect(Collectors.joining(", "));
+        context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
+                                                   JpsBuildBundle.message("build.message.cannot.compile.a.module.cycle.with.multiple.module.info.files", modules)));
         return ExitCode.ABORT;
       }
 
@@ -274,9 +286,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       LOG.info(e);
       String message = e.getMessage();
       if (message == null || message.trim().isEmpty()) {
-        message = "Internal error: \n" + ExceptionUtil.getThrowableText(e);
+        message = JpsBuildBundle.message("build.message.internal.error.0", ExceptionUtil.getThrowableText(e));
       }
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, message));
       throw new StopBuildException();
     }
   }
@@ -298,7 +310,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final ProjectDescriptor pd = context.getProjectDescriptor();
 
-    JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, BUILDER_NAME);
+    JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().getModule(), context, getBuilderName());
     final Collection<File> classpath = ProjectPaths.getCompilationClasspath(chunk, false);
     final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
 
@@ -320,7 +332,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final DiagnosticSink diagnosticSink = new DiagnosticSink(context, Collections.unmodifiableCollection(myRefRegistrars));
 
         final String chunkName = chunk.getName();
-        context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
+        context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.parsing.java.0", chunk.getPresentableShortName())));
 
         final int filesCount = files.size();
         boolean compiledOk = true;
@@ -351,15 +363,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           // unexpected exception occurred or compiler did not output any errors for some reason
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
-        }
-        if (diagnosticSink.getErrorCount() > 0) {
-          diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.compilation.failed.internal.java.compiler.error")));
         }
 
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           throw new StopBuildException(
-            "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
+            JpsBuildBundle.message("build.message.compilation.failed.errors.0.warnings.1", diagnosticSink.getErrorCount(), diagnosticSink.getWarningCount())
           );
         }
       }
@@ -394,7 +403,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
       context.getProjectDescriptor().getProject()
     );
-    assert compilerConfig != null;
 
     if (modules.size() == 1) {
       profile = compilerConfig.getAnnotationProcessingProfile(modules.iterator().next());
@@ -410,45 +418,39 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
     try {
       final int targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().getModule());
-      final boolean shouldForkJavac = shouldForkCompilerProcess(context, chunk, targetLanguageLevel);
 
       // when forking external javac, compilers from SDK 1.6 and higher are supported
-      Pair<String, Integer> forkSdk = null;
-      if (shouldForkJavac) {
+      final Pair<String, Integer> forkSdk;
+      if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
         forkSdk = getForkedJavacSdk(chunk, targetLanguageLevel);
         if (forkSdk == null) {
-          String text = "Cannot start javac process for " + chunk.getName() + ": unknown JDK home path.\nPlease check project configuration.";
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, text));
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", chunk.getName())));
           return false;
         }
+      }
+      else {
+        forkSdk = null;
       }
 
       final int compilerSdkVersion = forkSdk == null ? JavaVersion.current().feature : forkSdk.getSecond();
 
-      final Pair<List<String>, List<String>> vm_compilerOptions = getCompilationOptions(
-        compilerSdkVersion, context, chunk, profile, compilingTool
-      );
-      final List<String> vmOptions = vm_compilerOptions.first;
-      final List<String> options = vm_compilerOptions.second;
+      final Pair<Iterable<String>, Iterable<String>> vm_compilerOptions = getCompilationOptions(compilerSdkVersion, context, chunk, profile, compilingTool);
+      final Iterable<String> vmOptions = vm_compilerOptions.first;
+      final Iterable<String> options = vm_compilerOptions.second;
 
-      if (LOG.isDebugEnabled()) {
-        String mode = shouldForkJavac ? "fork" : "in-process";
-        LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
-      }
-
-      Collection<? extends File> platformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool);
-      if (platformCp == null) {
-        String text = "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\"" +
-                      " differs from javac's platform (" + System.getProperty("java.version") + ")\n" +
-                      "Compilation profiles are not supported for such configuration";
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, text));
+      Iterable<? extends File> effectivePlatformCp = calcEffectivePlatformCp(originalPlatformCp, options, compilingTool);
+      if (effectivePlatformCp == null) {
+        String text = JpsBuildBundle.message(
+          "build.message.unsupported.compact.compilation.profile.was.requested", chunk.getName(), System.getProperty("java.version")
+        );
+        context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, text));
         return false;
       }
 
-      Collection<? extends File> classPath = originalClassPath;
-      ModulePath modulePath = ModulePath.EMPTY;
-      Collection<? extends File> upgradeModulePath = Collections.emptyList();
-
+      final Iterable<? extends File> platformCp;
+      final Iterable<? extends File> classPath;
+      final ModulePath modulePath;
+      final Iterable<? extends File> upgradeModulePath;
       if (moduleInfoFile != null) { // has modules
         final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
         final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
@@ -471,42 +473,91 @@ public class JavaBuilder extends ModuleLevelBuilder {
           classPath = pair.second;
         }
         // modules above the JDK in the order entry list make a module upgrade path
-        upgradeModulePath = platformCp;
+        upgradeModulePath = effectivePlatformCp;
         platformCp = Collections.emptyList();
       }
-
-      if (!platformCp.isEmpty() && (getChunkSdkVersion(chunk)) >= 9) {
-        // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
-        // because platform classes are stored in jimage binary files with unknown format.
-        // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
-        // and prepending additional jars from the JDK configuration to compilation classpath
-        classPath = JBIterable.<File>from(platformCp).append(classPath).toList();
-        platformCp = Collections.emptyList();
+      else {
+        modulePath = ModulePath.EMPTY;
+        upgradeModulePath = Collections.emptyList();
+        if (!Iterators.isEmpty(effectivePlatformCp) && (getChunkSdkVersion(chunk)) >= 9) {
+          // if chunk's SDK is 9 or higher, there is no way to specify full platform classpath
+          // because platform classes are stored in jimage binary files with unknown format.
+          // Because of this we are clearing platform classpath so that javac will resolve against its own boot classpath
+          // and prepending additional jars from the JDK configuration to compilation classpath
+          platformCp = Collections.emptyList();
+          classPath = Iterators.flat(effectivePlatformCp, originalClassPath);
+        }
+        else {
+          platformCp = effectivePlatformCp;
+          classPath = originalClassPath;
+        }
       }
 
       final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
-      final boolean rc;
-      if (!shouldForkJavac) {
-        updateCompilerUsageStatistics(context, compilingTool.getDescription(), chunk);
-        rc = JavacMain.compile(
-          options, files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, classesConsumer,
-          context.getCancelStatus(), compilingTool
-        );
-      }
-      else {
+
+      if (forkSdk != null) {
         updateCompilerUsageStatistics(context, "javac " + forkSdk.getSecond(), chunk);
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         final CompilationPaths paths = CompilationPaths.create(platformCp, classPath, upgradeModulePath, modulePath, sourcePath);
-        rc = server.forkJavac(
-          forkSdk.getFirst(), Utils.suggestForkedCompilerHeapSize(),
-          vmOptions, options, paths, files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus(), false
-        ).get();
+        final int heapSize = Utils.suggestForkedCompilerHeapSize();
+        return invokeJavac(compilerSdkVersion, context, chunk, compilingTool, options, files, classesConsumer, (_options, _files, _outSink) -> {
+          logJavacCall(chunk, _options, "fork");
+          return server.forkJavac(
+            forkSdk.getFirst(), heapSize, vmOptions, _options, paths, _files, outs, diagnosticSink, _outSink, compilingTool, context.getCancelStatus(), true
+          ).get();
+        });
       }
-      return rc;
+
+      updateCompilerUsageStatistics(context, compilingTool.getDescription(), chunk);
+      return invokeJavac(compilerSdkVersion, context, chunk, compilingTool, options, files, classesConsumer, (_options, _files, _outSink) -> {
+        logJavacCall(chunk, _options, "in-process");
+        return JavacMain.compile(
+          _options, _files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, _outSink, context.getCancelStatus(), compilingTool
+        );
+      });
     }
     finally {
       counter.waitFor();
     }
+  }
+
+  private static void logJavacCall(ModuleChunk chunk, Iterable<? extends String> options, final String mode) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug((Iterators.contains(options, PROC_ONLY_OPTION)? "Running processors for chunk" : "Compiling chunk") + " [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\", mode=" + mode);
+    }
+  }
+
+  private interface JavacCaller {
+    boolean invoke(Iterable<String> options, Iterable<? extends File> files, OutputFileConsumer outSink);
+  }
+  private static boolean invokeJavac(
+    int compilerSdkVersion,
+    CompileContext context,
+    ModuleChunk chunk,
+    @NotNull JavaCompilingTool compilingTool,
+    Iterable<String> options,
+    Iterable<? extends File> files,
+    OutputFileConsumer outSink,
+    JavacCaller javacCall
+  ) {
+    if (Iterators.contains(options, PROC_ONLY_OPTION)) {
+      // make a dedicated javac call for annotation processing only
+      final Collection<File> generated = new ArrayList<>();
+      final boolean processingSuccess = javacCall.invoke(options, files, fileObject -> {
+        if (fileObject.getKind() == JavaFileObject.Kind.SOURCE) {
+          generated.add(fileObject.getFile());
+        }
+        outSink.save(fileObject);
+      });
+      if (!processingSuccess) {
+        return false;
+      }
+      // now call javac with processor-generated sources and without processing-related options
+      final Iterable<String> compileOnlyOptions = getCompilationOptions(compilerSdkVersion, context, chunk, null, compilingTool).second;
+      return javacCall.invoke(compileOnlyOptions, Iterators.flat(files, generated), outSink);
+    }
+
+    return javacCall.invoke(options, files, outSink);
   }
 
   private static void updateCompilerUsageStatistics(CompileContext context, String compilerName, ModuleChunk chunk) {
@@ -525,10 +576,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  public static String validateCycle(CompileContext context, ModuleChunk chunk) {
+  public static @Nls String validateCycle(CompileContext context, ModuleChunk chunk) {
     final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
     final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
-    assert compilerConfig != null;
     final Set<JpsModule> modules = chunk.getModules();
     Pair<String, LanguageLevel> pair = null;
     for (JpsModule module : modules) {
@@ -537,8 +587,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         pair = pair(module.getName(), moduleLevel); // first value
       }
       else if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
-        return "Modules " + pair.getFirst() + " and " + module.getName() +
-               " must have the same language level because of cyclic dependencies between them";
+        return JpsBuildBundle.message("build.message.modules.0.and.1.must.have.the.same.language.level", pair.getFirst(), module.getName());
       }
     }
 
@@ -556,14 +605,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
           else {
             if (!overridden.second.equals(parsed)) {
-              return "Modules " + overridden.first + " and " + module.getName() + " must have the same 'additional command line parameters' specified because of cyclic dependencies between them";
+              return JpsBuildBundle.message("build.message.modules.0.and.1.must.have.the.same.additional.command.line.parameters", overridden.first, module.getName());
             }
           }
         }
         else {
           context.processMessage(new CompilerMessage(
-            BUILDER_NAME, BuildMessage.Kind.WARNING,
-            "Some modules with cyclic dependencies [" + chunk.getName() + "] have 'additional command line parameters' overridden in project settings.\nThese compilation options were applied to all modules in the cycle."
+            getBuilderName(), BuildMessage.Kind.WARNING,
+            JpsBuildBundle.message("build.message.some.modules.with.cyclic.dependencies.0.have.additional.command.line.parameters", chunk.getName())
           ));
         }
       }
@@ -573,9 +622,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : modules) {
       final ProcessorConfigProfile prof = compilerConfig.getAnnotationProcessingProfile(module);
       if (prof.isEnabled()) {
-        return "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" +
-               chunk.getName() +
-               "] are excluded from annotation processing";
+        return JpsBuildBundle.message("build.message.annotation.processing.is.not.supported.for.module.cycles", chunk.getName());
       }
     }
     return null;
@@ -626,16 +673,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (compilerSdkVersion < 9 || chunkLanguageLevel <= 0) {
-      // javac up to version 9 supports all previous releases
-      // or
+    if (chunkLanguageLevel <= 0) {
       // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    // compiler version is 9+ here, so:
-    //  - java 5 and older are not supported for sure
-    //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
-    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > RETIRE_POLICY_VERSIONS_COUNT;
+    return !isTargetReleaseSupported(compilerSdkVersion, chunkLanguageLevel);
+  }
+
+  private static boolean isTargetReleaseSupported(int compilerVersion, int targetPlatformVersion) {
+    if (targetPlatformVersion > compilerVersion) {
+      return false;
+    }
+    if (compilerVersion < 9) {
+      return true;
+    }
+    if (compilerVersion <= 11) {
+      return targetPlatformVersion >= 6;
+    }
+    return targetPlatformVersion >= 7;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -645,11 +700,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static boolean preferTargetJdkCompiler(CompileContext context) {
     Boolean val = PREFER_TARGET_JDK_COMPILER.get(context);
     if (val == null) {
-      final JpsProject project = context.getProjectDescriptor().getProject();
-      final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
+      JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject());
       // default
-      val = config != null? config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER : Boolean.TRUE;
-      PREFER_TARGET_JDK_COMPILER.set(context, val);
+      PREFER_TARGET_JDK_COMPILER.set(context, val = config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER);
     }
     return val;
   }
@@ -657,7 +710,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
-  private static Collection<? extends File> calcEffectivePlatformCp(Collection<? extends File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
+  private static Iterable<? extends File> calcEffectivePlatformCp(Collection<? extends File> platformCp, Iterable<String> options, JavaCompilingTool compilingTool) {
     if (ourDefaultRtJar == null || !isJavac(compilingTool)) {
       return platformCp;
     }
@@ -699,7 +752,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         taskRunnable.run();
       }
       catch (Throwable e) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, e));
+        context.processMessage(new CompilerMessage(getBuilderName(), e));
       }
       finally {
         counter.up();
@@ -714,7 +767,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return server;
     }
     final int listenPort = findFreePort();
-    server = new ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance()) {
+    server = new ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance(), 2 * 60 * 1000L /*keep idle builds for 2 minutes*/) {
       @Override
       protected ExternalJavacProcessHandler createProcessHandler(UUID processId, @NotNull Process process, @NotNull String commandLine, boolean keepProcessAlive) {
         return new ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive) {
@@ -722,6 +775,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
           @Override
           public Future<?> executeTask(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().submit(task);
+          }
+
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.NON_BLOCKING;
           }
         };
       }
@@ -758,13 +817,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static final Key<String> USER_DEFINED_BYTECODE_TARGET = Key.create("_user_defined_bytecode_target_");
 
-  private static Pair<List<String>, List<String>> getCompilationOptions(int compilerSdkVersion,
+  private static Pair<Iterable<String>, Iterable<String>> getCompilationOptions(int compilerSdkVersion,
                                                                         CompileContext context,
                                                                         ModuleChunk chunk,
                                                                         @Nullable ProcessorConfigProfile profile,
                                                                         @NotNull JavaCompilingTool compilingTool) {
     final List<String> compilationOptions = new ArrayList<>();
     final List<String> vmOptions = new ArrayList<>();
+    if (!JavacMain.TRACK_AP_GENERATED_DEPENDENCIES) {
+      vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES);
+      notifyMessage(context, BuildMessage.Kind.WARNING, "build.message.incremental.annotation.processing.disabled.0", true, JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY);
+    }
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
@@ -812,7 +875,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       for (final String userOption : ParametersListUtil.parse(customArgs)) {
         if (FILTERED_OPTIONS.contains(userOption)) {
           skip = true;
-          targetOptionFound = "-target".equals(userOption);
+          targetOptionFound = TARGET_OPTION.equals(userOption);
           notifyOptionIgnored(context, userOption, chunk);
           continue;
         }
@@ -825,6 +888,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         else {
           if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
+            if (POSSIBLY_CONFLICTING_OPTIONS.contains(userOption)) {
+              notifyOptionPossibleConflicts(context, userOption, chunk);
+            }
             if (userOption.startsWith("-J-")) {
               vmOptions.add(userOption.substring("-J".length()));
             }
@@ -843,55 +909,65 @@ public class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.addAll(extension.getOptions(compilingTool));
     }
 
-    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
+    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile, true);
 
     return pair(vmOptions, compilationOptions);
   }
 
+  private static void notifyOptionPossibleConflicts(CompileContext context, String option, ModuleChunk chunk) {
+    notifyMessage(context, BuildMessage.Kind.JPS_INFO, "build.message.user.specified.option.0.for.1.may.conflict.with.calculated.option", false, option, chunk.getPresentableShortName());
+  }
+
   private static void notifyOptionIgnored(CompileContext context, String option, ModuleChunk chunk) {
-    context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.JPS_INFO,
-      "User-specified option \"" + option + "\" is ignored for \"" + chunk.getPresentableShortName() + "\". This compilation parameter is set automatically according to project settings."
-    ));
+    notifyMessage(context, BuildMessage.Kind.JPS_INFO, "build.message.user.specified.option.0.is.ignored.for.1", false, option, chunk.getPresentableShortName());
+  }
+
+  private static void notifyMessage(CompileContext context, final BuildMessage.Kind kind, final String messageKey, boolean notifyOnce, Object... params) {
+    if (!notifyOnce || SHOWN_NOTIFICATIONS.get(context).add(messageKey)) {
+      context.processMessage(new CompilerMessage(getBuilderName(), kind, JpsBuildBundle.message(messageKey, params)));
+    }
   }
 
   public static void addCompilationOptions(List<? super String> options,
                                            CompileContext context,
                                            ModuleChunk chunk,
                                            @Nullable ProcessorConfigProfile profile) {
-    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile);
+    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile, false);
   }
 
   private static void addCompilationOptions(int compilerSdkVersion,
                                             List<? super String> options,
                                             CompileContext context, ModuleChunk chunk,
-                                            @Nullable ProcessorConfigProfile profile) {
-    if (!options.contains("-encoding")) {
+                                            @Nullable ProcessorConfigProfile profile, boolean procOnlySupported) {
+    if (!options.contains(ENCODING_OPTION)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
       if (config.getAllModuleChunkEncodings(chunk).size() > 1) {
-        final StringBuilder msgBuilder = new StringBuilder();
-        msgBuilder.append("Multiple encodings set for module chunk ").append(chunk.getName());
-        if (encoding != null) {
-          msgBuilder.append("\n\"").append(encoding).append("\" will be used by compiler");
-        }
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, msgBuilder.toString()));
+        String message = JpsBuildBundle.message("build.message.multiple.encodings.set.for.module.chunk", chunk.getName(), encoding, encoding != null ? 0 : 1);
+        context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.INFO, message));
       }
       if (!StringUtil.isEmpty(encoding)) {
-        options.add("-encoding");
+        options.add(ENCODING_OPTION);
         options.add(encoding);
       }
     }
 
     addCrossCompilationOptions(compilerSdkVersion, options, context, chunk);
 
-    if (!options.contains("--enable-preview")) {
+    if (!options.contains(ENABLE_PREVIEW_OPTION)) {
       LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(chunk.representativeTarget().getModule());
       if (level != null && level.isPreview()) {
-        options.add("--enable-preview");
+        options.add(ENABLE_PREVIEW_OPTION);
       }
     }
 
     if (addAnnotationProcessingOptions(options, profile)) {
+      assert profile != null;
+
+      if (procOnlySupported && profile.isProcOnly()) {
+        options.add(PROC_ONLY_OPTION);
+      }
+
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
         chunk.getModules().iterator().next(), chunk.containsTests(), profile
       );
@@ -908,14 +984,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
    */
   public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
     if (profile == null || !profile.isEnabled()) {
-      options.add("-proc:none");
+      options.add(PROC_NONE_OPTION);
       return false;
     }
 
     // configuring annotation processing
     if (!profile.isObtainProcessorsFromClasspath()) {
       final String processorsPath = profile.getProcessorPath();
-      options.add(profile.isUseProcessorModulePath() ? "--processor-module-path" : "-processorpath");
+      options.add(profile.isUseProcessorModulePath() ? PROCESSOR_MODULE_PATH_OPTION : PROCESSORPATH_OPTION);
       options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
     }
 
@@ -948,14 +1024,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
-      options.add("--release");
+      options.add(RELEASE_OPTION);
       options.add(complianceOption(bytecodeTarget));
       return;
     }
 
     // using older -source, -target and -bootclasspath options
     if (languageLevel > 0) {
-      options.add("-source");
+      options.add(SOURCE_OPTION);
       options.add(complianceOption(languageLevel));
     }
 
@@ -981,7 +1057,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     if (bytecodeTarget > 0) {
-      options.add("-target");
+      options.add(TARGET_OPTION);
       options.add(complianceOption(bytecodeTarget));
     }
   }
@@ -1064,7 +1140,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
     if (sdkVersionPair != null) {
       final int sdkVersion = sdkVersionPair.second;
-      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= RETIRE_POLICY_VERSIONS_COUNT)) {
+      if (sdkVersion >= 6 && isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
         // current javac compiler does support required language level
         return pair(sdkVersionPair.first.getHomePath(), sdkVersion);
       }
@@ -1099,16 +1175,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
+    ExternalJavacManager extJavacManager = ExternalJavacManager.KEY.get(context);
+    if (extJavacManager != null) {
+      extJavacManager.shutdownIdleProcesses();
+    }
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
-    final Map<File, Set<File>> map = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Set<File>> map = FileCollectionFactory.createCanonicalFileMap();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       final File outputDir = target.getOutputDir();
       if (outputDir == null) {
         continue;
       }
-      final Set<File> roots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      final Set<File> roots = FileCollectionFactory.createCanonicalFileSet();
       for (JavaSourceRootDescriptor descriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
         roots.add(descriptor.root);
       }
@@ -1117,11 +1197,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return map;
   }
 
-  private static class DiagnosticSink implements DiagnosticOutputConsumer {
+  private static final class DiagnosticSink implements DiagnosticOutputConsumer {
     private final CompileContext myContext;
     private final AtomicInteger myErrorCount = new AtomicInteger(0);
     private final AtomicInteger myWarningCount = new AtomicInteger(0);
-    private final Set<File> myFilesWithErrors = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    private final Set<File> myFilesWithErrors = FileCollectionFactory.createCanonicalFileSet();
     @NotNull
     private final Collection<? extends JavacFileReferencesRegistrar> myRegistrars;
 
@@ -1157,22 +1237,29 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     @Override
-    public void outputLineAvailable(String line) {
+    public void outputLineAvailable(@NlsSafe String line) {
       if (!StringUtil.isEmpty(line)) {
         if (line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX)) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println(line);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(line);
+          }
         }
         else if (line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
           //noinspection UseOfSystemOutOrSystemErr
           System.err.println(line);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(line);
+          }
         }
         else if (line.contains("\\bjava.lang.OutOfMemoryError\\b")) {
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
+          myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
+                                                       JpsBuildBundle.message("build.message.insufficient.memory")));
           myErrorCount.incrementAndGet();
         }
         else {
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
+          myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.INFO, line));
         }
       }
     }
@@ -1224,7 +1311,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         LOG.info(message);
       }
       final CompilerMessage compilerMsg = new CompilerMessage(
-        BUILDER_NAME, kind, message, srcPath, diagnostic.getStartPosition(),
+        getBuilderName(), kind, message, srcPath, diagnostic.getStartPosition(),
         diagnostic.getEndPosition(), diagnostic.getPosition(), diagnostic.getLineNumber(),
         diagnostic.getColumnNumber()
       );
@@ -1271,7 +1358,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private class ClassProcessingConsumer implements OutputFileConsumer {
+  private final class ClassProcessingConsumer implements OutputFileConsumer {
     private final CompileContext myContext;
     private final OutputFileConsumer myDelegateOutputFileSink;
 
@@ -1293,11 +1380,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
           content.saveToFile(file);
         }
         else {
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Missing content for file " + file.getPath()));
+          myContext.processMessage(new CompilerMessage(
+            getBuilderName(), BuildMessage.Kind.WARNING, JpsBuildBundle.message("build.message.missing.content.for.file.0", file.getPath()))
+          );
         }
       }
       catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+        myContext.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, e.getMessage()));
       }
 
       submitAsyncTask(myContext, () -> {

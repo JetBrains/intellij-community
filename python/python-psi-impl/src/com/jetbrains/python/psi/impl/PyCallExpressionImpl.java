@@ -30,6 +30,11 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Override
+  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    return PyCallExpressionHelper.getReceiver(this, resolvedCallee);
+  }
+
+  @Override
   @Nullable
   public PyExpression getCallee() {
     // peel off any parens, because we may have smth like (lambda x: x+1)(2)
@@ -40,14 +45,14 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @NotNull
   @Override
-  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext, implicitOffset);
+  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.multiResolveCallee(this, resolveContext);
   }
 
   @NotNull
   @Override
-  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.multiMapArguments(this, resolveContext, implicitOffset);
+  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
+    return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
   @Override

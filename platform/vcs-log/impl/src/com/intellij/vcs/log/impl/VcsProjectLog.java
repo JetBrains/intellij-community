@@ -5,15 +5,18 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -25,7 +28,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -36,14 +42,16 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.function.BiConsumer;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
@@ -127,13 +135,13 @@ public class VcsProjectLog implements Disposable {
     return myTabsManager;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters) {
     return openLogTab(filters, VcsLogManager.LogWindowKind.TOOL_WINDOW);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters,
                                  @NotNull VcsLogManager.LogWindowKind kind) {
@@ -161,8 +169,10 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void recreateOnError(@NotNull Throwable t) {
+    if (myDisposeStarted) return;
+
     myRecreatedLogCount++;
     String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
     if (myRecreatedLogCount % RECREATE_LOG_TRIES == 0) {
@@ -191,7 +201,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   private VcsLogManager createLog(boolean forceInit) {
     if (myDisposeStarted) return null;
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
@@ -203,7 +213,7 @@ public class VcsProjectLog implements Disposable {
     return null;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private static void initialize(@NotNull VcsLogManager logManager, boolean force) {
     if (force) {
       logManager.scheduleInitialization();
@@ -226,7 +236,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
+  public static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
     return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project);
   }
 
@@ -253,12 +263,12 @@ public class VcsProjectLog implements Disposable {
    * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
    * waits for it in a background task, and executes the action after the log is ready.
    */
-  @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
+  @RequiresEdt
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
     VcsProjectLog log = getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager != null) {
-      action.accept(log, manager);
+      action.consume(manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
       Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
@@ -282,36 +292,37 @@ public class VcsProjectLog implements Disposable {
         public void onSuccess() {
           VcsLogManager manager = log.getLogManager();
           if (manager != null) {
-            action.accept(log, manager);
+            action.consume(manager);
           }
         }
       }.queue();
     }
   }
 
-  @CalledInBackground
-  @Nullable
-  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
-    VcsProjectLog log = getInstance(project);
-    VcsLogManager manager = log.getLogManager();
-    if (manager == null) {
-      try {
-        manager = log.createLogInBackground(true).get();
-      }
-      catch (InterruptedException ignored) {
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public static boolean ensureLogCreated(@NotNull Project project) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
+    if (getInstance(project).getLogManager() != null) return true;
+
+    try {
+      return getInstance(project).createLogInBackground(true).get() != null;
     }
-    return manager;
+    catch (InterruptedException ignored) {
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+
+    return false;
   }
 
   private class LazyVcsLogManager {
     @Nullable private volatile VcsLogManager myValue;
 
     @NotNull
-    @CalledInBackground
+    @RequiresBackgroundThread
     public VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
@@ -326,15 +337,15 @@ public class VcsProjectLog implements Disposable {
     }
 
     @Nullable
-    @CalledInAwt
+    @RequiresEdt
     public VcsLogManager dropValue() {
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
+        myValue = null;
 
         LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
-        myValue = null;
 
         return oldValue;
       }
@@ -347,13 +358,17 @@ public class VcsProjectLog implements Disposable {
     }
   }
 
-  public static class InitLogStartupActivity implements StartupActivity {
+  static final class InitLogStartupActivity implements StartupActivity, DumbAware {
+    public InitLogStartupActivity() {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+        throw ExtensionNotApplicableException.INSTANCE;
+      }
+    }
+
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-
       VcsProjectLog projectLog = getInstance(project);
-
       projectLog.subscribeToMappingsAndPluginsChanges();
       projectLog.createLogInBackground(false);
     }
@@ -400,11 +415,10 @@ public class VcsProjectLog implements Disposable {
   }
 
   public interface ProjectLogListener {
-    @CalledInAwt
+    @RequiresEdt
     void logCreated(@NotNull VcsLogManager manager);
 
-    @CalledInAwt
-    default void logDisposed(@NotNull VcsLogManager manager) {
-    }
+    @RequiresEdt
+    void logDisposed(@NotNull VcsLogManager manager);
   }
 }

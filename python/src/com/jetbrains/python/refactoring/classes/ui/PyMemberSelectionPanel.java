@@ -16,6 +16,7 @@
 package com.jetbrains.python.refactoring.classes.ui;
 
 import com.google.common.base.Preconditions;
+import com.intellij.openapi.util.NlsContexts.BorderTitle;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -42,22 +43,22 @@ public class PyMemberSelectionPanel extends JPanel {
 
 
   /**
-   * Creates empty panel to be filled later by {@link #init(com.intellij.refactoring.classMembers.MemberInfoModel, java.util.Collection)}
+   * Creates empty panel to be filled later by {@link #init(MemberInfoModel, Collection)}
    *
    * @param title
    */
-  public PyMemberSelectionPanel(@NotNull String title, boolean supportAbstract) {
+  public PyMemberSelectionPanel(@NotNull @BorderTitle String title, boolean supportAbstract) {
     this(title, EMPTY_MEMBER_INFO, null, supportAbstract);
   }
 
   /**
-   * Creates panel and fills its table (see {@link #init(com.intellij.refactoring.classMembers.MemberInfoModel, java.util.Collection)} ) with members info
+   * Creates panel and fills its table (see {@link #init(MemberInfoModel, Collection)} ) with members info
    *
    * @param title      Title for panel
    * @param memberInfo list of members
    * @param model      model
    */
-  public PyMemberSelectionPanel(String title,
+  public PyMemberSelectionPanel(@BorderTitle String title,
                                 List<PyMemberInfo<PyElement>> memberInfo,
                                 final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
                                 final boolean supportAbstract) {
@@ -78,7 +79,7 @@ public class PyMemberSelectionPanel extends JPanel {
   /**
    * Inits panel.
    *
-   * @param memberInfoModel model to display memebers in table
+   * @param memberInfoModel model to display members in table
    * @param members         members to display
    */
   public void init(@NotNull final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> memberInfoModel,

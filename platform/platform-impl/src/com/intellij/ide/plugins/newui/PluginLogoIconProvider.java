@@ -10,5 +10,5 @@ import javax.swing.*;
  */
 interface PluginLogoIconProvider {
   @NotNull
-  Icon getIcon(boolean big, boolean jb, boolean error, boolean disabled);
+  Icon getIcon(boolean big, boolean error, boolean disabled);
 }

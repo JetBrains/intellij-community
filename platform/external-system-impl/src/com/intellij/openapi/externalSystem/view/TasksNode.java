@@ -62,7 +62,7 @@ public class TasksNode extends ExternalSystemNode<Object> {
     if (isGroup) {
       for (Map.Entry<String, Collection<TaskNode>> collectionEntry : myTasksMap.entrySet()) {
         final String group = ObjectUtils.notNull(collectionEntry.getKey(), "other");
-        final ExternalSystemNode<?> tasksGroupNode = new ExternalSystemNode<Object>(getExternalProjectsView(), null, null) {
+        final ExternalSystemNode<?> tasksGroupNode = new ExternalSystemNode<>(getExternalProjectsView(), null, null) {
 
           @Override
           protected void update(@NotNull PresentationData presentation) {

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.BaseOutputReader;
 import io.netty.bootstrap.ServerBootstrap;
@@ -40,11 +39,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-/**
- * @author Eugene Zhuravlev
- */
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
@@ -65,15 +63,6 @@ public class ExternalJavacManager extends ProcessAdapter {
   private final Executor myExecutor;
   private boolean myOwnExecutor;
   private final long myKeepAliveTimeout;
-
-  /**
-   * @deprecated: use {@link #ExternalJavacManager(File, Executor)} instead with explicit executor parameter
-   */
-  @Deprecated
-  public ExternalJavacManager(@NotNull final File workingDir) {
-    this(workingDir, ConcurrencyUtil.newSingleThreadExecutor("Javac server event loop pool"));
-    myOwnExecutor = true;
-  }
 
   public ExternalJavacManager(@NotNull final File workingDir, @NotNull Executor executor) {
     this(workingDir, executor, 5 * 60 * 1000L /* 5 minutes default*/);
@@ -114,39 +103,13 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  /**
-   * @deprecated Use {@link #forkJavac(String, int, List, List, CompilationPaths, Collection, Map, DiagnosticOutputConsumer, OutputFileConsumer, JavaCompilingTool, CanceledStatus, boolean)} instead
-   */
-  @Deprecated
-  public boolean forkJavac(String javaHome,
-                           int heapSize,
-                           List<String> vmOptions,
-                           List<String> options,
-                           Collection<? extends File> platformCp,
-                           Collection<? extends File> classpath,
-                           Collection<? extends File> upgradeModulePath,
-                           Collection<? extends File> modulePath,
-                           Collection<? extends File> sourcePath,
-                           Collection<? extends File> files,
-                           Map<File, Set<File>> outs,
-                           DiagnosticOutputConsumer diagnosticSink,
-                           OutputFileConsumer outputSink,
-                           JavaCompilingTool compilingTool,
-                           CanceledStatus cancelStatus) {
-    return forkJavac(
-      javaHome, heapSize, vmOptions, options,
-      CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath),
-      files, outs, diagnosticSink, outputSink, compilingTool, cancelStatus, false
-    ).get();
-  }
-
 
   public ExternalJavacRunResult forkJavac(String javaHome,
                                           int heapSize,
-                                          List<String> vmOptions,
-                                          List<String> options,
+                                          Iterable<String> vmOptions,
+                                          Iterable<String> options,
                                           CompilationPaths paths,
-                                          Collection<? extends File> files,
+                                          Iterable<? extends File> files,
                                           Map<File, Set<File>> outs,
                                           DiagnosticOutputConsumer diagnosticSink,
                                           OutputFileConsumer outputSink,
@@ -154,8 +117,8 @@ public class ExternalJavacManager extends ProcessAdapter {
                                           CanceledStatus cancelStatus, final boolean keepProcessAlive) {
     try {
       final ExternalJavacProcessHandler running = findRunningProcess(processHash(javaHome, vmOptions, compilingTool));
-      final ExternalJavacProcessHandler processHandler = running != null && running.lock()? running : launchExternalJavacProcess(
-        javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool, running == null && keepProcessAlive
+      final ExternalJavacProcessHandler processHandler = running != null? running : launchExternalJavacProcess(
+        javaHome, heapSize, myListenPort, myWorkingDir, vmOptions, compilingTool, keepProcessAlive
       );
 
       final Channel channel = lookupChannel(processHandler.getProcessId());
@@ -208,7 +171,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private ExternalJavacProcessHandler findRunningProcess(int processHash) {
-    LOG.debug("findRunningProcess: looking for hash " + processHash);
+    debug(()-> "findRunningProcess: looking for hash " + processHash);
     List<ExternalJavacProcessHandler> idleProcesses = null;
     try {
       synchronized (myRunningProcesses) {
@@ -220,20 +183,20 @@ public class ExternalJavacManager extends ProcessAdapter {
           }
 
           final Integer hash = PROCESS_HASH.get(process);
-          if (hash != null && hash == processHash) {
-            LOG.debug("findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
+          if (hash != null && hash == processHash && process.lock()) {
+            debug(()-> "findRunningProcess: returning process " + process.getProcessId() + " for hash " + processHash);
             return process;
           }
           if (process.getIdleTime() > myKeepAliveTimeout) {
             if (idleProcesses == null) {
               idleProcesses = new ArrayList<>();
             }
-            LOG.debug("findRunningProcess: adding " + process.getProcessId() + " to idle list");
+            debug(()-> "findRunningProcess: adding " + process.getProcessId() + " to idle list");
             idleProcesses.add(process);
           }
         }
       }
-      LOG.debug("findRunningProcess: no running process for " + hashCode() + " is found");
+      debug(()-> "findRunningProcess: no running process for " + processHash + " is found");
       return null;
     }
     finally {
@@ -245,14 +208,32 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private static int processHash(String sdkHomePath, List<String> vmOptions, JavaCompilingTool tool) {
-    return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), vmOptions, tool.getId());
+  private static <T> void debug(T data, Function<? super T, String> message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(message.apply(data));
+    }
+  }
+
+  private static void debug(Supplier<String> message) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(message.get());
+    }
+  }
+
+  private static int processHash(String sdkHomePath, Iterable<String> vmOptions, JavaCompilingTool tool) {
+    Collection<? extends String> opts = vmOptions instanceof Collection<?>? (Collection<String>)vmOptions : Iterators.collect(vmOptions, new ArrayList<>());
+    return Objects.hash(sdkHomePath.replace(File.separatorChar, '/'), opts, tool.getId());
   }
 
   @Nullable
-  private static String getEncodingName(List<String> options) {
-    int p = options.indexOf("-encoding");
-    return p >= 0 && p < options.size() - 1 ? options.get(p + 1) : null;
+  private static String getEncodingName(Iterable<String> options) {
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("-encoding".equals(option)) {
+        return it.hasNext()? it.next() : null;
+      }
+    }
+    return null;
   }
 
   public boolean isRunning() {
@@ -299,10 +280,10 @@ public class ExternalJavacManager extends ProcessAdapter {
 
   private boolean shutdownProcess(ExternalJavacProcessHandler process) {
     UUID processId = process.getProcessId();
-    LOG.debug("shutdownProcess: shutting down " + processId);
+    debug(()-> "shutdownProcess: shutting down " + processId);
     final Channel conn = myConnections.get(processId);
     if (conn != null && process.lock()) {
-      LOG.debug("shutdownProcess: sending shutdown request to " + processId);
+      debug(()-> "shutdownProcess: sending shutdown request to " + processId);
       conn.writeAndFlush(JavacProtoUtil.toMessage(processId, JavacProtoUtil.createShutdownRequest()));
       return true;
     }
@@ -313,7 +294,7 @@ public class ExternalJavacManager extends ProcessAdapter {
                                                                  int heapSize,
                                                                  int port,
                                                                  File workingDir,
-                                                                 List<String> vmOptions,
+                                                                 Iterable<String> vmOptions,
                                                                  JavaCompilingTool compilingTool,
                                                                  final boolean keepProcessAlive) throws Exception {
     final UUID processId = UUID.randomUUID();
@@ -324,7 +305,6 @@ public class ExternalJavacManager extends ProcessAdapter {
     appendParam(cmdLine, "-Djava.awt.headless=true");
 
     //appendParam(cmdLine, "-XX:MaxPermSize=150m");
-    //appendParam(cmdLine, "-XX:ReservedCodeCacheSize=64m");
     if (heapSize > 0) {
       // if the value is zero or negative, use JVM default memory settings
       final int xms = heapSize / 2;
@@ -369,9 +349,7 @@ public class ExternalJavacManager extends ProcessAdapter {
 
     appendParam(cmdLine, FileUtil.toSystemIndependentName(workingDir.getPath()));
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("starting external compiler: " + cmdLine);
-    }
+    debug(()-> "starting external compiler: " + cmdLine);
     FileUtil.createDirectory(workingDir);
 
     final int processHash = processHash(sdkHomePath, vmOptions, compilingTool);
@@ -379,7 +357,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     PROCESS_HASH.set(processHandler, processHash);
     processHandler.lock();
     myRunningProcesses.put(processId, processHandler);
-    LOG.debug("external compiler process registered: id=" + processId + ", hash=" + processHash);
+    debug(()-> "external compiler process registered: id=" + processId + ", hash=" + processHash);
     processHandler.addProcessListener(this);
     processHandler.startNotify();
     return processHandler;
@@ -388,7 +366,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   @Override
   public void processTerminated(@NotNull ProcessEvent event) {
     final UUID processId = ((ExternalJavacProcessHandler)event.getProcessHandler()).getProcessId();
-    LOG.debug("process " + processId + " terminated");
+    debug(()-> "process " + processId + " terminated");
     myRunningProcesses.remove(processId);
     if (myConnections.get(processId) == null) {
       // only if connection has never been established
@@ -591,10 +569,10 @@ public class ExternalJavacManager extends ProcessAdapter {
     Channel channel = null;
     synchronized (myConnections) {
       channel = myConnections.get(processId);
-      LOG.debug("lookupChannel: channel for " + processId + " is " + channel);
+      debug(channel, ch-> "lookupChannel: channel for " + processId + " is " + ch);
       while (channel == null) {
         if (!myRunningProcesses.containsKey(processId)) {
-          LOG.debug("lookupChannel: no process for " + processId);
+          debug(()-> "lookupChannel: no process for " + processId);
           break; // the process is already gone
         }
         try {
@@ -603,7 +581,7 @@ public class ExternalJavacManager extends ProcessAdapter {
         catch (InterruptedException ignored) {
         }
         channel = myConnections.get(processId);
-        LOG.debug("lookupChannel: after wait channel for " + processId + " is " + channel);
+        debug(channel, ch-> "lookupChannel: after wait channel for " + processId + " is " + ch);
       }
     }
     return channel;
@@ -705,7 +683,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       }
       boolean successfully = isTerminatedSuccessfully();
       if (!successfully) {
-        LOG.debug("Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
+        debug(()-> "Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
       }
       return successfully;
     }
@@ -720,7 +698,7 @@ public class ExternalJavacManager extends ProcessAdapter {
       }
       boolean successfully = isTerminatedSuccessfully();
       if (!successfully) {
-        LOG.debug("Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
+        debug(()-> "Javac compile session " + myId + " in process " + myProcessId + "didn't terminate successfully");
       }
       return successfully;
     }

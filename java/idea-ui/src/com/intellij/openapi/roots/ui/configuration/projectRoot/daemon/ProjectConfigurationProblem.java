@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ui.configuration.ConfigurationError;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +44,12 @@ public class ProjectConfigurationProblem extends ConfigurationError {
     }
   }
 
-  private static String computeDescription(ProjectStructureProblemDescription description) {
-    final String descriptionString = description.getDescription();
-    return descriptionString != null ? descriptionString : description.getMessage(true);
+  private static HtmlChunk computeDescription(ProjectStructureProblemDescription description) {
+    if (description.getDescription().isEmpty()) {
+      return HtmlChunk.text(description.getMessage(true));
+    }
+
+    return description.getDescription();
   }
 
   @NotNull

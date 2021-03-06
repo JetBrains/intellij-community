@@ -7,10 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -66,7 +63,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
         invokeOnTarget(list.get(0), file, editor, project);
       }
       else {
-        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, new Pass<Target>() {
+        IntroduceTargetChooser.showIntroduceTargetChooser(editor, list, new Pass<>() {
           @Override
           public void pass(final Target target) {
             invokeOnTarget(target, file, editor, project);
@@ -153,13 +150,13 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                 @NotNull Editor editor,
                                 @NotNull Project project) {
     Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = getOccurrenceOptions(target, usages);
-    OccurrencesChooser<Object> chooser = new OccurrencesChooser<Object>(editor) {
+    OccurrencesChooser<Object> chooser = new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(Object occurrence) {
         return IntroduceHandler.this.getOccurrenceRange(occurrence);
       }
     };
-    chooser.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+    chooser.showChooser(new Pass<>() {
       @Override
       public void pass(final OccurrencesChooser.ReplaceChoice choice) {
         AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
@@ -206,7 +203,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * @return null if everything is ok, or a short message describing why it's impossible to perform the refactoring. It will be shown in a balloon popup.
    */
   @Nullable
-  protected abstract String checkUsages(@NotNull List<UsageInfo> usages);
+  protected abstract @NlsContexts.DialogMessage String checkUsages(@NotNull List<UsageInfo> usages);
 
   /**
    * @return find all possible scopes for the target to introduce
@@ -244,13 +241,13 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * @return null if everything is ok, or a short message describing why the refactoring cannot be performed
    */
   @Nullable
-  protected abstract String checkSelectedTarget(@NotNull Target target,
-                                                @NotNull PsiFile file,
-                                                @NotNull Editor editor,
-                                                @NotNull Project project);
+  protected abstract @NlsContexts.DialogMessage String checkSelectedTarget(@NotNull Target target,
+                                                                           @NotNull PsiFile file,
+                                                                           @NotNull Editor editor,
+                                                                           @NotNull Project project);
 
   @NotNull
-  protected abstract String getRefactoringName();
+  protected abstract @NlsContexts.DialogTitle String getRefactoringName();
 
   @Nullable
   protected abstract String getHelpID();
@@ -260,7 +257,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * It will have this title.
    */
   @NotNull
-  protected abstract String getChooseScopeTitle();
+  protected abstract @NlsContexts.PopupTitle String getChooseScopeTitle();
 
   /**
    * If {@link IntroduceHandler#collectTargetScopes}() returns several possible scopes, the Choose Scope Popup will be shown.
@@ -282,12 +279,12 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
                                                                    @NotNull Project project);
 
   @NotNull
-  protected String getEmptyScopeErrorMessage() {
-    return getRefactoringName() + " is not available in the current scope";
+  protected @NlsContexts.DialogMessage String getEmptyScopeErrorMessage() {
+    return RefactoringBundle.message("dialog.message.refactoring.not.available.in.current.scope", getRefactoringName());
   }
 
 
-  protected void showErrorHint(@NotNull String errorMessage, @NotNull Editor editor, @NotNull Project project) {
+  protected void showErrorHint(@NotNull @NlsContexts.DialogMessage String errorMessage, @NotNull Editor editor, @NotNull Project project) {
     CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringName(), getHelpID());
   }
 

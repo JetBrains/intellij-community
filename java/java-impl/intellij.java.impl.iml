@@ -46,7 +46,16 @@
     <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="intellij.java.structureView" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="library" name="nekohtml" level="project" />
+    <orderEntry type="module-library">
+      <library name="nekohtml" type="repository">
+        <properties include-transitive-deps="false" maven-id="net.sourceforge.nekohtml:nekohtml:1.9.22" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/sourceforge/nekohtml/nekohtml/1.9.22/nekohtml-1.9.22.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="library" name="gson" level="project" />
@@ -59,14 +68,12 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module-library">
       <library name="completion-ranking-java" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.1.4" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.3.4" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.1.4/completion-ranking-java-0.1.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.4/completion-ranking-java-0.3.4.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.1.4/completion-ranking-java-0.1.4-sources.jar!/" />
-        </SOURCES>
+        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.copyright" />
@@ -74,6 +81,9 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.inspect" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
   <component name="copyright">
     <Base>

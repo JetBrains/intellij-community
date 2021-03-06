@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -6,21 +6,18 @@ import com.intellij.ide.projectWizard.NewProjectWizard
 import com.intellij.ide.projectWizard.ProjectTypeStep
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
@@ -28,9 +25,9 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleFrameworksWizar
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.waitForProjectReload
 import org.junit.runners.Parameterized
 import java.io.File
-import java.util.concurrent.TimeUnit
 import com.intellij.openapi.externalSystem.util.use as utilUse
 
 
@@ -45,7 +42,7 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
   }
 
   fun deleteProject(projectInfo: ProjectInfo) {
-    invokeAndWaitIfNeeded {
+    ApplicationManager.getApplication().invokeAndWait {
       runWriteAction {
         for (module in projectInfo.modules) {
           val root = module.root
@@ -115,31 +112,32 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
   }
 
   private fun createProject(directory: String, configure: (ModuleWizardStep) -> Unit): Project {
-    val project = invokeAndWaitIfNeeded {
-      val wizard = createWizard(null, directory)
-      wizard.runWizard(configure)
-      NewProjectUtil.createFromWizard(wizard, null)
+    return waitForProjectReload {
+      invokeAndWaitIfNeeded {
+        val wizard = createWizard(null, directory)
+        wizard.runWizard(configure)
+        wizard.disposeIfNeeded()
+        NewProjectUtil.createFromWizard(wizard, null)
+      }
     }
-    waitForImportCompletion(project)
-    return project
   }
 
   private fun createModule(directory: String, project: Project, configure: (ModuleWizardStep) -> Unit) {
-    invokeAndWaitIfNeeded {
-      val wizard = createWizard(project, directory)
-      wizard.runWizard(configure)
-      NewModuleAction().createModuleFromWizard(project, null, wizard)
+    waitForProjectReload {
+      ApplicationManager.getApplication().invokeAndWait {
+        val wizard = createWizard(project, directory)
+        wizard.runWizard(configure)
+        wizard.disposeIfNeeded()
+        NewModuleAction().createModuleFromWizard(project, null, wizard)
+      }
     }
-    waitForImportCompletion(project)
   }
 
   private fun createWizard(project: Project?, directory: String): AbstractProjectWizard {
     val modulesProvider = project?.let { DefaultModulesProvider(it) } ?: ModulesProvider.EMPTY_MODULES_PROVIDER
-    val projectWizard = NewProjectWizard(project, modulesProvider, directory).also {
+    return NewProjectWizard(project, modulesProvider, directory).also {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }
-    Disposer.register(testRootDisposable, Disposable { invokeAndWaitIfNeeded { Disposer.dispose(projectWizard.disposable) } })
-    return projectWizard
   }
 
   private fun AbstractProjectWizard.runWizard(configure: ModuleWizardStep.() -> Unit) {
@@ -155,13 +153,6 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
     if (!doFinishAction()) {
       throw RuntimeException("$currentStepObject is not validated")
     }
-  }
-
-  private fun waitForImportCompletion(project: Project) {
-    val promise = AsyncPromise<Any>()
-    val connection = project.messageBus.connect()
-    connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener { promise.setResult(null) })
-    invokeAndWaitIfNeeded { PlatformTestUtil.waitForPromise(promise, TimeUnit.MINUTES.toMillis(1)) }
   }
 
   fun assertSettingsFileContent(projectInfo: ProjectInfo) {
@@ -241,16 +232,7 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun Project.use(save: Boolean = false, action: (Project) -> Unit) {
-    utilUse(save) {
-      try {
-        action(this)
-      }
-      finally {
-        GradleSetupProjectTest.removeGradleJvmSdk(this)
-      }
-    }
-  }
+  fun Project.use(save: Boolean = false, action: (Project) -> Unit) = utilUse(save, action)
 
   companion object {
     /**

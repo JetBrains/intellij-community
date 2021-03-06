@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -9,8 +8,8 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.BalloonImpl;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   private final JComponent myContent;
 
-  private Color myBorder = IdeTooltipManager.getInstance().getBorderColor(true);
+  private Color myBorder = JBUI.CurrentTheme.Tooltip.borderColor();
   @Nullable private Insets myBorderInsets;
   private Color myFill = MessageType.INFO.getPopupBackground();
   private boolean myHideOnMouseOutside = true;
@@ -50,7 +49,7 @@ public final class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myHideOnAction = true;
   private boolean myHideOnCloseClick = true;
   private boolean myDialogMode;
-  private String  myTitle;
+  private @NlsContexts.PopupTitle String  myTitle;
   private Insets  myContentInsets = JBUI.insets(2);
   private boolean myShadow        = true;
   private boolean mySmallVariant;

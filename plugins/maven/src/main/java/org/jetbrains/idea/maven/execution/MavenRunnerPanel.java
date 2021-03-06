@@ -1,39 +1,34 @@
-/* ==========================================================================
- * Copyright 2006 Mevenide Team
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * =========================================================================
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.target.LanguageRuntimeConfiguration;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.UserActivityWatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-public class MavenRunnerPanel {
+public class MavenRunnerPanel implements MavenSettingsObservable {
   protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
@@ -41,12 +36,15 @@ public class MavenRunnerPanel {
   private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
+  private JLabel myJdkLabel;
   private ExternalSystemJdkComboBox myJdkCombo;
+  private ComboBox<String> myTargetJdkCombo;
 
   private JCheckBox mySkipTestsCheckBox;
   private MavenPropertiesPanel myPropertiesPanel;
 
   private Map<String, String> myProperties;
+  private String myTargetName;
 
   public MavenRunnerPanel(@NotNull Project p, boolean isRunConfiguration) {
     myProject = p;
@@ -95,18 +93,22 @@ public class MavenRunnerPanel {
     panel.add(myVMParametersEditor, c);
     c.insets.left = 0;
 
-    JLabel jdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
-    jdkLabel.setDisplayedMnemonic('j');
-    jdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
+    myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
+    myJdkLabel.setDisplayedMnemonic('j');
+    myJdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
     c.gridy++;
     c.weightx = 0;
-    panel.add(jdkLabel, c);
+    panel.add(myJdkLabel, c);
     c.gridx = 1;
     c.weightx = 1;
     c.insets.left = 10;
     c.fill = GridBagConstraints.HORIZONTAL;
     panel.add(myJdkCombo, c);
+    myTargetJdkCombo = new ComboBox<>();
+    ComponentUtil.putClientProperty(myTargetJdkCombo, UserActivityWatcher.DO_NOT_WATCH, true);
+    myTargetJdkCombo.setVisible(false);
+    panel.add(myTargetJdkCombo, c);
     c.insets.left = 0;
 
     myEnvVariablesComponent = new EnvironmentVariablesComponent();
@@ -127,6 +129,7 @@ public class MavenRunnerPanel {
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
+    myPropertiesPanel.getTable().setShowGrid(false);
     myPropertiesPanel.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.runner.properties.not.defined"));
 
     c.gridx = 0;
@@ -158,6 +161,7 @@ public class MavenRunnerPanel {
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
     myJdkCombo.refreshData(data.getJreName());
+    myTargetJdkCombo.setSelectedItem(data.getJreName());
 
     myPropertiesPanel.setDataFromMap(data.getMavenProperties());
 
@@ -171,15 +175,76 @@ public class MavenRunnerPanel {
     data.setRunMavenInBackground(myRunInBackgroundCheckbox.isSelected());
     data.setVmOptions(myVMParametersEditor.getText().trim());
     data.setSkipTests(mySkipTestsCheckBox.isSelected());
-    data.setJreName(myJdkCombo.getSelectedValue());
-
+    if (myTargetName == null) {
+      data.setJreName(myJdkCombo.getSelectedValue());
+    } else {
+      data.setJreName(StringUtil.notNullize(myTargetJdkCombo.getItem(), MavenRunnerSettings.USE_PROJECT_JDK));
+    }
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
-
     data.setEnvironmentProperties(myEnvVariablesComponent.getEnvs());
     data.setPassParentEnv(myEnvVariablesComponent.isPassParentEnvs());
   }
 
   public Project getProject() {
     return myProject;
+  }
+
+  @ApiStatus.Internal
+  void applyTargetEnvironmentConfiguration(@Nullable String targetName) {
+    boolean localTarget = targetName == null;
+    boolean targetChanged = !Objects.equals(myTargetName, targetName);
+    if (targetChanged) {
+      myTargetName = targetName;
+      updateJdkComponents(targetName);
+      if (localTarget) {
+        myJdkCombo.refreshData(null);
+      }
+    }
+    else if (!localTarget) {
+      updateJdkComponents(targetName);
+    }
+  }
+
+  private void updateJdkComponents(@Nullable String targetName) {
+    boolean localTarget = targetName == null;
+    myTargetJdkCombo.setVisible(!localTarget);
+    myJdkCombo.setVisible(localTarget);
+    if (!localTarget) {
+      List<String> items = IntStream.range(0, myTargetJdkCombo.getItemCount())
+        .mapToObj(i -> myTargetJdkCombo.getItemAt(i))
+        .collect(Collectors.toList());
+
+      List<String> targetItems = new ArrayList<>();
+      TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)
+        .getTargets().findByName(targetName);
+      if (targetEnvironmentConfiguration != null) {
+        for (LanguageRuntimeConfiguration runtimeConfiguration : targetEnvironmentConfiguration.getRuntimes().resolvedConfigs()) {
+          if (runtimeConfiguration instanceof JavaLanguageRuntimeConfiguration) {
+            String homePath = ((JavaLanguageRuntimeConfiguration)runtimeConfiguration).getHomePath();
+            targetItems.add(homePath);
+          }
+        }
+      }
+
+      if (!items.equals(targetItems)) {
+        myTargetJdkCombo.removeAllItems();
+        targetItems.forEach(myTargetJdkCombo::addItem);
+      }
+      myJdkLabel.setLabelFor(myTargetJdkCombo);
+    } else {
+      myJdkLabel.setLabelFor(myJdkCombo);
+    }
+  }
+
+  @Override
+  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
+    watcher.registerComponent("delegateToMaven", myDelegateToMavenCheckbox);
+    watcher.registerComponent("runInBackground", myRunInBackgroundCheckbox);
+    watcher.registerComponent("vmParameters", myVMParametersEditor);
+    watcher.registerComponent("envVariables", myEnvVariablesComponent);
+    watcher.registerComponent("jdk", myJdkCombo);
+    watcher.registerComponent("targetJdk", myTargetJdkCombo);
+    watcher.registerComponent("skipTests", mySkipTestsCheckBox);
+    watcher.registerComponent("properties", myPropertiesPanel);
   }
 }

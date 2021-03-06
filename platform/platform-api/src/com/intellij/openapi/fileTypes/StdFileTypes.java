@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use file type definitions from the corresponding plugins instead.
  */
+@SuppressWarnings("StaticNonFinalField")
 @Deprecated
-public class StdFileTypes extends FileTypes {
+public final class StdFileTypes extends FileTypes {
   private StdFileTypes() { }
 
   /**
@@ -43,12 +31,14 @@ public class StdFileTypes extends FileTypes {
    * @deprecated use {@link com.intellij.ide.highlighter.NewJspFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile LanguageFileType JSP = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSP");
 
   /**
    * @deprecated use {@link com.intellij.ide.highlighter.JspxFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile LanguageFileType JSPX = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("JSPX");
 
   /**
@@ -61,6 +51,7 @@ public class StdFileTypes extends FileTypes {
    * @deprecated use {@link com.intellij.ide.highlighter.DTDFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile LanguageFileType DTD = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("DTD");
 
   /**
@@ -73,6 +64,7 @@ public class StdFileTypes extends FileTypes {
    * @deprecated use {@link com.intellij.ide.highlighter.XHtmlFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile LanguageFileType XHTML = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("XHTML");
 
   /**
@@ -86,36 +78,42 @@ public class StdFileTypes extends FileTypes {
    * @deprecated use {@link com.intellij.lang.properties.PropertiesFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile LanguageFileType PROPERTIES = (LanguageFileType)FileTypeManager.getInstance().getStdFileType("Properties");
 
   /**
    * @deprecated use {@link com.intellij.uiDesigner.GuiFormFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile FileType GUI_DESIGNER_FORM = FileTypeManager.getInstance().getStdFileType("GUI_DESIGNER_FORM");
 
   /**
    * @deprecated use {@link WorkspaceFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile FileType IDEA_WORKSPACE = FileTypeManager.getInstance().getStdFileType("IDEA_WORKSPACE");
 
   /**
    * @deprecated use {@link ProjectFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile FileType IDEA_PROJECT = FileTypeManager.getInstance().getStdFileType("IDEA_PROJECT");
 
   /**
    * @deprecated use {@link ModuleFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile FileType IDEA_MODULE = FileTypeManager.getInstance().getStdFileType("IDEA_MODULE");
 
   /**
    * @deprecated use {@link com.intellij.openapi.vcs.changes.patch.PatchFileType#INSTANCE} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static volatile FileType PATCH = FileTypeManager.getInstance().getStdFileType("PATCH");
 
 

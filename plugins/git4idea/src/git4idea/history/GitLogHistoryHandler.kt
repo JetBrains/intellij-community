@@ -19,7 +19,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 
 class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHandler {
-  private val LOG = Logger.getInstance(GitLogHistoryHandler::class.java)
 
   @Throws(VcsException::class)
   override fun getRename(root: VirtualFile, filePath: FilePath, beforeHash: Hash, afterHash: Hash): Rename? {
@@ -72,5 +71,9 @@ class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHand
       if (info?.secondPath != null) return info
       return null
     }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitLogHistoryHandler::class.java)
   }
 }

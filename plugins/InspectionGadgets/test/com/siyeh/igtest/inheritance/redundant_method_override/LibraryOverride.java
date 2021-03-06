@@ -8,7 +8,7 @@ class X11 {
 }
 class MyList2 extends ArrayList {
   @Override
-  protected void <warning descr="Method 'removeRange()' is identical to its super method">removeRange</warning>(int a, int b) {
+  protected void <warning descr="Method 'removeRange()' only delegates to its super method">removeRange</warning>(int a, int b) {
     super.removeRange(a, b);
   }
 

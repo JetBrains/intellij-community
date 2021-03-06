@@ -281,11 +281,13 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret instanceof PsiJavaToken && "}".equals(atCaret.getText())) {
       atCaret = atCaret.getParent();
-      if (!(atCaret instanceof PsiAnonymousClass ||
-            atCaret instanceof PsiArrayInitializerExpression ||
-            psiElement(PsiCodeBlock.class).withParent(PsiLambdaExpression.class).accepts(atCaret))) {
-        return null;
-      }
+      boolean expressionEndingWithBrace = atCaret instanceof PsiAnonymousClass ||
+                                          atCaret instanceof PsiArrayInitializerExpression ||
+                                          atCaret instanceof PsiCodeBlock && (
+                                            atCaret.getParent() instanceof PsiLambdaExpression ||
+                                            atCaret.getParent() instanceof PsiSwitchExpression
+                                          );
+      if (!expressionEndingWithBrace) return null;
     }
 
     for (PsiElement each : SyntaxTraverser.psiApi().parents(atCaret).skip(1)) {

@@ -72,8 +72,6 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
     return if (resolved is GrAnonymousClassDefinition) resolved.baseClassType else type
   }
 
-  override fun getParameters() = getParameters(expectedParameters, project)
-
   private class ParametersNameSupplier(suggested: List<Pair<PsiType, List<String>>>) {
 
     private val namesCount = suggested

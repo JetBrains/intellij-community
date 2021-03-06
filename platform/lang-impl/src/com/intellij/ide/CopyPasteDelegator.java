@@ -19,6 +19,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,13 +41,20 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     myEditable = new MyEditable();
   }
 
+  /** @deprecated no replacement needed,
+   * {@code LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext)} is used instead. */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected PsiElement @NotNull [] getSelectedElements() {
-    DataContext dataContext = DataManager.getInstance().getDataContext(myKeyReceiver);
-    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
+    return PsiElement.EMPTY_ARRAY;
   }
 
-  private PsiElement @NotNull [] getValidSelectedElements() {
-    PsiElement[] selectedElements = getSelectedElements();
+  protected PsiElement @NotNull [] getSelectedElements(@NotNull DataContext dataContext) {
+    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), getSelectedElements());
+  }
+
+  private static PsiElement @NotNull [] validate(PsiElement @Nullable [] selectedElements) {
+    if (selectedElements == null) return PsiElement.EMPTY_ARRAY;
     for (PsiElement element : selectedElements) {
       if (element == null || !element.isValid()) {
         return PsiElement.EMPTY_ARRAY;
@@ -77,14 +85,14 @@ public class CopyPasteDelegator implements CopyPasteSupport {
   class MyEditable implements CutProvider, CopyProvider, PasteProvider {
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
-      PsiElement[] elements = getValidSelectedElements();
+      PsiElement[] elements = validate(getSelectedElements(dataContext));
       PsiCopyPasteManager.getInstance().setElements(elements, true);
       updateView();
     }
 
     @Override
     public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-      PsiElement[] elements = getValidSelectedElements();
+      PsiElement[] elements = validate(getSelectedElements(dataContext));
       return CopyHandler.canCopy(elements) ||
              JBIterable.of(elements).filter(Conditions.instanceOf(PsiNamedElement.class)).isNotEmpty();
     }
@@ -96,7 +104,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      PsiElement[] elements = getValidSelectedElements();
+      PsiElement[] elements = validate(getSelectedElements(dataContext));
       if (MoveHandler.adjustForMove(myProject, elements, null) == null) {
         return;
       }
@@ -108,7 +116,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
 
     @Override
     public boolean isCutEnabled(@NotNull DataContext dataContext) {
-      final PsiElement[] elements = getValidSelectedElements();
+      final PsiElement[] elements = validate(getSelectedElements(dataContext));
       return elements.length != 0 && MoveHandler.canMove(elements, null);
     }
 

@@ -34,7 +34,7 @@ public class SimplifyStreamApiCallChainsInspectionTest extends LightQuickFixPara
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk9();
+    return IdeaTestUtil.getMockJdk11();
   }
 
   @Override

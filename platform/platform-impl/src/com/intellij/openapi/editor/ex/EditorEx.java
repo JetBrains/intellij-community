@@ -30,12 +30,12 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +70,7 @@ public interface EditorEx extends Editor {
    *
    * @return the markup model instance.
    * @see com.intellij.openapi.editor.markup.MarkupEditorFilter
-   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingFilter(Condition)
+   * @see com.intellij.openapi.editor.impl.EditorImpl#setHighlightingPredicate(java.util.function.Predicate)
    * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, Project, boolean)
    */
   @NotNull
@@ -111,12 +111,16 @@ public interface EditorEx extends Editor {
 
   void setHorizontalScrollbarVisible(boolean b);
 
+  @NotNull
   CutProvider getCutProvider();
 
+  @NotNull
   CopyProvider getCopyProvider();
 
+  @NotNull
   PasteProvider getPasteProvider();
 
+  @NotNull
   DeleteProvider getDeleteProvider();
 
   void repaint(int startOffset, int endOffset);
@@ -197,7 +201,7 @@ public interface EditorEx extends Editor {
    *
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
-  void setPlaceholder(@Nullable CharSequence text);
+  void setPlaceholder(@Nullable @Nls CharSequence text);
 
   /**
    * Sets text attributes for a placeholder. Font style and color are currently supported. 
@@ -270,9 +274,9 @@ public interface EditorEx extends Editor {
 
   /**
    * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
-   * function will be drawn in the editor after end of the line (together with fragments returned by {@link com.intellij.openapi.editor.EditorLinePainter} extensions).
+   * function will be drawn in the editor after end of the line (together with fragments returned by {@link EditorLinePainter} extensions).
    */
-  void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
+  void registerLineExtensionPainter(@NotNull IntFunction<? extends @NotNull Collection<? extends LineExtensionInfo>> lineExtensionPainter);
 
   /**
    * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.

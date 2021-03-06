@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +29,9 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
-    actionPerformed(tree, e);
+    if (tree != null) {
+      actionPerformed(tree, e);
+    }
   }
 
   @Override
@@ -45,7 +46,7 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
     }
   }
 
-  protected abstract void update(FileSystemTree fileChooser, AnActionEvent e);
+  protected abstract void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e);
 
-  protected abstract void actionPerformed(FileSystemTree fileChooser, AnActionEvent e);
+  protected abstract void actionPerformed(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e);
 }

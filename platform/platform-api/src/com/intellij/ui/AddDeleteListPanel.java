@@ -3,10 +3,10 @@
 package com.intellij.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +23,12 @@ import java.util.List;
  * @author anna
  */
 public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
-  private final String myTitle;
+  private final @NlsContexts.BorderTitle String myTitle;
 
   protected DefaultListModel<T> myListModel = new DefaultListModel<>();
   protected JBList<T> myList = new JBList<>(myListModel);
 
-  public AddDeleteListPanel(@Nls final String title, final List<T> initialList) {
+  public AddDeleteListPanel(@NlsContexts.BorderTitle final String title, final List<T> initialList) {
     myTitle = title;
     for (T o : initialList) {
       if (o != null) {
@@ -58,7 +58,7 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     }
   }
 
-  protected Border createTitledBorder(String title) {
+  protected Border createTitledBorder(@NlsContexts.BorderTitle String title) {
     return IdeBorderFactory.createTitledBorder(title, false);
   }
 

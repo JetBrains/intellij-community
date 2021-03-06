@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -21,35 +21,22 @@ class GradleDependenciesTest extends GradleHighlightingBaseTest implements Resol
   @Test
   void dependenciesTest() {
     importProject("apply plugin: 'java'")
-    new RunAll().append {
-      'dependencies delegate'()
-    } append {
-      'add external module dependency delegate'()
-    } append {
-      'add self resolving dependency delegate'()
-    } append {
-      'add project dependency delegate'()
-    } append {
-      'add delegate method setter'()
-    } append {
-      'module delegate'()
-    } append {
-      'module delegate method setter'()
-    } append {
-      'components delegate'()
-    } append {
-      'modules delegate'()
-    } append {
-      'modules module delegate'()
-    } append {
-      'classpath configuration'()
-    } append {
-      'compile configuration'()
-    } append {
-      'buildscript classpath configuration'()
-    } append {
-      'buildscript compile configuration'()
-    } run()
+    new RunAll(
+      { 'dependencies delegate'() },
+      { 'add external module dependency delegate'() },
+      { 'add self resolving dependency delegate'() },
+      { 'add project dependency delegate'() },
+      { 'add delegate method setter'() },
+      { 'module delegate'() },
+      { 'module delegate method setter'() },
+      { 'components delegate'() },
+      { 'modules delegate'() },
+      { 'modules module delegate'() },
+      { 'classpath configuration'() },
+      { 'compile configuration'() },
+      { 'buildscript classpath configuration'() },
+      { 'buildscript compile configuration'() }
+    ).run()
   }
 
   void 'dependencies delegate'() {

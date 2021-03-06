@@ -8,6 +8,8 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.BaseOutputReader.Options;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +40,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    * @deprecated override {@link #executeTask(Runnable)} instead of this method
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
@@ -136,7 +139,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   protected class SimpleOutputReader extends BaseOutputReader {
     private final Key<?> myProcessOutputType;
 
-    public SimpleOutputReader(Reader reader, Key<?> outputType, Options options, @NotNull String presentableName) {
+    public SimpleOutputReader(Reader reader, Key<?> outputType, Options options, @NotNull @NonNls String presentableName) {
       super(reader, options);
       myProcessOutputType = outputType;
       start(presentableName);

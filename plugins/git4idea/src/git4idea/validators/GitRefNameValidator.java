@@ -42,13 +42,20 @@ public final class GitRefNameValidator implements InputValidator {
     sb.append("]");
     CONTROL_CHARS = sb.toString();
   }
-  private static final Pattern ILLEGAL = Pattern.compile(
+  private static final Pattern ILLEGALCHARS = Pattern.compile(
     "(^\\.)|" +                             // begins with a dot
-    "(^-)|" +                                 // begins with '-'
-    "[ ~:\\^\\?\\*\\[\\\\]+|(@\\{)+|" +     // contains invalid character: space, one of ~:^?*[\ or @{ sequence
+    "(^-)|" +                               // begins with '-'
+    "(^/)|" +                               // begins with '/'
     "(\\.\\.)+|" +                          // two dots in a row
-    "(([\\./]|\\.lock)$)|" +                // ends with dot, slash or ".lock"
+    "[ ~:^?*\\[\\\\]+|(@\\{)+|" +           // contains invalid character: space, one of ~:^?*[\ or @{ sequence
     CONTROL_CHARS                           // contains a control character
+  );
+
+  private static final Pattern ILLEGAL = Pattern.compile(
+    "(([./]|\\.lock)$)|" +                  // ends with dot, slash or ".lock"
+    "\\.(?=/)|" +                           // has a dot before slash in the middle
+    "(?<=/)\\.|" +                          // has a dot after slash in the middle
+    ILLEGALCHARS.pattern()
   );
 
   public static GitRefNameValidator getInstance() {
@@ -69,6 +76,16 @@ public final class GitRefNameValidator implements InputValidator {
 
   @NotNull
   public String cleanUpBranchName(@NotNull String branchName) {
-    return branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", "");
+    return deduplicateChars(branchName.replaceAll(ILLEGAL.pattern(), "_").replaceAll("\"", ""));
+  }
+
+  @NotNull
+  public String cleanUpBranchNameOnTyping(@NotNull String branchName) {
+    return branchName.replaceAll(ILLEGALCHARS.pattern(), "_");
+  }
+
+  @NotNull
+  public String deduplicateChars(@NotNull String branchName) {
+    return branchName.replaceAll("(/){2,}", "/" ).replaceAll("(_){2,}", "_");
   }
 }

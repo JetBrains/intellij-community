@@ -18,7 +18,9 @@ package com.intellij.codeInspection;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -29,18 +31,19 @@ import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveD
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class MoveToPackageFix implements LocalQuickFix {
+public class MoveToPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(MoveToPackageFix.class);
   private final String myTargetPackage;
 
-  public MoveToPackageFix(String targetPackage) {
+  public MoveToPackageFix(PsiFile psiFile, String targetPackage) {
+    super(psiFile);
     myTargetPackage = targetPackage;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @IntentionName @NotNull String getText() {
     return QuickFixBundle.message("move.class.to.package.text", myTargetPackage);
   }
 
@@ -60,15 +63,12 @@ public class MoveToPackageFix implements LocalQuickFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
-    if (element == null) return;
-    final PsiFile myFile = element.getContainingFile();
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiFile myFile = startElement.getContainingFile();
 
     if (!FileModificationService.getInstance().prepareFileForWrite(myFile)) return;
 
@@ -102,5 +102,10 @@ public class MoveToPackageFix implements LocalQuickFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

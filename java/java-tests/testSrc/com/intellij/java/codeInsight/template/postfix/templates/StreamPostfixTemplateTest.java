@@ -15,34 +15,15 @@
  */
 package com.intellij.java.codeInsight.template.postfix.templates;
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
-  private LanguageLevel myDefaultLanguageLevel;
-
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(myFixture.getProject());
-    myDefaultLanguageLevel = levelProjectExtension.getLanguageLevel();
-    levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myDefaultLanguageLevel);
-      myDefaultLanguageLevel = null;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @NotNull
@@ -58,14 +39,17 @@ public class StreamPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testExpressionContext() {
     doTest();
   }
+  
+  public void testInLambda() {
+    doTest();
+  }
 
   public void testNotAvailable() {
     doTest();
   }
 
   public void testDoNotExpandOnJavaLess8() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_6, myFixture.getTestRootDisposable());
-    doTest();
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 }
 

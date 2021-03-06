@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -17,15 +17,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dennis.Ushakov
- */
-public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
-
-  private static String escape(XmlFile file, TIntObjectHashMap<String> map, String text, int start) {
+final class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
+  private static String escape(XmlFile file, Int2ObjectMap<String> map, String text, int start) {
     final StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -45,11 +42,11 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
   }
 
   @NotNull
-  private static TIntObjectHashMap<String> computeMap(XmlFile xmlFile) {
+  private static Int2ObjectMap<String> computeMap(XmlFile xmlFile) {
     final XmlFile file = XmlUtil.findXmlFile(xmlFile, Html5SchemaProvider.getCharsDtdLocation());
     assert file != null;
 
-    final TIntObjectHashMap<String> result = new TIntObjectHashMap<>();
+    Int2ObjectMap<String> result = new Int2ObjectOpenHashMap<>();
     XmlUtil.processXmlElements(file, element -> {
       if (element instanceof XmlEntityDecl) {
         final String value = ((XmlEntityDecl)element).getValueElement().getValue();
@@ -94,7 +91,7 @@ public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeI
     int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
     final Document document = editor.getDocument();
     XmlFile xmlFile = (XmlFile)file;
-    TIntObjectHashMap<String> map = computeMap(xmlFile);
+    Int2ObjectMap<String> map = computeMap(xmlFile);
     for (int i = starts.length - 1; i >= 0; i--) {
       final int start = starts[i];
       final int end = ends[i];

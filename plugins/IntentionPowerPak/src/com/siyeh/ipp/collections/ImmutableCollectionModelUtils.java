@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -30,7 +30,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-class ImmutableCollectionModelUtils {
+final class ImmutableCollectionModelUtils {
 
   private static final CallMatcher MAP_ENTRY_CALL = staticCall(JAVA_UTIL_MAP, "entry").parameterCount(2);
 
@@ -156,7 +156,7 @@ class ImmutableCollectionModelUtils {
   /**
    * Replaces immutable collection creation with mutable one.
    */
-  private static class ToMutableCollectionConverter {
+  private static final class ToMutableCollectionConverter {
 
     private final PsiElementFactory myElementFactory;
     private final JavaCodeStyleManager myCodeStyleManager;
@@ -316,7 +316,7 @@ class ImmutableCollectionModelUtils {
   /**
    * Renames given variable and moves caret to anchor after renaming.
    */
-  private static class VariableRenamer extends VariableInplaceRenamer {
+  private static final class VariableRenamer extends VariableInplaceRenamer {
 
     private final PsiElement myAnchor;
 

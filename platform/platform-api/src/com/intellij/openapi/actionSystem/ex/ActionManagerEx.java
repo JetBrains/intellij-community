@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,8 @@ public abstract class ActionManagerEx extends ActionManager {
 
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
+
+  public abstract void fireAfterEditorTyping(char c, @NotNull DataContext dataContext);
 
   /**
    * For logging purposes
@@ -81,14 +84,25 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isActionPopupStackEmpty();
 
-  public abstract boolean isTransparentOnlyActionsUpdateNow();
+  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
+    fireActionPerformed(actionId, event, place, this::fireBeforeActionPerformed);
+  }
 
-  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event) {
-    final AnAction action = getAction(actionId);
-    if (action != null) {
-      AnActionEvent e = AnActionEvent.createFromAnAction(action, event, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext());
-      fireBeforeActionPerformed(action, DataManager.getInstance().getDataContext(), e);
-    }
+  public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
+    fireActionPerformed(actionId, event, place, this::fireAfterActionPerformed);
+  }
+
+  private void fireActionPerformed(@NotNull String actionId,
+                                   @NotNull InputEvent event,
+                                   @NotNull String place,
+                                   TriConsumer<? super AnAction, ? super DataContext, ? super AnActionEvent> firingFunction) {
+    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
+      final AnAction action = getAction(actionId);
+      if (action != null) {
+        AnActionEvent e = AnActionEvent.createFromAnAction(action, event, place, dataContext);
+        firingFunction.accept(action, dataContext, e);
+      }
+    });
   }
 
   /**

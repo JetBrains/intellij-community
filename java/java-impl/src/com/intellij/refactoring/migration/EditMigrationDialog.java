@@ -4,10 +4,12 @@ package com.intellij.refactoring.migration;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,12 +50,14 @@ public class EditMigrationDialog extends DialogWrapper{
     setOKActionEnabled(isEnabled);
   }
 
-  public String getName() {
-    return myNameField.getText();
+  public @Nls String getName() {
+    @NlsSafe String text = myNameField.getText();
+    return text;
   }
 
-  public String getDescription() {
-    return myDescriptionTextArea.getText();
+  public @Nls String getDescription() {
+    @NlsSafe String text = myDescriptionTextArea.getText();
+    return text;
   }
 
   @Override

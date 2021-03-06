@@ -18,6 +18,7 @@ package com.intellij.tasks.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class EditTaskAction extends BaseTaskAction {
     Presentation presentation = event.getPresentation();
     Project project = getEventProject(event);
     if (project != null && presentation.isEnabled()) {
-      presentation.setText("Edit '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "'");
+      presentation.setText(TaskBundle.message("action.edit.text", TaskManager.getManager(project).getActiveTask().getPresentableName()), false);
     }
   }
 }

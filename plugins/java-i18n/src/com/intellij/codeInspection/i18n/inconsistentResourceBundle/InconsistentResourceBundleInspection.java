@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.inconsistentResourceBundle;
 
 import com.intellij.codeInspection.*;
@@ -14,35 +12,25 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
+public final class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
-  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders =
-    new NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]>() {
-    @Override
-    protected InconsistentResourceBundleInspectionProvider @NotNull [] compute() {
-      return new InconsistentResourceBundleInspectionProvider[] {
-        new PropertiesKeysConsistencyInspectionProvider(),
-        new DuplicatedPropertiesInspectionProvider(),
-        new MissingTranslationsInspectionProvider(),
-        new PropertiesPlaceholdersInspectionProvider(),
-        new InconsistentPropertiesEndsInspectionProvider(),
-      };
-    }
-  };
+  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders = NotNullLazyValue.lazy(() -> {
+    return new InconsistentResourceBundleInspectionProvider[]{
+      new PropertiesKeysConsistencyInspectionProvider(),
+      new DuplicatedPropertiesInspectionProvider(),
+      new MissingTranslationsInspectionProvider(),
+      new PropertiesPlaceholdersInspectionProvider(),
+      new InconsistentPropertiesEndsInspectionProvider(),
+    };
+  });
   private final Map<String, Boolean> mySettings = new LinkedHashMap<>();
 
 
@@ -53,8 +41,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(new OptionAccessor() {
       @Override
       public boolean getOption(String optionName) {
@@ -87,13 +74,10 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   @Override
   public void readSettings(final @NotNull Element node) throws InvalidDataException {
     mySettings.clear();
-    for (final Object o : node.getChildren()) {
-      if (o instanceof Element) {
-        final Element e = (Element) o;
-        final String name = e.getAttributeValue("name");
-        final boolean value = Boolean.parseBoolean(e.getAttributeValue("value"));
-        mySettings.put(name, value);
-      }
+    for (final Element e : node.getChildren()) {
+      final String name = e.getAttributeValue("name");
+      final boolean value = Boolean.parseBoolean(e.getAttributeValue("value"));
+      mySettings.put(name, value);
     }
   }
 
@@ -126,9 +110,9 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       }
     }
     final Map<PropertiesFile, Map<String, String>> propertiesFilesNamesMaps = FactoryMap.create(key -> key.getNamesMap());
-    Map<PropertiesFile, Set<String>> keysUpToParent = new THashMap<>();
+    Map<PropertiesFile, Set<String>> keysUpToParent = new HashMap<>();
     for (PropertiesFile f : files) {
-      Set<String> keys = new THashSet<>(propertiesFilesNamesMaps.get(f).keySet());
+      Set<String> keys = new HashSet<>(propertiesFilesNamesMaps.get(f).keySet());
       PropertiesFile parent = parents.get(f);
       while (parent != null) {
         keys.addAll(propertiesFilesNamesMaps.get(parent).keySet());

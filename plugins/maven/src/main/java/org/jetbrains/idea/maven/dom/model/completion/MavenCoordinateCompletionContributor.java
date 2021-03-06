@@ -113,8 +113,8 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
     return StringUtil.trim(value.replace(DUMMY_IDENTIFIER, "").replace(DUMMY_IDENTIFIER_TRIMMED, ""));
   }
 
-  protected static <T> Consumer<T> withPredicate(Consumer<T> consumer,
-                                                 Predicate<T> predicate) {
+  protected static <T> Consumer<T> withPredicate(Consumer<? super T> consumer,
+                                                 Predicate<? super T> predicate) {
     return it -> {
       if (predicate.test(it)) {
         consumer.accept(it);

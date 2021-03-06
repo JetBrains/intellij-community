@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOption {
+public final class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOption {
   @Override
   public boolean isToBeShown() {
     return true;
@@ -14,9 +14,17 @@ public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOpt
 
   @Override
   public void setToBeShown(boolean value, int exitCode) {
-    int confirmOpenNewProject = value || exitCode == 2 ? GeneralSettings.OPEN_PROJECT_ASK :
-                                exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW ;
-    GeneralSettings.getInstance().setConfirmOpenNewProject(confirmOpenNewProject);
+    int mode;
+    if (value) {
+      mode = GeneralSettings.OPEN_PROJECT_ASK;
+    }
+    else {
+      // see `ProjectUtil#confirmOpenNewProject` and `ProjectUtil#confirmOpenOrAttachProject`
+      mode = exitCode == 0 /*Messages.YES*/ ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+             exitCode == 1 /*Messages.NO*/ ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
+             GeneralSettings.OPEN_PROJECT_ASK;
+    }
+    GeneralSettings.getInstance().setConfirmOpenNewProject(mode);
   }
 
   @Override
@@ -30,8 +38,7 @@ public class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOpt
   }
 
   @Override
-  @NotNull
-  public String getDoNotShowMessage() {
+  public @NotNull String getDoNotShowMessage() {
     return UIBundle.message("dialog.options.do.not.ask");
   }
 }

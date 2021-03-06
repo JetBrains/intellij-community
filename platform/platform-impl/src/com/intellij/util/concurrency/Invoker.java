@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
@@ -8,13 +8,16 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
@@ -24,8 +27,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
-import static com.intellij.openapi.util.Disposer.register;
-import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -33,7 +34,7 @@ public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   private static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
-  private final ConcurrentHashMap<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
+  private final Map<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
   private final AtomicInteger count = new AtomicInteger();
   private final ThreeState useReadAction;
   private final String description;
@@ -42,7 +43,7 @@ public abstract class Invoker implements Disposable {
   private Invoker(@NotNull String prefix, @NotNull Disposable parent, @NotNull ThreeState useReadAction) {
     description = "Invoker." + UID.getAndIncrement()+"."+prefix + (useReadAction != ThreeState.UNSURE ? ".ReadAction="+useReadAction : "") + ": "+parent;
     this.useReadAction = useReadAction;
-    register(parent, this);
+    Disposer.register(parent, this);
   }
 
   @Override
@@ -78,7 +79,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final <T> CancellablePromise<T> compute(@NotNull Supplier<? extends T> task) {
-    return promise(new Task<>(task, null));
+    return promise(new Task<>(task));
   }
 
   /**
@@ -104,7 +105,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final <T> CancellablePromise<T> computeLater(@NotNull Supplier<? extends T> task, int delay) {
-    return promise(new Task<>(task, null), delay);
+    return promise(new Task<>(task), delay);
   }
 
   /**
@@ -116,7 +117,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final CancellablePromise<?> invoke(@NotNull Runnable task) {
-    return promise(new Task<>(null, task));
+    return compute(new Wrapper(task));
   }
 
   /**
@@ -142,7 +143,7 @@ public abstract class Invoker implements Disposable {
    */
   @NotNull
   public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
-    return promise(new Task<>(null, task), delay);
+    return computeLater(new Wrapper(task), delay);
   }
 
   /**
@@ -183,7 +184,7 @@ public abstract class Invoker implements Disposable {
     }
     catch (RejectedExecutionException exception) {
       count.decrementAndGet();
-      LOG.debug("Executor is shutdown");
+      if (LOG.isTraceEnabled()) LOG.debug("Executor is shutdown");
       task.promise.setError("shutdown");
     }
   }
@@ -231,7 +232,7 @@ public abstract class Invoker implements Disposable {
   private void offerRestart(@NotNull Task<?> task, int attempt) {
     if (task.canRestart(disposed, attempt)) {
       offerSafely(task, attempt + 1, 10);
-      LOG.debug("Task is restarted");
+      if (LOG.isTraceEnabled()) LOG.debug("Task is restarted");
     }
   }
 
@@ -271,39 +272,34 @@ public abstract class Invoker implements Disposable {
   static final class Task<T> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends T> supplier;
-    private final Runnable runnable;
     private volatile T result;
 
-    Task(Supplier<? extends T> supplier, Runnable runnable) {
-      assert runnable != null && supplier == null || runnable == null && supplier != null;
-      this.runnable = runnable;
+    Task(@NotNull Supplier<? extends T> supplier) {
       this.supplier = supplier;
     }
 
     boolean canRestart(boolean disposed, int attempt) {
-      LOG.debug("Task is canceled");
+      if (LOG.isTraceEnabled()) LOG.debug("Task is canceled");
       if (attempt < THRESHOLD) return canInvoke(disposed);
-      Object task = supplier != null ? supplier : runnable;
-      LOG.warn("Task is always canceled: " + task);
+      LOG.warn("Task is always canceled: " + supplier);
       promise.setError("timeout");
       return false; // too many attempts to run the task
     }
 
     boolean canInvoke(boolean disposed) {
       if (promise.isDone()) {
-        LOG.debug("Promise is cancelled: ", promise.isCancelled());
+        if (LOG.isTraceEnabled()) LOG.debug("Promise is cancelled: ", promise.isCancelled());
         return false; // the given promise is already done or cancelled
       }
       if (disposed) {
-        LOG.debug("Invoker is disposed");
+        if (LOG.isTraceEnabled()) LOG.debug("Invoker is disposed");
         promise.setError("disposed");
         return false; // the current invoker is disposed
       }
-      Object task = supplier != null ? supplier : runnable;
-      if (task instanceof Obsolescent) {
-        Obsolescent obsolescent = (Obsolescent)task;
+      if (supplier instanceof Obsolescent) {
+        Obsolescent obsolescent = (Obsolescent)supplier;
         if (obsolescent.isObsolete()) {
-          LOG.debug("Task is obsolete");
+          if (LOG.isTraceEnabled()) LOG.debug("Task is obsolete");
           promise.setError("obsolete");
           return false; // the specified task is obsolete
         }
@@ -317,20 +313,43 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void run() {
-      if (supplier != null) {
-        result = supplier.get();
-      }
-      else {
-        runnable.run();
-      }
+      result = supplier.get();
     }
 
     @Override
     public String toString() {
-      Object task = supplier != null ? supplier : runnable;
-      return "Invoker.Task: " + task;
+      return "Invoker.Task: " + supplier;
     }
   }
+
+
+  /**
+   * This wrapping class is intended to convert a developer's runnable to the obsolescent supplier.
+   */
+  private static final class Wrapper implements Obsolescent, Supplier<Void> {
+    private final Runnable task;
+
+    Wrapper(@NotNull Runnable task) {
+      this.task = task;
+    }
+
+    @Override
+    public Void get() {
+      task.run();
+      return null;
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return task instanceof Obsolescent && ((Obsolescent)task).isObsolete();
+    }
+
+    @Override
+    public String toString() {
+      return task.toString();
+    }
+  }
+
 
   @NotNull
   private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
@@ -421,7 +440,7 @@ public abstract class Invoker implements Disposable {
   }
 
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = newConcurrentSet();
+    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
     private final ScheduledExecutorService executor;
 
     /**
@@ -549,6 +568,11 @@ public abstract class Invoker implements Disposable {
   @NotNull
   public static Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
     return new Background(parent, ThreeState.YES, 8);
+  }
+
+  @NotNull
+  public static Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
+    return new Background(parent, ThreeState.NO, 8);
   }
 
   @NotNull

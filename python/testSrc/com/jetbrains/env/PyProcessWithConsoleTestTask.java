@@ -50,6 +50,7 @@ import static com.intellij.testFramework.ThreadTracker.longRunningThreadCreated;
  * </p>
  * <ol>
  * <li>Inherit it</li>
+ * <li>Optionally override {@link #exceptionThrown()} if you want to check exception when test is launched</li>
  * <li>Override {@link #createProcessRunner()} and return appropriate test runner</li>
  * <li>Override {@link #checkTestResults(ProcessWithConsoleRunner, String, String, String, int)} and check result using arguments or
  * {@link ProcessWithConsoleRunner#getConsole()} or something else (be sure to check all runner methods)</li>
@@ -117,6 +118,16 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     Disposer.dispose(runner);
   }
 
+
+  /**
+   * Called instead of {@link #checkTestResults(ProcessWithConsoleRunner, String, String, String, int)} when exception is thrown
+   *
+   * @param e exception (root cause)
+   */
+  protected void exceptionThrown(@NotNull Throwable e, @NotNull T runner) {
+    Assert.fail("Exception thrown, see logs for details: " + e.getMessage());
+  }
+
   private void executeRunner(final String sdkHome, final T runner) throws InterruptedException {
     // Semaphore to wait end of process
     final Semaphore processStartedSemaphore = new Semaphore(1);
@@ -159,11 +170,18 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
         failed.set(true);
         // Release semaphore to prevent main thread from infinite waiting.
         processStartedSemaphore.release();
-        final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
-        throw exception;
+        //  // In case of exception, find the root and report it as "stderr"
+        Throwable cause = e;
+        while (cause.getCause() != null) {
+          cause = cause.getCause();
+        }
+
+        exceptionThrown(cause, runner);
       }
     }, ModalityState.defaultModalityState());
-
+    if (failed.get()) {
+      return;
+    }
 
     final boolean processStarted = processStartedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
     assert processStarted : "Process not started in 5 minutes";
@@ -185,17 +203,12 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     assert code != null : "Process finished, but no exit code exists";
 
     XDebuggerTestUtil.waitForSwing();
-    if (failed.get()) {
-      Assert.fail("Failed to run test, see logs for exceptions");
+    try {
+      runner.assertExitCodeIsCorrect(code);
+      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
     }
-    else {
-      try {
-        runner.assertExitCodeIsCorrect(code);
-        checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(stdAll.toString(), e);
-      }
+    catch (Throwable e) {
+      throw new RuntimeException(stdAll.toString(), e);
     }
   }
 
@@ -218,12 +231,14 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
   /**
    * Process is finished. Do all checks you need to make sure your test passed.
-   *  @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff like
-   *               {@link PyAbstractTestProcessRunner#getFormattedTestTree()}
-   *               Check concrete runner documentation
-   * @param stdout process stdout
-   * @param stderr process stderr
-   * @param all    joined stdout and stderr
+   * If process failed to start, it's exception is reported as stderr
+   *
+   * @param runner   runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff like
+   *                 {@link PyAbstractTestProcessRunner#getFormattedTestTree()}
+   *                 Check concrete runner documentation
+   * @param stdout   process stdout
+   * @param stderr   process stderr or exception message.
+   * @param all      joined stdout and stderr
    * @param exitCode
    */
   protected abstract void checkTestResults(@NotNull T runner,

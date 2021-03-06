@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import org.jetbrains.annotations.Nls
+import javax.swing.JComponent
 
 /**
  * A service providing information required for building user-interface of Change Signature refactoring.
@@ -35,16 +38,33 @@ abstract class SuggestedRefactoringUI {
     return model.improvePresentation()
   }
 
-  data class NewParameterData(
-    val presentableName: String,
+  data class NewParameterData @JvmOverloads constructor(
+    @Nls val presentableName: String,
     val valueFragment: PsiCodeFragment,
-    val offerToUseAnyVariable: Boolean
+    val offerToUseAnyVariable: Boolean,
+    @Nls(capitalization = Nls.Capitalization.Sentence) val placeholderText: String? = null,
+    val additionalData: NewParameterAdditionalData? = null
   )
+
+  /**
+   * Language-specific information to be stored in [NewParameterData].
+   *
+   * Don't put any PSI-related objects here.
+   */
+  interface NewParameterAdditionalData {
+    override fun equals(other: Any?): Boolean
+  }
 
   /**
    * Extracts data about new parameters to offer the user to specify its values for updating calls.
    */
   abstract fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData>
+
+  /**
+   * Validates value for [data] typed in [component].
+   * This method should be very fast since it is called on any change for any parameter even if the updated parameter is not [data].
+   */
+  open fun validateValue(data: NewParameterData, component: JComponent?): ValidationInfo? = null
 
   /**
    * Extracts value for a new parameter from code fragment after its editing by the user.

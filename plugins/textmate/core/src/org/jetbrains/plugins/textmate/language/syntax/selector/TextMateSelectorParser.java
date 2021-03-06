@@ -158,7 +158,7 @@ public class TextMateSelectorParser {
     }
   }
 
-  private static class ScopeSelector implements Node {
+  private static final class ScopeSelector implements Node {
     private final List<Node> children;
     private final List<Node> exclusions;
     private final boolean startMatch;

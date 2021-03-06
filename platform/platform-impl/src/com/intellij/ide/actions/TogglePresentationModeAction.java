@@ -119,7 +119,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
         Object key = keys.nextElement();
         if (key instanceof String) {
           String name = (String)key;
-          if (name.endsWith(".font")) {
+          if (name.endsWith(".font") || name.endsWith(".acceleratorFont")) {
             Font font = defaults.getFont(key);
             ourSavedValues.put(key, font);
           }

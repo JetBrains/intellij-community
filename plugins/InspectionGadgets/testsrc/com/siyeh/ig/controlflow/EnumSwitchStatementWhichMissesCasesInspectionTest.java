@@ -16,9 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -150,8 +148,26 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "  }\n" +
            "}");
   }
+  
+  public void testDfaJoinEphemeral() {
+    doTest("enum X {A, B, C}\n" +
+           "\n" +
+           "class Test {\n" +
+           "  void test(X x, boolean b, boolean c) {\n" +
+           "    if (b) {\n" +
+           "      if (x == null || x == X.A || x == X.B || x == X.C) return;\n" +
+           "    } else if (c) {\n" +
+           "      if (x == null || x == X.A) return;\n" +
+           "    } else {\n" +
+           "      if (x == null || x == X.B) return;\n" +
+           "    }\n" +
+           "    /*'switch' statement on enum type 'X' misses cases: 'A', 'B', and 'C'*/switch/**/ (x) {\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
 
-  public void testJava13Preview() {
+  public void testJava14() {
     doTest("enum E {A, B, C}\n" +
            "\n" +
            "class X {\n" +
@@ -176,11 +192,6 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
-  }
 
   @Nullable
   @Override

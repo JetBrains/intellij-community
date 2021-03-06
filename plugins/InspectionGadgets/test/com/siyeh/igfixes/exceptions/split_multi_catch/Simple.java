@@ -6,7 +6,8 @@ public class Simple {
   void foo() {
     try {
       Reader reader = new FileReader("");
-    } <caret>catch (IndexOutOfBoundsException | FileNotFoundException e) {
+    } <caret>catch (IndexOutOfBoundsException //c1
+                    | FileNotFoundException e) {
     }
   }
 }

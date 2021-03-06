@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -73,6 +75,7 @@ public class ProjectSettingsPanel {
     ColumnInfo[] columns = {new ScopeColumn(), new SettingColumn()};
     myScopeMappingModel = new ListTableModel<>(columns, new ArrayList<>(), 0);
     myScopeMappingTable = new TableView<>(myScopeMappingModel);
+    myScopeMappingTable.setShowGrid(false);
 
     reloadCopyrightProfiles();
     myProfilesComboBox.setRenderer(SimpleListCellRenderer.create(CopyrightBundle.message("copyright.no.text"), CopyrightProfile::getName));
@@ -110,7 +113,7 @@ public class ProjectSettingsPanel {
     component.setText(CopyrightBundle.message("copyright.default.project.copyright"));
     component.setLabelLocation(BorderLayout.WEST);
     component.setComponent(myProfilesComboBox);
-    ElementProducer<ScopeSetting> producer = new ElementProducer<ScopeSetting>() {
+    ElementProducer<ScopeSetting> producer = new ElementProducer<>() {
       @Override
       public ScopeSetting createElement() {
         return new ScopeSetting(CustomScopesProviderEx.getAllScope(), myProfilesModel.getAllProfiles().values().iterator().next());
@@ -142,8 +145,8 @@ public class ProjectSettingsPanel {
       final NamedScope scope = setting.getScope();
       if (!iterator.hasNext()) return true;
       final String scopeName = iterator.next();
-      if (scope == null || !Comparing.strEqual(scopeName, scope.getName())) return true;
-      final String profileName = map.get(scope.getName());
+      if (scope == null || !Comparing.strEqual(scopeName, scope.getScopeId())) return true;
+      final String profileName = map.get(scope.getScopeId());
       if (profileName == null) return true;
       if (!profileName.equals(setting.getProfileName())) return true;
     }
@@ -154,7 +157,7 @@ public class ProjectSettingsPanel {
     myManager.setDefaultCopyright((CopyrightProfile)myProfilesComboBox.getSelectedItem());
     myManager.clearMappings();
     for (ScopeSetting scopeSetting : myScopeMappingModel.getItems()) {
-      myManager.mapCopyright(scopeSetting.getScope().getName(), scopeSetting.getProfileName());
+      myManager.mapCopyright(scopeSetting.getScope().getScopeId(), scopeSetting.getProfileName());
     }
   }
 
@@ -217,12 +220,12 @@ public class ProjectSettingsPanel {
       myScope = scope;
     }
 
-    public String getProfileName() {
+    public @NlsSafe String getProfileName() {
       return myProfile != null ? myProfile.getName() : myProfileName;
     }
   }
 
-  private class SettingColumn extends MyColumnInfo<CopyrightProfile> {
+  private final class SettingColumn extends MyColumnInfo<CopyrightProfile> {
     private SettingColumn() {
       super(CopyrightBundle.message("copyright.copyright.column"));
     }
@@ -279,7 +282,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private class ScopeColumn extends MyColumnInfo<NamedScope> {
+  private final class ScopeColumn extends MyColumnInfo<NamedScope> {
     private ScopeColumn() {
       super(CopyrightBundle.message("copyright.scope.column"));
     }
@@ -294,12 +297,12 @@ public class ProjectSettingsPanel {
             setText("");
           }
           else {
-            final String scopeName = ((NamedScope)value).getName();
+            final String scopeId = ((NamedScope)value).getScopeId();
             if (!isSelected) {
-              final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeName);
+              final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeId);
               if (scope == null) setForeground(JBColor.RED);
             }
-            setText(scopeName);
+            setText(((NamedScope)value).getPresentableName());
           }
           return this;
         }
@@ -319,7 +322,7 @@ public class ProjectSettingsPanel {
 
         @Override
         public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
-          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName(), false, false){
+          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getScopeId(), false, false){
             @Override
             protected NamedScope[] createModel() {
               final NamedScope[] model = super.createModel();
@@ -347,7 +350,7 @@ public class ProjectSettingsPanel {
   }
 
   private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
-    protected MyColumnInfo(final String name) {
+    protected MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 

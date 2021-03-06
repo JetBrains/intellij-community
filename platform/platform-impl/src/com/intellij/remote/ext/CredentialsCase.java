@@ -26,8 +26,8 @@ public interface CredentialsCase<T> {
 
   void process(T credentials);
 
-  static <T> CredentialsCase<T> create(@NotNull CredentialsType<T> type, @NotNull Consumer<T> consumer) {
-    return new CredentialsCase<T>() {
+  static <T> CredentialsCase<T> create(@NotNull CredentialsType<T> type, @NotNull Consumer<? super T> consumer) {
+    return new CredentialsCase<>() {
       @Override
       public CredentialsType<T> getType() {
         return type;

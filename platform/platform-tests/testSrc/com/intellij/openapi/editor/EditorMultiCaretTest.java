@@ -504,4 +504,29 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     verifyCaretsAndSelections(0, 1, 1, 1,
                               1, 1, 1, 1);
   }
+
+  public void testCloneCaretDoesNotUseRememberedHorizontalPositionFromMovement() {
+    initText("long long line<caret>\nshort line");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+    executeAction(IdeActions.ACTION_EDITOR_CLONE_CARET_ABOVE);
+    checkResultByText("long long <caret>line\nshort line<caret>");
+  }
+
+  public void testRightClickInMultiCaretSelection1() {
+    initText("<selection>quick<caret></selection> <selection>brown<caret></selection> fox");
+    mouse().right().clickAt(0, 1);
+    checkResultByText("<selection>q<caret>uick</selection> <selection>brown<caret></selection> fox");
+  }
+
+  public void testRightClickInMultiCaretSelection2() {
+    initText("<selection>quick<caret></selection> <selection>brown<caret></selection> fox");
+    mouse().right().clickAt(0, 7);
+    checkResultByText("<selection>quick<caret></selection> <selection>b<caret>rown</selection> fox");
+  }
+
+  public void testRightClickOutsideMultiCaretSelection() {
+    initText("<selection>quick<caret></selection> <selection>brown<caret></selection> fox");
+    mouse().right().clickAt(0, 13);
+    checkResultByText("quick brown f<caret>ox");
+  }
 }

@@ -6,14 +6,16 @@ import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.LongStreamEx;
@@ -25,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.codeInspection.dataFlow.types.DfTypes.rangeClamped;
 
 /**
  * @author peter
@@ -40,7 +44,7 @@ public class DfaExpressionFactory {
 
   @Nullable
   @Contract("null -> null")
-  public DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
+  DfaValue getExpressionDfaValue(@Nullable PsiExpression expression) {
     if (expression == null) return null;
 
     if (expression instanceof PsiParenthesizedExpression) {
@@ -120,7 +124,12 @@ public class DfaExpressionFactory {
     }
 
     DfaValue qualifier = getQualifierOrThisValue(refExpr);
-    return var.createValue(myFactory, qualifier, true);
+    DfaValue result = var.createValue(myFactory, qualifier, true);
+    if (var instanceof SpecialField) {
+      PsiType wantedType = refExpr.getType();
+      result = DfaUtil.boxUnbox(result, wantedType);
+    }
+    return result;
   }
 
   /**
@@ -158,7 +167,7 @@ public class DfaExpressionFactory {
   private DfaValue getQualifierValue(PsiExpression qualifierExpression) {
     DfaValue qualifierValue = getExpressionDfaValue(qualifierExpression);
     if (qualifierValue == null) return null;
-    PsiVariable constVar = DfConstantType.getConstantOfType(qualifierValue.getDfType(), PsiVariable.class);
+    PsiVariable constVar = qualifierValue.getDfType().getConstantOfType(PsiVariable.class);
     if (constVar != null) {
       return myFactory.getVarFactory().createVariableValue(constVar);
     }
@@ -171,7 +180,7 @@ public class DfaExpressionFactory {
     // If static final field is referred from the same or inner/nested class,
     // we consider that it might be uninitialized yet as some class initializers may call its methods or
     // even instantiate objects of this class and call their methods
-    if (!DfConstantType.isConst(constValue.getDfType(), var)) return false;
+    if (!constValue.getDfType().isConst(var)) return false;
     if (!(var instanceof PsiField) || var instanceof PsiEnumConstant) return false;
     return PsiTreeUtil.getTopmostParentOfType(refExpr, PsiClass.class) == PsiTreeUtil.getTopmostParentOfType(var, PsiClass.class);
   }
@@ -225,9 +234,17 @@ public class DfaExpressionFactory {
     PsiType type = expression.getType();
     if (expression instanceof PsiArrayInitializerExpression) {
       int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
-      return myFactory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length), type));
+      return myFactory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
+                                    .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
+    if (type instanceof PsiPrimitiveType && targetType instanceof PsiPrimitiveType && !type.equals(targetType)) {
+      if (TypeConversionUtil.isIntegralNumberType(targetType)) {
+        LongRangeSet range = DfLongType.extractRange(dfType);
+        return myFactory.fromDfType(rangeClamped(range.castTo((PsiPrimitiveType)targetType), PsiType.LONG.equals(targetType)));
+      }
+      return myFactory.fromDfType(DfTypes.typedObject(targetType, Nullability.UNKNOWN));
+    }
     return DfaUtil.boxUnbox(myFactory.fromDfType(dfType), targetType);
   }
 
@@ -352,7 +369,8 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean isStable() {
-      return PsiUtil.isJvmLocalVariable(myVariable) || myVariable.hasModifierProperty(PsiModifier.FINAL);
+      return PsiUtil.isJvmLocalVariable(myVariable) || 
+             (myVariable.hasModifierProperty(PsiModifier.FINAL) && !DfaUtil.hasInitializationHacks(myVariable));
     }
 
     @NotNull
@@ -363,8 +381,7 @@ public class DfaExpressionFactory {
         return factory.getObjectType(type, DfaPsiUtil.getElementNullability(type, myVariable));
       }
       if (PsiUtil.isJvmLocalVariable(myVariable) ||
-          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC) &&
-           (!myVariable.hasModifierProperty(PsiModifier.FINAL) || !DfaUtil.hasInitializationHacks((PsiField)myVariable)))) {
+          (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
         return factory.getVarFactory().createVariableValue(this);
       }
       return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
@@ -381,13 +398,23 @@ public class DfaExpressionFactory {
     }
   }
 
-  private static final class GetterDescriptor implements VariableDescriptor {
+  public static final class GetterDescriptor implements VariableDescriptor {
+    private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
+      CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
+      CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
+      CallMatcher.instanceCall("java.lang.reflect.Executable", "getParameterCount", "isVarArgs"),
+      CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
+      CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
+      CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
+                               "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass", 
+                               "getSimpleName", "getCanonicalName")
+    );
     private final @NotNull PsiMethod myGetter;
     private final boolean myStable;
 
-    GetterDescriptor(@NotNull PsiMethod getter) {
+    public GetterDescriptor(@NotNull PsiMethod getter) {
       myGetter = getter;
-      if (PsiTypesUtil.isGetClass(getter)) {
+      if (STABLE_METHODS.methodMatches(getter) || getter instanceof LightRecordMethod) {
         myStable = true;
       } else {
         PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);

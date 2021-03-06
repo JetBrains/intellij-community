@@ -18,18 +18,21 @@ import java.awt.event.ActionEvent;
 
 public class UsageViewContext {
 
+  @NotNull
   protected final SearchContext mySearchContext;
+  @NotNull
   protected final Configuration myConfiguration;
+  @NotNull
   private final ConfigurableUsageTarget myTarget;
   protected UsageView myUsageView;
 
-  protected UsageViewContext(Configuration configuration, SearchContext searchContext, Runnable searchStarter) {
+  protected UsageViewContext(@NotNull Configuration configuration, @NotNull SearchContext searchContext, @NotNull Runnable searchStarter) {
     myConfiguration = configuration;
     mySearchContext = searchContext;
     myTarget = new StructuralSearchUsageTarget(configuration, searchContext, searchStarter);
   }
 
-  public void setUsageView(final UsageView usageView) {
+  public void setUsageView(@NotNull UsageView usageView) {
     myUsageView = usageView;
     final MessageBusConnection connection = mySearchContext.getProject().getMessageBus().connect(usageView);
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
@@ -40,7 +43,7 @@ public class UsageViewContext {
     });
   }
 
-  public ConfigurableUsageTarget getTarget() {
+  public @NotNull ConfigurableUsageTarget getTarget() {
     return myTarget;
   }
 
@@ -53,7 +56,6 @@ public class UsageViewContext {
     final String usagesString = SSRBundle.message("occurrences.of", pattern);
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.shortenTextWithEllipsis(usagesString, 60, 0, false));
-    presentation.setUsagesWord(SSRBundle.message("occurrence"));
     presentation.setCodeUsagesString(SSRBundle.message("found.occurrences", scopeText));
     presentation.setTargetsNodeText(SSRBundle.message("targets.node.text"));
     presentation.setCodeUsages(false);
@@ -65,7 +67,7 @@ public class UsageViewContext {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-        StructuralSearchProfileActionProvider.createNewInspection(myConfiguration, mySearchContext.getProject());
+        StructuralSearchProfileActionProvider.createNewInspection(myConfiguration.copy(), mySearchContext.getProject());
       }
     });
   }

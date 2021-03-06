@@ -35,6 +35,7 @@ import org.intellij.lang.xpath.xslt.psi.impl.ImplicitModeElement;
 import org.intellij.lang.xpath.xslt.util.MatchTemplateMatcher;
 import org.intellij.lang.xpath.xslt.util.QNameUtil;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,10 +203,10 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   public String getUnresolvedMessagePattern() {
     final QName qName = myImplicitModeElement.getQName();
     if (qName != null && qName != QNameUtil.UNRESOLVED) {
-      return "Undefined mode '" + qName.toString() + "'";
+      return XPathBundle.message("inspection.message.undefined.mode", qName);
     }
     else {
-      return "Undefined mode ''{0}''";
+      return XPathBundle.partialMessage("inspection.message.undefined.mode", 1);
     }
   }
 

@@ -38,9 +38,14 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
     public void visitRegExpClass(RegExpClass regExpClass) {
       super.visitRegExpClass(regExpClass);
       final PsiElement parent = regExpClass.getParent();
+      // In JDK 9 the behaviour of negated character classes was changed, so we can never warn about them
+      // JDK 8: [^a&&b] is the intersection of [^a] with [b], which equals [b]
+      // JDK 9: [^a&&b] is the intersection of [a] and [b] (which is nothing), inverted, which equals everything.
+      // see https://bugs.openjdk.java.net/browse/JDK-8189343
+      // and http://mail.openjdk.java.net/pipermail/core-libs-dev/2011-June/006957.html
       if (parent instanceof RegExpClass) {
         final RegExpClass parentClass = (RegExpClass)parent;
-        if (parentClass.isNegated() == regExpClass.isNegated()) {
+        if (!parentClass.isNegated() && !regExpClass.isNegated()) {
           myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                    new RedundantNestedCharacterClassFix());
         }
@@ -48,8 +53,8 @@ public class RedundantNestedCharacterClassInspection extends LocalInspectionTool
       else if (parent instanceof RegExpIntersection) {
         final PsiElement grandParent = parent.getParent();
         if (grandParent instanceof RegExpClass) {
-          final RegExpClass parentClass = (RegExpClass)grandParent;
-          if (parentClass.isNegated() == regExpClass.isNegated()) {
+          final RegExpClass grandparentClass = (RegExpClass)grandParent;
+          if (!grandparentClass.isNegated() && !regExpClass.isNegated()) {
             myHolder.registerProblem(regExpClass.getFirstChild(), RegExpBundle.message("inspection.warning.redundant.nested.character.class"),
                                      new RedundantNestedCharacterClassFix());
           }

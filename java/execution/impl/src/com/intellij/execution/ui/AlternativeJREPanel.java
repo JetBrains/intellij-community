@@ -17,6 +17,7 @@ import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PathUtil;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
  * @deprecated use {@link JrePathEditor} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private final JBCheckBox myCbEnabled;

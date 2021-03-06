@@ -12,7 +12,6 @@
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="control 4"/>
-    <keyboard-shortcut first-keystroke="alt 0"/>
   </action>
   <action id="ActivatePaletteToolWindow">
     <keyboard-shortcut first-keystroke="shift control 8"/>
@@ -27,7 +26,7 @@
     <keyboard-shortcut first-keystroke="control 7"/>
     <keyboard-shortcut first-keystroke="alt 7"/>
   </action>
-  <action id="ActivateTODOToolWindow">
+  <action id="ActivateProblemsViewToolWindow">
     <keyboard-shortcut first-keystroke="alt 6"/>
     <keyboard-shortcut first-keystroke="control 6"/>
   </action>
@@ -312,6 +311,7 @@
   <action id="RenameElement">
     <keyboard-shortcut first-keystroke="control R"/>
   </action>
+  <action id="SelectVirtualTemplateElement"/>
   <action id="Replace">
     <keyboard-shortcut first-keystroke="control H"/>
   </action>

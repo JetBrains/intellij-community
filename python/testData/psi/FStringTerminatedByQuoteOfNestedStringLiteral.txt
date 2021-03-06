@@ -15,9 +15,9 @@ PyFile:FStringTerminatedByQuoteOfNestedStringLiteral.py
               PsiElement(Py:FSTRING_START)('f"')
               PyFStringFragment
                 PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-                PsiErrorElement:expression expected
+                PsiErrorElement:Expression expected
                   <empty list>
-                PsiErrorElement:} expected
+                PsiErrorElement:'}' expected
                   <empty list>
               PsiErrorElement:" expected
                 <empty list>

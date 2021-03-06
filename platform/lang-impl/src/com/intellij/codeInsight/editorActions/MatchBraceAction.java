@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceHighlightingHandler;
@@ -21,29 +21,25 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Moves caret to the the matching brace:
- * - If caret is on the closing brace - moves in the beginning of the matching opening brace
- * - If caret is on the opening brace - moves to the end of the matching closing brace
- * - Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position
- */
+ * Moves caret to the matching brace:
+ * <ul>
+ * <li>If caret is on the closing brace - moves in the beginning of the matching opening brace</li>
+ * <li>If caret is on the opening brace - moves to the end of the matching closing brace</li>
+ * <li>Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position</li>
+ * </ul>
+ **/
 public class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
     super(new MyHandler());
   }
 
-  private static class MyHandler extends EditorActionHandler {
-    MyHandler() {
-      super(true);
-    }
-
+  private static class MyHandler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file == null) return;
-
 
       int targetOffset = getClosestTargetOffset(editor, file);
 

@@ -24,24 +24,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 public class JUnitDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
   private static final String[] JUNIT_JAR_MARKERS = {
-    "org.junit.Test", "junit.framework.TestCase", "org.hamcrest.Matcher", "org.hamcrest.Matchers"
+    "org.junit.Test", "junit.framework.TestCase", "org.hamcrest.Matcher", "org.hamcrest.Matchers",
+    "org.junit.jupiter.api.Test", "org.junit.platform.commons.JUnitException", "org.opentest4j.AssertionFailedError"
   };
 
   @Nullable
   @Override
   public DependencyScope getDefaultDependencyScope(@NotNull Library library) {
     VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-    if (files.length == 0) return null;
-    for (VirtualFile file : files) {
-      if (!isTestJarRoot(file)) {
-        return null;
-      }
-    }
-    return DependencyScope.TEST;
+    long testJars = Arrays.stream(files).filter(JUnitDependencyScopeSuggester::isTestJarRoot).count();
+    long regularJars = files.length - testJars;
+    return testJars > regularJars ? DependencyScope.TEST : null;
   }
 
   private static boolean isTestJarRoot(VirtualFile file) {

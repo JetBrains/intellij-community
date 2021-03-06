@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 public class WebModuleConfigurationEditorProvider implements ModuleConfigurationEditorProvider {
   @Override
   public ModuleConfigurationEditor[] createEditors(final ModuleConfigurationState state) {
-    Module module = state.getRootModel().getModule();
+    Module module = state.getCurrentRootModel().getModule();
     if (!ModuleTypeWithWebFeatures.isAvailable(module)) {
       return ModuleConfigurationEditor.EMPTY;
     }

@@ -26,6 +26,7 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +131,7 @@ public abstract class MavenImporter {
    * @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
@@ -187,6 +189,7 @@ public abstract class MavenImporter {
    * @deprecated override {@link #collectSourceRoots} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
   }
 
@@ -194,6 +197,7 @@ public abstract class MavenImporter {
    * @deprecated override {@link #collectSourceRoots} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void collectTestFolders(MavenProject mavenProject, List<String> result) {
   }
 

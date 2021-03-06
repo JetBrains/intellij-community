@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +14,7 @@ public interface PsiSymbolReferenceService {
 
   @NotNull
   static PsiSymbolReferenceService getService() {
-    return ServiceManager.getService(PsiSymbolReferenceService.class);
+    return ApplicationManager.getApplication().getService(PsiSymbolReferenceService.class);
   }
 
   /**
@@ -22,6 +22,12 @@ public interface PsiSymbolReferenceService {
    */
   @NotNull
   Iterable<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element);
+
+  /**
+   * @param <T> type of desired reference
+   * @return all (own and external) references from this element, which have desired type
+   */
+  <@NotNull T extends PsiSymbolReference> @NotNull Collection<T> getReferences(@NotNull PsiElement host, @NotNull Class<T> referenceClass);
 
   /**
    * @return all (own and external) references from this element, which match {@code hints}

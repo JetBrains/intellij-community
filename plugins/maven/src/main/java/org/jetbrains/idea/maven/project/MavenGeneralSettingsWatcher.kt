@@ -5,8 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesProviderImpl
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.ExecutorService
 
 class MavenGeneralSettingsWatcher private constructor(
@@ -29,7 +30,8 @@ class MavenGeneralSettingsWatcher private constructor(
 
   private fun fireSettingsChange() {
     embeddersManager.reset()
-    watcher.scheduleUpdateAll(true, false)
+    MavenDistributionsCache.getInstance(manager.project).cleanCaches();
+    watcher.scheduleUpdateAll(true, true)
   }
 
   private fun fireSettingsXmlChange() {
@@ -38,13 +40,9 @@ class MavenGeneralSettingsWatcher private constructor(
   }
 
   init {
-    val generalSettingsListener = MavenGeneralSettings.Listener { fireSettingsChange() }
-    generalSettings.addListener(generalSettingsListener)
-    Disposer.register(parentDisposable, Disposable { generalSettings.removeListener(generalSettingsListener) })
-
-    val virtualFileSettingsListener = VirtualFileSettingsListener()
-    AsyncFilesChangesProviderImpl(backgroundExecutor, ::settingsFiles)
-      .subscribeAsAsyncVirtualFilesChangesProvider(false, virtualFileSettingsListener, parentDisposable)
+    generalSettings.addListener(::fireSettingsChange, parentDisposable)
+    AsyncFilesChangesProviderImpl(ReadAsyncSupplier.readAction(::settingsFiles, backgroundExecutor, this))
+      .subscribeAsAsyncVirtualFilesChangesProvider(false, VirtualFileSettingsListener(), parentDisposable)
   }
 
   private inner class VirtualFileSettingsListener : FilesChangesListener {

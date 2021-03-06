@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntStack;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +20,14 @@ import java.util.*;
  */
 public final class DFSTBuilder<Node> {
   private final OutboundSemiGraph<Node> myGraph;
-  private final TObjectIntHashMap<Node> myNodeToNNumber; // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
+  private final Object2IntMap<Node> myNodeToNNumber; // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
   private final Node[] myInvN; // node number in topological order [0..size) -> node
   private Couple<Node> myBackEdge;
 
   private Comparator<Node> myNComparator;
   private Comparator<Node> myTComparator;
-  private final TIntArrayList mySCCs = new TIntArrayList(); // strongly connected component sizes
-  private final TObjectIntHashMap<Node> myNodeToTNumber = new TObjectIntHashMap<>(); // node -> number in scc topological order. Independent scc are in reversed loading order
+  private final IntList mySCCs = new IntArrayList(); // strongly connected component sizes
+  private final Object2IntMap<Node> myNodeToTNumber = new Object2IntOpenHashMap<>(); // node -> number in scc topological order. Independent scc are in reversed loading order
 
   private final Node[] myInvT; // number in (enumerate all nodes scc by scc) order -> node
   private final Node[] myAllNodes;
@@ -67,7 +69,7 @@ public final class DFSTBuilder<Node> {
     }
     myGraph = graph;
     int size = graph.getNodes().size();
-    myNodeToNNumber = new TObjectIntHashMap<>(size * 2, 0.5f);
+    myNodeToNNumber = new Object2IntOpenHashMap<>(size * 2, 0.5f);
     //noinspection unchecked
     myInvN = (Node[])new Object[size];
     //noinspection unchecked
@@ -88,20 +90,19 @@ public final class DFSTBuilder<Node> {
     private final int[] lowLink = new int[myInvN.length];
     private final int[] index = new int[myInvN.length];
 
-    private final IntStack nodesOnStack = new IntStack();
+    private final IntStack nodesOnStack = new IntArrayList();
     private final boolean[] isOnStack = new boolean[index.length];
 
     private final class Frame {
       Frame(int nodeI) {
         this.nodeI = nodeI;
         Iterator<Node> outNodes = myGraph.getOut(myAllNodes[nodeI]);
-        TIntArrayList list = new TIntArrayList();
-
+        IntList list = new IntArrayList();
         while (outNodes.hasNext()) {
           Node node = outNodes.next();
-          list.add(nodeIndex.get(node));
+          list.add(nodeIndex.getInt(node));
         }
-        out = list.toNativeArray();
+        out = list.toIntArray();
       }
 
       private final int nodeI;
@@ -120,10 +121,10 @@ public final class DFSTBuilder<Node> {
     }
 
     private final Stack<Frame> frames = new Stack<>(); // recursion stack
-    private final TObjectIntHashMap<Node> nodeIndex = new TObjectIntHashMap<>();
+    private final Object2IntMap<Node> nodeIndex = new Object2IntOpenHashMap<>();
     private int dfsIndex;
     private int sccsSizeCombined;
-    private final TIntArrayList topo = new TIntArrayList(index.length); // nodes in reverse topological order
+    private final IntList topo = new IntArrayList(index.length); // nodes in reverse topological order
 
     private void build() {
       Arrays.fill(index, -1);
@@ -132,44 +133,52 @@ public final class DFSTBuilder<Node> {
         nodeIndex.put(node, i);
       }
       for (int i = 0; i < index.length; i++) {
-        if (index[i] == -1) {
-          frames.push(new Frame(i));
-          List<List<Node>> sccs = new ArrayList<>();
+        if (index[i] != -1) {
+          continue;
+        }
 
-          strongConnect(sccs);
+        frames.push(new Frame(i));
+        List<List<Node>> sccs = new ArrayList<>();
 
-          for (List<Node> scc : sccs) {
-            int sccSize = scc.size();
+        strongConnect(sccs);
 
-            mySCCs.add(sccSize);
-            int sccBase = index.length - sccsSizeCombined - sccSize;
+        for (List<Node> scc : sccs) {
+          int sccSize = scc.size();
 
-            // root node should be first in scc for some reason
-            Node rootNode = myAllNodes[i];
-            int rIndex = scc.indexOf(rootNode);
-            if (rIndex != -1) {
-              ContainerUtil.swapElements(scc, rIndex, 0);
-            }
+          mySCCs.add(sccSize);
+          int sccBase = index.length - sccsSizeCombined - sccSize;
 
-            for (int j = 0; j < scc.size(); j++) {
-              Node sccNode = scc.get(j);
-              int tIndex = sccBase + j;
-              myInvT[tIndex] = sccNode;
-              myNodeToTNumber.put(sccNode, tIndex);
-            }
-            sccsSizeCombined += sccSize;
+          // root node should be first in scc for some reason
+          Node rootNode = myAllNodes[i];
+          int rIndex = scc.indexOf(rootNode);
+          if (rIndex != -1) {
+            ContainerUtil.swapElements(scc, rIndex, 0);
           }
+
+          for (int j = 0; j < scc.size(); j++) {
+            Node sccNode = scc.get(j);
+            int tIndex = sccBase + j;
+            myInvT[tIndex] = sccNode;
+            myNodeToTNumber.put(sccNode, tIndex);
+          }
+          sccsSizeCombined += sccSize;
         }
       }
 
       for (int i = 0; i < topo.size(); i++) {
-        int nodeI = topo.get(i);
+        int nodeI = topo.getInt(i);
         Node node = myAllNodes[nodeI];
 
         myNodeToNNumber.put(node, index.length - 1 - i);
         myInvN[index.length - 1 - i] = node;
       }
-      mySCCs.reverse(); // have to place SCCs in topological order too
+
+      // have to place SCCs in topological order too
+      for (int i = 0, j = mySCCs.size() - 1; i < j; i++, j--) {
+        int tmp = mySCCs.getInt(i);
+        mySCCs.set(i, mySCCs.getInt(j));
+        mySCCs.set(j, tmp);
+      }
     }
 
     private void strongConnect(@NotNull List<? super List<Node>> sccs) {
@@ -204,7 +213,7 @@ public final class DFSTBuilder<Node> {
             lowLink[i] = Math.min(lowLink[i], index[nextI]);
 
             if (myBackEdge == null) {
-              myBackEdge = Couple.of(myAllNodes[nextI], myAllNodes[i]);
+              myBackEdge = new Couple<>(myAllNodes[nextI], myAllNodes[i]);
             }
           }
         }
@@ -216,7 +225,7 @@ public final class DFSTBuilder<Node> {
           List<Node> scc = new ArrayList<>();
           int pushedI;
           do {
-            pushedI = nodesOnStack.pop();
+            pushedI = nodesOnStack.popInt();
             Node pushed = myAllNodes[pushedI];
             isOnStack[pushedI] = false;
             scc.add(pushed);
@@ -241,13 +250,13 @@ public final class DFSTBuilder<Node> {
   public Comparator<Node> comparator(boolean useNNumber) {
     if (useNNumber) {
       if (myNComparator == null) {
-        myNComparator = Comparator.comparingInt(myNodeToNNumber::get);
+        myNComparator = Comparator.comparingInt(myNodeToNNumber::getInt);
       }
       return myNComparator;
     }
     else {
       if (myTComparator == null) {
-        myTComparator = Comparator.comparingInt(myNodeToTNumber::get);
+        myTComparator = Comparator.comparingInt(myNodeToTNumber::getInt);
       }
       return myTComparator;
     }
@@ -277,13 +286,13 @@ public final class DFSTBuilder<Node> {
    * Respective nodes could be obtained via {@link #getNodeByTNumber(int)}.
    */
   @NotNull
-  public TIntArrayList getSCCs() {
+  public IntList getSCCs() {
     return mySCCs;
   }
 
   @NotNull
   public Collection<Collection<Node>> getComponents() {
-    final TIntArrayList componentSizes = getSCCs();
+    IntList componentSizes = getSCCs();
     if (componentSizes.isEmpty()) {
       return Collections.emptyList();
     }
@@ -297,7 +306,7 @@ public final class DFSTBuilder<Node> {
 
           @Override
           protected Collection<Node> get(int i) {
-            final int cSize = componentSizes.get(i);
+            final int cSize = componentSizes.getInt(i);
             final int cOffset = offset;
             if (cSize == 0) {
               return Collections.emptyList();

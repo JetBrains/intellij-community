@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,18 +33,14 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class FileLevelIntentionComponent extends EditorNotificationPanel {
-  private final Project myProject;
-
-  public FileLevelIntentionComponent(final String description,
+  public FileLevelIntentionComponent(@NlsContexts.Label String description,
                                      @NotNull HighlightSeverity severity,
                                      @Nullable GutterMark gutterMark,
-                                     @Nullable final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
-                                     @NotNull final Project project,
+                                     @Nullable List<? extends Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      @NotNull final PsiFile psiFile,
-                                     @NotNull final Editor editor, @Nullable String tooltip) {
-    super(getColor(project, severity));
-    myProject = project;
-
+                                     @NotNull final Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
+    super(getColor(psiFile.getProject(), severity));
+    Project project = psiFile.getProject();
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
     if (intentions != null) {
@@ -56,7 +53,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
         }
         final String text = action.getText();
         createActionLabel(text, () -> {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
           ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
         });
       }

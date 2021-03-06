@@ -18,12 +18,15 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+
+import static git4idea.GitNotificationIdsHolder.INIT_FAILED;
 
 public class GitInit extends DumbAwareAction {
 
@@ -35,8 +38,8 @@ public class GitInit extends DumbAwareAction {
     }
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
-    fcd.setTitle(GitBundle.getString("init.destination.directory.title"));
-    fcd.setDescription(GitBundle.getString("init.destination.directory.description"));
+    fcd.setTitle(GitBundle.message("init.destination.directory.title"));
+    fcd.setDescription(GitBundle.message("init.destination.directory.description"));
     fcd.setHideIgnored(false);
     VirtualFile baseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (baseDir == null || !baseDir.isDirectory()) {
@@ -48,19 +51,20 @@ public class GitInit extends DumbAwareAction {
   private static void doInit(@NotNull Project project, @NotNull FileChooserDescriptor fcd, VirtualFile baseDir) {
     FileChooser.chooseFile(fcd, project, baseDir, root -> {
       if (GitUtil.isUnderGit(root) && Messages.showYesNoDialog(project,
-                                                               GitBundle.message("init.warning.already.under.git",
-                                                                                 StringUtil.escapeXmlEntities(root.getPresentableUrl())),
-                                                               GitBundle.getString("init.warning.title"),
+                                                               XmlStringUtil.wrapInHtml(
+                                                                 GitBundle.message("init.warning.already.under.git",
+                                                                                   StringUtil.escapeXmlEntities(root.getPresentableUrl()))),
+                                                               GitBundle.message("init.warning.title"),
                                                                Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
 
-      new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
+      new Task.Backgroundable(project, GitBundle.message("common.refreshing")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitCommandResult result = Git.getInstance().init(project, root);
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString(), true);
+            VcsNotifier.getInstance(project).notifyError(INIT_FAILED, GitBundle.message("action.Git.Init.error"), result.getErrorOutputAsHtmlString(), true);
             return;
           }
 

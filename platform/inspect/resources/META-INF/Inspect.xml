@@ -1,5 +1,9 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
+    <appStarter implementation="com.intellij.codeInspection.QodanaExcludePluginsCalculator"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint name="inspectResultsConsumer" interface="com.intellij.codeInspection.InspectResultsConsumer" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

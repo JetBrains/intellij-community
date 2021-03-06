@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -77,12 +78,12 @@ public class CustomTemplateCallback {
   }
 
   @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull String key) {
+  public TemplateImpl findApplicableTemplate(@NotNull @NlsSafe String key) {
     return ContainerUtil.getFirstItem(findApplicableTemplates(key));
   }
 
   @NotNull
-  public List<TemplateImpl> findApplicableTemplates(@NotNull String key) {
+  public List<TemplateImpl> findApplicableTemplates(@NotNull @NlsSafe String key) {
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {
@@ -94,7 +95,8 @@ public class CustomTemplateCallback {
 
   private boolean isAvailableTemplate(@NotNull TemplateImpl template) {
     if (myApplicableContextTypes == null) {
-      myApplicableContextTypes = TemplateManagerImpl.getApplicableContextTypes(myFile, myOffset);
+      myApplicableContextTypes =
+        TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.create(myFile, myEditor, myOffset, myOffset, false));
     }
     return !template.isDeactivated() && TemplateManagerImpl.isApplicable(template, myApplicableContextTypes);
   }

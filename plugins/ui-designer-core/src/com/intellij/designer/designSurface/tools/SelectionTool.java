@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.ZoomType;
 import com.intellij.designer.model.RadComponent;
@@ -127,7 +128,7 @@ public class SelectionTool extends InputTool {
         refreshCursor();
 
         if (ApplicationManager.getApplication().isInternal()) {
-          myArea.setDescription("Location (" + myCurrentScreenX + " x " + myCurrentScreenY + ")");
+          myArea.setDescription(DesignerBundle.message("selection.tool.location.0.x.1", myCurrentScreenX, myCurrentScreenY));
         }
         else {
           myArea.setDescription(null);

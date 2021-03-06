@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCase {
@@ -35,7 +36,7 @@ public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCas
     digest.update(FileUtil.loadFileBytes(jar));
     byte[] sha1 = digest.digest();
 
-    PrintWriter out = new PrintWriter(new File(dir, name + ".sha1"), "UTF-8");
+    PrintWriter out = new PrintWriter(new File(dir, name + ".sha1"), StandardCharsets.UTF_8);
     try {
       for (byte b : sha1) out.printf("%02x", b);
       out.println("  " + name);

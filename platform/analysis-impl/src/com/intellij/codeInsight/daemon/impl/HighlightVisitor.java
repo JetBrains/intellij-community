@@ -14,7 +14,7 @@ public interface HighlightVisitor {
 
   void visit(@NotNull PsiElement element);
 
-  boolean analyze(@NotNull PsiFile file, final boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
+  boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable action);
 
   @NotNull
   HighlightVisitor clone();

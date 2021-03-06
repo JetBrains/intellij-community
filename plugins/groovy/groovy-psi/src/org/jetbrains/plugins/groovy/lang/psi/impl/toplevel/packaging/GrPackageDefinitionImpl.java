@@ -50,7 +50,7 @@ public class GrPackageDefinitionImpl extends GrStubElementBase<GrPackageDefiniti
 
   @Override
   public GrCodeReferenceElement getPackageReference() {
-    return (GrCodeReferenceElement) findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+    return findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Override

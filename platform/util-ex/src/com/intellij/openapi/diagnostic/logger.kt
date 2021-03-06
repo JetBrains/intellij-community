@@ -3,25 +3,32 @@ package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
+
+
+inline fun <reified T : Any> @Suppress("unused") T.thisLogger() = Logger.getInstance(T::class.java)
 
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)
 
-fun logger(category: String) = Logger.getInstance(category)
+@Deprecated(level = DeprecationLevel.ERROR, message = "Use Logger directly", replaceWith = ReplaceWith("Logger.getInstance(category)"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+fun logger(@NonNls category: String) = Logger.getInstance(category)
 
-inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
+inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> @NonNls String) {
   if (isDebugEnabled) {
     debug(lazyMessage(), e)
   }
 }
 
-inline fun Logger.trace(lazyMessage: () -> String) {
+inline fun Logger.trace(@NonNls lazyMessage : () -> String) {
   if (isTraceEnabled) {
     trace(lazyMessage())
   }
 }
 
-inline fun Logger.debugOrInfoIfTestMode(e: Exception? = null, lazyMessage: () -> String) {
+inline fun Logger.debugOrInfoIfTestMode(e: Exception? = null, lazyMessage: () -> @NonNls String) {
   if (ApplicationManager.getApplication()?.isUnitTestMode == true) {
     info(lazyMessage())
   }
@@ -30,18 +37,19 @@ inline fun Logger.debugOrInfoIfTestMode(e: Exception? = null, lazyMessage: () ->
   }
 }
 
+/** Consider using [Result.getOrLogException] for more straight-forward API instead. */
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
-  try {
-    return runnable()
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    error(e)
-    return null
-  }
+  return kotlin.runCatching {
+    runnable()
+  }.getOrLogException(this)
+}
+
+fun <T> Result<T>.getOrLogException(logger: Logger): T? {
+  return onFailure { e ->
+    when (e) {
+      is ProcessCanceledException,
+      is CancellationException -> throw e
+      else -> logger.error(e)
+    }
+  }.getOrNull()
 }

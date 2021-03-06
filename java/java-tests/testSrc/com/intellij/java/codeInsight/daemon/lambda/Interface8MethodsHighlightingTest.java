@@ -88,6 +88,14 @@ public class Interface8MethodsHighlightingTest extends LightJavaCodeInsightFixtu
     doTest(false, false);
   }
 
+  public void testStaticMethodAccessibleThroughInheritance() {
+    myFixture.addClass("package p; public interface Foo {" +
+                       "    static void foo() {}" +
+                       "    interface FooEx extends Foo {} " +
+                       "}");
+    doTest(false, false);
+  }
+
   public void testSuperProtectedCalls() {
     myFixture.addClass("package p; public class Foo {" +
                        "  protected void foo(){}" +

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -203,7 +204,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   protected boolean isProcessCovariantOverriders() {
     String message = JavaRefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type");
-    return Messages.showYesNoDialog(myProject, message, ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == Messages.YES;
+    return Messages.showYesNoDialog(myProject, message, RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getQuestionIcon()) == Messages.YES;
   }
 
   public static void makeEmptyBody(final PsiElementFactory factory, final PsiMethod delegate) throws IncorrectOperationException {

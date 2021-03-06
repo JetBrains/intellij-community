@@ -28,5 +28,5 @@ fun Typo.assertTypoIs(range: IntRange, fixes: List<String> = emptyList(), text: 
 }
 
 fun GrammarChecker.check(elements: Collection<PsiElement>, strategy: GrammarCheckingStrategy): Set<Typo> {
-  return elements.map { check(it, strategy) }.flatten().toSet()
+  return elements.map { check(listOf(it), strategy) }.flatten().toSet()
 }

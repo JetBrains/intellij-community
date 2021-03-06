@@ -8,20 +8,29 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 
 @CompileStatic
 class GradleRunner {
-  private final File gradleProjectDir
+  final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
   private final String javaHome
+  private final List<String> additionalParams
+
   @Lazy
   private volatile GradleRunner modularGradleRunner = {
     createModularRunner()
   }()
 
-  GradleRunner(File gradleProjectDir, String projectDir, BuildMessages messages, String javaHome) {
+  GradleRunner(
+    File gradleProjectDir,
+    String projectDir,
+    BuildMessages messages,
+    String javaHome,
+    List<String> additionalParams = getDefaultAdditionalParams()
+  ) {
     this.messages = messages
     this.projectDir = projectDir
     this.gradleProjectDir = gradleProjectDir
     this.javaHome = javaHome
+    this.additionalParams = additionalParams
   }
 
   /**
@@ -29,7 +38,16 @@ class GradleRunner {
    * Logs error and stops the build process if Gradle process is failed.
    */
   boolean run(String title, String... tasks) {
-    return runInner(title, false, tasks)
+    return runInner(title, null, false, tasks)
+  }
+
+  /**
+   * Invokes Gradle tasks on {@code buildFile} project.
+   * However, gradle wrapper from project {@link #gradleProjectDir} is used.
+   * Logs error and stops the build process if Gradle process is failed.
+   */
+  boolean run(String title, File buildFile, String... tasks) {
+    return runInner(title, buildFile, false, tasks)
   }
 
   /**
@@ -46,14 +64,27 @@ class GradleRunner {
    * Ignores the result of running Gradle.
    */
   boolean forceRun(String title, String... tasks) {
-    return runInner(title, true, tasks)
+    return runInner(title, null, true, tasks)
   }
 
-  private boolean runInner(String title, boolean force, String... tasks) {
+  GradleRunner withParams(List<String> additionalParams) {
+    return new GradleRunner(gradleProjectDir, projectDir, messages, javaHome, this.additionalParams + additionalParams)
+  }
+
+  private static List<String> getDefaultAdditionalParams() {
+    def rawParams = System.getProperty("intellij.gradle.jdk.build.parameters", "")
+    if (rawParams.isEmpty()) {
+      return Collections.emptyList()
+    }
+
+    return Arrays.asList(rawParams.split(" "))
+  }
+
+  private boolean runInner(String title, File buildFile, boolean force, String... tasks) {
     def result = false
     messages.block("Gradle $tasks") {
       messages.progress(title)
-      result = runInner(tasks)
+      result = runInner(buildFile, tasks)
       if (!result) {
         def errorMessage = "Failed to complete `gradle ${tasks.join(' ')}`"
         if (force) {
@@ -67,7 +98,7 @@ class GradleRunner {
     return result
   }
 
-  private boolean runInner(String... tasks) {
+  private boolean runInner(File buildFile, String... tasks) {
     def gradleScript = SystemInfo.isWindows ? 'gradlew.bat' : 'gradlew'
     List<String> command = new ArrayList()
     command.add("${gradleProjectDir.absolutePath}/$gradleScript".toString())
@@ -79,10 +110,11 @@ class GradleRunner {
     else {
       command.add('--no-daemon')
     }
-    def additionalParams = System.getProperty('intellij.gradle.jdk.build.parameters')
-    if (additionalParams != null && !additionalParams.isEmpty()) {
-      command.addAll(additionalParams.split(" "))
+    if (buildFile != null) {
+      command.add('-b')
+      command.add(buildFile.absolutePath)
     }
+    command.addAll(additionalParams)
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
     processBuilder.environment().put("JAVA_HOME", javaHome)

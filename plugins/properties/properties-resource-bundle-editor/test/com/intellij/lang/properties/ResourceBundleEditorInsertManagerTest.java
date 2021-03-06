@@ -30,7 +30,7 @@ public class ResourceBundleEditorInsertManagerTest extends BasePlatformTestCase 
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/testData/insertManager/";
+    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/insertManager/";
   }
 
   public void testIsAlphaSorted() {

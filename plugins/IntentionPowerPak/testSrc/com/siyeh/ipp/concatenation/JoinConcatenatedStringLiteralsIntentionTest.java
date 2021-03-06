@@ -22,7 +22,7 @@ public class JoinConcatenatedStringLiteralsIntentionTest extends IPPTestCase {
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return JAVA_14;
+        return JAVA_15;
     }
 
     @Override

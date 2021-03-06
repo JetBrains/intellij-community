@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -21,7 +22,7 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('test')
       PsiWhiteSpace(' ')
       LITERAL
@@ -833,7 +834,7 @@ SHELL_SCRIPT
             LITERAL
               PsiElement(word)('custom')
             PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
+            LITERAL
               PsiElement(word)('test')
             PsiWhiteSpace(' ')
             LITERAL

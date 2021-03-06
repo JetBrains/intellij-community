@@ -10,7 +10,9 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -273,6 +275,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
+  
+  public void testOverrideGenericMethod() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 
   public void testTypeUseNotNullOverriding() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
@@ -315,5 +323,28 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
+  }
+  
+  public void testIncorrectPlacement() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  
+  public void testIncorrectPlacementAmbiguous() {
+    DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  
+  public void testIncorrectPlacementAmbiguousJava6() {
+    DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
+  }
+
+  public void testOverridersHaveNonDefaultAnnotation() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.PARAMETER) public @interface NonNull { }");
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate overridden method parameters"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 }

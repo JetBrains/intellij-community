@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.execution;
 
 import java.io.*;
@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarInputStream;
@@ -18,8 +19,8 @@ import java.util.jar.Manifest;
  * @author anna
  * @noinspection SSBasedInspection, UseOfSystemOutOrSystemErr
  */
-public class CommandLineWrapper {
-  private static class AppData {
+public final class CommandLineWrapper {
+  private static final class AppData {
     private final List<String> properties;
     private final Class<?> mainClass;
     private final String[] args;
@@ -78,8 +79,7 @@ public class CommandLineWrapper {
 
       String programParameters = manifest != null ? manifest.getMainAttributes().getValue("Program-Parameters") : null;
       if (programParameters == null) {
-        mainArgs = new String[args.length - 2];
-        System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
+        mainArgs = Arrays.copyOfRange(args, 2, args.length);
       }
       else {
         List<String> list = splitBySpaces(programParameters);
@@ -151,8 +151,7 @@ public class CommandLineWrapper {
     List<URL> classpathUrls = new ArrayList<URL>();
     StringBuilder classpathString = new StringBuilder();
     List<String> pathElements = readLinesAndDeleteFile(classpathFile);
-    for (Object element : pathElements) {
-      String pathElement = (String)element;
+    for (String pathElement : pathElements) {
       classpathUrls.add(toUrl(new File(pathElement)));
       if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
       classpathString.append(pathElement);
@@ -174,8 +173,7 @@ public class CommandLineWrapper {
       startArgsIdx += 2;
     }
     else {
-      mainArgs = new String[args.length - startArgsIdx];
-      System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
+      mainArgs = Arrays.copyOfRange(args, startArgsIdx, args.length);
     }
 
     String mainClassName = args[startArgsIdx - 1];

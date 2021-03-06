@@ -9,7 +9,6 @@ import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
@@ -22,19 +21,23 @@ import com.intellij.util.NotNullizer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-class ServiceModel implements Disposable, InvokerSupplier {
-  static final ExtensionPointName<ServiceViewContributor<?>> CONTRIBUTOR_EP_NAME =
-    ExtensionPointName.create("com.intellij.serviceViewContributor");
+import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
+
+final class ServiceModel implements Disposable, InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(ServiceModel.class);
 
   static final TreeTraversal NOT_LOADED_LAST_BFS = new TreeTraversal("NOT_LOADED_LAST_BFS") {
@@ -155,7 +158,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
 
   @NotNull
   CancellablePromise<?> handle(@NotNull ServiceEvent e) {
-    return getInvoker().invoke(() -> {
+    Runnable handler = () -> {
       LOG.debug("Handle event: " + e);
       switch (e.type) {
         case SERVICE_ADDED:
@@ -182,7 +185,12 @@ class ServiceModel implements Disposable, InvokerSupplier {
       for (ServiceModelEventListener listener : myListeners) {
         listener.eventProcessed(e);
       }
-    });
+    };
+    if (e.type != ServiceEventListener.EventType.SYNC_RESET) {
+      return getInvoker().invoke(handler);
+    }
+    handler.run();
+    return Promises.resolvedCancellablePromise(null);
   }
 
   private void reset(Class<?> contributorClass) {

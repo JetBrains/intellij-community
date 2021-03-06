@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -16,6 +17,7 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -39,7 +41,7 @@ public class BidiContentNotificationProvider extends EditorNotifications.Provide
         Boolean.TRUE.equals(editor.getUserData(DISABLE_NOTIFICATION)) ||
         PropertiesComponent.getInstance().isTrueValue(DISABLE_NOTIFICATION.toString())) return null;
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(EditorBundle.message("bidi.content.message"));
     panel.createActionLabel(EditorBundle.message("bidi.content.choose.message"), () -> showChooserPopup(editor));
     panel.createActionLabel(EditorBundle.message("notification.hide.message"), () -> {
@@ -57,23 +59,14 @@ public class BidiContentNotificationProvider extends EditorNotifications.Provide
     ActionManager actionManager = ActionManager.getInstance();
     AnAction group = actionManager.getAction(IdeActions.GROUP_EDITOR_BIDI_TEXT_DIRECTION);
     if (group instanceof ActionGroup) {
+      JPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.MAIN_MENU, (ActionGroup)group).getComponent();
       AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-      Component invoker;
-      int x;
-      int y;
       if (event instanceof MouseEvent) {
-        MouseEvent mouseEvent = (MouseEvent)event;
-        invoker = mouseEvent.getComponent();
-        x = mouseEvent.getX();
-        y = mouseEvent.getY();
+        JBPopupMenu.showByEvent((MouseEvent)event, popupMenu);
       }
       else {
-        invoker = editor.getContentComponent();
-        Point caretPoint = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
-        x = caretPoint.x;
-        y = caretPoint.y;
+        JBPopupMenu.showByEditor(editor, popupMenu);
       }
-      actionManager.createActionPopupMenu(ActionPlaces.MAIN_MENU, (ActionGroup)group).getComponent().show(invoker, x, y);
     }
   }
 }

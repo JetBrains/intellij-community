@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  * @author Vladimir Kondratyev
  */
 public final class TextEditorState implements FileEditorState {
-  CaretState[] CARETS;
+  @NotNull CaretState @NotNull [] CARETS = new CaretState[0];
 
   int RELATIVE_CARET_POSITION; // distance from primary caret to the top of editor's viewable area in pixels
 
@@ -24,13 +24,9 @@ public final class TextEditorState implements FileEditorState {
    * This field can be {@code null}.
    */
   private CodeFoldingState myFoldingState;
-  @Nullable
-  private Supplier<CodeFoldingState> myDelayedFoldInfoProducer;
+  private Supplier<? extends CodeFoldingState> myDelayedFoldInfoProducer;
 
   private static final int MIN_CHANGE_DISTANCE = 4;
-
-  public TextEditorState() {
-  }
 
   /**
    * Folding state is more complex than, say, line/column number, that's why it's deserialization can be performed only when
@@ -41,12 +37,12 @@ public final class TextEditorState implements FileEditorState {
    *
    * @param producer  delayed folding info producer
    */
-  void setDelayedFoldState(@NotNull Supplier<CodeFoldingState> producer) {
+  void setDelayedFoldState(@NotNull Supplier<? extends CodeFoldingState> producer) {
     myDelayedFoldInfoProducer = producer;
   }
 
   @Nullable
-  Supplier<CodeFoldingState> getDelayedFoldState() {
+  Supplier<? extends CodeFoldingState> getDelayedFoldState() {
     return myDelayedFoldInfoProducer;
   }
 
@@ -79,32 +75,22 @@ public final class TextEditorState implements FileEditorState {
     if (RELATIVE_CARET_POSITION != textEditorState.RELATIVE_CARET_POSITION) return false;
     CodeFoldingState localFoldingState = getFoldingState();
     CodeFoldingState theirFoldingState = textEditorState.getFoldingState();
-    if (!Objects.equals(localFoldingState, theirFoldingState)) return false;
-
-    return true;
+    return Objects.equals(localFoldingState, theirFoldingState);
   }
 
   @Override
   public int hashCode() {
-    int result = 0;
-    if (CARETS != null) {
-      for (CaretState caretState : CARETS) {
-        if (caretState != null) {
-          result += caretState.hashCode();
-        }
-      }
-    }
-    return result;
+    return Arrays.hashCode(CARETS);
   }
 
   @Override
-  public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+  public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     if (!(otherState instanceof TextEditorState)) return false;
     TextEditorState other = (TextEditorState)otherState;
-    return level == FileEditorStateLevel.NAVIGATION
-           && CARETS != null && CARETS.length == 1
-           && other.CARETS != null && other.CARETS.length == 1
-           && Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
+    return level == FileEditorStateLevel.NAVIGATION &&
+           CARETS.length == 1 &&
+           other.CARETS.length == 1 &&
+           Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
   }
 
   @Override
@@ -113,14 +99,14 @@ public final class TextEditorState implements FileEditorState {
   }
 
   static class CaretState {
-    int   LINE;
-    int   COLUMN;
+    int LINE;
+    int COLUMN;
     boolean LEAN_FORWARD;
-    int   VISUAL_COLUMN_ADJUSTMENT;
-    int   SELECTION_START_LINE;
-    int   SELECTION_START_COLUMN;
-    int   SELECTION_END_LINE;
-    int   SELECTION_END_COLUMN;
+    int VISUAL_COLUMN_ADJUSTMENT;
+    int SELECTION_START_LINE;
+    int SELECTION_START_COLUMN;
+    int SELECTION_END_LINE;
+    int SELECTION_END_COLUMN;
 
     @Override
     public boolean equals(Object o) {
@@ -136,9 +122,7 @@ public final class TextEditorState implements FileEditorState {
       if (SELECTION_START_LINE != caretState.SELECTION_START_LINE) return false;
       if (SELECTION_START_COLUMN != caretState.SELECTION_START_COLUMN) return false;
       if (SELECTION_END_LINE != caretState.SELECTION_END_LINE) return false;
-      if (SELECTION_END_COLUMN != caretState.SELECTION_END_COLUMN) return false;
-
-      return true;
+      return SELECTION_END_COLUMN == caretState.SELECTION_END_COLUMN;
     }
 
     @Override

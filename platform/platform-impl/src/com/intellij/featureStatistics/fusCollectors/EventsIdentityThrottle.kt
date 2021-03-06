@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors
 
-import gnu.trove.TIntLongHashMap
+import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap
 
 class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long) {
-
-  private val identities: TIntLongHashMap = TIntLongHashMap(maxSize)
+  private val identities = Int2LongOpenHashMap(maxSize)
 
   private var oldestIdentityCache: Int = 0
   private var oldestTimestampCache: Long = Long.MAX_VALUE
@@ -18,7 +17,7 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
       return false
     }
     else {
-      if (identities.size() == maxSize) {
+      if (identities.size == maxSize) {
         clearOldest()
       }
 
@@ -30,7 +29,7 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
 
   fun size(now: Long): Int {
     clearObsolete(now)
-    return identities.size()
+    return identities.size
   }
 
   fun getOldest(now: Long): Int? {
@@ -59,10 +58,9 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
   }
 
   private fun doClearObsolete(now: Long) {
-
-    for (identity in identities.keys()) {
-      if (isObsolete(identities.get(identity), now)) {
-        identities.remove(identity)
+    for (entry in identities.int2LongEntrySet().fastIterator()) {
+      if (isObsolete(entry.longValue, now)) {
+        identities.remove(entry.intKey)
       }
     }
 
@@ -72,9 +70,8 @@ class EventsIdentityThrottle(private val maxSize: Int, private val timeout: Long
   private fun updateOldest() {
     oldestTimestampCache = Long.MAX_VALUE
 
-    identities.forEachEntry { identity, timestamp ->
-      takeIntoAccountInOldest(identity, timestamp)
-      true
+    for (entry in identities.int2LongEntrySet().fastIterator()) {
+      takeIntoAccountInOldest(entry.intKey, entry.longValue)
     }
   }
 

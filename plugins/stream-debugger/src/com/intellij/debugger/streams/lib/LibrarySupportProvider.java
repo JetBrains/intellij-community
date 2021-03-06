@@ -5,6 +5,8 @@ import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,7 +23,7 @@ public interface LibrarySupportProvider {
   }
 
   @NotNull
-  String getLanguageId();
+  @NonNls String getLanguageId();
 
   @NotNull
   StreamChainBuilder getChainBuilder();

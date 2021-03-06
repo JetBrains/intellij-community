@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,10 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.font.TextAttribute;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,29 +36,13 @@ import java.lang.ref.WeakReference;
  */
 @SuppressWarnings("UseJBColor")
 public class JBUI {
-
   /**
    * @deprecated use {@link JBUIScale#sysScale()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static float sysScale() {
     return JBUIScale.sysScale();
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#sysScale(Graphics2D)}
-   */
-  @Deprecated
-  public static float sysScale(@Nullable Graphics2D g) {
-    return JBUIScale.sysScale(g);
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#sysScale(Component)}
-   */
-  @Deprecated
-  public static float sysScale(@Nullable Component comp) {
-    return JBUIScale.sysScale(comp);
   }
 
   /**
@@ -86,14 +73,6 @@ public class JBUI {
    */
   public static float pixScale(@Nullable Component comp) {
     return pixScale(comp != null ? comp.getGraphicsConfiguration() : null);
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#setUserScaleFactor(float)}
-   */
-  @Deprecated
-  public static float setUserScaleFactor(float scale) {
-    return JBUIScale.setUserScaleFactor(scale);
   }
 
   /**
@@ -194,7 +173,7 @@ public class JBUI {
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static <T extends JBScalableIcon> T scale(@NotNull T icon) {
     return JBUIScale.scaleIcon(icon);
@@ -204,7 +183,7 @@ public class JBUI {
    * @deprecated Use {@link JBUIScale#scaleIcon(JBScalableIcon)}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     //noinspection unchecked
@@ -225,6 +204,7 @@ public class JBUI {
    * @deprecated use {@link JBUIScale#isUsrHiDPI()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isHiDPI() {
     return JBUIScale.isUsrHiDPI();
   }
@@ -253,7 +233,7 @@ public class JBUI {
     return JBUIScale.isHiDPI(pixScale(comp));
   }
 
-  public static class Fonts {
+  public static final class Fonts {
     @NotNull
     public static JBFont label() {
       return JBFont.label();
@@ -275,7 +255,7 @@ public class JBUI {
     }
 
     @NotNull
-    public static JBFont create(String fontFamily, int size) {
+    public static JBFont create(@NonNls String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
     }
 
@@ -293,7 +273,7 @@ public class JBUI {
   private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
 
   @SuppressWarnings("UseDPIAwareBorders")
-  public static class Borders {
+  public static final class Borders {
     @NotNull
     public static JBEmptyBorder empty(int top, int left, int bottom, int right) {
       if (top == 0 && left == 0 && bottom == 0 && right == 0) {
@@ -359,7 +339,7 @@ public class JBUI {
     }
   }
 
-  public static class Panels {
+  public static final class Panels {
     @NotNull
     public static BorderLayoutPanel simplePanel() {
       return new BorderLayoutPanel();
@@ -383,7 +363,11 @@ public class JBUI {
 
   @SuppressWarnings("UnregisteredNamedColor")
   public static final class CurrentTheme {
-    public static class ActionButton {
+    public interface Component {
+      Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA, 0x466D94);
+    }
+
+    public static final class ActionButton {
       @NotNull
       public static Color pressedBackground() {
         return JBColor.namedColor("ActionButton.pressedBackground", Gray.xCF);
@@ -415,7 +399,85 @@ public class JBUI {
       }
     }
 
-    public static class CustomFrameDecorations {
+    public static final class ActionsList {
+      public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+
+      @NotNull
+      public static Insets numberMnemonicInsets() {
+        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 1, 6));
+      }
+
+      @NotNull
+      public static Insets cellPadding() {
+        return insets("ActionsList.cellBorderInsets", insets(1, 12, 1, 12));
+      }
+
+      @NotNull
+      public static int elementIconGap() {
+        return new JBValue.UIInteger("ActionsList.icon.gap", scale(8)).get();
+      }
+
+      @NotNull
+      public static Font applyStylesForNumberMnemonic(Font font) {
+        if (SystemInfo.isWindows) {
+          Map<TextAttribute, Object> attributes = new HashMap<>(font.getAttributes());
+          attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+          return font.deriveFont(attributes);
+        }
+
+        return font;
+      }
+    }
+
+    public static final class Button {
+      @NotNull
+      public static Color buttonColorStart() {
+        return JBColor.namedColor("Button.startBackground", JBColor.namedColor("Button.darcula.startColor", 0x555a5c));
+      }
+
+      @NotNull
+      public static Color buttonColorEnd() {
+        return JBColor.namedColor("Button.endBackground", JBColor.namedColor("Button.darcula.endColor", 0x414648));
+      }
+
+      @NotNull
+      public static Color defaultButtonColorStart() {
+        return JBColor.namedColor("Button.default.startBackground", JBColor.namedColor("Button.darcula.defaultStartColor", 0x384f6b));
+      }
+
+      @NotNull
+      public static Color defaultButtonColorEnd() {
+        return JBColor.namedColor("Button.default.endBackground", JBColor.namedColor("Button.darcula.defaultEndColor", 0x233143));
+      }
+
+      @NotNull
+      public static Color focusBorderColor(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.focusedBorderColor", JBColor.namedColor("Button.darcula.defaultFocusedOutlineColor", 0x87afda)) :
+               JBColor.namedColor("Button.focusedBorderColor", JBColor.namedColor("Button.darcula.focusedOutlineColor", 0x87afda));
+      }
+
+      @NotNull
+      public static Color buttonOutlineColorStart(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.startBorderColor", JBColor.namedColor("Button.darcula.outlineDefaultStartColor", Gray.xBF)) :
+               JBColor.namedColor("Button.startBorderColor",  JBColor.namedColor("Button.darcula.outlineStartColor", Gray.xBF));
+      }
+
+      @NotNull
+      public static Color buttonOutlineColorEnd(boolean isDefaultButton) {
+        return isDefaultButton ?
+               JBColor.namedColor("Button.default.endBorderColor", JBColor.namedColor("Button.darcula.outlineDefaultEndColor", Gray.xB8)) :
+               JBColor.namedColor("Button.endBorderColor",  JBColor.namedColor("Button.darcula.outlineEndColor", Gray.xB8));
+      }
+
+      @NotNull
+      public static Color disabledOutlineColor() {
+        return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
+      }
+    }
+
+    public static final class CustomFrameDecorations {
       @NotNull
       public static Color separatorForeground() {
         return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
@@ -464,7 +526,7 @@ public class JBUI {
       }
     }
 
-    public static class DefaultTabs {
+    public static final class DefaultTabs {
       @NotNull
       public static Color underlineColor() {
         return JBColor.namedColor("DefaultTabs.underlineColor", new JBColor(0x4083C9, 0x4A88C7));
@@ -504,9 +566,15 @@ public class JBUI {
       public static Color underlinedTabForeground() {
         return JBColor.namedColor("DefaultTabs.underlinedTabForeground", UIUtil.getLabelForeground());
       }
+
+      @NotNull
+      public static Color inactiveColoredTabBackground() {
+        return JBColor.namedColor("DefaultTabs.inactiveColoredTabBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
+                                                                                          ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+      }
     }
 
-    public static class DebuggerTabs {
+    public static final class DebuggerTabs {
       public static int underlineHeight() {
         return getInt("DebuggerTabs.underlineHeight", JBUIScale.scale(2));
       }
@@ -516,7 +584,7 @@ public class JBUI {
       }
     }
 
-    public static class EditorTabs {
+    public static final class EditorTabs {
       @NotNull
       public static Color underlineColor() {
         return JBColor.namedColor("EditorTabs.underlineColor", DefaultTabs.underlineColor());
@@ -533,6 +601,10 @@ public class JBUI {
 
       public static Color underlinedTabBackground() {
         return UIManager.getColor("EditorTabs.underlinedTabBackground");
+      }
+
+      public static Insets tabInsets() {
+        return insets("EditorTabs.tabInsets", insets(0, 8));
       }
 
       @NotNull
@@ -552,8 +624,7 @@ public class JBUI {
 
       @NotNull
       public static Color inactiveColoredFileBackground() {
-        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", new JBColor(ColorUtil.withAlpha(Color.BLACK, .07),
-                                                                              ColorUtil.withAlpha(new Color(0x3C3F41), .60)));
+        return JBColor.namedColor("EditorTabs.inactiveColoredFileBackground", DefaultTabs.inactiveColoredTabBackground());
       }
 
       @NotNull
@@ -562,14 +633,14 @@ public class JBUI {
       }
     }
 
-    public static class StatusBar {
+    public static final class StatusBar {
       @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("StatusBar.hoverBackground", ActionButton.hoverBackground());
       }
     }
 
-    public static class ToolWindow {
+    public static final class ToolWindow {
       @NotNull
       public static Color borderColor() {
         return JBColor.namedColor("ToolWindow.HeaderTab.borderColor", DefaultTabs.borderColor());
@@ -616,6 +687,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabSelectedBackground() {
         return Registry.is("toolwindow.active.tab.use.contrast.background")
@@ -628,6 +700,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabHoveredBackground() {
         return hoverInactiveBackground();
@@ -637,6 +710,7 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       @NotNull
       public static Color tabHoveredBackground(boolean active) {
         return active ? hoverBackground() : hoverInactiveBackground();
@@ -666,17 +740,9 @@ public class JBUI {
        * @deprecated obsolete UI
        */
       @Deprecated
+      @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
       public static int tabVerticalPadding() {
         return getInt("ToolWindow.HeaderTab.verticalPadding", JBUIScale.scale(6));
-      }
-
-      /**
-       * @deprecated obsolete UI
-       */
-      @NotNull
-      @Deprecated
-      public static Border tabBorder() {
-        return getBorder("ToolWindow.tabBorder", JBUI.Borders.empty(1));
       }
 
       public static int underlineHeight() {
@@ -716,7 +782,7 @@ public class JBUI {
       }
     }
 
-    public static class Label {
+    public static final class Label {
       @NotNull
       public static Color foreground(boolean selected) {
         return selected ? JBColor.namedColor("Label.selectedForeground", 0xFFFFFF)
@@ -740,7 +806,7 @@ public class JBUI {
       }
     }
 
-    public static class Popup {
+    public static final class Popup {
       public static Color headerBackground(boolean active) {
         return active
                ? JBColor.namedColor("Popup.Header.activeBackground", 0xe6e6e6)
@@ -776,9 +842,13 @@ public class JBUI {
       public static Color separatorTextColor() {
         return JBColor.namedColor("Popup.separatorForeground", Color.gray);
       }
+
+      public static int minimumHintWidth() {
+        return JBUIScale.scale(170);
+      }
     }
 
-    public static class Focus {
+    public static final class Focus {
       private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
       @NotNull
@@ -805,7 +875,7 @@ public class JBUI {
       }
     }
 
-    public static class TabbedPane {
+    public static final class TabbedPane {
       public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.underlineColor", JBColor.namedColor("TabbedPane.selectedColor", 0x4083C9));
       public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.disabledUnderlineColor", JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB));
       public static final Color DISABLED_TEXT_COLOR = JBColor.namedColor("TabbedPane.disabledForeground", JBColor.namedColor("TabbedPane.disabledText", Gray.x99));
@@ -815,7 +885,7 @@ public class JBUI {
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
-    public static class BigPopup {
+    public static final class BigPopup {
       @NotNull
       public static Color headerBackground() {
         return JBColor.namedColor("SearchEverywhere.Header.background", 0xf2f2f2);
@@ -886,9 +956,7 @@ public class JBUI {
       }
     }
 
-    public static class Advertiser {
-      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(1, 5);
-
+    public static final class Advertiser {
       @NotNull
       public static Color foreground() {
         Color foreground = JBUI.CurrentTheme.BigPopup.advertiserForeground();
@@ -903,7 +971,7 @@ public class JBUI {
 
       @NotNull
       public static Border border() {
-        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS));
+        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15)));
       }
 
       @NotNull
@@ -912,7 +980,7 @@ public class JBUI {
       }
     }
 
-    public static class Validator {
+    public static final class Validator {
       @NotNull
       public static Color errorBorderColor() {
         return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
@@ -934,34 +1002,86 @@ public class JBUI {
       }
     }
 
-    public static class Link {
+    public static final class Link {
+      public static final Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Link.focusedBorderColor", Component.FOCUSED_BORDER_COLOR);
+
+      public interface Foreground {
+        Color DISABLED = JBColor.namedColor("Link.disabledForeground", Label.disabledForeground());
+        Color ENABLED = JBColor.namedColor("Link.activeForeground", JBColor.namedColor("link.foreground", 0x589DF6));
+        Color HOVERED = JBColor.namedColor("Link.hoverForeground", JBColor.namedColor("link.hover.foreground", ENABLED));
+        Color PRESSED = JBColor.namedColor("Link.pressedForeground", JBColor.namedColor("link.pressed.foreground", 0xF00000, 0xBA6F25));
+        Color VISITED = JBColor.namedColor("Link.visitedForeground", JBColor.namedColor("link.visited.foreground", 0x800080, 0x9776A9));
+        Color SECONDARY = JBColor.namedColor("Link.secondaryForeground", 0x779DBD, 0x5676A0);
+      }
+
+      /**
+       * @deprecated use {@link Foreground#ENABLED} instead
+       */
+      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+      @Deprecated
       @NotNull
       public static Color linkColor() {
-        return JBColor.namedColor("Link.activeForeground", JBColor.namedColor("link.foreground", 0x589df6));
+        return Foreground.ENABLED;
       }
 
+      /**
+       * @deprecated use {@link Foreground#HOVERED} instead
+       */
+      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+      @Deprecated
       @NotNull
       public static Color linkHoverColor() {
-        return JBColor.namedColor("Link.hoverForeground", JBColor.namedColor("link.hover.foreground", linkColor()));
+        return Foreground.HOVERED;
       }
 
+      /**
+       * @deprecated use {@link Foreground#PRESSED} instead
+       */
+      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+      @Deprecated
       @NotNull
       public static Color linkPressedColor() {
-        return JBColor.namedColor("Link.pressedForeground", JBColor.namedColor("link.pressed.foreground", new JBColor(0xf00000, 0xba6f25)));
+        return Foreground.PRESSED;
       }
 
+      /**
+       * @deprecated use {@link Foreground#VISITED} instead
+       */
+      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+      @Deprecated
       @NotNull
       public static Color linkVisitedColor() {
-        return JBColor.namedColor("Link.visitedForeground", JBColor.namedColor("link.visited.foreground", new JBColor(0x800080, 0x9776a9)));
+        return Foreground.VISITED;
       }
 
+      /**
+       * @deprecated use {@link Foreground#SECONDARY} instead
+       */
+      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+      @Deprecated
       @NotNull
       public static Color linkSecondaryColor() {
-        return JBColor.namedColor("Link.secondaryForeground", new JBColor(0x779dbd, 0x5676a0));
+        return Foreground.SECONDARY;
       }
     }
 
-    public static class Arrow {
+    public static final class Tooltip {
+      @NotNull
+      public static Color shortcutForeground () {
+        return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
+      }
+    }
+
+    public interface ContextHelp {
+      @NotNull Color FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+    }
+
+    public static final class Arrow {
       @NotNull
       public static Color foregroundColor(boolean enabled) {
         return enabled ?
@@ -979,7 +1099,7 @@ public class JBUI {
       }
     }
 
-    public static class NewClassDialog {
+    public static final class NewClassDialog {
       @NotNull
       public static Color searchFieldBackground() {
         return JBColor.namedColor("NewClass.SearchField.background", 0xffffff);
@@ -1000,6 +1120,195 @@ public class JBUI {
 
       public static int fieldsSeparatorWidth() {
         return getInt("NewClass.separatorWidth", JBUIScale.scale(10));
+      }
+    }
+
+    public static final class NotificationError {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorBackground", new JBColor(0xffcccc, 0x704745));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorBorderColor", new JBColor(0xd69696, 0x998a8a));
+      }
+    }
+
+    public static final class NotificationInfo {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeBackground", new JBColor(0xbaeeba, 0x33412E));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeBorderColor", new JBColor(0xa0bf9d, 0x85997a));
+      }
+    }
+        public static final class NotificationWarning {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningBackground", new JBColor(0xf9f78e, 0x5a5221));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningBorderColor", new JBColor(0xbab824, 0xa69f63));
+      }
+    }
+
+    private static final Color DEFAULT_RENDERER_BACKGROUND = new JBColor(0xFFFFFF, 0x3C3F41);
+    private static final Color DEFAULT_RENDERER_SELECTION_BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
+    private static final Color DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
+    private static final Color DEFAULT_RENDERER_HOVER_BACKGROUND = new JBColor(0xEDF5FC, 0x464A4D);
+    private static final Color DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND = new JBColor(0xF5F5F5, 0x464A4D);
+
+    public interface List {
+      Color BACKGROUND = JBColor.namedColor("List.background", DEFAULT_RENDERER_BACKGROUND);
+      Color FOREGROUND = JBColor.namedColor("List.foreground", Label.foreground(false));
+
+      static @NotNull Color background(boolean selected, boolean focused) {
+        return selected ? Selection.background(focused) : BACKGROUND;
+      }
+
+      static @NotNull Color foreground(boolean selected, boolean focused) {
+        return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      final class Selection {
+        private static final Color BACKGROUND = JBColor.namedColor("List.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
+        private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));
+
+        public static @NotNull Color background(boolean focused) {
+          if (focused && UIUtil.isUnderDefaultMacTheme()) {
+            double alpha = getInt("List.selectedItemAlpha", 75);
+            if (0 <= alpha && alpha < 100) return ColorUtil.mix(Color.WHITE, BACKGROUND, alpha / 100.0);
+          }
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        public static @NotNull Color foreground(boolean focused) {
+          return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("List.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
+          Color FOREGROUND = JBColor.namedColor("List.selectionInactiveForeground", List.FOREGROUND);
+        }
+      }
+
+      final class Hover {
+        private static final Color BACKGROUND = JBColor.namedColor("List.hoverBackground", DEFAULT_RENDERER_HOVER_BACKGROUND);
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
+        }
+      }
+    }
+
+    public interface Table {
+      Color BACKGROUND = JBColor.namedColor("Table.background", DEFAULT_RENDERER_BACKGROUND);
+      Color FOREGROUND = JBColor.namedColor("Table.foreground", Label.foreground(false));
+
+      static @NotNull Color background(boolean selected, boolean focused) {
+        return selected ? Selection.background(focused) : BACKGROUND;
+      }
+
+      static @NotNull Color foreground(boolean selected, boolean focused) {
+        return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      final class Selection {
+        private static final Color BACKGROUND = JBColor.namedColor("Table.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
+        private static final Color FOREGROUND = JBColor.namedColor("Table.selectionForeground", Label.foreground(true));
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        public static @NotNull Color foreground(boolean focused) {
+          return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Table.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
+          Color FOREGROUND = JBColor.namedColor("Table.selectionInactiveForeground", Table.FOREGROUND);
+        }
+      }
+
+      final class Hover {
+        private static final Color BACKGROUND = JBColor.namedColor("Table.hoverBackground", DEFAULT_RENDERER_HOVER_BACKGROUND);
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Table.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
+        }
+      }
+    }
+
+    public interface Tree {
+      Color BACKGROUND = JBColor.namedColor("Tree.background", DEFAULT_RENDERER_BACKGROUND);
+      Color FOREGROUND = JBColor.namedColor("Tree.foreground", Label.foreground(false));
+
+      static @NotNull Color background(boolean selected, boolean focused) {
+        return selected ? Selection.background(focused) : BACKGROUND;
+      }
+
+      static @NotNull Color foreground(boolean selected, boolean focused) {
+        return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      final class Selection {
+        private static final Color BACKGROUND = JBColor.namedColor("Tree.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
+        private static final Color FOREGROUND = JBColor.namedColor("Tree.selectionForeground", Label.foreground(true));
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        public static @NotNull Color foreground(boolean focused) {
+          return focused ? FOREGROUND : Inactive.FOREGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Tree.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
+          Color FOREGROUND = JBColor.namedColor("Tree.selectionInactiveForeground", Tree.FOREGROUND);
+        }
+      }
+
+      final class Hover {
+        private static final Color BACKGROUND = JBColor.namedColor("Tree.hoverBackground", DEFAULT_RENDERER_HOVER_BACKGROUND);
+
+        public static @NotNull Color background(boolean focused) {
+          return focused ? BACKGROUND : Inactive.BACKGROUND;
+        }
+
+        private interface Inactive {
+          Color BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", DEFAULT_RENDERER_HOVER_INACTIVE_BACKGROUND);
+        }
       }
     }
   }
@@ -1026,22 +1335,10 @@ public class JBUI {
    */
 
   /**
-   * @deprecated Use {@link com.intellij.ui.scale.ScaleType}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public enum ScaleType {
-    USR_SCALE,
-    SYS_SCALE,
-    OBJ_SCALE,
-    PIX_SCALE
-  }
-
-  /**
    * @deprecated Use {@link UserScaleContext}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static class BaseScaleContext extends UserScaleContext {
     @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
     public boolean update(@Nullable BaseScaleContext ctx) {
@@ -1051,27 +1348,13 @@ public class JBUI {
     public boolean update(@NotNull Scale scale) {
       return setScale(scale);
     }
-
-    /**
-     * @deprecated Use {@link UserScaleContext#getScale(com.intellij.ui.scale.ScaleType)}.
-     */
-    @Deprecated
-    public double getScale(@NotNull ScaleType type) {
-      switch (type) {
-        case USR_SCALE: return usrScale.value();
-        case SYS_SCALE: return 1d;
-        case OBJ_SCALE: return objScale.value();
-        case PIX_SCALE: return pixScale;
-      }
-      return 1f; // unreachable
-    }
   }
 
   /**
    * @deprecated Use {@link com.intellij.ui.scale.ScaleContext}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings({"ClassNameSameAsAncestorName", "MethodOverridesStaticMethodOfSuperclass"})
   public static final class ScaleContext extends com.intellij.ui.scale.ScaleContext {
     private ScaleContext() {
@@ -1099,17 +1382,6 @@ public class JBUI {
     }
 
     @Override
-    public double getScale(@NotNull ScaleType type) {
-      switch (type) {
-        case USR_SCALE: return usrScale.value();
-        case SYS_SCALE: return sysScale.value();
-        case OBJ_SCALE: return objScale.value();
-        case PIX_SCALE: return pixScale;
-      }
-      return 1f; // unreachable
-    }
-
-    @Override
     public boolean update(@Nullable BaseScaleContext context) {
       return super.update(context);
     }
@@ -1119,7 +1391,7 @@ public class JBUI {
    * @deprecated Use {@link JBScalableIcon}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("DeprecatedIsStillUsed")
   public abstract static class JBIcon<T extends JBScalableIcon> extends JBScalableIcon {
     public JBIcon() {

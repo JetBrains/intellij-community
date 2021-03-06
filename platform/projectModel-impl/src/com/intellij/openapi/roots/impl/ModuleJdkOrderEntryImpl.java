@@ -24,7 +24,7 @@ final class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   @NonNls private static final String JDK_TYPE_ATTR = JpsModuleRootModelSerializer.JDK_TYPE_ATTRIBUTE;
 
   @Nullable private Sdk myJdk;
-  private String myJdkName;
+  @Nullable private String myJdkName;
   private String myJdkType;
 
   ModuleJdkOrderEntryImpl(@NotNull Sdk projectJdk, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
@@ -79,7 +79,7 @@ final class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
     init(null, jdkName, jdkType);
   }
 
-  private void init(final Sdk jdk, final String jdkName, final String jdkType) {
+  private void init(final Sdk jdk, @Nullable final String jdkName, final String jdkType) {
     myJdk = jdk;
     myJdkName = jdkName;
     myJdkType = jdkType;

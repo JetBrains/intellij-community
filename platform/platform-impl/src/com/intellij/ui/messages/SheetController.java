@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.BundleBase;
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -16,6 +17,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,11 +34,7 @@ import java.net.URL;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
-/**
- * Created by Denis Fokin
- */
-public class SheetController implements Disposable {
-
+public final class SheetController implements Disposable {
   private static final KeyStroke VK_ESC_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
 
   private static final Logger LOG = Logger.getInstance(SheetController.class);
@@ -63,7 +62,7 @@ public class SheetController implements Disposable {
 
   private static final int GAP_BETWEEN_BUTTONS = 5;
 
-  private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "([\\s" + System.getProperty("line.separator") + "]|(<br\\s*/?>))+";
+  @NonNls private static final String SPACE_OR_LINE_SEPARATOR_PATTERN = "([\\s" + System.lineSeparator() + "]|(<br\\s*/?>))+";
 
   // SHEET
   public int SHEET_WIDTH = 400;
@@ -87,8 +86,8 @@ public class SheetController implements Disposable {
   private final JEditorPane headerLabel = new JEditorPane();
 
   SheetController(final SheetMessage sheetMessage,
-                  final String title,
-                  final String message,
+                  @Nls final String title,
+                  @Nls final String message,
                   final Icon icon,
                   final String[] buttonTitles,
                   final String defaultButtonTitle,
@@ -143,8 +142,6 @@ public class SheetController implements Disposable {
     }
 
     mySheetPanel = createSheetPanel(title, message, buttons);
-
-    initShadowImage();
   }
 
   private void initShadowImage() {
@@ -163,7 +160,7 @@ public class SheetController implements Disposable {
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
 
-  private void handleMnemonics(int i, String title) {
+  private void handleMnemonics(int i, @NlsContexts.Button String title) {
     buttons[i].setName(title);
 
     if (!setButtonTextAndMnemonic(i, title, '_') &&
@@ -173,7 +170,7 @@ public class SheetController implements Disposable {
     }
   }
 
-  private boolean setButtonTextAndMnemonic(int i, String title, char mnemonics) {
+  private boolean setButtonTextAndMnemonic(int i, @NlsContexts.Button String title, char mnemonics) {
     int mIdx;
     if ((mIdx = title.indexOf(mnemonics)) >= 0) {
       String text = title.substring(0, mIdx) + title.substring(mIdx + 1);
@@ -208,15 +205,14 @@ public class SheetController implements Disposable {
     }
   }
 
-  void setResultAndStartClose(String result) {
+  private void setResultAndStartClose(String result) {
     if (result != null)
       myResult = result;
     mySheetMessage.startAnimation(false);
   }
 
-  JPanel getPanel(final JDialog w) {
-    w.getRootPane().setDefaultButton(myDefaultButton);
-
+  JPanel getPanel(@NotNull RootPaneContainer container) {
+    container.getRootPane().setDefaultButton(myDefaultButton);
 
     ActionListener actionListener = new ActionListener() {
       @Override
@@ -240,37 +236,46 @@ public class SheetController implements Disposable {
     return .95f;
   }
 
-  private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
-    JPanel sheetPanel = new JPanel() {
-      @Override
-      protected void paintComponent(@NotNull Graphics g2d) {
-        final Graphics2D g = (Graphics2D) g2d.create();
-        super.paintComponent(g);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
+  private JPanel createSheetPanel(@Nls String title, @Nls String message, JButton[] buttons) {
+    JPanel sheetPanel;
 
-        g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
-        Rectangle dialog  = new Rectangle(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+    if (SheetMessage.useTransparent()) {
+      sheetPanel = new JPanel() {
+        @Override
+        protected void paintComponent(@NotNull Graphics g2d) {
+          super.paintComponent(g2d);
+          Graphics2D g = (Graphics2D)g2d.create();
+          g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
-        paintShadow(g);
-        // draw the sheet background
-        if (StartupUiUtil.isUnderDarcula()) {
-          g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
-        } else {
-          //todo make bottom corners
-          g.fill(dialog);
+          g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
+          Rectangle dialog = new Rectangle(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+
+          paintShadow(g);
+          // draw the sheet background
+          if (StartupUiUtil.isUnderDarcula()) {
+            g.fillRoundRect((int)dialog.getX(), (int)dialog.getY() - 5, (int)dialog.getWidth(), (int)(5 + dialog.getHeight()), 5, 5);
+          }
+          else {
+            //todo make bottom corners
+            g.fill(dialog);
+          }
+
+          Border border = UIManager.getBorder("Window.border");
+          if (border != null) {
+            border.paintBorder(this, g, dialog.x, dialog.y, dialog.width, dialog.height);
+          }
+
+          paintShadowFromParent(g);
+          g.dispose();
         }
+      };
+      sheetPanel.setOpaque(false);
+      initShadowImage();
+    }
+    else {
+      sheetPanel = new JPanel();
+    }
 
-        Border border = UIManager.getBorder("Window.border");
-        if (border != null) {
-          border.paintBorder(this, g, dialog.x, dialog.y, dialog.width, dialog.height);
-        }
-
-        paintShadowFromParent(g);
-      }
-
-    };
-
-    sheetPanel.setOpaque(false);
     sheetPanel.setLayout(null);
 
     JPanel ico = new JPanel() {
@@ -337,6 +342,7 @@ public class SheetController implements Disposable {
 
     messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
     messageTextPane.setText(handleBreaks(message));
+    widestWordWidth = Math.max(widestWordWidth, messageTextPane.getMinimumSize().width);
     messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
 
     SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
@@ -418,7 +424,6 @@ public class SheetController implements Disposable {
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
-
     //int widestButtonWidth = 0;
     int buttonWidth = 0;
     SHEET_HEIGHT += GAP_BETWEEN_LINES;
@@ -487,7 +492,8 @@ public class SheetController implements Disposable {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = ImageUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT,
+                                                myShadowImage == null ? BufferedImage.TYPE_INT_RGB : BufferedImage.TYPE_INT_ARGB);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);

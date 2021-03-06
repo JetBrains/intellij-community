@@ -19,35 +19,44 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
 
-class DocumentTracker : Disposable {
-  private val handler: Handler
+/**
+ * Any external calls (ex: Document modifications) must be avoided under [LOCK],
+ * to avoid deadlocks with application Read/Write action and ChangeListManager.
+ *
+ * Tracker assumes that both documents are modified on EDT only.
+ *
+ * Blocks are modified on EDT and under [LOCK].
+ */
+class DocumentTracker(
+  document1: Document,
+  document2: Document,
+  private val LOCK: Lock
+) : Disposable {
 
-  // Any external calls (ex: Document modifications) must be avoided under lock,
-  // do avoid deadlock with ChangeListManager
-  internal val LOCK: Lock = Lock()
+  private val handlers: MutableList<Handler> = mutableListOf()
 
-  val document1: Document
-  val document2: Document
+  var document1: Document = document1
+    private set
+  var document2: Document = document2
+    private set
 
   private val tracker: LineTracker
   private val freezeHelper: FreezeHelper = FreezeHelper()
 
   private var isDisposed: Boolean = false
 
+  private val documentListener1 = MyDocumentListener(Side.LEFT, document1)
+  private val documentListener2 = MyDocumentListener(Side.RIGHT, document2)
 
-  constructor(document1: Document,
-              document2: Document,
-              handler: Handler) {
+  init {
     assert(document1 != document2)
-    this.document1 = document1
-    this.document2 = document2
-    this.handler = handler
 
     val changes = when {
       document1.immutableCharSequence === document2.immutableCharSequence -> emptyList()
@@ -56,16 +65,13 @@ class DocumentTracker : Disposable {
                            document1.lineOffsets,
                            document2.lineOffsets).iterateChanges().toList()
     }
-    tracker = LineTracker(this.handler, changes)
+    tracker = LineTracker(handlers, changes)
 
     val application = ApplicationManager.getApplication()
     application.addApplicationListener(MyApplicationListener(), this)
-
-    document1.addDocumentListener(MyDocumentListener(Side.LEFT), this)
-    document2.addDocumentListener(MyDocumentListener(Side.RIGHT), this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
@@ -75,6 +81,11 @@ class DocumentTracker : Disposable {
     LOCK.write {
       tracker.destroy()
     }
+  }
+
+  @RequiresEdt
+  fun addHandler(newHandler: Handler) {
+    handlers.add(newHandler)
   }
 
 
@@ -98,14 +109,14 @@ class DocumentTracker : Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun unfreeze(side: Side) {
     LOCK.write {
       freezeHelper.unfreeze(side)
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   inline fun doFrozen(task: () -> Unit) {
     doFrozen(Side.LEFT) {
       doFrozen(Side.RIGHT) {
@@ -114,7 +125,7 @@ class DocumentTracker : Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   inline fun doFrozen(side: Side, task: () -> Unit) {
     freeze(side)
     try {
@@ -133,8 +144,24 @@ class DocumentTracker : Disposable {
     }
   }
 
+  @RequiresEdt
+  fun replaceDocument(side: Side, newDocument: Document) {
+    assert(!LOCK.isHeldByCurrentThread)
 
-  @CalledInAwt
+    doFrozen {
+      if (side.isLeft) {
+        documentListener1.switchDocument(newDocument)
+        document1 = newDocument
+      }
+      else {
+        documentListener2.switchDocument(newDocument)
+        document2 = newDocument
+      }
+    }
+  }
+
+
+  @RequiresEdt
   fun refreshDirty(fastRefresh: Boolean, forceInFrozen: Boolean = false) {
     if (isDisposed) return
     if (!forceInFrozen && freezeHelper.isFrozen()) return
@@ -167,6 +194,7 @@ class DocumentTracker : Disposable {
     }
   }
 
+  @RequiresEdt
   fun updateFrozenContentIfNeeded() {
     // ensure blocks are up to date
     updateFrozenContentIfNeeded(Side.LEFT)
@@ -184,7 +212,12 @@ class DocumentTracker : Disposable {
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean) {
+    partiallyApplyBlocks(side, condition, { _, _ -> })
+  }
+
+  @RequiresEdt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
     if (isDisposed) return
 
@@ -216,6 +249,7 @@ class DocumentTracker : Disposable {
     }
   }
 
+  @RequiresEdt
   fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
     val otherSide = side.other()
     val affectedBlocks = LOCK.write {
@@ -252,7 +286,7 @@ class DocumentTracker : Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun setFrozenState(lineRanges: List<Range>): Boolean {
     if (isDisposed) return false
     assert(freezeHelper.isFrozen(Side.LEFT) && freezeHelper.isFrozen(Side.RIGHT))
@@ -274,14 +308,22 @@ class DocumentTracker : Disposable {
     }
   }
 
-  private inner class MyDocumentListener(val side: Side) : DocumentListener {
-    private val document = side[document1, document2]
-
+  private inner class MyDocumentListener(val side: Side, private var document: Document) : DocumentListener {
     private var line1: Int = 0
     private var line2: Int = 0
 
     init {
+      document.addDocumentListener(this, this@DocumentTracker)
       if (document.isInBulkUpdate) freeze(side)
+    }
+
+    fun switchDocument(newDocument: Document) {
+      document.removeDocumentListener(this)
+      if (document.isInBulkUpdate == true) unfreeze(side)
+
+      document = newDocument
+      newDocument.addDocumentListener(this, this@DocumentTracker)
+      if (newDocument.isInBulkUpdate) freeze(side)
     }
 
     override fun beforeDocumentChange(e: DocumentEvent) {
@@ -375,8 +417,8 @@ class DocumentTracker : Disposable {
         setData(side, data)
         data.counter++
 
-        if (wasFrozen) handler.onFreeze()
-        handler.onFreeze(side)
+        if (wasFrozen) onFreeze()
+        onFreeze(side)
       }
       else {
         data.counter++
@@ -397,8 +439,8 @@ class DocumentTracker : Disposable {
 
         setData(side, null)
         refreshDirty(fastRefresh = false)
-        handler.onUnfreeze(side)
-        if (!isFrozen()) handler.onUnfreeze()
+        onUnfreeze(side)
+        if (!isFrozen()) onUnfreeze()
       }
     }
 
@@ -416,6 +458,23 @@ class DocumentTracker : Disposable {
     fun setFrozenContent(side: Side, newContent: CharSequence) {
       setData(side, FreezeData(getData(side)!!, newContent))
     }
+
+
+    private fun onFreeze(side: Side) {
+      handlers.forEach { it.onFreeze(side) }
+    }
+
+    private fun onUnfreeze(side: Side) {
+      handlers.forEach { it.onUnfreeze(side) }
+    }
+
+    private fun onFreeze() {
+      handlers.forEach { it.onFreeze() }
+    }
+
+    private fun onUnfreeze() {
+      handlers.forEach { it.onUnfreeze() }
+    }
   }
 
   private class FreezeData(val textBeforeFreeze: CharSequence, var counter: Int) {
@@ -424,30 +483,39 @@ class DocumentTracker : Disposable {
   }
 
 
-  internal inner class Lock {
-    private val myLock = ReentrantLock()
+  @ApiStatus.Internal
+  class Lock {
+    val myLock = ReentrantLock()
 
-    internal inline fun <T> read(task: () -> T): T {
+    inline fun <T> read(task: () -> T): T {
       return myLock.withLock(task)
     }
 
-    internal inline fun <T> write(task: () -> T): T {
+    inline fun <T> write(task: () -> T): T {
       return myLock.withLock(task)
     }
 
-    internal val isHeldByCurrentThread: Boolean
+    val isHeldByCurrentThread: Boolean
       get() = myLock.isHeldByCurrentThread
   }
 
+  /**
+   * All methods are invoked under [LOCK].
+   */
   interface Handler {
     fun onRangeRefreshed(before: Block, after: List<Block>) {}
     fun onRangesChanged(before: List<Block>, after: Block) {}
     fun onRangeShifted(before: Block, after: Block) {}
 
-    fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
+    /**
+     * In some cases, we might want to refresh multiple adjustent blocks together.
+     * This method allows to veto such merging (ex: if blocks share conflicting sets of flags).
+     *
+     * @return true if blocks are allowed to be merged
+     */
+    fun mergeRanges(block1: Block, block2: Block, merged: Block): Boolean = true
 
-    fun afterRangeChange() {}
-    fun afterBulkRangeChange() {}
+    fun afterBulkRangeChange(isDirty: Boolean) {}
 
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
@@ -457,8 +525,13 @@ class DocumentTracker : Disposable {
   }
 
 
-  class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) {
+  class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) : BlockI {
     var data: Any? = null
+
+    override val start: Int get() = range.start2
+    override val end: Int get() = range.end2
+    override val vcsStart: Int get() = range.start1
+    override val vcsEnd: Int get() = range.end1
   }
 
   companion object {
@@ -467,20 +540,27 @@ class DocumentTracker : Disposable {
 }
 
 
-private class LineTracker(private val handler: Handler,
+private class LineTracker(private val handlers: List<Handler>,
                           originalChanges: List<Range>) {
   var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
     private set
 
   var isDirty: Boolean = false
     private set
+  private var forceMergeNearbyBlocks: Boolean = false
 
 
   fun setRanges(ranges: List<Range>, dirty: Boolean) {
-    blocks = ranges.map { Block(it, dirty, false) }
-    isDirty = dirty
+    val newBlocks = ranges.map { Block(it, dirty, false) }
+    for (block in newBlocks) {
+      onRangesChanged(emptyList(), block)
+    }
 
-    handler.afterBulkRangeChange()
+    blocks = newBlocks
+    isDirty = dirty
+    forceMergeNearbyBlocks = false
+
+    afterBulkRangeChange(isDirty)
   }
 
   fun destroy() {
@@ -494,35 +574,37 @@ private class LineTracker(private val handler: Handler,
                    fastRefresh: Boolean) {
     if (!isDirty) return
 
-    val result = BlocksRefresher(handler, text1, text2, lineOffsets1, lineOffsets2).refresh(blocks, fastRefresh)
+    val result = BlocksRefresher(handlers, text1, text2, lineOffsets1, lineOffsets2, forceMergeNearbyBlocks).refresh(blocks, fastRefresh)
 
     blocks = result.newBlocks
     isDirty = false
+    forceMergeNearbyBlocks = false
 
-    handler.afterBulkRangeChange()
+    afterBulkRangeChange(isDirty)
   }
 
   fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
     val data = RangeChangeHandler().run(blocks, side, startLine, beforeLength, afterLength)
 
-    handler.onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
+    onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
     for (i in data.afterBlocks.indices) {
-      handler.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
+      onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
     }
 
     blocks = data.newBlocks
-    isDirty = true
+    isDirty = data.newBlocks.isNotEmpty()
 
-    handler.afterRangeChange()
+    afterBulkRangeChange(isDirty)
   }
 
   fun rangesChanged(side: Side, iterable: DiffIterable) {
-    val newBlocks = BulkRangeChangeHandler(handler, blocks, side).run(iterable)
+    val newBlocks = BulkRangeChangeHandler(handlers, blocks, side).run(iterable)
 
     blocks = newBlocks
-    isDirty = true
+    isDirty = newBlocks.isNotEmpty()
+    forceMergeNearbyBlocks = isDirty
 
-    handler.afterBulkRangeChange()
+    afterBulkRangeChange(isDirty)
   }
 
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
@@ -538,7 +620,7 @@ private class LineTracker(private val handler: Handler,
       }
       else {
         val newBlock = block.shift(side, shift)
-        handler.onRangeShifted(block, newBlock)
+        onRangeShifted(block, newBlock)
 
         newBlocks.add(newBlock)
       }
@@ -546,9 +628,22 @@ private class LineTracker(private val handler: Handler,
 
     blocks = newBlocks
 
-    handler.afterBulkRangeChange()
+    afterBulkRangeChange(isDirty)
 
     return appliedBlocks
+  }
+
+
+  private fun onRangesChanged(before: List<Block>, after: Block) {
+    handlers.forEach { it.onRangesChanged(before, after) }
+  }
+
+  private fun onRangeShifted(before: Block, after: Block) {
+    handlers.forEach { it.onRangeShifted(before, after) }
+  }
+
+  private fun afterBulkRangeChange(isDirty: Boolean) {
+    handlers.forEach { it.afterBulkRangeChange(isDirty) }
   }
 }
 
@@ -691,7 +786,7 @@ private class RangeChangeHandler {
  * blockShift: delta B -> A
  * changeShift: delta B -> C
  */
-private class BulkRangeChangeHandler(private val handler: Handler,
+private class BulkRangeChangeHandler(private val handlers: List<Handler>,
                                      private val blocks: List<Block>,
                                      private val side: Side) {
   private val newBlocks: MutableList<Block> = mutableListOf()
@@ -776,7 +871,7 @@ private class BulkRangeChangeHandler(private val handler: Handler,
                                 dirtyStart + changeShift, dirtyEnd + changeShift + dirtyChangeShift,
                                 dirtyStart + blockShift, dirtyEnd + blockShift + dirtyBlockShift)
         val newBlock = Block(range, isDirty, isTooBig)
-        handler.onRangesChanged(dirtyBlocks, newBlock)
+        onRangesChanged(dirtyBlocks, newBlock)
         newBlocks.add(newBlock)
       }
       else {
@@ -784,7 +879,7 @@ private class BulkRangeChangeHandler(private val handler: Handler,
         if (changeShift != 0) {
           for (oldBlock in dirtyBlocks) {
             val newBlock = oldBlock.shift(side, changeShift)
-            handler.onRangeShifted(oldBlock, newBlock)
+            onRangeShifted(oldBlock, newBlock)
             newBlocks.add(newBlock)
           }
         }
@@ -804,22 +899,31 @@ private class BulkRangeChangeHandler(private val handler: Handler,
       dirtyChangeShift = 0
     }
   }
+
+  private fun onRangesChanged(before: List<Block>, after: Block) {
+    handlers.forEach { it.onRangesChanged(before, after) }
+  }
+
+  private fun onRangeShifted(before: Block, after: Block) {
+    handlers.forEach { it.onRangeShifted(before, after) }
+  }
 }
 
-private class BlocksRefresher(val handler: Handler,
+private class BlocksRefresher(val handlers: List<Handler>,
                               val text1: CharSequence,
                               val text2: CharSequence,
                               val lineOffsets1: LineOffsets,
-                              val lineOffsets2: LineOffsets) {
+                              val lineOffsets2: LineOffsets,
+                              val forceMergeNearbyBlocks: Boolean) {
   fun refresh(blocks: List<Block>, fastRefresh: Boolean): Result {
     val newBlocks = ArrayList<Block>()
 
     processMergeableGroups(blocks) { group ->
       if (group.any { it.isDirty }) {
         processMergedBlocks(group) { mergedBlock ->
-          val freshBlocks = refreshBlock(mergedBlock, fastRefresh)
+          val freshBlocks = refreshMergedBlock(mergedBlock, fastRefresh)
 
-          handler.onRangeRefreshed(mergedBlock, freshBlocks)
+          onRangeRefreshed(mergedBlock.merged, freshBlocks)
 
           newBlocks.addAll(freshBlocks)
         }
@@ -838,13 +942,21 @@ private class BlocksRefresher(val handler: Handler,
     var i = 0
     var blockStart = 0
     while (i < blocks.size - 1) {
-      if (!isWhitespaceOnlySeparated(blocks[i], blocks[i + 1])) {
+      if (!shouldMergeBlocks(blocks[i], blocks[i + 1])) {
         processGroup(blocks.subList(blockStart, i + 1))
         blockStart = i + 1
       }
       i += 1
     }
     processGroup(blocks.subList(blockStart, i + 1))
+  }
+
+  private fun shouldMergeBlocks(block1: Block, block2: Block): Boolean {
+    if (forceMergeNearbyBlocks && block2.range.start2 - block1.range.end2 < NEARBY_BLOCKS_LINES) {
+      return true
+    }
+    if (isWhitespaceOnlySeparated(block1, block2)) return true
+    return false
   }
 
   private fun isWhitespaceOnlySeparated(block1: Block, block2: Block): Boolean {
@@ -856,28 +968,33 @@ private class BlocksRefresher(val handler: Handler,
   }
 
   private fun processMergedBlocks(group: List<Block>,
-                                  processBlock: (merged: Block) -> Unit) {
+                                  processBlock: (merged: MergedBlock) -> Unit) {
     assert(!group.isEmpty())
 
     var merged: Block? = null
+    val original: MutableList<Block> = mutableListOf()
 
     for (block in group) {
       if (merged == null) {
         merged = block
+        original += block
       }
       else {
         val newMerged = mergeBlocks(merged, block)
         if (newMerged != null) {
           merged = newMerged
+          original += block
         }
         else {
-          processBlock(merged)
+          processBlock(MergedBlock(merged, original.toList()))
+          original.clear()
           merged = block
+          original += merged
         }
       }
     }
 
-    processBlock(merged!!)
+    processBlock(MergedBlock(merged!!, original.toList()))
   }
 
   private fun mergeBlocks(block1: Block, block2: Block): Block? {
@@ -887,10 +1004,37 @@ private class BlocksRefresher(val handler: Handler,
                       block1.range.start2, block2.range.end2)
     val merged = Block(range, isDirty, isTooBig)
 
-    if (!handler.onRangesMerged(block1, block2, merged)) {
-      return null // merging vetoed
+    for (handler in handlers) {
+      val success = handler.mergeRanges(block1, block2, merged)
+      if (!success) return null // merging vetoed
     }
     return merged
+  }
+
+  private fun refreshMergedBlock(mergedBlock: MergedBlock, fastRefresh: Boolean): List<Block> {
+    val freshBlocks = refreshBlock(mergedBlock.merged, fastRefresh)
+    if (mergedBlock.original.size == 1) return freshBlocks
+    if (!forceMergeNearbyBlocks) return freshBlocks
+
+    // try reuse original blocks to prevent occasional 'insertion' moves
+    val nonMergedFreshBlocks = mergedBlock.original.flatMap { block ->
+      if (block.isDirty) {
+        refreshBlock(block, fastRefresh)
+      }
+      else {
+        listOf(block)
+      }
+    }
+
+    val oldSize = calcNonWhitespaceSize(text1, text2, lineOffsets1, lineOffsets2, nonMergedFreshBlocks)
+    val newSize = calcNonWhitespaceSize(text1, text2, lineOffsets1, lineOffsets2, freshBlocks)
+    if (oldSize < newSize) return nonMergedFreshBlocks
+    if (oldSize > newSize) return freshBlocks
+
+    val oldTotalSize = calcSize(nonMergedFreshBlocks)
+    val newTotalSize = calcSize(freshBlocks)
+    if (oldTotalSize <= newTotalSize) return nonMergedFreshBlocks
+    return freshBlocks
   }
 
   private fun refreshBlock(block: Block, fastRefresh: Boolean): List<Block> {
@@ -919,7 +1063,48 @@ private class BlocksRefresher(val handler: Handler,
     }
   }
 
+  private fun calcSize(blocks: List<Block>): Int {
+    var result = 0
+    for (block in blocks) {
+      result += block.range.end1 - block.range.start1
+      result += block.range.end2 - block.range.start2
+    }
+    return result
+  }
+
+  private fun calcNonWhitespaceSize(text1: CharSequence,
+                                    text2: CharSequence,
+                                    lineOffsets1: LineOffsets,
+                                    lineOffsets2: LineOffsets,
+                                    blocks: List<Block>): Int {
+    var result = 0
+    for (block in blocks) {
+      for (line in block.range.start1 until block.range.end1) {
+        if (!isWhitespaceLine(text1, lineOffsets1, line)) result++
+      }
+      for (line in block.range.start2 until block.range.end2) {
+        if (!isWhitespaceLine(text2, lineOffsets2, line)) result++
+      }
+    }
+    return result
+  }
+
+  private fun isWhitespaceLine(text: CharSequence, lineOffsets: LineOffsets, line: Int): Boolean {
+    val start = lineOffsets.getLineStart(line)
+    val end = lineOffsets.getLineEnd(line)
+    return trimStart(text, start, end) == end
+  }
+
+  private fun onRangeRefreshed(before: Block, after: List<Block>) {
+    handlers.forEach { it.onRangeRefreshed(before, after) }
+  }
+
   data class Result(val newBlocks: List<Block>)
+  data class MergedBlock(val merged: Block, val original: List<Block>)
+
+  companion object {
+    private const val NEARBY_BLOCKS_LINES = 30
+  }
 }
 
 private fun getRangeDelta(range: Range, side: Side): Int {

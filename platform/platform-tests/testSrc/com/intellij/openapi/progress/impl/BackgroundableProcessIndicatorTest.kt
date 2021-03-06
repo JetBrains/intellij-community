@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.impl
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.ProgressWindowTestCase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
@@ -18,7 +19,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 @SkipInHeadlessEnvironment
-class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<IdeStatusBarImpl, Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
+class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
   private lateinit var statusBar: IdeStatusBarImpl
 
   override fun setUp(): Unit = super.setUp().also {

@@ -189,17 +189,21 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
       }
     }
 
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      if (task != null) {
-        try {
-          task.waitFor(1, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException | ExecutionException e) {
-          LOG.debug(e);
-        }
-        catch (TimeoutException e) {
-          LOG.warn("Wait time out ", e);
-        }
+    if (task != null) {
+      boolean longTimeOut = !ApplicationManager.getApplication().isDispatchThread() ||
+                            ApplicationManager.getApplication().isUnitTestMode();
+      try {
+        int timeout;
+        if (longTimeOut) timeout = 1000;
+        else timeout = 20;
+
+        task.waitFor(timeout, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException | ExecutionException e) {
+        LOG.debug(e);
+      }
+      catch (TimeoutException e) {
+        if (longTimeOut) LOG.warn("Wait time out ", e);
       }
     }
   }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
@@ -32,7 +33,7 @@ public class GroovySynchronizationOnNonFinalFieldInspection extends BaseInspecti
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Synchronization on non-final field '#ref' #loc";
+    return GroovyBundle.message("inspection.message.synchronization.on.non.final.field.ref");
 
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,6 @@ import org.jetbrains.idea.svn.api.Url;
 public class SvnAuthenticationProvider implements AuthenticationProvider {
 
   private final Project myProject;
-  private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final AuthenticationProvider mySvnInteractiveAuthenticationProvider;
   private final SvnAuthenticationManager myAuthenticationManager;
 
@@ -17,7 +16,6 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
                                    final SvnAuthenticationManager authenticationManager) {
     myAuthenticationManager = authenticationManager;
     myProject = svnVcs.getProject();
-    myAuthenticationNotifier = svnVcs.getAuthNotifier();
     mySvnInteractiveAuthenticationProvider = provider;
   }
 
@@ -26,16 +24,15 @@ public class SvnAuthenticationProvider implements AuthenticationProvider {
                                                         final Url url,
                                                         final String realm,
                                                         final boolean canCache) {
-    final SvnAuthenticationNotifier.AuthenticationRequest obj =
-      new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
-    final Url wcUrl = myAuthenticationNotifier.getWcUrl(obj);
-    if (wcUrl == null) {
-      // outside-project url
+    SvnAuthenticationNotifier.AuthenticationRequest obj = new SvnAuthenticationNotifier.AuthenticationRequest(myProject, kind, url, realm);
+    SvnAuthenticationNotifier notifier = SvnAuthenticationNotifier.getInstance(myProject);
+    Url wcUrl = notifier.getWcUrl(obj);
+
+    if (wcUrl == null) { // outside-project url
       return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, canCache);
-    } else {
-      if (myAuthenticationNotifier.ensureNotify(obj)) {
-        return myAuthenticationManager.requestFromCache(kind, realm);
-      }
+    }
+    else if (notifier.ensureNotify(obj)) {
+      return myAuthenticationManager.requestFromCache(kind, realm);
     }
     return null;
   }

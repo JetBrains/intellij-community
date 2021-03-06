@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -13,15 +12,13 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
+public final class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder {
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedErrors =
     new ConcurrentHashMap<>();
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedChildrenErrors =
@@ -39,7 +36,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY =
     () -> new ConcurrentHashMap<>();
   private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = () -> new SmartList<>();
-  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<>();
+  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new HashSet<>();
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
     myElement = element;
@@ -113,12 +110,13 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return map;
     }
 
-    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new THashMap<>();
+    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new HashMap<>();
     if (domElement == myElement) {
       for (Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> listMap : myCachedErrors.values()) {
         mergeMaps(problems, listMap);
       }
-    } else {
+    }
+    else {
       mergeMaps(problems, myCachedErrors.get(domElement));
       if (DomUtil.hasXml(domElement)) {
         domElement.acceptChildren(new DomElementVisitor() {
@@ -134,10 +132,13 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     return problems;
   }
 
-  private static <T> void mergeMaps(final Map<T, List<DomElementProblemDescriptor>> accumulator, final @Nullable Map<T, List<DomElementProblemDescriptor>> toAdd) {
-    if (toAdd == null) return;
-    for (final Map.Entry<T, List<DomElementProblemDescriptor>> entry : toAdd.entrySet()) {
-      ContainerUtil.getOrCreate(accumulator, entry.getKey(), SMART_LIST_FACTORY).addAll(entry.getValue());
+  private static <T> void mergeMaps(@NotNull Map<T, List<DomElementProblemDescriptor>> accumulator, @Nullable Map<T, List<DomElementProblemDescriptor>> toAdd) {
+    if (toAdd == null) {
+      return;
+    }
+
+    for (Map.Entry<T, List<DomElementProblemDescriptor>> entry : toAdd.entrySet()) {
+      accumulator.computeIfAbsent(entry.getKey(), __ -> new SmartList<>()).addAll(entry.getValue());
     }
   }
 

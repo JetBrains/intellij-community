@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public interface EditorCustomElementRenderer {
    * displayed upon corresponding mouse event.
    */
   @Nullable
+  @NonNls
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
     return null;
   }
@@ -84,6 +86,7 @@ public interface EditorCustomElementRenderer {
   default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
     return null;
   }
+
 
   /**
    * Allows to show an icon in gutter and process corresponding mouse events for block custom elements (other types of custom elements are

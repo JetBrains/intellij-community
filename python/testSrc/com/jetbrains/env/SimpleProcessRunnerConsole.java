@@ -41,7 +41,7 @@ public class SimpleProcessRunnerConsole extends ConsoleViewImpl {
   }
 
   @Override
-  public void attachToProcess(final ProcessHandler processHandler) {
+  public void attachToProcess(final @NotNull ProcessHandler processHandler) {
     super.attachToProcess(processHandler);
     processHandler.addProcessListener(myHandler);
   }

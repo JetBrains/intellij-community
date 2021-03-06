@@ -22,7 +22,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -288,7 +287,7 @@ public class XmlTagTest extends LightJavaCodeInsightTestCase {
 
   private XmlTag createTag(final String name, final String text) {
     final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject())
-      .createFileFromText(name, StdFileTypes.XML, text, LocalTimeCounter.currentTime(), true);
+      .createFileFromText(name, XmlFileType.INSTANCE, text, LocalTimeCounter.currentTime(), true);
     return file.getDocument().getRootTag();
   }
 

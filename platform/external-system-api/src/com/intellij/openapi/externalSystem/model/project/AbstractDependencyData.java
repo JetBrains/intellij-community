@@ -64,25 +64,6 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     this.exported = exported;
   }
 
-  /**
-   * @deprecated use {@link #getExternalName()} or {@link #getInternalName()} instead
-   */
-  @NotNull
-  @Deprecated
-  @Override
-  public String getName() {
-    return target.getName();
-  }
-
-  /**
-   * @deprecated  use {@link #setExternalName(String)} or {@link #setInternalName(String)} instead
-   */
-  @Deprecated
-  @Override
-  public void setName(@NotNull String name) {
-    target.setName(name);
-  }
-
   @NotNull
   @Override
   public String getExternalName() {

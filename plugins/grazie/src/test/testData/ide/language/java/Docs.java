@@ -30,9 +30,9 @@ class ExampleClassWithNoTypos<T> {
 }
 
 /**
- * It is <warning descr="ARTICLE_MISSING">friend</warning> there
+ * It is friend there
  *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
  *
  * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  */
@@ -43,7 +43,7 @@ class ExampleClassWithTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name the name which group
+     * @param name the <warning descr="COMMA_WHICH">name which</warning> group
      */
     public ExampleClassWithTypos(String name) {
         this.name = name;

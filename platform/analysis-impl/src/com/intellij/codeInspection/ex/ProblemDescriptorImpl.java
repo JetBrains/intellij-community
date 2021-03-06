@@ -20,6 +20,7 @@ import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               @NotNull String descriptionTemplate,
+                               @NotNull @InspectionMessage String descriptionTemplate,
                                LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
@@ -45,7 +46,7 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               @NotNull String descriptionTemplate,
+                               @NotNull @InspectionMessage String descriptionTemplate,
                                LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
@@ -57,7 +58,7 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,
                                @NotNull PsiElement endElement,
-                               @NotNull String descriptionTemplate,
+                               @NotNull @InspectionMessage String descriptionTemplate,
                                LocalQuickFix[] fixes,
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,

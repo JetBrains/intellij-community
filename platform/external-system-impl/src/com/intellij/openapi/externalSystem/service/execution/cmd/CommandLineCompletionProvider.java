@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution.cmd;
 
 import com.intellij.codeInsight.TailType;
@@ -6,11 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.util.TextFieldCompletionProvider;
-import groovyjarjarcommonscli.Option;
-import groovyjarjarcommonscli.Options;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author Sergey Evdokimov
@@ -64,14 +63,14 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
       if (offset <= lexer.getTokenEnd()) {
         if (argCount == 0) {
           if (prefix.startsWith("--")) {
-            for (Option option : (Collection<Option>)myOptions.getOptions()) {
+            for (Option option : myOptions.getOptions()) {
               if (option.getLongOpt() != null) {
                 result.addElement(createLookupElement(option, "--" + option.getLongOpt()));
               }
             }
           }
           else if (prefix.startsWith("-")) {
-            for (Option option : (Collection<Option>)myOptions.getOptions()) {
+            for (Option option : myOptions.getOptions()) {
               if (option.getOpt() != null) {
                 result.addElement(createLookupElement(option, "-" + option.getOpt()));
               }

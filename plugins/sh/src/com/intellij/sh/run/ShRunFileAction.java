@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
 import com.intellij.execution.ExecutionManager;
@@ -10,20 +10,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ShRunFileAction extends DumbAwareAction {
+final class ShRunFileAction extends DumbAwareAction {
   static final String ID = "runShellFileAction";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
-    if (!(file instanceof ShFile)) return;
+    if (file == null) return;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return;
 
@@ -32,9 +35,15 @@ public class ShRunFileAction extends DumbAwareAction {
       RunManager.getInstance(project).createConfiguration(file.getName(), ShConfigurationType.class);
     ShRunConfiguration runConfiguration = (ShRunConfiguration)configurationSettings.getConfiguration();
     runConfiguration.setScriptPath(virtualFile.getPath());
+    runConfiguration.setExecuteScriptFile(true);
     runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
-    String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
-    runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
+    if (file instanceof ShFile) {
+      @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
+      runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
+    }
+    else {
+      runConfiguration.setInterpreterPath("");
+    }
 
     ExecutionEnvironmentBuilder builder =
       ExecutionEnvironmentBuilder.createOrNull(DefaultRunExecutor.getRunExecutorInstance(), runConfiguration);
@@ -49,6 +58,14 @@ public class ShRunFileAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
-    return e.getProject() != null && e.getData(CommonDataKeys.PSI_FILE) instanceof ShFile;
+    if (e.getProject() != null) {
+      PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+      if (file != null) {
+        if (file instanceof ShFile) return true;
+        PsiElement firstChild = file.findElementAt(0);
+        return firstChild instanceof PsiComment && firstChild.getText().startsWith("#!");
+      }
+    }
+    return false;
   }
 }

@@ -18,11 +18,11 @@ import org.jetbrains.annotations.Nullable;
  * configuration takes care of building a command line and the program runner takes care of how exactly it needs to be executed.
  *
  * A newly created program runner should be registered in a corresponding plugin.xml:
- *
+ * <pre>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;
  *   &lt;programRunner implementation="RunnerClassFQN"/&gt;
  * &lt;/extensions&gt;
- *
+ * </pre>
  * @see AsyncProgramRunner
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {

@@ -1,16 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.library.OrderedClassLibraryBuilder;
 import com.thoughtworks.qdox.model.JavaModule;
 import com.thoughtworks.qdox.model.JavaModuleDescriptor;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.JpsJavacFileManager;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.ModulePath;
 
 import java.io.BufferedInputStream;
@@ -29,8 +28,8 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  * Date: 26-Sep-19
  */
-public class ModulePathSplitter {
-  private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(new THashMap<>(FileUtil.FILE_HASHING_STRATEGY));
+public final class ModulePathSplitter {
+  private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(FileCollectionFactory.createCanonicalFileMap());
   private static final Attributes.Name AUTOMATIC_MODULE_NAME = new Attributes.Name("Automatic-Module-Name");
   private static final Method myModuleFinderCreateMethod;
   private static final Method myFindAll;
@@ -75,18 +74,17 @@ public class ModulePathSplitter {
     return dotIndex >= 0? fName.substring(0, dotIndex) : fName;
   };
 
-  @NotNull
-  private final Function<File, String> myModuleNameSearch;
+  private final @NotNull Function<? super File, String> myModuleNameSearch;
 
   public ModulePathSplitter() {
     this(DEFAULT_MODULE_NAME_SEARCH);
   }
-  
-  public ModulePathSplitter(@NotNull Function<File, String> moduleNameSearch) {
+
+  public ModulePathSplitter(@NotNull Function<? super File, String> moduleNameSearch) {
     myModuleNameSearch = moduleNameSearch;
   }
 
-  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<File> chunkOutputs, Collection<File> path) {
+  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
       return Pair.create(ModulePath.create(path), Collections.emptyList());
@@ -94,7 +92,7 @@ public class ModulePathSplitter {
     final ModulePath.Builder mpBuilder = ModulePath.newBuilder();
     final List<File> classpath = new ArrayList<>();
 
-    final Set<String> allRequired = collectRequired(chunkModuleInfo, JpsJavacFileManager.filter(path, file -> !chunkOutputs.contains(file)));
+    final Set<String> allRequired = collectRequired(chunkModuleInfo, Iterators.filter(path, file -> !chunkOutputs.contains(file)));
     for (File file : path) {
       if (chunkOutputs.contains(file)) {
         mpBuilder.add(null, file);

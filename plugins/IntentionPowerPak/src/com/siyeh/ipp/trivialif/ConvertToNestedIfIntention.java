@@ -8,9 +8,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -33,7 +33,7 @@ public class ConvertToNestedIfIntention extends Intention {
           return false;
         }
         final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
-        final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
+        final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
         if (!(returnValue instanceof PsiPolyadicExpression)) {
           return false;
         }

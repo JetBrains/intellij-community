@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -17,7 +17,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class StructContext {
-
   private final IResultSaver saver;
   private final IDecompiledData decompiledData;
   private final LazyLoader loader;
@@ -106,7 +105,7 @@ public class StructContext {
 
       if (filename.endsWith(".class")) {
         try (DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null)) {
-          StructClass cl = new StructClass(in, isOwn, loader);
+          StructClass cl = StructClass.create(in, isOwn, loader);
           classes.put(cl.qualifiedName, cl);
           unit.addClass(cl, filename);
           loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(file.getAbsolutePath(), null));
@@ -141,7 +140,7 @@ public class StructContext {
         if (!entry.isDirectory()) {
           if (name.endsWith(".class")) {
             byte[] bytes = InterpreterUtil.getBytes(archive, entry);
-            StructClass cl = new StructClass(bytes, isOwn, loader);
+            StructClass cl = StructClass.create(new DataInputFullStream(bytes), isOwn, loader);
             classes.put(cl.qualifiedName, cl);
             unit.addClass(cl, name);
             loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(file.getAbsolutePath(), name));

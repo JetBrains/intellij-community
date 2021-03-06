@@ -1,10 +1,10 @@
 import java.util.*;
 
-public class Outer {
+class Outer {
   private final int value = calcValue();
 
   int myValue;
-  Set set = new <error descr="Cannot resolve symbol 'HashSet'">HashSet</error>();
+  Set set = new HashSet();
 
   int calcValue() {
     return set.size();

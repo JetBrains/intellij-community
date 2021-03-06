@@ -4,8 +4,9 @@ package com.intellij.ide.plugins.marketplace
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
-
-const val PAID_TAG = "Paid"
+import com.intellij.ide.plugins.RepositoryHelper
+import com.intellij.ide.plugins.newui.Tags
+import com.intellij.openapi.extensions.PluginId
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -34,17 +35,19 @@ data class IntellijUpdateMetadata(
   val description: String = "",
   val tags: List<String> = emptyList(),
   val vendor: String = "",
+  val organization: String = "",
   val version: String = "",
   val notes: String = "",
   val dependencies: Set<String> = emptySet(),
+  val optionalDependencies: Set<String> = emptySet(),
   val since: String? = null,
   val until: String? = null,
-  val productCode: String? = null
+  val productCode: String? = null,
+  val url: String? = null,
+  val size: Int = 0
 ) {
   fun toPluginNode(): PluginNode {
-    val pluginNode = PluginNode()
-    pluginNode.setId(id)
-    pluginNode.name = name
+    val pluginNode = PluginNode(PluginId.getId(id), name, size.toString())
     pluginNode.description = description
     pluginNode.vendor = vendor
     pluginNode.tags = tags
@@ -53,7 +56,17 @@ data class IntellijUpdateMetadata(
     pluginNode.untilBuild = until
     pluginNode.productCode = productCode
     pluginNode.version = version
-    for (dep in dependencies) pluginNode.addDepends(dep)
+    pluginNode.organization = organization
+    pluginNode.url = url
+    for (dep in dependencies) {
+      pluginNode.addDepends(dep, false)
+    }
+    for (dep in optionalDependencies) {
+      pluginNode.addDepends(dep, true)
+    }
+
+    RepositoryHelper.addMarketplacePluginDependencyIfRequired(pluginNode)
+
     return pluginNode
   }
 }
@@ -65,6 +78,7 @@ internal class MarketplaceSearchPluginData(
   var isPaid: Boolean = false,
   val rating: Double = 0.0,
   val name: String = "",
+  val cdate: Long? = null,
   val vendor: String = "",
   @get:JsonProperty("updateId")
   val externalUpdateId: String? = null,
@@ -73,15 +87,15 @@ internal class MarketplaceSearchPluginData(
   val downloads: String = ""
 ) {
   fun toPluginNode(): PluginNode {
-    val pluginNode = PluginNode()
-    pluginNode.setId(id)
+    val pluginNode = PluginNode(PluginId.getId(id))
     pluginNode.name = name
     pluginNode.rating = String.format("%.2f", rating)
     pluginNode.downloads = downloads
     pluginNode.vendor = vendor
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
-    if (isPaid) pluginNode.tags = listOf(PAID_TAG)
+    if (cdate != null) pluginNode.date = cdate
+    if (isPaid) pluginNode.tags = listOf(Tags.Paid.name)
     return pluginNode
   }
 }
@@ -92,3 +106,23 @@ internal class MarketplaceSearchPluginData(
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal class AggregationSearchResponse(val aggregations: Map<String, Int> = emptyMap(), val total: Int = 0)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class FeatureImpl(
+  val pluginId: String? = null,
+  val pluginName: String? = null,
+  val description: String? = null,
+  val version: String? = null,
+  val implementationName: String? = null,
+  val bundled: Boolean = false
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class MarketplaceBrokenPlugin(
+  val id: String = "",
+  val version: String = "",
+  val since: String? = null,
+  val until: String? = null,
+  val originalSince: String? = null,
+  val originalUntil: String? = null
+)

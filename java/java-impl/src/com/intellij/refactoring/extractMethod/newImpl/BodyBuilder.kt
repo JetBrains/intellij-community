@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.createDeclaration
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findInCopy
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findTopmostParenthesis
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
@@ -38,9 +39,20 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     }
   }
 
+  private fun castNumericReturns(codeFragment: PsiElement, returnType: PsiType) {
+    val castType = PsiPrimitiveType.getUnboxedType(returnType) ?: return
+    val returnStatements = PsiTreeUtil.findChildrenOfType(codeFragment, PsiReturnStatement::class.java)
+    returnStatements.mapNotNull { it.returnValue }
+      .filter { expression -> expression.type != PsiType.NULL && TypeConversionUtil.isNumericType(expression.type) }
+      .filterNot { expression -> TypeConversionUtil.isAssignable(returnType, expression.type ?: PsiType.NULL) }
+      .forEach { expression -> AddTypeCastFix.addTypeCast(expression.project, expression, castType) }
+  }
+
   private fun findExitReplacements(flowOutput: FlowOutput, dataOutput: DataOutput): List<PsiReplace> {
-    val replacement = findDefaultFlowSubstitution(flowOutput, dataOutput) ?: return emptyList()
-    return flowOutput.statements.map { statement -> PsiReplace(statement, statementOf(replacement)) }
+    val flowReplacement = findDefaultFlowSubstitution(flowOutput, dataOutput) ?: return emptyList()
+    return flowOutput.statements
+      .filterNot { statement -> dataOutput is ExpressionOutput && statement is PsiReturnStatement && statement.returnValue != null }
+      .map { statement -> PsiReplace(statement, statementOf(flowReplacement)) }
   }
 
   private fun createInputReplacements(inputGroup: InputParameter): List<PsiReplace> {
@@ -68,11 +80,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
   }
 
   private fun wrapExpression(expression: PsiExpression, shouldBeReturned: Boolean): Pair<PsiStatement, PsiExpression> {
-    val statement = if (shouldBeReturned) {
-      factory.createStatementFromText("return ${expression.text};", expression.context)
-    } else {
-      factory.createStatementFromText("${expression.text};", expression.context)
-    }
+    val statement = if (shouldBeReturned) createReturnStatement(expression) else createExpressionStatement(expression)
     val block = factory.createCodeBlockFromText("{\n}", expression.context)
     val addedStatement = block.add(statement) as PsiStatement
     val inCopyExpression = when (addedStatement) {
@@ -83,12 +91,16 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     return Pair(addedStatement, inCopyExpression)
   }
 
-  private fun findInputParameterInCopy(source: PsiElement, copy: PsiElement, parameter: InputParameter): InputParameter {
-    return InputParameter(
-      references = parameter.references.map { reference -> findInCopy(source, copy, reference) },
-      name = parameter.name,
-      type = parameter.type
-    )
+  private fun createReturnStatement(returnExpression: PsiExpression): PsiReturnStatement {
+    val statement = factory.createStatementFromText("return dummy;", returnExpression.context) as PsiReturnStatement
+    statement.returnValue?.replace(returnExpression)
+    return statement
+  }
+
+  private fun createExpressionStatement(callExpression: PsiExpression): PsiExpressionStatement {
+    val expressionStatement = factory.createStatementFromText("dummy();", callExpression.context) as PsiExpressionStatement
+    expressionStatement.expression.replace(callExpression)
+    return expressionStatement
   }
 
   fun copyOf(elements: List<PsiElement>): List<PsiElement> {
@@ -112,11 +124,15 @@ class BodyBuilder(private val factory: PsiElementFactory) {
     val normalizedExpression = PsiUtil.skipParenthesizedExprDown(expression)
     if (normalizedExpression != null) {
       require(dataOutput is ExpressionOutput)
-      val (wrappedStatement, wrappedExpression) = wrapExpression(normalizedExpression, dataOutput.type != PsiType.VOID)
-      val wrappedInputParameters = inputParameters.map { parameter -> findInputParameterInCopy(normalizedExpression, wrappedExpression, parameter) }
+      val parameterMarkers = inputParameters.associateWith { parameter -> PsiElementMark.createMarkers(parameter.references) }
+      val needsReturnStatement = dataOutput.type != PsiType.VOID
+      val (wrappedStatement, wrappedExpression) = wrapExpression(normalizedExpression, needsReturnStatement)
+      val wrappedParameters = parameterMarkers.entries.map { (parameter, markers) ->
+        parameter.copy(references = PsiElementMark.releaseMarkers(wrappedStatement, markers))
+      }
       val wrappedFlowOutput = UnconditionalFlow(listOf(wrappedStatement), true)
       val wrappedDataOutput = dataOutput.copy(returnExpressions = listOf(wrappedExpression))
-      return build(listOf(wrappedStatement), wrappedFlowOutput, wrappedDataOutput, wrappedInputParameters, disabledParameters, missedDeclarations)
+      return build(listOf(wrappedStatement), wrappedFlowOutput, wrappedDataOutput, wrappedParameters, disabledParameters, missedDeclarations)
     }
 
     val blockStatement = elements.singleOrNull() as? PsiBlockStatement
@@ -126,22 +142,29 @@ class BodyBuilder(private val factory: PsiElementFactory) {
       .dropWhile { it is PsiWhiteSpace }
       .dropLastWhile { it is PsiWhiteSpace }
 
-    val copy = copyOf(normalizedElements)
+    val exitStatementsMarkers = PsiElementMark.createMarkers(flowOutput.statements)
+    val parameterMarkers = inputParameters.associateWith { parameter -> PsiElementMark.createMarkers(parameter.references) }
 
-    val exitCopies = flowOutput.statements.map { statement -> findInCopy(normalizedElements.first(), copy.first(), statement) }
+    val copy = copyOf(normalizedElements)
+    val block = copy.first().parent as PsiCodeBlock
+
+    val exitStatementsInCopy = PsiElementMark.releaseMarkers(block, exitStatementsMarkers)
     val inCopyFlowOutput = when (flowOutput) {
-      is ConditionalFlow -> ConditionalFlow(exitCopies)
-      is UnconditionalFlow -> UnconditionalFlow(exitCopies, flowOutput.isDefaultExit)
+      is ConditionalFlow -> ConditionalFlow(exitStatementsInCopy)
+      is UnconditionalFlow -> UnconditionalFlow(exitStatementsInCopy, flowOutput.isDefaultExit)
       EmptyFlow -> EmptyFlow
     }
-    val inCopyInputGroups = inputParameters.map { parameter -> findInputParameterInCopy(normalizedElements.first(), copy.first(), parameter) }
+
+    val inCopyInputGroups = parameterMarkers.entries.map { (parameter, marks) ->
+      parameter.copy(references = PsiElementMark.releaseMarkers(block, marks))
+    }
     val exitSubstitution = findExitReplacements(inCopyFlowOutput, dataOutput)
     val inputReplacements = inCopyInputGroups.map { createInputReplacements(it) }.flatten()
     val requiredDeclarations = missedDeclarations.map { createDeclaration(it) }
 
     (inputReplacements + exitSubstitution).forEach { (source, target) -> source.replace(target) }
 
-    val block = copy.first().parent as PsiCodeBlock
+    castNumericReturns(block, dataOutput.type)
 
     val defaultReturn = findDefaultReturn(dataOutput, flowOutput)
     if (defaultReturn != null) {

@@ -36,9 +36,6 @@ import java.util.Objects;
 
 class InstancesWithStackFrameView {
   private static final float DEFAULT_SPLITTER_PROPORTION = 0.7f;
-  private static final String EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED = "Select instance to see stack frame";
-  private static final String EMPTY_TEXT_WHEN_STACK_NOT_FOUND = "No stack frame for this instance";
-  private static final String TEXT_FOR_ARRAYS = "Arrays could not be tracked";
 
   private float myHidedProportion;
 
@@ -50,10 +47,10 @@ class InstancesWithStackFrameView {
     mySplitter.setFirstComponent(new JBScrollPane(tree));
 
     final Project project = debugSession.getProject();
-    list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
+    list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
     JLabel stackTraceLabel;
     if (isArrayType(className)) {
-      stackTraceLabel = new JBLabel(TEXT_FOR_ARRAYS, SwingConstants.CENTER);
+      stackTraceLabel = new JBLabel(JavaDebuggerBundle.message("label.arrays.could.not.be.tracked"), SwingConstants.CENTER);
     }
     else {
       ActionLink actionLink = new ActionLink(JavaDebuggerBundle.message("enable.tracking.for.new.instances"),
@@ -115,10 +112,10 @@ class InstancesWithStackFrameView {
           }
           return;
         }
-        list.setEmptyText(EMPTY_TEXT_WHEN_STACK_NOT_FOUND);
+        list.setEmptyText(JavaDebuggerBundle.message("status.text.no.stack.frame.for.this.instance"));
       }
       else {
-        list.setEmptyText(EMPTY_TEXT_WHEN_ITEM_NOT_SELECTED);
+        list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
       }
 
       list.setFrameItems(Collections.emptyList());

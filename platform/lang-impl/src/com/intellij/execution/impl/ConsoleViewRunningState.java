@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
+import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
+import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -88,7 +91,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
   @Override
   public boolean isCommandLine(@NotNull String line) {
-    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler)myProcessHandler).getCommandLine());
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLine());
   }
 
   @Override
@@ -106,13 +109,25 @@ public class ConsoleViewRunningState extends ConsoleState {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
     }
-    myUserInputWriter.write(input);
+    char enterKeyCode = getEnterKeyCode();
+    String inputToSend = input.replace((char)Ascii.LF, enterKeyCode);
+    myUserInputWriter.write(inputToSend);
     myUserInputWriter.flush();
+  }
+
+  private char getEnterKeyCode() {
+    if (myProcessHandler instanceof BaseProcessHandler<?>) {
+      PtyProcess process = ObjectUtils.tryCast(((BaseProcessHandler<?>)myProcessHandler).getProcess(), PtyProcess.class);
+      if (process != null) {
+        return (char)process.getEnterKeyCode();
+      }
+    }
+    return Ascii.LF;
   }
 
   @NotNull
   @Override
-  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final ProcessHandler processHandler) {
+  public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final @NotNull ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

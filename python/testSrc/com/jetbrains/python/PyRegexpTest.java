@@ -36,6 +36,10 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
+  public void testConditional() {
+    doTestHighlighting();
+  }
+
   public void testRedundantEscape() {
     myFixture.enableInspections(new RedundantEscapeInspection());
     doTestHighlighting();
@@ -229,7 +233,7 @@ public class PyRegexpTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return getName().endsWith("Py3") ? ourPy3Descriptor : super.getProjectDescriptor();
+    return getName().endsWith("Py3") ? ourPyLatestDescriptor : super.getProjectDescriptor();
   }
 
   @NotNull

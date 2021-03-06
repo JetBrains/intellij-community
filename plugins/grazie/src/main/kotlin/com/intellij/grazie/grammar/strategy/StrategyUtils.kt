@@ -2,13 +2,13 @@
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
-import com.intellij.grazie.grammar.strategy.impl.ReplaceNewLines
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.Text
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 
 
@@ -24,12 +24,14 @@ object StrategyUtils {
    * @return extension point
    */
   internal fun getStrategyExtensionPoint(strategy: GrammarCheckingStrategy): LanguageExtensionPoint<GrammarCheckingStrategy> {
-    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("${strategy.getName()} strategy is not registered")
+    return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
-  internal fun getTextDomainOrDefault(root: PsiElement, default: TextDomain): TextDomain {
-    val parser = LanguageParserDefinitions.INSTANCE.forLanguage(root.language) ?: return default
+  internal fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
+    val extension = getStrategyExtensionPoint(strategy)
+    if (extension.language != root.language.id) return default
 
+    val parser = LanguageParserDefinitions.INSTANCE.forLanguage(root.language) ?: return default
     return when {
       parser.stringLiteralElements.contains(root.elementType) -> TextDomain.LITERALS
       parser.commentTokens.contains(root.elementType) -> TextDomain.COMMENTS
@@ -101,6 +103,55 @@ object StrategyUtils {
     if (from != -1) result.add(IntRange(from, str.length - 1))
 
     return result
+  }
+
+  /**
+   * Get all siblings of [element] of specific [types]
+   * which are no further than one line
+   *
+   * @param element element whose siblings are to be found
+   * @param types possible types of siblings
+   * @return sequence of siblings with whitespace tokens
+   */
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) =
+    getNotSoDistantSiblingsOfTypes(strategy, element) { type -> type in types }
+
+  /**
+   * Get all siblings of [element] of type accepted by [checkType]
+   * which are no further than one line
+   *
+   * @param element element whose siblings are to be found
+   * @param checkType predicate to check if type is accepted
+   * @return sequence of siblings with whitespace tokens
+   */
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) = sequence {
+    fun PsiElement.process(checkType: (IElementType?) -> Boolean, next: Boolean) = sequence<PsiElement> {
+      val whitespaceTokens = strategy.getWhiteSpaceTokens()
+      var newLinesBetweenSiblingsCount = 0
+
+      var sibling: PsiElement? = this@process
+      while (sibling != null) {
+        val candidate = if (next) sibling.nextSibling else sibling.prevSibling
+        val type = candidate.elementType
+        sibling = when {
+          checkType(type) -> {
+            newLinesBetweenSiblingsCount = 0
+            candidate
+          }
+          type in whitespaceTokens -> {
+            newLinesBetweenSiblingsCount += candidate.text.count { char -> char == '\n' }
+            if (newLinesBetweenSiblingsCount > 1) null else candidate
+          }
+          else -> null
+        }
+
+        if (sibling != null) yield(sibling)
+      }
+    }
+
+    yieldAll(element.process(checkType, false).toList().asReversed())
+    yield(element)
+    yieldAll(element.process(checkType, true))
   }
 
   private fun quotesOffset(str: CharSequence): Int {

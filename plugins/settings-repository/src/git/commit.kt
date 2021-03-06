@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
@@ -8,14 +8,16 @@ import com.intellij.util.SmartList
 import org.eclipse.jgit.lib.IndexDiff
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.eclipse.jgit.lib.Repository
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.PROJECTS_DIR_NAME
+import org.jetbrains.settingsRepository.icsMessage
 
 fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()): Boolean {
   indicator?.checkCanceled()
 
   val diff = repository.computeIndexDiff()
-  val changed = diff.diff(indicator?.asProgressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, "Commit")
+  val changed = diff.diff(indicator?.asProgressMonitor(), ProgressMonitor.UNKNOWN, ProgressMonitor.UNKNOWN, icsMessage("operation.progress.committing"))
 
   // don't worry about untracked/modified only in the FS files
   if (!changed || (diff.added.isEmpty() && diff.changed.isEmpty() && diff.removed.isEmpty())) {
@@ -61,6 +63,7 @@ fun commit(repository: Repository, indicator: ProgressIndicator?, commitMessageF
   return true
 }
 
+@NonNls
 private fun indexDiffToString(diff: IndexDiff): String {
   val builder = StringBuilder()
   builder.append("To commit:")
@@ -74,7 +77,7 @@ private fun indexDiffToString(diff: IndexDiff): String {
   return builder.toString()
 }
 
-private fun StringBuilder.appendCompactList(name: String, list: Collection<String>) {
+private fun StringBuilder.appendCompactList(@NonNls name: String, list: Collection<String>) {
   addList(name, list, true)
 }
 

@@ -8,9 +8,9 @@ Groovy script
       PsiElement(identifier)('foo')
     Arguments
       PsiElement(()('(')
+      PsiElement(new line)('\n')
       PsiErrorElement:<expression> expected, got ','
         <empty list>
-      PsiWhiteSpace('\n')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement())(')')

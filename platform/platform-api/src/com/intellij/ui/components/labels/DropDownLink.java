@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.icons.AllIcons;
@@ -6,21 +6,28 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.metal.MetalLabelUI;
 import java.awt.*;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * @see https://jetbrains.github.io/ui/controls/link/
+ * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
+ */
+@SuppressWarnings("HardCodedStringLiteral")
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class DropDownLink<T> extends LinkLabel<Object> {
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private T chosenItem;
 
   public DropDownLink(@NotNull T value, @NotNull Runnable clickAction) {
@@ -37,7 +44,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
       if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       JBPopup popup = popupBuilder.apply((DropDownLink)linkLabel);
       Point showPoint = new Point(0, getHeight() + JBUIScale.scale(4));
-      popup.addListener(myPopupState);
+      myPopupState.prepareToShow(popup);
       popup.show(new RelativePoint(this, showPoint));
     }, null);
 
@@ -53,7 +60,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
             linkLabel.setText(t.toString());
           }
 
-          if (itemChosenAction != null && !linkLabel.chosenItem.equals(t)) {
+          if (itemChosenAction != null && (!linkLabel.chosenItem.equals(t) || !updateLabel)) {
             itemChosenAction.consume(t);
           }
           linkLabel.chosenItem = t;
@@ -66,23 +73,17 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     setIconTextGap(JBUIScale.scale(1));
     setHorizontalAlignment(SwingConstants.LEADING);
     setHorizontalTextPosition(SwingConstants.LEADING);
-
-    setUI(new MetalLabelUI() {
-      @Override
-      protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
-                                Rectangle viewR, Rectangle iconR, Rectangle textR) {
-        String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
-        iconR.y += JBUIScale.scale(1);
-        return result;
-      }
-    });
   }
 
   public T getChosenItem() {
     return chosenItem;
   }
 
-  private static class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
+  public PopupState getPopupState() {
+    return myPopupState;
+  }
+
+  private static final class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
     private final JComponent owner;
 
     private LinkCellRenderer(JComponent owner) {

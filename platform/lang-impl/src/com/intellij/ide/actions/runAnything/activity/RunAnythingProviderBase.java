@@ -8,6 +8,8 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingHelpItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
@@ -90,12 +92,12 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
 
   @Nullable
   @Nls
-  public String getHelpDescription() {
+  public @NlsContexts.DetailedDescription String getHelpDescription() {
     return null;
   }
 
   @Nullable
-  public String getHelpCommandPlaceholder() {
+  public @NlsSafe String getHelpCommandPlaceholder() {
     return getHelpCommand();
   }
 
@@ -105,7 +107,7 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
    * @return
    */
   @Nullable
-  public String getHelpCommand() {
+  public @NlsSafe String getHelpCommand() {
     return null;
   }
 }

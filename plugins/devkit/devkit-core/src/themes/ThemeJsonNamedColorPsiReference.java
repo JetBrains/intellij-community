@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonLiteral;
 import com.intellij.json.psi.JsonProperty;
-import com.intellij.model.SymbolResolveResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -14,8 +13,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaBaseReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,11 +39,5 @@ class ThemeJsonNamedColorPsiReference extends JsonSchemaBaseReference<JsonLitera
   @Override
   public Object @NotNull [] getVariants() {
     return EMPTY_ARRAY;
-  }
-
-  @NotNull
-  @Override
-  public Collection<? extends SymbolResolveResult> resolveReference() {
-    return Collections.emptyList();
   }
 }

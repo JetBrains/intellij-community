@@ -18,6 +18,7 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFix {
 
   protected final T myElement;
-  protected final String myName;
+  protected final @IntentionName String myName;
 
   public AddDomElementQuickFix(@NotNull T element) {
     myElement = element.createStableCopy();
@@ -46,9 +47,10 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
     return myName;
   }
 
+  @IntentionName
   private String computeName() {
     final String name = myElement.getXmlElementName();
-    return XmlDomBundle.message(isTag() ? "add.element.fix.name" : "add.attribute.fix.name", name);
+    return XmlDomBundle.message(isTag() ? "dom.quickfix.add.element.name" : "dom.quickfix.add.attribute.name", name);
   }
 
   private boolean isTag() {
@@ -58,7 +60,7 @@ public class AddDomElementQuickFix<T extends DomElement> implements LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlDomBundle.message("add.element.fix.family");
+    return XmlDomBundle.message("dom.quickfix.add.element.family");
   }
 
   @Override

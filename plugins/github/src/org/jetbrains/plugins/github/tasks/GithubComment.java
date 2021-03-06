@@ -9,10 +9,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle;
 
 import java.util.Date;
 
-/**
- * @author Dennis.Ushakov
- */
-public class GithubComment extends SimpleComment {
+final class GithubComment extends SimpleComment {
   @Nullable private final String myAvatarUrl;
   @NotNull private final String myUserHtmlUrl;
 

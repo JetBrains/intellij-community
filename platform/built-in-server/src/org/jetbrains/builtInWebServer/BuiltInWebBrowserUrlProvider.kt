@@ -1,11 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("HardCodedStringLiteral")
+
 package org.jetbrains.builtInWebServer
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
-import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
+import com.intellij.ide.browsers.WebBrowserXmlService
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
@@ -13,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.Urls
+import org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 import org.jetbrains.ide.BuiltInServerManager
 
 open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
@@ -26,7 +30,7 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
     return request.isPhysicalFile() && isFileOfMyLanguage(request.file)
   }
 
-  protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserService.isHtmlOrXmlFile(psiFile)
+  protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserXmlService.getInstance().isHtmlOrXmlFile(psiFile)
 
   override fun getUrl(request: OpenInBrowserRequest, file: VirtualFile): Url? {
     if (file is HttpVirtualFile) {
@@ -56,7 +60,14 @@ fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: Str
   val path = info.path
 
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
-  val query = if (appendAccessToken) "?$TOKEN_PARAM_NAME=${acquireToken()}" else ""
+  val appendReloadOnSave = Registry.get("ide.built.in.web.server.reload.on.save").asBoolean()
+  val queryBuilder = StringBuilder()
+  if (appendAccessToken || appendReloadOnSave) queryBuilder.append('?')
+  if (appendAccessToken) queryBuilder.append(TOKEN_PARAM_NAME).append('=').append(acquireToken())
+  if (appendAccessToken && appendReloadOnSave) queryBuilder.append('&')
+  if (appendReloadOnSave) queryBuilder.append(WebServerPageConnectionService.RELOAD_URL_PARAM)
+  val query = queryBuilder.toString()
+
   val urls = SmartList(Urls.newHttpUrl(authority, "/${project.name}/$path", query))
 
   val path2 = info.rootLessPathIfPossible

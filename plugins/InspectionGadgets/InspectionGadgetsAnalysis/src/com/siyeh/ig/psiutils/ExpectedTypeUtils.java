@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ExpectedTypeUtils {
+public final class ExpectedTypeUtils {
 
   private ExpectedTypeUtils() {}
 
@@ -62,8 +63,6 @@ public class ExpectedTypeUtils {
 
     private static final Set<IElementType> booleanOps = new THashSet<>(5);
 
-    private static final Set<IElementType> shiftOps = new THashSet<>(3);
-
     private static final Set<IElementType> operatorAssignmentOps = new THashSet<>(11);
 
     static {
@@ -78,10 +77,6 @@ public class ExpectedTypeUtils {
       booleanOps.add(JavaTokenType.XOR);
       booleanOps.add(JavaTokenType.OROR);
       booleanOps.add(JavaTokenType.OR);
-
-      shiftOps.add(JavaTokenType.LTLT);
-      shiftOps.add(JavaTokenType.GTGT);
-      shiftOps.add(JavaTokenType.GTGTGT);
 
       operatorAssignmentOps.add(JavaTokenType.PLUSEQ);
       operatorAssignmentOps.add(JavaTokenType.MINUSEQ);
@@ -619,7 +614,7 @@ public class ExpectedTypeUtils {
     }
 
     private static boolean isShiftOperation(@NotNull IElementType sign) {
-      return shiftOps.contains(sign);
+      return ExpressionParser.SHIFT_OPS.contains(sign);
     }
 
     private static boolean isOperatorAssignmentOperation(@NotNull IElementType sign) {
@@ -644,7 +639,7 @@ public class ExpectedTypeUtils {
       if (parameters.length == 0) {
         return null;
       }
-      final boolean isVarargs = result instanceof MethodCandidateInfo && 
+      final boolean isVarargs = result instanceof MethodCandidateInfo &&
                                 ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
       final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
       final PsiSubstitutor substitutor = result.getSubstitutor();

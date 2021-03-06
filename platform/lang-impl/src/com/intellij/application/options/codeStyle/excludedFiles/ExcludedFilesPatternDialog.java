@@ -2,7 +2,6 @@
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.formatting.fileSet.PatternDescriptor;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;

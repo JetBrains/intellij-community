@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -22,6 +22,7 @@ import java.io.IOException;
 public class MethodProcessorRunnable implements Runnable {
   public final Object lock = new Object();
 
+  private final StructClass klass;
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
   private final VarProcessor varProc;
@@ -31,10 +32,12 @@ public class MethodProcessorRunnable implements Runnable {
   private volatile Throwable error;
   private volatile boolean finished = false;
 
-  public MethodProcessorRunnable(StructMethod method,
+  public MethodProcessorRunnable(StructClass klass,
+                                 StructMethod method,
                                  MethodDescriptor methodDescriptor,
                                  VarProcessor varProc,
                                  DecompilerContext parentContext) {
+    this.klass = klass;
     this.method = method;
     this.methodDescriptor = methodDescriptor;
     this.varProc = varProc;
@@ -48,7 +51,7 @@ public class MethodProcessorRunnable implements Runnable {
 
     try {
       DecompilerContext.setCurrentContext(parentContext);
-      root = codeToJava(method, methodDescriptor, varProc);
+      root = codeToJava(klass, method, methodDescriptor, varProc);
     }
     catch (Throwable t) {
       error = t;
@@ -63,17 +66,15 @@ public class MethodProcessorRunnable implements Runnable {
     }
   }
 
-  public static RootStatement codeToJava(StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
-    StructClass cl = mt.getClassStruct();
-
+  public static RootStatement codeToJava(StructClass cl, StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
 
-    mt.expandData();
+    mt.expandData(cl);
     InstructionSequence seq = mt.getInstructionSequence();
     ControlFlowGraph graph = new ControlFlowGraph(seq);
 
     DeadCodeHelper.removeDeadBlocks(graph);
-    graph.inlineJsr(mt);
+    graph.inlineJsr(cl, mt);
 
     // TODO: move to the start, before jsr inlining
     DeadCodeHelper.connectDummyExitBlock(graph);
@@ -110,13 +111,13 @@ public class MethodProcessorRunnable implements Runnable {
       if (!ExceptionDeobfuscator.handleMultipleEntryExceptionRanges(graph)) {
         DecompilerContext.getLogger().writeMessage("Found multiple entry exception ranges which could not be splitted", IFernflowerLogger.Severity.WARN);
       }
-      ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, cl.getBytecodeVersion());
+      ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
     }
 
     RootStatement root = DomHelper.parseGraph(graph);
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
-    while (fProc.iterateGraph(mt, root, graph)) {
+    while (fProc.iterateGraph(cl, mt, root, graph)) {
       root = DomHelper.parseGraph(graph);
     }
 

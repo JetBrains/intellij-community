@@ -13,11 +13,14 @@ import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
+
+import static git4idea.GitNotificationIdsHolder.LOCAL_CHANGES_NOT_RESTORED;
 
 /**
  * Saves and restores uncommitted local changes - it is used before and after the update process.
@@ -26,7 +29,6 @@ import java.util.Collection;
  * @author Kirill Likhodedov
  */
 public abstract class GitChangesSaver {
-
   private static final Logger LOG = Logger.getInstance(GitChangesSaver.class);
 
   @NotNull protected final Project myProject;
@@ -39,13 +41,14 @@ public abstract class GitChangesSaver {
 
   /**
    * Returns an instance of the proper GitChangesSaver depending on the given save changes policy.
+   *
    * @return {@link GitStashChangesSaver} or {@link GitShelveChangesSaver}.
    */
   @NotNull
   public static GitChangesSaver getSaver(@NotNull Project project,
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
-                                         @NotNull String stashMessage,
+                                         @NotNull @Nls String stashMessage,
                                          @NotNull GitSaveChangesPolicy saveMethod) {
     if (saveMethod == GitSaveChangesPolicy.SHELVE) {
       return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
@@ -67,6 +70,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes in stash or in shelf.
+   *
    * @param rootsToSave Save changes only from these roots.
    */
   public void saveLocalChanges(@Nullable Collection<? extends VirtualFile> rootsToSave) throws VcsException {
@@ -80,10 +84,10 @@ public abstract class GitChangesSaver {
     if (wereChangesSaved()) {
       LOG.info("Update is incomplete, changes are not restored");
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        GitBundle.getString("restore.notification.failed.title"),
+        LOCAL_CHANGES_NOT_RESTORED, GitBundle.message("restore.notification.failed.title"),
         getSaveMethod().selectBundleMessage(
-          GitBundle.getString("restore.notification.failed.stash.message"),
-          GitBundle.getString("restore.notification.failed.shelf.message")
+          GitBundle.message("restore.notification.failed.stash.message"),
+          GitBundle.message("restore.notification.failed.shelf.message")
         ),
         new ShowSavedChangesNotificationListener()
       );
@@ -96,6 +100,7 @@ public abstract class GitChangesSaver {
 
   /**
    * Saves local changes - specific for chosen save strategy.
+   *
    * @param rootsToSave local changes should be saved on these roots.
    */
   protected abstract void save(Collection<? extends VirtualFile> rootsToSave) throws VcsException;
@@ -125,7 +130,7 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   protected static String getConflictRightPanelTitle() {
-    return GitBundle.getString("save.load.conflict.dialog.diff.right.title");
+    return GitBundle.message("save.load.conflict.dialog.diff.right.title");
   }
 
   /**
@@ -133,11 +138,12 @@ public abstract class GitChangesSaver {
    */
   @NotNull
   protected static String getConflictLeftPanelTitle() {
-    return GitBundle.getString("save.load.conflict.dialog.diff.left.title");
+    return GitBundle.message("save.load.conflict.dialog.diff.left.title");
   }
 
-  protected class ShowSavedChangesNotificationListener implements NotificationListener {
-    @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+  protected final class ShowSavedChangesNotificationListener implements NotificationListener {
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("saver")) {
         showSavedChanges();
       }

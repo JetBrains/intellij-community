@@ -4,13 +4,13 @@ package git4idea.actions
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.*
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager.LOCAL_BRANCH
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.Nls
 import java.util.*
 
 internal class GitCheckoutActionGroup : GitSingleCommitActionGroup(GitBundle.message("git.log.action.checkout.group"), false) {
@@ -63,7 +63,7 @@ private fun checkout(project: Project, repository: GitRepository, hashOrRefName:
 private class GitCheckoutAction(private val project: Project,
                                 private val repository: GitRepository,
                                 private val hashOrRefName: String,
-                                actionText: @Nls String) : DumbAwareAction() {
+                                @ActionText actionText: String) : DumbAwareAction() {
 
   init {
     templatePresentation.setText(actionText, false)

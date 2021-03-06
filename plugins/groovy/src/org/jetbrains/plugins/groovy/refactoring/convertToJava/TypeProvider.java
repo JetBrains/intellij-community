@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -22,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 /**
  * @author Medvedev Max
@@ -96,7 +98,7 @@ public class TypeProvider {
 
     final GrParameter[] parameters = method.getParameters();
 
-    final TIntArrayList paramInds = new TIntArrayList(parameters.length);
+    final IntList paramInds = new IntArrayList(parameters.length);
     final PsiType[] types = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getTypeElementGroovy() == null) {
@@ -118,20 +120,18 @@ public class TypeProvider {
           final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
 
           if (argInfos == null) return true;
-          paramInds.forEach(i -> {
+          paramInds.forEach((IntConsumer)i -> {
             PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
             types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
-            return true;
           });
         }
         return true;
       });
     }
-    paramInds.forEach(i -> {
+    paramInds.forEach((IntConsumer)i -> {
       if (types[i] == null || types[i] == PsiType.NULL) {
         types[i] = parameters[i].getType();
       }
-      return true;
     });
     inferredTypes.put(method, types);
     return types;

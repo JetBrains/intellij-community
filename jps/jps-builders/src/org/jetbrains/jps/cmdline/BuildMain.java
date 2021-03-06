@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @author Eugene Zhuravlev
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public class BuildMain {
+public final class BuildMain {
   private static final String PRELOAD_PROJECT_PATH = "preload.project.path";
   private static final String PRELOAD_CONFIG_PATH = "preload.config.path";
 
@@ -189,7 +190,7 @@ public class BuildMain {
     System.exit(-1);
   }
 
-  private static class MyMessageHandler extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {
+  private static final class MyMessageHandler extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {
     private final UUID mySessionId;
     private volatile BuildSession mySession;
 
@@ -278,7 +279,8 @@ public class BuildMain {
       }
 
       channel.writeAndFlush(
-        CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure("Unsupported message type: " + type.name(), null)));
+        CmdlineProtoUtil.toMessage(mySessionId,
+                                   CmdlineProtoUtil.createFailure(JpsBuildBundle.message("build.message.unsupported.message.type.0", type.name()), null)));
     }
 
     @Override

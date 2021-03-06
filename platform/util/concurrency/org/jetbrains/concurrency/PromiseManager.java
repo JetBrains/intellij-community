@@ -29,7 +29,7 @@ public abstract class PromiseManager<HOST, VALUE> {
   public abstract Promise<VALUE> load(@NotNull HOST host);
 
   public final void reset(HOST host) {
-    fieldUpdater.set(host, null);
+    fieldUpdater.setVolatile(host, null);
   }
 
   public final void set(HOST host, @Nullable VALUE value) {
@@ -42,13 +42,13 @@ public abstract class PromiseManager<HOST, VALUE> {
   }
 
   public final boolean has(HOST host) {
-    Promise<VALUE> result = fieldUpdater.get(host);
+    Promise<VALUE> result = fieldUpdater.getVolatile(host);
     return result != null && result.isSucceeded();
   }
 
   @Nullable
   public final Promise.State getState(HOST host) {
-    Promise<VALUE> result = fieldUpdater.get(host);
+    Promise<VALUE> result = fieldUpdater.getVolatile(host);
     return result == null ? null : result.getState();
   }
 
@@ -64,10 +64,12 @@ public abstract class PromiseManager<HOST, VALUE> {
 
   @NotNull
   private Promise<VALUE> getOrCreateAsyncResult(HOST host, boolean checkFreshness, boolean load) {
-    Promise<VALUE> promise = fieldUpdater.get(host);
+    Promise<VALUE> promise = fieldUpdater.getVolatile(host);
     if (promise == null) {
-      if (!fieldUpdater.compareAndSet(host, null, promise = new AsyncPromise<>())) {
-        return fieldUpdater.get(host);
+      promise = new AsyncPromise<>();
+      promise.onError((ignored) -> {});
+      if (!fieldUpdater.compareAndSet(host, null, promise)) {
+        return fieldUpdater.getVolatile(host);
       }
     }
     else {
@@ -87,13 +89,13 @@ public abstract class PromiseManager<HOST, VALUE> {
         }
 
         if (!fieldUpdater.compareAndSet(host, promise, promise = new AsyncPromise<>())) {
-          Promise<VALUE> valueFromAnotherThread = fieldUpdater.get(host);
+          Promise<VALUE> valueFromAnotherThread = fieldUpdater.getVolatile(host);
           while (valueFromAnotherThread == null) {
             if (fieldUpdater.compareAndSet(host, null, promise)) {
               return getPromise(host, load, promise);
             }
             else {
-              valueFromAnotherThread = fieldUpdater.get(host);
+              valueFromAnotherThread = fieldUpdater.getVolatile(host);
             }
           }
           return valueFromAnotherThread;

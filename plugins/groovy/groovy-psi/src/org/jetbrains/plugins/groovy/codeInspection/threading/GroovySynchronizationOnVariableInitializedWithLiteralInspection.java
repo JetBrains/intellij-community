@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.threading;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
@@ -31,7 +32,7 @@ public class GroovySynchronizationOnVariableInitializedWithLiteralInspection ext
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Synchronization on variable '#ref', which was initialized with a literal #loc";
+    return GroovyBundle.message("inspection.message.synchronization.on.variable.ref.which.was.initialized.with.literal");
 
   }
 

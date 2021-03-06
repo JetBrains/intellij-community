@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public final class ShadowAction {
   private AnAction myCopyFromAction;
   private final Reference<JComponent> myComponent;
 
-  private String myActionId;
+  private @NonNls String myActionId;
 
   private Presentation myPresentation;
 
@@ -120,9 +121,6 @@ public final class ShadowAction {
     }
 
     Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) {
-      return;
-    }
 
     ShortcutSet shortcutSet = new CustomShortcutSet(keymap.getShortcuts(myActionId));
     shortcutSetDisposable = Disposer.newDisposable();

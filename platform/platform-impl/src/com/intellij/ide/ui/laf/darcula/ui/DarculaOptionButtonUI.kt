@@ -3,17 +3,16 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
+import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isDefaultButton
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getArrowButtonPreferredSize
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.RenderingHints
+import java.awt.*
 import java.awt.geom.Rectangle2D
 import javax.swing.AbstractButton
 import javax.swing.JComponent
+import javax.swing.UIManager
 import javax.swing.border.Border
 
 open class DarculaOptionButtonUI : BasicOptionButtonUI() {
@@ -89,8 +88,21 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     val yOffset = BW.getFloat() + LW.getFloat() + scale(1)
     val x = mainButton.width.toFloat()
 
-    g.paint = (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
+    g.paint = separatorColor(c)
     g.fill(Rectangle2D.Float(x, yOffset, LW.getFloat(), mainButton.height - yOffset * 2))
+  }
+
+  private fun separatorColor(c: JComponent) : Paint {
+    val defButton = isDefaultButton(c as AbstractButton)
+    val hasFocus = c.hasFocus()
+
+    val resourceName = when {
+      defButton && !hasFocus -> "OptionButton.default.separatorColor"
+      !defButton && !hasFocus -> "OptionButton.separatorColor"
+      else -> null
+    }
+
+    return resourceName?.let{ UIManager.getColor(resourceName)} ?: (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
   }
 
   override fun updateOptions(): Unit = super.updateOptions().also {

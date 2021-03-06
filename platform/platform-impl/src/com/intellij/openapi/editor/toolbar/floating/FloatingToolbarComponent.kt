@@ -2,16 +2,21 @@
 package com.intellij.openapi.editor.toolbar.floating
 
 import com.intellij.openapi.actionSystem.DataKey
+import org.jetbrains.annotations.ApiStatus
 
 interface FloatingToolbarComponent {
 
-  fun update()
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated("Floating toolbar component should have auto-update")
+  fun update() {
+  }
 
   fun scheduleHide()
 
   fun scheduleShow()
 
   companion object {
+    @Deprecated("Use FloatingToolbarProviderUtil instead")
     val KEY = DataKey.create<FloatingToolbarComponent>("com.intellij.openapi.editor.toolbar.floating.Component")
   }
 }

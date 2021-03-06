@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CountingGZIPInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 
-public class NetUtils {
+public final class NetUtils {
   private static final Logger LOG = Logger.getInstance(NetUtils.class);
 
   private NetUtils() { }
@@ -30,15 +32,14 @@ public class NetUtils {
     }
   }
 
-  /**
-   * @deprecated use {@link InetAddress#getLoopbackAddress()}
-   */
+  /** @deprecated use {@link InetAddress#getLoopbackAddress()} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static InetAddress getLoopbackAddress() {
     return InetAddress.getLoopbackAddress();
   }
 
-  public static boolean isLocalhost(@NotNull String hostName) {
+  public static boolean isLocalhost(@NotNull @NlsSafe String hostName) {
     return hostName.equalsIgnoreCase("localhost") || hostName.equals("127.0.0.1") || hostName.equals("::1");
   }
 
@@ -129,7 +130,7 @@ public class NetUtils {
 
   public static String getLocalHostString() {
     // HACK for Windows with ipv6
-    String localHostString = "localhost";
+    @NlsSafe String localHostString = "localhost";
     try {
       final InetAddress localHost = InetAddress.getByName(localHostString);
       if ((localHost.getAddress().length != 4 && SystemInfo.isWindows) ||
@@ -162,7 +163,7 @@ public class NetUtils {
       indicator.setIndeterminate(expectedContentLength <= 0);
     }
     CountingGZIPInputStream gzipStream = inputStream instanceof CountingGZIPInputStream ? (CountingGZIPInputStream)inputStream : null;
-    final byte[] buffer = FileUtilRt.getThreadLocalBuffer();
+    byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     int count;
     int bytesWritten = 0;
     long bytesRead = 0;
@@ -192,7 +193,7 @@ public class NetUtils {
     }
 
     if (bytesRead < expectedContentLength) {
-      throw new IOException(String.format("Connection closed at byte %d. Expected %d bytes.", bytesRead, expectedContentLength));
+      throw new IOException("Connection closed at byte " + bytesRead + ". Expected " + expectedContentLength + " bytes.");
     }
 
     return bytesWritten;

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection;
 
 import com.intellij.facet.Facet;
@@ -5,13 +6,13 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.mock.*;
 import com.intellij.framework.detection.impl.FacetBasedDetectedFrameworkDescription;
 import com.intellij.framework.detection.impl.FrameworkDetectionManager;
+import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 
-import java.io.File;
 import java.util.List;
 
 public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
@@ -50,7 +51,11 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   public void testDynamicDetector() {
     VirtualFile file = createFrameworkConfig("my-config.xml");
     assertNoFrameworksDetected();
-    FrameworkDetector.EP_NAME.getPoint(null).registerExtension(new MockFacetDetector(), getTestRootDisposable());
+
+    Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtil.loadExtensionWithText(
+      "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
+      MockFacetDetector.class.getClassLoader()));
+
     assertFrameworkDetectedIn(file);
   }
 
@@ -170,8 +175,8 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
     assertFrameworkDetectedIn(file);
   }
 
-  private MockFacet createMockFacet(final String fileName) {
-    final MockFacet facet = WriteAction.compute(() -> FacetManager.getInstance(myModule).addFacet(MockFacetType.getInstance(), "f", null));
+  private MockFacet createMockFacet(String fileName) {
+    MockFacet facet = WriteAction.compute(() -> FacetManager.getInstance(myModule).addFacet(MockFacetType.getInstance(), "f", null));
     facet.getConfiguration().setData(fileName);
     return facet;
   }
@@ -179,9 +184,8 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final File dir = createTempDirectory();
-    final VirtualFile testDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
-    assertNotNull(dir.getPath(), testDir);
+
+    VirtualFile testDir = getTempDir().createVirtualDir();
     myTestDir = WriteAction.compute(() -> {
       PsiTestUtil.addSourceContentToRoots(myModule, testDir);
       return testDir;

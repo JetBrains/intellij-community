@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData.decorateTextDescriptorWithKey;
@@ -13,7 +14,7 @@ public class PostfixTemplateWrapperMetaData implements BeforeAfterMetaData {
   @NotNull
   private final BeforeAfterMetaData myDelegateMetaData;
   @NotNull
-  private final String myKey;
+  private final @NlsSafe String myKey;
 
   public PostfixTemplateWrapperMetaData(@NotNull PostfixTemplateWrapper wrapper) {
     myKey = wrapper.getKey();

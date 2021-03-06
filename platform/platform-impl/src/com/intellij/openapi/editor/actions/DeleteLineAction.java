@@ -19,10 +19,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -75,13 +72,14 @@ public class DeleteLineAction extends TextComponentEditorAction {
           }
           int targetLine = editor.offsetToVisualPosition(currentRange.getStartOffset()).line;
 
-          document.deleteString(currentRange.getStartOffset(), currentRange.getEndOffset());
+          DocumentGuardedTextUtil.deleteString(editor.getDocument(), currentRange.getStartOffset(), currentRange.getEndOffset());
 
           for (int i = caretIndex + 1; i <= currentCaretIndex; i++) {
             carets.get(i).moveToVisualPosition(new VisualPosition(targetLine, caretColumns[i]));
           }
         }
       });
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }
 

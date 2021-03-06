@@ -59,11 +59,13 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return false;
   }
 
+  @Deprecated
   @Override
   public boolean useDefaultCommentInjector() {
     return true;
   }
 
+  @Deprecated
   @Nullable
   @Override
   public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<? super PsiElement> commentRef) {
@@ -129,7 +131,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     Icon icon = FileTypeManager.getInstance().getFileTypeByExtension(support.getId()).getIcon();
     AnAction action = DumbAwareAction.create(e -> {
       BaseInjection injection = new BaseInjection(support.getId());
-      injection.setDisplayName("New " + supportTitle + " Injection");
+      injection.setDisplayName(IntelliLangBundle.message("new.language.name.injection", supportTitle));
       final BaseInjection newInjection = showDefaultInjectionUI(project, injection);
       if (newInjection != null) {
         consumer.consume(injection);
@@ -159,7 +161,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     builder.addCancelAction();
     builder.setDimensionServiceKey(dimensionServiceKey);
     builder.setCenterPanel(panel.getComponent());
-    builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
+    builder.setTitle(IntelliLangBundle.message("language.injection.settings.title"));
     builder.setOkOperation(() -> {
       try {
         panel.apply();

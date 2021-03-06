@@ -25,10 +25,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author cdr
  * if (!a == b) ...  =>  if (!(a == b)) ...
  */
-
 public class NegationBroadScopeFix implements IntentionAction {
   private final PsiPrefixExpression myPrefixExpression;
 

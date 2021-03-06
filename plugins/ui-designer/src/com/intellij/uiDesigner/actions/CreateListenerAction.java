@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -48,6 +49,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -79,9 +81,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       LOG.error(e);
       return null;
     }
-    EventSetDescriptor[] sortedDescriptors = new EventSetDescriptor[eventSetDescriptors.length];
-    System.arraycopy(eventSetDescriptors, 0, sortedDescriptors, 0, eventSetDescriptors.length);
-    Arrays.sort(sortedDescriptors, (o1, o2) -> o1.getListenerType().getName().compareTo(o2.getListenerType().getName()));
+    EventSetDescriptor[] sortedDescriptors = eventSetDescriptors.clone();
+    Arrays.sort(sortedDescriptors, Comparator.comparing(o -> o.getListenerType().getName()));
     for(EventSetDescriptor descriptor: sortedDescriptors) {
       actionGroup.add(new MyCreateListenerAction(selection, descriptor));
     }
@@ -105,6 +106,10 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     return true;
   }
 
+  private static @NlsSafe String getEventDescriptorName(EventSetDescriptor descriptor) {
+    return descriptor.getListenerType().getSimpleName();
+  }
+
   private static class MyCreateListenerAction extends AnAction {
     private final List<? extends RadComponent> mySelection;
     private final EventSetDescriptor myDescriptor;
@@ -112,7 +117,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
 
     MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
-      super(descriptor.getListenerType().getSimpleName());
+      super(getEventDescriptorName(descriptor));
       mySelection = selection;
       myDescriptor = descriptor;
     }

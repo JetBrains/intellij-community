@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
@@ -27,19 +29,21 @@ import javax.swing.*;
 public abstract class AutoScrollFromSourceHandler {
   protected final Project myProject;
   protected final Alarm myAlarm;
+  private final Disposable myParentDisposable;
   private final JComponent myComponent;
 
   public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view, @NotNull Disposable parentDisposable) {
     myProject = project;
     myComponent = view;
     myAlarm = new Alarm(parentDisposable);
+    myParentDisposable = parentDisposable;
   }
 
-  protected String getActionName() {
+  protected @NlsActions.ActionText String getActionName() {
     return UIBundle.message("autoscroll.from.source.action.name");
   }
 
-  protected String getActionDescription() {
+  protected @NlsActions.ActionDescription String getActionDescription() {
     return UIBundle.message("autoscroll.from.source.action.description");
   }
 
@@ -58,7 +62,7 @@ public abstract class AutoScrollFromSourceHandler {
   }
 
   public void install() {
-    final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    final MessageBusConnection connection = myProject.getMessageBus().connect(myParentDisposable);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
@@ -69,6 +73,9 @@ public abstract class AutoScrollFromSourceHandler {
   }
 
   private void selectInAlarm(final FileEditor editor) {
+    // Code WithMe: do not process changes from remote (client) editor switching
+    if (!ClientId.isCurrentlyUnderLocalId()) return;
+
     if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
@@ -87,7 +94,7 @@ public abstract class AutoScrollFromSourceHandler {
   }
 
   private class AutoScrollFromSourceAction extends ToggleAction implements DumbAware {
-    AutoScrollFromSourceAction(String actionName, String actionDescription) {
+    AutoScrollFromSourceAction(@NlsActions.ActionText String actionName, @NlsActions.ActionDescription String actionDescription) {
       super(actionName, actionDescription, AllIcons.General.AutoscrollFromSource);
     }
 

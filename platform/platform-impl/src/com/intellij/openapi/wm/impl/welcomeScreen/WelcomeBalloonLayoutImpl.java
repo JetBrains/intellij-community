@@ -5,14 +5,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EmptyConsumer;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -25,30 +26,24 @@ import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static com.intellij.notification.impl.NotificationsManagerImpl.BORDER_COLOR;
 import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR;
 
-/**
- * @author Alexander Lobas
- */
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
+
+  public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
+    Topic.create("balloon notification changed", BalloonNotificationListener.class);
   private static final String TYPE_KEY = "Type";
 
-  private final Consumer<? super List<NotificationType>> myListener;
-  private final Computable<? extends Point> myButtonLocation;
+  private @Nullable Component myLayoutBaseComponent;
   private BalloonImpl myPopupBalloon;
   private final BalloonPanel myBalloonPanel = new BalloonPanel();
   private boolean myVisible;
 
   public WelcomeBalloonLayoutImpl(@NotNull JRootPane parent,
-                                  @NotNull Insets insets,
-                                  @NotNull Consumer<? super List<NotificationType>> listener,
-                                  @NotNull Computable<? extends Point> buttonLocation) {
+                                  @NotNull Insets insets) {
     super(parent, insets);
-    myListener = listener;
-    myButtonLocation = buttonLocation;
   }
 
   @Override
@@ -151,14 +146,21 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private void layoutPopup() {
+    if (myLayoutBaseComponent == null) {
+      // if no component set - use default location on the LayeredPane
+      myPopupBalloon.setBounds(null);
+      return;
+    }
+
     Dimension layeredSize = myLayeredPane.getSize();
     Dimension size = new Dimension(myPopupBalloon.getPreferredSize());
-    Point location = myButtonLocation.compute();
+    Point point = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, myLayeredPane);
+    Point location = new Point(point.x, point.y + 5);
     int x = layeredSize.width - size.width - 5;
     int fullHeight = location.y;
 
     if (x > location.x) {
-      x = location.x - 20;
+      x = Math.max(location.x - 20, 0);
     }
     if (size.height > fullHeight) {
       size.height = fullHeight;
@@ -173,7 +175,8 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
     for (int i = 0; i < count; i++) {
       types.add((NotificationType)((JComponent)myBalloonPanel.getComponent(i)).getClientProperty(TYPE_KEY));
     }
-    myListener.accept(types);
+
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(BALLOON_NOTIFICATION_TOPIC).notificationsChanged(types);
 
     if (myVisible) {
       if (count == 0) {
@@ -183,6 +186,19 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
         layoutPopup();
       }
     }
+  }
+
+  @Nullable
+  public Component getLocationComponent() {
+    return myLayoutBaseComponent;
+  }
+
+  public void setLocationComponent(@Nullable Component component) {
+    myLayoutBaseComponent = component;
+  }
+
+  public interface BalloonNotificationListener {
+    void notificationsChanged(List<NotificationType> types);
   }
 
   private static class BalloonPanel extends NonOpaquePanel {

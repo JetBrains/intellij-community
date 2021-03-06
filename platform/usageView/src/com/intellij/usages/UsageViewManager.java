@@ -16,18 +16,23 @@ public abstract class UsageViewManager {
     return ServiceManager.getService(project, UsageViewManager.class);
   }
 
-  @NotNull
-  public abstract UsageView createUsageView(UsageTarget @NotNull [] targets, Usage @NotNull [] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory);
+  public abstract @NotNull UsageView createUsageView(UsageTarget @NotNull [] targets,
+                                                     Usage @NotNull [] usages,
+                                                     @NotNull UsageViewPresentation presentation,
+                                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory);
 
-  @NotNull
-  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> factory);
+  public abstract @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                                Usage @NotNull [] foundUsages,
+                                                @NotNull UsageViewPresentation presentation,
+                                                @Nullable Factory<? extends UsageSearcher> factory);
 
-  @NotNull
-  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation);
+  public abstract @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                                Usage @NotNull [] foundUsages,
+                                                @NotNull UsageViewPresentation presentation);
 
   @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                @NotNull Factory<UsageSearcher> searcherFactory,
+                                                @NotNull Factory<? extends UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,
                                                 boolean showNotFoundMessage,
                                                 @NotNull UsageViewPresentation presentation,
@@ -39,7 +44,7 @@ public abstract class UsageViewManager {
   }
 
   public abstract void searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                           @NotNull Factory<UsageSearcher> searcherFactory,
+                                           @NotNull Factory<? extends UsageSearcher> searcherFactory,
                                            @NotNull FindUsagesProcessPresentation processPresentation,
                                            @NotNull UsageViewPresentation presentation,
                                            @Nullable UsageViewStateListener listener);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.mock;
 
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
@@ -20,7 +20,7 @@ import java.util.List;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
-public class MockFacetDetector extends FacetBasedFrameworkDetector<MockFacet, MockFacetConfiguration> {
+public final class MockFacetDetector extends FacetBasedFrameworkDetector<MockFacet, MockFacetConfiguration> {
   public static final String ROOT_TAG_NAME = "root";
   public static final String ROOT_TAG = "<" + ROOT_TAG_NAME + "/>";
 
@@ -83,8 +83,6 @@ public class MockFacetDetector extends FacetBasedFrameworkDetector<MockFacet, Mo
         return null;
       }
     }
-    MockFacetConfiguration configuration = new MockFacetConfiguration();
-    configuration.setData(fileName);
-    return configuration;
+    return new MockFacetConfiguration(fileName);
   }
 }

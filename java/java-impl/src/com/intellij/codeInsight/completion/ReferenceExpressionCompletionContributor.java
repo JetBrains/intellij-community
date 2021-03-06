@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.StandardPatterns;
@@ -12,22 +12,19 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author peter
  */
-public class ReferenceExpressionCompletionContributor {
+public final class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance(ReferenceExpressionCompletionContributor.class);
 
   @NotNull
@@ -69,49 +66,38 @@ public class ReferenceExpressionCompletionContributor {
     return TrueFilter.INSTANCE;
   }
 
-  @Nullable
-  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<? super LookupElement> result) {
-    final PsiElement element = parameters.getPosition();
-    if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
-    if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;
-
-    final int offset = parameters.getParameters().getOffset();
-    final PsiJavaCodeReferenceElement reference = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), offset, PsiJavaCodeReferenceElement.class, false);
-    if (reference != null) {
-      ElementFilter filter = getReferenceFilter(element, false);
-      if (CheckInitialized.isInsideConstructorCall(element)) {
-        filter = new AndFilter(filter, new CheckInitialized(element));
-      }
-
-      for (final LookupElement item : completeFinalReference(element, reference, filter, parameters)) {
-        result.consume(item);
-      }
-
-      final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
-
-      final Set<LookupElement> base =
-        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
-      for (final LookupElement item : new LinkedHashSet<>(base)) {
-        ExpressionLookupItem access = ArrayMemberAccess.accessFirstElement(element, item);
-        if (access != null) {
-          base.add(access);
-          PsiType type = access.getType();
-          if (type != null && parameters.getExpectedType().isAssignableFrom(type)) {
-            result.consume(access);
-          }
+  static List<LookupElement> smartCompleteReference(List<LookupElement> allRefSuggestions, Set<ExpectedTypeInfo> infos) {
+    List<LookupElement> result = new ArrayList<>();
+    for (LookupElement item : allRefSuggestions) {
+      if (matchesExpectedType(item, infos)) {
+        if (item instanceof JavaMethodCallElement) {
+          checkTooGeneric((JavaMethodCallElement)item);
         }
-      }
-
-      if (secondTime) {
-        return new SlowerTypeConversions(base, element, reference, parameters, result);
+        result.add(JavaSmartCompletionContributor.decorate(item, infos));
       }
     }
-    return null;
+    return result;
   }
 
-  static Set<LookupElement> completeFinalReference(final PsiElement element, PsiJavaCodeReferenceElement reference, ElementFilter filter,
-                                                           final JavaSmartCompletionParameters parameters) {
-    final Set<PsiField> used = parameters.getParameters().getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.emptySet();
+  static boolean matchesExpectedType(LookupElement item, Set<ExpectedTypeInfo> infos) {
+    return ContainerUtil.exists(infos, info -> matchesExpectedType(item, info.getType()));
+  }
+
+  private static boolean matchesExpectedType(LookupElement item, PsiType type) {
+    Object object = item.getObject();
+    if (object instanceof PsiClass) return false;
+    if (PsiType.VOID.equals(type)) return object instanceof PsiMethod;
+
+    PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
+    return itemType != null && type.isAssignableFrom(itemType);
+  }
+
+  static Set<LookupElement> completeFinalReference(PsiElement element,
+                                                   PsiJavaCodeReferenceElement reference,
+                                                   ElementFilter filter,
+                                                   PsiType expectedType,
+                                                   CompletionParameters parameters) {
+    final Set<PsiField> used = parameters.getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.emptySet();
 
     final Set<LookupElement> elements =
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {
@@ -121,12 +107,10 @@ public class ReferenceExpressionCompletionContributor {
             final CandidateInfo info = (CandidateInfo)o;
             final PsiElement member = info.getElement();
 
-            final PsiType expectedType = parameters.getExpectedType();
             if (expectedType.equals(PsiType.VOID)) {
               return member instanceof PsiMethod;
             }
 
-            //noinspection SuspiciousMethodCalls
             if (member instanceof PsiEnumConstant && used.contains(CompletionUtil.getOriginalOrSelf(member))) {
               return false;
             }
@@ -140,20 +124,24 @@ public class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
+      }), false, true, parameters, PrefixMatcher.ALWAYS_TRUE);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (item != null) {
-          item.setInferenceSubstitutorFromExpectedType(element, parameters.getExpectedType());
-          if (JavaCompletionSorting.isTooGeneric(lookupElement, item.getObject())) {
-            item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          }
+          item.setInferenceSubstitutorFromExpectedType(element, expectedType);
+          checkTooGeneric(item);
         }
       }
     }
 
     return elements;
+  }
+
+  private static void checkTooGeneric(JavaMethodCallElement item) {
+    if (JavaCompletionSorting.isTooGeneric(item, item.getObject())) {
+      item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+    }
   }
 
   @NotNull

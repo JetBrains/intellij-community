@@ -39,7 +39,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   @NonNls
   private static final String ANCHOR_ELEMENT_NAME = "a";
   @NonNls private static final String MAP_ELEMENT_NAME = "map";
-  private static final Key<CachedValue<Map<String,XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
+  private static final Key<CachedValue<Map<String, XmlTag>>> ourCachedIdsKey = Key.create("cached.ids");
 
   AnchorReferenceImpl(final String anchor, @Nullable final FileReference psiReference, @NotNull final PsiElement element, final int offset,
                       final boolean soft) {
@@ -60,7 +60,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   @NotNull
   @Override
   public TextRange getRangeInElement() {
-    return new TextRange(myOffset,myOffset+myAnchor.length());
+    return new TextRange(myOffset, myOffset + myAnchor.length());
   }
 
   @Override
@@ -68,17 +68,17 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
     if (myAnchor.isEmpty()) {
       return myElement;
     }
-    Map<String,XmlTag> map = getIdMap();
-    final XmlTag tag = map != null ? map.get(myAnchor):null;
+    Map<String, XmlTag> map = getIdMap();
+    final XmlTag tag = map != null ? map.get(myAnchor) : null;
     if (tag != null) {
       XmlAttribute attribute = tag.getAttribute("id");
-      if (attribute==null) attribute = tag.getAttribute("name");
+      if (attribute == null) attribute = tag.getAttribute("name");
 
       if (attribute == null && MAP_ELEMENT_NAME.equalsIgnoreCase(tag.getName())) {
         attribute = tag.getAttribute("usemap");
       }
 
-      assert attribute != null: tag.getText();
+      assert attribute != null : tag.getText();
       return attribute.getValueElement();
     }
 
@@ -86,11 +86,11 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   private static boolean processXmlElements(XmlTag element, PsiElementProcessor<? super XmlTag> processor) {
-    if (!_processXmlElements(element,processor)) return false;
+    if (!_processXmlElements(element, processor)) return false;
 
-    for(PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
+    for (PsiElement next = element.getNextSibling(); next != null; next = next.getNextSibling()) {
       if (next instanceof XmlTag) {
-        if (!_processXmlElements((XmlTag)next,processor)) return false;
+        if (!_processXmlElements((XmlTag)next, processor)) return false;
       }
     }
 
@@ -109,7 +109,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   }
 
   @Nullable
-  private Map<String,XmlTag> getIdMap() {
+  private Map<String, XmlTag> getIdMap() {
     final XmlFile file = getFile();
 
     if (file != null) {
@@ -128,13 +128,13 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   private static String getAnchorValue(final XmlTag xmlTag) {
     final String attributeValue = xmlTag.getAttributeValue("id");
 
-    if (attributeValue!=null) {
+    if (attributeValue != null) {
       return attributeValue;
     }
 
     if (ANCHOR_ELEMENT_NAME.equalsIgnoreCase(xmlTag.getName())) {
       final String attributeValue2 = xmlTag.getAttributeValue("name");
-      if (attributeValue2!=null) {
+      if (attributeValue2 != null) {
         return attributeValue2;
       }
     }
@@ -192,7 +192,7 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   private XmlFile getFile() {
     if (myFileReference != null) {
       final PsiElement psiElement = myFileReference.resolve();
-      return psiElement instanceof XmlFile ? (XmlFile)psiElement:null;
+      return psiElement instanceof XmlFile ? (XmlFile)psiElement : null;
     }
 
     final PsiFile containingFile = myElement.getContainingFile();
@@ -215,8 +215,8 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
   public String getUnresolvedMessagePattern() {
     final XmlFile xmlFile = getFile();
     return xmlFile == null ?
-           XmlBundle.message("cannot.resolve.anchor", myAnchor) :
-           XmlBundle.message("cannot.resolve.anchor.in.file", myAnchor, xmlFile.getName());
+           XmlBundle.message("xml.inspections.cannot.resolve.anchor", myAnchor) :
+           XmlBundle.message("xml.inspections.cannot.resolve.anchor.in.file", myAnchor, xmlFile.getName());
   }
 
   // separate static class to avoid memory leak via this$0
@@ -229,18 +229,18 @@ public class AnchorReferenceImpl implements AnchorReference, PsiReference, Empty
 
     @Override
     public Result<Map<String, XmlTag>> compute() {
-      final Map<String,XmlTag> resultMap = new HashMap<>();
+      final Map<String, XmlTag> resultMap = new HashMap<>();
       XmlDocument document = HtmlUtil.getRealXmlDocument(myFile.getDocument());
-      final XmlTag rootTag = document != null ? document.getRootTag():null;
+      final XmlTag rootTag = document != null ? document.getRootTag() : null;
 
       if (rootTag != null) {
-        processXmlElements(rootTag,
-          new PsiElementProcessor<XmlTag>() {
+        processXmlElements(
+          rootTag, new PsiElementProcessor<>() {
             @Override
             public boolean execute(@NotNull final XmlTag element) {
               final String anchorValue = getAnchorValue(element);
 
-              if (anchorValue!=null) {
+              if (anchorValue != null) {
                 resultMap.put(anchorValue, element);
               }
               return true;

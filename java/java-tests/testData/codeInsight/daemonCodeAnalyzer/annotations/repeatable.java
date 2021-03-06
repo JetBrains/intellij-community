@@ -56,3 +56,12 @@ class C8 {
 
 @interface AA9 { A9[] value(); int i(); }
 @Repeatable(<error descr="Container annotation 'AA9' does not have a default value for 'i'">AA9.class</error>) @interface A9 { }
+
+@Repeatable(<error descr="Invalid container annotation 'java.lang.annotation.Annotation': no 'value' method declared">Annotation.class</error>)
+@interface A10 {}
+
+@interface AA11 { A11[] value();}
+
+@Documented
+@Repeatable(<error descr="Container annotation 'AA11' does not have required @Documented annotation">AA11.class</error>)
+@interface A11 {}

@@ -23,7 +23,6 @@ import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
 import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
 import org.jetbrains.builtInWebServer.acquireToken
 import org.jetbrains.io.BuiltInServer
-import org.jetbrains.io.BuiltInServer.Companion.recommendedWorkerCount
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.io.SubServer
 import java.io.IOException
@@ -63,10 +62,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
 
   companion object {
     @JvmField
-    internal val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = object : NotNullLazyValue<NotificationGroup>() {
-      override fun compute(): NotificationGroup {
-        return NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true)
-      }
+    internal val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = NotNullLazyValue.lazy {
+      NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true)
     }
 
     @JvmStatic
@@ -135,18 +132,19 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
       .thenAcceptAsync(Consumer { mainServer ->
         try {
           @Suppress("DEPRECATION")
-          server = when {
-            mainServer == null || mainServer.eventLoopGroup is io.netty.channel.oio.OioEventLoopGroup -> BuiltInServer.start(recommendedWorkerCount, defaultPort, PORTS_COUNT)
-            else -> BuiltInServer.start(mainServer.eventLoopGroup, false, defaultPort, PORTS_COUNT, true, null)
+          server = when (mainServer) {
+            null -> BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT)
+            else -> BuiltInServer.start(eventLoopGroup = mainServer.eventLoopGroup, isEventLoopGroupOwner = false, firstPort = defaultPort,
+                                        portsCount = PORTS_COUNT, tryAnyPort = true)
           }
           bindCustomPorts(server!!)
         }
         catch (e: Throwable) {
           LOG.info(e)
           NOTIFICATION_GROUP.value.createNotification(
-            BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.git.integration.javascript.debugger.and.liveedit.may.operate.with.errors") +
-            BuiltInServerBundle.message("notification.content.please.check.your.firewall.settings.and.restart") + ApplicationNamesInfo.getInstance().fullProductName,
-            NotificationType.ERROR).notify(null)
+            BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.and.ask.for.restart.0", ApplicationNamesInfo.getInstance().fullProductName),
+            NotificationType.ERROR
+          ).notify(null)
           return@Consumer
         }
 

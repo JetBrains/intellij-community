@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture
 class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val repository: GHRepositoryCoordinates) : GHPRDetailsService {
-  
+
   private val serverPath = repository.serverPath
   private val repoPath = repository.repositoryPath
 
@@ -34,10 +34,16 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
       ?: throw GHNotFoundException("Pull request ${pullRequestId.number} does not exist")
     }.logError(LOG, "Error occurred while loading PR details")
 
+  override fun updateDetails(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, title: String?, description: String?)
+    : CompletableFuture<GHPullRequest> = progressManager.submitIOTask(indicator) {
+    requestExecutor.execute(it, GHGQLRequests.PullRequest.update(repository, pullRequestId.id, title, description))
+  }.logError(LOG, "Error occurred while loading PR details")
+
   override fun adjustReviewers(indicator: ProgressIndicator,
                                pullRequestId: GHPRIdentifier,
                                delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
     progressManager.submitIOTask(indicator) {
+      it.text = GithubBundle.message("pull.request.details.adjusting.reviewers")
       val removedItems = delta.removedItems
       if (removedItems.isNotEmpty()) {
         it.text2 = GithubBundle.message("pull.request.removing.reviewers")
@@ -61,6 +67,7 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
 
   override fun adjustAssignees(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>) =
     progressManager.submitIOTask(indicator) {
+      it.text = GithubBundle.message("pull.request.details.adjusting.assignees")
       requestExecutor.execute(it,
                               GithubApiRequests.Repos.Issues.updateAssignees(serverPath, repoPath.owner, repoPath.repository,
                                                                              pullRequestId.number.toString(),
@@ -71,6 +78,7 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
 
   override fun adjustLabels(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>) =
     progressManager.submitIOTask(indicator) {
+      it.text = GithubBundle.message("pull.request.details.adjusting.labels")
       requestExecutor.execute(indicator,
                               GithubApiRequests.Repos.Issues.Labels
                                 .replace(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number.toString(),

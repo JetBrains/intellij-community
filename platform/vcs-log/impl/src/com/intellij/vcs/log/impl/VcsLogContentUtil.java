@@ -4,16 +4,16 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.TabGroupId;
-import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.content.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogUi;
@@ -21,15 +21,15 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Utility methods to operate VCS Log tabs as {@link Content}s of the {@link ContentManager} of the VCS toolwindow.
@@ -37,31 +37,26 @@ import java.util.function.Supplier;
 public final class VcsLogContentUtil {
   @Nullable
   public static VcsLogUiEx getLogUi(@NotNull JComponent c) {
-    VcsLogPanel vcsLogPanel = null;
-    if (c instanceof VcsLogPanel) {
-      vcsLogPanel = (VcsLogPanel)c;
-    }
-    else if (c instanceof JPanel) {
-      vcsLogPanel = recursiveFindLogPanelInstance(c);
-    }
-
-    if (vcsLogPanel != null) {
-      return vcsLogPanel.getUi();
-    }
-    return null;
+    return ContainerUtil.getFirstItem(getLogUis(c));
   }
 
-  @Nullable
-  private static VcsLogPanel recursiveFindLogPanelInstance(@NotNull JComponent component) {
-    VcsLogPanel instance = ContainerUtil.findInstance(component.getComponents(), VcsLogPanel.class);
-    if (instance != null) return instance;
+  public static List<VcsLogUiEx> getLogUis(@NotNull JComponent c) {
+    Set<VcsLogPanel> panels = new HashSet<>();
+    collectLogPanelInstances(c, panels);
+
+    return ContainerUtil.map(panels, VcsLogPanel::getUi);
+  }
+
+  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
+    if (component instanceof VcsLogPanel) {
+      result.add((VcsLogPanel)component);
+      return;
+    }
     for (Component childComponent : component.getComponents()) {
       if (childComponent instanceof JComponent) {
-        instance = recursiveFindLogPanelInstance((JComponent)childComponent);
-        if (instance != null) return instance;
+        collectLogPanelInstances((JComponent)childComponent, result);
       }
     }
-    return null;
   }
 
   @Nullable
@@ -137,21 +132,20 @@ public final class VcsLogContentUtil {
   }
 
 
-  public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
-                                                    @NotNull @NonNls String groupId,
-                                                    @NotNull Supplier<String> tabGroupDisplayName,
-                                                    @NotNull Function<U, String> tabDisplayName,
-                                                    @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
+  public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project,
+                                                    @NotNull VcsLogManager logManager,
+                                                    @NotNull TabGroupId tabGroupId,
+                                                    @NotNull Function<U, @NlsContexts.TabTitle String> tabDisplayName,
+                                                    @NotNull VcsLogManager.VcsLogUiFactory<U> factory,
+                                                    boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new VcsLogPanel(logManager, logUi),
-                                   groupId, tabGroupDisplayName, () -> tabDisplayName.apply(logUi),
-                                   focus, logUi);
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), tabGroupId,
+                                   new TabDescriptor(new VcsLogPanel(logManager, logUi), () -> tabDisplayName.apply(logUi), logUi), focus);
     if (focus) {
       toolWindow.activate(null);
     }
-    logManager.scheduleInitialization();
     return logUi;
   }
 
@@ -169,6 +163,7 @@ public final class VcsLogContentUtil {
    * @deprecated replaced by {@link VcsLogContentUtil#runInMainLog(Project, Consumer)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<? super VcsLogUiImpl> consumer) {
     runInMainLog(project, ui -> consumer.consume((VcsLogUiImpl)ui));
   }
@@ -189,7 +184,7 @@ public final class VcsLogContentUtil {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void showLogIsNotAvailableMessage(@NotNull Project project) {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING);
   }
@@ -218,12 +213,14 @@ public final class VcsLogContentUtil {
   }
 
   /**
-   * @deprecated replaced by {@link VcsProjectLog#getOrCreateLog(Project)}.
+   * @deprecated use {@link VcsProjectLog#runWhenLogIsReady(Project, Consumer)} instead.
    */
   @Deprecated
-  @CalledInBackground
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @RequiresBackgroundThread
   @Nullable
   public static VcsLogManager getOrCreateLog(@NotNull Project project) {
-    return VcsProjectLog.getOrCreateLog(project);
+    VcsProjectLog.ensureLogCreated(project);
+    return VcsProjectLog.getInstance(project).getLogManager();
   }
 }

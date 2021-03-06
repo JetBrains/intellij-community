@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,12 +15,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +26,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance(SingleRootFileViewProvider.class);
   @SuppressWarnings("unused")
   private volatile PsiFile myPsiFile;
-  private static final AtomicFieldUpdater<SingleRootFileViewProvider, PsiFile> myPsiFileUpdater = AtomicFieldUpdater.forFieldOfType(SingleRootFileViewProvider.class, PsiFile.class);
+  private static final AtomicReferenceFieldUpdater<SingleRootFileViewProvider, PsiFile>
+    myPsiFileUpdater = AtomicReferenceFieldUpdater.newUpdater(SingleRootFileViewProvider.class, PsiFile.class, "myPsiFile");
   @NotNull private final Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
@@ -71,7 +72,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
-    Language language = LanguageUtil.getLanguageForPsi(project, file);
+    Language language = LanguageUtil.getLanguageForPsi(project, file, fileType);
 
     return language != null ? language : PlainTextLanguage.INSTANCE;
   }
@@ -132,11 +133,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @NotNull
-  public final List<FileElement> getKnownTreeRoots() {
+  public final @NotNull List<FileASTNode> getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
-    FileElement element = ((PsiFileImpl)psiFile).getTreeElement();
+    FileASTNode element = ((PsiFileImpl)psiFile).getNodeIfLoaded();
     return ContainerUtil.createMaybeSingletonList(element);
   }
 
@@ -198,7 +198,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
-    if (vFile instanceof LightVirtualFile) {
+    if (vFile instanceof LightVirtualFile && !vFile.getFileType().isBinary()) {
       // This is optimization in order to avoid conversion of [large] file contents to bytes
       int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
       if (lengthInChars < maxBytes / 2) {
@@ -242,7 +242,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       // jdk 6 doesn't have getAndSet()
       if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
         if (prev != psiFile && prev instanceof PsiFileEx) {
-          ((PsiFileEx)prev).markInvalidated();
+          DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
         }
         break;
       }

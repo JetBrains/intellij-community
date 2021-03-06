@@ -32,6 +32,7 @@ public class CompilerModuleOptionsComponent extends JPanel {
     myProject = project;
 
     myTable = new JBTable(new ModuleOptionsTableModel());
+    myTable.setShowGrid(false);
     myTable.setRowHeight(JBUIScale.scale(22));
     myTable.getEmptyText().setText(JavaCompilerBundle.message("settings.additional.compilation.options"));
 

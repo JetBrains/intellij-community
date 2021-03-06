@@ -28,6 +28,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -35,6 +36,7 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.psi.XPathFunction;
 import org.intellij.lang.xpath.psi.XPathVariable;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,17 +99,17 @@ public final class XPathLanguage extends Language {
         @NotNull
         public String getType(@NotNull PsiElement element) {
           if (element instanceof XPathFunction) {
-            return "function";
+            return XPathBundle.message("find.usages.type.function");
           } else if (element instanceof XPathVariable) {
-            return "variable";
+            return XPathBundle.message("find.usages.type.variable");
           } else {
-            return "unknown";
+            return XPathBundle.message("find.usages.type.unknown");
           }
         }
 
         @Override
         @NotNull
-        public String getDescriptiveName(@NotNull PsiElement element) {
+        public @NlsSafe String getDescriptiveName(@NotNull PsiElement element) {
             if (element instanceof PsiNamedElement) {
                 final String name = ((PsiNamedElement)element).getName();
                 if (name != null) return name;
@@ -117,7 +119,7 @@ public final class XPathLanguage extends Language {
 
         @Override
         @NotNull
-        public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+        public @NlsSafe String getNodeText(@NotNull PsiElement element, boolean useFullName) {
             if (useFullName) {
                 if (element instanceof NavigationItem) {
                     final NavigationItem navigationItem = ((NavigationItem)element);

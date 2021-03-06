@@ -6,16 +6,17 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides access to components. Serves as a base interface for {@link com.intellij.openapi.application.Application}
@@ -45,6 +46,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Useless.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent) {
     T component = getComponent(interfaceClass);
     return component == null ? defaultImplementationIfAbsent : component;
@@ -64,7 +66,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * Gets all components whose implementation class is derived from {@code baseClass}.
    *
-   * @deprecated use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
+   * @deprecated use <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extension points</a> instead
    */
   @Deprecated
   default <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
@@ -80,7 +82,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   /**
    * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
-   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
+   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectExImpl#dispose()} was called but not completed yet)
    * <br>
    * The result is only valid inside read action because the application/project/module can be disposed at any moment.
    * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
@@ -156,22 +158,20 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
-    ExceptionUtilRt.rethrowUnchecked(error);
-    return new RuntimeException(error);
-  }
+  @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId);
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
-    return new RuntimeException(message);
-  }
+  @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId);
 
-  // todo make pluginDescriptor as not-null
+  @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId, @Nullable Map<String, String> attachments);
+
   @ApiStatus.Internal
-  default @NotNull <T> T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name, @Nullable PluginDescriptor pluginDescriptor) {
+  <@NotNull T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+
+  @ApiStatus.Internal
+  default @NotNull <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
     try {
-      //noinspection unchecked
-      return (T)ReflectionUtil.newInstance(Class.forName(name));
+      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
     }
     catch (ClassNotFoundException e) {
       throw new RuntimeException(e);

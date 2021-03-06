@@ -1,26 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.util.Objects;
 
 public final class MarkdownCssSettings {
-  public static final MarkdownCssSettings DEFAULT = new MarkdownCssSettings(false);
-  public static final MarkdownCssSettings DARCULA = new MarkdownCssSettings(true);
+  public static final MarkdownCssSettings DEFAULT = new MarkdownCssSettings();
 
   @SuppressWarnings("FieldMayBeFinal")
   @Attribute("UriEnabled")
-  private boolean myUriEnabled;
+  private boolean myCustomStylesheetEnabled;
 
   @SuppressWarnings("FieldMayBeFinal")
   @Attribute("StylesheetUri")
   @NotNull
-  private String myStylesheetUri;
+  private String myCustomStylesheetPath;
 
   @SuppressWarnings("FieldMayBeFinal")
   @Attribute("TextEnabled")
@@ -31,28 +28,41 @@ public final class MarkdownCssSettings {
   @NotNull
   private String myStylesheetText;
 
+  @NotNull
+  private Integer myFontSize;
+
+  @NotNull
+  private String myFontFamily;
+
   private MarkdownCssSettings() {
-    this(StartupUiUtil.isUnderDarcula());
+    this(false,
+         "",
+         false, "",
+         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE, //note: may be get from default.css
+         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_FAMILY); //note: may be get from default.css
   }
 
-  private MarkdownCssSettings(boolean isDarcula) {
-    this(false, getPredefinedCssURI(isDarcula), false, "");
-  }
-
-  public MarkdownCssSettings(boolean uriEnabled, @NotNull String stylesheetUri, boolean textEnabled, @NotNull String stylesheetText) {
-    myUriEnabled = uriEnabled;
-    myStylesheetUri = stylesheetUri;
+  public MarkdownCssSettings(boolean customStylesheetEnabled,
+                             @NotNull String customStylesheetPath,
+                             boolean textEnabled,
+                             @NotNull String stylesheetText,
+                             @NotNull Integer fontSize,
+                             @NotNull String fontFamily) {
+    myCustomStylesheetEnabled = customStylesheetEnabled;
+    myCustomStylesheetPath = customStylesheetPath;
     myTextEnabled = textEnabled;
     myStylesheetText = stylesheetText;
+    myFontSize = fontSize;
+    myFontFamily = fontFamily;
   }
 
-  public boolean isUriEnabled() {
-    return myUriEnabled;
+  public boolean isCustomStylesheetEnabled() {
+    return myCustomStylesheetEnabled;
   }
 
   @NotNull
-  public String getStylesheetUri() {
-    return myStylesheetUri;
+  public String getCustomStylesheetPath() {
+    return myCustomStylesheetPath;
   }
 
   public boolean isTextEnabled() {
@@ -60,8 +70,26 @@ public final class MarkdownCssSettings {
   }
 
   @NotNull
-  public String getStylesheetText() {
+  public String getCustomStylesheetText() {
     return myStylesheetText;
+  }
+
+  @NotNull
+  public Integer getFontSize() {
+    return myFontSize;
+  }
+
+  public void setFontSize(@NotNull Integer fontSize) {
+    myFontSize = fontSize;
+  }
+
+  @NotNull
+  public String getFontFamily() {
+    return myFontFamily;
+  }
+
+  public void setFontFamily(@NotNull String fontFamily) {
+    myFontFamily = fontFamily;
   }
 
   @Override
@@ -71,39 +99,19 @@ public final class MarkdownCssSettings {
 
     MarkdownCssSettings settings = (MarkdownCssSettings)o;
 
-    if (myUriEnabled != settings.myUriEnabled) return false;
+    if (myCustomStylesheetEnabled != settings.myCustomStylesheetEnabled) return false;
     if (myTextEnabled != settings.myTextEnabled) return false;
-    if (!myStylesheetUri.equals(settings.myStylesheetUri)) return false;
+    if (!myCustomStylesheetPath.equals(settings.myCustomStylesheetPath)) return false;
     if (!myStylesheetText.equals(settings.myStylesheetText)) return false;
+    if (!myFontSize.equals(settings.myFontSize)) return false;
+    if (!myFontFamily.equals(settings.myFontFamily)) return false;
 
     return true;
   }
 
-  @NotNull
-  public static MarkdownCssSettings getDefaultCssSettings(boolean isDarcula) {
-    return isDarcula ? DARCULA : DEFAULT;
-  }
-
-  @NotNull
-  private static String getPredefinedCssURI(boolean isDarcula) {
-    final String fileName = isDarcula ? "darcula.css" : "default.css";
-    try {
-      final URL resource = MarkdownCssSettings.class.getResource(fileName);
-      return resource != null ? resource.toURI().toString() : "";
-    }
-    catch (URISyntaxException e) {
-      Logger.getInstance(MarkdownCssSettings.class).error(e);
-      return "";
-    }
-  }
-
   @Override
   public int hashCode() {
-    int result = (myUriEnabled ? 1 : 0);
-    result = 31 * result + myStylesheetUri.hashCode();
-    result = 31 * result + (myTextEnabled ? 1 : 0);
-    result = 31 * result + myStylesheetText.hashCode();
-    return result;
+    return Objects.hash(myCustomStylesheetEnabled, myCustomStylesheetPath, myTextEnabled, myStylesheetText, myFontSize, myFontFamily);
   }
 
   public interface Holder {

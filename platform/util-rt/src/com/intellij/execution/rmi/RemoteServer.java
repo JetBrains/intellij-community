@@ -18,6 +18,8 @@ package com.intellij.execution.rmi;
 import com.intellij.execution.rmi.ssl.SslKeyStore;
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
 import com.intellij.execution.rmi.ssl.SslTrustStore;
+import com.intellij.execution.rmi.ssl.SslUtil;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,9 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
@@ -53,9 +57,16 @@ public class RemoteServer {
 
   private static Remote ourRemote;
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected static void start(Remote remote) throws Exception {
-    setupRMI();
+    start(remote, false, true);
+  }
+
+  /**
+   * @param requireKnownPort when true, the port for the exported Remote will be written to stdout together with serverPort/name pair
+   */
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  protected static void start(Remote remote, boolean requireKnownPort, boolean localHostOnly) throws Exception {
+    setupRMI(localHostOnly);
     banJNDI();
     setupSSL();
 
@@ -64,35 +75,47 @@ public class RemoteServer {
 
     Registry registry;
     int port;
-    for (Random random = new Random(); ;) {
+    for (Random random = new Random(); ; ) {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
       try {
-        registry = LocateRegistry.createRegistry(port);
+        if (localHostOnly) {
+          registry = LocateRegistry.createRegistry(port);
+        }
+        else {
+          registry = LocateRegistry.createRegistry(port, null, RMISocketFactory.getSocketFactory());
+        }
+
+
         break;
       }
-      catch (ExportException ignored) { }
+      catch (ExportException ignored) {
+      }
     }
 
     try {
-      Remote stub = UnicastRemoteObject.exportObject(ourRemote, 0);
+      Remote stub;
+      String portSuffix;
+      if (requireKnownPort) {
+        Pair<Remote, Integer> exported = export(ourRemote);
+        stub = exported.first;
+        portSuffix = "#" + exported.second;
+      }
+      else {
+        stub = UnicastRemoteObject.exportObject(ourRemote, 0);
+        portSuffix = "";
+      }
       String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
       registry.bind(name, stub);
 
-      String id = port + "/" + name;
+      IdeaWatchdog watchdog = new IdeaWatchdogImpl();
+      Remote watchdogStub = UnicastRemoteObject.exportObject(watchdog, 0);
+      registry.bind(IdeaWatchdog.BINDING_NAME, watchdogStub);
+      String id = port + "/" + name + portSuffix;
       System.out.println("Port/ID: " + id);
+      System.out.println();
 
-      long waitTime = RemoteDeadHand.PING_TIMEOUT;
-      Object lock = new Object();
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (lock) {
-          lock.wait(waitTime);
-        }
-        RemoteDeadHand deadHand = (RemoteDeadHand)registry.lookup(RemoteDeadHand.BINDING_NAME);
-        waitTime = deadHand.ping(id);
-      }
+      spinUntilWatchdogAlive(watchdog);
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
@@ -100,7 +123,37 @@ public class RemoteServer {
     }
   }
 
-  public static void setupRMI() {
+  private static void spinUntilWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
+    long waitTime = IdeaWatchdog.WAIT_TIMEOUT;
+    Object lock = new Object();
+    while (true) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (lock) {
+        lock.wait(waitTime);
+      }
+      if (!watchdog.isAlive()) {
+        System.exit(1);
+      }
+    }
+  }
+
+  private static Pair<Remote, Integer> export(Remote toExport) {
+    //[Mihail Muhin] wasn't able to find a better way to know the port. A good alternative would be exporting to port 0 and extracting
+    // serving port number after, but there seem to be no way to extract port for a Remote
+    int port;
+    for (Random random = new Random(); ; ) {
+      port = random.nextInt(0xffff);
+      if (port < 4000) continue;
+      try {
+        Remote remote = UnicastRemoteObject.exportObject(toExport, port);
+        return new Pair<Remote, Integer>(remote, port);
+      }
+      catch (RemoteException ignored) {
+      }
+    }
+  }
+
+  public static void setupRMI(final boolean localHostOnly) {
     // this properties are necessary for RMI servers to work in some cases:
     // if we are behind a firewall, if the network connection is lost, etc.
 
@@ -112,10 +165,10 @@ public class RemoteServer {
     System.setProperty("java.rmi.server.disableHttp", "true");
 
     if (RMISocketFactory.getSocketFactory() != null) return;
-    // bind to localhost only
     try {
       RMISocketFactory.setSocketFactory(new RMISocketFactory() {
-        final InetAddress loopbackAddress = InetAddress.getByName(getLoopbackAddress());
+        final InetAddress loopbackAddress = InetAddress.getByName(getListenAddress(localHostOnly));
+
         @Override
         public Socket createSocket(String host, int port) throws IOException {
           return new Socket(host, port);
@@ -139,10 +192,11 @@ public class RemoteServer {
   }
 
   private static void setupSSL() {
-    boolean caCert = System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null;
-    boolean clientCert = System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH) != null;
-    boolean clientKey = System.getProperty(SslSocketFactory.SSL_CLIENT_KEY_PATH) != null;
-    boolean useFactory = "true".equals(System.getProperty(SslSocketFactory.SSL_USE_FACTORY));
+    boolean caCert = System.getProperty(SslUtil.SSL_CA_CERT_PATH) != null;
+    boolean clientCert = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH) != null;
+    boolean clientKey = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH) != null;
+    boolean deferred = "true".equals(System.getProperty(SslKeyStore.SSL_DEFERRED_KEY_LOADING));
+    boolean useFactory = "true".equals(System.getProperty(SslUtil.SSL_USE_FACTORY));
     if (useFactory) {
       if (caCert || clientCert && clientKey) {
         Security.setProperty("ssl.SocketFactory.provider", SslSocketFactory.class.getName());
@@ -150,18 +204,30 @@ public class RemoteServer {
     }
     else {
       if (caCert) SslTrustStore.setDefault();
-      if (clientCert && clientKey) SslKeyStore.setDefault();
+      if (clientCert && clientKey || deferred) SslKeyStore.setDefault();
     }
+  }
+
+
+  private static String getListenAddress(boolean localHostOnly) {
+    if (localHostOnly) {
+      return getLoopbackAddress();
+    }
+    return isIpV6() ? "::/0" : "0.0.0.0";
   }
 
   @NotNull
   private static String getLoopbackAddress() {
-    boolean ipv6 = false;
+    return isIpV6() ? "::1" : "127.0.0.1";
+  }
+
+  private static boolean isIpV6() {
     try {
-      ipv6 = InetAddress.getByName(null) instanceof Inet6Address;
+      return InetAddress.getByName(null) instanceof Inet6Address;
     }
-    catch (IOException ignore) {}
-    return ipv6 ? "::1" : "127.0.0.1";
+    catch (IOException ignore) {
+      return false;
+    }
   }
 
   @SuppressWarnings("UnusedDeclaration")

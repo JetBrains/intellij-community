@@ -7,6 +7,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -26,7 +27,7 @@ public abstract class RegExpInspectionTestCase extends BasePlatformTestCase {
     highlightTest(code, RegExpFileType.INSTANCE);
   }
 
-  protected void highlightTest(@Language("RegExp") String code, RegExpFileType fileType) {
+  protected void highlightTest(@Language("RegExp") String code, FileType fileType) {
     final LocalInspectionTool inspection = getInspection();
     myFixture.enableInspections(inspection);
     final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
@@ -46,7 +47,7 @@ public abstract class RegExpInspectionTestCase extends BasePlatformTestCase {
     quickfixTest(before, after, hint, RegExpFileType.INSTANCE);
   }
 
-  protected void quickfixTest(@Language("RegExp") String before, @Language("RegExp") String after, String hint, RegExpFileType fileType) {
+  protected void quickfixTest(@Language("RegExp") String before, @Language("RegExp") String after, String hint, FileType fileType) {
     highlightTest(before, fileType);
     myFixture.launchAction(myFixture.findSingleIntention(hint));
     myFixture.checkResult(after);
@@ -54,7 +55,6 @@ public abstract class RegExpInspectionTestCase extends BasePlatformTestCase {
 
   protected final void quickfixAllTest(@Language("RegExp") String before, @Language("RegExp") String after) {
     InspectionProfileEntry inspection = getInspection();
-    assert inspection != null : "getInspection() needs to return a non-null value for quickFixAllTest() to work";
     quickfixTest(before, after, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.getDisplayName()));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -13,29 +13,26 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import java.io.File
+import java.nio.file.Paths
 
 class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
-    val project = getProjectManager().loadAndOpenProject(projectPath)!!
-    try {
-      val moduleManager = ModuleManager.getInstance(project)
-      assertEquals(3, moduleManager.allModuleDescriptions.size)
-      assertEquals(2, moduleManager.unloadedModuleDescriptions.size)
+    val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), testRootDisposable)
+    val moduleManager = ModuleManager.getInstance(project)
+    assertEquals(3, moduleManager.allModuleDescriptions.size)
+    assertEquals(2, moduleManager.unloadedModuleDescriptions.size)
 
-      val util = moduleManager.unloadedModuleDescriptions.find { it.name == "util" }!!
-      val projectDirUrl = VfsUtilCore.pathToUrl(projectPath)
-      assertEquals("$projectDirUrl/util", assertOneElement(util.contentRoots).url)
-      assertEmpty(util.dependencyModuleNames)
+    val util = moduleManager.unloadedModuleDescriptions.find { it.name == "util" }!!
+    val projectDirUrl = VfsUtilCore.pathToUrl(projectPath)
+    assertEquals("$projectDirUrl/util", assertOneElement(util.contentRoots).url)
+    assertEmpty(util.dependencyModuleNames)
 
-      val dep = moduleManager.unloadedModuleDescriptions.find { it.name == "dep" }!!
-      assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
-      assertEquals("util", assertOneElement(dep.dependencyModuleNames))
-    }
-    finally {
-      getProjectManager().forceCloseProject(project)
-    }
+    val dep = moduleManager.unloadedModuleDescriptions.find { it.name == "dep" }!!
+    assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
+    assertEquals("util", assertOneElement(dep.dependencyModuleNames))
   }
 
   fun `test set unloaded modules`() {

@@ -147,7 +147,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       CopyPasteManagerEx.getInstanceEx().removeContent(content);
     }
 
-    class PasteSimpleAction extends DialogWrapperAction {
+    final class PasteSimpleAction extends DialogWrapperAction {
       private PasteSimpleAction() {
         super(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE_SIMPLE));
       }

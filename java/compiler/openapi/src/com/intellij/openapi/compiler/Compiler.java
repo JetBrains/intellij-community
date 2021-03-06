@@ -2,6 +2,7 @@
 package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,6 +23,7 @@ public interface Compiler {
    * @return the description string.
    */
   @NotNull
+  @Nls
   String getDescription();
 
   /**

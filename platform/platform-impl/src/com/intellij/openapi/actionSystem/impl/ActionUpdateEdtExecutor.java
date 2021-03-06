@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -10,16 +11,24 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class ActionUpdateEdtExecutor {
   /**
    * Compute the supplied value on Swing thread, but try to avoid deadlocks by periodically performing {@link ProgressManager#checkCanceled()} in the current thread.
    * Makes sense to be used in background read actions running with a progress indicator that's canceled when a write action is about to occur.
+   *
    * @see com.intellij.openapi.application.ReadAction#nonBlocking(Runnable)
    */
-  public static <T> T computeOnEdt(@NotNull Supplier<T> supplier) {
+  public static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier) {
+    return computeOnEdt(supplier, null);
+  }
+
+  static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier,
+                            @Nullable Consumer<Runnable> laterInvocator) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();
@@ -28,7 +37,7 @@ public final class ActionUpdateEdtExecutor {
     Semaphore semaphore = new Semaphore(1);
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     Ref<T> result = Ref.create();
-    ApplicationManager.getApplication().invokeLater(() -> {
+    Runnable runnable = () -> {
       try {
         if (indicator == null || !indicator.isCanceled()) {
           result.set(supplier.get());
@@ -37,7 +46,13 @@ public final class ActionUpdateEdtExecutor {
       finally {
         semaphore.up();
       }
-    });
+    };
+    if (laterInvocator != null) {
+      laterInvocator.accept(runnable);
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+    }
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
 

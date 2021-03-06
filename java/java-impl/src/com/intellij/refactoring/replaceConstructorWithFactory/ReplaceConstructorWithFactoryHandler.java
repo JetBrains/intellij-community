@@ -16,28 +16,33 @@
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-public class ReplaceConstructorWithFactoryHandler
-        implements RefactoringActionHandler {
+public class ReplaceConstructorWithFactoryHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   /**
    * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static final String REFACTORING_NAME = "Replace Constructor With Factory Method";
   private Project myProject;
 
@@ -164,7 +169,13 @@ public class ReplaceConstructorWithFactoryHandler
     new ReplaceConstructorWithFactoryDialog(myProject, method, method.getContainingClass()).show();
   }
 
-  public static String getRefactoringName() {
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null;
+  }
+
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 }

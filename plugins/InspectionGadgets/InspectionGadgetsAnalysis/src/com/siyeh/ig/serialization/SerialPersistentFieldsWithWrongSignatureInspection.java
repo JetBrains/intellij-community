@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SerialPersistentFieldsWithWrongSignatureInspection
-  extends BaseInspection {
+import static com.intellij.psi.PsiModifier.*;
+
+public class SerialPersistentFieldsWithWrongSignatureInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -41,47 +39,29 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
     return new SerialPersistentFieldsWithWrongSignatureVisitor();
   }
 
-  private static class SerialPersistentFieldsWithWrongSignatureVisitor
-    extends BaseInspectionVisitor {
+  private static class SerialPersistentFieldsWithWrongSignatureVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      PsiField badSerialPersistentFields = null;
-      final PsiField[] fields = aClass.getFields();
-      for (final PsiField field : fields) {
-        if (isSerialPersistentFields(field)) {
-          if (!field.hasModifierProperty(PsiModifier.PRIVATE) ||
-              !field.hasModifierProperty(PsiModifier.STATIC) ||
-              !field.hasModifierProperty(PsiModifier.FINAL)) {
-            badSerialPersistentFields = field;
-            break;
-          }
-          else {
-            final PsiType type = field.getType();
-            if (!type.equalsToText("java.io.ObjectStreamField" +
-                                   "[]")) {
-              badSerialPersistentFields = field;
-              break;
-            }
-          }
-        }
-      }
-      if (badSerialPersistentFields == null) {
-        return;
-      }
-      if (!SerializationUtils.isSerializable(aClass)) {
-        return;
-      }
-      registerFieldError(badSerialPersistentFields);
+    public void visitField(PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || containingClass.isInterface() || containingClass.isAnnotationType()) return;
+      visitVariable(field, containingClass);
     }
 
-    private static boolean isSerialPersistentFields(PsiField field) {
-      @NonNls final String fieldName = field.getName();
-      return "serialPersistentFields".equals(fieldName);
+    @Override
+    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+      visitVariable(recordComponent, recordComponent.getContainingClass());
+    }
+
+    private void visitVariable(@NotNull PsiVariable variable, @Nullable PsiClass containingClass) {
+      if (!SerializationUtils.isSerializable(containingClass)) return;
+      if (!"serialPersistentFields".equals(variable.getName())) return;
+      boolean rightReturnType = variable.getType().equalsToText("java.io.ObjectStreamField[]");
+      if (rightReturnType && variable.hasModifierProperty(STATIC) && variable.hasModifierProperty(PRIVATE) &&
+          variable.hasModifierProperty(FINAL)) {
+        return;
+      }
+      registerVariableError(variable);
     }
   }
 }

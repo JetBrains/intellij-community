@@ -4,12 +4,11 @@ package com.intellij.usages.impl.rules;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
@@ -65,9 +64,9 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     return null;
   }
 
-  private static class MethodUsageGroup implements UsageGroup, TypeSafeDataProvider {
+  private static class MethodUsageGroup implements UsageGroup, DataProvider {
     private final SmartPsiElementPointer<PsiMethod> myMethodPointer;
-    private final String myName;
+    private final @NlsSafe String myName;
     private final Icon myIcon;
     private final Project myProject;
 
@@ -175,18 +174,18 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       return myName.compareToIgnoreCase(other.myName);
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (CommonDataKeys.PSI_ELEMENT == key) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getMethod());
+    public Object getData(@NotNull String dataId) {
+      if (!isValid()) return null;
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getMethod();
       }
-      if (UsageView.USAGE_INFO_KEY == key) {
+      else if (UsageView.USAGE_INFO_KEY.is(dataId)) {
         PsiMethod method = getMethod();
-        if (method != null) {
-          sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(method));
-        }
+        return method == null ? null : new UsageInfo(method);
       }
+      return null;
     }
   }
 }

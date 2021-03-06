@@ -15,8 +15,15 @@
  */
 package com.intellij.lang;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated in favor of {@link HtmlEmbeddedContentSupport} API.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class LanguageHtmlInlineScriptTokenTypesProvider extends LanguageExtension<HtmlInlineScriptTokenTypesProvider> {
   public final static LanguageHtmlInlineScriptTokenTypesProvider INSTANCE = new LanguageHtmlInlineScriptTokenTypesProvider();
 

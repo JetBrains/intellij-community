@@ -26,6 +26,7 @@ import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.vp.Creator;
 import com.jetbrains.python.vp.ViewPresenterUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +47,7 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
     }
 
     ViewPresenterUtils.linkViewWithPresenterAndLaunch(PyExtractSuperclassPresenter.class, PyExtractSuperclassView.class,
-                                                      new Creator<PyExtractSuperclassView, PyExtractSuperclassPresenter>() {
+                                                      new Creator<>() {
                                                         @NotNull
                                                         @Override
                                                         public PyExtractSuperclassPresenter createPresenter(@NotNull final PyExtractSuperclassView view) {
@@ -75,7 +76,7 @@ public class PyExtractSuperclassHandler extends PyClassRefactoringHandler {
     return "refactoring.extractSuperclass";
   }
 
-  public static String getRefactoringName() {
+  public static @Nls(capitalization = Nls.Capitalization.Title) String getRefactoringName() {
     return RefactoringBundle.message("extract.superclass.title");
   }
 }

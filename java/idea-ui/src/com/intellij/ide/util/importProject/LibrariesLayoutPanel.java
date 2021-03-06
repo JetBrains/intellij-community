@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.util.NlsContexts;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,32 +67,36 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
   @Override
   protected String getEntriesChooserTitle() {
-    return "Libraries";
+    return JavaUiBundle.message("title.libraries");
   }
 
   @Override
-  protected String getDependenciesTitle() {
-    return "Library contents";
+  protected @NlsContexts.BorderTitle String getDependenciesTitle() {
+    return JavaUiBundle.message("title.library.contents");
   }
 
   @Override
-  protected String getElementTypeName() {
-    return "library";
+  protected String getElementTypeNamePlural() {
+    return JavaUiBundle.message("title.libraries");
+  }
+
+  @Override
+  protected ElementType getElementType() {
+    return ElementType.LIBRARY;
   }
 
   @Override
   protected String getSplitDialogChooseFilesPrompt() {
-    return "&Select jars to extract to the new library:";
+    return JavaUiBundle.message("label.select.jars.to.extract.to.new.library");
   }
 
   @Override
   protected String getNameAlreadyUsedMessage(final String name) {
-    return "library with name " + name + " already exists";
+    return JavaUiBundle.message("error.library.with.name.already.exists", name);
   }
 
   @Override
   protected String getStepDescriptionText() {
-    return "Please review libraries found. At this stage you can set library names that will be used in the project,\n" +
-           "exclude particular libraries from the project, or move individual files between the libraries.";
+    return JavaUiBundle.message("libraries.layout.step.description");
   }
 }

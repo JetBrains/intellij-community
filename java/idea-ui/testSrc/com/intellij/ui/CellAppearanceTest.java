@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,8 +64,8 @@ public class CellAppearanceTest extends JavaModuleTestCase {
     checkSingleSection(appearance, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
   }
 
-  private Module createTempModule() {
-    return createModule(getTempDir().createTempFile("module"));
+  private @NotNull Module createTempModule() {
+    return createModule(getTempDir().newPath("module.iml"));
   }
 
   private static void checkSingleSection(CellAppearanceEx appearance, SimpleTextAttributes expectedAttribute) {
@@ -81,7 +81,7 @@ public class CellAppearanceTest extends JavaModuleTestCase {
 
   public void testEmptyRelativePath() {
     ModifiableRootModel rootModel = createRootModel();
-    VirtualFile vFile = getTempDir().createTempVDir("content");
+    VirtualFile vFile = getTempDir().createVirtualDir();
     ContentEntry contentEntry = rootModel.addContentEntry(vFile);
     CellAppearanceEx appearance = myService.forContentFolder(contentEntry.addSourceFolder(vFile, false));
     assertEquals("." + File.separator, appearance.getText());
@@ -112,7 +112,7 @@ public class CellAppearanceTest extends JavaModuleTestCase {
   }
 
   private VirtualFile addClassRoot(Library library) {
-    VirtualFile vFile = getTempDir().createVFile("yyy");
+    VirtualFile vFile = getTempDir().createVirtualFile("yyy");
     addClassesRoot(library, vFile);
     return vFile;
   }

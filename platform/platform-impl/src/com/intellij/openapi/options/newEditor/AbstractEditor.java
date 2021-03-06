@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ abstract class AbstractEditor extends JPanel implements Disposable {
 
   abstract Action getResetAction();
 
+  @NonNls
   abstract String getHelpTopic();
 
   abstract boolean apply();

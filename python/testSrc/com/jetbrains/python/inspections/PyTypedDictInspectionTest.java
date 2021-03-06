@@ -51,7 +51,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "class Movie(TypedDict):\n" +
                          "    name: str\n" +
-                         "    year: int = <warning descr=\"Right hand side values are not supported in TypedDict\">42</warning>"));
+                         "    year: int = <warning descr=\"Right-hand side values are not supported in TypedDict\">42</warning>"));
   }
 
   public void testPass() {
@@ -168,7 +168,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    "m = Horror(name='Alien', year=1979)\n" +
                    "d={'name':'Garden State', 'year':2004}\n" +
                    "m.update(d)\n" +
-                   "m.update({'name':'Garden State', 'year':<warning descr=\"Expected type 'Optional[int]', got 'str' instead\">'2004'</warning>, <warning descr=\"TypedDict Horror cannot have key based_on\">'based_on'</warning>: 'book'})\n" +
+                   "m.update({'name':'Garden State', 'year':<warning descr=\"Expected type 'Optional[int]', got 'str' instead\">'2004'</warning>, <warning descr=\"TypedDict \\\"Horror\\\" cannot have key 'based_on'\">'based_on'</warning>: 'book'})\n" +
                    "m.update(name=<warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>, year=1984, based_on_book=<warning descr=\"Expected type 'bool', got 'str' instead\">'yes'</warning>)\n" +
                    "m.update([('name',<warning descr=\"Expected type 'str', got 'int' instead\">1984</warning>), ('year',None)])"));
   }
@@ -298,6 +298,16 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                          "    return movie[<warning descr=\"TypedDict \\\"Movie\\\" has no keys ('name1', '42')\">key</warning>]\n" +
                          "def get_value(movie: Movie, key: Literal[42]) -> Union[int, str]:\n" +
                          "    return movie[<warning descr=\"TypedDict key must be a string literal; expected one of ('name', 'year')\">key</warning>]"));
+  }
+
+  // PY-44714
+  public void testNoneAsType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import TypedDict\n" +
+                         "class X(TypedDict):\n" +
+                         "    n: None\n" +
+                         "Y = TypedDict('Y', {'n': None})\n"));
   }
 
   @NotNull

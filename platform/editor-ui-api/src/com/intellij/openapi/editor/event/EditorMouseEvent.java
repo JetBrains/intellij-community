@@ -30,9 +30,8 @@ import java.util.EventObject;
  * dispatching, and is not guaranteed to be actual by the time some event listener receives the event (if previously called listener has
  * modified the editor state).
  * <p>
- * The additional information is currently provided for the following types of events: {@link MouseEvent#MOUSE_MOVED MOUSE_MOVED},
- * {@link MouseEvent#MOUSE_PRESSED MOUSE_PRESSED}, {@link MouseEvent#MOUSE_RELEASED MOUSE_RELEASED} and
- * {@link MouseEvent#MOUSE_CLICKED MOUSE_CLICKED}. For other events, return values of corresponding event getters are unspecified.
+ * The additional information is not provided for {@link MouseEvent#MOUSE_ENTERED MOUSE_ENTERED} and
+ * {@link MouseEvent#MOUSE_EXITED MOUSE_EXITED} events. Return values of corresponding event getters are unspecified for those events.
  */
 public class EditorMouseEvent extends EventObject {
   @NotNull
@@ -88,52 +87,33 @@ public class EditorMouseEvent extends EventObject {
     return myEditorArea;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public int getOffset() {
     return myOffset;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @NotNull LogicalPosition getLogicalPosition() {
     return myLogicalPosition;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @NotNull VisualPosition getVisualPosition() {
     return myVisualPosition;
   }
 
   /**
    * Returns {@code false} if mouse is below the last line of text, to the right of the last character on the line, or over an inlay.
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
    */
   public boolean isOverText() {
     return myIsOverText;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @Nullable FoldRegion getCollapsedFoldRegion() {
     return myCollapsedFoldRegion == null || !myCollapsedFoldRegion.isValid() ? null : myCollapsedFoldRegion;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @Nullable Inlay getInlay() {
     return myInlay == null || !myInlay.isValid() ? null : myInlay;
   }
 
-  /**
-   * See {@link EditorMouseEvent class documentation} with regard to the availability of this information.
-   */
   public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }

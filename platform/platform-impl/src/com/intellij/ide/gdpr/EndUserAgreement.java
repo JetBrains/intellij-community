@@ -2,17 +2,18 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 /**
@@ -59,11 +60,11 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Path getDataRoot() {
-    return Locations.getDataRoot().resolve("PrivacyPolicy");
+    return PathManager.getCommonDataPath().resolve(RELATIVE_RESOURCE_PATH);
   }
 
   private static String getBundledResourcePath(String docName) {
-    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? "/PrivacyPolicy.html" : "/"+docName+".html";
+    return PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? "/PrivacyPolicy.html" : "/" + docName + ".html";
   }
 
   public static void setAccepted(@NotNull Document doc) {
@@ -82,24 +83,21 @@ public final class EndUserAgreement {
 
   public static @NotNull Document getLatestDocument() {
     // needed for testing
-    final String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
+    String text = System.getProperty(POLICY_TEXT_PROPERTY, null);
     if (text != null) {
-      final Document fromProperty = loadContent(PRIVACY_POLICY_DOCUMENT_NAME, new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+      Document fromProperty = new Document(PRIVACY_POLICY_DOCUMENT_NAME, text);
       if (!fromProperty.getVersion().isUnknown()) {
         return fromProperty;
       }
     }
 
     String docName = getDocumentName();
-    try {
-      Document fromFile = loadContent(docName, Files.newInputStream(getDocumentContentFile(docName)));
-      if (!fromFile.getVersion().isUnknown()) {
-        return fromFile;
-      }
+    Document fromFile = loadContent(docName, getDocumentContentFile(docName));
+    if (!fromFile.getVersion().isUnknown()) {
+      return fromFile;
     }
-    catch (IOException ignored) {
-    }
-    return loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+
+    return loadContent(docName, getBundledResourcePath(docName));
   }
 
   public static boolean updateCachedContentToLatestBundledVersion() {
@@ -107,14 +105,14 @@ public final class EndUserAgreement {
       final String docName = getDocumentName();
       Path cacheFile = getDocumentContentFile(docName);
       if (Files.exists(cacheFile)) {
-        Document cached = loadContent(docName, Files.newInputStream(cacheFile));
+        Document cached = loadContent(docName, cacheFile);
         if (!cached.getVersion().isUnknown()) {
-          final Document bundled = loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+          Document bundled = loadContent(docName, getBundledResourcePath(docName));
           if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
             try {
               // update content only and not the active document name
               // active document name can be changed by JBA only
-              FileUtil.writeToFile(getDocumentContentFile(docName).toFile(), bundled.getText());
+              writeToFile(getDocumentContentFile(docName), bundled.getText());
             }
             catch (FileNotFoundException e) {
               LOG.info(e.getMessage());
@@ -127,17 +125,21 @@ public final class EndUserAgreement {
         }
       }
     }
-    catch (Throwable ignored) {
-    }
+    catch (Throwable ignored) { }
     return false;
   }
 
-  public static void update(String docName, String text) {
+  private static void writeToFile(@NotNull Path file, @NotNull String text) throws IOException {
+    Files.createDirectories(file.getParent());
+    Files.write(file, text.getBytes(StandardCharsets.UTF_8));
+  }
+
+  public static void update(@NotNull String docName, @NotNull String text) {
     try {
-      FileUtil.writeToFile(getDocumentContentFile(docName).toFile(), text);
-      FileUtil.writeToFile(getDocumentNameFile().toFile(), docName);
+      writeToFile(getDocumentContentFile(docName), text);
+      writeToFile(getDocumentNameFile(), docName);
     }
-    catch (FileNotFoundException e) {
+    catch (NoSuchFileException e) {
       LOG.info(e.getMessage());
     }
     catch (IOException e) {
@@ -145,15 +147,26 @@ public final class EndUserAgreement {
     }
   }
 
-  private static @NotNull Document loadContent(String docName, InputStream stream) {
-    if (stream != null) {
-      try (Reader reader = new InputStreamReader(stream instanceof ByteArrayInputStream ? stream : new BufferedInputStream(stream),
-                                                 StandardCharsets.UTF_8)) {
-        return new Document(docName, new String(FileUtil.adaptiveLoadText(reader)));
+  private static @NotNull Document loadContent(String docName, String resourcePath) {
+    try (InputStream stream = EndUserAgreement.class.getResourceAsStream(resourcePath)) {
+      if (stream != null) {
+        return new Document(docName, ResourceUtil.loadText(stream));
       }
-      catch (IOException e) {
-        LOG.info(e);
-      }
+    }
+    catch (IOException e) {
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
+    }
+    return new Document(docName, "");
+  }
+
+  private static @NotNull Document loadContent(String docName, Path file) {
+    try {
+      return new Document(docName, Files.readString(file));
+    }
+    catch (IOException e) {
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
     }
     return new Document(docName, "");
   }
@@ -164,13 +177,12 @@ public final class EndUserAgreement {
     }
 
     try {
-      String docName = new String(Files.readAllBytes(getDocumentNameFile()), StandardCharsets.UTF_8);
+      String docName = Files.readString(getDocumentNameFile());
       if (!StringUtilRt.isEmptyOrSpaces(docName)) {
         return docName;
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
     return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
@@ -223,7 +235,7 @@ public final class EndUserAgreement {
     }
 
     private static @NotNull Version parseVersion(String text) {
-      if (!StringUtil.isEmptyOrSpaces(text)) {
+      if (!StringUtilRt.isEmptyOrSpaces(text)) {
         try (BufferedReader reader = new BufferedReader(new StringReader(text))) {
           final String line = reader.readLine();
           if (line != null) {
@@ -242,6 +254,5 @@ public final class EndUserAgreement {
       }
       return Version.UNKNOWN;
     }
-
   }
 }

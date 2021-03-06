@@ -3,7 +3,7 @@ package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.formatting.fileSet.PatternDescriptor;
+import com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

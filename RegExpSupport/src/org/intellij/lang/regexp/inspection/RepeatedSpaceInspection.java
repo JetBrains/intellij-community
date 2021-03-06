@@ -51,7 +51,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
         next = next.getNextSibling();
       }
       if (count > 1) {
-        final String message = count + " consecutive spaces in RegExp";
+        final String message = RegExpBundle.message("inspection.warning.consecutive.spaces.in.regexp", count);
         final int offset = aChar.getStartOffsetInParent();
         myHolder.registerProblem(parent, new TextRange(offset, offset + length), message, new RepeatedSpaceFix(count));
       }

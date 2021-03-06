@@ -18,19 +18,17 @@ final class ActiveStack {
    * Contains {@code id}s of tool window that were activated. This stack
    * is cleared each time when editor is being activated.
    */
-  private final Stack<ToolWindowEntry> myStack;
+  private final Stack<ToolWindowEntry> myStack = new Stack<>();
   /**
    * This stack is not cleared when editor is being activated. It means its "long"
    * persistence.
    */
-  private final Stack<ToolWindowEntry> myPersistentStack;
+  private final Stack<ToolWindowEntry> myPersistentStack = new Stack<>();
 
   /**
    * Creates enabled window stack.
    */
   ActiveStack() {
-    myStack = new Stack<>();
-    myPersistentStack = new Stack<>();
   }
 
   /**
@@ -40,19 +38,7 @@ final class ActiveStack {
     myStack.clear();
   }
 
-  /**
-   * Return whether the stack of active (not persistent) {@code id}s is empty or not.
-   */
-  boolean isEmpty() {
-    return myStack.isEmpty();
-  }
-
-  @NotNull
-  ToolWindowEntry pop() {
-    return myStack.pop();
-  }
-
-  int getSize() {
+  private int getSize() {
     return myStack.size();
   }
 

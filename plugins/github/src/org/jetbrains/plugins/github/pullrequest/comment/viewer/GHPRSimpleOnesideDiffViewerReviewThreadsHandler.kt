@@ -5,6 +5,7 @@ import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
@@ -14,7 +15,8 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRRe
                                                       commentableRangesModel: SingleValueModel<List<Range>?>,
                                                       reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                       viewer: SimpleOnesideDiffViewer,
-                                                      componentsFactory: GHPRDiffEditorReviewComponentsFactory)
+                                                      componentsFactory: GHPRDiffEditorReviewComponentsFactory,
+                                                      cumulative: Boolean)
   : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
   private val commentableRanges = SingleValueModel<List<LineRange>>(emptyList())
@@ -25,8 +27,12 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRRe
   init {
     val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
 
-    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel, inlaysManager, componentsFactory) {
-      viewer.side to it
+    val gutterIconRendererFactory = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
+                                                                                inlaysManager,
+                                                                                componentsFactory,
+                                                                                cumulative) { line ->
+      val (startLine, endLine) = getCommentLinesRange(viewer.editor, line)
+      GHPRCommentLocation(viewer.side, endLine, startLine)
     }
 
     GHPREditorCommentableRangesController(commentableRanges, gutterIconRendererFactory, viewer.editor)

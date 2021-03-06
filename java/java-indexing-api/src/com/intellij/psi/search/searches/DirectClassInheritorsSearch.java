@@ -12,7 +12,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.directClassInheritorsSearch");
   public static final DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
@@ -83,17 +83,5 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
   @NotNull
   public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
     return INSTANCE.createUniqueResultsQuery(parameters);
-  }
-
-  /**
-   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
-   */
-  @NotNull
-  @Deprecated
-  public static Query<PsiClass> search(@NotNull PsiClass aClass,
-                                       @NotNull SearchScope scope,
-                                       boolean includeAnonymous,
-                                       final boolean checkInheritance) {
-    return search(aClass, scope, includeAnonymous);
   }
 }

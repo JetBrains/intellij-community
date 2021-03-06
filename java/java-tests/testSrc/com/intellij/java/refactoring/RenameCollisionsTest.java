@@ -91,6 +91,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     doTest("siStaticMethod");
   }
 
+  public void testRenameMethodInnerStaticToOuterStaticMoreParameters() {
+    doTest("staticMethod");
+  }
+
   public void testRenameMethodStaticToAlien() {
     doTest("valueOf");
   }
@@ -171,7 +175,7 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
       doTest("y");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Assert.assertEquals("There is already a field <b><code>y</code></b>. It will conflict with the renamed variable", e.getMessage());
+      Assert.assertEquals("There is already a field <b><code>y</code></b>. It will conflict with the renamed local variable", e.getMessage());
       return;
     }
     fail("Conflicts were not found");

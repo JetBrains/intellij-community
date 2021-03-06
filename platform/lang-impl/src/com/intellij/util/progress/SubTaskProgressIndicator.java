@@ -1,21 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.progress;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import org.jetbrains.annotations.ApiStatus;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @ApiStatus.Internal
 public final class SubTaskProgressIndicator extends SensitiveProgressWrapper {
   private final ConcurrentTasksProgressManager myProgressManager;
-  private final AtomicDouble myFraction;
+  private final AtomicLong myFraction;
   private final int myTaskWeight;
 
   SubTaskProgressIndicator(ConcurrentTasksProgressManager progressManager, int taskWeight) {
     super(progressManager.getParent());
     myProgressManager = progressManager;
     myTaskWeight = taskWeight;
-    myFraction = new AtomicDouble();
+    myFraction = new AtomicLong();
   }
 
   @Override
@@ -31,7 +32,7 @@ public final class SubTaskProgressIndicator extends SensitiveProgressWrapper {
 
   @Override
   public void setFraction(double newValue) {
-    double oldValue = myFraction.getAndSet(newValue);
+    double oldValue = Double.longBitsToDouble(myFraction.getAndSet(Double.doubleToRawLongBits(newValue)));
     myProgressManager.updateTaskFraction(newValue - oldValue, myTaskWeight);
   }
 
@@ -42,7 +43,7 @@ public final class SubTaskProgressIndicator extends SensitiveProgressWrapper {
 
   @Override
   public double getFraction() {
-    return myFraction.get();
+    return Double.longBitsToDouble(myFraction.get());
   }
 
   public void finished() {

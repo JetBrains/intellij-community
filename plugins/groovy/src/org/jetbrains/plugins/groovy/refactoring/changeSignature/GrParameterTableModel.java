@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
@@ -22,6 +8,7 @@ import com.intellij.refactoring.changeSignature.ParameterTableModelBase;
 import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellEditor;
 
@@ -34,7 +21,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
   public GrParameterTableModel(final PsiElement typeContext, PsiElement defaultValueContext, final GrChangeSignatureDialog dialog) {
     this(typeContext, defaultValueContext,
          new GrTypeColumn(typeContext.getProject()),
-         new NameColumn<GrParameterInfo, GrParameterTableModelItem>(typeContext.getProject(), "Name"),
+         new NameColumn<GrParameterInfo, GrParameterTableModelItem>(typeContext.getProject()),
          new GrInitializerColumn(typeContext.getProject()),
          new GrDefaultValueColumn(typeContext.getProject()),
          new AnyVarColumn<GrParameterInfo, GrParameterTableModelItem>() {
@@ -59,7 +46,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
   private static class GrTypeColumn extends TypeColumn<GrParameterInfo, GrParameterTableModelItem> {
 
     GrTypeColumn(Project project) {
-      super(project, GroovyFileType.GROOVY_FILE_TYPE, "Type");
+      super(project, GroovyFileType.GROOVY_FILE_TYPE, GroovyBundle.message("change.signature.type.column"));
     }
 
     @Override
@@ -89,7 +76,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
 
     @Override
     public String getName() {
-      return "Default initializer";
+      return GroovyBundle.message("change.signature.default.initializer.column");
     }
 
     @Override

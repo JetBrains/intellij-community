@@ -12,6 +12,9 @@ public class TerminalSessionFileType extends FakeFileType {
 
   public final static TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
 
+  private TerminalSessionFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {
@@ -21,7 +24,7 @@ public class TerminalSessionFileType extends FakeFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return getName() + " Fake File Type";
+    return getName() + " Fake File Type"; //NON-NLS
   }
 
   @Override

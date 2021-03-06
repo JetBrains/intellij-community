@@ -1,16 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +14,7 @@ public class CollectTest extends GraphTestCase {
 
   @Test
   public void testSimple() {
-    Map<String, String> graph = new THashMap<>();
+    Map<String, String> graph = new HashMap<>();
     graph.put("a", "b");
     graph.put("b", "c");
     graph.put("c", "c");
@@ -27,7 +23,7 @@ public class CollectTest extends GraphTestCase {
 
   @Test
   public void testFull() {
-    Map<String, String> graph = new THashMap<>();
+    Map<String, String> graph = new HashMap<>();
     graph.put("a", "bcd");
     graph.put("b", "acd");
     graph.put("c", "abd");
@@ -37,7 +33,7 @@ public class CollectTest extends GraphTestCase {
 
   @Test
   public void testVisitedNode() {
-    Map<String, String> graph = new THashMap<>();
+    Map<String, String> graph = new HashMap<>();
     graph.put("a", "bcd");
     graph.put("b", "acd");
     graph.put("c", "abd");
@@ -50,7 +46,7 @@ public class CollectTest extends GraphTestCase {
 
   @Test
   public void testBigGraph() {
-    Map<String, String> graph = new THashMap<>();
+    Map<String, String> graph = new HashMap<>();
     List<String> answer = new ArrayList<>();
     for (int i = 0; i < 10000; ++i) {
       graph.put(String.valueOf((char)i), String.valueOf((char)(i + 1)));
@@ -64,7 +60,7 @@ public class CollectTest extends GraphTestCase {
   private static void doTest(final @NotNull Map<String, String> graph,
                              final @NotNull String node,
                              final String @NotNull ... expected) {
-    Set<String> nodes = new THashSet<>();
+    Set<String> nodes = new HashSet<>();
     getAlgorithmsInstance().collectOutsRecursively(initGraph(graph), node, nodes);
     assertThat(nodes).containsExactlyInAnyOrder(expected);
   }

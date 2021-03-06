@@ -18,6 +18,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @deprecated Use {@link #PsiResolveHelperImpl(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public PsiResolveHelperImpl(@NotNull PsiManager manager) {
     myManager = manager;
   }
@@ -171,7 +173,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     };
     if (call instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
-      processor.setIsConstructor(true);
+      processor.setIsConstructor(false);
       processor.setName(methodExpression.getReferenceName());
       PsiScopesUtil.resolveAndWalk(processor, methodExpression, null);
     }
@@ -179,6 +181,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassOrAnonymousClassReference();
       if (classReference != null) {
         processor.setIsConstructor(true);
+        processor.setName(classReference.getReferenceName());
         PsiScopesUtil.resolveAndWalk(processor, classReference, null);
       }
     }

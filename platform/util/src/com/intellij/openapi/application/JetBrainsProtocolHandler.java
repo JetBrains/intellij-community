@@ -1,24 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * @author Konstantin Bulenkov
+ * Only JDK classes should be used. This class is used in Main before bootstrap.
  */
 public final class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
-  public static final String FRAGMENT_PARAM_NAME = "__fragment";
+  public static final @NonNls String FRAGMENT_PARAM_NAME = "__fragment";
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
 
   private static String ourMainParameter = null;
@@ -33,7 +29,7 @@ public final class JetBrainsProtocolHandler {
     URI uri = URI.create(url.substring(PROTOCOL.length()));
 
     String path = uri.getPath();
-    List<String> urlParts = StringUtil.split(path, "/");
+    List<String> urlParts = Arrays.asList(path.split("/"));
     // expect at least platform prefix and command name
     if (urlParts.size() < 2) {
       //noinspection UseOfSystemOutOrSystemErr
@@ -42,8 +38,8 @@ public final class JetBrainsProtocolHandler {
     }
 
     ourCommand = urlParts.get(1);
-    ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
-    Map<String, String> parameters = new THashMap<>();
+    ourMainParameter = urlParts.size() > 2 ? urlParts.get(2) : null;
+    Map<String, String> parameters = new HashMap<>();
     computeParameters(uri.getRawQuery(), parameters);
     parameters.put(FRAGMENT_PARAM_NAME, uri.getFragment());
     ourParameters = Collections.unmodifiableMap(parameters);
@@ -52,9 +48,11 @@ public final class JetBrainsProtocolHandler {
 
   // well, Netty cannot be added as dependency and so, QueryStringDecoder cannot be used
   private static void computeParameters(@Nullable String rawQuery, Map<String, String> parameters) {
-    if (StringUtil.isEmpty(rawQuery)) return;
+    if (rawQuery == null || rawQuery.isEmpty()) {
+      return;
+    }
 
-    for (String keyValue : StringUtil.split(rawQuery, "&")) {
+    for (String keyValue : rawQuery.split("&")) {
       if (keyValue.contains("=")) {
         int ind = keyValue.indexOf('=');
         String key = URLUtil.unescapePercentSequences(keyValue, 0, ind).toString();
@@ -72,15 +70,13 @@ public final class JetBrainsProtocolHandler {
     }
   }
 
-  @Nullable
-  public static String getCommand() {
+  public static @Nullable @NonNls String getCommand() {
     init();
     return ourCommand;
   }
 
   private static void init() {
-    if (initialized) return;
-    String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    String property = initialized ? null : System.getProperty(JetBrainsProtocolHandler.class.getName());
     if (property != null && property.startsWith(PROTOCOL)) {
       processJetBrainsLauncherParameters(property);
     }
@@ -100,8 +96,7 @@ public final class JetBrainsProtocolHandler {
     ourCommand = null;
   }
 
-  @NotNull
-  public static Map<String, String> getParameters() {
+  public static @NotNull Map<String, String> getParameters() {
     init();
     return ourParameters;
   }

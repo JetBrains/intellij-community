@@ -19,11 +19,6 @@ package org.jetbrains.jps.api;
  * @author Eugene Zhuravlev
  */
 public interface GlobalOptions {
-  /**
-   * @deprecated The possibility to keep intermediate cache changes in-memory was dropped, so the option has no effect.
-   */
-  @Deprecated
-  String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 
   String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
   String COMPILE_PARALLEL_OPTION = "compile.parallel";
@@ -34,6 +29,7 @@ public interface GlobalOptions {
   String FALLBACK_JDK_HOME = "jps.fallback.jdk.home";
   String FALLBACK_JDK_VERSION = "jps.fallback.jdk.version";
   String REPORT_BUILD_STATISTICS = "jps.report.build.statistics";
+  String JPS_IN_WSL_OPTION = "jps.in.wsl";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.
@@ -49,4 +45,10 @@ public interface GlobalOptions {
    * The path to external project config directory (used for external system projects).
    */
   String EXTERNAL_PROJECT_CONFIG = "external.project.config";
+
+  /**
+   * The path to optional localization language bundle currently used by IDE.
+   * This will allow JPS process to access bundle's resources and provide localized error/warning/diagnostic messages
+   */
+  String LANGUAGE_BUNDLE = "jps.language.bundle";
 }

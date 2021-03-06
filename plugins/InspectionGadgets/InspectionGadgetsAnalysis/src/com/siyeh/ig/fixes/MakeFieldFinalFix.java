@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.FinalUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MakeFieldFinalFix extends InspectionGadgetsFix {
+public final class MakeFieldFinalFix extends InspectionGadgetsFix {
 
   private final String fieldName;
 

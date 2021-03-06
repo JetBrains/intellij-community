@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ListIntToIntMapTest extends UpdatableIntToIntMapTest {
   @Override
-  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<Integer> thisIsVisible, int longSize) {
+  protected UpdatableIntToIntMap createUpdatableIntToIntMap(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize) {
     return ListIntToIntMap.newInstance(new BooleanFunctionFlags(thisIsVisible, longSize), 3);
   }
 }

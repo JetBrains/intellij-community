@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 
@@ -14,7 +13,6 @@ class GradleUtilTest: UsefulTestCase() {
 
   private lateinit var rootDir: File
 
-  @Before
   override fun setUp() {
     super.setUp()
     rootDir = FileUtil.createTempDirectory("gradleRoot", null)

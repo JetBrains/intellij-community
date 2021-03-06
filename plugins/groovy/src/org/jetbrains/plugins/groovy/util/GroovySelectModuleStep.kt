@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.openapi.module.Module
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle.message
 class GroovySelectModuleStep(
   modules: List<Module>,
   private val consumer: (Module) -> Unit
-) : BaseListPopupStep<Module>(message("select.module.description"), modules, PlatformIcons.CONTENT_ROOT_ICON_CLOSED) {
+) : BaseListPopupStep<Module>(message("select.module.popup.title"), modules, PlatformIcons.CONTENT_ROOT_ICON_CLOSED) {
 
   override fun getTextFor(value: Module): String = value.name
 

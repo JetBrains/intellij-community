@@ -5,8 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -41,12 +39,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
           if (argument == null) continue;
           if (argument instanceof PsiMethodCallExpression && PsiResolveHelper.ourGuard.currentStack().contains(argument)) continue;
 
-          RecursionGuard.StackStamp stackStamp = RecursionManager.markStack();
           argTypes[j] = argument.getType();
-          if (!stackStamp.mayCacheNow()) {
-            argTypes[j] = null;
-            continue;
-          }
 
           final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
           if (j >= parameters.length && !parameter.isVarArgs()) break;

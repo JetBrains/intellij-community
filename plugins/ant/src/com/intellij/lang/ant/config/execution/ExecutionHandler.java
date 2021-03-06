@@ -26,12 +26,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FutureResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +75,7 @@ public final class ExecutionHandler {
 
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void runBuild(final AntBuildFileBase buildFile,
                               String[] targets,
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
@@ -82,10 +85,10 @@ public final class ExecutionHandler {
   }
 
   /**
-   * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
+   * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
   public static void runBuild(final AntBuildFileBase buildFile,
-                              List<String> targets,
+                              List<@NlsSafe String> targets,
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
@@ -93,11 +96,11 @@ public final class ExecutionHandler {
   }
 
   /**
-   * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
+   * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
   @Nullable
   private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
-                                                          List<String> targets,
+                                                          List<@NlsSafe String> targets,
                                                           @Nullable final AntBuildMessageView buildMessageViewToReuse,
                                                           final DataContext dataContext,
                                                           List<BuildFileProperty> additionalProperties,
@@ -216,7 +219,7 @@ public final class ExecutionHandler {
 
     handler.putUserData(AntRunProfileState.MESSAGE_VIEW, errorView);
     handler.addProcessListener(new ProcessAdapter() {
-      private final StringBuilder myUnprocessedStdErr = new StringBuilder();
+      private final @NlsSafe StringBuilder myUnprocessedStdErr = new StringBuilder();
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {

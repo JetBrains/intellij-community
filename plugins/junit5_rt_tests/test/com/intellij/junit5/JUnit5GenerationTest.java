@@ -19,7 +19,7 @@ import com.intellij.testIntegration.BaseGenerateTestSupportMethodAction;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import org.junit.jupiter.api.Test;
 
-class JUnit5GenerationTest extends JUnit5CodeInsightTest {
+public class JUnit5GenerationTest extends JUnit5CodeInsightTest {
   @Test
   void testMethodInTopLevelClass() {
     doTest("import org.junit.jupiter.api.Test; class MyTest {<caret> @Test void m2(){}}",
@@ -47,14 +47,10 @@ class JUnit5GenerationTest extends JUnit5CodeInsightTest {
   }
 
   private void doTest(String text, String expected) {
-    doTest(() -> {
-             myFixture.configureByText("MyTest.java", text);
+    myFixture.configureByText("MyTest.java", text);
 
-             new BaseGenerateTestSupportMethodAction.MyHandler(TestIntegrationUtils.MethodKind.TEST).invoke(myFixture.getProject(),
-                                                                                                            myFixture.getEditor(),
-                                                                                                            myFixture.getFile());
-             myFixture.checkResult(expected);
-           }
-    );
+    new BaseGenerateTestSupportMethodAction.MyHandler(TestIntegrationUtils.MethodKind.TEST)
+      .invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    myFixture.checkResult(expected);
   }
 }

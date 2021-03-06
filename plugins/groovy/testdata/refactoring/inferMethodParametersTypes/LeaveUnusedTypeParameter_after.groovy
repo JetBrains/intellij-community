@@ -1,4 +1,4 @@
-def <T, T0> void foo(List<T> a, T b) {
+def <T, T0> void foo(ArrayList<T> a, T b) {
   a.add(b)
 }
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.layout.*
 import javax.swing.AbstractButton
@@ -119,12 +120,13 @@ class ExternalDiffSettingsPanel {
     return this
   }
 
-  private fun Cell.executableTextField(title: String,
+  private fun Cell.executableTextField(title: @NlsContexts.DialogTitle String,
                                        modelGet: () -> String,
                                        modelSet: (String) -> Unit): CellBuilder<TextFieldWithBrowseButton> {
     val pathField = TextFieldWithBrowseButton()
     pathField.addBrowseFolderListener(title, null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
-    return pathField().withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, PropertyBinding(modelGet, modelSet))
+    return pathField().withBinding(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText,
+                                   PropertyBinding(modelGet, modelSet))
   }
 
   private fun showTestDiff() {
@@ -179,7 +181,7 @@ class ExternalDiffSettingsPanel {
                             DiffBundle.message("settings.external.diff.right.file.content"))
       val titles = listOf("Left.txt", "Base.txt", "Right.txt")
       val request = factory.createMergeRequest(null, PlainTextFileType.INSTANCE, document, contents, null, titles, callback)
-      ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest)
+      ExternalDiffToolUtil.executeMerge(null, ExternalDiffSettings.instance, request as ThreesideMergeRequest, panel)
     }
     catch (e: Exception) {
       Messages.showErrorDialog(e.message, DiffBundle.message("error.cannot.show.merge"))

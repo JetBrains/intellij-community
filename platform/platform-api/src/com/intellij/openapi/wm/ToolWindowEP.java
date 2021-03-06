@@ -7,10 +7,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +23,7 @@ public class ToolWindowEP implements PluginAware {
 
   private PluginDescriptor pluginDescriptor;
 
+  @RequiredElement
   @Attribute
   public String id;
 
@@ -29,6 +32,12 @@ public class ToolWindowEP implements PluginAware {
    */
   @Attribute
   public String anchor;
+
+  /**
+   * The stripe side bar on which large toolwindow icon are displayed ("left", "right" or "bottom").
+   */
+  @Attribute
+  public String largeStripeAnchor;
 
   /**
    * @deprecated Use {@link #secondary}
@@ -57,6 +66,7 @@ public class ToolWindowEP implements PluginAware {
   /**
    * The name of the class implementing {@link ToolWindowFactory}, used to create the toolwindow contents.
    */
+  @RequiredElement
   @Attribute
   public String factoryClass;
 
@@ -91,11 +101,12 @@ public class ToolWindowEP implements PluginAware {
    * @deprecated Do not use ToolWindowEP.
    */
   @Deprecated
-  public ToolWindowFactory getToolWindowFactory() {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public @Nullable ToolWindowFactory getToolWindowFactory() {
     return getToolWindowFactory(getPluginDescriptor());
   }
 
-  public ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
+  public @Nullable ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
     ToolWindowFactory factory = myFactory;
     if (factory != null) {
       return factory;
@@ -115,7 +126,7 @@ public class ToolWindowEP implements PluginAware {
 
       try {
         //noinspection NonPrivateFieldAccessedInSynchronizedContext
-        factory = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(factoryClass, pluginDescriptor);
+        factory = ApplicationManager.getApplication().instantiateClass(factoryClass, pluginDescriptor);
         myFactory = factory;
       }
       catch (Exception e) {
@@ -159,7 +170,7 @@ public class ToolWindowEP implements PluginAware {
     }
 
     try {
-      return ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(conditionClass, pluginDescriptor);
+      return ApplicationManager.getApplication().instantiateClass(conditionClass, pluginDescriptor);
     }
     catch (Exception e) {
       LOG.error(e);

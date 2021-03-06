@@ -35,10 +35,11 @@ public final class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRe
   public static void showUnAppliedPatches(@NotNull Project project, @NotNull HgRepository selectedRepo) {
     ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID));
     String tabName = selectedRepo.getRoot().getName();
-    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new HgMqUnAppliedPatchesPanel(selectedRepo),
+    HgMqUnAppliedPatchesPanel patchesPanel = new HgMqUnAppliedPatchesPanel(selectedRepo);
+    ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), patchesPanel,
                                    "MQ",
                                    HgBundle.messagePointer("hg4idea.mq.tab.name"), () -> tabName,
-                                   true, null);
+                                   true, patchesPanel);
     toolWindow.activate(null);
   }
 }

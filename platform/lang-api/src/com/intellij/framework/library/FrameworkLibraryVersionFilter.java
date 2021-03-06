@@ -23,6 +23,11 @@ public interface FrameworkLibraryVersionFilter {
     public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
       return true;
     }
+
+    @Override
+    public String toString() {
+      return "FrameworkLibraryVersion(all)";
+    }
   };
 
   boolean isAccepted(@NotNull FrameworkLibraryVersion version);

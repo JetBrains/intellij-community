@@ -8,12 +8,17 @@ customer:
 items:
   - part_no:   A4786
     descrip:   Water Bucket (Filled)
+    # This
+
+    # Are good price
     price:     1.47
     quantity:  4
 
   - part_no:   E1628
     'it are error here':   It <warning descr="IT_VBZ">are</warning> error here
     size:      8
+    # It
+    # <warning descr="IT_VBZ">are</warning> bad price
     price:     133.7
     quantity:
       - It <warning descr="IT_VBZ">are</warning> error here

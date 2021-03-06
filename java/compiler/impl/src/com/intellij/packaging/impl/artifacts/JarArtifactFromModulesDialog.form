@@ -13,7 +13,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Main &amp;Class:"/>
+          <text resource-bundle="messages/JavaCompilerBundle" key="jar.artifacts.dialog.label.main.class"/>
         </properties>
       </component>
       <vspacer id="8cb38">
@@ -33,7 +33,7 @@
         </constraints>
         <properties>
           <labelFor value="4853e"/>
-          <text value="&amp;Module:"/>
+          <text resource-bundle="messages/JavaCompilerBundle" key="jar.artifacts.dialog.label.module"/>
         </properties>
       </component>
       <component id="4853e" class="javax.swing.JComboBox" binding="myModuleComboBox">
@@ -49,7 +49,7 @@
           <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Directory for META-INF/MANIFEST.MF:"/>
+          <text resource-bundle="messages/JavaCompilerBundle" key="jar.artifacts.dialog.label.directory.for.metainf"/>
         </properties>
       </component>
       <component id="1ea2d" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myManifestDirField">
@@ -67,7 +67,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="JAR files from libraries"/>
+        <border type="none" title-resource-bundle="messages/JavaCompilerBundle" title-key="jar.artifacts.dialog.border.title.jar.files.from.libraries"/>
         <children>
           <component id="f9a17" class="javax.swing.JRadioButton" binding="myExtractJarsRadioButton">
             <constraints>
@@ -75,7 +75,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="&amp;extract to the target JAR"/>
+              <text resource-bundle="messages/JavaCompilerBundle" key="jar.artifacts.dialog.radio.button.extract.to.the.target.jar"/>
             </properties>
           </component>
           <hspacer id="90c4f">
@@ -88,7 +88,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="copy &amp;to the output directory and link via manifest"/>
+              <text resource-bundle="messages/JavaCompilerBundle" key="jar.artifacts.dialog.radio.button.copy.to.the.output.directory.and.link.via.manifest"/>
             </properties>
           </component>
         </children>
@@ -98,7 +98,7 @@
           <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Include tests"/>
+          <text resource-bundle="messages/JavaCompilerBundle" key="jar.artifacts.dialog.checkbox.include.tests"/>
         </properties>
       </component>
     </children>

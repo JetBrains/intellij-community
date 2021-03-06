@@ -16,6 +16,7 @@
 package com.intellij.designer.model;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +29,18 @@ import java.util.List;
 public final class ErrorInfo {
   private static final String KEY = "Inspection.Errors";
 
-  private final String myName;
+  private final @Nls String myName;
   private final String myPropertyName;
   private final HighlightDisplayLevel myLevel;
   private final List<QuickFix> myQuickFixes = new ArrayList<>();
 
-  public ErrorInfo(@NotNull String name, @Nullable String propertyName, @NotNull HighlightDisplayLevel level) {
+  public ErrorInfo(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name, @Nullable String propertyName, @NotNull HighlightDisplayLevel level) {
     myName = name;
     myPropertyName = propertyName;
     myLevel = level;
   }
 
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getName() {
     return myName;
   }
 

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -56,7 +57,7 @@ public class TemplateLanguageErrorQuickFixProvider implements ErrorQuickFixProvi
 
       @Override
       @NotNull
-      public String getText() {
+      public @Nls String getText() {
         return LangBundle.message("quickfix.change.template.data.language.text", language.getDisplayName());
       }
 

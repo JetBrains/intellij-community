@@ -1,17 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import org.jetbrains.annotations.Contract
 import sun.swing.SwingUtilities2
 import java.awt.FontMetrics
 import java.io.File
 import javax.swing.JComponent
 
-class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultPartTitle(prefix, suffix), ShrinkingTitlePart {
+internal open class ClippingTitle(prefix: String = " - ", suffix: String = "") : DefaultPartTitle(prefix, suffix), ShrinkingTitlePart {
   companion object {
     const val ellipsisSymbol = "\u2026"
 
+    @Contract(pure = true)
     fun clipString(component: JComponent, string: String, maxWidth: Int, fileSeparatorChar: String = File.separator): String {
       val fm = component.getFontMetrics(component.font)
       val symbolWidth = SwingUtilities2.stringWidth(component, fm, ellipsisSymbol)

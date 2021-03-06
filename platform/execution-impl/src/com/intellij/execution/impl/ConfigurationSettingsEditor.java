@@ -8,10 +8,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
+import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -33,7 +36,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
-  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
+  private final List<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
@@ -42,7 +45,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   private GroupSettingsBuilder<RunnerAndConfigurationSettings> myGroupSettingsBuilder;
 
   @Override
-  public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
+  public @NotNull CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
     init();
     myGroupSettingsBuilder = new GroupSettingsBuilder<>(myCompound);
     return myGroupSettingsBuilder;
@@ -54,8 +57,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       Disposer.register(this, myCompound);
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
-        List<Pair<String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
-        for (Pair<String, SettingsEditor<RunConfiguration>> pair : editors) {
+        List<Pair<@TabTitle String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
+        for (Pair<@TabTitle String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
         }
       }
@@ -68,7 +71,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       myRunnersComponent = new RunnersEditorComponent();
 
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), myConfiguration);
+        ProgramRunner<RunnerSettings> runner = getRunner(executor, myConfiguration);
         if (runner != null) {
           JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
           if (perRunnerSettings != null) {
@@ -79,17 +82,17 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
 
       if (myRunnerEditors.size() > 0) {
         myCompound.addEditor(getRunnersTabName(),
-                             new CompositeSettingsEditor<RunnerAndConfigurationSettings>(getFactory()) {
+                             new CompositeSettingsEditor<>(getFactory()) {
                                @Override
-                               public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
-                                 return new CompositeSettingsBuilder<RunnerAndConfigurationSettings>() {
+                               public @NotNull CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
+                                 return new CompositeSettingsBuilder<>() {
                                    @Override
-                                   public Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
+                                   public @NotNull Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
                                      return myRunnerEditors;
                                    }
 
                                    @Override
-                                   public JComponent createCompoundEditor() {
+                                   public @NotNull JComponent createCompoundEditor() {
                                      return myRunnersComponent.getComponent();
                                    }
                                  };
@@ -97,6 +100,19 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
                              });
       }
     }
+  }
+
+  @Nullable
+  private static ProgramRunner<RunnerSettings> getRunner(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    if (executor instanceof ExecutorGroup<?>) {
+      for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
+        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(childExecutor.getId(), configuration);
+        if (runner != null) {
+          return runner;
+        }
+      }
+    }
+    return ProgramRunner.getRunner(executor.getId(), configuration);
   }
 
   @Nullable
@@ -207,6 +223,14 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return settings;
   }
 
+  public void targetChanged(String targetName) {
+    for (SettingsEditor<RunnerAndConfigurationSettings> editor : myEditors) {
+      if (editor instanceof TargetAwareRunConfigurationEditor) {
+        ((TargetAwareRunConfigurationEditor)editor).targetChanged(targetName);
+      }
+    }
+  }
+
   private static final class RunnersEditorComponent {
     @NonNls private static final String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
 
@@ -231,7 +255,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       updateRunnerComponent();
       myRunnersList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
         label.setIcon(value.getIcon());
-        label.setText(value.getId());
+        //noinspection DialogTitleCapitalization
+        label.setText(value.getActionName());
       }));
       myScrollPane.setBorder(JBUI.Borders.empty());
       myScrollPane.setViewportBorder(JBUI.Borders.empty());
@@ -262,7 +287,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
-  private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
+  private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
+    implements TargetAwareRunConfigurationEditor {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
     ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
@@ -325,8 +351,16 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     public void disposeEditor() {
       Disposer.dispose(myConfigEditor);
     }
+
+    @Override
+    public void targetChanged(String targetName) {
+      if (myConfigEditor instanceof TargetAwareRunConfigurationEditor) {
+        ((TargetAwareRunConfigurationEditor)myConfigEditor).targetChanged(targetName);
+      }
+    }
   }
 
+  @TabTitle
   private static String getRunnersTabName() {
     return ExecutionBundle.message("run.configuration.startup.connection.rab.title");
   }

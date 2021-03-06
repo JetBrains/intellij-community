@@ -2,6 +2,7 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
@@ -118,6 +119,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
   }
 
   @Override
+  @InspectionMessage
   @NotNull
   public String getUnresolvedMessagePattern() {
     return PropertiesBundle.message("unresolved.property.key");
@@ -173,5 +175,10 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       return PropertiesImplUtil.isPropertiesFile(element.getContainingFile());
     }
     return false;
+  }
+
+  public static boolean isPropertyPsi(@NotNull PsiElement target) {
+    return target instanceof IProperty ||
+           target instanceof PomTargetPsiElement && ((PomTargetPsiElement)target).getTarget() instanceof IProperty;
   }
 }

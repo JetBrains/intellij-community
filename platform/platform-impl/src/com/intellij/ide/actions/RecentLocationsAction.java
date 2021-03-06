@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -43,6 +44,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,7 +56,7 @@ import java.util.List;
 import static com.intellij.ui.speedSearch.SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME;
 
 public final class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
-  public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
+  @NonNls public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static final int DEFAULT_WIDTH = JBUIScale.scale(700);
   private static final int DEFAULT_HEIGHT = JBUIScale.scale(530);
@@ -134,7 +136,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
       .setLocateWithinScreenBounds(false)
       .createPopup();
 
-    DumbAwareAction.create(event -> {
+    LightEditActionFactory.create(event -> {
       checkBox.setSelected(!checkBox.isSelected());
       updateItems(model, listWithFilter, title, checkBox, popup);
     }).registerCustomShortcutSet(showChangedOnlyShortcutSet, list, popup);
@@ -313,10 +315,10 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
       }
     });
 
-    DumbAwareAction.create(e -> navigateToSelected(project, list, popup))
+    LightEditActionFactory.create(e -> navigateToSelected(project, list, popup))
       .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), listWithFilter, popup);
 
-    DumbAwareAction.create(e -> removePlaces(project, listWithFilter, list, data, checkBox.isSelected()))
+    LightEditActionFactory.create(e -> removePlaces(project, listWithFilter, list, data, checkBox.isSelected()))
       .registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), listWithFilter, popup);
   }
 

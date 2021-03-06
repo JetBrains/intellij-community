@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
@@ -16,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
 
 const val DEFAULT_PROFILE_NAME: String = "Default"
+
 val BASE_PROFILE: InspectionProfileImpl by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
 
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
@@ -23,7 +24,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   @JvmField
   protected var initialized: Boolean = false
   @JvmField
-  protected val myLock: Any = Any()
+  protected val lock: Any = Any()
 
   private var isProjectLevel: Boolean = false
 
@@ -105,7 +106,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       return
     }
 
-    synchronized(myLock) {
+    synchronized(lock) {
       if (!initialized) {
         initialize(project)
       }

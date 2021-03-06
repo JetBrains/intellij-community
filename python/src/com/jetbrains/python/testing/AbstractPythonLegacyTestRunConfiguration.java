@@ -6,9 +6,7 @@ import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,13 +40,13 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   implements AbstractPythonRunConfigurationParams,
              AbstractPythonTestRunConfigurationParams,
              RefactoringListenerProvider {
-  protected String myClassName = "";
-  protected String myScriptName = "";
-  protected String myMethodName = "";
-  protected String myFolderName = "";
+  protected @NlsSafe String myClassName = "";
+  protected @NlsSafe String myScriptName = "";
+  protected @NlsSafe String myMethodName = "";
+  protected @NlsSafe String myFolderName = "";
   protected TestType myTestType = TestType.TEST_SCRIPT;
 
-  private String myPattern = ""; // pattern for modules in folder to match against
+  private @NlsSafe String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
 
   protected AbstractPythonLegacyTestRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
@@ -264,16 +262,16 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
   public String suggestedName() {
     switch (myTestType) {
       case TEST_CLASS:
-        return getPluralTitle() + " in " + myClassName;
+        return PyBundle.message("runcfg.unittest.suggest.name.in.class", getPluralTitle(), myClassName);
       case TEST_METHOD:
         return getTitle() + " " + myClassName + "." + myMethodName;
       case TEST_SCRIPT:
         String name = new File(getScriptName()).getName();
         name = StringUtil.trimEnd(name, ".py");
-        return getPluralTitle() + " in " + name;
+        return PyBundle.message("runcfg.unittest.suggest.name.in.script", getPluralTitle(), name);
       case TEST_FOLDER:
         String folderName = new File(myFolderName).getName();
-        return getPluralTitle() + " in " + folderName;
+        return PyBundle.message("runcfg.unittest.suggest.name.in.folder", getPluralTitle(), folderName);
       case TEST_FUNCTION:
         return getTitle() + " " + myMethodName;
       default:
@@ -290,9 +288,9 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     return suggestedName();
   }
 
-  protected abstract String getTitle();
+  protected abstract @NlsActions.ActionText String getTitle();
 
-  protected abstract String getPluralTitle();
+  protected abstract @NlsActions.ActionText String getPluralTitle();
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +45,7 @@ public final class Diff {
     if (changeRef != null) return changeRef.get();
 
     int trimmedLength = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
-    Enumerator<T> enumerator = new Enumerator<>(trimmedLength, ContainerUtil.canonicalStrategy());
+    Enumerator<T> enumerator = new Enumerator<>(trimmedLength);
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
@@ -88,7 +88,7 @@ public final class Diff {
     }
 
     BitSet[] changes;
-    if (Registry.is("diff.patience.alg")) {
+    if (Registry.is("diff.patience.alg", false)) {
       PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
       patienceIntLCS.execute();
       changes = patienceIntLCS.getChanges();

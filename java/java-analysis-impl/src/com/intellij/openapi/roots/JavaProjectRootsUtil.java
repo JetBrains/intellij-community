@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
 
-public class JavaProjectRootsUtil {
+public final class JavaProjectRootsUtil {
   public static boolean isOutsideJavaSourceRoot(@Nullable PsiFile psiFile) {
     if (psiFile == null) return false;
     if (psiFile instanceof PsiCodeFragment) return false;
@@ -146,7 +146,7 @@ public class JavaProjectRootsUtil {
     return result;
   }
 
-  private static class NonGeneratedSourceScope extends DelegatingGlobalSearchScope {
+  private static final class NonGeneratedSourceScope extends DelegatingGlobalSearchScope {
     @NotNull private final Project myProject;
 
     private NonGeneratedSourceScope(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {

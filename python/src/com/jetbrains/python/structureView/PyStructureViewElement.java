@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -252,12 +252,6 @@ public class PyStructureViewElement implements StructureViewTreeElement {
 
       @Nullable
       @Override
-      public String getLocationString() {
-        return null;
-      }
-
-      @Nullable
-      @Override
       public Icon getIcon(boolean open) {
         if (element == null) {
           return null;
@@ -276,10 +270,10 @@ public class PyStructureViewElement implements StructureViewTreeElement {
             overlay = PythonPsiApiIcons.Nodes.Lock;
           }
           else if (myVisibility == Visibility.PREDEFINED) {
-            overlay = PythonPsiApiIcons.Nodes.Cyan_dot;
+            overlay = PythonPsiApiIcons.Nodes.CyanDot;
           }
           else if (myVisibility == Visibility.INVISIBLE) {
-            overlay = PythonPsiApiIcons.Nodes.Red_inv_triangle;
+            overlay = PythonPsiApiIcons.Nodes.RedInvTriangle;
           }
           if (overlay != null) {
             icon.setIcon(overlay, 1);

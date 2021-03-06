@@ -2,6 +2,7 @@
 
 package com.intellij.util.concurrency;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
@@ -12,12 +13,12 @@ public final class SequentialTaskExecutor {
   }
 
   @NotNull
-  public static ExecutorService createSequentialApplicationPoolExecutor(@NotNull String name) {
+  public static ExecutorService createSequentialApplicationPoolExecutor(@NonNls @NotNull String name) {
     return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, 1);
   }
 
   @NotNull
-  public static ExecutorService createSequentialApplicationPoolExecutor(@NotNull String name,  @NotNull Executor executor) {
+  public static ExecutorService createSequentialApplicationPoolExecutor(@NonNls @NotNull String name,  @NotNull Executor executor) {
     return AppExecutorUtil.createBoundedApplicationPoolExecutor(name, executor, 1);
   }
 }

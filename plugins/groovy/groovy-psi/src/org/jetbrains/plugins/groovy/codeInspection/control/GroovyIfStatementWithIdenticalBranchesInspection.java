@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -17,7 +18,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
 
   @Override
   public String buildErrorString(Object... args) {
-    return "'#ref' statement with identical branches #loc";
+    return GroovyBundle.message("inspection.message.ref.statement.with.identical.branches");
   }
 
   @Override
@@ -30,7 +31,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Collapse 'if' statement'";
+      return GroovyBundle.message("intention.family.name.collapse.if.statement");
     }
 
     @Override

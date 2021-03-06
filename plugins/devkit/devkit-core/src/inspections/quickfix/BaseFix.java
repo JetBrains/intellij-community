@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,11 +44,10 @@ abstract class BaseFix implements LocalQuickFix {
       if (status.hasReadonlyFiles()) {
         String className = clazz != null ? clazz.getQualifiedName() : element.getContainingFile().getName();
 
-        Messages.showMessageDialog(project,
+        Messages.showErrorDialog(project,
                                    DevKitBundle.message("inspections.registration.problems.quickfix.read-only",
                                                         className),
-                                   getName(),
-                                   Messages.getErrorIcon());
+                                   CommonBundle.getErrorTitle());
         return;
       }
     }

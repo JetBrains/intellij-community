@@ -29,7 +29,7 @@ public interface BinaryContentRevision extends ByteBackedContentRevision {
    * Might return null in case if file path denotes a directory or content is impossible to retrieve.
    *
    * @return content of the revision
-   * @throws com.intellij.openapi.vcs.VcsException in case when content retrieval fails
+   * @throws VcsException in case when content retrieval fails
    */
   byte @Nullable [] getBinaryContent() throws VcsException;
 

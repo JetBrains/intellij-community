@@ -77,7 +77,7 @@ public class UnwrapElseBranchAction extends PsiElementBaseIntentionAction {
               setText(JavaBundle.message("intention.unwrap.else.branch.changes.semantics"));
             }
             else {
-              setText(JavaBundle.message("intention.unwrap.else.branch"));
+              return false;
             }
             return true;
           }

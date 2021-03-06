@@ -21,6 +21,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -34,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory {
-  private static final String PROPERTY_RENAME_DESCRIPTION_AND_SHORT_NAME = "rename.inspection.description.and.short.name";
-  private static final String INSPECTION_CLASS_SUFFIX = "Inspection";
+  private static final @NonNls String PROPERTY_RENAME_DESCRIPTION_AND_SHORT_NAME = "rename.inspection.description.and.short.name";
+  private static final @NonNls String INSPECTION_CLASS_SUFFIX = "Inspection";
 
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
@@ -86,8 +87,8 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
   }
 
   @Nullable
-  private static XmlAttribute getInspectionShortNameAttribute(Module module, PsiClass inspectionClass) {
-    Extension extension = InspectionDescriptionInfo.findExtension(module, inspectionClass);
+  private static XmlAttribute getInspectionShortNameAttribute(PsiClass inspectionClass) {
+    Extension extension = InspectionDescriptionInfo.findExtension(inspectionClass);
     return extension == null ? null : extension.getXmlTag().getAttribute("shortName");
   }
 
@@ -130,7 +131,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
         return;
       }
 
-      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(module, inspectionClass);
+      XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
       if (shortNameAttribute == null) {
         return;
       }
@@ -199,7 +200,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
           continue;
         }
 
-        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(module, inspectionClass);
+        XmlAttribute shortNameAttribute = getInspectionShortNameAttribute(inspectionClass);
         if (shortNameAttribute == null) {
           continue;
         }

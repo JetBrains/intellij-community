@@ -16,6 +16,7 @@ from setuptools import setup
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 IS_PY36_OR_GREATER = sys.version_info > (3, 6)
+IS_PY39_OR_GREATER = sys.version_info > (3, 9)
 
 
 def process_args():
@@ -68,7 +69,7 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
             from Cython.Build import cythonize  # @UnusedImport
             ext_modules = cythonize([
                 "%s/%s.pyx" % (dir_name, target_pydevd_name,),
-            ])
+            ], compile_time_env={"IS_PY39_OR_GREATER": "YES" if IS_PY39_OR_GREATER else "NO"}, force=True)
         else:
             # Always compile the .c (and not the .pyx) file (which we should keep up-to-date by running build_tools/build.py).
             from distutils.extension import Extension
@@ -112,9 +113,15 @@ build_extension("_pydevd_bundle", extension_name, target_pydevd_name, force_cyth
 
 if IS_PY36_OR_GREATER:
     extension_name = "pydevd_frame_evaluator"
+    frame_eval_dir_name = "_pydevd_frame_eval"
+    target_frame_eval_common = "%s_%s" % (extension_name, "common")
+    build_extension(frame_eval_dir_name, target_frame_eval_common, target_frame_eval_common, force_cython, extension_folder,
+                    True)
+    if IS_PY39_OR_GREATER:
+        extension_name += "_py39"
     if target_frame_eval is None:
         target_frame_eval = extension_name
-    build_extension("_pydevd_frame_eval", extension_name, target_frame_eval, force_cython, extension_folder, True)
+    build_extension(frame_eval_dir_name, extension_name, target_frame_eval, force_cython, extension_folder, True)
 
 if extension_folder:
     os.chdir(extension_folder)

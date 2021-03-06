@@ -32,7 +32,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>
-    <compileServer.plugin classpath="ant-jps-plugin.jar"/>
+    <compileServer.plugin classpath="ant-jps.jar"/>
 
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
@@ -44,15 +44,16 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.lang.ant.quickfix.AntUnresolvedRefsFixProvider"/>
     <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
 
-    <localInspection language="XML" shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="ant.duplicate.targets.inspection"
+    <localInspection language="XML" shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="inspection.ant.duplicate.targets"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.ant.validation.AntDuplicateTargetsInspection"/>
-    <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="ant.missing.properties.file.inspection"
+    <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="inspection.ant.missing.properties.file"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection"/>
-    <localInspection language="XML" shortName="AntResolveInspection" displayName="Ant references resolve problems" bundle="messages.AntBundle"
+    <localInspection language="XML" shortName="AntResolveInspection" bundle="messages.AntBundle"
                      groupKey="ant.inspections.display.name"
-                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"/>
+                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"
+                     key="inspection.ant.resolve.inspection.display.name"/>
 
     <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntDomFileDescription" rootTagName="project"/>
     <dom.fileMetaData implementation="com.intellij.lang.ant.dom.AntlibDomFileDescription" rootTagName="antlib"/>
@@ -85,6 +86,8 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <compiler.task execute="BEFORE" implementation="com.intellij.lang.ant.config.impl.AntBeforeCompileTask"/>
     <compiler.task execute="AFTER" implementation="com.intellij.lang.ant.config.impl.AntAfterCompileTask"/>
     <postStartupActivity implementation="com.intellij.lang.ant.config.impl.AntShortcutStartupActivity"/>
+
+    <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
   </extensions>
 
   <actions>
@@ -102,6 +105,9 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <action id="RunTargetAction" class="com.intellij.lang.ant.config.actions.RunTargetAction">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
       <keyboard-shortcut first-keystroke="control shift F10" keymap="$default"/>
+    </action>
+    <action id="ActivateAntToolWindow" class="com.intellij.lang.ant.config.actions.ActivateAntToolWindowAction">
+      <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
   </actions>
 </idea-plugin>

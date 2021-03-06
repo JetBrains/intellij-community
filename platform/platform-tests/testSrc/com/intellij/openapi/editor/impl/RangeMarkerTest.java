@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
@@ -29,9 +29,9 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,16 +50,17 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private PsiToDocumentSynchronizer synchronizer;
   private Document document;
   private PsiFile psiFile;
+  @SuppressWarnings("unused") // to avoid GC
   private FileASTNode fileNode;
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (getTestName(false).contains("NoCommand")) {
-      super.runTest();
+      super.runTestRunnable(testRunnable);
       return;
     }
     WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
-      super.runTest();
+      super.runTestRunnable(testRunnable);
       return null;
     });
   }
@@ -425,7 +426,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     synchronizer.replaceString(document, 3, 5, "bb");
     buffer.replace(3, 5, "bb");
-    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = Objects.requireNonNull(synchronizer.getTransaction(document));
     assertSize(2, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -447,7 +448,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       synchronizer.insertString(document, i, String.valueOf(i));
       buffer.insert(i, i);
     }
-    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = Objects.requireNonNull(synchronizer.getTransaction(document));
     assertSize(1, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -497,7 +498,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     synchronizer.insertString(document, 7, "d");
     buffer.insert(7, "d");
 
-    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = Objects.requireNonNull(synchronizer.getTransaction(document));
     assertSize(3, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -898,7 +899,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private RangeMarkerEx createMarker(PsiFile psiFile, final int start, final int end) {
-    document = PlatformTestUtil.notNull(documentManager.getDocument(psiFile));
+    document = Objects.requireNonNull(documentManager.getDocument(psiFile));
     return (RangeMarkerEx)document.createRangeMarker(start, end);
   }
 
@@ -955,9 +956,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<2; i++) {
-      RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
-      RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, HighlighterTargetArea.EXACT_RANGE);
-      RangeMarker m3 = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+      RangeMarker m = markupModel.addRangeHighlighter(null, 1, 6, 0, HighlighterTargetArea.EXACT_RANGE);
+      RangeMarker m2 = markupModel.addRangeHighlighter(null, 2, 7, 0, HighlighterTargetArea.EXACT_RANGE);
+      RangeMarker m3 = markupModel.addRangeHighlighter(null, 1, 6, 0, HighlighterTargetArea.EXACT_RANGE);
       markupModel.removeAllHighlighters();
       assertFalse(m.isValid());
       assertFalse(m2.isValid());
@@ -1042,7 +1043,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeMarker m = markupModel.addRangeHighlighter(null, 1, 6, 0, HighlighterTargetArea.EXACT_RANGE);
     assertTrue(m.isValid());
     markupModel.removeAllHighlighters();
     assertFalse(m.isValid());
@@ -1057,9 +1058,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<N-1;i++) {
-      markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, HighlighterTargetArea.EXACT_RANGE);
+      markupModel.addRangeHighlighter(null, 2 * i, 2 * i + 1, 0, HighlighterTargetArea.EXACT_RANGE);
     }
-    markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    markupModel.addRangeHighlighter(null, N / 2, N / 2 + 1, 0, HighlighterTargetArea.LINES_IN_RANGE);
 
     PlatformTestUtil.startPerformanceTest("highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
       List<RangeHighlighterEx> list = new ArrayList<>();
@@ -1076,8 +1077,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Document document = EditorFactory.getInstance().createDocument("1234567890");
 
     final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
-    RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    RangeHighlighter exact = markupModel.addRangeHighlighter(null, 3, 6, 0, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter line = markupModel.addRangeHighlighter(null, 4, 5, 0, HighlighterTargetArea.LINES_IN_RANGE);
     List<RangeHighlighter> list = new ArrayList<>();
     markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<>(list));
     assertEquals(Arrays.asList(line, exact), list);
@@ -1466,7 +1467,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     int docHash2 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
     assertNotSame(docHash0, docHash2);
-    Set<RangeMarker> collectedMarkers = new THashSet<>();
+    Set<RangeMarker> collectedMarkers = new HashSet<>();
     ((DocumentEx)document).processRangeMarkers(new CommonProcessors.CollectProcessor<>(collectedMarkers));
     assertSameElements("", collectedMarkers, Arrays.asList(marker[0], persistentMarker[0], oldmarker[0]));
     collectedMarkers.clear();

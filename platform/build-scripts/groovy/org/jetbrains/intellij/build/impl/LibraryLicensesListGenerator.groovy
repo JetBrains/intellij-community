@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.google.gson.GsonBuilder
@@ -27,8 +13,12 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsModule
+
+import java.nio.file.Files
+import java.nio.file.Path
+
 @CompileStatic
-class LibraryLicensesListGenerator {
+final class LibraryLicensesListGenerator {
   private final BuildMessages messages
   private Map<LibraryLicense, String> licensesInModules
 
@@ -43,6 +33,9 @@ class LibraryLicensesListGenerator {
                                              List<LibraryLicense> licensesList,
                                              Set<String> usedModulesNames) {
     Map<LibraryLicense, String> licences = generateLicenses(messages, project, licensesList, usedModulesNames)
+    if (licences.isEmpty()) {
+      messages.error("Empty licenses table for ${licensesList.size()} licenses and ${usedModulesNames.size()} used modules names")
+    }
     return new LibraryLicensesListGenerator(messages, licences)
   }
 
@@ -95,9 +88,8 @@ class LibraryLicensesListGenerator {
     return name
   }
 
-  void generateHtml(String filePath) {
+  void generateHtml(Path file) {
     messages.debug("Used libraries:")
-    List<String> lines = []
 
     String line = '''
   <tr valign="top">
@@ -110,11 +102,12 @@ class LibraryLicensesListGenerator {
     </td>
   </tr>
       '''.trim()
-    def engine = new SimpleTemplateEngine()
+    SimpleTemplateEngine engine = new SimpleTemplateEngine()
 
-    licensesInModules.entrySet().each {
-      LibraryLicense lib = it.key
-      String moduleName = it.value
+    List<String> lines = new ArrayList<>()
+    for (entry in licensesInModules.entrySet()) {
+      LibraryLicense lib = entry.key
+      String moduleName = entry.value
 
       String libKey = (lib.presentableName + "_" + lib.version ?: "").replace(" ", "_")
       // id here is needed because of a bug IDEA-188262
@@ -125,15 +118,12 @@ class LibraryLicensesListGenerator {
                        "<span class=\"licence\">$lib.license</span>"
 
       messages.debug(" $lib.presentableName (in module $moduleName)")
-      lines << engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString()
+      lines.add(engine.createTemplate(line).make(["name": name, "libVersion": lib.version ?: "", "license": license]).toString())
     }
 
     lines.sort(true, String.CASE_INSENSITIVE_ORDER)
-    File file = new File(filePath)
-    file.parentFile.mkdirs()
-    FileWriter out = new FileWriter(file)
-    try {
-      out.println('''
+    StringBuilder out = new StringBuilder()
+    out.append('''
 <style>
   table {
     width: 560px;
@@ -175,19 +165,18 @@ class LibraryLicensesListGenerator {
   }
 </style>
 '''.trim())
-      out.println("<table>")
-      out.println("<tr><th class=\"firstColumn\">Software</th><th class=\"secondColumn\">License</th></tr>")
-      lines.each {
-        out.println(it)
-      }
-      out.println("</table>")
+    out.append("\n<table>")
+    out.append("\n<tr><th class=\"firstColumn\">Software</th><th class=\"secondColumn\">License</th></tr>")
+    for (it in lines) {
+      out.append('\n')
+      out.append(it)
     }
-    finally {
-      out.close()
-    }
+    out.append("\n</table>")
+    Files.createDirectories(file.getParent())
+    Files.writeString(file, out)
   }
 
-  void generateJson(String filePath) {
+  void generateJson(Path file) {
     List<LibraryLicenseData> entries = []
 
     licensesInModules.keySet().sort( {it.presentableName} ).each {
@@ -202,9 +191,8 @@ class LibraryLicensesListGenerator {
       )
     }
 
-    File file = new File(filePath)
-    file.parentFile.mkdirs()
-    file.withWriter {
+    Files.createDirectories(file.getParent())
+    Files.newBufferedWriter(file).withCloseable {
       new GsonBuilder().setPrettyPrinting().create().toJson(entries, it)
     }
   }

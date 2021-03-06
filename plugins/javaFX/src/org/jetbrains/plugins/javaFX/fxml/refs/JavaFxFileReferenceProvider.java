@@ -3,7 +3,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.util.PsiUtilCore;
@@ -36,8 +35,7 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
     if (directory == null) return PsiReference.EMPTY_ARRAY;
     final boolean startsWithSlash = value.startsWith("/");
-    final VirtualFileSystem fs = directory.getVirtualFile().getFileSystem();
-    final FileReferenceSet fileReferenceSet = new FileReferenceSet(value, element, 1, null, fs.isCaseSensitive()) {
+    final FileReferenceSet fileReferenceSet = new FileReferenceSet(value, element, 1, null, directory.getVirtualFile().isCaseSensitive()) {
       @NotNull
       @Override
       public Collection<PsiFileSystemItem> getDefaultContexts() {

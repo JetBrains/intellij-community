@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -32,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(CanBeFinalInspection.class);
@@ -42,40 +29,26 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   public boolean REPORT_FIELDS = true;
   @NonNls public static final String SHORT_NAME = "CanBeFinal";
 
-  private class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends InspectionOptionsPanel {
     private final JCheckBox myReportClassesCheckbox;
     private final JCheckBox myReportMethodsCheckbox;
     private final JCheckBox myReportFieldsCheckbox;
 
     private OptionsPanel() {
-      super(new GridBagLayout());
-
-      GridBagConstraints gc = new GridBagConstraints();
-      gc.weighty = 0;
-      gc.weightx = 1;
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-
-
       myReportClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
       myReportClassesCheckbox.getModel().addItemListener(e -> REPORT_CLASSES = myReportClassesCheckbox.isSelected());
-      gc.gridy = 0;
-      add(myReportClassesCheckbox, gc);
+      add(myReportClassesCheckbox);
 
       myReportMethodsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
       myReportMethodsCheckbox.getModel().addItemListener(e -> REPORT_METHODS = myReportMethodsCheckbox.isSelected());
-      gc.gridy++;
-      add(myReportMethodsCheckbox, gc);
+      add(myReportMethodsCheckbox);
 
       myReportFieldsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
       myReportFieldsCheckbox.getModel().addItemListener(e -> REPORT_FIELDS = myReportFieldsCheckbox.isSelected());
-
-      gc.weighty = 1;
-      gc.gridy++;
-      add(myReportFieldsCheckbox, gc);
+      add(myReportFieldsCheckbox);
     }
   }
 
@@ -264,7 +237,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getQuickFixName() {
+  private static @IntentionFamilyName String getQuickFixName() {
     return JavaAnalysisBundle.message("inspection.can.be.final.accept.quickfix");
   }
 }

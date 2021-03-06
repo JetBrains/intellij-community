@@ -2,7 +2,8 @@
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -22,12 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author yole
- */
-public class ColoredOutputTypeRegistry {
+@Service
+public final class ColoredOutputTypeRegistry {
   public static ColoredOutputTypeRegistry getInstance() {
-    return ServiceManager.getService(ColoredOutputTypeRegistry.class);
+    return ApplicationManager.getApplication().getService(ColoredOutputTypeRegistry.class);
   }
 
   private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = new ConcurrentHashMap<>();
@@ -128,14 +127,6 @@ public class ColoredOutputTypeRegistry {
     return newKey;
   }
 
-  /**
-   * @deprecated use {@link #getOutputType(String, Key)} instead
-   */
-  @Deprecated
-  public @NotNull Key getOutputKey(@NonNls String attribute) {
-    return getOutputType(attribute, ProcessOutputTypes.STDOUT);
-  }
-
   private static Color getAnsiColor(final int value) {
     return getColorByKey(getAnsiColorKey(value));
   }
@@ -228,7 +219,7 @@ public class ColoredOutputTypeRegistry {
     return new AnsiConsoleViewContentType(attribute, backgroundColor, foregroundColor, inverse, effectType, fontType);
   }
 
-  private static class AnsiConsoleViewContentType extends ConsoleViewContentType {
+  private static final class AnsiConsoleViewContentType extends ConsoleViewContentType {
     private final int myBackgroundColorIndex;
     private final int myForegroundColorIndex;
     private final @Nullable Color myEnforcedBackgroundColor;
@@ -245,7 +236,7 @@ public class ColoredOutputTypeRegistry {
                                        boolean inverse,
                                        @NotNull List<EffectType> effectTypes,
                                        int fontType) {
-      super(attribute, ConsoleViewContentType.NORMAL_OUTPUT_KEY);
+      super(attribute, new TextAttributes());
       myBackgroundColorIndex = backgroundColorIndex;
       myEnforcedBackgroundColor = enforcedBackgroundColor;
       myForegroundColorIndex = foregroundColorIndex;

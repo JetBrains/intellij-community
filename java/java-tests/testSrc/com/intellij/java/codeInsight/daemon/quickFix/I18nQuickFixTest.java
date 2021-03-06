@@ -19,12 +19,10 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -64,10 +62,5 @@ public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected boolean shouldBeAvailableAfterExecution() {
     return myMustBeAvailableAfterInvoke;
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

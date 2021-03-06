@@ -1,29 +1,37 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.IndexDebugAssertions;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.LongAdder;
 
 @ApiStatus.Internal
 public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInputMappingIndex<Key, Value, FileContent> {
@@ -42,8 +50,10 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   private final DataIndexer<Key, Value, FileContent> myIndexer;
   @NotNull
   private final PersistentMapBasedForwardIndex myContents;
+  @NotNull
+  private final SnapshotHashEnumeratorService.HashEnumeratorHandle myEnumeratorHandle;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
-  private final Statistics myStatistics = IndexDebugAssertions.DEBUG ? new Statistics() : null;
+  private final @Nullable SnapshotInputMappingsStatistics myStatistics;
 
   private final HashIdForwardIndexAccessor<Key, Value, FileContent> myHashIdForwardIndexAccessor;
 
@@ -54,6 +64,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   public SnapshotInputMappings(@NotNull IndexExtension<Key, Value, FileContent> indexExtension,
                                @NotNull AbstractMapForwardIndexAccessor<Key, Value, ?> accessor) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
+    myStatistics = IndexDebugProperties.DEBUG ? new SnapshotInputMappingsStatistics(myIndexId) : null;
 
     boolean storeOnlySingleValue = indexExtension instanceof SingleEntryFileBasedIndexExtension;
     myMapExternalizer = storeOnlySingleValue ? null : new InputMapExternalizer<>(indexExtension);
@@ -62,7 +73,8 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
     myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this, accessor);
-    myIndexingTrace = IndexDebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
+    myIndexingTrace = IndexDebugProperties.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
+    myEnumeratorHandle = SnapshotHashEnumeratorService.getInstance().createHashEnumeratorHandle(myIndexId);
 
     if (VfsAwareMapReduceIndex.isCompositeIndexer(myIndexer)) {
       myCompositeHashIdEnumerator = new CompositeHashIdEnumerator(myIndexId);
@@ -75,8 +87,8 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     return myHashIdForwardIndexAccessor;
   }
 
-  public File getInputIndexStorageFile() {
-    return new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
+  public Path getInputIndexStorageFile() throws IOException {
+    return IndexInfrastructure.getIndexRootDir(myIndexId).resolve("fileIdToHashId");
   }
 
   @NotNull
@@ -99,7 +111,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
       myStatistics.update(data == null);
     }
 
-    if (data != null && IndexDebugAssertions.EXTRA_SANITY_CHECKS) {
+    if (data != null && IndexDebugProperties.EXTRA_SANITY_CHECKS) {
       Map<Key, Value> contentData = myIndexer.map(content);
       boolean sameValueForSavedIndexedResultAndCurrentOne;
       if (myIndexer instanceof SingleEntryIndexer) {
@@ -111,14 +123,12 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
         sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
       }
       if (!sameValueForSavedIndexedResultAndCurrentOne) {
-        data = contentData;
-        IndexDebugAssertions.error(
-          "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
-          getContentDebugData(content),
-          myIndexId,
-          buildDiff(data, contentData),
-          myIndexingTrace.get(hashId)
-        );
+        LOG.error(
+          "Unexpected difference in indexing of" +
+          "\n" + getContentDebugData(content) +
+          "\n by index " + myIndexId +
+          "\nprevious indexed info " + myIndexingTrace.get(hashId) +
+          "\ndiff " + buildDiff(data, contentData));
       }
     }
     return data == null ? null : new HashedInputData<>(data, hashId);
@@ -145,18 +155,18 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     }
   }
 
-  @NotNull
-  private ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
+  private @NotNull ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
     if (myMapExternalizer != null) {
       return AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size() * 4);
-    } else {
+    }
+    else {
       assert myValueExternalizer != null;
       return AbstractForwardIndexAccessor.serializeToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, 4);
     }
   }
 
   @Override
-  public InputData<Key, Value> putData(@Nullable FileContent content, @NotNull InputData<Key, Value> data) throws IOException {
+  public InputData<Key, Value> putData(@NotNull FileContent content, @NotNull InputData<Key, Value> data) throws IOException {
     int hashId;
     InputData<Key, Value> result;
     if (data instanceof HashedInputData) {
@@ -167,7 +177,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
       result = hashId == 0 ? InputData.empty() : new HashedInputData<>(data.getKeyValues(), hashId);
     }
     boolean saved = savePersistentData(data.getKeyValues(), hashId);
-    if (IndexDebugAssertions.EXTRA_SANITY_CHECKS) {
+    if (IndexDebugProperties.EXTRA_SANITY_CHECKS) {
       if (saved) {
         try {
           myIndexingTrace.put(hashId, getContentDebugData(content) + "," + ExceptionUtil.getThrowableText(new Throwable()));
@@ -181,9 +191,19 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   @NotNull
-  private static String getContentDebugData(FileContent input) {
+  private String getContentDebugData(@NotNull FileContent input) {
     FileContentImpl content = (FileContentImpl) input;
-    return "[" + content.getFile().getPath() + ";" + content.getFileType().getName() + ";" + content.getCharset() + "]";
+
+    List<String> data = new ArrayList<>();
+    data.add(content.getFile().getPath());
+    data.add(content.getFileType().getName());
+    data.add(content.getCharset().name());
+    if (VfsAwareMapReduceIndex.isCompositeIndexer(myIndexer)) {
+      data.add("composite indexer: " + mySubIndexerRetriever.getVersion(content));
+
+    }
+
+    return "[" + StringUtil.join(data, ";") + "]";
   }
 
   private int getHashId(@Nullable FileContent content) throws IOException {
@@ -218,7 +238,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
         }
       }
       if (myIndexingTrace != null) {
-        PersistentHashMap.deleteMap(myIndexingTrace);
+        myIndexingTrace.closeAndClean();
         myIndexingTrace = createIndexingTrace();
       }
     } finally {
@@ -234,13 +254,14 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   @Override
   public void close() {
     IOUtil.closeSafe(LOG, myContents, myIndexingTrace, myCompositeHashIdEnumerator);
+    myEnumeratorHandle.release();
   }
 
   @NotNull
   private PersistentMapBasedForwardIndex createContentsIndex() throws IOException {
-    final File saved = new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values");
+    Path saved = IndexInfrastructure.getPersistentIndexRootDir(myIndexId).resolve("values");
     try {
-      return new PersistentMapBasedForwardIndex(saved.toPath(), false);
+      return new PersistentMapBasedForwardIndex(saved, false);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(saved);
@@ -249,22 +270,21 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   private PersistentHashMap<Integer, String> createIndexingTrace() throws IOException {
-    final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
+    Path mapFile = IndexInfrastructure.getIndexRootDir(myIndexId).resolve("indextrace");
     try {
-      return new PersistentHashMap<>(mapFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE,
-                                     new DataExternalizer<String>() {
-                                       @Override
-                                       public void save(@NotNull DataOutput out, String value) throws IOException {
-                                         out.write((byte[])CompressionUtil.compressStringRawBytes(value));
-                                       }
+      return new PersistentHashMap<>(mapFile, EnumeratorIntegerDescriptor.INSTANCE, new DataExternalizer<>() {
+        @Override
+        public void save(@NotNull DataOutput out, String value) throws IOException {
+          out.write((byte[])CompressionUtil.compressStringRawBytes(value));
+        }
 
-                                       @Override
-                                       public String read(@NotNull DataInput in) throws IOException {
-                                         byte[] b = new byte[((InputStream)in).available()];
-                                         in.readFully(b);
-                                         return (String)CompressionUtil.uncompressStringRawBytes(b);
-                                       }
-                                     }, 4096);
+        @Override
+        public String read(@NotNull DataInput in) throws IOException {
+          byte[] b = new byte[((InputStream)in).available()];
+          in.readFully(b);
+          return (String)CompressionUtil.uncompressStringRawBytes(b);
+        }
+      }, 4096);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(mapFile);
@@ -283,11 +303,11 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   @NotNull
-  private static Integer doGetContentHash(FileContentImpl content) throws IOException {
+  private Integer doGetContentHash(FileContentImpl content) throws IOException {
     Integer previouslyCalculatedContentHashId = content.getUserData(ourContentHashIdKey);
     if (previouslyCalculatedContentHashId == null) {
       byte[] hash = IndexedHashesSupport.getOrInitIndexedHash(content);
-      previouslyCalculatedContentHashId = IndexedHashesSupport.enumerateHash(hash);
+      previouslyCalculatedContentHashId = myEnumeratorHandle.enumerateHash(hash);
       content.putUserData(ourContentHashIdKey, previouslyCalculatedContentHashId);
     }
     return previouslyCalculatedContentHashId;
@@ -342,32 +362,14 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   @ApiStatus.Internal
-  public void dumpStatistics() {
+  public void resetStatistics() {
     if (myStatistics != null) {
-      myStatistics.dumpStatistics();
+      myStatistics.reset();
     }
   }
 
-  private class Statistics {
-    private final LongAdder totalRequests = new LongAdder();
-    private final LongAdder totalMisses = new LongAdder();
-
-    void update(boolean miss) {
-      totalRequests.increment();
-      if (miss) {
-        totalMisses.increment();
-      }
-    }
-
-    void dumpStatistics() {
-      long requests = totalRequests.longValue();
-      long misses = totalMisses.longValue();
-      String message =
-        "Snapshot mappings stats for " + myIndexId +
-        ". requests: " + requests +
-        ", hits: " + (requests - misses) +
-        ", misses: " + misses;
-      LOG.info(message);
-    }
+  @ApiStatus.Internal
+  public @Nullable SnapshotInputMappingsStatistics dumpStatistics() {
+    return myStatistics;
   }
 }

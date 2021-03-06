@@ -8,6 +8,7 @@ import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.NlsContexts;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.TestOnly;
 
@@ -64,7 +65,7 @@ public class ChangeList {
     return split;
   }
 
-  public synchronized boolean endChangeSet(String name) {
+  public synchronized boolean endChangeSet(@NlsContexts.Label String name) {
     LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "not balanced 'begin/end-change set' calls");
 
     myChangeSetDepth--;
@@ -73,7 +74,7 @@ public class ChangeList {
     return doEndChangeSet(name);
   }
 
-  private boolean doEndChangeSet(String name) {
+  private boolean doEndChangeSet(@NlsContexts.Label String name) {
     if (myCurrentChangeSet.isEmpty()) {
       myCurrentChangeSet = null;
       return false;
@@ -99,10 +100,10 @@ public class ChangeList {
 
   // todo synchronization issue: changeset may me modified while being iterated
   public synchronized Iterable<ChangeSet> iterChanges() {
-    return new Iterable<ChangeSet>() {
+    return new Iterable<>() {
       @Override
       public Iterator<ChangeSet> iterator() {
-        return new Iterator<ChangeSet>() {
+        return new Iterator<>() {
           private final TIntHashSet recursionGuard = new TIntHashSet(1000);
 
           private ChangeSetHolder currentBlock;

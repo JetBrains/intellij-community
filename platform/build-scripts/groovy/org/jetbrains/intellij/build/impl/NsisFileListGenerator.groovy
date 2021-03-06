@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -7,7 +7,7 @@ import groovy.transform.CompileStatic
 import java.util.regex.Pattern
 
 @CompileStatic
-class NsisFileListGenerator {
+final class NsisFileListGenerator {
   private final Map<String, List<File>> directoryToFiles = [:]
   private final List<String> filesRelativePaths = []
 
@@ -21,7 +21,7 @@ class NsisFileListGenerator {
       directoryToFiles.each {
         if (!it.value.empty) {
           out.newLine()
-          out.writeLine("SetOutPath \"\$INSTDIR${it.key.isEmpty() ? "" : "\\"}${toWinPath(it.key)}\"")
+          out.writeLine("SetOutPath \"\$INSTDIR${it.key.isEmpty() ? "" : "\\"}${escapeWinPath(it.key)}\"")
 
           it.value.each {
             out.writeLine("File \"${it.absolutePath}\"")
@@ -34,9 +34,9 @@ class NsisFileListGenerator {
   void generateUninstallerFile(String installDir = "\$INSTDIR", File outputFile) {
     outputFile.withWriter { BufferedWriter out ->
       filesRelativePaths.toSorted().each {
-        out.writeLine("Delete \"${installDir}\\${toWinPath(it)}\"")
+        out.writeLine("Delete \"${installDir}\\${escapeWinPath(it)}\"")
         if (it.endsWith(".py")) {
-          out.writeLine("Delete \"${installDir}\\${toWinPath(it)}c\"") //.pyc
+          out.writeLine("Delete \"${installDir}\\${escapeWinPath(it)}c\"") //.pyc
         }
       }
 
@@ -44,16 +44,16 @@ class NsisFileListGenerator {
 
       directoryToFiles.keySet().toSorted().reverseEach {
         if (!it.empty) {
-          out.writeLine("RmDir /r \"${installDir}\\${toWinPath(it)}\\__pycache__\"")
-          out.writeLine("RmDir \"${installDir}\\${toWinPath(it)}\"")
+          out.writeLine("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"")
+          out.writeLine("RmDir \"${installDir}\\${escapeWinPath(it)}\"")
         }
       }
       out.writeLine("RmDir \"${installDir}\"")
     }
   }
 
-  private static String toWinPath(String dir) {
-    return dir.replace('/', '\\')
+  private static String escapeWinPath(String dir) {
+    return dir.replace('/', '\\').replace("\$", "\$\$")
   }
 
   private void processDirectory(File directory, String relativePath, List<Pattern> excludePatterns) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.task
 
 import com.intellij.openapi.application.runWriteAction
@@ -16,8 +16,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 class GradleTaskManagerTest: UsefulTestCase() {
@@ -28,7 +26,6 @@ class GradleTaskManagerTest: UsefulTestCase() {
   private lateinit var gradleExecSettings: GradleExecutionSettings
 
 
-  @Before
   override fun setUp() {
     super.setUp()
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
@@ -43,7 +40,6 @@ class GradleTaskManagerTest: UsefulTestCase() {
                                                      DistributionType.WRAPPED, false)
   }
 
-  @After
   override fun tearDown() {
     try {
       myTestFixture.tearDown()
@@ -68,7 +64,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
   @Test
   fun `test task manager uses wrapper task when wrapper already exists`() {
     runWriteAction {
-      val baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject)
+      val baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(myProject)
       val wrapperProps = baseDir
         .createChildDirectory(this, "gradle")
         .createChildDirectory(this, "wrapper")
@@ -107,7 +103,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
   private fun writeBuildScript(scriptText: String) {
     runWriteAction {
-      VfsUtil.saveText(PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject).createChildData(this, "build.gradle"), scriptText)
+      VfsUtil.saveText(PlatformTestUtil.getOrCreateProjectBaseDir(myProject).createChildData(this, "build.gradle"), scriptText)
     }
   }
 }

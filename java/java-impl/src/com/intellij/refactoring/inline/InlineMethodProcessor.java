@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.history.LocalHistory;
@@ -16,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -27,12 +27,13 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.OverrideMethodsProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -44,6 +45,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -54,7 +56,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -62,7 +63,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineMethodProcessor.class);
 
   private PsiMethod myMethod;
-  private PsiJavaCodeReferenceElement myReference;
+  private PsiReference myReference;
   private final Editor myEditor;
   private final boolean myInlineThisOnly;
   private final boolean mySearchInComments;
@@ -79,11 +80,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final String myDescriptiveName;
   private Map<PsiField, PsiClassInitializer> myAddedClassInitializers;
   private PsiMethod myMethodCopy;
+  @SuppressWarnings("LeakableMapKey") //short living refactoring
   private Map<Language,InlineHandler.Inliner> myInliners;
 
   public InlineMethodProcessor(@NotNull Project project,
                                @NotNull PsiMethod method,
-                               @Nullable PsiJavaCodeReferenceElement reference,
+                               @Nullable PsiReference reference,
                                Editor editor,
                                boolean isInlineThisOnly) {
     this(project, method, reference, editor, isInlineThisOnly, false, false, true);
@@ -91,7 +93,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   public InlineMethodProcessor(@NotNull Project project,
                              @NotNull PsiMethod method,
-                             @Nullable PsiJavaCodeReferenceElement reference,
+                             @Nullable PsiReference reference,
                              Editor editor,
                              boolean isInlineThisOnly,
                              boolean searchInComments,
@@ -101,7 +103,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   public InlineMethodProcessor(@NotNull Project project,
                                @NotNull PsiMethod method,
-                               @Nullable PsiJavaCodeReferenceElement reference,
+                               @Nullable PsiReference reference,
                                Editor editor,
                                boolean isInlineThisOnly,
                                boolean searchInComments,
@@ -141,18 +143,21 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
     Set<UsageInfo> usages = new HashSet<>();
     if (myReference != null) {
-      usages.add(new UsageInfo(myReference));
+      usages.add(new UsageInfo(myReference.getElement()));
     }
-    for (PsiReference reference : ReferencesSearch.search(myMethod, myRefactoringScope)) {
+    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    OverridingMethodsSearch.search(myMethod, myRefactoringScope, false).forEach(method -> {
-      if (AnnotationUtil.isAnnotated(method, Override.class.getName(), 0)) {
-        usages.add(new UsageInfo(method));
-      }
-      return true;
-    });
+    if (myDeleteTheDeclaration) {
+      OverridingMethodsSearch.search(myMethod, myRefactoringScope, true)
+        .forEach(method -> {
+          if (shouldDeleteOverrideAttribute(method)) {
+            usages.add(new OverrideAttributeUsageInfo(method));
+          }
+          return true;
+        });
+    }
 
     if (mySearchInComments || mySearchForTextOccurrences) {
       final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
@@ -174,6 +179,22 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  private boolean shouldDeleteOverrideAttribute(PsiMethod method) {
+    return method.getHierarchicalMethodSignature()
+      .getSuperSignatures().stream()
+      .allMatch(signature -> {
+        PsiMethod superMethod = signature.getMethod();
+        if (superMethod == myMethod) {
+          return true;
+        }
+        if (JavaLanguage.INSTANCE == method.getLanguage() &&
+            Objects.requireNonNull(superMethod.getContainingClass()).isInterface()) {
+          return !PsiUtil.isLanguageLevel6OrHigher(method);
+        }
+        return false;
+      });
   }
 
   @Override
@@ -212,11 +233,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (UsageInfo info : usagesIn) {
         final PsiElement element = info.getElement();
         if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
-          conflicts.putValue(element, "Inlined method is used in javadoc");
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.javadoc"));
         }
         if (element instanceof PsiLiteralExpression &&
-            Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
-          conflicts.putValue(element, "Inlined method is used reflectively");
+            ContainerUtil.or(element.getReferences(), JavaLangClassMemberReference.class::isInstance)) {
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.used.in.reflection"));
         }
         if (element instanceof PsiMethodReferenceExpression) {
           final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
@@ -224,7 +245,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             final List<PsiElement> sideEffects = new ArrayList<>();
             SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
             if (!sideEffects.isEmpty()) {
-              conflicts.putValue(element, "Inlined method is used in method reference with side effects in qualifier");
+              conflicts.putValue(element, JavaRefactoringBundle.message("inline.method.qualifier.usage.side.effect"));
             }
           }
         }
@@ -239,7 +260,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
     else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
-      conflicts.putValue(myReference, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+      conflicts.putValue(myReference.getElement(), JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
     }
 
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
@@ -295,13 +316,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
           LOG.assertTrue(methodCallExpression != null);
           if (!targetContainingClasses.isEmpty()) {
-            conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessed in " +
-                                           StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ","));
+            String descriptions = StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ",");
+            conflicts.putValue(expression, JavaRefactoringBundle.message("inline.method.calls.not.accessible.in", methodCallExpression.getText(), descriptions));
           }
 
           if (qualifiedCall != null) {
-            conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessible on qualifier "
-                                           + qualifiedCall.getText());
+            conflicts.putValue(expression, JavaRefactoringBundle.message("inline.method.calls.not.accessible.on.qualifier",
+                                                                         methodCallExpression.getText(), qualifiedCall.getText()));
           }
         }
       }
@@ -321,7 +342,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(container, StringUtil.capitalize(message));
       }
     });
   }
@@ -407,12 +428,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void doRefactoring(UsageInfo[] usages) {
     try {
       if (myInlineThisOnly) {
-        if (myMethod.isConstructor() && InlineUtil.isChainingConstructor(myMethod)) {
+        if (JavaLanguage.INSTANCE != myReference.getElement().getLanguage()) {
+          GenericInlineHandler.inlineReference(new UsageInfo(myReference.getElement()), myMethod, myInliners);
+        }
+        else if (myMethod.isConstructor() && InlineUtil.isChainingConstructor(myMethod)) {
           if (myReference instanceof PsiMethodReferenceExpression) {
             inlineMethodReference((PsiMethodReferenceExpression)myReference);
           }
           else {
-            PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall(myReference);
+            PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)myReference);
             if (constructorCall != null) {
               inlineConstructorCall(constructorCall);
             }
@@ -455,6 +479,16 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           final List<PsiElement> imports2Delete = new ArrayList<>();
           for (final UsageInfo usage : usages) {
             final PsiElement element = usage.getElement();
+            if (element == null) continue;
+            if (usage instanceof OverrideAttributeUsageInfo) {
+              for (OverrideMethodsProcessor processor : OverrideMethodsProcessor.EP_NAME.getExtensionList()) {
+                if (processor.removeOverrideAttribute(element)) {
+                  break;
+                }
+              }
+              continue;
+            }
+            
             if (element instanceof PsiReferenceExpression) {
               refExprList.add((PsiReferenceExpression)element);
             }
@@ -464,12 +498,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                 //no overloads available: ensure broken import are deleted and
                 //unused overloaded imports are deleted by optimize imports helper
                 imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
-              }
-            }
-            else if (element instanceof PsiMethod) {
-              PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiMethod) element, false, Override.class.getName());
-              if (annotation != null) {
-                annotation.delete();
               }
             }
             else if (JavaLanguage.INSTANCE != element.getLanguage()) {
@@ -492,7 +520,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) myMethod.delete();
+        if (myMethod.isValid() && myMethod.isWritable() && myDeleteTheDeclaration) {
+          CommentTracker tracker = new CommentTracker();
+          tracker.markUnchanged(myMethod.getBody());
+          tracker.markUnchanged(myMethod.getDocComment());
+          tracker.deleteAndRestoreComments(myMethod);
+        }
       }
       removeAddedBracesWhenPossible();
     }
@@ -572,33 +605,27 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static void replaceParameterReferences(final PsiElement element,
                                                  final PsiMethod oldConstructor,
                                                  final PsiExpression[] instanceCreationArguments) {
-    boolean isParameterReference = false;
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression expression = (PsiReferenceExpression)element;
-      PsiElement resolved = expression.resolve();
-      if (resolved instanceof PsiParameter &&
-          element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
-        isParameterReference = true;
-        PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
-        PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
-        for (int j = 0; j < declarationParameters.length; j++) {
-          if (declarationParameters[j] == resolved) {
-            try {
-              expression.replace(instanceCreationArguments[j]);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+    Map<PsiReferenceExpression, PsiExpression> replacement = new LinkedHashMap<>();
+    element.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiParameter &&
+            element.getManager().areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
+          int parameterIndex = oldConstructor.getParameterList().getParameterIndex((PsiParameter)resolved);
+          if (parameterIndex >= 0) {
+            replacement.put(expression, instanceCreationArguments[parameterIndex]);
           }
-        }
+        }  
       }
-    }
-    if (!isParameterReference) {
-      PsiElement child = element.getFirstChild();
-      while (child != null) {
-        PsiElement next = child.getNextSibling();
-        replaceParameterReferences(child, oldConstructor, instanceCreationArguments);
-        child = next;
+    });
+    for (Map.Entry<PsiReferenceExpression, PsiExpression> entry : replacement.entrySet()) {
+      try {
+        entry.getKey().replace(entry.getValue());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     }
   }
@@ -1106,28 +1133,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return ((PsiAssignmentExpression)expression).getRExpression();
   }
 
-  /**
-   * @deprecated use {@link #checkUnableToInsertCodeBlock(PsiCodeBlock, PsiElement)}
-   */
-  @Deprecated
-  public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
-    return checkUnableToInsertCodeBlock(methodBody, element,
-                                        expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)
-           ? "Inline cannot be applied to multiline method in constructor call"
-           : null;
-  }
-
-  public static String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
+  public static @NlsContexts.DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
     if (checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
-      return "Inline cannot be applied to multiline method in constructor call";
+      return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");
     }
     return checkUnableToInsertCodeBlock(methodBody, element,
                                         expr -> {
-                                          PsiElement parent = expr.getParent();
-                                          return parent instanceof PsiLoopStatement && PsiUtil.isCondition(expr, parent);
+                                          PsiConditionalLoopStatement loopStatement = PsiTreeUtil.getParentOfType(expr, PsiConditionalLoopStatement.class);
+                                          return loopStatement != null && PsiTreeUtil.isAncestor(loopStatement.getCondition(), expr, false);
                                         })
-           ? "Inline cannot be applied to multiline method in loop condition"
+           ? JavaRefactoringBundle.message("inline.method.multiline.method.in.loop.condition")
            : null;
   }
 
@@ -1135,7 +1151,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                       final PsiElement element,
                                                       final Predicate<? super PsiMethodCallExpression> errorCondition) {
     PsiStatement[] statements = methodBody.getStatements();
-    if (statements.length > 1 || statements.length == 1 && !(statements[0] instanceof PsiExpressionStatement)) {
+    if (statements.length > 1 || statements.length == 1 && 
+                                 !(statements[0] instanceof PsiExpressionStatement) && 
+                                 !(statements[0] instanceof PsiReturnStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);
       while (expr != null) {
         if (errorCondition.test(expr)) {
@@ -1223,11 +1241,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {
-      return Collections.singletonList(myReference);
+      return Collections.singletonList(myReference.getElement());
     }
     else {
       if (!checkReadOnly()) return Collections.emptyList();
-      return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference, myMethod);
+      return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference.getElement(), myMethod);
+    }
+  }
+
+  private static class OverrideAttributeUsageInfo extends UsageInfo {
+    private OverrideAttributeUsageInfo(@NotNull PsiElement element) {
+      super(element);
     }
   }
 }

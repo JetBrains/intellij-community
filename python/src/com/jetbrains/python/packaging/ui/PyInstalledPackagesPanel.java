@@ -26,12 +26,14 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
@@ -54,6 +56,10 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     super(project, area);
   }
 
+  public void setShowGrid(boolean v) {
+    myPackagesTable.setShowGrid(v);
+  }
+
   private Sdk getSelectedSdk() {
     PyPackageManagementService service = (PyPackageManagementService)myPackageManagementService;
     return service != null ? service.getSdk() : null;
@@ -63,7 +69,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     @NotNull
     @Override
     public String getName() {
-      return "Install packaging tools";
+      return PyBundle.message("python.packaging.install.packaging.tools");
     }
 
     @Override
@@ -103,7 +109,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement();
         application.invokeLater(() -> updateUninstallUpgrade(), ModalityState.any());
         if (!myHasManagement) {
-          throw new PyExecutionException("Python packaging tools not found", "pip", Collections.emptyList(), "", "", 0,
+          throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.tools.not.found"), "pip", Collections.emptyList(), "", "", 0,
                                          ImmutableList.of(new PyInstallPackageManagementFix()));
         }
       }
@@ -120,12 +126,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           if (problem != null) {
             final boolean invalid = PythonSdkUtil.isInvalid(selectedSdk);
             if (!invalid) {
-              final StringBuilder builder = new StringBuilder(problem.getMessage());
-              builder.append(". ");
+              HtmlBuilder builder = new HtmlBuilder();
+              builder.append(problem.getMessage()).append(". ");
               for (final PyExecutionFix fix : problem.getFixes()) {
-                final String key = "id" + fix.hashCode();
-                final String link = "<a href=\"" + key + "\">" + fix.getName() + "</a>";
-                builder.append(link);
+                String key = "id" + fix.hashCode();
+                builder.appendLink(key, fix.getName());
                 builder.append(" ");
                 myNotificationArea.addLinkHandler(key, () -> {
                   final Sdk sdk = getSelectedSdk();

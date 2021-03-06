@@ -3,7 +3,7 @@ package com.intellij.vcs.branch;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.FilePath;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +13,7 @@ public interface BranchStateProvider {
   /**
    * Returns information about current branch of the given path.
    */
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   BranchData getCurrentBranch(@NotNull FilePath path);
 }

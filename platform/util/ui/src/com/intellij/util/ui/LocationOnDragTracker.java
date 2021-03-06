@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent;
  *
  * @author tav
  */
-public class LocationOnDragTracker {
+public final class LocationOnDragTracker {
   private Point myOffsetXY;
   private Rectangle myMonitorBounds;
   private double myScale;

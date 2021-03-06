@@ -32,6 +32,9 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "form";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
+  private GuiFormFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {
@@ -57,11 +60,6 @@ public class GuiFormFileType implements /*UIBased*/FileType {
 
   @Override
   public boolean isBinary() {
-    return false;
-  }
-
-  @Override
-  public boolean isReadOnly() {
     return false;
   }
 

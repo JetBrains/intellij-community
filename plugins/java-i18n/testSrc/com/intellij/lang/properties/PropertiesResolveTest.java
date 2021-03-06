@@ -1,14 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -16,9 +14,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 @HeavyPlatformTestCase.WrapInCommand
 public class PropertiesResolveTest extends JavaCodeInsightTestCase {
   private static final String BASE_PATH = "testData/resolve/";
@@ -75,7 +70,6 @@ public class PropertiesResolveTest extends JavaCodeInsightTestCase {
 
   private void configure(@NonNls final String fileName) throws Exception {
     configureByFile(BASE_PATH + fileName, BASE_PATH);
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
   }
 
   private PropertiesFile findPropertiesFile() {

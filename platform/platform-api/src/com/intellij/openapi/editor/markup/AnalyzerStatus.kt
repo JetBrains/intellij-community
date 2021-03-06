@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.markup
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
 import java.util.*
@@ -16,21 +18,22 @@ import kotlin.math.roundToInt
  */
 enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val bundleKey: String) {
   NONE("iw.level.none"),
-  ERRORS("iw.level.errors"),
+  SYNTAX("iw.level.syntax"),
   ALL("iw.level.all");
 
+  @Nls
   override fun toString(): String = EditorBundle.message(bundleKey)
 }
 
 /*
  * Per language highlight level
  */
-data class LanguageHighlightLevel(val langID: String, val level: InspectionsLevel)
+data class LanguageHighlightLevel(@NlsSafe @get:NlsSafe val langID: String, val level: InspectionsLevel)
 
 /**
  * Light wrapper for <code>ProgressableTextEditorHighlightingPass</code> with only essential UI data.
  */
-data class PassWrapper(val presentableName: String, val progress: Double, val finished: Boolean) {
+data class PassWrapper(@Nls @get:Nls val presentableName: String, val progress: Double, val finished: Boolean) {
   fun toPercent() : Int {
     val percent = (progress * 100).roundToInt()
     return if (percent == 100 && !finished) 99 else percent
@@ -41,14 +44,15 @@ data class PassWrapper(val presentableName: String, val progress: Double, val fi
  * Type of the analyzing status that's taking place.
  */
 enum class AnalyzingType {
-  COMPLETE, // Analyzing complete
+  COMPLETE, // Analyzing complete, final results are available or none if OFF or in PowerSave mode
+  SUSPENDED, // Analyzing suspended for long process like indexing
   PARTIAL,  // Analyzing has partial results available for displaying
   EMPTY     // Analyzing in progress but no information is available
 }
 /**
- * Severity status item containing text (not necessarily a number) possible icon and severity type
+ * Severity status item containing text (not necessarily a number) possible icon and details text for popup
  */
-data class StatusItem @JvmOverloads constructor(val text: String, val icon: Icon? = null, val type: String? = null)
+data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val detailsText: String? = null)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -103,14 +107,14 @@ interface UIController {
    */
   fun onClosePopup()
 
-  fun openProblemsView()
+  fun toggleProblemsView()
 }
 
 /**
  * Container containing all necessary information for rendering TrafficLightRenderer.
  * Instance is created each time <code>ErrorStripeRenderer.getStatus</code> is called.
  */
-class AnalyzerStatus(val icon: Icon, val title: String, val details: String, controllerCreator: () -> UIController) {
+class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, controllerCreator: () -> UIController) {
   /**
    * Lazy UI controller getter. Call only when you do need access to the UI details.
    */
@@ -128,7 +132,7 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     return this
   }
 
-  fun withTextStatus(status: String): AnalyzerStatus {
+  fun withTextStatus(@Nls status: String): AnalyzerStatus {
     expandedStatus = Collections.singletonList(StatusItem(status))
     textStatus = true
     return this
@@ -178,18 +182,21 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     @JvmStatic
     val DEFAULT by lazy(LazyThreadSafetyMode.NONE) {
       AnalyzerStatus(EmptyIcon.ICON_0, "", "") {
-        object : UIController {
-          override fun enableToolbar(): Boolean = false
-          override fun getActions(): List<AnAction> = emptyList()
-          override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
-          override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
-          override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
-          override fun fillHectorPanels(container: Container, gc: GridBag) {}
-          override fun canClosePopup(): Boolean = true
-          override fun onClosePopup() {}
-          override fun openProblemsView() {}
-        }
+        EmptyController
       }
+    }
+
+    @JvmStatic
+    val EmptyController = object : UIController {
+      override fun enableToolbar(): Boolean = false
+      override fun getActions(): List<AnAction> = emptyList()
+      override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
+      override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
+      override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
+      override fun fillHectorPanels(container: Container, gc: GridBag) {}
+      override fun canClosePopup(): Boolean = true
+      override fun onClosePopup() {}
+      override fun toggleProblemsView() {}
     }
   }
 }

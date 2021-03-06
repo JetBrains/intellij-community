@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,5 +30,19 @@ public class EditorActivityManager {
    */
   public boolean isFocused(@NotNull Editor editor) {
     return ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().hasFocus();
+  }
+
+  /**
+   * Determines whether a fileEditor is visible to a user
+   */
+  public boolean isVisible(@NotNull FileEditor fileEditor) {
+    return ApplicationManager.getApplication().isHeadlessEnvironment() || fileEditor.getComponent().isShowing();
+  }
+
+  /**
+   * Determines whether a fileEditor has focus
+   */
+  public boolean isFocused(@NotNull FileEditor fileEditor) {
+    return ApplicationManager.getApplication().isHeadlessEnvironment() || UIUtil.isFocusAncestor(fileEditor.getComponent());
   }
 }

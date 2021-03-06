@@ -25,6 +25,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -37,7 +38,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Conditional expression can be elvis #loc";
+    return GroovyBundle.message("inspection.message.conditional.expression.can.be.elvis");
   }
 
   @Override
@@ -46,7 +47,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
       @Override
       @NotNull
       public String getFamilyName() {
-        return "Convert Conditional to Elvis";
+        return GroovyBundle.message("intention.family.name.convert.conditional.expression.to.elvis");
       }
 
       @Override

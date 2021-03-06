@@ -30,7 +30,10 @@ public class ExpressionParserTest extends JavaParsingTestCase {
 
   public void testInstanceOf0() { doParserTest("a instanceof String"); }
   public void testInstanceOf1() { doParserTest("a instanceof"); }
-  public void testInstanceOf2() { doParserTest("x instanceof Foo v"); }
+
+  public void testInstanceOfPattern0() { doParserTest("x instanceof Foo v"); }
+  public void testInstanceOfPattern1() { doParserTest("x instanceof final Foo v"); }
+  public void testInstanceOfPattern2() { doParserTest("x instanceof @Ann() final Foo v"); }
 
   public void testNot0() { doParserTest("!!a"); }
   public void testNot1() { doParserTest("!"); }
@@ -149,6 +152,11 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testTextBlockLiteral0() { doParserTest("\"\"\".\"\"\""); }
 
   public void testSwitch0() { doParserTest("switch (i) { case 1 -> 1; default -> 2; }"); }
+
+  public void testYieldAsExpr0() { doParserTest("yield.run()"); }
+  public void testYieldAsExpr1() { doParserTest("yield++"); }
+  public void testYieldAsExpr2() { doParserTest("yield += 2"); }
+  public void testYieldAsExpr3() { doParserTest("yield ? 10 : 20"); }
 
   private void doParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));

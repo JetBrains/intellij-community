@@ -6,23 +6,26 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.content.*;
+import com.intellij.ui.UIBundle;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class InspectionManagerEx extends InspectionManagerBase {
@@ -32,66 +35,28 @@ public class InspectionManagerEx extends InspectionManagerBase {
   public InspectionManagerEx(final Project project) {
     super(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
-          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
-        }
-      };
+      myContentManager = NotNullLazyValue.createValue(() -> {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        toolWindowManager.registerToolWindow(ProblemsView.ID, true, ToolWindowAnchor.BOTTOM, project);
+        return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
+      });
     }
     else {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
-          ContentManager contentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
-          ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
-          contentManager.addContentManagerListener(new ContentManagerListener() {
-            private static final String PREFIX = "of ";
-
-            @Override
-            public void contentAdded(@NotNull ContentManagerEvent event) {
-              handleContentSizeChanged();
-            }
-
-            @Override
-            public void contentRemoved(@NotNull ContentManagerEvent event) {
-              handleContentSizeChanged();
-            }
-
-            private void handleContentSizeChanged() {
-              final int count = contentManager.getContentCount();
-              if (count == 1) {
-                final Content content = contentManager.getContent(0);
-                final String displayName = content.getDisplayName();
-                if (!content.getDisplayName().startsWith(PREFIX)) {
-                  content.setDisplayName(PREFIX + displayName);
-                }
-              }
-              else if (count > 1) {
-                for (Content content : contentManager.getContents()) {
-                  if (content.getDisplayName().startsWith(PREFIX)) {
-                    content.setDisplayName(content.getDisplayName().substring(PREFIX.length()));
-                  }
-                }
-              }
-            }
-          });
-          return contentManager;
-        }
-      };
+      myContentManager = NotNullLazyValue.createValue(() -> getProblemsViewContentManager(project));
     }
   }
 
   @NotNull
+  protected ContentManager getProblemsViewContentManager(@NotNull Project project) {
+    ToolWindow toolWindow = Objects.requireNonNull(ProblemsView.getToolWindow(project));
+    ContentManager contentManager = toolWindow.getContentManager();
+    ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
+    return contentManager;
+  }
+
+  @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   @NotNull final String descriptionTemplate,
+                                                   @NotNull final @InspectionMessage String descriptionTemplate,
                                                    @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,

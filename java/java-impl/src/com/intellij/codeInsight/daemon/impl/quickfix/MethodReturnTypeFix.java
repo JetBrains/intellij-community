@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -45,7 +43,6 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +151,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @NotNull
   private static List<PsiType> getReturnTypes(PsiType @NotNull [] types, @NotNull PsiType defaultType) {
-    Map<String, PsiType> map = new THashMap<>();
+    Map<String, PsiType> map = new HashMap<>();
     String defaultTypeKey = serialize(defaultType);
     map.put(defaultTypeKey, defaultType);
     Arrays.stream(types).forEach(t -> map.put(serialize(t), t));
@@ -244,7 +241,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   // to clearly separate data
-  private static class ReturnStatementAdder {
+  private static final class ReturnStatementAdder {
     @NotNull private final PsiElementFactory factory;
     @NotNull private final PsiType myTargetType;
 
@@ -313,7 +310,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
     return null;
   }
-  
+
   @NotNull
   private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull PsiType returnType) {
     PsiMethod[] methods = new PsiMethod[] {method};
@@ -345,7 +342,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return methodSignatureChangeVisitor.getAffectedMethods();
   }
 
-  private static class MethodSignatureChangeVisitor implements UsageVisitor {
+  private static final class MethodSignatureChangeVisitor implements UsageVisitor {
     private final List<PsiMethod> myAffectedMethods;
 
     private MethodSignatureChangeVisitor() {
@@ -386,7 +383,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos);
   }
 
-  private static class UsagesAwareChangeSignatureProcessor extends ChangeSignatureProcessor {
+  private static final class UsagesAwareChangeSignatureProcessor extends ChangeSignatureProcessor {
     private final UsageVisitor myUsageVisitor;
 
     private UsagesAwareChangeSignatureProcessor(final Project project, final PsiMethod method, final boolean generateDelegate,

@@ -51,4 +51,9 @@ public interface MavenDomParent extends MavenDomElement, MavenDomArtifactCoordin
   @Required(value = false, nonEmpty = false)
   @Convert(MavenParentRelativePathConverter.class)
   GenericDomValue<PsiFile> getRelativePath();
+
+
+  @Override
+  @Required(value = false, nonEmpty = true)
+  GenericDomValue<String> getVersion();
 }

@@ -15,32 +15,52 @@
  */
 package git4idea.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * Information about one stash.
  */
 public class StashInfo {
-  @NotNull
-  private final String myStash; // stash codename (stash@{1})
-  private final String myBranch;
-  private final String myMessage;
-  private final String myText; // The formatted text representation
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull Hash myHash;
+  private final @NotNull String myStash; // stash codename (stash@{1})
+  private final @Nullable String myBranch;
+  private final @NotNull String myMessage;
+  private final @Nls String myText; // The formatted text representation
 
-  public StashInfo(@NotNull String stash, @Nullable String branch, @NotNull String message) {
+  public StashInfo(@NotNull VirtualFile root, @NotNull Hash hash, @NotNull @NlsSafe String stash, @Nullable @NlsSafe String branch, @NlsSafe @Nls String message) {
+    myRoot = root;
+    myHash = hash;
     myStash = stash;
     myBranch = branch;
     myMessage = message;
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("<html><b><tt>").append(StringUtil.escapeXmlEntities(stash)).append("</tt></b>: ");
+    HtmlBuilder sb = new HtmlBuilder();
+    sb.append(HtmlChunk.text(stash).wrapWith("tt").bold()).append(": ");
     if (branch != null) {
-      sb.append("<i>").append(StringUtil.escapeXmlEntities(branch)).append("</i>: ");
+      sb.append(HtmlChunk.text(branch).italic()).append(": ");
     }
-    sb.append(StringUtil.escapeXmlEntities(message)).append("</html>");
-    myText = sb.toString();
+    sb.append(message);
+    myText = sb.wrapWithHtmlBody().toString();
+  }
+
+  @NotNull
+  public VirtualFile getRoot() {
+    return myRoot;
+  }
+
+  @NotNull
+  public Hash getHash() {
+    return myHash;
   }
 
   @Override
@@ -48,6 +68,7 @@ public class StashInfo {
     return myText;
   }
 
+  @NlsSafe
   @NotNull
   public String getStash() {
     return myStash;
@@ -58,11 +79,13 @@ public class StashInfo {
     return myBranch;
   }
 
+  @NlsSafe
   @NotNull
   public String getMessage() {
     return myMessage;
   }
 
+  @Nls
   public String getText() {
     return myText;
   }

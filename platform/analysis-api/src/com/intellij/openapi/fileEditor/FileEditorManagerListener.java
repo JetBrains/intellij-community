@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -55,6 +56,7 @@ public interface FileEditorManagerListener extends EventListener {
      * @deprecated use {@link Before} directly
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     class Adapter implements Before {
       @Override
       public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }

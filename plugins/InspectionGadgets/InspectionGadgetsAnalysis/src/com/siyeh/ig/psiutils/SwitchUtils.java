@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SwitchUtils {
+public final class SwitchUtils {
 
   private SwitchUtils() {}
 
@@ -72,7 +72,7 @@ public class SwitchUtils {
 
   public static boolean canBeSwitchCase(PsiExpression expression, PsiExpression switchExpression, LanguageLevel languageLevel,
                                         Set<Object> existingCaseValues) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiExpression stringSwitchExpression = determinePossibleJdk17SwitchExpression(expression, existingCaseValues);
       if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, stringSwitchExpression)) {
@@ -165,7 +165,7 @@ public class SwitchUtils {
   }
 
   private static PsiExpression getPossibleSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return null;
     }
@@ -196,8 +196,8 @@ public class SwitchUtils {
       return getPossibleSwitchSelectorExpression(operands[0], languageLevel);
     }
     else if (operation.equals(JavaTokenType.EQEQ) && operands.length == 2) {
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(operands[0]);
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(operands[1]);
       if (canBeCaseLabel(lhs, languageLevel, null)) {
         return rhs;
       }

@@ -24,6 +24,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
   private static class Holder {
@@ -40,12 +41,12 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
   }
 
   @Override
-  public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     return isBrace(iterator, fileText, fileType, true);
   }
 
   @Override
-  public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
+  public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     return isBrace(iterator, fileText, fileType, false);
   }
 

@@ -123,6 +123,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null && host.supportsPythonConditionalRefs();
   }
 
+  public boolean supportConditionalCondition(RegExpAtom condition) {
+    final RegExpLanguageHost host = findRegExpHost(condition);
+    return host != null && host.supportConditionalCondition(condition);
+  }
+
   public boolean supportsPossessiveQuantifiers(@Nullable final RegExpElement context) {
     final RegExpLanguageHost host = findRegExpHost(context);
     return host == null || host.supportsPossessiveQuantifiers();
@@ -203,5 +208,10 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   String[][] getPosixCharacterClasses(@NotNull final PsiElement element) {
     return myDefaultProvider.getPosixCharacterClasses();
+  }
+
+  public boolean belongsToConditionalExpression(@NotNull PsiElement regexpElement, @NotNull PsiElement hostElement) {
+    final RegExpLanguageHost host = findRegExpHost(regexpElement);
+    return host != null && host.belongsToConditionalExpression(hostElement);
   }
 }

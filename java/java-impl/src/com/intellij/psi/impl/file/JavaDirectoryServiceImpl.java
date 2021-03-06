@@ -26,10 +26,11 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -171,7 +172,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
       properties.setProperty(entry.getKey(), entry.getValue());
     }
 
-    String ext = StdFileTypes.JAVA.getDefaultExtension();
+    String ext = JavaFileType.INSTANCE.getDefaultExtension();
     String fileName = name + "." + ext;
 
     PsiElement element;
@@ -193,7 +194,11 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, project));
     }
     if (template.isLiveTemplateEnabled()) {
-      CreateFromTemplateActionBase.startLiveTemplate(file);
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+        CreateFromTemplateActionBase.startLiveTemplate(file);
+      }
     }
     return classes[0];
   }
@@ -211,7 +216,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   public static void checkCreateClassOrInterface(@NotNull PsiDirectory directory, String name) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(directory.getManager(), name);
 
-    String fileName = name + "." + StdFileTypes.JAVA.getDefaultExtension();
+    String fileName = name + "." + JavaFileType.INSTANCE.getDefaultExtension();
     directory.checkCreateFile(fileName);
 
     PsiNameHelper helper = PsiNameHelper.getInstance(directory.getProject());

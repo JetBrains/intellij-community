@@ -82,5 +82,4 @@ public class CommitParser {
     }
     return vcsCommitParents;
   }
-
 }

@@ -3,6 +3,18 @@
 Reports on uses of <b>instanceof</b> or <b>getClass() == SomeClass.class</b> where the type checked for is a concrete class,
 rather than an interface. Such uses often indicate excessive coupling to concrete implementations, rather
 than abstractions. <b>instanceof</b> expressions whose classes come from system or third-party libraries will not be reported by this inspection.
+<p>Example:</p>
+<pre>
+interface Entity {}
+class EntityImpl implements Entity {}
+  
+void processObject(Object obj) {
+  // warning: instanceof check for a concrete class, rather than the interface
+  if (obj instanceof EntityImpl) {
+    processEntity((Entity)obj);
+  }
+}
+</pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to have this inspection ignore <b>instanceof</b> on abstract classes.

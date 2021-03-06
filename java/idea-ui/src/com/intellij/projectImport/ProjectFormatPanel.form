@@ -13,7 +13,7 @@
           <gridbag top="5" left="5" bottom="0" right="5" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="Project format:"/>
+          <text resource-bundle="messages/JavaUiBundle" key="label.project.format1"/>
         </properties>
       </component>
       <component id="bc339" class="javax.swing.JComboBox" binding="myStorageFormatCombo">

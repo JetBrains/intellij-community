@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.usages;
 
 import com.intellij.psi.PsiClass;
@@ -43,10 +41,10 @@ public class JavaUsageViewTreeTest extends LightJavaCodeInsightFixtureTestCase {
     PsiMethod foo = foos[0];
     PsiReference ref = ReferencesSearch.search(foo).findFirst();
     assertNotNull(ref);
-    assertEquals("Usage (1 usage)\n" +
-               " Found usages (1 usage)\n" +
-               "  A (1 usage)\n" +
-               "   bar() (1 usage)\n" +
+    assertEquals("<root> (1)\n" +
+               " Found usages (1)\n" +
+               "  A (1)\n" +
+               "   bar() (1)\n" +
                "    3{    foo();\n", myFixture.getUsageViewTreeTextRepresentation(Collections.singleton(new UsageInfo(ref))));
   }
 }

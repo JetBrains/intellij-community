@@ -28,11 +28,11 @@ class EclipseAnnotationSupport implements AnnotationPackageSupport {
 
   @Override
   public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                                 @NotNull PsiElement context,
                                                                                  PsiAnnotation.TargetType @NotNull [] types,
                                                                                  boolean superPackage) {
     if (superPackage) return null;
-    String qName = anno.getQualifiedName();
-    if (DEFAULT_NOT_NULL.equals(qName)) {
+    if (anno.hasQualifiedName(DEFAULT_NOT_NULL)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       String[] targets = DEFAULT_LOCATIONS;
       if (value instanceof PsiArrayInitializerMemberValue) {

@@ -18,27 +18,27 @@ package com.intellij.diff.util;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DiffTaskQueue {
   @Nullable private ProgressIndicator myProgressIndicator;
 
-  @CalledInAwt
+  @RequiresEdt
   public void abort() {
     if (myProgressIndicator != null) myProgressIndicator.cancel();
     myProgressIndicator = null;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void executeAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends Runnable> backgroundTask,
                                 @Nullable Runnable onSlowAction,
                                 long waitMillis) {
     executeAndTryWait(backgroundTask, onSlowAction, waitMillis, false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void executeAndTryWait(@NotNull Function<? super ProgressIndicator, ? extends Runnable> backgroundTask,
                                 @Nullable Runnable onSlowAction,
                                 long waitMillis,

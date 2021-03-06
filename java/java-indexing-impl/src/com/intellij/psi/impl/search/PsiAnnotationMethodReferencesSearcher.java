@@ -36,7 +36,7 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
 
   @NotNull
   static ReadActionProcessor<PsiReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
-    return new ReadActionProcessor<PsiReference>() {
+    return new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference reference) {
         if (reference instanceof PsiJavaCodeReferenceElement) {

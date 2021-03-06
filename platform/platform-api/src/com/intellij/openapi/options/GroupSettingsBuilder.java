@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTabbedPane;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +36,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
   }
 
   @Override
-  public Collection<SettingsEditor<T>> getEditors() {
+  public @NotNull Collection<SettingsEditor<T>> getEditors() {
     List<SettingsEditor<T>> result = new ArrayList<>();
     List<Pair<String,SettingsEditor<T>>> editors = myGroup.getEditors();
     for (int i = 0; i < editors.size(); i++) {
@@ -44,7 +46,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
   }
 
   @Override
-  public JComponent createCompoundEditor() {
+  public @NotNull JComponent createCompoundEditor() {
     if (myComponent == null) {
       myComponent = doCreateComponent();
     }
@@ -58,7 +60,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
 
     JTabbedPane tabs = new JBTabbedPane();
     for (int i = 0; i < editors.size(); i++) {
-      Pair<String, SettingsEditor<T>> pair = editors.get(i);
+      Pair<@TabTitle String, SettingsEditor<T>> pair = editors.get(i);
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(pair.getSecond().getComponent(), BorderLayout.CENTER);
       tabs.add(pair.getFirst(), panel);

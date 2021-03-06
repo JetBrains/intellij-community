@@ -26,8 +26,8 @@ import java.util.Objects;
 /**
  * @author peter
  */
-public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
-  private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+public final class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
+  private static final InsertHandler<PsiTypeLookupItem> DEFAULT_IMPORT_FIXER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       if (item.getObject() instanceof PsiClass) {
@@ -310,7 +310,14 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     while (ref != null) {
       PsiElement qualifier = ref.getQualifier();
       PsiClass outer = aClass.getContainingClass();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !Objects.equals(aClass.getName(), ref.getReferenceName()) || outer == null) break;
+      if (!Objects.equals(aClass.getName(), ref.getReferenceName())) {
+        if (!JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().isAccessible(aClass, ref, outer)) {
+          // An inner class of non-public superclass is accessed via public subclass: do not rationalize qualifier in this case
+          return;
+        }
+        break;
+      }
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || outer == null) break;
 
       goneDeeper = true;
       ref = (PsiJavaCodeReferenceElement)qualifier;

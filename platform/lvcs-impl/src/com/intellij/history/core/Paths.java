@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.core;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collections;
 
-public class Paths {
+public final class Paths {
   public static final char DELIM = '/';
   private static boolean myIsCaseSensitive;
 
@@ -67,20 +54,11 @@ public class Paths {
   }
 
   public static Iterable<String> split(String path) {
-    //must be consistent with LocalFileSystemBase.extractRootPath()
-    int prefixLen = 0;
-    if (path.startsWith("//")) {
-      prefixLen = path.indexOf(DELIM, 2);
-      if (prefixLen == -1) prefixLen = path.length();
-    }
-    else if (StringUtil.startsWithChar(path, DELIM)) {
-      prefixLen = 1;
-    }
-    Iterable<String> result = StringUtil.tokenize(path.substring(prefixLen), String.valueOf(DELIM));
-    if (prefixLen > 0) {
-      result = ContainerUtil.concat(Collections.singleton(path.substring(0, prefixLen)), result);
-    }
-    return result;
+    String root = FileUtil.extractRootPath(path);
+    if (root == null) return StringUtil.tokenize(path, String.valueOf(DELIM));
+
+    Iterable<String> tail = StringUtil.tokenize(path.substring(root.length()), String.valueOf(DELIM));
+    return ContainerUtil.concat(Collections.singleton(root), tail);
   }
 
   public static boolean isParent(String parent, String path) {

@@ -112,4 +112,9 @@ public class PyFoldingTest extends PyTestCase {
       }
     }
   }
+
+  // PY-39406
+  public void testStringPrefixFolding() {
+    doTest();
+  }
 }

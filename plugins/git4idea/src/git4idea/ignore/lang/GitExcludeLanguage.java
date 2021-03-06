@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Git exclude (.git/info/exclude) {@link IgnoreLanguage} definition.
  */
-public class GitExcludeLanguage extends IgnoreLanguage {
+public final class GitExcludeLanguage extends IgnoreLanguage {
 
   public static final GitExcludeLanguage INSTANCE = new GitExcludeLanguage();
 

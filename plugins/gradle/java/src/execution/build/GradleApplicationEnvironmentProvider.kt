@@ -36,9 +36,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
-import com.intellij.util.PathUtil
 import gnu.trove.THashMap
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
+import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -69,17 +70,23 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     val javaModuleName: String?
     val javaExePath: String
     try {
-      val jdk = JavaParametersUtil.createProjectJdk(project, applicationConfiguration.alternativeJrePath)
-                ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-      val type = jdk.sdkType
-      if (type !is JavaSdkType) throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
-      javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
-        FileUtil.toSystemIndependentName(it)
-      } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-      javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule, mainClass)
+      if (applicationConfiguration.defaultTargetName != null && applicationConfiguration.alternativeJrePath == null) {
+        javaModuleName = null
+        javaExePath = GradleServerEnvironmentSetup.targetJavaExecutablePathMappingKey
+      }
+      else {
+        val jdk = JavaParametersUtil.createProjectJdk(project, applicationConfiguration.alternativeJrePath)
+                  ?: throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
+        val type = jdk.sdkType
+        if (type !is JavaSdkType) throw RuntimeException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
+        javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
+          FileUtil.toSystemIndependentName(it)
+        } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
+        javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule, mainClass)
+      }
     }
     catch (e: CantRunException) {
-      ExecutionErrorDialog.show(e, "Cannot use specified JRE", project)
+      ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
 
@@ -162,7 +169,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
       var intelliJRtPath: String? = null
       if (useClasspathFile) {
         try {
-          intelliJRtPath = PathUtil.getCanonicalPath(
+          intelliJRtPath = FileUtil.toCanonicalPath(
             PathManager.getJarPathForClass(Class.forName("com.intellij.rt.execution.CommandLineWrapper")))
         }
         catch (t: Throwable) {
@@ -179,13 +186,13 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     def gradlePath = '$gradlePath'
     def runAppTaskName = '$runAppTaskName'
     def mainClass = '${mainClass.qualifiedName}'
-    def javaExePath = '$javaExePath'
-    def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "'$workingDir'\n"}
+    def javaExePath = mapPath('$javaExePath')
+    def _workingDir = ${if (workingDir.isNullOrEmpty()) "null\n" else "mapPath('$workingDir')\n"}
     def sourceSetName = '$sourceSetName'
     def javaModuleName = ${if (javaModuleName == null) "null\n" else "'$javaModuleName'\n"}
     ${if (useManifestJar) "gradle.addListener(new ManifestTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
-    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, '$intelliJRtPath'))\n " else ""}
+    ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, mapPath('$intelliJRtPath')))\n " else ""}
 
     allprojects {
       afterEvaluate { project ->

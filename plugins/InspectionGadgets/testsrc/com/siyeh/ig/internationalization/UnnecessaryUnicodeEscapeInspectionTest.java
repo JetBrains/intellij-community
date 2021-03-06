@@ -2,13 +2,13 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Bas Leijdekkers
@@ -18,7 +18,7 @@ public class UnnecessaryUnicodeEscapeInspectionTest extends LightJavaInspectionT
   public void testUnnecessaryUnicodeEscape() {
     myFixture.configureByFile(getTestName(false) + ".java");
     final VirtualFile vFile = myFixture.getFile().getVirtualFile();
-    Charset ascii = CharsetToolkit.forName("US-ASCII");
+    Charset ascii = StandardCharsets.US_ASCII;
     EncodingProjectManager.getInstance(getProject()).setEncoding(vFile, ascii);
     UIUtil.dispatchAllInvocationEvents(); // reload in invokeLater
     assertEquals(ascii, vFile.getCharset());

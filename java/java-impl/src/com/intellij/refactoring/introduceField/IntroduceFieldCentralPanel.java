@@ -158,7 +158,6 @@ public abstract class IntroduceFieldCentralPanel {
   protected abstract JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater);
   public abstract void setInitializeInFieldDeclaration();
 
-  public abstract void setVisibility(String visibility);
   public abstract String getFieldVisibility();
 
   protected void initializeControls(PsiExpression initializerExpression,

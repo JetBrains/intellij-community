@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.psi.*;
@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class InlinerUtil {
+final class InlinerUtil {
   static boolean isLambdaChainParameterReference(PsiExpression expression, Predicate<? super PsiType> chainTypePredicate) {
     if(!(expression instanceof PsiReferenceExpression)) return false;
     PsiParameter target = tryCast(((PsiReferenceExpression)expression).resolve(), PsiParameter.class);
@@ -21,8 +21,12 @@ class InlinerUtil {
     if (list == null) return false;
     PsiMethodCallExpression call = tryCast(list.getParent(), PsiMethodCallExpression.class);
     if (call == null) return false;
-    PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-    if (qualifierCall == null) return false;
+    PsiMethodCallExpression qualifierCall = call;
+    do {
+      qualifierCall = MethodCallUtils.getQualifierMethodCall(qualifierCall);
+      if (qualifierCall == null) return false;
+    }
+    while (qualifierCall.getArgumentList().isEmpty());
     PsiType type = qualifierCall.getType();
     return type != null && chainTypePredicate.test(type);
   }

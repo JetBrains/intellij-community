@@ -28,6 +28,11 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     return ServiceManager.getService(project, MavenRunner.class);
   }
 
+  @Nullable
+  public static MavenRunner getInstanceIfCreated(@NotNull Project project) {
+    return project.getServiceIfCreated(MavenRunner.class);
+  }
+
   public MavenRunner(final Project project) {
     myProject = project;
   }
@@ -96,9 +101,8 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     for (MavenRunnerParameters command : commands) {
       if (indicator != null) {
         indicator.setFraction(((double)count++) / commands.size());
-        indicator.setText(MessageFormat.format("{0} {1}", action != null ? action : RunnerBundle.message("maven.running"),
-                                               command.getWorkingDirPath()));
-        indicator.setText2(command.getGoals().toString());
+        indicator.setText(RunnerBundle.message("maven.running", action != null ? action : command.getWorkingDirPath()));
+        indicator.setText2(command.getGoals().toString()); //NON-NLS
       }
       ProgramRunner.Callback callback = descriptor -> {
         ProcessHandler handler = descriptor.getProcessHandler();

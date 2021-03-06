@@ -15,15 +15,14 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.testFramework.TestFileType;
 
@@ -50,9 +49,13 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   }
 
   @Override
-  // disabling execution of tests in command
-  protected void runTest() throws Throwable {
-    WriteAction.runAndWait(() -> doRunTest());
+  protected boolean isRunInCommand() {
+    return false;
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return true;
   }
 
   public void testUndoRedo() {

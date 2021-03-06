@@ -44,7 +44,7 @@ public abstract class Converter<T> {
   @InspectionMessage
   @Nullable
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
-    return XmlDomBundle.message("error.cannot.convert.default.message", s);
+    return XmlDomBundle.message("dom.converter.cannot.convert.default", s);
   }
 
 
@@ -52,7 +52,7 @@ public abstract class Converter<T> {
    * @deprecated not necessary for Integer, use {@link com.intellij.util.xml.converters.values.NumberValueConverter}
    */
   @Deprecated
-  public static final Converter<Integer> INTEGER_CONVERTER = new Converter<Integer>() {
+  public static final Converter<Integer> INTEGER_CONVERTER = new Converter<>() {
     @Override
     public Integer fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
@@ -66,12 +66,12 @@ public abstract class Converter<T> {
 
     @Override
     public String toString(final Integer t, final ConvertContext context) {
-      return t == null? null: t.toString();
+      return t == null ? null : t.toString();
     }
 
     @Override
     public String getErrorMessage(final String s, final ConvertContext context) {
-      return XmlDomBundle.message("value.should.be.integer");
+      return XmlDomBundle.message("dom.converter.value.should.be.integer");
     }
   };
 
@@ -79,7 +79,7 @@ public abstract class Converter<T> {
    * @deprecated unnecessary
    */
   @Deprecated
-  public static final Converter<String> EMPTY_CONVERTER = new Converter<String>() {
+  public static final Converter<String> EMPTY_CONVERTER = new Converter<>() {
     @Override
     public String fromString(final String s, final ConvertContext context) {
       return s;
@@ -89,7 +89,6 @@ public abstract class Converter<T> {
     public String toString(final String t, final ConvertContext context) {
       return t;
     }
-
   };
 
 }

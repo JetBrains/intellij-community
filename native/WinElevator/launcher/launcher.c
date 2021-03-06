@@ -16,6 +16,7 @@
 #include <Windows.h>
 #include <elevTools.h>
 #include <stdio.h>
+#include <assert.h>
 
 // Elevation "frontend". Launched by user it starts elevator, connects to it and reads data from it
 
@@ -28,6 +29,7 @@
 #define ERR_LAUNCH -4
 #define ERR_FAIL_WAIT -5
 #define ERR_CREATE_PIPE -6
+#define ERR_WRITE_PIPE -7
 
 // Pipe that should be connected to remote process
 typedef struct
@@ -61,9 +63,8 @@ static WCHAR* _GetCommandLineNoProgram()
 	{
 		nProgramLengthChars += 2; //Program name is in quotes
 	}
-	WCHAR * sCommandLineAfterProgram = sCommandLine + nProgramLengthChars;
+	WCHAR* sCommandLineAfterProgram = sCommandLine + nProgramLengthChars;
 	for (; sCommandLineAfterProgram[0] == L' '; sCommandLineAfterProgram++) {} // Remove spaces after program
-
 	return sCommandLineAfterProgram;
 }
 
@@ -204,7 +205,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
 	HANDLE eventSource = RegisterEventSourceW(NULL, L"JB-Launcher");
 
-	
 	DWORD nExitCode = 0;
 
 	// Get pids
@@ -216,8 +216,21 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	_CONFIGURE_PIPE_INFO(g_stdErrPipe, ELEV_DESCR_STDERR, nPid, TRUE);
 	_CONFIGURE_PIPE_INFO(g_stdInPipe, ELEV_DESCR_STDIN, nPid, FALSE);
 
-
 	MemoryBarrier(); // To make sure threads has access to g_
+
+	ELEV_PIPE_NAME sEnvVarsPipeName;
+	ELEV_GEN_PIPE_NAME(sEnvVarsPipeName, nPid, ELEV_DESCR_ENVVAR);
+	HANDLE hEnvVarsPipe = CreateNamedPipe(
+		sEnvVarsPipeName,
+		PIPE_ACCESS_OUTBOUND,
+		PIPE_WAIT | PIPE_TYPE_MESSAGE,
+		1, _MAX_ENV, _MAX_ENV, 0, NULL
+	);
+	if (hEnvVarsPipe == INVALID_HANDLE_VALUE) {
+		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_CREATE_PIPE, NULL, 0, 0, NULL, NULL);
+		fprintf(stderr, "Failed to open env vars pipe: %ld", GetLastError());
+		return ERR_CREATE_PIPE;
+	}
 
 	HANDLE arHandlesToWait[] = {NULL, NULL};
 	int nDescriptorFlags = 0;
@@ -243,7 +256,6 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, ELEV_COMMAND_LINE_SEPARATOR, FALSE);
 
-	
 	// Add arguments provided by user to the tail of command line
 	// https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
 	WCHAR * sOriginalCommandLineNoProgram = _GetCommandLineNoProgram();
@@ -279,6 +291,46 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_LAUNCH, NULL, 0, 0, NULL, NULL);
 		fprintf(stderr, "Failed to launch process: %ld", GetLastError());
 		return ERR_LAUNCH;
+	}
+
+	{
+		// Waiting for the client to connect.
+		if (!ConnectNamedPipe(hEnvVarsPipe, NULL))
+		{
+			ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_FAIL_WAIT, NULL, 0, 0, NULL, NULL);
+			fwprintf(stderr, L"Failed to wait for in pipe: %ld", GetLastError());
+			exit(ERR_FAIL_WAIT);
+		}
+
+		// Getting the env vars block.
+		LPWCH lpEnvString = GetEnvironmentStringsW();
+		LPWSTR lpszVariable = (LPWSTR)lpEnvString;
+		while (*lpszVariable)
+		{
+			size_t len = (wcslen(lpszVariable) + 1) * sizeof(WCHAR);
+			DWORD numWritten;
+			BOOL bWriteOk = WriteFile(hEnvVarsPipe, lpszVariable, (DWORD)len, &numWritten, NULL);
+			if (!bWriteOk)
+			{
+				ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_WRITE_PIPE, NULL, 0, 0, NULL, NULL);
+				fprintf(stderr, "Failed to write to env vars pipe: %ld", GetLastError());
+				return ERR_WRITE_PIPE;
+			}
+
+			// Waiting for the client to read the message.
+			BOOL bFlushOk = FlushFileBuffers(hEnvVarsPipe);
+			if (!bFlushOk) {
+				ReportEvent(eventSource, EVENTLOG_ERROR_TYPE, 0, ERR_WRITE_PIPE, NULL, 0, 0, NULL, NULL);
+				fprintf(stderr, "Failed to flush the env vars pipe: %ld", GetLastError());
+				return ERR_WRITE_PIPE;
+			}
+
+			lpszVariable += wcslen(lpszVariable) + 1;
+		}
+		FreeEnvironmentStringsW(lpEnvString);
+
+		// Closing the pipe to signal the client to stop waiting for new msgs.
+		CloseHandle(hEnvVarsPipe);
 	}
 		
 	// Wait for all threads

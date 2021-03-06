@@ -18,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * Base interface for popup windows.
@@ -160,6 +161,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
   boolean isNativePopup();
 
   void setUiVisible(boolean visible);
+
+  default void setUserData(@NotNull List<Object> userData) {}
 
   @Nullable
   <T> T getUserData(@NotNull Class<T> userDataClass);

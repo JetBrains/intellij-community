@@ -18,6 +18,7 @@ package com.intellij.packaging.impl.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class DirectoryCopyPresentation extends PackagingElementPresentation {
-  private final String mySourcePath;
+  private final @NlsSafe String mySourcePath;
   private final String mySourceFileName;
   private final VirtualFile myFile;
 

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class CompletionUtilCoreImpl {
+public final class CompletionUtilCoreImpl {
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     return getOriginalElement(psi, psi.getContainingFile());

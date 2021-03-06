@@ -54,7 +54,8 @@ public class TextSplitter extends BaseSplitter {
         ws.split(text, found, consumer);
       }
     }
-    catch (ProcessCanceledException ignored) { }
+    catch (ProcessCanceledException ignored) {
+    }
   }
 
   @NotNull

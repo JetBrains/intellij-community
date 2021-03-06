@@ -54,6 +54,9 @@ public class EscapeHandler extends EditorActionHandler {
         templateState.gotoEnd(true);
         return;
       }
+      else if (lookup != null) { //to hide lookup and remove selection at once
+        lookup.hide();
+      }
     }
 
     if (myOriginalHandler.isEnabled(editor, caret, dataContext)) {

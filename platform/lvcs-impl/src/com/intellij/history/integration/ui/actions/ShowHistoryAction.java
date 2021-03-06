@@ -16,26 +16,47 @@
 
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.history.integration.ui.views.FileHistoryDialog;
 import com.intellij.history.integration.ui.views.HistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class ShowHistoryAction extends LocalHistoryAction {
   @Override
-  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    Presentation presentation = e.getPresentation();
+    if (presentation.isEnabled()) {
+      IdeaGateway gateway = getGateway();
+      VirtualFile file = getFile(e);
+      presentation.setEnabled(gateway != null && file != null && isEnabled(gateway, file));
+    }
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
+    VirtualFile f = Objects.requireNonNull(getFile(e));
     HistoryDialog frame = f.isDirectory() ? new DirectoryHistoryDialog(p, gw, f) : new FileHistoryDialog(p, gw, f);
     frame.show();
   }
 
-  @Override
-  protected boolean isEnabled(@NotNull LocalHistoryFacade vcs, @NotNull IdeaGateway gw, @Nullable VirtualFile f, @NotNull AnActionEvent e) {
-    return f != null && gw.isVersioned(f) && (f.isDirectory() || gw.areContentChangesVersioned(f));
+  protected boolean isEnabled(@NotNull IdeaGateway gw, @NotNull VirtualFile f) {
+    return gw.isVersioned(f) && (f.isDirectory() || gw.areContentChangesVersioned(f));
+  }
+
+  @Nullable
+  protected static VirtualFile getFile(@NotNull AnActionEvent e) {
+    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
   }
 }

@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
@@ -8,6 +9,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
@@ -29,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -64,7 +67,7 @@ public class PythonSdkUtil {
   }
 
   public static List<Sdk> getAllSdks() {
-    return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks()).filter(sdk -> isPythonSdk(sdk)).collect(Collectors.toList());
+    return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), PythonSdkUtil::isPythonSdk);
   }
 
   @Nullable
@@ -147,7 +150,7 @@ public class PythonSdkUtil {
     return sdk != null && sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataMarker;
   }
 
-  public static String getUserSite() {
+  public static @NlsSafe String getUserSite() {
     if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
       return appdata + File.separator + "Python";
@@ -169,11 +172,8 @@ public class PythonSdkUtil {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         final Sdk sdk = findPythonSdk(element);
-        if (sdk != null) {
-          final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
-          if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {
-            return true;
-          }
+        if (sdk != null && isFileInSkeletons(virtualFile, sdk)) {
+          return true;
         }
       }
     }
@@ -283,6 +283,10 @@ public class PythonSdkUtil {
     }
     final VirtualFile interpreter = sdk.getHomeDirectory();
     return interpreter == null || !interpreter.exists();
+  }
+
+  public static boolean isDisposed(@NotNull Sdk sdk) {
+    return sdk instanceof Disposable && Disposer.isDisposed((Disposable)sdk);
   }
 
   public static List<Sdk> getAllLocalCPythons() {
@@ -524,7 +528,7 @@ public class PythonSdkUtil {
       return null;
     }
     final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
-                                                           : homeDirectory.getParent().getParent();
+                                                         : homeDirectory.getParent().getParent();
     return condaParent.findChild("conda-meta");
   }
 }

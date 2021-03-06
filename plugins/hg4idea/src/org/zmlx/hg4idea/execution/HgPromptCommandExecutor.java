@@ -69,7 +69,7 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
       //noinspection IOResourceOpenedButNotSafelyClosed
       DataInputStream dataInput = new DataInputStream(socket.getInputStream());
       DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-      final String message = new String(readDataBlock(dataInput), StandardCharsets.UTF_8);
+      final String message = new String(readDataBlock(dataInput), StandardCharsets.UTF_8); //NON-NLS
       int numOfChoices = dataInput.readInt();
       final HgPromptChoice[] choices = new HgPromptChoice[numOfChoices];
       for (int i = 0; i < numOfChoices; i++) {

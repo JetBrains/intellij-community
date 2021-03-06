@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.preview;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +38,7 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
+public final class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
   private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
   private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
 
@@ -86,7 +87,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     final int height = image.getHeight();
     final ColorModel colorModel = image.getColorModel();
     final int i = colorModel.getPixelSize();
-    return new JLabel(String.format("%dx%d, %dbpp, %s", width, height, i, StringUtil.formatFileSize(imageFileSize)));
+    return new JLabel(LangBundle.message("image.preview.label", width, height, i, StringUtil.formatFileSize(imageFileSize)));
   }
 
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
@@ -107,12 +108,12 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     return false;
   }
 
-  @NotNull
-  public static BufferedImage readImageFromBytes(byte @NotNull [] content) throws IOException {
+  public static @NotNull BufferedImage readImageFromBytes(byte @NotNull [] content) throws IOException {
     try {
-      Image image = SVGLoader.load(new ByteArrayInputStream(content), JBUIScale.sysScale());
-      if (image != null) return ImageUtil.toBufferedImage(image);
-    } catch (IOException ignored) {}
+      return ImageUtil.toBufferedImage(SVGLoader.loadWithoutCache(content, JBUIScale.sysScale()));
+    }
+    catch (IOException ignored) {
+    }
 
     InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
     try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
@@ -174,7 +175,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     return new ImagePreviewComponent(image, imageFileSize);
   }
 
-  private class ImageComp extends JComponent {
+  private final class ImageComp extends JComponent {
     private final Dimension myPreferredSize;
 
     private ImageComp() {
@@ -195,7 +196,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
       final int width = myImage.getWidth();
       final int height = myImage.getHeight();
 
-      UIUtil.drawImage(g, myImage, new Rectangle(0, 0, r.width > width ? width : r.width, r.height > height ? height : r.height), null, this);
+      UIUtil.drawImage(g, myImage, new Rectangle(0, 0, Math.min(r.width, width), Math.min(r.height, height)), null, this);
     }
 
     @Override

@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtilRt;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.util.function.Predicate;
  *
  * @param <E> the type of elements held in this list
  */
-public class DisposableWrapperList<E> extends AbstractList<E> {
+public final class DisposableWrapperList<E> extends AbstractList<E> {
   @NotNull private final List<DisposableWrapper> myWrappedList = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public DisposableWrapperList() {
@@ -125,7 +126,7 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
 
   @Override
   public boolean removeIf(@NotNull Predicate<? super E> filter) {
-    Set<DisposableWrapper> removedWrappers = ContainerUtil.newIdentityTroveSet(myWrappedList.size());
+    Set<DisposableWrapper> removedWrappers = new ReferenceOpenHashSet<>(myWrappedList.size());
     boolean result = myWrappedList.removeIf(disposableWrapper -> {
       if (filter.test(disposableWrapper.delegate) && (disposableWrapper.makeUnique() || removedWrappers.contains(disposableWrapper))) {
         removedWrappers.add(disposableWrapper);
@@ -343,7 +344,13 @@ public class DisposableWrapperList<E> extends AbstractList<E> {
 
     @NotNull
     private String classInfo(@NotNull E o) {
-      return o + " (" + o.getClass() + "; super interfaces: " + Arrays.toString(o.getClass().getInterfaces()) +")";
+      try {
+        return o + " (" + o.getClass() + "; super interfaces: " + Arrays.toString(o.getClass().getInterfaces()) +")";
+      }
+      catch (Throwable e) {
+        // ignore in case of Proxy object with poorly-implemented toString()
+        return e.getMessage();
+      }
     }
   }
 

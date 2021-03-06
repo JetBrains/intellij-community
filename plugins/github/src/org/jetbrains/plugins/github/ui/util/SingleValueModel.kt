@@ -3,26 +3,39 @@ package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import kotlin.properties.Delegates
+import org.jetbrains.plugins.github.util.GithubUtil
 
-class SingleValueModel<T>(initialValue: T) {
+class SingleValueModel<T>(initialValue: T) : com.intellij.util.ui.codereview.SingleValueModel<T> {
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
-  var value by Delegates.observable<T>(initialValue) { _, _, _ ->
-    changeEventDispatcher.multicaster.eventOccurred()
-  }
+  override var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addAndInvokeValueChangedListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(changeEventDispatcher, listener)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addValueChangedListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(changeEventDispatcher, disposable, listener)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addValueChangedListener(listener: () -> Unit) =
     SimpleEventListener.addListener(changeEventDispatcher, listener)
+
+  @RequiresEdt
+  override fun addValueUpdatedListener(listener: (newValue: T) -> Unit) {
+    SimpleEventListener.addListener(changeEventDispatcher) {
+      listener(value)
+    }
+  }
+
+  fun <R> map(mapper: (T) -> R): SingleValueModel<R> {
+    val mappedModel = SingleValueModel(value.let(mapper))
+    addValueChangedListener {
+      mappedModel.value = value.let(mapper)
+    }
+    return mappedModel
+  }
 }

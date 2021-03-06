@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -31,14 +27,14 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
   @Override
   @NotNull
-  public FileEditor createEditor(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new PsiAwareTextEditorImpl(project, file, this);
   }
 
   @Override
   @NotNull
-  public FileEditorState readState(@NotNull Element element, @NotNull final Project project, @NotNull final VirtualFile file) {
-    final TextEditorState state = (TextEditorState)super.readState(element, project, file);
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
+    TextEditorState state = (TextEditorState)super.readState(element, project, file);
 
     // Foldings
     Element child = element.getChild(FOLDING_ELEMENT);
@@ -56,7 +52,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  public void writeState(@NotNull final FileEditorState _state, @NotNull final Project project, @NotNull final Element element) {
+  public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
     super.writeState(_state, project, element);
 
     TextEditorState state = (TextEditorState)_state;
@@ -75,7 +71,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       }
     }
     else {
-      Supplier<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
+      Supplier<? extends CodeFoldingState> delayedProducer = state.getDelayedFoldState();
       if (delayedProducer instanceof MyDelayedFoldingState) {
         element.addContent(((MyDelayedFoldingState)delayedProducer).getSerializedState());
       }
@@ -84,10 +80,9 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
   @NotNull
   @Override
-  protected TextEditorState getStateImpl(final Project project, @NotNull final Editor editor, @NotNull final FileEditorStateLevel level) {
-    final TextEditorState state = super.getStateImpl(project, editor, level);
-    // Save folding only on FULL level. It's very expensive to commit document on every
-    // type (caused by undo).
+  protected TextEditorState getStateImpl(Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level) {
+    TextEditorState state = super.getStateImpl(project, editor, level);
+    // Save folding only on FULL level. It's very expensive to commit document on every type (caused by undo).
     if (FileEditorStateLevel.FULL == level) {
       // Folding
       if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
@@ -102,10 +97,10 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
+  protected void setStateImpl(Project project, Editor editor, TextEditorState state, boolean exactState) {
     super.setStateImpl(project, editor, state, exactState);
     // Folding
-    final CodeFoldingState foldState = state.getFoldingState();
+    CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null && AsyncEditorLoader.isEditorLoaded(editor)) {
       if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -119,7 +114,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
   @NotNull
   @Override
-  protected EditorWrapper createWrapperForEditor(@NotNull final Editor editor) {
+  protected EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
     return new PsiAwareEditorWrapper(editor);
   }
 
@@ -128,7 +123,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
     private PsiAwareEditorWrapper(@NotNull Editor editor) {
       super(editor);
-      final Project project = editor.getProject();
+      Project project = editor.getProject();
       myBackgroundHighlighter = project == null
                                 ? null
                                 : new TextEditorBackgroundHighlighter(project, editor);

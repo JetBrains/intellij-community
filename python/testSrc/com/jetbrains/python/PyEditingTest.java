@@ -168,6 +168,20 @@ public class PyEditingTest extends PyTestCase {
                                         "<caret>\"\"\"");
   }
 
+  // PY-32864
+  public void testIndentationOfTripleQuotedFStringContent() {
+    doTestEnter("if True:\n" +
+                "    s = f\"\"\"\n" +
+                "        SELECT<caret>\n" +
+                "\"\"\"",
+                "if True:\n" +
+                "    s = f\"\"\"\n" +
+                "        SELECT\n" +
+                "        <caret>\n" +
+                "\"\"\""
+                );
+  }
+
   public void testOvertypeFromInside() {
     assertEquals("''", doTestTyping("''", 1, '\''));
   }

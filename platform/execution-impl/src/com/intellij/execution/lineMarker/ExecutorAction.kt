@@ -2,30 +2,31 @@
 package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
-import com.intellij.execution.actions.BaseRunConfigurationAction
-import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.LocatableConfiguration
-import com.intellij.ide.DataManager
+import com.intellij.execution.actions.RunContextAction
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.NonNls
 
-private val LOG = logger<ExecutorAction>()
-private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
 
 /**
  * @author Dmitry Avdeev
  */
 @Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
-                                         private val executor: Executor,
-                                         private val order: Int) : ActionGroup() {
+                                         val executor: Executor,
+                                         val order: Int) :
+  ActionGroup(), ActionWithDelegate<AnAction>, UpdateInBackground {
   init {
     copyFrom(origin)
   }
 
+  override fun isUpdateInBackground() = (origin as? UpdateInBackground)?.isUpdateInBackground == true
+
   companion object {
+    @JvmStatic
+    val orderKey: DataKey<Int> = DataKey.create("Order")
     @JvmStatic
     @JvmOverloads
     fun getActions(order: Int = 0) = getActionList(order).toTypedArray()
@@ -36,7 +37,7 @@ class ExecutorAction private constructor(val origin: AnAction,
       val actionManager = ActionManager.getInstance()
       val createAction = actionManager.getAction("CreateRunConfiguration")
       val extensions = Executor.EXECUTOR_EXTENSION_NAME.extensionList
-      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 1))
+      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 2))
       extensions
         .mapNotNullTo(result) { executor ->
           actionManager.getAction(executor.contextActionId)?.let {
@@ -44,42 +45,57 @@ class ExecutorAction private constructor(val origin: AnAction,
           }
         }
       if (createAction != null) {
-        result.add(createAction)
+        result.add(object : EmptyAction.MyDelegatingActionGroup(createAction as ActionGroup) {
+          override fun update(e: AnActionEvent) {
+            super.update(wrapEvent(e, order))
+          }
+
+          override fun actionPerformed(e: AnActionEvent) {
+            super.actionPerformed(wrapEvent(e, order))
+          }
+
+          override fun canBePerformed(context: DataContext): Boolean {
+            return super.canBePerformed(wrapContext(context, order))
+          }
+
+          override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+            return super.getChildren(e?.let { wrapEvent(e, order)})
+          }
+        })
       }
       return result
     }
 
-    private fun getConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
-      var result = DataManager.getInstance().loadFromDataContext(dataContext, CONFIGURATION_CACHE)
-      if (result == null) {
-        result = computeConfigurations(dataContext)
-        DataManager.getInstance().saveInDataContext(dataContext, CONFIGURATION_CACHE, result)
-      }
-      return result
+    private fun wrapEvent(e: AnActionEvent, order : Int): AnActionEvent {
+      val dataContext = wrapContext(e.dataContext, order)
+      return AnActionEvent(e.inputEvent, dataContext, e.place, e.presentation, e.actionManager, e.modifiers)
     }
 
-    private fun computeConfigurations(dataContext: DataContext): List<ConfigurationFromContext> {
-      val originalContext = ConfigurationContext.getFromContext(dataContext)
-      return originalContext.configurationsFromContext ?: return emptyList()
+    private fun wrapContext(dataContext: DataContext, order : Int): DataContext {
+      return MyDataContext(dataContext, order)
     }
+
+    @JvmStatic
+    fun wrap(runContextAction: RunContextAction, order: Int): AnAction {
+      return ExecutorAction(runContextAction, runContextAction.executor, order)
+    }
+  }
+
+  override fun getDelegate(): AnAction {
+    return origin
   }
 
   override fun update(e: AnActionEvent) {
-    val name = getActionName(e.dataContext)
-    e.presentation.isEnabledAndVisible = name != null
-    origin.update(e)
-    if (name != null) {
-      e.presentation.text = name
-    }
+    origin.update(wrapEvent(e, order))
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    origin.actionPerformed(e)
+    origin.actionPerformed(wrapEvent(e, order))
   }
 
-  override fun canBePerformed(context: DataContext) = origin !is ActionGroup || origin.canBePerformed(context)
+  override fun canBePerformed(context: DataContext) = origin !is ActionGroup || origin.canBePerformed(wrapContext(context, order))
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e) ?: AnAction.EMPTY_ARRAY
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e?.let { wrapEvent(it, order) }) ?: AnAction.EMPTY_ARRAY
 
   override fun isDumbAware() = origin.isDumbAware
 
@@ -88,16 +104,6 @@ class ExecutorAction private constructor(val origin: AnAction,
   override fun hideIfNoVisibleChildren() = origin is ActionGroup && origin.hideIfNoVisibleChildren()
 
   override fun disableIfNoVisibleChildren() = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
-
-  fun getActionName(dataContext: DataContext): String? {
-    val list = getConfigurations(dataContext)
-    if (list.isEmpty()) {
-      return null
-    }
-
-    val configuration = list.get(if (order < list.size) order else 0).configuration as LocatableConfiguration
-    return executor.getStartActionText(BaseRunConfigurationAction.suggestRunActionName(configuration))
-  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {
@@ -119,5 +125,31 @@ class ExecutorAction private constructor(val origin: AnAction,
     result = 31 * result + executor.hashCode()
     result = 31 * result + order
     return result
+  }
+  
+  private class MyDataContext(private val myDelegate: DataContext, val order: Int) : UserDataHolderBase(), DataContext {
+    @Synchronized
+    override fun getData(dataId: @NonNls String): Any? {
+      if (orderKey.`is`(dataId)) {
+        return order
+      }
+      return myDelegate.getData(dataId)
+    }
+
+    override fun <T : Any?> getUserData(key: Key<T>): T? {
+      if (myDelegate is UserDataHolder) {
+        return myDelegate.getUserData(key)
+      }
+      return super.getUserData(key)
+    }
+
+    override fun <T : Any?> putUserData(key: Key<T>, value: T?) {
+      if (myDelegate is UserDataHolder) {
+        myDelegate.putUserData(key, value)
+      }
+      else{
+        super.putUserData(key, value)
+      }
+    }
   }
 }

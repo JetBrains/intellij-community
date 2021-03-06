@@ -10,7 +10,7 @@ public class AddEmptyRecordHeaderTest extends LightQuickFixParameterizedTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 
   @Override

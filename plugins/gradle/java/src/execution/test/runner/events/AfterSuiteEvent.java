@@ -16,6 +16,9 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
@@ -28,11 +31,27 @@ public class AfterSuiteEvent extends AbstractTestEvent {
     super(executionConsole);
   }
 
+
+  @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    if (!(testEvent instanceof ExternalSystemFinishEvent)) {
+      return;
+    }
+    final String testId = testEvent.getEventId();
+    TestEventResult result = TestEventResult.fromOperationResult(((ExternalSystemFinishEvent)testEvent).getOperationResult());
+
+    doProcess(testId, result);
+  }
+
   @Override
   public void process(@NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     final String testId = eventXml.getTestId();
     TestEventResult result = TestEventResult.fromValue(eventXml.getTestEventResultType());
 
+    doProcess(testId, result);
+  }
+
+  private void doProcess(String testId, TestEventResult result) {
     final SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
 
@@ -58,6 +77,7 @@ public class AfterSuiteEvent extends AbstractTestEvent {
           break;
       }
       getResultsViewer().onSuiteFinished(testProxy);
+      getExecutionConsole().getEventPublisher().onSuiteFinished(testProxy);
     }
   }
 }

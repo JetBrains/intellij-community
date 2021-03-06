@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
@@ -47,7 +48,23 @@ public abstract class ProjectOpenProcessor {
                                           Messages.getQuestionIcon());
   }
 
+  /**
+   * Create an instance of the project, configure the project according to the needs of this ProjectOpenProcessor, and open it.
+   * <p/>
+   * If this processor calls some potentially untrusted code, then the processor should show a confirmation warning to the user,
+   * allowing to load the project in some sort of "preview mode", where the user will be able to view the code, but nothing dangerous
+   * will be executed automatically. See TrustedProjects#confirmOpeningUntrustedProject().
+   *
+   * @return The created project, or null if it was not possible to create a project for some reason.
+   */
   public abstract @Nullable Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
+
+  /**
+   * Return null if not supported.
+   */
+  public @Nullable CompletableFuture<@Nullable Project> openProjectAsync(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+    return null;
+  }
 
   /**
    * Allow opening a directory directly if the project files are located in that directory.

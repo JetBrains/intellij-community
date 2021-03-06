@@ -38,8 +38,8 @@ public class PsiRecordComponentStubImpl extends StubBase<PsiRecordComponent> imp
 
   @Override
   @NotNull
-  public TypeInfo getType(boolean doResolve) {
-    return doResolve ? myType.applyAnnotations(this) : myType;
+  public TypeInfo getType() {
+    return myType;
   }
 
 

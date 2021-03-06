@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 class SimpleLineStatusTracker(project: Project?,
                               document: Document,
@@ -27,5 +28,10 @@ class SimpleLineStatusTracker(project: Project?,
 ) : LineStatusTrackerBase<Range>(project, document) {
   override val renderer: LineStatusMarkerRenderer = rendererBuilder(this)
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, null)
+
+  @RequiresEdt
+  fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevision(vcsContent, null)
+  }
 }

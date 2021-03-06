@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -13,10 +13,8 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tree.LeafState;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.Collection;
@@ -145,7 +143,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   public final T getValue() {
     Object value = getEqualityObject();
-    return value == null ? null : (T)TreeAnchorizer.getService().retrieveElement(value);
+    return value == null ? null : (T)SlowOperations.allowSlowOperations(() -> TreeAnchorizer.getService().retrieveElement(value));
   }
 
   public final void setValue(T value) {
@@ -182,8 +180,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @TestOnly
   public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     if (getValue() instanceof Queryable) {
-      String text = Queryable.Util.print((Queryable)getValue(), printInfo, this);
-      if (text != null) return text;
+      return Queryable.Util.print((Queryable)getValue(), printInfo, this);
     }
 
     return getTestPresentation();
@@ -210,6 +207,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return null;
   }
 
+  @Nullable
   public Color getFileStatusColor(final FileStatus status) {
     if (FileStatus.NOT_CHANGED.equals(status) && myProject != null && !myProject.isDefault()) {
       final VirtualFile vf = getVirtualFile();
@@ -262,6 +260,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use {@link #getPresentation()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }

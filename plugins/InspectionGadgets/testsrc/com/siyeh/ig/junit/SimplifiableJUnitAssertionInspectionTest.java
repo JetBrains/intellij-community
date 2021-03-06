@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectionTestCase {
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/simplifiable_junit_assertion";
+  }
 
   public void testSimplifiableJUnitAssertion() {
     doTest();
@@ -43,7 +48,7 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectio
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new SimplifiableJUnitAssertionInspection();
+    return new SimplifiableAssertionInspection();
   }
 
   @Override

@@ -20,7 +20,7 @@ package com.intellij.lang;
  * (see {@link com.intellij.psi.PsiLanguageInjectionHost}, {@link com.intellij.psi.LanguageInjector})
  *
  * @see com.intellij.psi.templateLanguages.TemplateLanguage
- * @see com.intellij.lang.DependentLanguage
+ * @see DependentLanguage
  * @author peter
  */
 public interface InjectableLanguage {

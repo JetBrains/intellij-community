@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -26,7 +26,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private SMTestProxy.SMRootTestProxy myRootSuite;
   private SMTestRunnerResultsForm myResultsViewer;
 
-  private class MyConsoleView extends SMTRunnerConsoleView {
+  private final class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
     private MyConsoleView(final TestConsoleProperties consoleProperties) {
@@ -414,15 +414,15 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ",
-                     "\nmethod1:1\nmethod2:2\nstderr1 ",
-                     "\nignored2 msg\n");
+                     "stderr1 ",
+                     "\nignored2 msg\n\nmethod1:1\nmethod2:2\n");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1,
                      "stdout1 ",
-                     "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored2 msg\n");
+                     "stderr1 ",
+                     "\nignored2 msg\n\nmethod1:1\nmethod2:2\n");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -432,14 +432,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter,
                      "stdout1 ",
-                     "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored msg\n");
+                     "stderr1 ",
+                     "\nignored msg\n\nmethod1:1\nmethod2:2\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2,
                      "stdout1 ",
-                     "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored msg\n");
+                     "stderr1 ",
+                     "\nignored msg\n\nmethod1:1\nmethod2:2\n");
   }
 
   public void testOnUncapturedOutput_BeforeProcessStarted() {

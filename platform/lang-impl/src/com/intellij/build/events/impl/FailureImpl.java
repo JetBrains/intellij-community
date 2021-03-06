@@ -19,6 +19,7 @@ import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.Failure;
 import com.intellij.notification.Notification;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -29,8 +30,8 @@ import java.util.List;
  */
 public class FailureImpl implements Failure {
 
-  private final String myMessage;
-  private final String myDescription;
+  private final @BuildEventsNls.Message String myMessage;
+  private final @BuildEventsNls.Description String myDescription;
   private final List<? extends Failure> myCauses;
   @Nullable
   private final Throwable myError;
@@ -56,13 +57,13 @@ public class FailureImpl implements Failure {
 
   public FailureImpl(@BuildEventsNls.Message String message,
                      @BuildEventsNls.Description String description,
-                     List<? extends Failure> causes) {
+                     @NotNull List<? extends Failure> causes) {
     this(message, description, causes, null, null, null);
   }
 
-  private FailureImpl(@BuildEventsNls.Message String message,
+  public FailureImpl(@BuildEventsNls.Message String message,
                       @BuildEventsNls.Description String description,
-                      List<? extends Failure> causes,
+                      @NotNull List<? extends Failure> causes,
                       @Nullable Throwable error,
                       @Nullable Notification notification,
                       @Nullable Navigatable navigatable) {

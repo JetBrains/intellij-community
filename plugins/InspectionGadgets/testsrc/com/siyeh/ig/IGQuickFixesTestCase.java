@@ -59,14 +59,14 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   protected void assertQuickfixNotAvailable(final String quickfixName) {
     final String testName = getTestName(false);
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
-    assertEmpty("Quickfix \'" + quickfixName + "\' is available but should not",
+    assertEmpty("Quickfix '" + quickfixName + "' is available but should not",
                 myFixture.filterAvailableIntentions(quickfixName));
   }
 
   protected void assertQuickfixNotAvailable(String quickfixName, @Language("JAVA") @NotNull String text) {
     text = text.replace("/**/", "<caret>");
     myFixture.configureByText(JavaFileType.INSTANCE, text);
-    assertEmpty("Quickfix \'" + quickfixName + "\' is available but should not",
+    assertEmpty("Quickfix '" + quickfixName + "' is available but should not",
                 myFixture.filterAvailableIntentions(quickfixName));
   }
 

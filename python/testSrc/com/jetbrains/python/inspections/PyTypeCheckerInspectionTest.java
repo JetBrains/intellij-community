@@ -1,6 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -564,6 +568,34 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-43133
+  public void testHierarchyAgainstProtocol() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "from typing import Protocol\n" +
+        "\n" +
+        "class A:\n" +
+        "    def f1(self, x: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class B(A):\n" +
+        "    def f2(self, y: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class P(Protocol):\n" +
+        "    def f1(self, x: str): ...\n" +
+        "    def f2(self, y: str): ...\n" +
+        "\n" +
+        "def test(p: P):\n" +
+        "    pass\n" +
+        "\n" +
+        "b = B()\n" +
+        "test(b)"
+      )
+    );
+  }
+
   // PY-23161
   public void testGenericWithTypeVarBounds() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
@@ -929,7 +961,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "        pass\n" +
                          "\n" +
                          "def foo(cb: Callback[int]):\n" +
-                         "    cb(<weak_warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</weak_warning>)")
+                         "    cb(<warning descr=\"Expected type 'int' (matched generic type '_T'), got 'str' instead\">\"42\"</warning>)")
     );
   }
 
@@ -951,7 +983,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    year: int\n" +
                          "def record_movie(movie: Movie) -> None: ...\n" +
                          "record_movie({'name': 'Blade Runner', 'year': 1982})\n" +
-                         "record_movie(<warning descr=\"Expected type 'Movie', got 'Dict[str, int]' instead\">{'name': 1984}</warning>)")
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'dict[str, int]' instead\">{'name': 1984}</warning>)")
     );
   }
 
@@ -982,9 +1014,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    name: str\n" +
                          "    year: int\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 
@@ -995,9 +1027,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "Movie = TypedDict('Movie', {'name': str, 'year': int})\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 
@@ -1058,8 +1090,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "movie2 = Movie2()\n" +
                          "s: str = movie['address'][0]\n" +
                          "s: str = movie2['address'][0]\n" +
-                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n" +
-                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n"));
+                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible type(s):(int)(slice)\">'i'</warning>]\n" +
+                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible type(s):(int)(slice)\">'i'</warning>]\n"));
   }
 
   // PY-36008
@@ -1084,7 +1116,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
         "d: MyMapping[str, str] = undefined1\n" +
         "d.get(undefined2)\n" +
         "d.get(\"str\")\n" +
-        "d.get(<weak_warning descr=\"Expected type 'str' (matched generic type '_KT'), got 'int' instead\">1</weak_warning>)"
+        "d.get(<warning descr=\"Expected type 'str' (matched generic type '_KT'), got 'int' instead\">1</warning>)"
       )
     );
   }
@@ -1127,5 +1159,124 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "foo(MyCls())\n" +
                          "foo(<warning descr=\"Expected type 'MyCls', got 'DifferentCls' instead\">DifferentCls()</warning>)")
     );
+  }
+
+  public void testNewTypeInForeignUnstubbedFile() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+      myFixture.configureFromTempProjectFile("a.py");
+      VirtualFile foreignVFile = myFixture.findFileInTempDir("b.py");
+      assertNotNull(foreignVFile);
+      PsiFile foreignFilePsi = PsiManager.getInstance(myFixture.getProject()).findFile(foreignVFile);
+      assertNotNull(foreignFilePsi);
+      assertNotParsed(foreignFilePsi);
+      //noinspection ResultOfMethodCallIgnored
+      foreignFilePsi.getNode();
+      assertNotNull(((PsiFileImpl)foreignFilePsi).getTreeElement());
+      configureInspection();
+    });
+  }
+
+  // PY-42205
+  public void testNonReferenceCallee() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class CallableTest:\n" +
+                         "    def __call__(self, arg=None):\n" +
+                         "        pass\n" +
+                         "CallableTest()(\"bad 1\")")
+    );
+  }
+
+  // PY-37876
+  public void testGenericCallablesInGenericClasses() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Iterable, TypeVar, Generic\n" +
+                         "T = TypeVar(\"T\")\n" +
+                         "class MyClass(Generic[T]):\n" +
+                         "    def __init__(self, data: Iterable[T]):\n" +
+                         "        sorted(data, key=self.my_func)\n" +
+                         "    def my_func(self, elem: T) -> int:\n" +
+                         "        pass")
+    );
+  }
+
+  // PY-37876
+  public void testBoundedGenericParameterOfExpectedCallableParameter1() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Callable, TypeVar\n" +
+                         "\n" +
+                         "T = TypeVar('T', bound=int)\n" +
+                         "\n" +
+                         "def func(c: Callable[[T], None]):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def accepts_anything(x: object) -> None:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "func(accepts_anything)\n")
+    );
+  }
+
+  // PY-37876
+  public void testBoundedGenericParameterOfExpectedCallableParameter2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Callable, TypeVar\n" +
+                         "\n" +
+                         "T = TypeVar('T', bound=int)\n" +
+                         "\n" +
+                         "def func(c: Callable[[T], None]):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def accepts_anything(x: str) -> None:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "func(<warning descr=\"Expected type '(Any) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead\">accepts_anything</warning>)\n")
+    );
+  }
+
+  // PY-37876
+  public void testGenericParameterOfExpectedCallableMappedByOtherArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing import Callable, TypeVar\n" +
+                         "\n" +
+                         "T = TypeVar('T')\n" +
+                         "\n" +
+                         "def func(x: T, c: Callable[[T], None]) -> None:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def accepts_anything(x: str) -> None:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "func(42, <warning descr=\"Expected type '(int) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead\">accepts_anything</warning>)")
+    );
+  }
+
+  public void testCallByClass() {
+    doTest();
+  }
+
+  // PY-41806
+  public void testClassDefinitionAgainstProtocolDunderCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-41806
+  public void testClassInstanceAgainstProtocolDunderCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-36062
+  public void testModuleTypeParameter() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
+
+  // PY-43841
+  public void testPyFunctionAgainstBuiltinFunction() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 }

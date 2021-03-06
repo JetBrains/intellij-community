@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveParamFix extends AbstractFix {
@@ -34,7 +35,12 @@ public class RemoveParamFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        return "Remove Argument '" + myName + "'";
+        return XPathBundle.message("intention.name.remove.argument", myName);
+    }
+
+    @Override
+    public String getFamilyName() {
+        return XPathBundle.message("intention.family.name.remove.argument");
     }
 
     @Override

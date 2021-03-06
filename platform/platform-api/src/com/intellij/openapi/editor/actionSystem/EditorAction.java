@@ -132,7 +132,12 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
     if (editor == null) {
-      presentation.setEnabled(false);
+      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+        presentation.setEnabledAndVisible(false);
+      }
+      else {
+        presentation.setEnabled(false);
+      }
     }
     else {
       if (editor.isDisposed()) {

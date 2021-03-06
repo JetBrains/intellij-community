@@ -23,15 +23,6 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
     }
   }
 
-  public static void setupPoisonFactory() {
-    // if this method is called early enough and app called setupForkJoinCommonPool() too late
-    // (setupForkJoinCommonPool() has to be called after Main.setFlags() but before FJP init)
-    // then on the first use the FJP will explode, revealing who did the too early FJP init
-    if (!IdeaForkJoinWorkerThreadFactory.class.getName().equals(System.getProperty("java.util.concurrent.ForkJoinPool.common.threadFactory"))) {
-      System.setProperty("java.util.concurrent.ForkJoinPool.common.threadFactory", PoisonFactory.class.getName());
-    }
-  }
-
   private static final AtomicLong bits = new AtomicLong();
   @Override
   public ForkJoinWorkerThread newThread(ForkJoinPool pool) {

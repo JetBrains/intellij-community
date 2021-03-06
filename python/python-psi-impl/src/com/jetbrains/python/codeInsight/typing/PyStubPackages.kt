@@ -32,7 +32,7 @@ fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
   val top = name.firstComponent
 
   if (top != null && top.endsWith(STUBS_SUFFIX)) {
-    return QualifiedName.fromComponents(name.components).apply { components[0] = components[0].dropLast(STUBS_SUFFIX.length) }
+    return QualifiedName.fromComponents(top.removeSuffix(STUBS_SUFFIX)).append(name.removeHead(1))
   }
 
   return name

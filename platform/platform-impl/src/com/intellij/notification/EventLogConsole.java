@@ -54,13 +54,9 @@ final class EventLogConsole {
 
   private final EditorEx myLogEditor;
 
-  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<EditorHyperlinkSupport>() {
-    @NotNull
-    @Override
-    protected EditorHyperlinkSupport compute() {
-      return EditorHyperlinkSupport.get(getConsoleEditor());
-    }
-  };
+  private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = NotNullLazyValue.createValue(() -> {
+    return EditorHyperlinkSupport.get(getConsoleEditor());
+  });
 
   private final LogModel myProjectModel;
 
@@ -205,8 +201,8 @@ final class EventLogConsole {
     private final NotificationDisplayType myCurrent;
 
     DisplayTypeAction(@NotNull NotificationSettings settings,
-                             @NotNull NotificationDisplayType type,
-                             @NotNull NotificationDisplayType current) {
+                      @NotNull NotificationDisplayType type,
+                      @NotNull NotificationDisplayType current) {
       super(type.getTitle());
       mySettings = settings;
       myType = type;
@@ -260,17 +256,16 @@ final class EventLogConsole {
     final NotificationType type = notification.getType();
     TextAttributesKey key = type == NotificationType.ERROR
                             ? ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY
-                            : type == NotificationType.INFORMATION
+                            : type == NotificationType.INFORMATION || type == NotificationType.IDE_UPDATE
                               ? ConsoleViewContentType.NORMAL_OUTPUT_KEY
                               : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
     append(document, pair.message);
 
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
     RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+      .addRangeHighlighter(key, msgStart, document.getTextLength(), layer, HighlighterTargetArea.LINES_IN_RANGE);
     GROUP_ID.set(highlighter, notification.getGroupId());
     NOTIFICATION_ID.set(highlighter, notification.id);
 
@@ -319,7 +314,7 @@ final class EventLogConsole {
   }
 
   private void highlightNotification(final Notification notification,
-                                     String message,
+                                     @NlsContexts.Tooltip String message,
                                      final int startLine,
                                      final int endLine,
                                      int titleOffset,

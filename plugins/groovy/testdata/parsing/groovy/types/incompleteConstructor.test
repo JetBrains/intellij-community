@@ -27,9 +27,9 @@ Groovy script
             <empty list>
           Built in type
             PsiElement(int)('int')
-          PsiErrorElement:identifier expected, got '}'
+          PsiErrorElement:identifier expected
             <empty list>
         Throw clause
           <empty list>
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(})('}')

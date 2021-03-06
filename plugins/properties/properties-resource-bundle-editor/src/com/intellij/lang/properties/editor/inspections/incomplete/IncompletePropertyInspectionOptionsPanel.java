@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -33,7 +34,8 @@ public class IncompletePropertyInspectionOptionsPanel {
   public JPanel buildPanel() {
     JPanel panel = ToolbarDecorator
       .createDecorator(myList)
-      .setPanelBorder(IdeBorderFactory.createTitledBorder("Ignored suffixes"))
+      .setPanelBorder(IdeBorderFactory.createTitledBorder(
+        ResourceBundleEditorBundle.message("incomplete.property.inspection.ignored.suffixes.border")))
       .disableUpDownActions()
       .setAddAction(new AnActionButtonRunnable() {
       @Override
@@ -55,9 +57,9 @@ public class IncompletePropertyInspectionOptionsPanel {
         changed();
       }
     }).createPanel();
-    myList.setCellRenderer(new ColoredListCellRenderer<String>() {
+    myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList list, String suffix, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, @NlsSafe String suffix, int index, boolean selected, boolean hasFocus) {
         append(suffix);
         final Locale locale = PropertiesUtil.getLocale("_" + suffix + ".properties");
         if (locale != PropertiesUtil.DEFAULT_LOCALE) {
@@ -65,8 +67,9 @@ public class IncompletePropertyInspectionOptionsPanel {
             append(" ");
             append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
-        } else {
-          append("Default locale");
+        }
+        else {
+          append(ResourceBundleEditorBundle.message("incomplete.property.inspection.default.locale.presentation"));
         }
       }
     });

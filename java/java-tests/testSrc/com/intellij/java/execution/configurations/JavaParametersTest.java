@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -111,15 +111,15 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testPreviewLanguageFeatures() throws CantRunException {
     ModuleRootModificationUtil.updateModel(myModule, (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
-           .setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
-      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(13)));
+           .setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(14)));
     });
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertTrue(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
 
     ModuleRootModificationUtil.updateModel(myModule, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
-                                                                     .setLanguageLevel(LanguageLevel.JDK_12));
+                                                                     .setLanguageLevel(LanguageLevel.JDK_15));
     javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertFalse(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));

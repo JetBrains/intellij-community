@@ -1,20 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,7 +37,7 @@ import java.util.Objects;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TextEditorProvider implements DefaultPlatformFileEditorProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider, QuickDefinitionProvider, DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
@@ -119,23 +117,21 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
       element.setAttribute(RELATIVE_CARET_POSITION_ATTR, Integer.toString(state.RELATIVE_CARET_POSITION));
     }
 
-    if (state.CARETS != null) {
-      for (TextEditorState.CaretState caretState : state.CARETS) {
-        Element e = new Element(CARET_ELEMENT);
-        writeIfNot0(e, LINE_ATTR, caretState.LINE);
-        writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN);
-        if (caretState.LEAN_FORWARD) {
-          e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(true));
-        }
-        writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE);
-        writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN);
-        writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
-        writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
-        writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
+    for (TextEditorState.CaretState caretState : state.CARETS) {
+      Element e = new Element(CARET_ELEMENT);
+      writeIfNot0(e, LINE_ATTR, caretState.LINE);
+      writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN);
+      if (caretState.LEAN_FORWARD) {
+        e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(true));
+      }
+      writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE);
+      writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN);
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
+      writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
+      writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
 
-        if (!JDOMUtil.isEmpty(e)) {
-          element.addContent(e);
-        }
+      if (!JDOMUtil.isEmpty(e)) {
+        element.addContent(e);
       }
     }
   }
@@ -185,21 +181,18 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
       return new Document[]{document};
     }
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = projects.length - 1; i >= 0; i--) {
-      VirtualFile file = FileEditorManagerEx.getInstanceEx(projects[i]).getFile(editor);
-      if (file != null) {
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          return new Document[]{document};
-        }
+    VirtualFile file = editor.getFile();
+    if (file != null) {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        return new Document[]{document};
       }
     }
 
     return Document.EMPTY_ARRAY;
   }
 
-  static void putTextEditor(Editor editor, TextEditor textEditor) {
+  static void putTextEditor(@NotNull Editor editor, @NotNull TextEditor textEditor) {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
@@ -253,9 +246,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
 
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState){
     TextEditorState.CaretState[] carets = state.CARETS;
-    if (carets != null && carets.length > 0) {
-      if (!editor.getCaretModel().supportsMultipleCarets()) carets = Arrays.copyOf(carets, 1);
-      CaretModel caretModel = editor.getCaretModel();
+    if (carets.length > 0) {
       List<CaretState> states = new ArrayList<>(carets.length);
       for (TextEditorState.CaretState caretState : carets) {
         states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
@@ -263,7 +254,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
                                   new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
                                   new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
       }
-      caretModel.setCaretsAndSelections(states, false);
+      editor.getCaretModel().setCaretsAndSelections(states, false);
     }
 
     final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
@@ -278,8 +269,12 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
       }
     };
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
-      if (ApplicationManager.getApplication().isUnitTestMode()) scrollingRunnable.run();
-      else UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        scrollingRunnable.run();
+      }
+      else {
+        UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
+      }
     });
   }
 
@@ -310,7 +305,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Du
     @Override
     @NotNull
     public String getName() {
-      return "Text";
+      return IdeBundle.message("tab.title.text");
     }
 
     @Override

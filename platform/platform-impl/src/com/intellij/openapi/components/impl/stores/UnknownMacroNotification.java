@@ -18,6 +18,7 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +31,8 @@ public class UnknownMacroNotification extends Notification {
   private final Collection<String> myMacros;
 
   public UnknownMacroNotification(@NotNull String groupId,
-                                  @NotNull String title,
-                                  @NotNull String content,
+                                  @NotNull @NlsContexts.NotificationTitle String title,
+                                  @NotNull @NlsContexts.NotificationContent String content,
                                   @NotNull NotificationType type,
                                   @Nullable NotificationListener listener,
                                   @NotNull Collection<String> macros) {

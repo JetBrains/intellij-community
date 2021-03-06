@@ -17,6 +17,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -102,8 +103,7 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
   }
 
   private boolean isReplaceableType(PsiClassType classType) {
-    final PsiClassType rawType = classType.rawType();
-    return getReplaceableCollectionNames().stream().anyMatch(s -> rawType.equalsToText(s));
+    return getReplaceableCollectionNames().stream().anyMatch(s -> PsiTypesUtil.classNameEquals(classType, s));
   }
 
   @NotNull

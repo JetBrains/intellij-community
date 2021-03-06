@@ -1,0 +1,1 @@
+public cl<caret> MyClass

@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
-import com.amazon.ion.system.IonBinaryWriterBuilder;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
@@ -27,14 +26,14 @@ import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamAp
 /**
  * @author Vladislav.Soroka
  */
-public class BuildScriptClasspathModelSerializationService implements SerializationService<BuildScriptClasspathModel> {
+public final class BuildScriptClasspathModelSerializationService implements SerializationService<BuildScriptClasspathModel> {
   private final WriteContext myWriteContext = new WriteContext();
   private final ReadContext myReadContext = new ReadContext();
 
   @Override
   public byte[] write(BuildScriptClasspathModel classpathModel, Class<? extends BuildScriptClasspathModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = IonBinaryWriterBuilder.standard().build(out);
+    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
     try {
       write(writer, myWriteContext, classpathModel);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.history.LocalHistory;
@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnTreeConflictResolver {
 
   @NotNull private final SvnVcs myVcs;
@@ -41,13 +43,13 @@ public class SvnTreeConflictResolver {
     final LocalHistory localHistory = LocalHistory.getInstance();
     String pathPresentation = TreeConflictRefreshablePanel.filePath(myPath);
 
-    localHistory.putSystemLabel(myVcs.getProject(), "Before accepting theirs for " + pathPresentation);
+    localHistory.putSystemLabel(myVcs.getProject(), message("label.before.accepting.theirs.for.path", pathPresentation));
     try {
       updateToTheirsFull();
       pathDirty(myPath);
       revertAdditional();
     } finally {
-      localHistory.putSystemLabel(myVcs.getProject(), "After accepting theirs for " + pathPresentation);
+      localHistory.putSystemLabel(myVcs.getProject(), message("label.after.accepting.theirs.for.path", pathPresentation));
     }
   }
 

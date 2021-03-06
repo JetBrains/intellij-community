@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class TestTreeViewStructure<T extends AbstractTestProxy> extends AbstractTreeStructure {
   private Filter<T> myTestNodesFilter = Filter.NO_FILTER;
@@ -24,7 +25,7 @@ public abstract class TestTreeViewStructure<T extends AbstractTestProxy> extends
     return myTestNodesFilter;
   }
 
-  public void setFilter(final Filter<T> nodesFilter) {
+  public void setFilter(@NotNull final Filter<T> nodesFilter) {
     myTestNodesFilter = nodesFilter;
   }
 }

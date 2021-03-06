@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.containers.ContainerUtil
@@ -12,8 +12,13 @@ import groovy.transform.Immutable
 @CompileStatic
 @Immutable
 class LibraryLicense {
-  private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": "http://www.apache.org/licenses/LICENSE-2.0"]
+  private static final String APACHE_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0"
+  private static final Map<String, String> PREDEFINED_LICENSE_URLS = ["Apache 2.0": APACHE_LICENSE_URL]
   public static final String JETBRAINS_OWN = "JetBrains"
+  /**
+   * Denotes version of library built from custom revision
+   */
+  public static final String CUSTOM_REVISION = "custom revision"
 
   /**
    * Presentable full name of the library. If {@code null} {@link #libraryName} will be used instead.
@@ -86,5 +91,94 @@ class LibraryLicense {
 
   String getLibraryLicenseUrl() {
     licenseUrl ?: PREDEFINED_LICENSE_URLS[license]
+  }
+
+  LibraryLicense apache() {
+    assert license == null: "No need to specify 'license' for Apache 2.0"
+    assert !licenseUrl?.contains("apache.org/licenses"): "No need to specify default 'licenseUrl' for Apache 2.0"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "Apache 2.0",
+      licenseUrl: licenseUrl ?: APACHE_LICENSE_URL
+    )
+  }
+
+  LibraryLicense simplifiedBsd() {
+    assert license == null: "No need to specify 'license' for Simplified BSD"
+    assert !licenseUrl?.contains("opensource.org/licenses"): "No need to specify default 'licenseUrl' for Simplified BSD"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "Simplified BSD",
+      licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause"
+    )
+  }
+
+  LibraryLicense newBsd() {
+    assert license == null: "No need to specify 'license' for New BSD"
+    assert !licenseUrl?.contains("opensource.org/licenses"): "No need to specify default 'licenseUrl' for New BSD"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "New BSD",
+      licenseUrl: licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause"
+    )
+  }
+
+  LibraryLicense mit() {
+    assert license == null: "No need to specify 'license' for MIT"
+    assert !licenseUrl?.contains("opensource.org/licenses"): "No need to specify default 'licenseUrl' for MIT"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "MIT",
+      licenseUrl: licenseUrl ?: "https://opensource.org/licenses/MIT"
+    )
+  }
+
+  LibraryLicense eplV1() {
+    epl(1)
+  }
+
+  LibraryLicense eplV2() {
+    epl(2)
+  }
+
+  private LibraryLicense epl(int v) {
+    assert v == 1 || v == 2: "Version must be either 1 or 2 for Eclipse Public License"
+    assert license == null: "No need to specify 'license' for Eclipse Public License"
+    assert !licenseUrl?.contains("eclipse.org"): "No need to specify default 'licenseUrl' for Eclipse Public License"
+    new LibraryLicense(
+      name: name,
+      url: url,
+      version: version,
+      libraryName: libraryName,
+      additionalLibraryNames: additionalLibraryNames,
+      attachedTo: attachedTo,
+      transitiveDependency: transitiveDependency,
+      license: "Eclipse Public License $v.0",
+      licenseUrl: licenseUrl ?: (v == 1 ? "https://www.eclipse.org/org/documents/epl-v10.html" : "https://www.eclipse.org/legal/epl-2.0")
+    )
   }
 }

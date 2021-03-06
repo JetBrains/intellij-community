@@ -18,7 +18,7 @@ import java.util.*;
  */
 public abstract class EditorColorPalette {
   protected final EditorColorsScheme myColorsScheme;
-  private final MultiMap<Color, TextAttributesKey> myColors = MultiMap.createSmart();
+  private final MultiMap<Color, TextAttributesKey> myColors = new MultiMap<>();
 
   public final static Comparator<Color> ORDER_NONE = Comparator.comparingInt(EditorColorPalette::getDefaultOrder);
   public final static Comparator<Color> ORDER_BY_INTENSITY = Comparator.comparingInt(EditorColorPalette::getIntensity);
@@ -77,7 +77,7 @@ public abstract class EditorColorPalette {
    */
   public EditorColorPalette collectColorsWithFilter(@NotNull Function<? super TextAttributes, ? extends Color> attrColorReader,
                                                     boolean filterOutRainbowAttrKeys) {
-    final MultiMap<Color, TextAttributesKey> colors = MultiMap.createSmart();
+    final MultiMap<Color, TextAttributesKey> colors = new MultiMap<>();
     for (TextAttributesKey key : getTextAttributeKeys(filterOutRainbowAttrKeys)) {
       TextAttributes attributes = myColorsScheme.getAttributes(key);
       if (attributes != null) {

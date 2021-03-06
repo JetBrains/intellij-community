@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MethodDescriptor {
+public final class MethodDescriptor {
   public final VarType[] params;
   public final VarType ret;
 
@@ -68,8 +68,7 @@ public class MethodDescriptor {
 
     VarType[] newParams;
     if (params.length > 0) {
-      newParams = new VarType[params.length];
-      System.arraycopy(params, 0, newParams, 0, params.length);
+      newParams = params.clone();
       for (int i = 0; i < params.length; i++) {
         VarType substitute = buildNewType(params[i], builder);
         if (substitute != null) {

@@ -29,7 +29,7 @@ public class FileIndentProviderTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    FileIndentOptionsProvider.EP_NAME.getPoint(null).registerExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER, getTestRootDisposable());
+    FileIndentOptionsProvider.EP_NAME.getPoint().registerExtension(TEST_FILE_INDENT_OPTIONS_PROVIDER, getTestRootDisposable());
     myTestIndentOptions = new CommonCodeStyleSettings.IndentOptions();
   }
 

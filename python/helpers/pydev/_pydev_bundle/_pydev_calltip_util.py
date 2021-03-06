@@ -46,7 +46,7 @@ def get_description(obj):
 
     if isinstance(obj, type) or type(obj).__name__ == 'classobj':
         fob = getattr(obj, '__init__', lambda: None)
-        if not isinstance(fob, (types.FunctionType, types.MethodType)):
+        if not callable(fob):
             fob = obj
     elif is_bound_method(ob_call):
         fob = ob_call
@@ -54,9 +54,8 @@ def get_description(obj):
         fob = obj
 
     argspec = ""
-    fn_name = None
     fn_class = None
-    if isinstance(fob, (types.FunctionType, types.MethodType)):
+    if callable(fob):
         spec_info = inspect.getfullargspec(fob) if IS_PY3K else inspect.getargspec(fob)
         argspec = inspect.formatargspec(*spec_info)
         fn_name = getattr(fob, '__name__', None)

@@ -65,7 +65,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       firstExecution = false;
       myConsoleView.addConsoleFolding(true, false);
     }
-    myDebugProcess.consoleExec(command.getText(), new PyDebugCallback<String>() {
+    myDebugProcess.consoleExec(command.getText(), new PyDebugCallback<>() {
       @Override
       public void ok(String value) {
         callback.ok(parseExecResponseString(value));
@@ -100,14 +100,13 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     }
     else {
 
-      exec(new ConsoleCodeFragment(code.getText(), false), new PyDebugCallback<Pair<String, Boolean>>() {
+      exec(new ConsoleCodeFragment(code.getText(), false), new PyDebugCallback<>() {
         @Override
         public void ok(Pair<String, Boolean> executed) {
           boolean more = executed.second;
           myNeedsMore = more;
           notifyCommandExecuted(more);
           callback.fun(new InterpreterResponse(more, isWaitingForInput()));
-
         }
 
         @Override

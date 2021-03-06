@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.fixes.classlayout;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.classlayout.ClassMayBeInterfaceInspection;
@@ -37,4 +39,10 @@ public class ClassMayBeInterfaceFixTest extends IGQuickFixesTestCase {
   public void testConvertMe() { doTest(); }
   public void testObjectMethods() { doTest(); }
   public void testDefaultConstructor() { doTest(); }
+  public void testLocalClass() { 
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, this::assertQuickfixNotAvailable); 
+  }
+  public void testLocalClassJava15() { 
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest); 
+  }
 }

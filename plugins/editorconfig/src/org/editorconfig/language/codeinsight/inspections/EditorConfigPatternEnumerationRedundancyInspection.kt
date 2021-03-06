@@ -12,7 +12,7 @@ class EditorConfigPatternEnumerationRedundancyInspection : LocalInspectionTool()
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitPatternEnumeration(patternEnumeration: EditorConfigPatternEnumeration) {
       if (!containsIssue(patternEnumeration)) return
-      val message = EditorConfigBundle["inspection.pattern-enumeration.redundant.message"]
+      val message = EditorConfigBundle.get("inspection.pattern-enumeration.redundant.message")
       holder.registerProblem(patternEnumeration, message, EditorConfigRemoveBracesQuickFix())
     }
   }

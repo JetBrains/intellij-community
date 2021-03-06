@@ -20,31 +20,36 @@
   <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
-    <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
+    <workspaceModel.customModuleRootsSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleRootsSerializer"/>
+    <workspaceModel.customModuleComponentSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerSerializer"/>
+    <compileServer.plugin classpath="eclipse-jps.jar;eclipse-common.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>
     <fileType name="Eclipse" implementationClass="org.jetbrains.idea.eclipse.config.EclipseFileType" fileNames=".classpath;.project" fieldName="INSTANCE"/>
     <syntaxHighlighter key="Eclipse" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-    <schemeImporter 
-        name="Eclipse XML Profile"
+    <schemeImporter
+        nameKey="eclipse.xml.profile"
+        nameBundle="messages.EclipseBundle"
         implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
     <schemeImporter 
-        name="Eclipse Color Theme (XML)"
+        nameKey="eclipse.color.theme.name"
+        nameBundle="messages.EclipseBundle"
         implementationClass="org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
-    <notificationWhitelist groupIds="Unknown Natures Detected"/>
+    <notificationGroup id="Unknown Natures Detected" displayType="BALLOON"/>
   </extensions>
   <actions>
-    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">
-      <override-text place="MainMenu" text="Project to Eclipse..."/>
+    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction">
+      <override-text place="MainMenu"/>
       <add-to-group group-id="FileExportGroup" anchor="last"/>
     </action>
   </actions>
   <extensionPoints>
     <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter" dynamic="true"/>
   </extensionPoints>
+  <resource-bundle>messages.EclipseBundle</resource-bundle>
 </idea-plugin>

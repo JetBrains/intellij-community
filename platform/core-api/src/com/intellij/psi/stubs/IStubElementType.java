@@ -1,8 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -10,30 +6,29 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class IStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
+public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   private static volatile boolean ourInitializedStubs;
   private static volatile Set<String> ourLazyExternalIds = Collections.emptySet();
   private static final Logger LOG = Logger.getInstance(IStubElementType.class);
 
-  public IStubElementType(@NotNull @NonNls final String debugName, @Nullable final Language language) {
+  public IStubElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);
     if (!isLazilyRegistered()) {
-      checkNotInstantiatedTooLate();
+      checkNotInstantiatedTooLate(getClass());
     }
   }
 
-  public static void checkNotInstantiatedTooLate() {
+  public static void checkNotInstantiatedTooLate(@NotNull Class<?> aClass) {
     if (ourInitializedStubs) {
       LOG.error("All stub element types should be created before index initialization is complete.\n" +
-                "Please add the class containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
-                "Registered extensions: " + Arrays.toString(StubElementTypeHolderEP.EP_NAME.getExtensions()));
+                "Please add the " + aClass + " containing stub element type constants to \"stubElementTypeHolder\" extension.\n" +
+                "Registered extensions: " + StubElementTypeHolderEP.EP_NAME.getExtensionList());
     }
   }
 
@@ -53,28 +48,26 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
     ourInitializedStubs = false;
   }
 
-  static List<StubFieldAccessor> loadRegisteredStubElementTypes() {
+  static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
-    for (StubElementTypeHolderEP bean : StubElementTypeHolderEP.EP_NAME.getExtensionList()) {
-      result.addAll(bean.initializeOptimized());
-    }
+    StubElementTypeHolderEP.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
+      bean.initializeOptimized(pluginDescriptor, result);
+    });
 
-    Set<String> lazyIds = new THashSet<>();
+    Set<String> lazyIds = new HashSet<>(result.size());
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }
-    ourLazyExternalIds = lazyIds;
     ourInitializedStubs = true;
+    ourLazyExternalIds = lazyIds;
     return result;
   }
 
   public abstract PsiT createPsi(@NotNull StubT stub);
 
-  @NotNull
-  public abstract StubT createStub(@NotNull PsiT psi, final StubElement parentStub);
+  public abstract @NotNull StubT createStub(@NotNull PsiT psi, StubElement<? extends PsiElement> parentStub);
 
   public boolean shouldCreateStub(ASTNode node) {
     return true;
   }
-
 }

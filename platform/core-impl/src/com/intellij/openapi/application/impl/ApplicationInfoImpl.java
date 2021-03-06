@@ -11,10 +11,10 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -60,7 +60,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
-  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
+  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.svg";
   private String myWelcomeScreenLogoUrl;
 
   private Calendar myBuildDate;
@@ -68,6 +68,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
+  private String myCustomizeIDEWizardDialog;
   private final UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
@@ -99,81 +100,89 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionAdditionalFormData;
   private final List<ProgressSlide> myProgressSlides = new ArrayList<>();
 
-  private static final String ELEMENT_VERSION = "version";
-  private static final String ATTRIBUTE_MAJOR = "major";
-  private static final String ATTRIBUTE_MINOR = "minor";
-  private static final String ATTRIBUTE_MICRO = "micro";
-  private static final String ATTRIBUTE_PATCH = "patch";
-  private static final String ATTRIBUTE_FULL = "full";
-  private static final String ATTRIBUTE_CODENAME = "codename";
-  private static final String ATTRIBUTE_NAME = "name";
-  private static final String ELEMENT_BUILD = "build";
-  private static final String ELEMENT_COMPANY = "company";
-  private static final String ATTRIBUTE_NUMBER = "number";
-  private static final String ATTRIBUTE_API_VERSION = "apiVersion";
-  private static final String ATTRIBUTE_DATE = "date";
-  private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
-  private static final String ELEMENT_LOGO = "logo";
-  private static final String ATTRIBUTE_URL = "url";
-  private static final String COPYRIGHT_START = "copyrightStart";
-  private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
-  private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
-  private static final String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
-  private static final String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
-  private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
-  private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
-  private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
-  private static final String ELEMENT_ABOUT = "about";
-  private static final String ELEMENT_ICON = "icon";
-  private static final String ATTRIBUTE_SIZE16 = "size16";
-  private static final String ATTRIBUTE_SIZE12 = "size12";
-  private static final String ELEMENT_PACKAGE = "package";
-  private static final String ATTRIBUTE_CODE = "code";
-  private static final String ELEMENT_LICENSEE = "licensee";
-  private static final String ATTRIBUTE_SHOW = "show";
-  private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
-  private static final String LOGO_URL_ATTR = "logo-url";
-  private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
-  private static final String ATTRIBUTE_EAP = "eap";
-  private static final String HELP_ELEMENT_NAME = "help";
-  private static final String ELEMENT_DOCUMENTATION = "documentation";
-  private static final String ELEMENT_SUPPORT = "support";
-  private static final String ELEMENT_YOUTRACK = "youtrack";
-  private static final String ELEMENT_FEEDBACK = "feedback";
-  private static final String ELEMENT_PLUGINS = "plugins";
-  private static final String ATTRIBUTE_LIST_URL = "list-url";
-  private static final String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
-  private static final String ATTRIBUTE_DOWNLOAD_URL = "download-url";
-  private static final String ATTRIBUTE_BUILTIN_URL = "builtin-url";
-  @SuppressWarnings("SpellCheckingInspection") private static final String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
-  private static final String ATTRIBUTE_HAS_HELP = "has-help";
-  private static final String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
-  @SuppressWarnings("SpellCheckingInspection") private static final String ELEMENT_WHATS_NEW = "whatsnew";
-  private static final String ELEMENT_KEYMAP = "keymap";
-  private static final String ATTRIBUTE_WINDOWS_URL = "win";
-  private static final String ATTRIBUTE_MAC_URL = "mac";
-  private static final String ELEMENT_STATISTICS = "statistics";
-  private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
-  private static final String ELEMENT_JB_TV = "jetbrains-tv";
-  private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
-  private static final String STEPS_PROVIDER = "provider";
-  private static final String ELEMENT_EVALUATION = "evaluation";
-  private static final String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
-  private static final String ELEMENT_LICENSING = "licensing";
-  private static final String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
-  private static final String ESSENTIAL_PLUGIN = "essential-plugin";
+  private String myDefaultLightLaf;
+  private String myDefaultDarkLaf;
 
-  private static final String ELEMENT_SUBSCRIPTIONS = "subscriptions";
-  @SuppressWarnings("SpellCheckingInspection") private static final String ATTRIBUTE_SUBSCRIPTIONS_FORM_ID = "formid";
-  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY = "news-key";
-  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE = "news-value";
-  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
-  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
-  private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
-  private static final String PROGRESS_SLIDE = "progressSlide";
-  private static final String PROGRESS_PERCENT = "progressPercent";
+  private static final @NonNls String ELEMENT_VERSION = "version";
+  private static final @NonNls String ATTRIBUTE_MAJOR = "major";
+  private static final @NonNls String ATTRIBUTE_MINOR = "minor";
+  private static final @NonNls String ATTRIBUTE_MICRO = "micro";
+  private static final @NonNls String ATTRIBUTE_PATCH = "patch";
+  private static final @NonNls String ATTRIBUTE_FULL = "full";
+  private static final @NonNls String ATTRIBUTE_CODENAME = "codename";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_BUILD = "build";
+  private static final @NonNls String ELEMENT_COMPANY = "company";
+  private static final @NonNls String ATTRIBUTE_NUMBER = "number";
+  private static final @NonNls String ATTRIBUTE_API_VERSION = "apiVersion";
+  private static final @NonNls String ATTRIBUTE_DATE = "date";
+  private static final @NonNls String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
+  private static final @NonNls String ELEMENT_LOGO = "logo";
+  private static final @NonNls String ATTRIBUTE_URL = "url";
+  private static final @NonNls String COPYRIGHT_START = "copyrightStart";
+  private static final @NonNls String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
+  private static final @NonNls String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
+  private static final @NonNls String ATTRIBUTE_ABOUT_COPYRIGHT_FOREGROUND_COLOR = "copyrightForeground";
+  private static final @NonNls String ATTRIBUTE_ABOUT_LINK_COLOR = "linkColor";
+  private static final @NonNls String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
+  private static final @NonNls String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final @NonNls String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
+  private static final @NonNls String ELEMENT_ABOUT = "about";
+  private static final @NonNls String ELEMENT_ICON = "icon";
+  private static final @NonNls String ATTRIBUTE_SIZE16 = "size16";
+  private static final @NonNls String ATTRIBUTE_SIZE12 = "size12";
+  private static final @NonNls String ELEMENT_PACKAGE = "package";
+  private static final @NonNls String ATTRIBUTE_CODE = "code";
+  private static final @NonNls String ELEMENT_LICENSEE = "licensee";
+  private static final @NonNls String ATTRIBUTE_SHOW = "show";
+  private static final @NonNls String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
+  private static final @NonNls String LOGO_URL_ATTR = "logo-url";
+  private static final @NonNls String UPDATE_URLS_ELEMENT_NAME = "update-urls";
+  private static final @NonNls String ATTRIBUTE_EAP = "eap";
+  private static final @NonNls String HELP_ELEMENT_NAME = "help";
+  private static final @NonNls String ELEMENT_DOCUMENTATION = "documentation";
+  private static final @NonNls String ELEMENT_SUPPORT = "support";
+  private static final @NonNls String ELEMENT_YOUTRACK = "youtrack";
+  private static final @NonNls String ELEMENT_FEEDBACK = "feedback";
+  private static final @NonNls String ELEMENT_PLUGINS = "plugins";
+  private static final @NonNls String ATTRIBUTE_LIST_URL = "list-url";
+  private static final @NonNls String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
+  private static final @NonNls String ATTRIBUTE_DOWNLOAD_URL = "download-url";
+  private static final @NonNls String ATTRIBUTE_BUILTIN_URL = "builtin-url";
+  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ATTRIBUTE_WEBHELP_URL = "webhelp-url";
+  private static final @NonNls String ATTRIBUTE_HAS_HELP = "has-help";
+  private static final @NonNls String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
+  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ELEMENT_WHATS_NEW = "whatsnew";
+  private static final @NonNls String ELEMENT_KEYMAP = "keymap";
+  private static final @NonNls String ATTRIBUTE_WINDOWS_URL = "win";
+  private static final @NonNls String ATTRIBUTE_MAC_URL = "mac";
+  private static final @NonNls String ELEMENT_STATISTICS = "statistics";
+  private static final @NonNls String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
+  private static final @NonNls String ELEMENT_JB_TV = "jetbrains-tv";
+  private static final @NonNls String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
+  private static final @NonNls String STEPS_PROVIDER = "provider";
+  private static final @NonNls String WIZARD_DIALOG = "dialog";
+  private static final @NonNls String ELEMENT_EVALUATION = "evaluation";
+  private static final @NonNls String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
+  private static final @NonNls String ELEMENT_LICENSING = "licensing";
+  private static final @NonNls String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
+  private static final @NonNls String ESSENTIAL_PLUGIN = "essential-plugin";
 
-  static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
+  private static final @NonNls String ELEMENT_SUBSCRIPTIONS = "subscriptions";
+  @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_FORM_ID = "formid";
+  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY = "news-key";
+  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE = "news-value";
+  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
+  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
+  private static final @NonNls String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
+  private static final @NonNls String PROGRESS_SLIDE = "progressSlide";
+  private static final @NonNls String PROGRESS_PERCENT = "progressPercent";
+
+  private static final @NonNls String ELEMENT_DEFAULT_LAF = "default-laf";
+  private static final @NonNls String ATTRIBUTE_LAF_LIGHT = "light";
+  private static final @NonNls String ATTRIBUTE_LAF_DARK = "dark";
+
+  public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
 
   private static volatile ApplicationInfoImpl instance;
@@ -287,6 +296,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element wizardSteps = getChild(element, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
+
+      myCustomizeIDEWizardDialog = getAttributeValue(wizardSteps, WIZARD_DIALOG);
     }
 
     Element helpElement = getChild(element, HELP_ELEMENT_NAME);
@@ -361,7 +372,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/%s/lion-v3-assistant.xml";
+      myEventLogSettingsUrl = "https://resources.jetbrains.com/storage/fus/config/v4/%s/%s.json";
     }
 
     Element tvElement = getChild(element, ELEMENT_JB_TV);
@@ -393,6 +404,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
       mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
       mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
+
+    Element defaultLafElement = getChild(element, ELEMENT_DEFAULT_LAF);
+    if (defaultLafElement != null) {
+      String laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_LIGHT);
+      if (laf != null) {
+        myDefaultLightLaf = laf.trim();
+      }
+
+      laf = getAttributeValue(defaultLafElement, ATTRIBUTE_LAF_DARK);
+      if (laf != null) {
+        myDefaultDarkLaf = laf.trim();
+      }
     }
   }
 
@@ -566,6 +590,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myProgressColor;
   }
 
+  @Override
   public long getCopyrightForeground() {
     return myCopyrightForeground;
   }
@@ -607,7 +632,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSmallApplicationSvgIconUrl() {
-    return isEAP() && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
+    return getSmallApplicationSvgIconUrl(isEAP());
+  }
+
+  public @Nullable String getSmallApplicationSvgIconUrl(boolean isEap) {
+    return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
   }
 
   @Override
@@ -619,6 +648,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getWelcomeScreenLogoUrl() {
     return myWelcomeScreenLogoUrl;
   }
+
+  @Override
+  public @Nullable String getCustomizeIDEWizardDialog() { return myCustomizeIDEWizardDialog; }
 
   @Override
   public @Nullable String getCustomizeIDEWizardStepsProvider() {
@@ -730,6 +762,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutForeground;
   }
 
+  @Override
   public long getAboutLinkColor() {
     return myAboutLinkColor;
   }
@@ -744,6 +777,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myShowLicensee;
   }
 
+  @Override
   public String getCopyrightStart() {
     return myCopyrightStart;
   }
@@ -768,8 +802,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  @SuppressWarnings("SSBasedInspection")
-  public @Nullable int[] getAboutLogoRect() {
+  public int @Nullable [] getAboutLogoRect() {
     return myAboutLogoRect;
   }
 
@@ -804,7 +837,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public List<ProgressSlide> getProgressSlides() {
+  public @NotNull List<ProgressSlide> getProgressSlides() {
     return myProgressSlides;
   }
 
@@ -864,7 +897,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
 
       String builtinPluginsUrl = element.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
-      if (StringUtil.isNotEmpty(builtinPluginsUrl)) {
+      if (builtinPluginsUrl != null && !builtinPluginsUrl.isEmpty()) {
         myBuiltinPluginsUrl = builtinPluginsUrl;
       }
     }
@@ -939,8 +972,19 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
   }
 
+  @Override
   public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
+  }
+
+  @Override
+  public @Nullable String getDefaultLightLaf() {
+    return myDefaultLightLaf;
+  }
+
+  @Override
+  public @Nullable String getDefaultDarkLaf() {
+    return myDefaultDarkLaf;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.applications;
 
 import com.intellij.diff.DiffDialogHints;
@@ -51,7 +51,7 @@ final class DiffApplication extends DiffApplicationBase {
   @Override
   public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = args.subList(1, args.size());
-    List<VirtualFile> files = findFiles(filePaths, currentDirectory);
+    List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
     Project project = guessProject(files);
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
@@ -81,7 +81,7 @@ final class DiffApplication extends DiffApplicationBase {
     return future;
   }
 
-  private static class MyDiffRequestProducer implements DiffRequestProducer {
+  private static final class MyDiffRequestProducer implements DiffRequestProducer {
     private final Project myProject;
     private final List<VirtualFile> myFiles;
 

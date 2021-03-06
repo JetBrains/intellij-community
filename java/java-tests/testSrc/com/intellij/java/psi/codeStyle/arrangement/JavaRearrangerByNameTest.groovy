@@ -2,22 +2,19 @@
 package com.intellij.java.psi.codeStyle.arrangement
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.formatting.fileSet.NamedScopeDescriptor
+import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import groovy.transform.CompileStatic
-import org.junit.Before
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
-
 /**
  * @author Denis Zhdanov
  */
 @CompileStatic
 class JavaRearrangerByNameTest extends AbstractJavaRearrangerTest {
 
-  @Before
   void setUp() {
     super.setUp()
     commonSettings.BLANK_LINES_AROUND_METHOD = 0

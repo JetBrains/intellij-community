@@ -16,12 +16,15 @@
 package com.intellij.packaging.impl.ui;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -31,10 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LibraryElementPresentation extends PackagingElementPresentation {
-  private final String myLevel;
-  private final String myModuleName;
+  private final @NlsSafe String myLevel;
+  private final @NlsSafe String myModuleName;
   private final Library myLibrary;
-  private final String myLibraryName;
+  private final @NlsSafe String myLibraryName;
   private final ArtifactEditorContext myContext;
 
   public LibraryElementPresentation(String libraryName, String level, @Nullable String moduleName, Library library, ArtifactEditorContext context) {
@@ -64,12 +67,13 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
       presentationData.setIcon(PlatformIcons.LIBRARY_ICON);
-      presentationData.addText(myLibraryName, mainAttributes);
+      presentationData.addText(getPresentableName(), mainAttributes);
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }
     else {
-      presentationData.addText(myLibraryName + " (" + (myModuleName != null ? "module '" + myModuleName + "'" : myLevel) + ")",
-                               SimpleTextAttributes.ERROR_ATTRIBUTES);
+      presentationData.addText(
+        getPresentableName() + " (" + (myModuleName != null? JavaCompilerBundle.message("label.library.element.module", myModuleName) : myLevel) + ")", SimpleTextAttributes.ERROR_ATTRIBUTES
+      );
     }
   }
 
@@ -80,18 +84,18 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
 
   public static String getLibraryTableDisplayName(final Library library) {
     LibraryTable table = library.getTable();
-    LibraryTablePresentation presentation = table != null ? table.getPresentation() : ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+    LibraryTablePresentation presentation = table != null ? table.getPresentation() : ModuleLibraryTableBase.MODULE_LIBRARY_TABLE_PRESENTATION;
     return presentation.getDisplayName(false);
   }
 
-  public static String getLibraryTableComment(final Library library) {
+  public static @NlsContexts.Label String getLibraryTableComment(final Library library) {
     LibraryTable libraryTable = library.getTable();
     String displayName;
     if (libraryTable != null) {
       displayName = libraryTable.getPresentation().getDisplayName(false);
     }
     else {
-      Module module = ((LibraryImpl)library).getModule();
+      Module module = ((LibraryEx)library).getModule();
       String tableName = getLibraryTableDisplayName(library);
       displayName = module != null ? "'" + module.getName() + "' " + tableName : tableName;
     }

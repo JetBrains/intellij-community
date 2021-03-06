@@ -1,31 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Immutable object representing a number of type constraints applied to some reference value.
  * Type constraints represent a lattice with {@link TypeConstraints#TOP} and {@link TypeConstraints#BOTTOM}
  * elements, as well as {@link #join(TypeConstraint)} and {@link #meet(TypeConstraint)} operations.
- * 
+ *
  * Besides TOP and BOTTOM there are two types of constrains: {@link Exact} (value is known to have exactly some JVM type)
  * and {@link Constrained} (value is instanceof zero or more JVM types and not instanceof zero or more JVM types).
- * 
+ *
  * value is instance of some type and value is not an instance of some type.
  * Null or primitive types are not handled here.
  */
@@ -51,7 +56,7 @@ public interface TypeConstraint {
   boolean isSuperConstraintOf(@NotNull TypeConstraint other);
 
   /**
-   * @return negated constraint (a constraint that satisfied only by types not satisfied by this constraint). 
+   * @return negated constraint (a constraint that satisfied only by types not satisfied by this constraint).
    * Null if such a constraint cannot be created.
    */
   default @Nullable TypeConstraint tryNegate() {
@@ -70,7 +75,7 @@ public interface TypeConstraint {
    * @param type declared PsiType of the value
    * @return presentation text that tells about additional constraints; can be empty if no additional constraints are known
    */
-  default @NotNull String getPresentationText(@Nullable PsiType type) {
+  default @NotNull @NlsSafe String getPresentationText(@Nullable PsiType type) {
     return toShortString();
   }
 
@@ -89,12 +94,22 @@ public interface TypeConstraint {
   }
 
   /**
+   * @return true if given type is resolved
+   */
+  default boolean isResolved() {
+    return true;
+  }
+
+  /**
    * @param otherType          other type
    * @param expectedAssignable whether other type is expected to be assignable from this, or not
+   * @param elementTitle
    * @return textual explanation about why expected assignability cannot be satisfied; null if it can be satisfied, or
    * explanation cannot be found.
    */
-  default @Nullable String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
+  default @Nullable @Nls String getAssignabilityExplanation(@NotNull TypeConstraint otherType,
+                                                            boolean expectedAssignable,
+                                                            @Nls String elementTitle) {
     return null;
   }
 
@@ -173,7 +188,7 @@ public interface TypeConstraint {
     }
 
     /**
-     * @return true if instances of this type can exist (i.e. the type is not abstract). 
+     * @return true if instances of this type can exist (i.e. the type is not abstract).
      */
     default boolean canBeInstantiated() {
       return true;
@@ -202,22 +217,24 @@ public interface TypeConstraint {
     }
 
     @Override
-    default String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
+    default String getAssignabilityExplanation(@NotNull TypeConstraint otherType,
+                                               boolean expectedAssignable,
+                                               @Nls String elementTitle) {
       Exact exact = otherType.instanceOfTypes().collect(MoreCollectors.onlyOne()).orElse(null);
       if (exact == null) return null;
       boolean actual = exact.isAssignableFrom(this);
       if (actual != expectedAssignable) return null;
       if (expectedAssignable) {
         if (equals(exact)) {
-          return "is already known to be " + toShortString();
+          return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact", elementTitle, toShortString());
         }
-        return "type is exactly " + toShortString() + " which is a subtype of " + exact.toShortString();
+        return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact.subtype", elementTitle, toShortString(), exact.toShortString());
       }
       else {
-        return "type is exactly " + toShortString() + " which is not a subtype of " + exact.toShortString();
+        return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact.not.subtype", elementTitle, toShortString(), exact.toShortString());
       }
     }
-    
+
     @Override
     default boolean isSuperConstraintOf(@NotNull TypeConstraint other) {
       return other == TypeConstraints.BOTTOM || this.equals(other);
@@ -242,7 +259,7 @@ public interface TypeConstraint {
     default @NotNull TypeConstraint notInstanceOf() {
       return new Constrained(Collections.emptySet(), Collections.singleton(this));
     }
-    
+
     @Override
     default String toShortString() {
       return StringUtil.getShortName(toString());
@@ -265,6 +282,11 @@ public interface TypeConstraint {
       assert !instanceOf.isEmpty() || !notInstanceOf.isEmpty();
       myInstanceOf = instanceOf;
       myNotInstanceOf = notInstanceOf;
+    }
+
+    @Override
+    public boolean isResolved() {
+      return myInstanceOf.stream().allMatch(Exact::isResolved);
     }
 
     @Override
@@ -298,14 +320,16 @@ public interface TypeConstraint {
     }
 
     private @NotNull TypeConstraint joinWithConstrained(@NotNull Constrained other) {
-      Set<Exact> notTypes = new THashSet<>(this.myNotInstanceOf);
+      Set<Exact> notTypes = new HashSet<>(this.myNotInstanceOf);
       notTypes.retainAll(other.myNotInstanceOf);
       Set<Exact> instanceOfTypes;
       if (this.myInstanceOf.containsAll(other.myInstanceOf)) {
         instanceOfTypes = other.myInstanceOf;
-      } else if (other.myInstanceOf.containsAll(this.myInstanceOf)) {
+      }
+      else if (other.myInstanceOf.containsAll(this.myInstanceOf)) {
         instanceOfTypes = this.myInstanceOf;
-      } else {
+      }
+      else {
         instanceOfTypes = withSuper(this.myInstanceOf);
         instanceOfTypes.retainAll(withSuper(other.myInstanceOf));
       }
@@ -325,12 +349,12 @@ public interface TypeConstraint {
 
     private @Nullable Constrained withInstanceofValue(@NotNull Exact type) {
       if (myInstanceOf.contains(type)) return this;
-      
+
       for (Exact notInst : myNotInstanceOf) {
         if (notInst.isAssignableFrom(type)) return null;
       }
-      
-      List<Exact> moreGeneric = new ArrayList<>();
+
+      Set<Exact> newInstanceof = new HashSet<>(myInstanceOf);
       for (Exact alreadyInstanceof : myInstanceOf) {
         if (type.isAssignableFrom(alreadyInstanceof)) {
           return this;
@@ -339,12 +363,9 @@ public interface TypeConstraint {
           return null;
         }
         if (alreadyInstanceof.isAssignableFrom(type)) {
-          moreGeneric.add(alreadyInstanceof);
+          newInstanceof.remove(alreadyInstanceof);
         }
       }
-
-      Set<Exact> newInstanceof = new THashSet<>(myInstanceOf);
-      newInstanceof.removeAll(moreGeneric);
       newInstanceof.add(type);
       return new Constrained(newInstanceof, myNotInstanceOf);
     }
@@ -356,19 +377,17 @@ public interface TypeConstraint {
         if (type.isAssignableFrom(dfaTypeValue)) return null;
       }
 
-      List<Exact> moreSpecific = new ArrayList<>();
+      Set<Exact> newNotInstanceof = new HashSet<>(myNotInstanceOf);
       for (Exact alreadyNotInstanceof : myNotInstanceOf) {
         if (alreadyNotInstanceof.isAssignableFrom(type)) {
           return this;
         }
         if (type.isAssignableFrom(alreadyNotInstanceof)) {
-          moreSpecific.add(alreadyNotInstanceof);
+          newNotInstanceof.remove(alreadyNotInstanceof);
         }
       }
-
-      Set<Exact> newNotInstanceof = new THashSet<>(myNotInstanceOf);
-      newNotInstanceof.removeAll(moreSpecific);
       newNotInstanceof.add(type);
+
       return new Constrained(myInstanceOf, newNotInstanceof);
     }
 
@@ -434,28 +453,40 @@ public interface TypeConstraint {
       }
       return false;
     }
-    
+
     @Override
-    public String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
+    public String getAssignabilityExplanation(@NotNull TypeConstraint otherType,
+                                              boolean expectedAssignable,
+                                              @Nls String elementTitle) {
       Exact exact = otherType.instanceOfTypes().collect(MoreCollectors.onlyOne()).orElse(null);
       if (exact == null) return null;
       if (expectedAssignable) {
         for (Exact inst : myInstanceOf) {
           if (exact.isAssignableFrom(inst)) {
-            return "is already known to be " + inst.toShortString() +
-                   (exact == inst ? "" : " which is a subtype of " + exact.toShortString());
+            if (exact == inst) {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.exact", elementTitle, inst.toShortString());
+            }
+            else {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.subtype.of.subtype",
+                                                elementTitle, inst.toShortString(), exact.toShortString());
+            }
           }
         }
-      } else {
+      }
+      else {
         for (Exact notInst : myNotInstanceOf) {
           if (notInst.isAssignableFrom(exact)) {
-            return "is known to be not " + notInst.toShortString() +
-                   (exact == notInst ? "" : " which is a supertype of " + exact.toShortString());
+            if (exact == notInst) {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.not.instance.of", elementTitle, notInst.toShortString());
+            }
+            else {
+              return JavaAnalysisBundle.message("type.constraint.assignability.explanation.not.instance.of.supertype", elementTitle, notInst.toShortString(), exact.toShortString());
+            }
           }
         }
         for (Exact inst : myInstanceOf) {
           if (!exact.isConvertibleFrom(inst)) {
-            return "is known to be " + inst.toShortString() + " which is definitely incompatible with " + exact.toShortString();
+            return JavaAnalysisBundle.message("type.constraint.assignability.explanation.definitely.inconvertible", elementTitle, inst.toShortString(), exact.toShortString());
           }
         }
       }

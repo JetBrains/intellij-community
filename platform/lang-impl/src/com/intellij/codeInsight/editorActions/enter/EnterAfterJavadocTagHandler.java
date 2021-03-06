@@ -171,7 +171,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
       }
     }
     
-    if (startTagStartOffset < 0 || startTagEndOffset < 0) {
+    if (startTagStartOffset < 0) {
       return NOT_MATCHED_CONTEXT;
     }
     
@@ -189,25 +189,27 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     }
     
     
-    return new Context(text, startTagEndOffset, endTagStartOffset, offset);
+    return new Context(text, startTagEndOffset, endTagStartOffset, startTag, offset);
   }
   
   static class Context {
     
     public final int startTagEndOffset;
     public final int endTagStartOffset;
+    public final @Nullable String startTag;
 
     @Nullable private final CharSequence myText;
     private final int          myOffset;
 
     Context() {
-      this(null, -1, -1, -1);
+      this(null, -1, -1, null, -1);
     }
 
-    Context(@Nullable CharSequence text, int startTagEndOffset, int endTagStartOffset, int offset) {
+    Context(@Nullable CharSequence text, int startTagEndOffset, int endTagStartOffset, @Nullable CharSequence tag, int offset) {
       myText = text;
       this.startTagEndOffset = startTagEndOffset;
       this.endTagStartOffset = endTagStartOffset;
+      startTag = tag != null ? tag.toString() : null;
       myOffset = offset;
     }
     
@@ -216,7 +218,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     }
     
     public boolean shouldIndent() {
-      if (startTagEndOffset < 0 || myText == null) {
+      if (startTagEndOffset < 0 || myText == null || "br".equals(getTagName((startTag)))) {
         return false;
       }
       for (int i = startTagEndOffset + 1; i < myOffset; i++) {
@@ -226,6 +228,23 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
         }
       }
       return true;
+    }
+
+    private static String getTagName(@Nullable String tag) {
+      if (tag == null) return null;
+      int start = -1;
+      for (int i = 0; i < tag.length(); i ++) {
+        char c = tag.charAt(i);
+        if (Character.isAlphabetic(c)) {
+          if (start < 0)
+            start = i;
+        }
+        else {
+          if (start >= 0)
+            return tag.substring(start, i);
+        }
+      }
+      return start >= 0 ? tag.substring(start) : null;
     }
   }
 }

@@ -5,7 +5,6 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import one.util.streamex.StreamEx
 import java.util.*
 
 class PyTypedDictType @JvmOverloads constructor(private val name: String,
@@ -14,8 +13,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                                                 private val dictClass: PyClass,
                                                 private val definitionLevel: DefinitionLevel,
                                                 private val ancestors: List<PyTypedDictType>,
-                                                private val targetExpression: PyTargetExpression? = null) : PyClassTypeImpl(dictClass,
-                                                                                                                            definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
+                                                private val declaration: PyQualifiedNameOwner? = null) : PyClassTypeImpl(dictClass,
+                                                                                                                         definitionLevel != DefinitionLevel.INSTANCE), PyCollectionType {
   override fun getElementTypes(): List<PyType?> {
     return listOf(PyBuiltinCache.getInstance(dictClass).strType, getValuesType())
   }
@@ -48,7 +47,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     return if (definitionLevel == DefinitionLevel.NEW_TYPE)
       PyTypedDictType(name, fields, inferred, dictClass,
                       DefinitionLevel.INSTANCE, ancestors,
-                      targetExpression)
+                      declaration)
     else
       this
   }
@@ -57,7 +56,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     return if (definitionLevel == DefinitionLevel.INSTANCE)
       PyTypedDictType(name, fields, inferred, dictClass,
                       DefinitionLevel.NEW_TYPE, ancestors,
-                      targetExpression)
+                      declaration)
     else
       this
   }
@@ -107,11 +106,11 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
            && inferred == otherTypedDict.inferred
            && definitionLevel == otherTypedDict.definitionLevel
            && ancestors == otherTypedDict.ancestors
-           && targetExpression == otherTypedDict.targetExpression
+           && declaration == otherTypedDict.declaration
   }
 
   override fun hashCode(): Int {
-    return Objects.hash(super.hashCode(), name, fields, inferred, definitionLevel, ancestors, targetExpression)
+    return Objects.hash(super.hashCode(), name, fields, inferred, definitionLevel, ancestors, declaration)
   }
 
   enum class DefinitionLevel {
@@ -125,6 +124,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
   fun isInferred(): Boolean {
     return inferred
   }
+
+  override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
 
   class FieldTypeAndTotality @JvmOverloads constructor(val type: PyType?, val isRequired: Boolean = true)
 
@@ -179,11 +180,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
-      if (actual is PyUnionType) {
-        return StreamEx.of(actual.members).allMatch { type -> PyTypeChecker.match(expected, type, context) }
-      }
-
-      return PyTypeChecker.match(expected, actual, context)
+      return PyTypeUtil.toStream(actual).allMatch { type -> PyTypeChecker.match(expected, type, context) }
     }
 
     fun checkStructuralCompatibility(expected: PyType?, actual: PyTypedDictType, context: TypeEvalContext): Optional<Boolean> {

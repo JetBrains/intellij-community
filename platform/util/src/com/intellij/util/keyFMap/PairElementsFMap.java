@@ -28,7 +28,7 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
   PairElementsFMap(@NotNull Key<V1> key1, @NotNull V1 value1, @NotNull Key<V2> key2, @NotNull V2 value2) {
     // Key hashCodes are unique and ordered
     int c = Integer.compare(key1.hashCode(), key2.hashCode());
-    if(c < 0) {
+    if (c < 0) {
       this.key1 = key1;
       this.value1 = value1;
       this.key2 = key2;
@@ -56,12 +56,12 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
       return value == value1 ? this : new PairElementsFMap<>(key, value, key2, value2);
     }
     if (key == key2) {
-      return value == value2 ? this : new PairElementsFMap<>(key, value, key1, value1);
+      return value == value2 ? this : new PairElementsFMap<>(key1, value1, key, value);
     }
-    if(key.hashCode() < key1.hashCode()) {
+    if (key.hashCode() < key1.hashCode()) {
       return new ArrayBackedFMap(new int[]{key.hashCode(), key1.hashCode(), key2.hashCode()}, new Object[]{value, value1, value2});
     }
-    if(key.hashCode() < key2.hashCode()) {
+    if (key.hashCode() < key2.hashCode()) {
       return new ArrayBackedFMap(new int[]{key1.hashCode(), key.hashCode(), key2.hashCode()}, new Object[]{value1, value, value2});
     }
     return new ArrayBackedFMap(new int[]{key1.hashCode(), key2.hashCode(), key.hashCode()}, new Object[]{value1, value2, value});
@@ -87,7 +87,7 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return new Key[] { key1, key2 };
   }
 
@@ -124,7 +124,7 @@ final class PairElementsFMap<V1, V2> implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap o) {
+  public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
     if (!(o instanceof PairElementsFMap)) return false;
 

@@ -17,8 +17,10 @@ package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface AntBuildTargetBase extends AntBuildTarget {
@@ -30,11 +32,11 @@ public interface AntBuildTargetBase extends AntBuildTarget {
   Project getProject();
 
   @Nullable
-  String getActionId();
+  @NonNls String getActionId();
 
   @Nullable
   Navigatable getOpenFileDescriptor();
 
   @Nullable
-  BuildTask findTask(final String taskName);
+  BuildTask findTask(final @NlsSafe String taskName);
 }

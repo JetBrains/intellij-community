@@ -1,21 +1,20 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-public class PropertiesPsiCompletionUtil {
+public final class PropertiesPsiCompletionUtil {
   public static void addVariantsFromFile(PropertyReferenceBase propertyReference,
                                          final PropertiesFile propertiesFile,
                                          final Set<Object> variants) {
@@ -29,11 +28,11 @@ public class PropertiesPsiCompletionUtil {
   }
 
   static Set<Object> getPropertiesKeys(final PropertyReferenceBase propertyReference) {
-    final Set<Object> variants = new THashSet<>(new TObjectHashingStrategy<Object>() {
+    final Set<Object> variants = new ObjectOpenCustomHashSet<>(new Hash.Strategy<>() {
       @Override
-      public int computeHashCode(final Object object) {
+      public int hashCode(@Nullable Object object) {
         if (object instanceof IProperty) {
-          final String key = ((IProperty)object).getKey();
+          String key = ((IProperty)object).getKey();
           return key == null ? 0 : key.hashCode();
         }
         else {
@@ -42,9 +41,12 @@ public class PropertiesPsiCompletionUtil {
       }
 
       @Override
-      public boolean equals(final Object o1, final Object o2) {
+      public boolean equals(@Nullable Object o1, @Nullable Object o2) {
+        if (o1 == o2) {
+          return true;
+        }
         return o1 instanceof IProperty && o2 instanceof IProperty &&
-               Comparing.equal(((IProperty)o1).getKey(), ((IProperty)o2).getKey(), true);
+               Objects.equals(((IProperty)o1).getKey(), ((IProperty)o2).getKey());
       }
     });
     List<PropertiesFile> propertiesFileList = propertyReference.getPropertiesFiles();

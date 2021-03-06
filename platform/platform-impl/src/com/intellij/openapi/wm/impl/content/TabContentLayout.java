@@ -219,7 +219,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   @Override
   public int getMinimumWidth() {
     int result = 0;
-    if (myIdLabel != null) {
+    if (myIdLabel != null && isIdVisible()) {
       result += myIdLabel.getPreferredSize().width;
       Insets insets = myIdLabel.getInsets();
       if (insets != null) {
@@ -236,6 +236,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     result += selected != null ? myContent2Tabs.get(selected).getMinimumSize().width : 0;
 
     return result;
+  }
+
+  @Nullable ContentTabLabel findTabLabelByContent(@Nullable Content content) {
+    return myContent2Tabs.get(content);
   }
 
   static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
@@ -292,10 +296,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       if (each.isSelected()) {
-        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.window.isActive(), each.isHovered());
+        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(), myUi.window.isActive(), each.isHovered());
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.window.isActive(), each.isHovered());
+        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, each.getTabColor(), myUi.window.isActive(), each.isHovered());
       }
     }
     g2d.dispose();

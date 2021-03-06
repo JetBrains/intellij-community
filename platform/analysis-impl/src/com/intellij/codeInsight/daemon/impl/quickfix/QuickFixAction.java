@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,10 +29,11 @@ public final class QuickFixAction {
 
   /** @deprecated This is used by TeamCity plugin */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
                                             @Nullable IntentionAction action,
                                             @Nullable List<IntentionAction> options,
-                                            @Nullable String displayName) {
+                                            @Nullable @Nls String displayName) {
     if (info == null) return;
     info.registerFix(action, options, displayName, null, null);
   }
@@ -39,9 +42,10 @@ public final class QuickFixAction {
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
                                             @Nullable TextRange fixRange,
                                             @Nullable IntentionAction action,
-                                            @Nullable final HighlightDisplayKey key) {
-    if (info == null) return;
-    info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+                                            @Nullable HighlightDisplayKey key) {
+    if (info != null) {
+      info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+    }
   }
 
   public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action) {

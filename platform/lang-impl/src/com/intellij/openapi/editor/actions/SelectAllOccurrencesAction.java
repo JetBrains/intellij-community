@@ -70,7 +70,7 @@ public class SelectAllOccurrencesAction extends EditorAction {
 
       final FindModel model = getFindModel(selectedText, wholeWordsSearch);
 
-      FindUtil.selectSearchResultsInEditor(editor, new Iterator<FindResult>() {
+      FindUtil.selectSearchResultsInEditor(editor, new Iterator<>() {
         FindResult findResult = findManager.findString(editor.getDocument().getCharsSequence(), 0, model);
 
         @Override

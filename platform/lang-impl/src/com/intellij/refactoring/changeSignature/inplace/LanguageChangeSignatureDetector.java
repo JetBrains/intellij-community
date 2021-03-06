@@ -35,6 +35,7 @@ public interface LanguageChangeSignatureDetector<C extends ChangeInfo> {
 
   boolean isChangeSignatureAvailableOnElement(@NotNull PsiElement element, C currentInfo);
 
+  @NotNull
   TextRange getHighlightingRange(@NotNull C changeInfo);
 
   default @NotNull String extractSignature(@NotNull C initialChangeInfo) {

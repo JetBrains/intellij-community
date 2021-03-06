@@ -85,6 +85,7 @@ public interface FileIndex {
    * if you want to accept files only.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   boolean isContentSourceFile(@NotNull VirtualFile file);
 
   /**

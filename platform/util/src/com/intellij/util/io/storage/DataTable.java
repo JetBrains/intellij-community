@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
@@ -25,11 +7,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
-class DataTable implements Disposable, Forceable {
+final class DataTable implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance(DataTable.class);
 
   private static final int HEADER_SIZE = 32;
@@ -43,7 +26,7 @@ class DataTable implements Disposable, Forceable {
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
   private boolean myIsDirty = false;
 
-  DataTable(final File filePath, final PagePool pool) throws IOException {
+  DataTable(@NotNull Path filePath, @NotNull PagePool pool) throws IOException {
     myFile = new RandomAccessDataFile(filePath, pool);
     if (myFile.length() == 0) {
       markDirty();
@@ -57,7 +40,7 @@ class DataTable implements Disposable, Forceable {
     return ((double)myWasteSize)/myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
   }
 
-  private void readInHeader(File filePath) throws IOException {
+  private void readInHeader(@NotNull Path filePath) throws IOException {
     int magic = myFile.getInt(HEADER_MAGIC_OFFSET);
     if (magic != SAFELY_CLOSED_MAGIC) {
       myFile.dispose();
@@ -87,7 +70,7 @@ class DataTable implements Disposable, Forceable {
     writeBytes(newLength - 1, new byte[]{0});
     long actualLength = myFile.length();
     if (actualLength != newLength) {
-      LOG.error("Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLength + ", actual: " + actualLength);
+      LOG.error("Failed to resize the storage at: " + myFile + ". Required: " + newLength + ", actual: " + actualLength);
     }
     return result;
   }

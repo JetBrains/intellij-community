@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,19 +11,15 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
  */
-public class JavaClassSupersImpl extends JavaClassSupers {
+public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 
   @Override
@@ -55,7 +51,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     }
 
     return derivedClass instanceof PsiTypeParameter
-           ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, new THashSet<>(), derivedSubstitutor)
+           ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, new HashSet<>(), derivedSubstitutor)
            : getSuperSubstitutorWithCaching(superClass, derivedClass, scope, derivedSubstitutor);
   }
 
@@ -188,13 +184,13 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     StringBuilder msg = new StringBuilder("superClassSubstitutor requested when derived doesn't extend super:\n");
     msg.append("Super: " + classInfo(superClass));
     msg.append("Derived: " + classInfo(derivedClass));
-    msg.append("isInheritor: " +
+    msg.append("isInheritor: via util=" +
                InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) +
-               " " +
+               ", directly=" +
                derivedClass.isInheritor(superClass, true) + "\n");
     msg.append("Super in derived's scope: " + PsiSearchScopeUtil.isInScope(derivedClass.getResolveScope(), superClass) + "\n");
     if (!InheritanceUtil.processSupers(derivedClass, false, s -> s != superClass)) {
-      msg.append("Plain derived's supers contain Super:\n");
+      msg.append("Plain derived's supers contain Super\n");
     }
     msg.append("Hierarchy:\n");
     new ScopedClassHierarchy(derivedClass, derivedClass.getResolveScope()) {
@@ -205,7 +201,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
         msg.append(eachClass == null ? "unresolved " + type : classInfo(eachClass));
         super.visitType(type, map);
       }
-    };
+    }.visitType(JavaPsiFacade.getElementFactory(derivedClass.getProject()).createType(derivedClass, PsiSubstitutor.EMPTY), new HashMap<>());
     LOG.error(msg);
   }
 
@@ -213,13 +209,13 @@ public class JavaClassSupersImpl extends JavaClassSupers {
   @NotNull
   private static String classInfo(@NotNull PsiClass aClass) {
     String s = aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
-    s += "extends: ";
+    s += "    extends: ";
     for (PsiClassType type : aClass.getExtendsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
+      s += "    " + type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
     }
-    s += "\nimplements: ";
+    s += "\n    implements: ";
     for (PsiClassType type : aClass.getImplementsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
+      s += "    " + type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
     }
     return s + "\n";
   }

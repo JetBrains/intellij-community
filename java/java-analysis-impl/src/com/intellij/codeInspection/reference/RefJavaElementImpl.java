@@ -1,24 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
-import com.intellij.util.IconUtil;
+import com.intellij.ui.CoreAwareIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
   private Set<RefClass> myOutTypeReferences; // guarded by this
@@ -66,7 +62,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   synchronized void addOutTypeReference(RefClass refClass){
     if (myOutTypeReferences == null){
-      myOutTypeReferences = new THashSet<>();
+      myOutTypeReferences = new HashSet<>();
     }
     myOutTypeReferences.add(refClass);
   }
@@ -268,8 +264,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (isSyntheticJSP()) {
       final PsiElement element = getPsiElement();
       if (element != null && element.isValid()) {
-        return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
-                                Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
+        IconManager iconManager = IconManager.getInstance();
+        if (iconManager instanceof CoreAwareIconManager) {
+          return ((CoreAwareIconManager)iconManager).getIcon(element.getContainingFile().getVirtualFile(),
+                                  Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
+        }
       }
     }
     return super.getIcon(expanded);

@@ -48,7 +48,7 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   @BeforeClass
-  public static void setupFSRecords() {
+  public static void setupFSRecords() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
       fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("ddd").getFixture();
       fixture.setUp();

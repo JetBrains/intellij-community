@@ -2,6 +2,7 @@
 package com.intellij.lang.jvm.actions;
 
 import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -42,6 +43,11 @@ public interface ChangeParametersRequest extends ActionRequest {
     public JvmParameter getExistingParameter() {
       return myExistingParameter;
     }
-  }
 
+    @NotNull
+    @Override
+    public Collection<AnnotationRequest> getExpectedAnnotations() {
+      return ContainerUtil.mapNotNull(myExistingParameter.getAnnotations(), AnnotationRequestsKt::annotationRequest);
+    }
+  }
 }

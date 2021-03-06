@@ -21,7 +21,7 @@ import java.util.ResourceBundle;
 
 public class Main {
   private JComponent myComponent;
-  private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
+  private static ResourceBundle ourBundle = ResourceBundle.getBundle("messages.RuntimeBundle");
 
   // Note: this class should not be obfuscated
 

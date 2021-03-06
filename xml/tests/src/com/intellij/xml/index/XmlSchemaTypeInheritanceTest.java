@@ -34,7 +34,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
   public void testBuilder() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("Semantic.xsd");
     assert file != null;
-    final FileInputStream is = new FileInputStream(new File(file.getPath()));
+    final FileInputStream is = new FileInputStream(file.getPath());
     final MultiMap<SchemaTypeInfo, SchemaTypeInfo> map = XsdComplexTypeInfoBuilder.parse(is);
 
     final Collection<SchemaTypeInfo> node = map.get(new SchemaTypeInfo("tConversationNode", true, ourNs));

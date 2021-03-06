@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import com.jetbrains.python.PythonPluginDisposable
 import java.util.concurrent.ExecutionException
 
 @Service
@@ -22,7 +23,7 @@ class PrevCallsModelsProviderService {
     .softValues()
     .maximumSize(40)
     .build(object: CacheLoader<String, PrevCallsModel>() {
-      override fun load(expression: String): PrevCallsModel? {
+      override fun load(expression: String): PrevCallsModel {
         val result = PrevCallsModelsLoader.getModelForExpression(expression)
         if (result == null) throw ModelNotFoundException()
         return result
@@ -30,7 +31,7 @@ class PrevCallsModelsProviderService {
     })
 
   private val modelsLoadingQueue = MergingUpdateQueue("ModelsLoadingQueue", 1000, true, null,
-                                                      ApplicationManager.getApplication(), null, false)
+                                                      PythonPluginDisposable.getInstance(), null, false)
   private fun createUpdate(identity: Any, runnable: () -> Unit) = object : Update(identity) {
     override fun canEat(update: Update?) = this == update
     override fun run() = runnable()

@@ -12,6 +12,11 @@ class Foo {
     if (<warning descr="Condition 'list2.size() == 1' is always 'true'">list2.size() == 1</warning>) {}
     if (<warning descr="Condition 'list3.size() == 3' is always 'true'">list3.size() == 3</warning>) {}
   }
+  
+  void test2(String[] arr) {
+    List<String> list = Arrays.asList(arr);
+    if (<warning descr="Condition 'list.size() == arr.length' is always 'true'">list.size() == arr.length</warning>) {}
+  }
 
   native void unknown();
 }

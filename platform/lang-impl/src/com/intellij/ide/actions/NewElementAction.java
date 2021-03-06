@@ -9,13 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class NewElementAction extends DumbAwareAction implements PopupAction {
+public class NewElementAction extends DumbAwareAction implements PopupAction, UpdateInBackground {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -60,7 +61,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     return false;
   }
 
-  protected String getPopupTitle() {
+  protected @NlsContexts.PopupTitle String getPopupTitle() {
     return IdeBundle.message("title.popup.new.element");
   }
 
@@ -77,7 +78,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       return;
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e, isEnabledInModalContext()));
+    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
   }
 
   protected boolean isEnabled(@NotNull AnActionEvent e) {

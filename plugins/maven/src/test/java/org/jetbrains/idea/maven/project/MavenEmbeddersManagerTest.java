@@ -41,52 +41,52 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
   }
 
   public void testBasics() {
-    MavenEmbedderWrapper one = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, null);
-    MavenEmbedderWrapper two = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
+    MavenEmbedderWrapper one = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, myDir.getPath());
+    MavenEmbedderWrapper two = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
 
     assertNotSame(one, two);
   }
 
   public void testForSameId() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
+    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
+    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
 
     assertNotSame(one1, one2);
 
     myManager.release(one1);
 
-    MavenEmbedderWrapper one3 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
+    MavenEmbedderWrapper one3 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
 
     assertSame(one1, one3);
   }
 
   public void testCachingOnlyOne() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
+    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
+    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
 
     assertNotSame(one1, one2);
 
     myManager.release(one1);
     myManager.release(one2);
 
-    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
-    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
+    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
+    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
 
     assertSame(one1, one11);
     assertNotSame(one2, one22);
   }
 
   public void testResettingAllCachedAndInUse() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, null);
+    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
+    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, myDir.getPath());
 
     myManager.release(one1);
     myManager.reset();
 
     myManager.release(one2);
 
-    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, null);
-    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, null);
+    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, null, myDir.getPath());
+    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, null, myDir.getPath());
 
     assertNotSame(one1, one11);
     assertNotSame(one2, one22);

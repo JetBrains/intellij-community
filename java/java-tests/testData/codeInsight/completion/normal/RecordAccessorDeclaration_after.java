@@ -1,5 +1,6 @@
 record Test(int component) {
+    @Override
     public int component() {
-        <selection>return component;</selection>
+        <selection><caret>return component;</selection>
     }
 }

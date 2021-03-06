@@ -10,6 +10,7 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
+import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   private static final Logger LOG = Logger.getInstance(SnapshotSingleValueIndexStorage.class);
 
   // shareable snapshots
-  private volatile SnapshotInputMappings<Key, Value> mySnapshotInputMappings;
+  private volatile UpdatableSnapshotInputMappingIndex<Key, Value, FileContent> mySnapshotInputMappings;
 
   // input -> hash (client instance dependent)
   private volatile IntForwardIndex myForwardIndex;
@@ -33,7 +34,7 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   private final SLRUCache<Key, ValueContainer<Value>> myCache;
 
   public SnapshotSingleValueIndexStorage(int cacheSize) {
-    myCache = new SLRUCache<Key, ValueContainer<Value>>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
+    myCache = new SLRUCache<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
       @NotNull
       @Override
       public ValueContainer<Value> createValue(Key key) {

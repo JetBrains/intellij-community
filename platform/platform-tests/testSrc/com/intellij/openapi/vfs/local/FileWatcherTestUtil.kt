@@ -1,11 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.util.TimeoutUtil
+import org.junit.Assert.assertTrue
 import java.io.File
-import kotlin.test.assertTrue
 
 @Suppress("MemberVisibilityCanBePrivate")
 internal object FileWatcherTestUtil {
@@ -38,8 +41,17 @@ internal object FileWatcherTestUtil {
   internal fun wait(timeout: Long = START_STOP_DELAY, condition: () -> Boolean) {
     val stopAt = System.currentTimeMillis() + timeout
     while (condition()) {
-      assertTrue(System.currentTimeMillis() < stopAt, "operation timed out")
+      assertTrue("operation timed out", System.currentTimeMillis() < stopAt)
       TimeoutUtil.sleep(10)
     }
+  }
+
+  internal fun refresh(file: File): VirtualFile {
+    val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) ?: throw IllegalStateException("can't get '${file.path}' into VFS")
+    VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
+      override fun visitFile(file: VirtualFile): Boolean { file.children; return true }
+    })
+    vFile.refresh(false, true)
+    return vFile
   }
 }

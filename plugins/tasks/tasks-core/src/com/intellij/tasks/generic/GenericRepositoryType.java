@@ -49,7 +49,7 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
   @Override
   public TaskRepositoryEditor createEditor(final GenericRepository repository,
                                            final Project project,
-                                           final Consumer<GenericRepository> changeListener) {
+                                           final Consumer<? super GenericRepository> changeListener) {
     return new GenericRepositoryEditor<>(project, repository, changeListener);
   }
 

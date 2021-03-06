@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.ExecutionBundle;
@@ -16,9 +16,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,18 +35,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   @NotNull private final ProjectSystemId myExternalSystemId;
   private final ConfigurationFactory @NotNull [] myFactories = new ConfigurationFactory[1];
 
-  @NotNull private final NotNullLazyValue<Icon> myIcon = new NotNullLazyValue<Icon>() {
-    @NotNull
-    @Override
-    protected Icon compute() {
-      ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
-      Icon result = null;
-      if (manager instanceof ExternalSystemUiAware) {
-        result = ((ExternalSystemUiAware)manager).getProjectIcon();
-      }
-      return result == null ? DefaultExternalSystemUiAware.INSTANCE.getTaskIcon() : result;
-    }
-  };
+  @NotNull private final NotNullLazyValue<Icon> myIcon;
 
   protected AbstractExternalSystemTaskConfigurationType(@NotNull final ProjectSystemId externalSystemId) {
     myExternalSystemId = externalSystemId;
@@ -59,11 +50,28 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       public @NotNull String getId() {
         return getConfigurationFactoryId();
       }
+
+      @Override
+      public boolean isEditableInDumbMode() {
+        return AbstractExternalSystemTaskConfigurationType.this.isEditableInDumbMode();
+      }
     };
+    myIcon = NotNullLazyValue.createValue(() -> {
+        ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
+        Icon result = null;
+        if (manager instanceof ExternalSystemUiAware) {
+          result = ((ExternalSystemUiAware)manager).getProjectIcon();
+        }
+        return result == null ? DefaultExternalSystemUiAware.INSTANCE.getTaskIcon() : result;
+      });
+  }
+
+  protected boolean isEditableInDumbMode() {
+    return false;
   }
 
   /**
-   * This method must be overriden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
+   * This method must be overridden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
    */
   @NonNls
   @NotNull
@@ -119,29 +127,29 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   }
 
   @NotNull
-  public static String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
+  public static @NlsActions.ActionText String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
     return generateName(
       project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames(), settings.getExecutionName()
     );
   }
 
   @NotNull
-  public static String generateName(@NotNull Project project,
-                                    @NotNull ProjectSystemId externalSystemId,
-                                    @Nullable String externalProjectPath,
-                                    @NotNull List<String> taskNames,
-                                    @Nullable String executionName) {
+  public static @NlsActions.ActionText String generateName(@NotNull Project project,
+                                                           @NotNull ProjectSystemId externalSystemId,
+                                                           @Nullable String externalProjectPath,
+                                                           @NotNull List<String> taskNames,
+                                                           @Nullable @Nls String executionName) {
     return generateName(project, externalSystemId, externalProjectPath, taskNames, executionName, " [", "]");
   }
 
   @NotNull
-  public static String generateName(@NotNull Project project,
-                                    @NotNull ProjectSystemId externalSystemId,
-                                    @Nullable String externalProjectPath,
-                                    @NotNull List<String> taskNames,
-                                    @Nullable String executionName,
-                                    @NotNull String tasksPrefix,
-                                    @NotNull String tasksPostfix) {
+  public static @NlsActions.ActionText String generateName(@NotNull Project project,
+                                                           @NotNull ProjectSystemId externalSystemId,
+                                                           @Nullable String externalProjectPath,
+                                                           @NotNull List<String> taskNames,
+                                                           @Nullable @Nls String executionName,
+                                                           @NotNull String tasksPrefix,
+                                                           @NotNull String tasksPostfix) {
     if (!StringUtil.isEmpty(executionName)) {
       return executionName;
     }
@@ -154,7 +162,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       }
     }
 
-    StringBuilder buffer = new StringBuilder();
+    @Nls StringBuilder buffer = new StringBuilder();
     final String projectName;
     if (rootProjectPath == null) {
       projectName = null;

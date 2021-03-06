@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * XSD/DTD Model generator tool
@@ -24,6 +10,7 @@ package org.jetbrains.idea.devkit.dom.generator;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.xs.XSObject;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,18 +20,18 @@ import java.util.StringTokenizer;
 /**
  * @author Konstantin Bulenkov
  */
-public class Util {
-  public static final String ANONYMOUS_ELEM_TYPE_SUFFIX = "ElemType";
-  public static final String ANONYMOUS_ATTR_TYPE_SUFFIX = "AttrType";
-  public static final String TYPE_SUFFIX = "Type";
-  
+public final class Util {
+  public static final @NonNls String ANONYMOUS_ELEM_TYPE_SUFFIX = "ElemType";
+  public static final @NonNls String ANONYMOUS_ATTR_TYPE_SUFFIX = "AttrType";
+  public static final @NonNls String TYPE_SUFFIX = "Type";
+
   //
   // Constants
   //
-  public static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
+  public static final @NonNls String XSD_NS = "http://www.w3.org/2001/XMLSchema";
 
   // reserved names map
-  public static final String[] RESERVED_NAMES_TABLE = {
+  public static final @NonNls  String[] RESERVED_NAMES_TABLE = {
           "abstract", "default", "if", "private", "this",
           "boolean", "do", "implements", "protected", "throw",
           "break", "double", "import", "public", "throws",
@@ -69,18 +56,19 @@ public class Util {
   }
 
 
-  static void log(String str) {
+  static void log(@NonNls String str) {
     System.out.println(str);
   }
 
-  static void logwarn(String str) {
-    System.out.println("[warn] " + str);
+  static void logwarn(@NonNls String str) {
+    System.out.println("[warn] " + str); //NON-NLS
   }
 
-  static void logerr(String str) {
-    System.out.println("[error] " + str);
+  static void logerr(@NonNls String str) {
+    System.out.println("[error] " + str); //NON-NLS
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static String pluralize(String suggestion) {
     // return suggestion+"List";
     final String VOWELS = "aeiouy";
@@ -117,7 +105,7 @@ public class Util {
       }
     }
     id = StringUtil.toUpperCase(id);
-    id = id.replace('.', '_').replace('-', '_');
+    id = id.replace('.', '_').replace('-', '_').replace(" ", "_");
     if (id.length() < 2 || !Character.isJavaIdentifierStart(id.charAt(0))) {
       id = typeName + "_" + id;
     }
@@ -156,6 +144,7 @@ public class Util {
   }
 
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean addToNameMap(Map<String, FieldDesc> fdMap, FieldDesc fd1, boolean merge) {
     boolean duplicates = false;
     FieldDesc fd2;

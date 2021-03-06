@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -55,15 +55,10 @@ public class TypeExpression extends Expression {
   }
 
   @Override
-  public Result calculateQuickResult(ExpressionContext context) {
-    return calculateResult(context);
-  }
-
-  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myItems.size() <= 1) return null;
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-    
+
     List<LookupElement> result = new ArrayList<>(myItems.size());
     for (final SmartTypePointer item : myItems) {
       final PsiType type = item.getType();

@@ -4,8 +4,11 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.VirtualFileAppearanceListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.ProblemListener;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiTreeChangeListener;
@@ -50,7 +54,7 @@ import java.util.List;
 public final class NavBarListener
   implements ProblemListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener, WindowFocusListener,
-             LafManagerListener {
+             LafManagerListener, DynamicPluginListener, VirtualFileAppearanceListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
@@ -74,6 +78,8 @@ public final class NavBarListener
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
     connection.subscribe(ProblemListener.TOPIC, listener);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    connection.subscribe(DynamicPluginListener.TOPIC, listener);
+    connection.subscribe(VirtualFileAppearanceListener.TOPIC, listener);
     panel.putClientProperty(BUS, connection);
     panel.addKeyListener(listener);
 
@@ -345,6 +351,14 @@ public final class NavBarListener
     myPanel.repaint();
   }
 
+  @Override
+  public void virtualFileAppearanceChanged(@NotNull VirtualFile virtualFile) {
+    PsiFile psiFile = PsiManager.getInstance(myPanel.getProject()).findFile(virtualFile);
+    if (psiFile != null) {
+      myPanel.queueFileUpdate(psiFile);
+      rebuildUI();
+    }
+  }
 
   //---- Ignored
   @Override
@@ -379,4 +393,14 @@ public final class NavBarListener
 
   @Override
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {}
+
+  @Override
+  public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    myPanel.getNavBarUI().clearItems();
+  }
+
+  @Override
+  public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    myPanel.getNavBarUI().clearItems();
+  }
 }

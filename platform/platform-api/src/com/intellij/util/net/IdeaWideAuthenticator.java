@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,8 +23,9 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
   @Override
   public PasswordAuthentication getPasswordAuthentication() {
     final String host = CommonProxy.getHostNameReliably(getRequestingHost(), getRequestingSite(), getRequestingURL());
-    final boolean isProxy = Authenticator.RequestorType.PROXY.equals(getRequestorType());
-    final String prefix = isProxy ? "Proxy authentication: " : "Server authentication: ";
+    // java.base/java/net/SocksSocketImpl.java:176 : there is SOCKS proxy auth, but without RequestorType passing
+    final boolean isProxy = Authenticator.RequestorType.PROXY.equals(getRequestorType()) || "SOCKS authentication".equals(getRequestingPrompt());
+    final String prefix = isProxy ? IdeBundle.message("prompt.proxy.authentication") : IdeBundle.message("prompt.server.authentication");
     Application application = ApplicationManager.getApplication();
     if (isProxy) {
       // according to idea-wide settings

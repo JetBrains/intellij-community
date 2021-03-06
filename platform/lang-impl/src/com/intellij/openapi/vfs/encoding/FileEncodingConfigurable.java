@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.lang.PerFileMappings;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.PerFileMappingsEx;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -26,9 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -38,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
@@ -58,12 +44,32 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   private HyperlinkLabel myExplanationLabel;
 
   private Charset myPropsCharset;
+  private final Trinity<String, Supplier<? extends Charset>, Consumer<? super Charset>> myProjectMapping;
+  private final Trinity<String, Supplier<? extends Charset>, Consumer<? super Charset>> myGlobalMapping;
 
   FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
     myBOMForUTF8Combo.setModel(new EnumComboBoxModel<>(EncodingProjectManagerImpl.BOMForNewUTF8Files.class));
     myBOMForUTF8Combo.addItemListener(e -> updateExplanationLabelText());
     myExplanationLabel.setHyperlinkTarget("https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8");
+    EncodingManager app = EncodingManager.getInstance();
+    EncodingProjectManagerImpl prj = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+    myProjectMapping = Trinity.create(IdeBundle.message("file.encoding.option.global.encoding"),
+                                      () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
+                                      o -> app.setDefaultCharsetName(getCharsetName(o)));
+    myGlobalMapping = Trinity.create(IdeBundle.message("file.encoding.option.project.encoding"),
+                                     prj::getConfiguredDefaultCharset,
+                                     o -> prj.setDefaultCharsetName(getCharsetName(o)));
+  }
+
+  @Override
+  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<? extends Charset>, Consumer<? super Charset>> prop) {
+    return prop == myGlobalMapping || super.isGlobalMapping(prop);
+  }
+
+  @Override
+  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<? extends Charset>, Consumer<? super Charset>> prop) {
+    return prop == myProjectMapping || super.isProjectMapping(prop);
   }
 
   private void updateExplanationLabelText() {
@@ -117,9 +123,9 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     VirtualFile file = target instanceof VirtualFile ? (VirtualFile)target : null;
     EncodingUtil.FailReason result = file == null || file.isDirectory() ? null : EncodingUtil.checkCanConvertAndReload(file);
 
-    String encodingText = t.displayName();
+    @NlsSafe String encodingText = t.displayName();
     SimpleTextAttributes attributes = result == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-    renderer.append(encodingText + (result == null ? "" : " (" + result + ")"), attributes);
+    renderer.append(encodingText + (result == null ? "" : " (" + EncodingUtil.reasonToString(result, file) + ")"), attributes);
   }
 
   @NotNull
@@ -137,29 +143,21 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
     return new ChangeFileEncodingAction(true) {
       @Override
-      protected boolean chosen(Document document,
-                               Editor editor,
-                               VirtualFile virtualFile,
-                               byte[] bytes,
-                               @NotNull Charset charset) {
+      protected boolean chosen(Document document, Editor editor, VirtualFile virtualFile, byte[] bytes, @NotNull Charset charset) {
         onChosen.consume(charset);
         return true;
       }
     }.createActionGroup(file, null, document, bytes, getClearValueText(target));
   }
 
-  @Nullable
   @Override
-  protected String getClearValueText(@Nullable Object target) {
-    if (target == null) return "<System Default>";
-    return super.getClearValueText(target);
+  protected @NlsActions.ActionText @Nullable String getClearValueText(@Nullable Object target) {
+    return target != null ? super.getClearValueText(target) : LangBundle.message("action.set.system.default.encoding.text");
   }
 
-  @Nullable
   @Override
-  protected String getNullValueText(@Nullable Object target) {
-    if (target == null) return IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
-    return super.getNullValueText(target);
+  protected @NlsActions.ActionText @Nullable String getNullValueText(@Nullable Object target) {
+    return target != null ? super.getNullValueText(target) : IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
   }
 
   @NotNull
@@ -172,7 +170,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   public JComponent createComponent() {
     myTablePanel.add(super.createComponent(), BorderLayout.CENTER);
-    JPanel p = createActionPanel(null, new Value<Charset>() {
+    JPanel p = createActionPanel(null, new Value<>() {
       @Override
       public void commit() {}
 
@@ -190,18 +188,11 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     return myPanel;
   }
 
-  @NotNull
   @Override
-  protected List<Trinity<String, Supplier<Charset>, Consumer<Charset>>> getDefaultMappings() {
-    EncodingManager app = EncodingManager.getInstance();
-    EncodingProjectManagerImpl prj = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+  protected @NotNull List<Trinity<@Nls String, Supplier<? extends Charset>, Consumer<? super Charset>>> getDefaultMappings() {
     return Arrays.asList(
-      Trinity.create(IdeBundle.message("file.encoding.option.global.encoding"),
-                     () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
-                     o -> app.setDefaultCharsetName(getCharsetName(o))),
-      Trinity.create(IdeBundle.message("file.encoding.option.project.encoding"),
-                     prj::getConfiguredDefaultCharset,
-                     o -> prj.setDefaultCharsetName(getCharsetName(o))));
+      myProjectMapping,
+      myGlobalMapping);
   }
 
   @Override
@@ -251,9 +242,9 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   @NotNull
-  private static PerFileMappings<Charset> createMappings(@NotNull Project project) {
+  private static PerFileMappingsEx<Charset> createMappings(@NotNull Project project) {
     EncodingProjectManagerImpl prjManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
-    return new PerFileMappings<Charset>() {
+    return new PerFileMappingsEx<>() {
       @NotNull
       @Override
       public Map<VirtualFile, Charset> getMappings() {

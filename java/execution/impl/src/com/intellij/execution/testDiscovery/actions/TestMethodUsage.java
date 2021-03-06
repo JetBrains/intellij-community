@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,13 +76,17 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
       @NotNull
       @Override
-      public String getPlainText() {
-        return StringUtil.notNullize(Objects.requireNonNull(getElement()).getName());
+      public @NlsSafe String getPlainText() {
+        PsiMember element = getElement();
+        if (element == null) return "";
+        return StringUtil.notNullize(element.getName());
       }
 
       @Override
       public Icon getIcon() {
-        return Objects.requireNonNull(getElement()).getIcon(0);
+        PsiMember element = getElement();
+        if (element == null) return null;
+        return element.getIcon(0);
       }
 
       @Override
@@ -93,7 +98,7 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
 
   @Override
   public boolean isValid() {
-    return getPointer().getElement() != null;
+    return getElement() != null;
   }
 
   @Override

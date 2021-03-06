@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -25,9 +25,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.intellij.lang.annotations.JdkConstants;
@@ -274,30 +278,52 @@ public abstract class AbstractValueHint {
     return myHintHidden;
   }
 
-  protected JComponent createExpandableHintComponent(@Nullable Icon icon, final SimpleColoredText text, final Runnable expand) {
-    final JComponent component =
-      HintUtil.createInformationLabel(text, icon != null ? IconManager.getInstance().createRowIcon(IconUtil.getAddIcon(), icon) : IconUtil.getAddIcon());
+  protected JComponent createExpandableHintComponent(@Nullable Icon icon,
+                                                     final SimpleColoredText text,
+                                                     final Runnable expand,
+                                                     @Nullable XFullValueEvaluator evaluator) {
+    SimpleColoredComponent component = HintUtil.createInformationComponent();
+    component.setIcon(icon != null
+                      ? IconManager.getInstance().createRowIcon(IconUtil.getAddIcon(), icon)
+                      : IconUtil.getAddIcon());
     component.setCursor(hintCursor());
-    addClickListenerToHierarchy(component, new ClickListener() {
+    text.appendToComponent(component);
+    appendEvaluatorLink(evaluator, component);
+    new ClickListener() {
       @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (myCurrentHint != null) {
-          myCurrentHint.hide();
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        if (SwingUtilities.isLeftMouseButton(e)) {
+          Object tag = ((SimpleColoredComponent)e.getSource()).getFragmentTagAt(e.getX());
+          if (tag != null) {
+            if (tag instanceof Consumer) {
+              //noinspection unchecked
+              ((Consumer<MouseEvent>)tag).consume(e);
+            }
+            else {
+              ((Runnable)tag).run();
+            }
+          }
+          else {
+            if (myCurrentHint != null) {
+              myCurrentHint.hide();
+            }
+            expand.run();
+          }
+          return true;
         }
-        expand.run();
-        return true;
+        return false;
       }
-    });
+    }.installOn(component);
     return component;
   }
 
-  private static void addClickListenerToHierarchy(Component c, ClickListener l) {
-    l.installOn(c);
-    if (c instanceof Container) {
-      Component[] children = ((Container)c).getComponents();
-      for (Component child : children) {
-        addClickListenerToHierarchy(child, l);
-      }
+  protected final void appendEvaluatorLink(@Nullable XFullValueEvaluator evaluator, SimpleColoredComponent component) {
+    if (evaluator != null) {
+      component.append(
+        evaluator.getLinkText(),
+        XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
+        (Consumer<MouseEvent>)event -> DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor())
+      );
     }
   }
 

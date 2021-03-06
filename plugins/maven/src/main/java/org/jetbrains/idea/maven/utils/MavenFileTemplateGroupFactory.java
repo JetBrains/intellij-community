@@ -14,7 +14,7 @@ public class MavenFileTemplateGroupFactory implements FileTemplateGroupDescripto
 
   @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor("Maven", RepositoryLibraryLogo);
+    FileTemplateGroupDescriptor group = new FileTemplateGroupDescriptor("Maven", RepositoryLibraryLogo); //NON-NLS
 
     group.addTemplate(new FileTemplateDescriptor(MAVEN_PROJECT_XML_TEMPLATE, RepositoryLibraryLogo));
     group.addTemplate(new FileTemplateDescriptor(MAVEN_PROFILES_XML_TEMPLATE, RepositoryLibraryLogo));

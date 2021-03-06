@@ -29,10 +29,10 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     myWcRootName = "wcRootConflictData";
     myTraceClient = true;
-    super.setUp();
+    super.before();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     myTheirs = myTempDirFixture.findOrCreateDir("theirs");

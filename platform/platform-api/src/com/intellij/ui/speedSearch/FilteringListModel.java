@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
@@ -13,6 +9,7 @@ import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class FilteringListModel<T> extends AbstractListModel<T> {
@@ -62,8 +59,8 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
   public void refilter() {
     removeAllElements();
     int count = 0;
-    for (int i = 0; i < myOriginalModel.getSize(); i++) {
-      final T elt = myOriginalModel.getElementAt(i);
+    Collection<T> elements = getElementsToFilter();
+    for (T elt : elements) {
       if (passElement(elt)) {
         addToFiltered(elt);
         count++;
@@ -73,6 +70,15 @@ public class FilteringListModel<T> extends AbstractListModel<T> {
     if (count > 0) {
       fireIntervalAdded(this, 0, count - 1);
     }
+  }
+
+  @NotNull
+  protected Collection<T> getElementsToFilter() {
+    ArrayList<T> result = new ArrayList<>();
+    for (int i = 0; i < myOriginalModel.getSize(); i++) {
+      result.add(myOriginalModel.getElementAt(i));
+    }
+    return result;
   }
 
   protected void addToFiltered(T elt) {

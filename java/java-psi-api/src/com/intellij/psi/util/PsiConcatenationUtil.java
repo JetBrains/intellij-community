@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public class PsiConcatenationUtil {
+public final class PsiConcatenationUtil {
 
   /**
    * @param formatParameters  output parameter, will contain the format parameters found in the concatenation
@@ -26,19 +26,6 @@ public class PsiConcatenationUtil {
   }
 
   // externally used
-
-  /**
-   * @deprecated use {@code buildUnescapedFormatString} instead and use either
-   * {@link StringUtil#escapeStringCharacters(String)}
-   * or
-   * {@link PsiLiteralUtil#escapeTextBlockCharacters(String)}
-   * to escape the resulting string.
-   */
-  @Deprecated
-  public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
-                                       List<? super PsiExpression> formatParameters, boolean printfFormat) {
-    buildFormatString(expression, formatString, formatParameters, printfFormat, true);
-  }
 
   private static void buildFormatString(PsiExpression expression, StringBuilder formatString,
                                        List<? super PsiExpression> formatParameters, boolean printfFormat, boolean escape) {

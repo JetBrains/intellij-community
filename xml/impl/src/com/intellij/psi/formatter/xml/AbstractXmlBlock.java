@@ -2,10 +2,12 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -22,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +66,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
    *
    * @return True if the space must be preserved (xml:space='preserve'), false if the attribute
    *         contains 'default'. If the attribute is not defined, return the current value.
-   */ 
+   */
   private static boolean shouldPreserveSpace(ASTNode node, boolean defaultValue) {
     if (node.getPsi() instanceof XmlTag) {
       XmlTag tag = (XmlTag)node.getPsi();
@@ -82,7 +85,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
     return defaultValue;
   }
-  
+
   public boolean isPreserveSpace() {
     return myPreserveSpace;
   }
@@ -95,11 +98,16 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return WrapType.CHOP_DOWN_IF_LONG;
   }
 
+  protected boolean isTextNode(IElementType elementType) {
+    return elementType == XmlElementType.XML_TEXT
+           || elementType == XmlElementType.HTML_RAW_TEXT;
+  }
+
   protected Alignment chooseAlignment(final ASTNode child, final Alignment attrAlignment, final Alignment textAlignment) {
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) return getAlignment();
+    if (isTextNode(myNode.getElementType())) return getAlignment();
     final IElementType elementType = child.getElementType();
     if (isAttributeElementType(elementType) && myXmlFormattingPolicy.getShouldAlignAttributes()) return attrAlignment;
-    if (elementType == XmlElementType.XML_TEXT && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
+    if (isTextNode(elementType) && myXmlFormattingPolicy.getShouldAlignText()) return textAlignment;
     return null;
   }
 
@@ -108,7 +116,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) return textWrap;
+    if (isTextNode(myNode.getElementType())) return textWrap;
     final IElementType elementType = child.getElementType();
     if (isAttributeElementType(elementType)) return attrWrap;
     if (elementType == XmlTokenType.XML_START_TAG_START) return tagBeginWrap;
@@ -122,9 +130,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
       return null;
     }
-    if (elementType == XmlElementType.XML_TEXT || elementType == XmlTokenType.XML_DATA_CHARACTERS) {
+    if (isTextNode(elementType) || elementType == XmlTokenType.XML_DATA_CHARACTERS) {
       ASTNode previous = FormatterUtil.getPreviousNonWhitespaceSibling(child);
-      if (previous == null || previous.getElementType() != XmlElementType.XML_TEXT) {
+      if (previous == null || !isTextNode(previous.getElementType())) {
         return myXmlFormattingPolicy.allowWrapBeforeText() ? textWrap : null;
       }
       return textWrap;
@@ -207,7 +215,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     else if (!isBuildIndentsOnly()) {
       myInjectedBlockBuilder.addInjectedLanguageBlockWrapper(result, child, indent, 0, null);
     }
-    
+
     return child;
   }
 
@@ -279,13 +287,25 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       );
     }
     else {
-      result.add(createSimpleChild(child, indent, wrap, alignment));
+      result.add(createSimpleChild(child, indent, wrap, alignment, null));
     }
   }
 
-
+  /** @deprecated use and override {@code createSimpleChild } overload with {@code range } provided */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   protected XmlBlock createSimpleChild(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
-    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace());
+    return null;
+  }
+
+  protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,
+                                                @Nullable Wrap wrap, @Nullable Alignment alignment, @Nullable TextRange range) {
+    XmlBlock blockFromDeprecatedCall = createSimpleChild(child, indent, wrap, alignment);
+    if (blockFromDeprecatedCall != null) {
+      return blockFromDeprecatedCall;
+    }
+    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, range, isPreserveSpace());
   }
 
   protected XmlTagBlock createTagBlock(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
@@ -294,7 +314,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   @Nullable
   protected XmlTag findXmlTagAt(final ASTNode child, final int startOffset) {
-    return null; 
+    return null;
   }
 
   @Nullable
@@ -335,9 +355,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected boolean useMyFormatter(final Language myLanguage, final Language childLanguage, final PsiElement childPsi) {
     if (myLanguage == childLanguage ||
-        childLanguage == StdFileTypes.HTML.getLanguage() ||
-        childLanguage == StdFileTypes.XHTML.getLanguage() ||
-        childLanguage == StdFileTypes.XML.getLanguage()) {
+        childLanguage == HtmlFileType.INSTANCE.getLanguage() ||
+        childLanguage == XHtmlFileType.INSTANCE.getLanguage() ||
+        childLanguage == XmlFileType.INSTANCE.getLanguage()) {
       return true;
     }
     final FormattingModelBuilder childFormatter = LanguageFormatting.INSTANCE.forLanguage(childLanguage);
@@ -351,7 +371,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   public abstract boolean insertLineBreakBeforeTag();
-  
+
   public int getBlankLinesBeforeTag() {
     return insertLineBreakBeforeTag() ? 1 : 0;
   }
@@ -416,7 +436,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
     if (isBuildIndentsOnly()) return false;
-    
+
     if (myInjectedBlockBuilder.addInjectedBlocks(result, child, wrap, alignment, indent)) {
       return true;
     }
@@ -466,7 +486,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private static boolean isTextOnlyNode(@NotNull ASTNode node) {
-    if (node.getPsi() instanceof XmlText) return true;
+    if (node.getPsi() instanceof XmlText
+        || node.getElementType() == XmlElementType.HTML_RAW_TEXT) return true;
     ASTNode firstChild = node.getFirstChildNode();
     ASTNode lastChild = node.getLastChildNode();
     if (firstChild != null && firstChild == lastChild && firstChild.getPsi() instanceof XmlText) {

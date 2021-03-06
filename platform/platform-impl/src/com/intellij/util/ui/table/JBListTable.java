@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -18,9 +17,10 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +33,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 import static java.awt.event.KeyEvent.*;
 
@@ -51,7 +52,7 @@ public abstract class JBListTable {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
-    myMainTable.setStriped(true);
+    myMainTable.setShowGrid(false);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
   }
@@ -110,7 +111,7 @@ public abstract class JBListTable {
       }
     };
 
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    Font font = EditorFontType.getGlobalPlainFont();
     font = new Font(font.getFontName(), font.getStyle(), JBUIScale.scaleFontSize((float)12));
     field.setFont(font);
     field.addSettingsProvider(EditorSettingsProvider.NO_WHITESPACE);
@@ -211,13 +212,14 @@ public abstract class JBListTable {
     }
   }
 
-  private static class RowResizeAnimator implements ActionListener, Disposable {
+  private static final class RowResizeAnimator implements ActionListener, Disposable {
     private static final int ANIMATION_STEP_MILLIS = 15;
     private static final int RESIZE_AMOUNT_PER_STEP = 5;
 
-    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<>();
+    private final Int2ObjectMap<RowAnimationState> myRowAnimationStates = new Int2ObjectOpenHashMap<>();
     private final Timer myAnimationTimer = TimerUtil.createNamedTimer("JBListTableTimer", ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
+    private boolean myDisposed;
 
     RowResizeAnimator(JTable table) {
       myTable = table;
@@ -233,15 +235,20 @@ public abstract class JBListTable {
       doAnimationStep(e.getWhen());
     }
 
+    void revive() {
+      myDisposed = false;
+    }
+
     @Override
     public void dispose() {
+      myDisposed = true;
       stopAnimation();
       // enforce all animations are completed
       doAnimationStep(Long.MAX_VALUE);
     }
 
     private void startAnimation() {
-      if (!myAnimationTimer.isRunning()) {
+      if (!myAnimationTimer.isRunning() && !myDisposed) {
         myAnimationTimer.start();
       }
     }
@@ -250,27 +257,22 @@ public abstract class JBListTable {
       myAnimationTimer.stop();
     }
 
-    private void doAnimationStep(final long updateTime) {
-      final TIntArrayList completeRows = new TIntArrayList(myRowAnimationStates.size());
-      myRowAnimationStates.forEachEntry(new TIntObjectProcedure<RowAnimationState>() {
-        @Override
-        public boolean execute(int row, RowAnimationState animationState) {
-          if (animationState.doAnimationStep(updateTime)) {
-            completeRows.add(row);
-          }
-          return true;
+    private void doAnimationStep(long updateTime) {
+      IntList completeRows = new IntArrayList(myRowAnimationStates.size());
+      for (Int2ObjectMap.Entry<RowAnimationState> entry : myRowAnimationStates.int2ObjectEntrySet()) {
+        if (entry.getValue().doAnimationStep(updateTime)) {
+          completeRows.add(entry.getIntKey());
         }
-      });
-      completeRows.forEach(row -> {
+      }
+      completeRows.forEach((IntConsumer)row -> {
         myRowAnimationStates.remove(row);
-        return true;
       });
       if (myRowAnimationStates.isEmpty()) {
         stopAnimation();
       }
     }
 
-    private class RowAnimationState {
+    private final class RowAnimationState {
       private final int myRow;
       private final int myTargetHeight;
       private long myLastUpdateTime;
@@ -461,7 +463,7 @@ public abstract class JBListTable {
         return myCellEditor;
       }
       myCellEditor = null;
-      return myCellEditor;
+      return null;
     }
 
     @Override
@@ -469,6 +471,12 @@ public abstract class JBListTable {
       Object value = getValueAt(row, column);
       boolean isSelected = isCellSelected(row, column);
       return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      myRowResizeAnimator.revive();
     }
 
     @Override

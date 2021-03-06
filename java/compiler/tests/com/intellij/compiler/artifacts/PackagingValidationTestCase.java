@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,14 +9,11 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.ArtifactProblemsHolderBase;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class PackagingValidationTestCase extends PackagingElementsTestCase {
   protected PackagingValidationTestCase() {
@@ -32,14 +30,14 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
 
   protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
     private final List<String> myProblems = new ArrayList<>();
-    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<>();
+    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new HashMap<>();
 
     public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));
     }
 
     @Override
-    public void registerError(@NotNull String message,
+    public void registerError(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @NotNull String problemTypeId,
                               @Nullable List<PackagingElement<?>> pathToPlace,
                               ArtifactProblemQuickFix @NotNull ... quickFixes) {
@@ -48,7 +46,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     @Override
-    public void registerWarning(@NotNull String message,
+    public void registerWarning(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                                 @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
                                 ArtifactProblemQuickFix @NotNull ... quickFixes) {
       registerError(message, problemTypeId, pathToPlace, quickFixes);

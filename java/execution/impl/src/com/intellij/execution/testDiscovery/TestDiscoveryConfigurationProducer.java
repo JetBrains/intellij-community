@@ -260,6 +260,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     }
 
     @Override
+    @NotNull
     public Project getProject() {
       return myConfiguration.getProject();
     }

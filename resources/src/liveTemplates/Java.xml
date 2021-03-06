@@ -144,7 +144,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.toar"
-            name="toar" toReformat="true" toShortenFQNames="true" value="$COLLECTION$.toArray(new $COMPONENT_TYPE$[$COLLECTION$.size()])$END$">
+            name="toar" toReformat="true" toShortenFQNames="true" value="$COLLECTION$.toArray(new $COMPONENT_TYPE$[0])$END$">
     <variable alwaysStopAt="true" defaultValue="&quot;Object&quot;" expression="componentTypeOf(expectedType())" name="COMPONENT_TYPE" />
     <variable alwaysStopAt="true" defaultValue="collection" expression="variableOfType(&quot;java.util.Collection&quot;)" name="COLLECTION" />
     <context>
@@ -231,40 +231,40 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
-            name="serr" toReformat="true" toShortenFQNames="true" value="java.lang.System.err.println($END$);">
+            name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template description="System.err::println" name="serrc" toReformat="true" toShortenFQNames="true" value="java.lang.System.err::println">
+  <template description="System.err::println" name="serrc" toReformat="true" toShortenFQNames="true" value="System.err::println">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_CONSUMER" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
-            name="sout" toReformat="true" toShortenFQNames="true" value="java.lang.System.out.println($END$);">
+            name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template description="System.out::println" name="soutc" toReformat="true" toShortenFQNames="true" value="java.lang.System.out::println">
+  <template description="System.out::println" name="soutc" toReformat="true" toShortenFQNames="true" value="System.out::println">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_CONSUMER" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.souf"
-            name="souf" toReformat="true" toShortenFQNames="true" value="java.lang.System.out.printf(&quot;$END$&quot;);">
+            name="souf" toReformat="true" toShortenFQNames="true" value="System.out.printf(&quot;$END$&quot;);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
-            name="soutm" toReformat="true" toShortenFQNames="true" value="java.lang.System.out.println(&quot;$CLASS_NAME$.$METHOD_NAME$&quot;);">
+            name="soutm" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$CLASS_NAME$.$METHOD_NAME$&quot;);">
     <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
     <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
     <context>
@@ -273,7 +273,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutp"
-            name="soutp" toReformat="true" toShortenFQNames="true" value="java.lang.System.out.println($FORMAT$);">
+            name="soutp" toReformat="true" toShortenFQNames="true" value="System.out.println($FORMAT$);">
     <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;import com.intellij.psi.*;import com.intellij.psi.util.PsiTreeUtil; def file = PsiDocumentManager.getInstance(_editor.project).getPsiFile(_editor.document); PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, _editor.caretModel.offset, PsiMethod.class, false); PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.parameterList.parameters; return parameters.size() == 0 ? '' : '\&quot;' + parameters.collect { def prefix = it.name + ' = '; def type = it.type; return type instanceof PsiArrayType ? type.componentType instanceof PsiPrimitiveType ? prefix + '\&quot; + java.util.Arrays.toString(' + it.name + ')' : prefix + '\&quot; + java.util.Arrays.deepToString(' + it.name + ')' : prefix + '\&quot; + ' + it.name }.join(' + \&quot;, ')&quot;, methodParameters())" name="FORMAT" />
     <!--
     import com.intellij.psi.*
@@ -298,7 +298,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
-            name="soutv" toReformat="true" toShortenFQNames="true" value="java.lang.System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
+            name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
     <variable alwaysStopAt="false" defaultValue="" expression="escapeString(EXPR)" name="EXPR_COPY" />
     <context>

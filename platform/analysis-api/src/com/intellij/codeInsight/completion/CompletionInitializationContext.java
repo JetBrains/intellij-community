@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,7 @@ public class CompletionInitializationContext {
     myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(caret)));
   }
 
+  @ApiStatus.Internal
   public static int calcSelectionEnd(Caret caret) {
     return caret.hasSelection() ? caret.getSelectionEnd() : caret.getOffset();
   }

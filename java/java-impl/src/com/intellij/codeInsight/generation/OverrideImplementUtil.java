@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -51,7 +51,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
-public class OverrideImplementUtil extends OverrideImplementExploreUtil {
+public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
   public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
@@ -300,15 +300,22 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding) {
-    return callSuper(superMethod, overriding, true);
+  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, PsiClass targetClass) {
+    return callSuper(superMethod, overriding, targetClass, true);
   }
 
   @NotNull
-  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, boolean prependReturn) {
+  private static String callSuper(@NotNull PsiMethod superMethod, @NotNull PsiMethod overriding, PsiClass targetClass, boolean prependReturn) {
     @NonNls StringBuilder buffer = new StringBuilder();
     if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
+    }
+    PsiClass aClass = superMethod.getContainingClass();
+    if (aClass != null && aClass.isInterface()) {
+      PsiClass superQualifier = getSuperQualifier(aClass, targetClass);
+      if (superQualifier != null) {
+        buffer.append(superQualifier.getName()).append(".");
+      }
     }
     buffer.append("super");
     PsiParameter[] parameters = overriding.getParameterList().getParameters();
@@ -326,8 +333,24 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return buffer.toString();
   }
 
+  private static PsiClass getSuperQualifier(PsiClass aClass, PsiClass targetClass) {
+    if (targetClass != null) {
+      if (targetClass.isInheritor(aClass, false)) {
+        return aClass;
+      }
+
+      for (PsiClassType type : targetClass.getSuperTypes()) {
+        PsiClass superClass = type.resolve();
+        if (InheritanceUtil.isInheritorOrSelf(superClass, aClass, true)) {
+          return superClass.isInterface() ? superClass : null;
+        }
+      }
+    }
+    return null;
+  }
+
   public static void setupMethodBody(@NotNull PsiMethod result, @NotNull PsiMethod originalMethod, @NotNull PsiClass targetClass) throws IncorrectOperationException {
-    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) || originalMethod.hasModifierProperty(PsiModifier.DEFAULT);
+    boolean isAbstract = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT);
     String templateName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
     FileTemplate template = FileTemplateManager.getInstance(originalMethod.getProject()).getCodeTemplate(templateName);
     setupMethodBody(result, originalMethod, targetClass, template);
@@ -354,8 +377,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
-    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
-    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, false));
+    properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result, targetClass));
+    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, targetClass, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());

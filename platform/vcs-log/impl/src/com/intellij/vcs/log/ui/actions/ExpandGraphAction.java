@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExpandGraphAction extends CollapseOrExpandGraphAction {
 
+  private static final GraphAction ourGraphAction = new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND);
+
   public ExpandGraphAction() {
     super(VcsLogBundle.messagePointer("action.title.expand.linear.branches"),
           VcsLogBundle.messagePointer("action.description.expand.linear.branches"),
@@ -32,10 +34,15 @@ public class ExpandGraphAction extends CollapseOrExpandGraphAction {
   }
 
   @Override
+  protected @NotNull GraphAction getGraphAction() {
+    return ourGraphAction;
+  }
+
+  @Override
   protected void executeAction(@NotNull MainVcsLogUi vcsLogUi) {
     String title = vcsLogUi.getProperties().get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek
                    ? VcsLogBundle.message("action.process.expanding.merges")
                    : VcsLogBundle.message("action.process.expanding.linear.branches");
-    performLongAction(vcsLogUi, new GraphAction.GraphActionImpl(null, GraphAction.Type.BUTTON_EXPAND), title);
+    performLongAction(vcsLogUi, getGraphAction(), title);
   }
 }

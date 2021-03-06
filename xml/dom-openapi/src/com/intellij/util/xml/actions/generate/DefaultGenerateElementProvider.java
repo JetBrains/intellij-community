@@ -19,6 +19,8 @@ package com.intellij.util.xml.actions.generate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,6 +33,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.actions.generate.GenerateDomElementProvider;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -38,12 +42,17 @@ import java.util.List;
 public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
   private final Class<T> myChildElementClass;
 
-  public DefaultGenerateElementProvider(final String name, Class<T> childElementClass) {
-    super(name);
-
-    myChildElementClass = childElementClass;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public DefaultGenerateElementProvider(@Nls final String name, Class<T> childElementClass) {
+    this(name, name, childElementClass);
   }
 
+  public DefaultGenerateElementProvider(@ActionText String text, @ActionDescription String description,
+                                        Class<T> childElementClass) {
+    super(text, description);
+    myChildElementClass = childElementClass;
+  }
 
   @Override
   @Nullable

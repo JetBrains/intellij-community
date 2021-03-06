@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -24,7 +25,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
+final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private JBPopup myPopup;
   private final Editor myEditor;
@@ -58,7 +59,7 @@ class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D
   }
 
   @Override
-  protected void updateContainer(final Tree tree, String title) {
+  protected void updateContainer(final Tree tree, @NlsContexts.PopupTitle String title) {
     if (myPopup != null) {
       myPopup.cancel();
     }

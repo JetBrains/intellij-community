@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions;
 
 import com.intellij.lang.ASTNode;
@@ -21,7 +22,7 @@ import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownActionUtil {
+public final class MarkdownActionUtil {
   @Nullable
   public static SplitFileEditor findSplitEditor(AnActionEvent e) {
     final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);

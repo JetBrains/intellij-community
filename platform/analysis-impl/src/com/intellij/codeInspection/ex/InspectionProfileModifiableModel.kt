@@ -70,7 +70,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
   fun isProperSetting(toolId: String): Boolean {
     if (myBaseProfile != null) {
       val tools = myBaseProfile.getToolsOrNull(toolId, null)
-      val currentTools = myTools.get(toolId)
+      val currentTools = myTools[toolId]
       return tools != currentTools
     }
     return false
@@ -116,6 +116,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
       myTools = model.myTools
     }
     profileManager = model.profileManager
+    scopesOrder = model.scopesOrder
   }
 
   fun disableTool(toolShortName: String, element: PsiElement) {

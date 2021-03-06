@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.dupLocator.iterators.SiblingNodeIterator;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -19,7 +18,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
   }
 
   @Override
-  public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final MatchContext matchContext) {
+  public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final @NotNull MatchContext matchContext) {
     final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
 
     if (matched) {
@@ -41,24 +40,24 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
        ) {
       final PsiElement child = matchedNode.getFirstChild();
       if (child != null) {
-        matchContext.getMatcher().matchContext(new SsrFilteringNodeIterator(new SiblingNodeIterator(child)));
+        matchContext.getMatcher().matchContext(SsrFilteringNodeIterator.create(child));
       }
     }
     return matched;
   }
 
   @Override
-  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean canMatch(@NotNull PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     return delegate.canMatch(patternNode, matchedNode, context);
   }
 
   @Override
-  public boolean matchSequentially(final NodeIterator patternNodes, final NodeIterator matchNodes, final MatchContext context) {
+  public boolean matchSequentially(final @NotNull NodeIterator patternNodes, final @NotNull NodeIterator matchNodes, final @NotNull MatchContext context) {
     return delegate.matchSequentially(patternNodes, matchNodes, context);
   }
 
   @Override
-  public boolean isMatchSequentiallySucceeded(final NodeIterator matchNodes) {
+  public boolean isMatchSequentiallySucceeded(final @NotNull NodeIterator matchNodes) {
     return true;
   }
 

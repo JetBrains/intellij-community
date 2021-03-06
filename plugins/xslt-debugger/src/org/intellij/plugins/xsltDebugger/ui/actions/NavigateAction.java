@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 
-public class NavigateAction {
+public final class NavigateAction {
   private NavigateAction() {
   }
 

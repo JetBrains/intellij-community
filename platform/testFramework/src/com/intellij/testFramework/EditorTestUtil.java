@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
@@ -13,11 +15,14 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.InlayModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -28,11 +33,16 @@ import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +50,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -61,14 +74,19 @@ public final class EditorTestUtil {
   public static final char BACKSPACE_FAKE_CHAR = '\uFFFF';
   public static final char SMART_ENTER_FAKE_CHAR = '\uFFFE';
   public static final char SMART_LINE_SPLIT_CHAR = '\uFFFD';
+  private static final Comparator<Pair<Integer, String>> MARKERS_COMPARATOR = (o1, o2) -> {
+    int first = Comparing.compare(o1.first, o2.first);
+    return first != 0 ? first : Comparing.compare(o1.second, o2.second);
+  };
 
   public static void performTypingAction(Editor editor, char c) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
     if (c == BACKSPACE_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
-    } else if (c == SMART_ENTER_FAKE_CHAR) {
+    }
+    else if (c == SMART_ENTER_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT);
-    } else if (c == SMART_LINE_SPLIT_CHAR) {
+    }
+    else if (c == SMART_LINE_SPLIT_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_SPLIT);
     }
     else if (c == '\n') {
@@ -106,11 +124,13 @@ public final class EditorTestUtil {
 
   @NotNull
   private static DataContext createEditorContext(@NotNull Editor editor) {
-    Object hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-    Map<String, Object> map = ContainerUtil.newHashMap(Pair.create(CommonDataKeys.HOST_EDITOR.getName(), hostEditor),
-                                                       Pair.createNonNull(CommonDataKeys.EDITOR.getName(), editor));
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
-    return SimpleDataContext.getSimpleContext(map, parent);
+    return SimpleDataContext.builder()
+      .setParent(parent)
+      .add(CommonDataKeys.HOST_EDITOR, hostEditor)
+      .add(CommonDataKeys.EDITOR, editor)
+      .build();
   }
 
   public static void performReferenceCopy(Editor editor) {
@@ -129,6 +149,43 @@ public final class EditorTestUtil {
       iterator.advance();
     }
     return tokens;
+  }
+
+  public static void checkEditorHighlighter(Project project, Editor editor) {
+    if (!(editor instanceof EditorImpl)) return;
+    HighlighterIterator editorIterator = ((EditorEx)editor).getHighlighter().createIterator(0);
+
+    EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
+      project, ((EditorEx)editor).getVirtualFile());
+    freshHighlighter.setEditor((EditorImpl)editor);
+    freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
+    HighlighterIterator freshIterator = freshHighlighter.createIterator(0);
+
+    while (!editorIterator.atEnd() || !freshIterator.atEnd()) {
+      if (editorIterator.atEnd() || freshIterator.atEnd()
+          || editorIterator.getTokenType() != freshIterator.getTokenType()
+          || editorIterator.getStart() != freshIterator.getStart()
+          || editorIterator.getEnd() != freshIterator.getEnd()) {
+        throw new IllegalStateException("Editor highlighter failed to update incrementally:\nFresh:  " +
+                                        dumpHighlighter(freshHighlighter) +
+                                        "\nEditor: " +
+                                        dumpHighlighter(((EditorImpl)editor).getHighlighter()));
+      }
+      editorIterator.advance();
+      freshIterator.advance();
+    }
+  }
+
+  private static String dumpHighlighter(EditorHighlighter highlighter) {
+    HighlighterIterator iterator = highlighter.createIterator(0);
+    StringBuilder result = new StringBuilder();
+    int i = 0;
+    while (!iterator.atEnd()) {
+      result.append(i).append(": ").append(iterator.getTokenType()).append(" [").append(iterator.getStart()).append("-")
+        .append(iterator.getEnd()).append("], ");
+      iterator.advance();
+    }
+    return result.toString();
   }
 
   public static int getCaretPosition(@NotNull final String content) {
@@ -225,13 +282,7 @@ public final class EditorTestUtil {
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(() -> visibleWidthInPixels);
-    model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
-      @Override
-      public int charWidth(int c, int fontType) {
-        return charWidthInPixels;
-      }
-    });
+    applianceManager.setWidthProvider(new TestWidthProvider(visibleWidthInPixels));
     setEditorVisibleSizeInPixels(editor, visibleWidthInPixels, visibleHeightInPixels);
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
@@ -456,8 +507,19 @@ public final class EditorTestUtil {
                                     boolean showAbove,
                                     int widthInPixels,
                                     Integer heightInPixels) {
-    return editor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, 0,
-                                                  new EmptyInlayRenderer(widthInPixels, heightInPixels));
+    return addBlockInlay(editor, offset, relatesToPrecedingText, showAbove, false, widthInPixels, heightInPixels);
+  }
+
+
+  public static Inlay addBlockInlay(@NotNull Editor editor,
+                                    int offset,
+                                    boolean relatesToPrecedingText,
+                                    boolean showAbove,
+                                    boolean showWhenFolded,
+                                    int widthInPixels,
+                                    Integer heightInPixels) {
+    return ((InlayModelImpl)editor.getInlayModel()).addBlockElement(offset, relatesToPrecedingText, showAbove, showWhenFolded, 0,
+                                                                    new EmptyInlayRenderer(widthInPixels, heightInPixels));
   }
 
   public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {
@@ -534,6 +596,75 @@ public final class EditorTestUtil {
     return result;
   }
 
+  /**
+   * Loads file from the {@code sourcePath}, runs highlighting, collects highlights optionally filtered with {@code textAttributesKeysNames},
+   * serializes them and compares result with file from {@code answersFilePath}. If answers file is missing, it's going to be created and
+   * test will fail.
+   *
+   * @param acceptableKeyNames highlights filter by {@link TextAttributesKey#myExternalName key names} or null if all highlights should be collected
+   * @apiNote If source file has carets in it, runs checking once per each caret. Results MUST be the same. E.g: brace matching highlighting with
+   * cursor positioned on open and close brace.
+   */
+  public static void checkEditorHighlighting(@NotNull CodeInsightTestFixture fixture,
+                                             @NotNull String answersFilePath,
+                                             @Nullable Set<String> acceptableKeyNames) {
+    Editor editor = fixture.getEditor();
+    CaretModel caretModel = editor.getCaretModel();
+    List<Integer> caretsOffsets = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
+    if (caretsOffsets.isEmpty()) {
+      caretsOffsets.add(-1);
+    }
+    caretModel.removeSecondaryCarets();
+    CharSequence documentSequence = editor.getDocument().getCharsSequence();
+
+
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(fixture.getProject(), fixture.getProjectDisposable(), () -> {
+      for (Integer caretsOffset : caretsOffsets) {
+        if (caretsOffset != -1) {
+          caretModel.moveToOffset(caretsOffset);
+        }
+
+        UsefulTestCase.assertSameLinesWithFile(
+          answersFilePath,
+          renderTextWithHighlihgtingInfos(fixture.doHighlighting(), documentSequence, acceptableKeyNames),
+          () -> "Failed at:\n " +
+                documentSequence.subSequence(0, caretsOffset) +
+                "<caret>" +
+                documentSequence.subSequence(caretsOffset, documentSequence.length()) +
+                "\n");
+      }});
+  }
+
+  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<HighlightInfo> highlightInfos,
+                                                                 @NotNull CharSequence documentSequence,
+                                                                 @Nullable Set<String> acceptableKeyNames) {
+    List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()
+      .flatMap(it -> {
+        String keyText = it.type.getAttributesKey().toString();
+        if (acceptableKeyNames != null && !acceptableKeyNames.contains(keyText)) {
+          return Stream.empty();
+        }
+        return Stream.of(
+          Pair.create(it.getStartOffset(), "<" + keyText + ">"),
+          Pair.create(it.getEndOffset(), "</" + keyText + ">")
+        );
+      })
+      .sorted(MARKERS_COMPARATOR).collect(Collectors.toList());
+
+    StringBuilder sb = new StringBuilder();
+    int lastEnd = 0;
+
+    for (Pair<Integer, String> marker : sortedMarkers) {
+      Integer startOffset = marker.first;
+      if (startOffset > lastEnd) {
+        sb.append(documentSequence.subSequence(lastEnd, startOffset));
+        lastEnd = startOffset;
+      }
+      sb.append(marker.second);
+    }
+    return sb.append(documentSequence.subSequence(lastEnd, documentSequence.length())).toString();
+  }
+
 
   public static class CaretAndSelectionState {
     public final List<CaretInfo> carets;
@@ -575,7 +706,7 @@ public final class EditorTestUtil {
     }
   }
 
-  private static class EmptyInlayRenderer implements EditorCustomElementRenderer {
+  private static final class EmptyInlayRenderer implements EditorCustomElementRenderer {
     private final int width;
     private final Integer height;
 
@@ -602,5 +733,47 @@ public final class EditorTestUtil {
                       @NotNull Rectangle targetRegion,
                       @NotNull TextAttributes textAttributes) {}
   }
-}
+
+  public static class TestWidthProvider implements SoftWrapApplianceManager.VisibleAreaWidthProvider {
+    private int myWidth;
+
+    public TestWidthProvider(int width) {
+      setVisibleAreaWidth(width);
+    }
+
+    @Override
+    public int getVisibleAreaWidth() {
+      return myWidth;
+    }
+
+    public void setVisibleAreaWidth(int width) {
+      myWidth = width;
+    }
+  }
+
+  public static <E extends Exception> void saveEncodingsIn(@NotNull Project project, Charset newIdeCharset, Charset newProjectCharset, @NotNull ThrowableRunnable<E> task) throws E {
+    EncodingManager encodingManager = EncodingManager.getInstance();
+    String oldIde = encodingManager.getDefaultCharsetName();
+    if (newIdeCharset != null) {
+      encodingManager.setDefaultCharsetName(newIdeCharset.name());
+    }
+
+    EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(project);
+    String oldProject = encodingProjectManager.getDefaultCharsetName();
+    if (newProjectCharset != null) {
+      encodingProjectManager.setDefaultCharsetName(newProjectCharset.name());
+    }
+
+    try {
+      task.run();
+    }
+    finally {
+      if (newIdeCharset != null) {
+        encodingManager.setDefaultCharsetName(oldIde);
+      }
+      if (newProjectCharset != null) {
+        encodingProjectManager.setDefaultCharsetName(oldProject);
+      }
+    }
+  }}
 

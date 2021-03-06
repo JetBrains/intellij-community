@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,7 @@ public interface PushTarget {
    */
   boolean hasSomethingToPush();
 
+  @Nls
   @NotNull
   String getPresentation();
 }

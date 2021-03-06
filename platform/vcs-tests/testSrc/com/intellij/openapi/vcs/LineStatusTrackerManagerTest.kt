@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.idea.Bombed
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentIs
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
@@ -21,7 +23,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.withOpenedEditor {
       val tracker = file.tracker
       assertNotNull(tracker)
-      assertTrue(tracker is SimpleLocalLineStatusTracker)
+      assertTrue(tracker is PartialLocalLineStatusTracker)
     }
     file.assertNullTracker()
   }
@@ -38,7 +40,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       assertNotNull(tracker)
       assertTrue(tracker is PartialLocalLineStatusTracker)
     }
-    assertNotNull(file.tracker)
+    file.assertNullTracker()
 
     lstm.waitUntilBaseContentsLoaded()
     file.assertNullTracker()

@@ -221,8 +221,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     myInterpreterComboBox.setRenderer(
       sdk == null
-      ? new PySdkListCellRenderer(null)
-      : new PySdkListCellRenderer(null, PyBundle.message("python.sdk.rendering.project.default.0", sdk.getName()), sdk)
+      ? new PySdkListCellRenderer()
+      : new PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.project.default.0", sdk.getName()), sdk)
     );
   }
 

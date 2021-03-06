@@ -1,10 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.ide.CutProvider;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.PasteProvider;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.UndoRedoAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -18,6 +15,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
@@ -40,7 +38,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
@@ -72,6 +69,8 @@ import java.util.Map;
 
 @DirtyUI
 public class EditorComponentImpl extends JTextComponent implements Scrollable, DataProvider, Queryable, TypingTarget, Accessible {
+  private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
+
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(@NotNull EditorImpl editor) {
@@ -181,6 +180,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
     myEditor.myCursorSetExternally = true;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Mouse cursor set to " + cursor, new Throwable());
+    }
   }
 
   protected void fireResized() {
@@ -189,7 +191,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   protected void processInputMethodEvent(InputMethodEvent e) {
-    // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
+    if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
+      EditorImpl.EVENT_LOG.debug(e.toString());
+    }
+    // Don't dispatch to super first; now that EdditorComponentImpl is a JTextComponent,
     // this would have the side effect of invoking Swing document machinery which relies
     // on creating Document positions etc (and won't update the document in an IntelliJ safe
     // way, such as running through all the carets etc.
@@ -236,9 +241,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor.measureTypingLatency();
 
     Graphics2D gg = (Graphics2D)g;
-    if (Registry.is("editor.legacy.compositing")) {
-      UIUtil.setupComposite(gg);
-    }
     if (myEditor.useEditorAntialiasing()) {
       EditorUIUtil.setupAntialiasing(gg);
     }
@@ -246,7 +248,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       UISettings.setupAntialiasing(gg);
     }
     gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
 
@@ -308,7 +310,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     myEditor.putInfo(info);
   }
 
@@ -890,7 +892,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  private static class TextAccessibleRole extends AccessibleRole {
+  private static final class TextAccessibleRole extends AccessibleRole {
     // Can't use AccessibleRole.TEXT: The screen reader verbally refers to it as a text field
     // and doesn't do multi-line iteration. (This is hardcoded into the sun/lwawt/macosx implementation.)
     // As you can see from JavaAccessibilityUtilities.m, we should use the exact key "textarea" to get
@@ -900,7 +902,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @SuppressWarnings("SpellCheckingInspection")
     private static final AccessibleRole TEXT_AREA = new TextAccessibleRole("textarea");
 
-    private TextAccessibleRole(String key) {
+    private TextAccessibleRole(@NonNls String key) {
       super(key);
     }
   }
@@ -990,9 +992,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
       VirtualFile file = myEditor.getVirtualFile();
       if (file != null) {
-        return "Editor for " + file.getName();
+        return EditorBundle.message("editor.for.file.accessible.name", file.getName());
       }
-      return "Editor";
+      return EditorBundle.message("editor.accessible.name");
     }
 
     @Override

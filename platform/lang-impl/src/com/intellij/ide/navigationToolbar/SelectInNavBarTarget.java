@@ -2,7 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.SelectInManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.ui.UISettings;
@@ -88,6 +88,6 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   public String toString() {
-    return SelectInManager.getNavBar();
+    return IdeBundle.message("navigation.bar");
   }
 }

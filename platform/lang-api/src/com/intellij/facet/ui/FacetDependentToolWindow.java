@@ -6,21 +6,21 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Provides tool window if any of the specified facets are present.
  *
  * @author Dmitry Avdeev
  */
-public class FacetDependentToolWindow extends ToolWindowEP {
-
-  public static final ExtensionPointName<FacetDependentToolWindow> EXTENSION_POINT_NAME =
-    ExtensionPointName.create("com.intellij.facet.toolWindow");
+public final class FacetDependentToolWindow extends ToolWindowEP {
+  public static final ExtensionPointName<FacetDependentToolWindow> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.facet.toolWindow");
 
   /**
    * Comma-delimited list of facet ids.
@@ -29,12 +29,27 @@ public class FacetDependentToolWindow extends ToolWindowEP {
   @Attribute("facetIdList")
   public String facetIdList;
 
-  public String[] getFacetIds() {
+  @Attribute("showOnStripeByDefault")
+  public boolean showOnStripeByDefault = true;
+
+  public String @NotNull [] getFacetIds() {
     return facetIdList.split(",");
   }
 
-  public List<FacetType> getFacetTypes() {
-    return ContainerUtil.mapNotNull(getFacetIds(),
-                                    (NullableFunction<String, FacetType>)facetId -> FacetTypeRegistry.getInstance().findFacetType(facetId));
+  public @NotNull List<FacetType<?, ?>> getFacetTypes() {
+    String @NotNull [] facetIds = getFacetIds();
+    if (facetIds.length == 0) {
+      return emptyList();
+    }
+
+    List<FacetType<?, ?>> result = new ArrayList<>(facetIds.length);
+    FacetTypeRegistry facetTypeRegistry = FacetTypeRegistry.getInstance();
+    for (String facetId : facetIds) {
+      FacetType<?, ?> o = facetTypeRegistry.findFacetType(facetId);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result.isEmpty() ? emptyList() : result;
   }
 }

@@ -23,13 +23,11 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler {
+class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler.ForEachCaret {
   private final boolean myMoveRight;
 
   MoveCaretLeftOrRightWithSelectionHandler(boolean moveRight) {
-    super(true);
     myMoveRight = moveRight;
   }
 
@@ -40,8 +38,7 @@ class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     VisualPosition currentPosition = caret.getVisualPosition();
     if (caret.isAtBidiRunBoundary() && (myMoveRight ^ currentPosition.leansRight)) {
       int selectionStartToUse = caret.getLeadSelectionOffset();

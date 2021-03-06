@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyStructuredDocstringFormatter {
+public final class PyStructuredDocstringFormatter {
 
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
 
@@ -39,12 +39,7 @@ public class PyStructuredDocstringFormatter {
    */
   @Nullable
   public static List<String> formatDocstring(@NotNull final PsiElement element, @NotNull final String docstring) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) {
-      final Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
-      if (modules.length == 0) return new ArrayList<>();
-      module = modules[0];
-    }
+    Module module = DocStringUtil.getModuleForElement(element);
     if (module == null) return new ArrayList<>();
     final List<String> result = new ArrayList<>();
 
@@ -63,9 +58,8 @@ public class PyStructuredDocstringFormatter {
 
     String output = null;
     try {
-      Module finalModule = module;
       output = ApplicationUtil.runWithCheckCanceled(
-        () -> PythonRuntimeService.getInstance().formatDocstring(finalModule, format, preparedDocstring),
+        () -> PythonRuntimeService.getInstance().formatDocstring(module, format, preparedDocstring),
         // It's supposed to be run inside a non-blocking read action and, thus, have an associated progress indicator
         ProgressManager.getInstance().getProgressIndicator()
       );

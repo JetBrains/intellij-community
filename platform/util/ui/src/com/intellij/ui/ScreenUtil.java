@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,9 +16,9 @@ import java.util.Map;
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
-  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache =
-    Patches.isJdkBugId8004103() ? ContainerUtil.createWeakMap() : null;
-  private static final int ourInsetsTimeout = 5000;  // shouldn't be too long
+  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache = Boolean.getBoolean("ide.cache.screen.insets")
+                                                                                                 ? CollectionFactory.createWeakMap() : null;
+  private static final int ourInsetsTimeout = SystemProperties.getIntProperty("ide.insets.cache.timeout", 5000);  // shouldn't be too long
 
   private ScreenUtil() { }
 
@@ -189,10 +189,6 @@ public final class ScreenUtil {
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    if (Patches.SUN_BUG_ID_8020443 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
-      return new Insets(0, 0, 0, 0);
-    }
-
     return Toolkit.getDefaultToolkit().getScreenInsets(gc);
   }
 
@@ -224,6 +220,9 @@ public final class ScreenUtil {
    * @return a visible area rectangle
    */
   public static Rectangle getScreenRectangle(int x, int y) {
+    if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) {
+      return new Rectangle(x, y, 0, 0);
+    }
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     if (devices.length == 0) {
       return new Rectangle(x, y, 0, 0);

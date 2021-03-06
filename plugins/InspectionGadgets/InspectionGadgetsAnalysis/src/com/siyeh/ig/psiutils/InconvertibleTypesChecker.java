@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class InconvertibleTypesChecker {
+public final class InconvertibleTypesChecker {
   @Contract(pure = true)
   public static @Nullable TypeMismatch checkTypes(@NotNull PsiType leftType,
                                                   @NotNull PsiType rightType,
@@ -88,7 +88,7 @@ public class InconvertibleTypesChecker {
     NEVER, ALWAYS, IF_CHEAP
   }
 
-  public static class TypeMismatch {
+  public static final class TypeMismatch {
     private final @NotNull PsiType myLeft;
     private final @NotNull PsiType myRight;
     private final boolean myConvertible;

@@ -2,7 +2,7 @@
 package com.intellij.debugger;
 
 import com.intellij.debugger.impl.AlternativeJreClassFinder;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -75,11 +75,8 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   public ExecutionResult createExecutionResult() throws ExecutionException {
     // debug port may have changed, reinit parameters just in case
     if (myNeedParametersSet && state instanceof JavaCommandLine) {
-      DebuggerManagerImpl.createDebugParameters(((JavaCommandLine)state).getJavaParameters(),
-                                                true,
-                                                DebuggerSettings.SOCKET_TRANSPORT,
-                                                myRemoteConnection.getApplicationAddress(),
-                                                false);
+      new RemoteConnectionBuilder(true, DebuggerSettings.SOCKET_TRANSPORT, myRemoteConnection.getApplicationAddress())
+        .create(((JavaCommandLine)state).getJavaParameters());
     }
     return state.execute(environment.getExecutor(), environment.getRunner());
   }

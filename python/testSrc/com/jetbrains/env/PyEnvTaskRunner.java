@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -19,6 +20,7 @@ import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.net.URL;
 import java.util.*;
 
@@ -55,8 +57,6 @@ public class PyEnvTaskRunner {
 
     final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 
-    final Set<String> tagsToCover = null;
-
     for (String root : myRoots) {
 
       List<String> envTags = PyEnvTestCase.loadEnvTags(root);
@@ -65,15 +65,6 @@ public class PyEnvTaskRunner {
       if (!suitableForTask || !shouldRun) {
         LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
         continue;
-      }
-
-      if (tagsToCover != null && envTags.size() > 0 && !isNeededToRun(tagsToCover, envTags)) {
-        LOG.warn(String.format("Skipping %s (test already was executed on a similar environment)", root));
-        continue;
-      }
-
-      if (tagsToCover != null) {
-        tagsToCover.removeAll(envTags);
       }
 
       LOG.warn(String.format("Running on root %s", root));
@@ -93,7 +84,7 @@ public class PyEnvTaskRunner {
         final Sdk sdk = getSdk(executable, testTask);
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-          if (Arrays.stream(skipOnFlavors).anyMatch((o) -> o.isInstance(flavor))) {
+          if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
             LOG.warn("Skipping flavor " + flavor.toString());
             continue;
           }
@@ -178,9 +169,8 @@ public class PyEnvTaskRunner {
   @NotNull
   protected Sdk getSdk(@NotNull final String executable, @NotNull final PyTestTask testTask) {
     try {
-      final URL rootUrl = new URL(String.format("file:///%s", executable));
-      final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
-      assert url != null : "No file " + rootUrl;
+      final VirtualFile url = VfsUtil.findFileByIoFile(new File(executable), true);
+      assert url != null : "No file " + executable;
       return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
     }
     catch (Exception ex) {

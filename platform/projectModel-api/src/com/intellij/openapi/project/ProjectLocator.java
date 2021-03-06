@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +48,10 @@ public abstract class ProjectLocator {
   @NotNull
   public abstract Collection<Project> getProjectsForFile(@NotNull VirtualFile file);
 
+  /**
+   * Execute {@code runnable}, making sure that within this computation every call to
+   * {@link #guessProjectForFile(VirtualFile)} for the {@code file} will return {@code preferredProject}
+   */
   public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
                                                                        @NotNull Project preferredProject,
                                                                        @NotNull ThrowableComputable<T, E> runnable) throws E {

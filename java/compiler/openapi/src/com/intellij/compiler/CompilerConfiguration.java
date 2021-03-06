@@ -32,6 +32,14 @@ public abstract class CompilerConfiguration {
   public abstract String getProjectBytecodeTarget();
   public abstract void setProjectBytecodeTarget(String level);
 
+  public abstract boolean isParallelCompilationEnabled();
+
+  /**
+   * Explicitly set parallel value property. The value will be written to user-local settings file (workspace.xml)
+   * This value will override any value set in shared settings.
+   */
+  public abstract void setParallelCompilationEnabled(boolean enabled);
+
   @Nullable
   public abstract String getBytecodeTargetLevel(Module module);
   public abstract void setBytecodeTargetLevel(Module module, String level);

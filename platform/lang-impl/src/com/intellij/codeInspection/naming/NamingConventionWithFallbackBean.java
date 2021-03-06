@@ -4,15 +4,16 @@
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class NamingConventionWithFallbackBean extends NamingConventionBean {
   public boolean inheritDefaultSettings = false;
 
-  public NamingConventionWithFallbackBean(String regex, int minLength, int maxLength, String... predefinedNames) {
+  public NamingConventionWithFallbackBean(@NonNls String regex, int minLength, int maxLength, String... predefinedNames) {
     super(regex, minLength, maxLength, predefinedNames);
   }
 
@@ -40,15 +41,15 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
 
   @Override
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
     JComponent selfOptions = super.createOptionsPanel();
     JCheckBox inheritCb = new JCheckBox(InspectionsBundle.message("inspection.naming.conventions.option"), inheritDefaultSettings);
-    panel.add(inheritCb, BorderLayout.NORTH);
+    panel.add(inheritCb);
     inheritCb.addActionListener(e -> {
       inheritDefaultSettings = inheritCb.isSelected();
       UIUtil.setEnabled(selfOptions, !inheritDefaultSettings, true);
     });
-    panel.add(selfOptions, BorderLayout.CENTER);
+    panel.add(selfOptions);
     UIUtil.setEnabled(selfOptions, !inheritDefaultSettings, true);
     return panel;
   }

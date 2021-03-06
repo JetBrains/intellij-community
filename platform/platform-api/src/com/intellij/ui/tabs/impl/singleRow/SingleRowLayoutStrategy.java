@@ -2,10 +2,12 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
+import com.intellij.util.MathUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +44,8 @@ public abstract class SingleRowLayoutStrategy {
   protected abstract Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength);
 
   protected abstract int getFixedPosition(final SingleRowPassInfo data);
+
+  protected abstract Rectangle getTitleRect(SingleRowPassInfo data);
 
   public abstract Rectangle getMoreRect(final SingleRowPassInfo data);
 
@@ -84,6 +88,8 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
+      Rectangle bounds = tabLabel.getBounds();
+      if (bounds.x + bounds.width + deltaX < 0 || bounds.x + bounds.width > tabLabel.getParent().getWidth()) return true;
       return Math.abs(deltaY) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
     }
 
@@ -104,7 +110,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getLengthIncrement(final Dimension labelPrefSize) {
-      return myTabs.isEditorTabs() ? labelPrefSize.width < MIN_TAB_WIDTH ? MIN_TAB_WIDTH : labelPrefSize.width : labelPrefSize.width;
+      return myTabs.isEditorTabs() ? Math.max(labelPrefSize.width, MIN_TAB_WIDTH) : labelPrefSize.width;
     }
 
     @Override
@@ -139,7 +145,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getScrollUnitIncrement(TabLabel label) {
-      return 10;
+      return MathUtil.clamp(Registry.intValue("ide.editor.tabs.scroll.unit.increment", 10), 1, 200);
     }
   }
 
@@ -176,6 +182,10 @@ public abstract class SingleRowLayoutStrategy {
       return new Rectangle(x, 1, data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height);
     }
 
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(0, 0, myTabs.myTitleWrapper.getPreferredSize().width, myTabs.myHeaderFitSize.height);
+    }
 
     @Override
     public void layoutComp(SingleRowPassInfo data) {
@@ -240,8 +250,20 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public Rectangle getMoreRect(final SingleRowPassInfo data) {
-      return new Rectangle(myTabs.getWidth() - data.insets.right - data.moreRectAxisSize + 2, getFixedPosition(data),
+          int x;
+      if (myTabs.isEditorTabs()) {
+        x = data.layoutSize.width - data.moreRectAxisSize - 1;
+      }
+      else {
+        x = data.position;
+      }
+      return new Rectangle(x, getFixedPosition(data),
                            data.moreRectAxisSize - 1, myTabs.myHeaderFitSize.height);
+    }
+
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(0, getFixedPosition(data), myTabs.myTitleWrapper.getPreferredSize().width, myTabs.myHeaderFitSize.height);
     }
 
     @Override
@@ -257,7 +279,9 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isDragOut(TabLabel tabLabel, int deltaX, int deltaY) {
-      return Math.abs(deltaX) > tabLabel.getHeight() * TabLayout.getDragOutMultiplier();
+      Rectangle bounds = tabLabel.getBounds();
+      if (bounds.y + bounds.height + deltaX < 0 || bounds.y + bounds.height > tabLabel.getParent().getHeight()) return true;
+      return Math.abs(deltaX) > tabLabel.getWidth() * TabLayout.getDragOutMultiplier();
     }
 
     @Override
@@ -335,6 +359,10 @@ public abstract class SingleRowLayoutStrategy {
     public Rectangle getLayoutRec(final int position, final int fixedPos, final int length, final int fixedFitLength) {
       return new Rectangle(fixedPos, position, fixedFitLength, length);
     }
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(0, 0, myTabs.myHeaderFitSize.width, myTabs.myTitleWrapper.getPreferredSize().height);
+    }
 
     @Override
     public int getFixedPosition(final SingleRowPassInfo data) {
@@ -386,6 +414,13 @@ public abstract class SingleRowLayoutStrategy {
                            myTabs.getHeight() - data.insets.bottom - data.moreRectAxisSize - 1,
                            myTabs.myHeaderFitSize.width,
                            data.moreRectAxisSize - 1);
+    }
+    @Override
+    protected Rectangle getTitleRect(SingleRowPassInfo data) {
+      return new Rectangle(data.layoutSize.width - myTabs.myHeaderFitSize.width,
+                           0,
+                           myTabs.myHeaderFitSize.width,
+                           myTabs.myTitleWrapper.getPreferredSize().height);
     }
   }
 

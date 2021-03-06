@@ -126,10 +126,12 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     if (id == null) {
       return null;
     }
+    //noinspection HardCodedStringLiteral
     final String summary = element.getChildText("title");
     if (summary == null) {
       return null;
     }
+    //noinspection HardCodedStringLiteral
     final String description = element.getChildText("original-body");
     final boolean isClosed = "true".equals(element.getChildText("closed"));
     final Ref<Date> updated = new Ref<>();
@@ -208,7 +210,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
 
       @Override
       public String getPresentableName() {
-        return getId() + ": " + getSummary();
+        return getId() + ": " + getSummary(); //NON-NLS
       }
     };
   }
@@ -286,28 +288,6 @@ public class LighthouseRepository extends BaseRepositoryImpl {
   public void setProjectId(String projectId) {
     myProjectId = projectId;
     myPattern = Pattern.compile("(" + projectId + "\\-\\d+):\\s+");
-  }
-
-  /**
-   * Don't use this getter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #getPassword()}
-   */
-  @Deprecated
-  public String getAPIKey() {
-    return null;
-  }
-
-  /**
-   * Don't use this getter, it's left only to preserve compatibility with existing settings.
-   * Actual API token is saved in Password Safe and accessible via {@link #getPassword()}.
-   *
-   * @deprecated Use {@link #setPassword(String)}
-   */
-  @Deprecated
-  public void setAPIKey(String APIKey) {
-    setPassword(APIKey);
   }
 
   @Override

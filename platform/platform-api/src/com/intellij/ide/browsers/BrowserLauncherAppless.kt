@@ -15,6 +15,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -24,6 +26,7 @@ import java.awt.Desktop
 import java.io.File
 import java.io.IOException
 import java.net.URI
+import java.nio.file.Path
 
 private val LOG = logger<BrowserLauncherAppless>()
 
@@ -46,11 +49,19 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
   }
 
+  override fun browse(file: Path) {
+    var path = file.toAbsolutePath().toString()
+    if (SystemInfo.isWindows && path[0] != '/') {
+      path = "/$path"
+    }
+    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
+  }
+
   protected open fun openWithExplicitBrowser(url: String, browserPath: String?, project: Project?) {
     browseUsingPath(url, browserPath, project = project)
   }
 
-  private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
+  protected open fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
     val url = signUrl(_url.trim { it <= ' ' })
     LOG.debug { "opening [$url]" }
 
@@ -130,7 +141,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   protected open fun signUrl(url: String): String = url
 
-  final override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+  override fun browse(url: String, browser: WebBrowser?, project: Project?) {
     val effectiveBrowser = getEffectiveBrowser(browser)
     // if browser is not passed, UrlOpener should be not used for non-http(s) urls
     if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
@@ -191,7 +202,9 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       try {
         val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
         if (!output.checkSuccess(LOG) && output.exitCode == 1) {
-          showError(output.stderrLines.firstOrNull(), browser, project, null, fix)
+          @NlsSafe
+          val error = output.stderrLines.firstOrNull()
+          showError(error, browser, project, null, fix)
         }
       }
       catch (e: ExecutionException) {
@@ -200,7 +213,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  protected open fun showError(error: String?, browser: WebBrowser? = null, project: Project? = null, title: String? = null, fix: (() -> Unit)? = null) {
+  protected open fun showError(@NlsContexts.DialogMessage error: String?, browser: WebBrowser? = null, project: Project? = null, @NlsContexts.DialogTitle title: String? = null, fix: (() -> Unit)? = null) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }

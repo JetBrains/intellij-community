@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +22,7 @@ import java.util.*;
 /**
  * @author Denis Zhdanov
  */
-public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
-
+public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
     Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();
     Object e2 = ((ExternalSystemNode<?>)t2).getDescriptor().getElement();
@@ -122,12 +121,10 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
     toAdd.remove(topLevelProject.getPath());
 
-    final TObjectIntHashMap<Object> taskWeights = new TObjectIntHashMap<>();
     for (int i = 0; i < topLevelProjectNode.getChildCount(); i++) {
       ExternalSystemNode<?> child = topLevelProjectNode.getChildAt(i);
       Object childElement = child.getDescriptor().getElement();
       if (childElement instanceof ExternalTaskExecutionInfo) {
-        taskWeights.put(childElement, subProjects.size() + i);
         continue;
       }
       if (toAdd.remove(((ExternalProjectPojo)childElement).getPath()) == null) {
@@ -220,7 +217,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   }
 
   @NotNull
-  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull String description, @Nullable Icon icon) {
+  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull @Nls String description, @Nullable Icon icon) {
     return new ExternalSystemNodeDescriptor<>(element, element.toString(), description, icon);
   }
 

@@ -7,33 +7,41 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
+  private final boolean myCloseSource;
+
+  public MoveEditorToOppositeTabGroupAction() {
+    this(true);
+  }
+
+  public MoveEditorToOppositeTabGroupAction(boolean closeSource) {
+    myCloseSource = closeSource;
+  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (vFile == null || project == null){
+    if (vFile == null || project == null) {
       return;
     }
     final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (window != null) {
       final EditorWindow[] siblings = window.findSiblings();
-      if (siblings != null && siblings.length == 1) {
+      if (siblings.length == 1) {
         final EditorWithProviderComposite editorComposite = window.getSelectedEditor();
         final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
         vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
-        closeOldFile(vFile, window);
+        if (myCloseSource) {
+          window.closeFile(vFile, true, false);
+        }
         ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry);
         vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
       }
     }
-  }
-
-  protected void closeOldFile(VirtualFile vFile, EditorWindow window) {
-    window.closeFile(vFile, true, false);
   }
 
   @Override
@@ -50,13 +58,13 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
     }
   }
 
-  private static boolean isEnabled(VirtualFile vFile, EditorWindow window) {
-    if (vFile != null && window != null) {
-      final EditorWindow[] siblings = window.findSiblings ();
-      if (siblings != null && siblings.length == 1) {
-        return true;
-      }
+  private boolean isEnabled(@Nullable VirtualFile vFile, @Nullable EditorWindow window) {
+    if (vFile == null || window == null) {
+      return false;
     }
-    return false;
+    if (!myCloseSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
+      return false;
+    }
+    return window.findSiblings().length == 1;
   }
 }

@@ -49,7 +49,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-    myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this, this::testExecutable);
+    myExecutablePathSelector = new VcsExecutablePathSelector(HgVcs.DISPLAY_NAME.get(), this, this::testExecutable);
     panel.add(myExecutablePathSelector.getMainPanel());
 
     myCheckIncomingOutgoingCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.check.incoming.outgoing"));
@@ -58,9 +58,9 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     myIgnoredWhitespacesInAnnotationsCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.ignore.whitespace.in.annotate"));
     panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
 
-    mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
+    mySyncControl = new JBCheckBox(DvcsBundle.message("sync.setting"));
     JPanel mySyncControlPanel = Objects.requireNonNull(UI.PanelFactory.panel(mySyncControl)
-                                                         .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
+                                                         .withTooltip(DvcsBundle.message("sync.setting.description", HgVcs.DISPLAY_NAME.get()))
                                                          .createPanel());
     if (!project.isDefault()) {
       final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);

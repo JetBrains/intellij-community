@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -11,7 +10,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.isEmpty
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -155,7 +154,7 @@ fun wrapState(element: Element, project: Project): Element {
   return wrapper
 }
 
-class BundledSchemeEP : AbstractExtensionPointBean() {
+class BundledSchemeEP {
   @Attribute("path")
   var path: String? = null
 }
@@ -163,7 +162,7 @@ class BundledSchemeEP : AbstractExtensionPointBean() {
 fun SchemeManager<*>.save() {
   val errors = SmartList<Throwable>()
   save(errors)
-  CompoundRuntimeException.throwIfNotEmpty(errors)
+  throwIfNotEmpty(errors)
 }
 
 @ApiStatus.Internal

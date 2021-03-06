@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +43,8 @@ public abstract class AbstractNewLineBlocksIteratorTest extends LightPlatformCod
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(getFile());
     Assert.assertNotNull(builder);
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
-    FormattingModel model = builder.createModel(getFile(), settings);
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    FormattingModel model = builder.createModel(FormattingContext.create(getFile(), settings));
 
     Block root = model.getRootBlock();
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getFile());

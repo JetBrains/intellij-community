@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.Module;
@@ -48,6 +48,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  * @author Vladislav.Soroka
  */
 public class IdeModelsProviderImpl implements IdeModelsProvider {
+  private static final Logger LOG = Logger.getInstance(IdeModelsProviderImpl.class);
 
   @NotNull
   protected final Project myProject;
@@ -108,7 +109,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
     for (VirtualFile root : ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+      if (VfsUtilCore.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }
@@ -211,6 +212,45 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
+  @NotNull
+  @Override
+  public Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                        @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
+    if (libraryDependencyDataList.isEmpty()) return Collections.emptyMap();
+    Module ownerIdeModule = findIdeModule(moduleData);
+    if (ownerIdeModule == null) return Collections.emptyMap();
+    Map<Set<String>, LibraryDependencyData> libraryDependencyDataMap = new HashMap<>();
+    for (LibraryDependencyData libraryDependencyData : libraryDependencyDataList) {
+      if (libraryDependencyData.getLevel() == LibraryLevel.PROJECT) {
+        LOG.warn("Library data \"" + libraryDependencyData.getInternalName() + "\" not a module level dependency");
+        continue;
+      }
+      if (libraryDependencyData.getOwnerModule() != moduleData) {
+        LOG.warn("Library data \"" + libraryDependencyData.getInternalName() + "\" not belong to the module: " + ownerIdeModule.getName());
+        continue;
+      }
+      libraryDependencyDataMap.put(ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
+                                                         PathUtil::getLocalPath), libraryDependencyData);
+    }
+
+    Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
+    for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+        if (!libraryOrderEntry.isModuleLevel()) continue;
+        if (isEmpty(libraryOrderEntry.getLibraryName())) {
+          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+                                                               s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
+          LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
+          if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
+            result.put(libraryOrderEntry, libraryDependencyData);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
   @Override
   public VirtualFile @NotNull [] getContentRoots(Module module) {
     return ModuleRootManager.getInstance(module).getContentRoots();
@@ -308,11 +348,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
 
       String namePrefix = ContainerUtil.getLastItem(names);
-      return new Iterable<String>() {
+      return new Iterable<>() {
         @NotNull
         @Override
         public Iterator<String> iterator() {
-          return ContainerUtil.concatIterators(names.iterator(), new Iterator<String>() {
+          return ContainerUtil.concatIterators(names.iterator(), new Iterator<>() {
             int current = 0;
 
             @Override

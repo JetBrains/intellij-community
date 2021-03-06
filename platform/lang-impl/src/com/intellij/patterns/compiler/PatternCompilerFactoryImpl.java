@@ -30,10 +30,7 @@ final class PatternCompilerFactoryImpl extends PatternCompilerFactory {
   private final Map<List<Class<?>>, PatternCompiler> myCompilers = ConcurrentFactoryMap.createMap(PatternCompilerImpl::new);
 
   public PatternCompilerFactoryImpl() {
-    PATTERN_CLASS_EP.addChangeListener(() -> {
-      myClasses.clear();
-      myCompilers.clear();
-    }, null);
+    PATTERN_CLASS_EP.addChangeListener(this::dropCache, null);
   }
 
   @Override
@@ -45,5 +42,11 @@ final class PatternCompilerFactoryImpl extends PatternCompilerFactory {
   @Override
   public <T> PatternCompiler<T> getPatternCompiler(Class @NotNull [] patternClasses) {
     return myCompilers.get(Arrays.asList(patternClasses));
+  }
+
+  @Override
+  public void dropCache() {
+    myClasses.clear();
+    myCompilers.clear();
   }
 }

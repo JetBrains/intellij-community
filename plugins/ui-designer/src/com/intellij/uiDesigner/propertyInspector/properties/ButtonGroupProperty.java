@@ -23,8 +23,9 @@ import java.awt.event.ItemListener;
  * @author yole
  */
 public class ButtonGroupProperty extends Property<RadComponent, RadButtonGroup> {
-  private final LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<RadButtonGroup>() {
-    @Override protected void customize(@NotNull final RadButtonGroup value) {
+  private final LabelPropertyRenderer<RadButtonGroup> myRenderer = new LabelPropertyRenderer<>() {
+    @Override
+    protected void customize(@NotNull final RadButtonGroup value) {
       setText(value.getName());
     }
   };

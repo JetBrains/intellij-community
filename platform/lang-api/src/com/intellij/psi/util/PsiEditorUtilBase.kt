@@ -13,9 +13,9 @@ import com.intellij.psi.PsiElement
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 
-private val LOG = logger<PsiEditorUtilBase>()
-
 object PsiEditorUtilBase : PsiEditorUtil {
+  private val LOG = logger<PsiEditorUtilBase>()
+
   /**
    * Tries to find editor for the given element.
    *

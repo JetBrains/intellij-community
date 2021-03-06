@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build
 
 import com.intellij.compiler.BaseCompilerTestCase
@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.PsiTestUtil
+import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
@@ -160,14 +160,14 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
 
   private fun copyAndCreateModule(relativePath: String): Module {
     copyToProject(relativePath)
-    val module = loadModule("$projectBasePath/pluginProject.iml")
+    val module = loadModule(myProject.stateStore.projectBasePath.resolve("pluginProject.iml"))
     assertThat(ModuleType.get(module)).isEqualTo(PluginModuleType.getInstance())
     return module
   }
 
   private fun setupPluginProjectWithJpsModule(): Module {
     val module = copyAndCreateModule("plugins/devkit/devkit-java-tests/testData/build/withJpsModule")
-    val jpsModule = loadModule("$projectBasePath/jps-plugin/jps-plugin.iml")
+    val jpsModule = loadModule(myProject.stateStore.projectBasePath.resolve("jps-plugin/jps-plugin.iml"))
     ModuleRootModificationUtil.setModuleSdk(jpsModule, testProjectJdk)
     return module
   }

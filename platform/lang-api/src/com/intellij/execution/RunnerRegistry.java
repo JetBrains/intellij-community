@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public final class RunnerRegistry {
   @NotNull
   public static RunnerRegistry getInstance() {
-    return ServiceManager.getService(RunnerRegistry.class);
+    return ApplicationManager.getApplication().getService(RunnerRegistry.class);
   }
 
   /**
@@ -29,6 +30,7 @@ public final class RunnerRegistry {
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ProgramRunner findRunnerById(@NotNull String id) {
     return ProgramRunner.findRunnerById(id);
   }

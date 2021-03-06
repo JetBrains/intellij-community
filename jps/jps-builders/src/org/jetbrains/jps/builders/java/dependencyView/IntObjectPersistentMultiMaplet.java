@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -26,7 +27,7 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   public IntObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<Integer> keyExternalizer,
                                         final DataExternalizer<V> valueExternalizer,
-                                        final CollectionFactory<V> collectionFactory) throws IOException {
+                                        final BuilderCollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer,
                                     new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
@@ -82,9 +83,9 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   public void put(final int key, final Collection<V> value) {
     try {
       myCache.remove(key);
-      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(DataOutput out) throws IOException {
+        public void append(@NotNull DataOutput out) throws IOException {
           for (V v : value) {
             myValueExternalizer.save(out, v);
           }
@@ -220,10 +221,10 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   private static class CollectionDataExternalizer<V> implements DataExternalizer<Collection<V>> {
     private final DataExternalizer<V> myElementExternalizer;
-    private final CollectionFactory<V> myCollectionFactory;
+    private final BuilderCollectionFactory<V> myCollectionFactory;
 
     CollectionDataExternalizer(DataExternalizer<V> elementExternalizer,
-                                      CollectionFactory<V> collectionFactory) {
+                                      BuilderCollectionFactory<V> collectionFactory) {
       myElementExternalizer = elementExternalizer;
       myCollectionFactory = collectionFactory;
     }

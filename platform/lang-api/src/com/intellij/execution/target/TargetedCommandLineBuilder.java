@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
 import com.intellij.execution.target.value.TargetValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -57,6 +58,10 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     myWorkingDirectory = workingDirectory;
   }
 
+  public void setWorkingDirectory(@NotNull String workingDirectory) {
+    myWorkingDirectory = TargetValue.fixed(workingDirectory);
+  }
+
   public void addParameter(@NotNull TargetValue<String> parameter) {
     myParameters.add(parameter);
   }
@@ -71,12 +76,35 @@ public class TargetedCommandLineBuilder extends UserDataHolderBase {
     }
   }
 
-  public void addEnvironmentVariable(String name, TargetValue<String> value) {
-    myEnvironment.put(name, value);
+  public void addParameters(String @NotNull ... parametersList) {
+    for (String parameter : parametersList) {
+      addParameter(parameter);
+    }
   }
 
-  public void addEnvironmentVariable(String name, String value) {
-    myEnvironment.put(name, TargetValue.fixed(value));
+  public void addParameterAt(int index, @NotNull String parameter) {
+    addParameterAt(index, TargetValue.fixed(parameter));
+  }
+
+  public void addParameterAt(int index, @NotNull TargetValue<String> parameter) {
+    myParameters.add(index, parameter);
+  }
+
+  public void addEnvironmentVariable(@NotNull String name, @Nullable TargetValue<String> value) {
+    if (value != null) {
+      myEnvironment.put(name, value);
+    }
+    else {
+      myEnvironment.remove(name);
+    }
+  }
+
+  public void addEnvironmentVariable(@NotNull String name, @Nullable String value) {
+    addEnvironmentVariable(name, value != null ? TargetValue.fixed(value) : null);
+  }
+
+  public void removeEnvironmentVariable(@NotNull String name) {
+    myEnvironment.remove(name);
   }
 
   public void addFileToDeleteOnTermination(@NotNull File file) {

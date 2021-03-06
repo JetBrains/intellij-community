@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
@@ -37,14 +38,19 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -122,7 +128,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
                                    @NotNull AbstractVcs vcs,
                                    int selectionStart,
                                    int selectionEnd,
-                                   @NotNull String title) {
+                                   @NotNull @NlsContexts.DialogTitle String title) {
     super(project, "VCS.FileHistoryDialog");
 
     myProject = project;
@@ -206,13 +212,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
       @Override
       protected void notifyUpdate(boolean shouldFlush) {
-        myUpdateQueue.queue(new Update(this) {
-          @Override
-          public void run() {
-            updateStatusPanel();
-            updateRevisionsList();
-          }
-        });
+        myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, this, () -> {
+          updateStatusPanel();
+          updateRevisionsList();
+        }));
         if (shouldFlush) {
           runOnEdt(() -> myUpdateQueue.flush());
         }
@@ -239,7 +242,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     return VcsBundle.message("selection.history.can.not.load.message") + (e != null ? ": " + e.getLocalizedMessage() : "");
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateRevisionsList() {
     if (myIsDuringUpdate) return;
     try {
@@ -301,7 +304,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
                        : CommonBundle.getLoadingTreeNodeText();
       int totalRevisions = data.getRevisions().size();
       if (totalRevisions != 0) {
-        message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions);
+        message += String.format(" (%s/%s)", data.myBlocks.size(), totalRevisions); //NON-NLS
       }
       myStatusLabel.setText(XmlStringUtil.wrapInHtml(message));
 
@@ -401,7 +404,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
   }
 
   @Nullable
-  private static String createDiffContentTitle(int index, @NotNull BlockData data) {
+  private static @NlsContexts.Label String createDiffContentTitle(int index, @NotNull BlockData data) {
     if (index >= data.getRevisions().size()) return null;
     return VcsBundle.message("diff.content.title.revision.number", data.getRevisions().get(index).getRevisionNumber());
   }
@@ -582,10 +585,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       });
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     protected abstract void notifyError(@NotNull VcsException e);
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     protected abstract void notifyUpdate(boolean shouldFlush);
 
     @NotNull
@@ -602,7 +605,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     private String loadContents(@NotNull VcsFileRevision revision) throws VcsException {
       try {
         byte[] bytes = revision.loadContent();
-        if (bytes == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
+        if (bytes == null) throw new VcsException(
+          VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
         return new String(bytes, myFile.getCharset());
       }
       catch (IOException e) {

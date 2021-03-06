@@ -6,23 +6,37 @@ import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detector.model.LanguageISO
 import java.nio.file.Path
 
-internal enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String, val iso: LanguageISO) {
-  ENGLISH(listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish"), "14 MB", LanguageISO.EN),
-  RUSSIAN(listOf("Russian"), "3 MB", LanguageISO.RU),
-  PERSIAN(listOf("Persian"), "1 MB", LanguageISO.FA),
-  FRENCH(listOf("French"), "4 MB", LanguageISO.FR),
+enum class RemoteLangDescriptor(val langsClasses: List<String>, val size: String, val iso: LanguageISO) {
+  ARABIC(listOf("Arabic"), "13 MB", LanguageISO.AR),
+  ASTURIAN(listOf("Asturian"), "1 MB", LanguageISO.AST),
+  BELARUSIAN(listOf("Belarusian"), "1 MB", LanguageISO.BE),
+  BRETON(listOf("Breton"), "2 MB", LanguageISO.BR),
+  CATALAN(listOf("Catalan", "ValencianCatalan"), "4 MB", LanguageISO.CA),
+  DANISH(listOf("Danish"), "1 MB", LanguageISO.DA),
   GERMAN(listOf("GermanyGerman", "AustrianGerman"), "19 MB", LanguageISO.DE),
-  POLISH(listOf("Polish"), "5 MB", LanguageISO.PL),
-  ITALIAN(listOf("Italian"), "1 MB", LanguageISO.IT),
-  DUTCH(listOf("Dutch"), "17 MB", LanguageISO.NL),
-  PORTUGUESE(listOf("PortugalPortuguese", "BrazilianPortuguese"), "5 MB", LanguageISO.PT),
-  CHINESE(listOf("Chinese"), "3 MB", LanguageISO.ZH),
   GREEK(listOf("Greek"), "1 MB", LanguageISO.EL),
-  JAPANESE(listOf("Japanese"), "1 MB", LanguageISO.JA),
-  ROMANIAN(listOf("Romanian"), "1 MB", LanguageISO.RO),
+  ENGLISH(listOf("BritishEnglish", "AmericanEnglish", "CanadianEnglish"), "15 MB", LanguageISO.EN),
+  ESPERANTO(listOf("Esperanto"), "1 MB", LanguageISO.EO),
+  SPANISH(listOf("Spanish"), "3 MB", LanguageISO.ES),
+  PERSIAN(listOf("Persian"), "1 MB", LanguageISO.FA),
+  FRENCH(listOf("French"), "3 MB", LanguageISO.FR),
+  IRISH(listOf("Irish"), "13 MB", LanguageISO.GA),
+  GALICIAN(listOf("Galician"), "5 MB", LanguageISO.GL),
+  ITALIAN(listOf("Italian"), "1 MB", LanguageISO.IT),
+  JAPANESE(listOf("Japanese"), "19 MB", LanguageISO.JA),
+  KHMER(listOf("Khmer"), "1 MB", LanguageISO.KM),
+  DUTCH(listOf("Dutch"), "21 MB", LanguageISO.NL),
+  POLISH(listOf("Polish"), "5 MB", LanguageISO.PL),
+  PORTUGUESE(listOf("PortugalPortuguese", "BrazilianPortuguese", "AngolaPortuguese", "MozambiquePortuguese"), "5 MB", LanguageISO.PT),
+  ROMANIAN(listOf("Romanian"), "2 MB", LanguageISO.RO),
+  RUSSIAN(listOf("Russian"), "5 MB", LanguageISO.RU),
   SLOVAK(listOf("Slovak"), "3 MB", LanguageISO.SK),
-  SPANISH(listOf("Spanish"), "2 MB", LanguageISO.ES),
-  UKRAINIAN(listOf("Ukrainian"), "6 MB", LanguageISO.UK);
+  SLOVENIAN(listOf("Slovenian"), "1 MB", LanguageISO.SL),
+  SWEDISH(listOf("Swedish"), "1 MB", LanguageISO.SV),
+  TAMIL(listOf("Tamil"), "1 MB", LanguageISO.TA),
+  TAGALOG(listOf("Tagalog"), "1 MB", LanguageISO.TL),
+  UKRAINIAN(listOf("Ukrainian"), "6 MB", LanguageISO.UK),
+  CHINESE(listOf("Chinese"), "8 MB", LanguageISO.ZH);
 
   val fileName: String by lazy { "$iso-${GraziePlugin.LanguageTool.version}.jar" }
   val file: Path by lazy { GrazieDynamic.dynamicFolder.resolve(fileName) }

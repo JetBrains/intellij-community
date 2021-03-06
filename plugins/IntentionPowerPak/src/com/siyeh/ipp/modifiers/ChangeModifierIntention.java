@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -15,13 +16,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -162,9 +162,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return;
     }
 
-    TextAttributes lvAttr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
     RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.LAST + 1, lvAttr,
+      .addRangeHighlighter(EditorColors.LIVE_TEMPLATE_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), HighlighterLayer.LAST + 1,
                            HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToRight(true);
     highlighter.setGreedyToLeft(true);
@@ -174,7 +173,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(modifiers)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setSelectedValue(current, true)
-      .setAccessibleName("Change Modifier")
+      .setAccessibleName(JavaBundle.message("accessible.name.change.modifier"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
@@ -231,10 +230,10 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     private final boolean myExtendLeft, myExtendRight;
     private final String myOriginalText;
     private final RangeMarker myMarker;
-    private final String myActionName;
+    private final @NlsContexts.Command String myActionName;
     private final PsiFile myFile;
 
-    ModifierUpdater(@NotNull PsiFile file, @NotNull Document document, @NotNull TextRange range, @NotNull String actionName) {
+    ModifierUpdater(@NotNull PsiFile file, @NotNull Document document, @NotNull TextRange range, @NotNull @NlsContexts.Command String actionName) {
       myDocument = document;
       myFile = file;
       myActionName = actionName;
@@ -386,13 +385,13 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       final PsiClass aClass = (PsiClass)member;
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiJavaFile)) {
-        return MultiMap.emptyInstance();
+        return MultiMap.empty();
       }
       final PsiJavaFile javaFile = (PsiJavaFile)parent;
       final String name = FileUtilRt.getNameWithoutExtension(javaFile.getName());
       final String className = aClass.getName();
       if (name.equals(className)) {
-        return MultiMap.emptyInstance();
+        return MultiMap.empty();
       }
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       conflicts.putValue(aClass, IntentionPowerPackBundle.message(
@@ -404,7 +403,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
     final PsiModifierList modifierList = member.getModifierList();
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return MultiMap.emptyInstance();
+      return MultiMap.empty();
     }
     PsiModifierList copy = (PsiModifierList)modifierList.copy();
     copy.setModifierProperty(modifier.toPsiModifier(), true);

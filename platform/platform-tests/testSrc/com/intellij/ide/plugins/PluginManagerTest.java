@@ -5,12 +5,17 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.rules.TempDirectory;
+import org.easymock.EasyMock;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
@@ -21,14 +26,21 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static com.intellij.ide.plugins.DynamicPluginsTestUtilKt.loadDescriptorInTest;
+import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
   private static String getTestDataPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort";
   }
+
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void compatibilityBranchBased() {
@@ -112,6 +124,7 @@ public class PluginManagerTest {
 
   @Test
   public void testSimplePluginSort() throws Exception {
+    // muted failure, investigation is assigned
     doPluginSortTest("simplePluginSort", false);
   }
 
@@ -160,16 +173,25 @@ public class PluginManagerTest {
     assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
   }
 
+  @Test
+  public void testSymlinkInConfigPath() throws IOException {
+    assumeSymLinkCreationIsSupported();
+
+    Path configPath = tempDir.getRoot().toPath().resolve("config-link");
+    IoTestUtil.createSymbolicLink(configPath, tempDir.newDirectory("config-target").toPath());
+    DisabledPluginsState.saveDisabledPlugins(configPath, "a");
+    assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
+  }
+
   private static void assertPluginPreInstalled(@NotNull PluginLoadingResult loadingResult, PluginId pluginId) {
     assertTrue("Plugin should be pre installed", loadingResult.getShadowedBundledIds().contains(pluginId));
   }
 
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {
-    PluginManagerCore.ourPluginError = null;
+    PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     String actual = StringUtil.join(loadPluginResult.sortedPlugins, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
-                    "\n\n" + StringUtil.notNullize(PluginManagerCore.ourPluginError).replace("<p/>", "\n");
-    PluginManagerCore.ourPluginError = null;
+                    "\n\n" + PluginManagerCore.getAndClearPluginLoadingErrors().stream().map(html -> html.toString().replace("<br/>", "\n")).collect(Collectors.joining("\n"));
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);
   }
 
@@ -178,11 +200,22 @@ public class PluginManagerTest {
   }
 
   private static void assertIncompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNotNull(PluginManagerCore.getIncompatibleMessage(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
+    assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
+  }
+
+  @Nullable
+  private static String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
+    IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
+    expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
+    expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
+    replay(mock);
+    PluginLoadingError error =
+      PluginManagerCore.checkBuildNumberCompatibility(mock, Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
+    return error != null ? error.getDetailedMessage() : null;
   }
 
   private static void assertCompatible(String ideVersion, String sinceBuild, String untilBuild) {
-    assertNull(PluginManagerCore.getIncompatibleMessage(Objects.requireNonNull(BuildNumber.fromString(ideVersion)), sinceBuild, untilBuild));
+    assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)

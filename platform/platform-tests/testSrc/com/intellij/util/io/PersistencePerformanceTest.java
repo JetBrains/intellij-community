@@ -13,7 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
-import com.intellij.util.indexing.caches.IndexUpdateRunner;
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -58,7 +58,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       PersistentHashMap<String, Record> map = createMap(FileUtil.createTempFile(tempDirectory, "persistent", "map" + i));
       myMaps.add(map);
     }
-    PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
+    StorageLockContext storageLockContext = new StorageLockContext(false);
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 
@@ -106,7 +106,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
       new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
-        .indexFiles(getProject(), files, new EmptyProgressIndicator());
+        .indexFiles(getProject(), "test files", files, new EmptyProgressIndicator());
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());
@@ -146,7 +146,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
 
   @NotNull
   private static PersistentHashMap<String, Record> createMap(File file) throws IOException {
-    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
+    return new PersistentHashMap<>(file, new EnumeratorStringDescriptor(), new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Record value) throws IOException {
         out.writeInt(value.magnitude);

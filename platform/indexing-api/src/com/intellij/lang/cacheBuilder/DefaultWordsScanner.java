@@ -151,13 +151,13 @@ public class DefaultWordsScanner extends VersionedWordsScanner {
     return lexer.getClass();
   }
 
-  protected static boolean stripWords(final Processor<? super WordOccurrence> processor,
-                                    final CharSequence tokenText,
-                                    int from,
-                                    int to,
-                                    final WordOccurrence.Kind kind,
-                                    @NotNull WordOccurrence occurrence,
-                                    boolean mayHaveFileRefs
+  public static boolean stripWords(final Processor<? super WordOccurrence> processor,
+                                   final CharSequence tokenText,
+                                   int from,
+                                   int to,
+                                   final WordOccurrence.Kind kind,
+                                   @NotNull WordOccurrence occurrence,
+                                   boolean mayHaveFileRefs
   ) {
     // This code seems strange but it is more effective as Character.isJavaIdentifier_xxx_ is quite costly operation due to unicode
     int index = from;

@@ -12,10 +12,14 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
@@ -78,7 +82,7 @@ public class GradleExtensionsSettings {
     public Map<String, GradleProject> projects = new HashMap<>();
 
     public void add(@NotNull String rootPath,
-                    @NotNull Collection<DataNode<GradleExtensions>> extensionsData) {
+                    @NotNull Collection<? extends DataNode<GradleExtensions>> extensionsData) {
       Map<String, GradleExtensions> extensionMap = new HashMap<>();
       for (DataNode<GradleExtensions> node : extensionsData) {
         DataNode<?> parent = node.getParent();
@@ -138,7 +142,6 @@ public class GradleExtensionsSettings {
           gradleTask.description = description.toString();
           extensionsData.tasksMap.put(gradleTask.name, gradleTask);
         }
-        extensionsData.tasks = new SmartList<>(extensionsData.tasksMap.values());
         for (org.jetbrains.plugins.gradle.model.GradleConfiguration configuration : gradleExtensions.getConfigurations()) {
           GradleConfiguration gradleConfiguration = new GradleConfiguration();
           gradleConfiguration.name = configuration.getName();
@@ -188,14 +191,20 @@ public class GradleExtensionsSettings {
      */
     @Nullable
     public GradleExtensionsData getExtensionsFor(@Nullable String rootProjectPath, @Nullable String gradlePath) {
-      if (rootProjectPath == null || gradlePath == null) return null;
-      GradleProject gradleProject = projects.get(rootProjectPath);
+      GradleProject gradleProject = getRootGradleProject(rootProjectPath);
       if (gradleProject == null) return null;
       return gradleProject.extensions.get(gradlePath);
     }
+
+    @Contract("null -> null")
+    @Nullable
+    public GradleProject getRootGradleProject(@Nullable String rootProjectPath) {
+      if (rootProjectPath == null) return null;
+      return projects.get(rootProjectPath);
+    }
   }
 
-  static class GradleProject {
+  public static class GradleProject {
     public Map<String, GradleExtensionsData> extensions = new HashMap<>();
   }
 
@@ -210,15 +219,11 @@ public class GradleExtensionsSettings {
     public final Map<String, GradleProp> properties = new HashMap<>();
     @NotNull
     public final Map<String, GradleTask> tasksMap = new LinkedHashMap<>();
-    /**
-     * @deprecated to be removed, use {@link GradleExtensionsData#tasksMap} instead
-     */
-    @Deprecated
-    public List<GradleTask> tasks = Collections.emptyList();
     @NotNull
     public final Map<String, GradleConfiguration> configurations = new HashMap<>();
     @NotNull
     public final Map<String, GradleConfiguration> buildScriptConfigurations = new HashMap<>();
+
     @Nullable
     public GradleExtensionsData getParent() {
       if (myGradleProject == null) return null;
@@ -314,5 +319,19 @@ public class GradleExtensionsSettings {
     public boolean visible = true;
     public boolean scriptClasspath;
     public String description;
+  }
+
+  @Nullable
+  public static GradleProject getRootProject(@NotNull PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile().getOriginalFile();
+    final Project project = containingFile.getProject();
+    return getInstance(project).getRootGradleProject(getRootProjectPath(element));
+  }
+
+  @Nullable
+  public static String getRootProjectPath(@NotNull PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile().getOriginalFile();
+    final Module module = ModuleUtilCore.findModuleForFile(containingFile);
+    return ExternalSystemApiUtil.getExternalRootProjectPath(module);
   }
 }

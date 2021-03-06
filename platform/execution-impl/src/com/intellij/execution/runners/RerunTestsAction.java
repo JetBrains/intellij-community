@@ -4,7 +4,6 @@ package com.intellij.execution.runners;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,7 @@ import java.util.Set;
  *
  * @see RerunTestsNotification
  */
-public class RerunTestsAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+public class RerunTestsAction extends DumbAwareAction {
   public static final String ID = "RerunTests";
   private static final Set<RunContentDescriptor> REGISTRY = new HashSet<>();
 
@@ -39,13 +38,6 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
         }
       });
     }
-  }
-
-  /**
-   * @deprecated use {@link #register(RunContentDescriptor)} instead
-   */
-  @Deprecated
-  public static void register(@NotNull ExecutionEnvironment environment) {
   }
 
   @Override

@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isNullOrEmpty
-import gnu.trove.THashMap
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.*
 import org.jetbrains.protocolReader.TextOutput
@@ -72,19 +71,19 @@ internal class Naming(val inputPackage: String, val requestClassName: String) {
 /**
  * Read metamodel and generates set of files with Java classes/interfaces for the protocol.
  */
-internal class Generator(outputDir: String, private val rootPackage: String, requestClassName: String, metamodel: ProtocolMetaModel.Root) {
+internal class Generator(outputDir: String, rootPackage: String, requestClassName: String, metamodel: ProtocolMetaModel.Root) {
   val jsonProtocolParserClassNames = ArrayList<String>()
   val parserRootInterfaceItems = ArrayList<ParserRootInterfaceItem>()
   val typeMap = TypeMap()
 
-  val nestedTypeMap = THashMap<NamePath, StandaloneType>()
+  val nestedTypeMap = HashMap<NamePath, StandaloneType>()
 
-  val fileSet = FileSet(FileSystems.getDefault().getPath(outputDir))
+  private val fileSet = FileSet(FileSystems.getDefault().getPath(outputDir))
   val naming = Naming(rootPackage, requestClassName)
 
   init {
     val domainList = metamodel.domains()
-    val domainGeneratorMap = THashMap<String, DomainGenerator>()
+    val domainGeneratorMap = HashMap<String, DomainGenerator>()
 
     for (domain in domainList) {
       if (!INCLUDED_DOMAINS.contains(domain.domain())) {
@@ -92,7 +91,9 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
         continue
       }
 
-      val fileUpdater = fileSet.createFileUpdater("${StringUtil.nullize(domain.domain()) ?: "protocol"}.kt")
+      val domainName = StringUtil.nullize(domain.domain())
+      val filePath = if (domainName != null) "${domainName.toLowerCase()}/$domainName.kt" else "protocol.kt"
+      val fileUpdater = fileSet.createFileUpdater(filePath)
       val out = fileUpdater.out
 
       out.append("// Generated source").newLine().append("package ").append(getPackageName(rootPackage, domain.domain())).newLine().newLine()
@@ -184,9 +185,9 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
     out.append(')')
   }
 
-  private fun generateParserRoot(parserRootInterfaceItems: List<ParserRootInterfaceItem>, out: TextOutput) {
+  private fun generateParserRoot(parserRootInterfaceItems: MutableList<ParserRootInterfaceItem>, out: TextOutput) {
     // write classes in stable order
-    Collections.sort<ParserRootInterfaceItem>(parserRootInterfaceItems)
+    parserRootInterfaceItems.sort()
 
     out.newLine().newLine().append("interface ").append(READER_INTERFACE_NAME).append(" : org.jetbrains.jsonProtocol.ResponseResultReader").openBlock()
     for (item in parserRootInterfaceItems) {
@@ -231,7 +232,7 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
 
 const val READER_INTERFACE_NAME: String = "ProtocolResponseReader"
 
-private val INCLUDED_DOMAINS = arrayOf("CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
+private val INCLUDED_DOMAINS = arrayOf("Mono", "CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
                                        "Tracing", "Target", "Overlay", "Console", "DOMDebugger", "Profiler", "HeapProfiler", "NodeWorker")
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {

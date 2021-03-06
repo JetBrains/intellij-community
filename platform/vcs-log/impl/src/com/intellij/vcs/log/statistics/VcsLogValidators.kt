@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomValidationRule
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter
-import com.intellij.vcs.log.ui.table.VcsLogColumn
+import com.intellij.vcs.log.ui.table.column.getDefaultDynamicColumns
 
-open class CustomStringsWhiteListRule(private val id: String, private val values: Collection<String>) : CustomWhiteListRule() {
+open class CustomStringsValidationRule(private val id: String, private val values: Collection<String>) : CustomValidationRule() {
   final override fun acceptRuleId(ruleId: String?): Boolean = id == ruleId
 
   final override fun doValidate(data: String, context: EventContext): ValidationResultType {
@@ -22,17 +22,17 @@ open class CustomStringsWhiteListRule(private val id: String, private val values
 }
 
 class VcsLogTriggerEventIdValidator :
-  CustomStringsWhiteListRule("vcs_log_trigger_event_id", VcsLogUsageTriggerCollector.VcsLogEvent.values().map { it.id }.toSet())
+  CustomStringsValidationRule("vcs_log_trigger_event_id", VcsLogUsageTriggerCollector.VcsLogEvent.values().map { it.id }.toSet())
 
 class VcsLogFilterNameValidator :
-  CustomStringsWhiteListRule("vcs_log_filter_name", VcsLogFilterCollection.STANDARD_KEYS.map { it.name }.toSet())
+  CustomStringsValidationRule("vcs_log_filter_name", VcsLogFilterCollection.STANDARD_KEYS.map { it.name }.toSet())
 
 class VcsLogSortKindValidator :
-  LocalEnumCustomWhitelistRule("vcs_log_sort_kind", PermanentGraph.SortType::class.java)
+  LocalEnumCustomValidationRule("vcs_log_sort_kind", PermanentGraph.SortType::class.java)
 
 class VcsLogHighlighterIdValidator :
-  CustomStringsWhiteListRule("vcs_log_highlighter_id", setOf(MyCommitsHighlighter.Factory.ID, MergeCommitsHighlighter.Factory.ID,
-                                                             CurrentBranchHighlighter.Factory.ID))
+  CustomStringsValidationRule("vcs_log_highlighter_id", setOf(MyCommitsHighlighter.Factory.ID, MergeCommitsHighlighter.Factory.ID,
+                                                              CurrentBranchHighlighter.Factory.ID))
 
 class VcsLogColumnNameValidator :
-  CustomStringsWhiteListRule("vcs_log_column_name", VcsLogColumn.DYNAMIC_COLUMNS.map { it.stableName }.toSet())
+  CustomStringsValidationRule("vcs_log_column_name", getDefaultDynamicColumns().map { it.stableName }.toSet())

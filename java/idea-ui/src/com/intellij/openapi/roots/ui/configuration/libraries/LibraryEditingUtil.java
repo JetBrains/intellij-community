@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.ide.JavaUiBundle;
@@ -23,30 +9,28 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.ModuleLibraryTable;
+import com.intellij.openapi.roots.impl.ModuleLibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
-public class LibraryEditingUtil {
+public final class LibraryEditingUtil {
   private static final Logger LOG = Logger.getInstance(LibraryEditingUtil.class);
 
   private LibraryEditingUtil() {
@@ -87,8 +71,8 @@ public class LibraryEditingUtil {
         final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
         if (library == null) continue;
 
-        if (library instanceof LibraryImpl) {
-          final Library source = ((LibraryImpl)library).getSource();
+        if (library instanceof LibraryEx) {
+          final Library source = ((LibraryEx)library).getSource();
           result.add(source != null ? source : library);
         } else {
           result.add(library);
@@ -97,15 +81,17 @@ public class LibraryEditingUtil {
     }
     return library -> {
       if (result.contains(library)) return false;
-      if (library instanceof LibraryImpl) {
-        final Library source = ((LibraryImpl)library).getSource();
+      if (library instanceof LibraryEx) {
+        final Library source = ((LibraryEx)library).getSource();
         if (source != null && result.contains(source)) return false;
       }
-      PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
-      if (kind != null) {
-        LibraryType type = LibraryType.findByKind(kind);
-        if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
-          return false;
+      if (library instanceof LibraryEx) {
+        PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
+        if (kind != null) {
+          LibraryType type = LibraryType.findByKind(kind);
+          if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+            return false;
+          }
         }
       }
       return true;
@@ -146,7 +132,7 @@ public class LibraryEditingUtil {
 
   public static LibraryTablePresentation getLibraryTablePresentation(@NotNull Project project, @NotNull String level) {
     if (level.equals(LibraryTableImplUtil.MODULE_LEVEL)) {
-      return ModuleLibraryTable.MODULE_LIBRARY_TABLE_PRESENTATION;
+      return ModuleLibraryTableBase.MODULE_LIBRARY_TABLE_PRESENTATION;
     }
     final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(level, project);
     LOG.assertTrue(table != null, level);
@@ -171,23 +157,27 @@ public class LibraryEditingUtil {
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
-    return new BaseListPopupStep<LibraryType>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-          @NotNull
-          @Override
-          public String getTextFor(LibraryType value) {
-            return value != null ? value.getCreateActionName() : JavaUiBundle.message("create.default.library.type.action.name");
-          }
+    return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
+      @NotNull
+      @Override
+      public String getTextFor(LibraryType value) {
+        if (value != null) {
+          final String name = value.getCreateActionName();
+          if (name != null) return name;
+        }
+        return JavaUiBundle.message("create.default.library.type.action.name");
+      }
 
-          @Override
-          public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
-          }
+      @Override
+      public Icon getIconFor(LibraryType aValue) {
+        return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
+      }
 
-          @Override
-          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-            return doFinalStep(() -> action.run(selectedValue));
-          }
-        };
+      @Override
+      public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
+        return doFinalStep(() -> action.run(selectedValue));
+      }
+    };
   }
 
   public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,
@@ -201,7 +191,7 @@ public class LibraryEditingUtil {
 
       if (library != null) {
         final ModuleRootModel rootModel = rootConfigurable.getContext().getModulesConfigurator().getRootModel(module);
-        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).apply(library)) {
+        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).test(library)) {
           continue;
         }
       }
@@ -209,11 +199,5 @@ public class LibraryEditingUtil {
       modules.add(module);
     }
     return modules;
-  }
-
-  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library,
-                                                           @NotNull Project project,
-                                                           boolean allowEmptySelection) {
-    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project, allowEmptySelection);
   }
 }

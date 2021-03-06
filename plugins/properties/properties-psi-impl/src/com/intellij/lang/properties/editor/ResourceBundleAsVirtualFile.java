@@ -128,7 +128,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
   }
 
   @Override
-  public InputStream getInputStream() {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 

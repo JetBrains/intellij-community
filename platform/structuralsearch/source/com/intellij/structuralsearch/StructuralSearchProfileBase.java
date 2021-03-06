@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.NodeFilter;
@@ -41,7 +40,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private static final String DELIMITER_CHARS = ",;.[]{}():";
 
   @Override
-  public void compile(PsiElement[] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
+  public void compile(PsiElement @NotNull [] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
     final PsiElement topElement = elements[0].getParent();
     final PsiElement element = elements.length > 1 ? topElement : elements[0];
 
@@ -179,14 +178,14 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   protected abstract LanguageFileType getFileType();
 
   @Override
-  public void checkReplacementPattern(Project project, ReplaceOptions options) {}
+  public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {}
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return new DocumentBasedReplaceHandler(project);
   }
 
-  static boolean canBePatternVariable(PsiElement element) {
+  private static boolean canBePatternVariable(@NotNull PsiElement element) {
     // can be leaf element! (ex. var a = 1 <-> var $a$ = 1)
     if (element instanceof LeafElement) {
       return true;
@@ -213,7 +212,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return false;
   }
 
-  static boolean canBePatternVariableValue(PsiElement element) {
+  private static boolean canBePatternVariableValue(@NotNull PsiElement element) {
     // can be leaf element! (ex. var a = 1 <-> var $a$ = 1)
     return !containsOnlyDelimiters(element.getText());
   }
@@ -251,7 +250,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       }
     }
 
-    private void doVisitElement(PsiElement element) {
+    private void doVisitElement(@NotNull PsiElement element) {
       final CompiledPattern pattern = myGlobalVisitor.getContext().getPattern();
 
       if (myGlobalVisitor.getCodeBlockLevel() == 0) {
@@ -262,12 +261,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       if (canBePatternVariable(element) && pattern.isRealTypedVar(element)) {
         myGlobalVisitor.handle(element);
         final MatchingHandler handler = pattern.getHandler(element);
-        handler.setFilter(new NodeFilter() {
-          @Override
-          public boolean accepts(PsiElement other) {
-            return canBePatternVariableValue(other);
-          }
-        });
+        handler.setFilter(other -> canBePatternVariableValue(other));
 
         super.visitElement(element);
 
@@ -283,7 +277,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
           // todo: support variables inside comments
           if (StringUtil.isJavaIdentifier(text)) {
-            myGlobalVisitor.processTokenizedName(text, true, GlobalCompilingVisitor.OccurenceKind.CODE);
+            myGlobalVisitor.processTokenizedName(text, GlobalCompilingVisitor.OccurenceKind.CODE);
           }
         }
       }
@@ -413,8 +407,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         final PsiElement patternChild = element.getFirstChild();
         final PsiElement matchedChild = myGlobalVisitor.getElement().getFirstChild();
 
-        final FilteringNodeIterator patternIterator = new SsrFilteringNodeIterator(patternChild);
-        final FilteringNodeIterator matchedIterator = new SsrFilteringNodeIterator(matchedChild);
+        final NodeIterator patternIterator = SsrFilteringNodeIterator.create(patternChild);
+        final NodeIterator matchedIterator = SsrFilteringNodeIterator.create(matchedChild);
 
         final boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);
@@ -456,13 +450,13 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private static class MySubstitutionHandler extends SubstitutionHandler {
     final Set<PsiElement> myExceptedNodes;
 
-    MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+    MySubstitutionHandler(@NotNull String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
       super(name, target, minOccurs, maxOccurs, greedy);
       myExceptedNodes = new HashSet<>();
     }
 
     @Override
-    public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
+    public boolean matchSequentially(@NotNull NodeIterator patternNodes, @NotNull NodeIterator matchNodes, @NotNull MatchContext context) {
       if (doMatchSequentially(patternNodes, matchNodes, context)) {
         return true;
       }

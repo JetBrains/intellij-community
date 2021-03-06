@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.Disposable;
@@ -25,18 +25,6 @@ public abstract class PsiManagerEx extends PsiManager {
   public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable);
 
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
-
-  /**
-   * @param runnable to be run before <b>physical</b> PSI change
-   */
-  public abstract void registerRunnableToRunOnChange(@NotNull Runnable runnable);
-
-  /**
-   * @param runnable to be run before <b>physical</b> or <b>non-physical</b> PSI change
-   */
-  public abstract void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable);
-
-  public abstract void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable);
 
   @NotNull
   public abstract FileManager getFileManager();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.testFramework.LightVirtualFile;
@@ -109,12 +110,12 @@ public class LayoutCodeDialog extends DialogWrapper {
   }
 
   @Nullable
-  private String getChangesNotAvailableHint() {
+  private @NlsContexts.Tooltip String getChangesNotAvailableHint() {
     if (!VcsFacade.getInstance().isFileUnderVcs(myFile)) {
-      return "File not under VCS root";
+      return CodeInsightBundle.message("tooltip.file.not.under.vcs.root");
     }
     else if (!VcsFacade.getInstance().hasChanges(myFile)) {
-      return "File was not changed since last revision";
+      return CodeInsightBundle.message("tooltip.file.was.not.changed.since.last.revision");
     }
     return null;
   }

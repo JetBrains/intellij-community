@@ -6,9 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class JdkScope extends LibraryScopeBase {
-  private final String myJdkName;
+  private final @Nullable String myJdkName;
 
   public JdkScope(Project project, JdkOrderEntry entry) {
     this(project, entry.getRootFiles(OrderRootType.CLASSES), entry.getRootFiles(OrderRootType.SOURCES), entry.getJdkName());
@@ -17,14 +20,14 @@ public class JdkScope extends LibraryScopeBase {
   public JdkScope(Project project,
                   VirtualFile[] classes,
                   VirtualFile[] sources,
-                  String jdkName) {
+                  @Nullable String jdkName) {
     super(project, classes, sources);
     myJdkName = jdkName;
   }
 
   @Override
   public int calcHashCode() {
-    return 31 * super.calcHashCode() + myJdkName.hashCode();
+    return 31 * super.calcHashCode() + (myJdkName == null ? 0 : myJdkName.hashCode());
   }
 
   @Override
@@ -32,6 +35,6 @@ public class JdkScope extends LibraryScopeBase {
     if (object == this) return true;
     if (object.getClass() != getClass()) return false;
 
-    return myJdkName.equals(((JdkScope)object).myJdkName) && super.equals(object);
+    return Objects.equals(myJdkName, ((JdkScope)object).myJdkName) && super.equals(object);
   }
 }

@@ -3,17 +3,18 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class ProcessNotCreatedException extends ExecutionException {
   private final GeneralCommandLine myCommandLine;
 
-  public ProcessNotCreatedException(final String s, final GeneralCommandLine commandLine) {
-    super(s);
+  public ProcessNotCreatedException(final @DialogMessage String message, final GeneralCommandLine commandLine) {
+    super(message);
     myCommandLine = commandLine;
   }
 
-  public ProcessNotCreatedException(final String s, final Throwable cause, final GeneralCommandLine commandLine) {
-    super(s, cause);
+  public ProcessNotCreatedException(final @DialogMessage String message, final Throwable cause, final GeneralCommandLine commandLine) {
+    super(message, cause);
     myCommandLine = commandLine;
   }
 

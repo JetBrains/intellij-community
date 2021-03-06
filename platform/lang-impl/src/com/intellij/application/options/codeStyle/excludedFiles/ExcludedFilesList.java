@@ -3,7 +3,6 @@ package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.formatting.fileSet.NamedScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -142,7 +141,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     List<NamedScope> namedScopes = new ArrayList<>();
     for (NamedScopesHolder holder : getScopeHolders()) {
       for (NamedScope scope : holder.getEditableScopes()) {
-        if (!usedNames.contains(scope.getName())) {
+        if (!usedNames.contains(scope.getScopeId())) {
           namedScopes.add(scope);
         }
       }
@@ -191,7 +190,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     if (scopesDialog.isOK()) {
       NamedScope scope = scopesDialog.getSelectedScope();
       if (scope != null) {
-        String newName = scope.getName();
+        String newName = scope.getScopeId();
         FileSetDescriptor newDesciptor = null;
         if (selectedName == null) {
           newDesciptor = findDescriptor(newName);

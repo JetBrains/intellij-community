@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,23 +7,19 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
-import com.intellij.util.xmlb.Converter;
-import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
-import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Dennis.Ushakov
  */
-public class HTMLControls {
+public final class HTMLControls {
   private static final Logger LOG = Logger.getInstance(HTMLControls.class);
   private static Control[] ourControls;
 
@@ -55,54 +51,49 @@ public class HTMLControls {
       LOG.error("HTMLControls storage is broken");
       return new Control[0];
     }
-    return XmlSerializer.deserialize(element, Control[].class);
+    return deserialize(element);
   }
 
-  public enum TagState { REQUIRED, OPTIONAL, FORBIDDEN }
-
-  @Tag("control")
-  public static class Control {
-    @Attribute("name")
-    public String name;
-    @Attribute(value = "startTag", converter = TagStateConverter.class)
-    public TagState startTag;
-    @Attribute(value = "endTag", converter = TagStateConverter.class)
-    public TagState endTag;
-    @Attribute("emptyAllowed")
-    public boolean emptyAllowed;
-    @Attribute(value = "autoClosedBy", converter = AutoCloseConverter.class)
-    public Set<String> autoClosedBy = Collections.emptySet();
-  }
-
-  private static class TagStateConverter extends Converter<TagState> {
-    @Nullable
-    @Override
-    public TagState fromString(@NotNull String value) {
-      return TagState.valueOf(StringUtil.toUpperCase(value));
-    }
-
-    @NotNull
-    @Override
-    public String toString(@NotNull TagState state) {
-      return StringUtil.toLowerCase(state.name());
-    }
-  }
-
-  private static class AutoCloseConverter extends Converter<Set<String>> {
-    @Nullable
-    @Override
-    public Set<String> fromString(@NotNull String value) {
-      final THashSet<String> result = new THashSet<>();
-      for (String closingTag : StringUtil.split(value, ",")) {
-        result.add(StringUtil.toLowerCase(closingTag.trim()));
+  private static Control[] deserialize(Element element) {
+    ArrayList<Control> controls = new ArrayList<>();
+    for (Element child : element.getChildren()) {
+      if ("control".equals(child.getName())) {
+        Control control = new Control(
+          child.getAttributeValue("name"),
+          TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("startTag"))),
+          TagState.valueOf(StringUtil.toUpperCase(child.getAttributeValue("endTag"))),
+          "true".equalsIgnoreCase(child.getAttributeValue("emptyAllowed")),
+          autoClosed(child.getAttributeValue("autoClosedBy")));
+        controls.add(control);
       }
-      return result;
     }
+    return controls.toArray(new Control[0]);
+  }
 
-    @NotNull
-    @Override
-    public String toString(@NotNull Set<String> o) {
-      return StringUtil.join(o, ", ");
+  private static Set<String> autoClosed(@Nullable String value) {
+    if (value == null) return Collections.emptySet();
+    Set<String> result = new HashSet<>();
+    for (String closingTag : StringUtil.split(value, ",")) {
+      result.add(StringUtil.toLowerCase(closingTag.trim()));
+    }
+    return result;
+  }
+
+  public enum TagState {REQUIRED, OPTIONAL, FORBIDDEN}
+
+  public static class Control {
+    public final String name;
+    public final TagState startTag;
+    public final TagState endTag;
+    public final boolean emptyAllowed;
+    public final Set<String> autoClosedBy;
+
+    public Control(String name, TagState startTag, TagState endTag, boolean emptyAllowed, Set<String> autoClosedBy) {
+      this.name = name;
+      this.endTag = endTag;
+      this.startTag = startTag;
+      this.emptyAllowed = emptyAllowed;
+      this.autoClosedBy = autoClosedBy;
     }
   }
 }

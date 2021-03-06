@@ -10,7 +10,7 @@ import org.editorconfig.language.psi.EditorConfigPatternEnumeration
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigRemoveBracesQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.pattern-enumeration.redundant.remove-braces.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.pattern-enumeration.redundant.remove-braces.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val patternEnumeration = descriptor.psiElement as? EditorConfigPatternEnumeration ?: return

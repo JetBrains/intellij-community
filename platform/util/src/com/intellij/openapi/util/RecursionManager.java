@@ -1,15 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,9 +52,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author peter
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-public class RecursionManager {
+public final class RecursionManager {
   private static final Logger LOG = Logger.getInstance(RecursionManager.class);
-  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
+  private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(() -> new CalculationStack());
   private static final AtomicBoolean ourAssertOnPrevention = new AtomicBoolean();
   private static final AtomicBoolean ourAssertOnMissedCache = new AtomicBoolean();
 
@@ -81,7 +77,9 @@ public class RecursionManager {
   public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
     return new RecursionGuard<Key>() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
+      public <T, E extends Throwable> @Nullable T computePreventingRecursion(@NotNull Key key,
+                                                                             boolean memoize,
+                                                                             @NotNull ThrowableComputable<T, E> computation) throws E{
         MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
@@ -134,7 +132,7 @@ public class RecursionManager {
       @NotNull
       @Override
       public List<Key> currentStack() {
-        ArrayList<Key> result = new ArrayList<>();
+        List<Key> result = new ArrayList<>();
         for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
             //noinspection unchecked
@@ -152,6 +150,18 @@ public class RecursionManager {
       }
 
     };
+  }
+
+  /**
+   * Clears the memoization cache for the current thread. This can be invoked when a side effect happens
+   * inside a {@link #doPreventingRecursion} call that may affect results of nested memoizing {@code doPreventingRecursion} calls,
+   * whose memoized results should not be reused on that point.<p></p>
+   *
+   * Please avoid this method at all cost and try to restructure your code to avoid side effects inside {@code doPreventingRecursion}.
+   */
+  @ApiStatus.Internal
+  public static void dropCurrentMemoizationCache() {
+    ourStack.get().intermediateCache.clear();
   }
 
   /**
@@ -225,12 +235,12 @@ public class RecursionManager {
     }
   }
 
-  private static class CalculationStack {
+  private static final class CalculationStack {
     private int reentrancyCount;
     private int depth;
     private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
     private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
-    private final Map<MyKey, Throwable> preventions = ContainerUtil.newIdentityTroveMap();
+    private final Map<MyKey, Throwable> preventions = new IdentityHashMap<>();
     private final Map<MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
@@ -349,20 +359,20 @@ public class RecursionManager {
     }
   }
 
-  private static final String[] toleratedFrames = {
+  private static final @NonNls String[] toleratedFrames = {
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
+    "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
     "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779
     "com.intellij.psi.impl.search.JavaDirectInheritorsSearcher.processConcurrentlyIfTooMany(", // IDEA-229003
 
     // WEB-42912
     "com.intellij.lang.javascript.psi.resolve.JSEvaluatorComplexityTracker.doRunTask(",
     "com.intellij.lang.javascript.ecmascript6.types.JSTypeSignatureChooser.chooseOverload(",
-    "com.intellij.lang.javascript.psi.resolve.JSTypeEvaluator.getElementType(",
+    "com.intellij.lang.javascript.psi.resolve.JSEvaluationCache.getElementType(",
     "com.intellij.lang.ecmascript6.psi.impl.ES6ImportSpecifierImpl.multiResolve(",
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 
     // IDEA-228814
-    "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
 
     // IDEA-212671
@@ -395,7 +405,7 @@ public class RecursionManager {
     void addPrevention(int stamp, MyKey prevented) {
       reentrancyStamp = stamp;
       if (preventionsInside == null) {
-        preventionsInside = new THashSet<>();
+        preventionsInside = new HashSet<>();
       }
       preventionsInside.add(prevented);
     }

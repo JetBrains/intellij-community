@@ -42,11 +42,11 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +66,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
   static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger");
 
+  public static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
+  private static final String REATTACH_DEBUG_PROCESS_NAME = "ExternalSystemReattachDebugProcess";
+  private boolean isDebugServerProcess = true;
+  private boolean isReattachDebugProcess = false;
+
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
                                         ConfigurationFactory factory,
@@ -77,6 +82,22 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public String suggestedName() {
     return AbstractExternalSystemTaskConfigurationType.generateName(getProject(), mySettings);
+  }
+
+  public boolean isReattachDebugProcess() {
+    return isReattachDebugProcess;
+  }
+
+  public void setReattachDebugProcess(boolean reattachDebugProcess) {
+    isReattachDebugProcess = reattachDebugProcess;
+  }
+
+  public boolean isDebugServerProcess() {
+    return isDebugServerProcess;
+  }
+
+  public void setDebugServerProcess(boolean debugServerProcess) {
+    isDebugServerProcess = debugServerProcess;
   }
 
   @Override
@@ -101,6 +122,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
+
+      final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
+      if (debugServerProcess != null) {
+        isDebugServerProcess = Boolean.valueOf(debugServerProcess.getText());
+      }
+      final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
+      if (reattachProcess != null) {
+        isReattachDebugProcess = Boolean.valueOf(reattachProcess.getText());
+      }
     }
     EP_NAME.forEachExtensionSafe(extension -> extension.readExternal(this, element));
   }
@@ -122,6 +152,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         }
       }
     }));
+
+    final Element debugServerProcess = new Element(DEBUG_SERVER_PROCESS_NAME);
+    debugServerProcess.setText(String.valueOf(isDebugServerProcess));
+    element.addContent(debugServerProcess);
+    final Element reattachProcess = new Element(REATTACH_DEBUG_PROCESS_NAME);
+    reattachProcess.setText(String.valueOf(isReattachDebugProcess));
+    element.addContent(reattachProcess);
+
     EP_NAME.forEachExtensionSafe(extension -> extension.writeExternal(this, element));
   }
 
@@ -172,21 +210,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     return scope;
   }
 
-  /**
-   * @deprecated Internal class {@link MyRunnableState} was turned into fully fledged class {@link ExternalSystemRunnableState}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static class MyRunnableState extends ExternalSystemRunnableState {
-    public MyRunnableState(@NotNull ExternalSystemTaskExecutionSettings settings,
-                           @NotNull Project project,
-                           boolean debug,
-                           @NotNull ExternalSystemRunConfiguration configuration,
-                           @NotNull ExecutionEnvironment env) {
-      super(settings, project, debug, configuration, env);
-    }
-  }
-
   static void foldGreetingOrFarewell(@Nullable ExecutionConsole consoleView, String text, boolean isGreeting) {
     int limit = 100;
     if (text.length() < limit) {
@@ -212,22 +235,24 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       consoleViewImpl = null;
     }
     if (consoleViewImpl != null) {
-      consoleViewImpl.performWhenNoDeferredOutput(() -> {
-        if (!ApplicationManager.getApplication().isDispatchThread()) return;
+      UIUtil.invokeLaterIfNeeded(() -> {
+        consoleViewImpl.performWhenNoDeferredOutput(() -> {
+          if (!ApplicationManager.getApplication().isDispatchThread()) return;
 
-        Document document = consoleViewImpl.getEditor().getDocument();
-        int line = isGreeting ? 0 : document.getLineCount() - 2;
-        if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
-          final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
-          foldingModel.runBatchFoldingOperation(() -> {
-            FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
-                                                           document.getLineEndOffset(line) + 1,
-                                                           StringUtil.trimLog(text, limit));
-            if (region != null) {
-              region.setExpanded(false);
-            }
-          });
-        }
+          Document document = consoleViewImpl.getEditor().getDocument();
+          int line = isGreeting ? 0 : document.getLineCount() - 2;
+          if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
+            final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
+            foldingModel.runBatchFoldingOperation(() -> {
+              FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
+                                                             document.getLineEndOffset(line) + 1,
+                                                             StringUtil.trimLog(text, limit));
+              if (region != null) {
+                region.setExpanded(false);
+              }
+            });
+          }
+        });
       });
     }
   }

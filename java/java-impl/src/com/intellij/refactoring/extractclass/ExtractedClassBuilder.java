@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -182,7 +168,7 @@ class ExtractedClassBuilder {
 
   private void calculateBackpointerName() {
     final String baseName;
-    if (originalClassName.indexOf((int)'.') == 0) {
+    if (originalClassName.indexOf('.') == 0) {
       baseName = StringUtil.decapitalize(originalClassName);
     }
     else {
@@ -375,7 +361,7 @@ class ExtractedClassBuilder {
     }
   }
 
-  private class Mutator extends JavaElementVisitor {
+  private final class Mutator extends JavaElementVisitor {
     @NonNls
     private final StringBuffer out;
 
@@ -484,22 +470,16 @@ class ExtractedClassBuilder {
 
     private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
                           final String fieldName) {
-      if (tokenType.equals(JavaTokenType.EQ)) {
-        final String setterName = GenerateMembersUtil.suggestSetterName(field);
-        out.append(fieldName + '.' + setterName + '(');
-        rhs.accept(this);
-        out.append(')');
-      }
-      else {
+      final String setterName = GenerateMembersUtil.suggestSetterName(field);
+      out.append(fieldName).append('.').append(setterName).append('(');
+      if (!tokenType.equals(JavaTokenType.EQ)) {
         final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-        final String setterName = GenerateMembersUtil.suggestSetterName(field);
-        out.append(fieldName + '.' + setterName + '(');
         final String getterName = GenerateMembersUtil.suggestGetterName(field);
-        out.append(fieldName + '.' + getterName + "()");
+        out.append(fieldName).append('.').append(getterName).append("()");
         out.append(operator);
-        rhs.accept(this);
-        out.append(')');
       }
+      rhs.accept(this);
+      out.append(')');
     }
 
 

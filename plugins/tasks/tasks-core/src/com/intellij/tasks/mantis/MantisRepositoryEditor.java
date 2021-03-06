@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.mantis;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -49,7 +36,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<? super MantisRepository> changeListener) {
     super(project, repository, changeListener);
 
-    myTestButton.setText("Login");
+    myTestButton.setText(TaskBundle.message("login"));
     myTestButton.setEnabled(myRepository.isConfigured());
 
     // Populate filters list on project selection
@@ -116,21 +103,21 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
+    myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectCombobox = new ComboBox<>(200);
-    myProjectCombobox.setRenderer(SimpleListCellRenderer.create("Login first", MantisProject::getName));
-    myFilterLabel = new JBLabel("Filter:", SwingConstants.RIGHT);
+    myProjectCombobox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.login.first"), MantisProject::getName));
+    myFilterLabel = new JBLabel(TaskBundle.message("label.filter"), SwingConstants.RIGHT);
     myFilterCombobox = new ComboBox<>(200);
-    myFilterCombobox.setRenderer(SimpleListCellRenderer.create("Login first", MantisFilter::getName));
+    myFilterCombobox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.login.first"), MantisFilter::getName));
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myProjectLabel, myProjectCombobox)
       .addLabeledComponent(myFilterLabel, myFilterCombobox)
       .getPanel();
   }
 
-  private class FetchMantisProjects extends TaskUiUtil.ComboBoxUpdater<MantisProject> {
+  private final class FetchMantisProjects extends TaskUiUtil.ComboBoxUpdater<MantisProject> {
     private FetchMantisProjects() {
-      super(MantisRepositoryEditor.this.myProject, "Downloading Mantis Projects...", myProjectCombobox);
+      super(MantisRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.mantis.projects"), myProjectCombobox);
     }
 
     @NotNull

@@ -13,6 +13,7 @@ import com.intellij.psi.InjectedLanguagePlaces
 import com.intellij.psi.LanguageInjector
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.NeedsIndex
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * For tests checking platform behavior not related to Java language (but they may still use Java for code samples)
  */
+@NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 @CompileStatic
 class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   void "test no autopopup in the middle of word when the only variant is already in the editor"() {

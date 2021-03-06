@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
@@ -16,12 +17,12 @@ import java.util.Set;
  * Table of textmate preferences.
  * Table represents mapping from scopeNames to set of preferences {@link Preferences}
  */
-public class PreferencesRegistry {
+public final class PreferencesRegistry {
   @NotNull private final Set<Preferences> myPreferences = new HashSet<>();
-  @NotNull private final TIntHashSet myLeftHighlightingBraces = new TIntHashSet();
-  @NotNull private final TIntHashSet myRightHighlightingBraces = new TIntHashSet();
-  @NotNull private final TIntHashSet myLeftSmartTypingBraces = new TIntHashSet();
-  @NotNull private final TIntHashSet myRightSmartTypingBraces = new TIntHashSet();
+  @NotNull private final IntSet myLeftHighlightingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myRightHighlightingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myLeftSmartTypingBraces = new IntOpenHashSet();
+  @NotNull private final IntSet myRightSmartTypingBraces = new IntOpenHashSet();
 
   public PreferencesRegistry() {
     fillHighlightingBraces(Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS);

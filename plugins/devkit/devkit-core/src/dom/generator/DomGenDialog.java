@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.dom.generator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.io.File;
@@ -20,9 +21,9 @@ public class DomGenDialog extends DialogWrapper{
     panel = new DomGenPanel(project);
     comp = panel.getComponent();
     panel.restore();
-    setTitle("Generate DOM Model From XSD or DTD");
+    setTitle(DevKitBundle.message("dom.generator.dialog.title"));
     init();
-    getOKAction().putValue(Action.NAME, "Generate");
+    getOKAction().putValue(Action.NAME, DevKitBundle.message("dom.generator.generate.button"));
   }
 
   @Override

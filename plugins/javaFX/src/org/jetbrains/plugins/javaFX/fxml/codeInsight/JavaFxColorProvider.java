@@ -31,7 +31,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
   private static final String GRAY = "gray";
   private static final String GRAY_RGB = "grayRgb";
   private static final String HSB = "hsb";
-  private static final Set<String> FACTORY_METHODS = ContainerUtil.immutableSet(COLOR, RGB, GRAY, GRAY_RGB, HSB);
+  private static final Set<String> FACTORY_METHODS = Set.of(COLOR, RGB, GRAY, GRAY_RGB, HSB);
   private static final String DECIMAL_FORMAT_PATTERN = "#.####";
   private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = new DecimalFormatSymbols(Locale.US); // use '.' as a decimal separator
 

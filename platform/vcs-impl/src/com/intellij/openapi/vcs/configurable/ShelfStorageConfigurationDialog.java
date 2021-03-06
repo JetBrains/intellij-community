@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,9 +25,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
-import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurationPanel.getDefaultShelfPresentationPath;
+import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.getDefaultShelfPresentationPath;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.*;
 
@@ -56,21 +44,21 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
 
   protected ShelfStorageConfigurationDialog(@NotNull Project project) {
     super(project);
-    setTitle(VcsBundle.getString("change.shelves.location.dialog.title"));
+    setTitle(VcsBundle.message("change.shelves.location.dialog.title"));
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
-    myUseCustomShelfDirectory = new JBRadioButton(VcsBundle.getString("change.shelves.location.dialog.custom.label"));
+    myUseCustomShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.custom.label"));
     if (isUnderWin10LookAndFeel()) {
       myUseCustomShelfDirectory.setBorder(JBUI.Borders.emptyRight(DEFAULT_HGAP));
     }
-    myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.getString("change.shelves.location.dialog.default.label"), true);
+    myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.default.label"), true);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener(VcsBundle.getString("shelf.tab"),
-                                                 VcsBundle.getString("change.shelves.location.dialog.location.browser.title"),
+    myShelfDirectoryPath.addBrowseFolderListener(VcsBundle.message("shelf.tab"),
+                                                 VcsBundle.message("change.shelves.location.dialog.location.browser.title"),
                                                  myProject,
                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
-    setOKButtonText(VcsBundle.getString("change.shelves.location.dialog.action.button"));
+    setOKButtonText(VcsBundle.message("change.shelves.location.dialog.action.button"));
     initComponents();
     updateOkAction();
     getOKAction().putValue(DEFAULT_ACTION, null);
@@ -108,7 +96,7 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   @Override
   protected JComponent createNorthPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-    JBLabel label = new JBLabel(VcsBundle.getString("change.shelves.location.dialog.group.title"));
+    JBLabel label = new JBLabel(VcsBundle.message("change.shelves.location.dialog.group.title"));
     contentPanel.add(label, BorderLayout.NORTH);
     JPanel buttonPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
     buttonPanel.setBorder(JBUI.Borders.emptyLeft(20));
@@ -160,21 +148,22 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     boolean nowCustom = myUseCustomShelfDirectory.isSelected();
     if (nowCustom && !checkAndIgnoreIfCreated(customPath)) {
       PopupUtil
-        .showBalloonForComponent(myShelfDirectoryPath, "Can't find or create new shelf directory", MessageType.WARNING, false, myProject);
+        .showBalloonForComponent(myShelfDirectoryPath,
+                                 VcsBundle.message("configurable.shelf.storage.cant.find.or.create.new.shelf.directory"), MessageType.WARNING, false, myProject);
       return;
     }
     myVcsConfiguration.USE_CUSTOM_SHELF_PATH = nowCustom;
     myVcsConfiguration.CUSTOM_SHELF_PATH = customPath;
     myVcsConfiguration.MOVE_SHELVES = myMoveShelvesCheckBox.isSelected();
-    File fromFile = new File(wasCustom ? prevPath : getDefaultShelfPath(myProject));
-    File toFile = new File(nowCustom ? customPath : getDefaultShelfPath(myProject));
+    Path fromFile = wasCustom ? Paths.get(prevPath) : getDefaultShelfPath(myProject);
+    Path toFile = nowCustom ? Paths.get(customPath) : getDefaultShelfPath(myProject);
 
-    if (!FileUtil.filesEqual(fromFile, toFile)) {
+    if (!FileUtil.pathsEqual(fromFile.toString(), toFile.toString())) {
       myProject.save();
       if (wasCustom) {
         ApplicationManager.getApplication().saveSettings();
       }
-      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(fromFile, toFile, wasCustom);
+      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(fromFile.toFile(), toFile.toFile(), wasCustom);
     }
     super.doOKAction();
   }
@@ -195,10 +184,10 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
       if (!toFile.exists()) return null;   // check that file can be created after OK button pressed;
       String validationError = null;
       if (!toFile.canRead()) {
-        validationError = "Destination shelf directory should have read access";
+        validationError = VcsBundle.message("configurable.shelf.storage.destination.shelf.directory.should.have.read.access");
       }
       if (!toFile.canWrite()) {
-        validationError = "Destination shelf directory should have write access";
+        validationError = VcsBundle.message("configurable.shelf.storage.destination.shelf.directory.should.have.write.access");
       }
       if (validationError != null) return new ValidationInfo(validationError, myShelfDirectoryPath);
     }

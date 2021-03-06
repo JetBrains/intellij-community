@@ -29,7 +29,8 @@
   <depends optional="true" config-file="profiler-java.xml">com.intellij.modules.profiler</depends>
   <depends optional="true" config-file="structuralsearch-java.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="RemoteServersJava.xml">com.intellij.modules.remoteServers</depends>
-  <depends optional="true" config-file="JavaCMakeActionPatcher.xml">com.intellij.modules.clion.cmake</depends> <!-- a workaround for IDEA-209728 -->
+  <depends optional="true" config-file="java-features-trainer.xml">training</depends>
+  <depends optional="true" config-file="java-ml-local-models.xml">com.intellij.ml.local.models</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>

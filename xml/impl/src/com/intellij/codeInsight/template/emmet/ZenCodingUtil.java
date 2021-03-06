@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
+import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene.Kudelevsky
  */
-public class ZenCodingUtil {
+public final class ZenCodingUtil {
   private static final char NUMBER_IN_ITERATION_PLACE_HOLDER = '$';
   private static final String SURROUNDED_TEXT_MARKER = "$#";
 
@@ -75,14 +62,12 @@ public class ZenCodingUtil {
               i++;
             }
             int baseInt = StringUtil.parseInt(base.toString(), 0) - 1;
-            baseInt = baseInt >= 0 ? baseInt : 0;
-            if(baseInt >= 0) {
-              int byInt = decrement
-                          ? totalIterations - numberInIteration
-                          : numberInIteration + 1;
-              byInt += baseInt;
-              by = Integer.toString(byInt);
-            }
+            baseInt = Math.max(baseInt, 0);
+            int byInt = decrement
+                        ? totalIterations - numberInIteration
+                        : numberInIteration + 1;
+            byInt += baseInt;
+            by = Integer.toString(byInt);
           }
           for (int k = 0, m = markersCount - by.length(); k < m; k++) {
             builder.append('0');
@@ -126,7 +111,7 @@ public class ZenCodingUtil {
 
   public static boolean isHtml(CustomTemplateCallback callback) {
     FileType type = callback.getFileType();
-    if (type == StdFileTypes.HTML || type == StdFileTypes.XHTML) {
+    if (type == HtmlFileType.INSTANCE || type == XHtmlFileType.INSTANCE) {
       return true;
     }
     return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(HTMLLanguage.INSTANCE);

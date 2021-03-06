@@ -72,7 +72,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
           }
         }
 
-        if (fileInRoots(file)) {
+        if (classOwner instanceof PsiCompiledElement || fileInRoots(file)) {
           PsiClass[] classes = ReadAction.compute(classOwner::getClasses);
           if (classes.length == 1 && isClassForTreeNode(file, classes[0])) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1, child.getChildren()));

@@ -2,118 +2,29 @@
 package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcsUtil.VcsFileUtil
-import com.intellij.vcsUtil.VcsUtil
-import com.intellij.xml.util.XmlStringUtil
-import git4idea.i18n.GitBundle
-import git4idea.index.ui.GIT_FILE_STATUS_NODES_STREAM
+import com.intellij.util.containers.asJBIterable
 import git4idea.index.ui.GitFileStatusNode
-import git4idea.index.ui.NodeKind
-import git4idea.repo.GitRepositoryManager
-import git4idea.util.GitFileUtils
+import git4idea.index.ui.GitStageDataKeys
 import java.util.function.Supplier
-import kotlin.streams.toList
+import javax.swing.Icon
 
-abstract class GitFileStatusNodeAction(dynamicText: Supplier<String>) : DumbAwareAction(dynamicText) {
-  protected abstract fun matches(statusNode: GitFileStatusNode): Boolean
-  @Throws(VcsException::class)
-  protected abstract fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>)
-  protected abstract fun progressTitle(): String
-  protected abstract fun showErrorMessage(project: Project, exceptions: Collection<VcsException>)
+abstract class GitFileStatusNodeAction(text: Supplier<String>, description: Supplier<String>, icon: Icon? = null)
+  : DumbAwareAction(text, description, icon) {
 
   override fun update(e: AnActionEvent) {
-    val statusInfoStream = e.getData(GIT_FILE_STATUS_NODES_STREAM)
-    e.presentation.isEnabledAndVisible = e.project != null && statusInfoStream != null &&
-                                         statusInfoStream.anyMatch(this::matches)
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+    e.presentation.isEnabledAndVisible = e.project != null && nodes.filter(this::matches).isNotEmpty
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val paths = e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).filter(this::matches).map { it.filePath }.toList()
-    val exceptions = runProcess(project, progressTitle(), true) {
-      performAction(project, paths)
-    }
-    if (exceptions.isNotEmpty()) {
-      showErrorMessage(project, exceptions)
-    }
+    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+
+    perform(project, nodes.filter(this::matches).toList())
   }
 
-  private fun performAction(project: Project, paths: List<FilePath>): Collection<VcsException> {
-    val exceptions = mutableListOf<VcsException>()
-    VcsUtil.groupByRoots(project, paths) { it }.forEach { (vcsRoot, paths) ->
-      try {
-        processPaths(project, vcsRoot.path, paths)
-        VcsFileUtil.markFilesDirty(project, paths)
-        GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot.path)?.repositoryFiles?.refreshIndexFile()
-      }
-      catch (ex: VcsException) {
-        exceptions.add(ex)
-      }
-    }
-    return exceptions
-  }
-}
-
-class GitAddAction : GitFileStatusNodeAction(GitBundle.messagePointer("add.action.name")) {
-  override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED || statusNode.kind == NodeKind.UNTRACKED
-
-  override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
-    GitFileUtils.addPaths(project, root, paths, false)
-  }
-
-  override fun progressTitle() = GitBundle.message("add.adding")
-
-  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
-    showErrorMessage(project, VcsBundle.message("error.adding.files.title"), exceptions)
-  }
-}
-
-class GitResetAction : GitFileStatusNodeAction(GitBundle.messagePointer("stage.reset.action.text")) {
-  override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.STAGED
-
-  override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
-    GitFileUtils.resetPaths(project, root, paths)
-  }
-
-  override fun progressTitle() = GitBundle.message("stage.reset.process")
-
-  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
-    showErrorMessage(project, GitBundle.message("stage.reset.error.title"), exceptions)
-  }
-}
-
-class GitRevertAction : GitFileStatusNodeAction(GitBundle.messagePointer("stage.revert.action.text")) {
-  override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED
-
-  override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
-    GitFileUtils.revertUnstagedPaths(project, root, paths)
-  }
-
-  override fun progressTitle() = GitBundle.message("stage.revert.process")
-
-  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
-    showErrorMessage(project, GitBundle.message("stage.revert.error.title"), exceptions)
-  }
-}
-
-fun <T> runProcess(project: Project, title: @NlsContexts.ProgressTitle String, canBeCancelled: Boolean, process: () -> T): T {
-  return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable { process() },
-                                                                                         title, canBeCancelled, project)
-}
-
-private fun showErrorMessage(project: Project, messageTitle: String, exceptions: Collection<Exception>) {
-  VcsBalloonProblemNotifier.showOverVersionControlView(project, XmlStringUtil.wrapInHtmlTag("$messageTitle:", "b")
-                                                                + "\n" + exceptions.joinToString("\n") { it.localizedMessage },
-                                                       MessageType.ERROR)
+  abstract fun matches(statusNode: GitFileStatusNode): Boolean
+  abstract fun perform(project: Project, nodes: List<GitFileStatusNode>)
 }

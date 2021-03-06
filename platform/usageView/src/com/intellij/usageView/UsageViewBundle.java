@@ -3,13 +3,15 @@
 package com.intellij.usageView;
 
 import com.intellij.DynamicBundle;
+import com.intellij.ide.IdeDeprecatedMessagesBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class UsageViewBundle extends DynamicBundle {
+public final class UsageViewBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.UsageViewBundle";
 
   private static final UsageViewBundle INSTANCE = new UsageViewBundle();
@@ -17,13 +19,19 @@ public class UsageViewBundle extends DynamicBundle {
   private UsageViewBundle() { super(BUNDLE); }
 
   @NotNull
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
-  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getLazyMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 
   @SuppressWarnings({"AutoBoxing"})
@@ -32,6 +40,7 @@ public class UsageViewBundle extends DynamicBundle {
   }
 
   @SuppressWarnings({"AutoBoxing"})
+  @Nls
   public static String getReferencesString(int usagesCount, int filesCount) {
     return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
   }

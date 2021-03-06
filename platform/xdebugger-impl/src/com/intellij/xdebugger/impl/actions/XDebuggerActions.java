@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import org.jetbrains.annotations.NonNls;
@@ -41,12 +27,14 @@ public interface XDebuggerActions {
   @NonNls String QUICK_EVALUATE_EXPRESSION = "QuickEvaluateExpression";
 
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_GROUP = "XDebugger.ToolWindow.TopToolbar";
+  @NonNls String TOOL_WINDOW_TOP_TOOLBAR_3_GROUP = "XDebugger.ToolWindow.TopToolbar3";
   @NonNls String TOOL_WINDOW_LEFT_TOOLBAR_GROUP = "XDebugger.ToolWindow.LeftToolbar";
   @NonNls String EVALUATE_DIALOG_TREE_POPUP_GROUP = "XDebugger.Evaluation.Dialog.Tree.Popup";
   @NonNls String INSPECT_TREE_POPUP_GROUP = "XDebugger.Inspect.Tree.Popup";
   @NonNls String VARIABLES_TREE_TOOLBAR_GROUP = "XDebugger.Variables.Tree.Toolbar";
   @NonNls String VARIABLES_TREE_POPUP_GROUP = "XDebugger.Variables.Tree.Popup";
   @NonNls String WATCHES_TREE_POPUP_GROUP = "XDebugger.Watches.Tree.Popup";
+  @NonNls String WATCHES_INLINE_POPUP_GROUP = "XDebugger.Watches.Inline.Popup";
   @NonNls String WATCHES_TREE_TOOLBAR_GROUP = "XDebugger.Watches.Tree.Toolbar";
   @NonNls String FRAMES_TREE_POPUP_GROUP = "XDebugger.Frames.Tree.Popup";
   @NonNls String THREADS_TREE_POPUP_GROUP = "XDebugger.Threads.Tree.Popup";
@@ -67,9 +55,6 @@ public interface XDebuggerActions {
   @NonNls String TOGGLE_SORT_VALUES = "XDebugger.ToggleSortValues";
 
   @NonNls String INLINE_DEBUGGER = "XDebugger.Inline";
-
-  @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
-  @NonNls String AUTO_TOOLTIP_ON_SELECTION = "XDebugger.AutoTooltipOnSelection";
 
   @NonNls String MARK_OBJECT = "Debugger.MarkObject";
 

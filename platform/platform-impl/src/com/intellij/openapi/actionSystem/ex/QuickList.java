@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import java.util.List;
 
 public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
-  public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
+  @NonNls public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
   private static final String ACTION_TAG = "action";

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -29,9 +30,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,15 +41,15 @@ import java.util.function.Predicate;
 
 public class GlobalInspectionContextBase extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextBase.class);
-  private static final TObjectHashingStrategy<Tools> TOOLS_HASHING_STRATEGY = new TObjectHashingStrategy<Tools>() {
+  private static final Hash.Strategy<Tools> TOOLS_HASHING_STRATEGY = new Hash.Strategy<>() {
     @Override
-    public int computeHashCode(Tools object) {
-      return object.getShortName().hashCode();
+    public int hashCode(@Nullable Tools object) {
+      return object == null ? 0 : object.getShortName().hashCode();
     }
 
     @Override
-    public boolean equals(Tools o1, Tools o2) {
-      return o1.getShortName().equals(o2.getShortName());
+    public boolean equals(@Nullable Tools o1, @Nullable Tools o2) {
+      return o1 == o2 || (o1 != null && o2 != null && o1.getShortName().equals(o2.getShortName()));
     }
   };
 
@@ -68,7 +68,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
-  final Map<String, Tools> myTools = new THashMap<>();
+  final Map<String, Tools> myTools = new HashMap<>();
 
   @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
@@ -316,7 +316,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (dependentTools.isEmpty()) {
       return tools;
     }
-    Set<Tools> set = new THashSet<>(tools, TOOLS_HASHING_STRATEGY);
+    Set<Tools> set = new ObjectOpenCustomHashSet<>(tools, TOOLS_HASHING_STRATEGY);
     set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
     return new ArrayList<>(set);
   }
@@ -430,7 +430,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   @Override
-  public void incrementJobDoneAmount(@NotNull JobDescriptor job, @NotNull String message) {
+  public void incrementJobDoneAmount(@NotNull JobDescriptor job, @NotNull @NlsContexts.ProgressText String message) {
     if (myProgressIndicator == null) return;
 
     ProgressManager.checkCanceled();

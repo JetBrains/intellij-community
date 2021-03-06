@@ -1,41 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.ide.TypePresentationService;
-import com.intellij.lang.findUsages.LanguageFindUsages;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.JavaElementKind;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
+public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   @NotNull
   private final PsiArrayType myTargetType;
-  private final String myName;
-  private final String myFamilyName;
+  private final @IntentionName String myName;
+  private final @IntentionFamilyName String myFamilyName;
 
   private VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer,
                                @NotNull PsiArrayType arrayType,
@@ -64,21 +51,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   }
 
   private static String formatType(@NotNull PsiVariable variable) {
-    final String type = LanguageFindUsages.getType(variable);
-    if (StringUtil.isNotEmpty(type)) {
-      return type;
-    }
-
-    return TypePresentationService.getService().getTypePresentableName(variable.getClass());
-  }
-
-  private static PsiArrayInitializerExpression getInitializer(PsiArrayInitializerExpression initializer) {
-    PsiArrayInitializerExpression arrayInitializer = initializer;
-    while (arrayInitializer.getParent() instanceof PsiArrayInitializerExpression) {
-      arrayInitializer = (PsiArrayInitializerExpression)arrayInitializer.getParent();
-    }
-
-    return arrayInitializer;
+    return JavaElementKind.fromElement(variable).lessDescriptive().subject();
   }
 
   private static PsiVariable getVariableLocal(@NotNull PsiArrayInitializerExpression initializer) {
@@ -105,17 +78,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   }
 
   private static PsiNewExpression getNewExpressionLocal(@NotNull PsiArrayInitializerExpression initializer) {
-    PsiNewExpression newExpressionLocal = null;
-
-    final PsiElement parent = initializer.getParent();
-    if (parent instanceof PsiVariable) {
-
-    }
-    else if (parent instanceof PsiNewExpression) {
-      newExpressionLocal = (PsiNewExpression)parent;
-    }
-
-    return newExpressionLocal;
+    return ObjectUtils.tryCast(initializer.getParent(), PsiNewExpression.class);
   }
 
   @Nullable

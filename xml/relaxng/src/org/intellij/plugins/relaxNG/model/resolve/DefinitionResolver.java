@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.openapi.util.Factory;
@@ -29,7 +28,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.model.*;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefinitionResolver extends CommonElement.Visitor implements
+public final class DefinitionResolver extends CommonElement.Visitor implements
         CachedValueProvider<Map<String, Set<Define>>>, Factory<Set<Define>> {
 
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
@@ -58,7 +57,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
     final PsiFile value = include.getInclude();
     if (myVisitedFiles.get() == null) {
-      myVisitedFiles.set(ContainerUtil.newIdentityTroveSet());
+      myVisitedFiles.set(new ReferenceOpenHashSet<>());
     }
     if (value != null && myVisitedFiles.get().add(value)) {
       doVisitRncOrRngFile(value, this);
@@ -105,7 +104,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public Set<Define> create() {
-    return new THashSet<>();
+    return new HashSet<>();
   }
 
   @Override

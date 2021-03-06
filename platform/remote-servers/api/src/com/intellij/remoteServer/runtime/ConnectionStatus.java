@@ -1,11 +1,23 @@
 package com.intellij.remoteServer.runtime;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
+import org.jetbrains.annotations.Nls;
+
+import java.util.function.Supplier;
 
 public enum ConnectionStatus {
-  DISCONNECTED, CONNECTED, CONNECTING;
+  DISCONNECTED(CloudBundle.messagePointer("ConnectionStatus.disconnected")),
+  CONNECTED(CloudBundle.messagePointer("ConnectionStatus.connected")),
+  CONNECTING(CloudBundle.messagePointer("ConnectionStatus.connecting"));
 
+  private final Supplier<@Nls String> myPresentableText;
+
+  @Nls
   public String getPresentableText() {
-    return StringUtil.capitalize(StringUtil.toLowerCase(name()));
+    return myPresentableText.get();
+  }
+
+  ConnectionStatus(Supplier<@Nls String> presentableText) {
+    myPresentableText = presentableText;
   }
 }

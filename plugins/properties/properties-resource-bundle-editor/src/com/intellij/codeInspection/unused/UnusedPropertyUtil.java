@@ -8,6 +8,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class UnusedPropertyUtil {
+public final class UnusedPropertyUtil {
   private static final Logger LOG = Logger.getInstance(UnusedPropertyUtil.class);
   @NotNull
   public static Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
@@ -40,7 +41,7 @@ public class UnusedPropertyUtil {
                                                 new RemovePropertiesFromAllLocalesFix((Property)properties[0]))} : null;
   }
 
-  private static class RemovePropertiesFromAllLocalesFix implements QuickFix<ResourceBundleEditorProblemDescriptor> {
+  private static final class RemovePropertiesFromAllLocalesFix implements QuickFix<ResourceBundleEditorProblemDescriptor> {
     private final SmartPsiElementPointer<Property> myRepresentativePointer;
 
     private RemovePropertiesFromAllLocalesFix(Property property) {

@@ -1,15 +1,13 @@
 package com.intellij.dupLocator.iterators;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Node iterator over array
- */
 public final class ArrayBackedNodeIterator extends NodeIterator {
   private final PsiElement[] nodes;
   private int index;
 
-  public ArrayBackedNodeIterator(final PsiElement[] _nodes) {
+  public ArrayBackedNodeIterator(PsiElement @NotNull [] _nodes) {
     nodes = _nodes;
     index = 0;
   }
@@ -26,7 +24,7 @@ public final class ArrayBackedNodeIterator extends NodeIterator {
 
   @Override
   public PsiElement current() {
-    if (index < nodes.length)
+    if (index < nodes.length && index >= 0)
       return nodes[index];
 
     return null;

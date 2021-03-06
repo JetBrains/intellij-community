@@ -7,6 +7,8 @@ import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class LightCompactConstructorParameter extends LightParameter implements LightRecordMember {
   private final @NotNull PsiRecordComponent myRecordComponent;
 
@@ -43,5 +45,17 @@ public class LightCompactConstructorParameter extends LightParameter implements 
   @Override
   public PsiElement getNavigationElement() {
     return myRecordComponent.getNavigationElement();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof LightCompactConstructorParameter &&
+           myRecordComponent.equals(((LightCompactConstructorParameter)o).myRecordComponent);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRecordComponent);
   }
 }

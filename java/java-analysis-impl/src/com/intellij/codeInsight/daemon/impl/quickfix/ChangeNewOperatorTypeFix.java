@@ -89,7 +89,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         }
         text.append("]");
         if (caretOffset < 0) {
-          caretOffset -= arrayDimension.length() + 2;
+          caretOffset -= 2;
         }
       }
 
@@ -201,7 +201,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new ChangeNewOperatorTypeFix(myType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

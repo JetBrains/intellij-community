@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.filter;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -23,11 +23,11 @@ import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -78,7 +78,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
     addSeparator();
 
-    final Set<String> languageIds = new THashSet<>();
+    final Set<String> languageIds = new HashSet<>();
     for (ScopeToolState state : profile.getDefaultStates(project)) {
       final String language = state.getTool().getLanguage();
       if (language != null) languageIds.add(language);
@@ -160,7 +160,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction implements DumbAware {
+  private final class ShowWithSpecifiedSeverityInspectionsAction extends CheckboxAction implements DumbAware {
 
     private final HighlightSeverity mySeverity;
 
@@ -237,7 +237,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
                                  (StringUtil.isEmptyOrSpaces(StringUtil.trimStart(ApplicationInfo.getInstance().getMinorVersion(),"0")) ?
                                  "" : "."+ApplicationInfo.getInstance().getMinorVersion());
   private final String presentableVersion = ApplicationNamesInfo.getInstance().getProductName() + " " + version;
-  private class ShowNewInspectionsAction extends AnAction implements DumbAware {
+  private final class ShowNewInspectionsAction extends AnAction implements DumbAware {
     private ShowNewInspectionsAction() {
       super(AnalysisBundle.message("inspections.settings.show.new.text", presentableVersion),
             AnalysisBundle.message("inspections.settings.show.new.description", presentableVersion),
@@ -246,7 +246,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myFilterComponent.setFilter("\"New in " + version + "\"");
+      myFilterComponent.setFilter("\"New in " + version + "\""); //NON-NLS
     }
   }
 

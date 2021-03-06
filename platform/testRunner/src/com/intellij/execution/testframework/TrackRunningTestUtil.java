@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.ClickListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,11 +18,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
 
-public class TrackRunningTestUtil {
+public final class TrackRunningTestUtil {
   private TrackRunningTestUtil() { }
 
   /** @deprecated use {@link #installStopListeners(JTree, Disposable, Consumer)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void installStopListeners(JTree tree, Disposable parentDisposable, Pass<? super AbstractTestProxy> setSelection) {
     installStopListeners(tree, parentDisposable, (Consumer<? super AbstractTestProxy>)setSelection);
   }
@@ -30,7 +32,7 @@ public class TrackRunningTestUtil {
     final ClickListener userSelectionListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        setSelection.accept(setUserSelection(tree.getPathForLocation(e.getX(), e.getY())));
+        setSelection.accept(getUserSelection(tree));
         return true;
       }
     };
@@ -42,7 +44,7 @@ public class TrackRunningTestUtil {
         if (keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP ||
             keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT ||
             keyCode == KeyEvent.VK_PAGE_DOWN || keyCode == KeyEvent.VK_PAGE_UP) {
-          setSelection.accept(setUserSelection(tree.getSelectionPath()));
+          setSelection.accept(getUserSelection(tree));
         }
       }
     };
@@ -57,7 +59,8 @@ public class TrackRunningTestUtil {
   }
 
   @Nullable
-  private static AbstractTestProxy setUserSelection(TreePath treePath) {
+  private static AbstractTestProxy getUserSelection(JTree tree) {
+    TreePath treePath = tree.getSelectionPath();
     if (treePath != null) {
       final Object component = treePath.getLastPathComponent();
       if (component instanceof DefaultMutableTreeNode) {

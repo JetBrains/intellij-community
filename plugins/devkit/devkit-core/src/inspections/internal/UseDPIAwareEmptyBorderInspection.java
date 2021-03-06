@@ -11,8 +11,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBBorderQuickFix;
 
@@ -20,6 +22,9 @@ import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBBorderQuickFix;
  * @author Konstantin Bulenkov
  */
 public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
+  private static final CallMatcher JBUI_BORDERS_EMPTY = 
+    CallMatcher.staticCall("com.intellij.util.ui.JBUI.Borders", "empty");
+  
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -46,17 +51,17 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
   private static ProblemDescriptor checkMethodCallCanBeSimplified(PsiMethodCallExpression expression,
                                                                   InspectionManager manager,
                                                                   boolean isOnTheFly) {
-    PsiType type = expression.getType();
-    if (type != null
-        && JBEmptyBorder.class.getName().equals(type.getCanonicalText())
-        && expression.getText().contains("empty(")
-        && ConvertToJBBorderQuickFix.canSimplify(expression)) {
-      return manager.createProblemDescriptor(expression, "Simplify", new ConvertToJBBorderQuickFix() {
-        @Override
-        public @IntentionFamilyName @NotNull String getFamilyName() {
-          return "Simplify";
-        }
-      }, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+    if (!JBUI_BORDERS_EMPTY.test(expression)) return null;
+    if (ConvertToJBBorderQuickFix.canSimplify(expression)) {
+      return manager.createProblemDescriptor(expression,
+                                             DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify"),
+                                             new ConvertToJBBorderQuickFix() {
+                                               @Override
+                                               public @IntentionFamilyName @NotNull String getFamilyName() {
+                                                 return DevKitBundle.message("inspections.use.dpi.aware.empty.border.family.name");
+                                               }
+                                             },
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
     }
     return null;
   }
@@ -76,12 +81,12 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
           if (parentType == null || JBEmptyBorder.class.getName().equals(parentType.getCanonicalText())) return null;
         }
         if (arguments.getExpressionCount() == 4) {
-          return manager.createProblemDescriptor(expression, "Replace with JBUI.Borders.empty(...)", new ConvertToJBBorderQuickFix(),
+          return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.dpi.aware.empty.border.replace"),
+                                                 new ConvertToJBBorderQuickFix(),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         }
       }
     }
     return null;
   }
-
 }

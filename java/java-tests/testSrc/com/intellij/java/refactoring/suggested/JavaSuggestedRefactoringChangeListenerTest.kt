@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.ide.highlighter.JavaFileType
@@ -9,7 +9,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLocalVariable
-import com.intellij.psi.util.findDescendantOfType
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
 import com.intellij.refactoring.suggested.endOffset
 
@@ -133,7 +133,7 @@ class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChang
     }
 
     perform("editingStarted: 'a'", "nextSignature: 'abcd'") {
-      val variable = file.findDescendantOfType<PsiLocalVariable>()!!
+      val variable = file.descendantsOfType<PsiLocalVariable>().first()
       myFixture.editor.caretModel.moveToOffset(variable.nameIdentifier!!.endOffset)
       myFixture.type("bcd")
       commitAll()

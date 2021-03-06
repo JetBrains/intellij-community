@@ -2,13 +2,14 @@
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class UnknownDependencyNode extends AbstractDependencyNode {
   private final String name;
 
   @PropertyMapping({"id", "name"})
-  public UnknownDependencyNode(long id, String name) {
+  public UnknownDependencyNode(long id, @Nls String name) {
     super(id);
     this.name = name;
   }
@@ -16,15 +17,13 @@ public class UnknownDependencyNode extends AbstractDependencyNode {
   @NotNull
   @Override
   public String getDisplayName() {
-    return name == null ? "unknown" : name;
+    return name == null ? "unknown" : name; //NON-NLS
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-    UnknownDependencyNode node = (UnknownDependencyNode)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    UnknownDependencyNode node = (UnknownDependencyNode)dependencyNode;
     if (name != null ? !name.equals(node.name) : node.name != null) return false;
     return true;
   }

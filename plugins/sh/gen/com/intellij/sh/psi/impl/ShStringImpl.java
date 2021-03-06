@@ -16,10 +16,12 @@ public class ShStringImpl extends ShLiteralImpl implements ShString {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitString(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

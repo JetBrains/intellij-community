@@ -24,7 +24,10 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
+import javax.swing.plaf.FontUIResource;
+import javax.swing.text.StyleContext;
 import java.awt.*;
+import java.util.Locale;
 
 /**
  * @author yole
@@ -35,13 +38,25 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type ourUIManagerType = Type.getType("Ljavax/swing/UIManager;");
   private static final Type ourObjectType = Type.getType(Object.class);
   private static final Type ourStringType = Type.getType(String.class);
+  private static final Type ourSystemType = Type.getType(System.class);
+  private static final Type ourLocaleType = Type.getType(Locale.class);
+  private static final Type ourStyleContextType = Type.getType(StyleContext.class);
+  private static final Type ourFontUIResource = Type.getType(FontUIResource.class);
 
-  private static final Method ourInitMethod = Method.getMethod("void <init>(java.lang.String,int,int)");
+  private static final Method ourInitFontMethod = Method.getMethod("void <init>(java.lang.String,int,int)");
+  private static final Method ourInitStyleContextMethod = Method.getMethod("void <init>()");
+  private static final Method ourInitFontUIResourceMethod = Method.getMethod("void <init>(java.awt.Font)");
+
   private static final Method ourUIManagerGetFontMethod = new Method("getFont", ourFontType, new Type[]{ourObjectType});
   private static final Method ourGetNameMethod = new Method("getName", ourStringType, new Type[0]);
+  private static final Method ourGetFamilyMethod = new Method("getFamily", ourStringType, new Type[0]);
   private static final Method ourGetSizeMethod = new Method("getSize", Type.INT_TYPE, new Type[0]);
   private static final Method ourGetStyleMethod = new Method("getStyle", Type.INT_TYPE, new Type[0]);
-  private static final Method ourCanDisplay = new Method("canDisplay", Type.BOOLEAN_TYPE, new Type[]{Type.CHAR_TYPE});
+  private static final Method ourCanDisplayMethod = new Method("canDisplay", Type.BOOLEAN_TYPE, new Type[]{Type.CHAR_TYPE});
+  private static final Method ourGetPropertyMethod = new Method("getProperty", ourStringType, new Type[]{ourStringType, ourStringType});
+  private static final Method ourToLowerCaseMethod = new Method("toLowerCase", ourStringType, new Type[]{ourLocaleType});
+  private static final Method ourStartsWithMethod = new Method("startsWith", Type.BOOLEAN_TYPE, new Type[]{ourStringType});
+  private static final Method ourGetFontMethod = new Method("getFont", ourFontType, new Type[] {ourStringType, Type.INT_TYPE, Type.INT_TYPE});
 
   @Override
   public boolean generateCustomSetValue(final LwComponent lwComponent,
@@ -135,7 +150,7 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
     generator.loadArg(0); // name
     generator.push(Font.PLAIN);
     generator.push(10);
-    generator.invokeConstructor(ourFontType, ourInitMethod);
+    generator.invokeConstructor(ourFontType, ourInitFontMethod);
 
     int testFont = generator.newLocal(ourFontType);
     generator.storeLocal(testFont);
@@ -143,11 +158,11 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
     Label fontGetNameLabel = new Label();
     generator.loadLocal(testFont);
     generator.push('a');
-    generator.invokeVirtual(ourFontType, ourCanDisplay);
+    generator.invokeVirtual(ourFontType, ourCanDisplayMethod);
     generator.ifZCmp(GeneratorAdapter.EQ, fontGetNameLabel);
     generator.loadLocal(testFont);
     generator.push('1');
-    generator.invokeVirtual(ourFontType, ourCanDisplay);
+    generator.invokeVirtual(ourFontType, ourCanDisplayMethod);
     generator.ifZCmp(GeneratorAdapter.EQ, fontGetNameLabel);
 
     generator.loadArg(0); // name
@@ -187,7 +202,67 @@ public class FontPropertyCodeGenerator extends PropertyCodeGenerator {
     generator.invokeVirtual(ourFontType, ourGetSizeMethod);
     generator.mark(checkSize2);
 
-    generator.invokeConstructor(ourFontType, ourInitMethod);
+    generator.invokeConstructor(ourFontType, ourInitFontMethod);
+    int font = generator.newLocal(ourFontType);
+    generator.storeLocal(font);
+
+    generator.push("os.name");
+    generator.push("");
+    generator.invokeStatic(ourSystemType, ourGetPropertyMethod);
+    generator.getStatic(ourLocaleType, "ENGLISH", ourLocaleType);
+    generator.invokeVirtual(ourStringType, ourToLowerCaseMethod);
+    generator.push("mac");
+    generator.invokeVirtual(ourStringType, ourStartsWithMethod);
+    int isMac = generator.newLocal(Type.BOOLEAN_TYPE);
+    generator.storeLocal(isMac);
+
+    Label styleContextLabel = new Label();
+    generator.loadLocal(isMac);
+    generator.ifZCmp(GeneratorAdapter.EQ, styleContextLabel);
+
+    generator.newInstance(ourFontType);
+    generator.dup();
+    generator.loadLocal(font);
+    generator.invokeVirtual(ourFontType, ourGetFamilyMethod);
+    generator.loadLocal(font);
+    generator.invokeVirtual(ourFontType, ourGetStyleMethod);
+    generator.loadLocal(font);
+    generator.invokeVirtual(ourFontType, ourGetSizeMethod);
+    generator.invokeConstructor(ourFontType, ourInitFontMethod);
+
+    Label resultBlock = new Label();
+    generator.goTo(resultBlock);
+    generator.mark(styleContextLabel);
+
+    generator.newInstance(ourStyleContextType);
+    generator.dup();
+    generator.invokeConstructor(ourStyleContextType, ourInitStyleContextMethod);
+    generator.loadLocal(font);
+    generator.invokeVirtual(ourFontType, ourGetFamilyMethod);
+    generator.loadLocal(font);
+    generator.invokeVirtual(ourFontType, ourGetStyleMethod);
+    generator.loadLocal(font);
+    generator.invokeVirtual(ourFontType, ourGetSizeMethod);
+    generator.invokeVirtual(ourStyleContextType, ourGetFontMethod);
+
+    generator.mark(resultBlock);
+    int fontWithFallback = generator.newLocal(ourFontType);
+    generator.storeLocal(fontWithFallback);
+
+    Label newFontResource = new Label();
+    Label returnBlock = new Label();
+
+    generator.loadLocal(fontWithFallback);
+    generator.instanceOf(ourFontUIResource);
+    generator.ifZCmp(GeneratorAdapter.EQ, newFontResource);
+    generator.loadLocal(fontWithFallback);
+    generator.goTo(returnBlock);
+    generator.mark(newFontResource);
+    generator.newInstance(ourFontUIResource);
+    generator.dup();
+    generator.loadLocal(fontWithFallback);
+    generator.invokeConstructor(ourFontUIResource, ourInitFontUIResourceMethod);
+    generator.mark(returnBlock);
     generator.returnValue();
 
     generator.endMethod();

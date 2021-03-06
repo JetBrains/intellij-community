@@ -3,7 +3,9 @@ package org.editorconfig.language.codestyle
 
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
+import org.editorconfig.Utils
 import org.editorconfig.language.EditorConfigLanguage
+import org.editorconfig.language.messages.EditorConfigBundle
 
 class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
   override fun getLanguage() = EditorConfigLanguage
@@ -11,7 +13,7 @@ class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsP
   override fun createConfigurable(baseSettings: CodeStyleSettings, modelSettings: CodeStyleSettings):
     CodeStyleConfigurable = EditorConfigCodeStyleConfigurable(baseSettings, modelSettings)
 
-  override fun getConfigurableDisplayName() = "EditorConfig"
+  override fun getConfigurableDisplayName() = Utils.EDITOR_CONFIG_NAME
 
   override fun customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: IndentOptions) {
     commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS = true
@@ -33,9 +35,9 @@ class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsP
         "SPACE_AFTER_COLON"
       )
 
-      consumer.renameStandardOption("SPACE_AROUND_ASSIGNMENT_OPERATORS", "Around separator")
-      consumer.moveStandardOption("SPACE_BEFORE_COLON", "Around Operators")
-      consumer.moveStandardOption("SPACE_AFTER_COLON", "Around Operators")
+      consumer.renameStandardOption("SPACE_AROUND_ASSIGNMENT_OPERATORS", EditorConfigBundle.get("code.style.space.around.separator"))
+      consumer.moveStandardOption("SPACE_BEFORE_COLON", CodeStyleSettingsCustomizableOptions.getInstance().SPACES_AROUND_OPERATORS)
+      consumer.moveStandardOption("SPACE_AFTER_COLON", CodeStyleSettingsCustomizableOptions.getInstance().SPACES_AROUND_OPERATORS)
     }
 
     SettingsType.WRAPPING_AND_BRACES_SETTINGS -> {

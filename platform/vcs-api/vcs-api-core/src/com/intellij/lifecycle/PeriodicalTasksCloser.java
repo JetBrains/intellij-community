@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lifecycle;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,13 +21,14 @@ import org.jetbrains.annotations.NotNull;
  * e.g. via {@link ProgressManager#run(Task)} or {@code BackgroundTaskUtil#executeOnPooledThread}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Service
 public final class PeriodicalTasksCloser {
   private static final Logger LOG = Logger.getInstance(PeriodicalTasksCloser.class);
   private final Object myLock = new Object();
 
   public static PeriodicalTasksCloser getInstance() {
-    return ServiceManager.getService(PeriodicalTasksCloser.class);
+    return ApplicationManager.getApplication().getService(PeriodicalTasksCloser.class);
   }
 
   public <T> T safeGetComponent(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {

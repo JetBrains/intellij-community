@@ -1,21 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
@@ -33,18 +38,17 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author dsl
- */
 public class RootsChangedTest extends JavaModuleTestCase {
   private MyModuleRootListener myModuleRootListener;
 
@@ -96,7 +100,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     // when the existing root is renamed, it remains a root
     rename(vDir2, "dir2");
-    assertNoEvents();
+    assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
 
     // and event if it is moved, it's still a root
@@ -130,48 +134,36 @@ public class RootsChangedTest extends JavaModuleTestCase {
     verifyLibraryTableEditingInUncommittedModel(globalLibraryTable);
   }
 
-  public void testEditLibraryForModuleLoadFromXml() throws IOException {
-    final File tempDirectory = createTempDirectory();
+  public void testEditLibraryForModuleLoadFromXml() {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      Module a = loadModule(PathManagerEx.getHomePath(getClass()) + "/java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml");
+      Module a = loadModule(Paths.get(PathManagerEx.getHomePath(getClass())).resolve("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml"));
       assertEventsCount(1);
 
-      final Sdk jdk;
-      try {
-        jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
+      final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertNoEvents();
 
       ModuleRootModificationUtil.setModuleSdk(a, jdk);
       assertEventsCount(1);
 
-      final SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
+      SdkModificator sdkModificator = jdk.getSdkModificator();
+      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
     });
 
     assertEventsCount(1);
   }
 
-  public void testModuleJdkEditing() throws Exception {
-    final File tempDirectory = createTempDirectory();
+  public void testModuleJdkEditing() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module moduleA = createModule("a.iml");
       final Module moduleB = createModule("b.iml");
       assertEventsCount(2);
 
-      final Sdk jdk;
-      try {
-        jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
-      }
-      catch (CloneNotSupportedException e) {
-        throw new RuntimeException(e);
-      }
+      final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
+      final Sdk unused = ProjectJdkTable.getInstance().createSdk("unused", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+      ProjectJdkTable.getInstance().addJdk(unused, getTestRootDisposable());
       assertNoEvents();
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
@@ -183,14 +175,33 @@ public class RootsChangedTest extends JavaModuleTestCase {
       assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
+      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
+      assertEventsCount(1);
+
+      final SdkModificator sdkModificator2 = unused.getSdkModificator();
+      sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
+      sdkModificator2.commitChanges();
+      assertNoEvents();
+    });
+  }
+
+  public void testSetupUnknownJdk() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Module module = createModule("a.iml");
+      assertEventsCount(1);
+      ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      model.setInvalidSdk("new-jdk", JavaSdk.getInstance().getName());
+      model.commit();
+      assertEventsCount(1);
+
+      Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       assertEventsCount(1);
     });
   }
 
-  public void testInheritedJdkEditing() throws Exception {
-    final File tempDirectory = createTempDirectory();
+  public void testInheritedJdkEditing() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module moduleA = createModule("a.iml");
       final Module moduleB = createModule("b.iml");
@@ -226,7 +237,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
-      sdkModificator.addRoot(getVirtualFile(tempDirectory), OrderRootType.CLASSES);
+      sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
       assertEventsCount(1);
     });
@@ -240,7 +251,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Library libraryA = libraryTable.createLibrary("A");
       final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
-      libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
+      libraryModifiableModel.addRoot(someAbsoluteUrl("a"), OrderRootType.CLASSES);
       libraryModifiableModel.commit();
       assertNoEvents();
 
@@ -254,26 +265,11 @@ public class RootsChangedTest extends JavaModuleTestCase {
       ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
-      final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
-      final File tmpDir;
-      try {
-        tmpDir = FileUtil.createTempDirectory(getTestName(true), "");
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
-      try {
-        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpDir);
-        assertNotNull(file);
-
-        libraryModifiableModel2.addRoot(file.getUrl(), OrderRootType.CLASSES);
-        libraryModifiableModel2.commit();
-        assertEventsCount(1);
-      }
-      finally {
-        FileUtil.delete(tmpDir);
-      }
+      Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
+      VirtualFile file = getTempDir().createVirtualDir();
+      libraryModifiableModel2.addRoot(file.getUrl(), OrderRootType.CLASSES);
+      libraryModifiableModel2.commit();
+      assertEventsCount(1);
 
       libraryTable.removeLibrary(libraryA);
       assertEventsCount(1);
@@ -286,7 +282,12 @@ public class RootsChangedTest extends JavaModuleTestCase {
     });
   }
 
-  private void verifyLibraryTableEditingInUncommittedModel(final LibraryTable libraryTable) {
+  @NotNull
+  private static String someAbsoluteUrl(@NotNull String name) {
+    return SystemInfo.isUnix ? "file:///" + name : "file://C:/"+name;
+  }
+
+  private void verifyLibraryTableEditingInUncommittedModel(LibraryTable libraryTable) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module moduleA = createModule("a.iml");
       final Module moduleB = createModule("b.iml");
@@ -294,7 +295,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
       final Library libraryA = libraryTable.createLibrary("A");
       final Library.ModifiableModel libraryModifiableModel = libraryA.getModifiableModel();
-      libraryModifiableModel.addRoot("file:///a", OrderRootType.CLASSES);
+      libraryModifiableModel.addRoot(someAbsoluteUrl("a"), OrderRootType.CLASSES);
       libraryModifiableModel.commit();
       assertNoEvents();
 
@@ -303,7 +304,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       rootModelA.addLibraryEntry(libraryA);
       rootModelB.addLibraryEntry(libraryA);
       final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
-      libraryModifiableModel2.addRoot("file:///b", OrderRootType.CLASSES);
+      libraryModifiableModel2.addRoot(someAbsoluteUrl("b"), OrderRootType.CLASSES);
       libraryModifiableModel2.commit();
       assertNoEvents();
 
@@ -384,11 +385,12 @@ public class RootsChangedTest extends JavaModuleTestCase {
     }
   }
 
-  public void testRootsChangedPerformanceInPresenceOfManyVirtualFilePointers() throws Exception {
-    VirtualFile temp = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
+  public void testRootsChangedPerformanceInPresenceOfManyVirtualFilePointers() {
+    VirtualFile temp = getTempDir().createVirtualDir();
     String dirName = "xxx";
+    VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
     for (int i = 0; i < 10_000; i++) {
-      VirtualFilePointerManager.getInstance().create(temp.getUrl() + "/" + dirName + "/" + i, getTestRootDisposable(), null);
+      virtualFilePointerManager.create(temp.getUrl() + "/" + dirName + "/" + i, getTestRootDisposable(), null);
     }
 
     VirtualFile xxx = createChildDirectory(temp, dirName);
@@ -401,11 +403,10 @@ public class RootsChangedTest extends JavaModuleTestCase {
     }).assertTiming();
   }
 
-  @NotNull
+  // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
   @Override
-  protected Path getProjectDirOrFile() {
-    // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common
-    return getProjectDirOrFile(true);
+  protected boolean isCreateDirectoryBasedProject() {
+    return true;
   }
 
   public void testShelveChangesMustNotLeadToRootsChangedEvent() {
@@ -421,7 +422,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     assertEquals(myModuleRootListener.modificationCount, ProjectRootManager.getInstance(myProject).getModificationCount());
 
-    VirtualFile newShelf = createChildDirectory(getProject().getBaseDir().getParent(), "newShelf");
+    VirtualFile newShelf = createChildDirectory(getOrCreateProjectBaseDir().getParent(), "newShelf");
     VcsConfiguration vcs = VcsConfiguration.getInstance(myProject);
     vcs.USE_CUSTOM_SHELF_PATH = true;
     vcs.CUSTOM_SHELF_PATH = newShelf.getPath();
@@ -496,7 +497,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     ModuleRootModificationUtil.updateModel(module, model -> model.getContentEntries()[0].addExcludeFolder(vRoot.getUrl() + "/parent/excluded"));
 
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
-    BulkFileListener rogueListenerWhichStupidlyGetChildrensRightAway = new BulkFileListener() {
+    BulkFileListener rogueListenerWhichStupidlyGetChildrenRightAway = new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
@@ -507,7 +508,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
         }
       }
     };
-    connect.subscribe(VirtualFileManager.VFS_CHANGES, rogueListenerWhichStupidlyGetChildrensRightAway);
+    connect.subscribe(VirtualFileManager.VFS_CHANGES, rogueListenerWhichStupidlyGetChildrenRightAway);
 
     myModuleRootListener.reset();
 
@@ -523,6 +524,145 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioExcluded));
 
+    assertEventsCount(1);
+  }
+
+  public void testChangesInsideCompilerOutputDirectoryMustNotLeadToRootsChange() {
+    File temp = new File(FileUtil.getTempDirectory());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile content = VfsTestUtil.createDir(root, "content");
+
+    Module module = createModule("a.iml");
+    ModuleRootModificationUtil.addContentRoot(module, content.getPath());
+    VirtualFile out = VfsTestUtil.createDir(root, "out");
+
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      CompilerModuleExtension moduleExtension = model.getModuleExtension(CompilerModuleExtension.class);
+      moduleExtension.inheritCompilerOutputPath(false);
+      moduleExtension.setCompilerOutputPath(out);
+      moduleExtension.setCompilerOutputPathForTests(out);
+    });
+
+    myModuleRootListener.reset();
+    VirtualFile f1 = VfsTestUtil.createFile(out, "x/x.txt");
+    VirtualFile f2 = VfsTestUtil.createFile(out, "x/x.class");
+    assertEventsCount(0);
+    VfsTestUtil.deleteFile(f1);
+    VfsTestUtil.deleteFile(f2);
+    assertEventsCount(0);
+  }
+
+  public void testBulkRootsChanging() {
+    WriteAction.run(() -> {
+      myModuleRootListener.reset();
+      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+        for (int i = 0; i < 10; i++) {
+          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+          try {
+            File dir = createTempDir("src-" + i);
+            VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+            model.addContentEntry(vDir);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          model.commit();
+
+          assertEquals(1, myModuleRootListener.beforeCount);
+          assertEquals(0, myModuleRootListener.afterCount);
+        }
+      });
+      assertEventsCount(1);
+    });
+  }
+
+  public void testRootDirDeletionDoesntLeadToIndexing() throws IOException {
+    File contentRoot = createTempDir("content-root");
+    File excludedRoot = new File(contentRoot, "excluded-root");
+    assertTrue(excludedRoot.mkdirs());
+    VirtualFile excludedRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(excludedRoot);
+
+    ModuleRootModificationUtil.updateModel(myModule, model -> model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile));
+
+    AtomicInteger dumbModeCount = new AtomicInteger();
+    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    try {
+      connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        @Override
+        public void enteredDumbMode() {
+          dumbModeCount.incrementAndGet();
+        }
+      });
+
+      FileUtil.delete(excludedRoot);
+      excludedRootVFile.refresh(false, true);
+      assertFalse(excludedRootVFile.isValid());
+      assertEquals(0, dumbModeCount.get());
+    }
+    finally {
+      connection.disconnect();
+    }
+  }
+
+  public void testRootsChangeEventAtCreatingAndMoveFolderUnderJarDir() throws IOException {
+    String rootJarDirName = "jarDir";
+
+    File temp = new File(FileUtil.getTempDirectory());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
+
+    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable.ModifiableModel projectLibraryTableModifiableModel = projectLibraryTable.getModifiableModel();
+    Library projectLib = projectLibraryTableModifiableModel.createLibrary("lib");
+    Library.ModifiableModel modifiableModel = projectLib.getModifiableModel();
+    modifiableModel.addJarDirectory(jarDir, false);
+    WriteAction.runAndWait(() -> {
+      modifiableModel.commit();
+      projectLibraryTableModifiableModel.commit();
+    });
+
+    myModuleRootListener.reset();
+    // Creating simple file - first event
+    VfsTestUtil.createFile(jarDir, "test.txt");
+    // Creating folder - second event
+    VirtualFile newVirtualDirectory = VfsTestUtil.createDir(jarDir, "foo");
+    // Recursive folder creating - third event
+    VfsTestUtil.createDir(newVirtualDirectory, "bar");
+    assertEventsCount(3);
+
+    VirtualFile otherFolder = VfsTestUtil.createDir(root, "baz");
+    assertNoEvents();
+    WriteAction.runAndWait(() -> otherFolder.move(this, newVirtualDirectory));
+    assertEventsCount(1);
+  }
+
+  public void testRootsChangeEventAtRenameCopyAndDeleteFileUnderJarDir() throws IOException {
+    String rootJarDirName = "jarDir";
+
+    File temp = new File(FileUtil.getTempDirectory());
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile testFileUnderRoot = VfsTestUtil.createFile(root, "test.jar");
+
+    VirtualFile jarDir = VfsTestUtil.createDir(root, rootJarDirName);
+    VirtualFile testFileUnderJarDir = VfsTestUtil.createFile(jarDir, "test.jar");
+
+    LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
+    LibraryTable.ModifiableModel projectLibraryTableModifiableModel = projectLibraryTable.getModifiableModel();
+    Library projectLib = projectLibraryTableModifiableModel.createLibrary("lib");
+    Library.ModifiableModel modifiableModel = projectLib.getModifiableModel();
+    modifiableModel.addJarDirectory(jarDir, false);
+    WriteAction.runAndWait(() -> {
+      modifiableModel.commit();
+      projectLibraryTableModifiableModel.commit();
+    });
+
+    myModuleRootListener.reset();
+    WriteAction.runAndWait(() -> testFileUnderJarDir.rename(this, "test2.jar"));
+    assertEventsCount(1);
+    WriteAction.runAndWait(() -> testFileUnderJarDir.delete(this));
+    assertEventsCount(1);
+
+    WriteAction.runAndWait(() -> testFileUnderRoot.copy(this, jarDir, "test2.jar"));
     assertEventsCount(1);
   }
 }

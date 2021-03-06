@@ -11,7 +11,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler
-import com.intellij.openapi.options.*
+import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
@@ -179,8 +182,8 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
   override fun hasOwnContent() = true
 
   override fun getDependencies() = listOf(EP_NAME)
-  
+
   companion object {
-    private val EP_NAME = ExtensionPointName.create<EditorSmartKeysConfigurableEP>("com.intellij.editorSmartKeysConfigurable")
+    private val EP_NAME = ExtensionPointName<EditorSmartKeysConfigurableEP>("com.intellij.editorSmartKeysConfigurable")
   }
 }

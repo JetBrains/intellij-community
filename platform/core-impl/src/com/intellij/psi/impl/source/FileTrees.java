@@ -19,6 +19,7 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.StaticGetter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -156,7 +157,7 @@ final class FileTrees {
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
-    return new FileTrees(file, null, ast, null);
+    return new FileTrees(file, null, new StaticGetter<>(ast), null);
   }
 
   /**
@@ -211,7 +212,7 @@ final class FileTrees {
     return IntStream.range(0, spine.getStubCount()).mapToObj(spine::getStubPsi).collect(Collectors.toList());
   }
 
-  private void bindSubstratesToCachedPsi(List<StubElement<?>> stubList, List<CompositeElement> nodeList) {
+  private void bindSubstratesToCachedPsi(List<StubElement<?>> stubList, List<? extends CompositeElement> nodeList) {
     assert myRefToPsi != null;
     for (int i = firstNonFilePsiIndex; i < myRefToPsi.length; i++) {
       StubBasedPsiElementBase cachedPsi = SoftReference.dereference(myRefToPsi[i]);
@@ -227,7 +228,7 @@ final class FileTrees {
     }
   }
 
-  private static void bindStubsWithAst(@NotNull List<PsiElement> srcSpine, List<StubElement<?>> stubList, List<CompositeElement> nodeList, boolean takePsiFromStubs) {
+  private static void bindStubsWithAst(@NotNull List<? extends PsiElement> srcSpine, List<? extends StubElement<?>> stubList, List<? extends CompositeElement> nodeList, boolean takePsiFromStubs) {
     for (int i = firstNonFilePsiIndex; i < stubList.size(); i++) {
       StubElement<?> stub = stubList.get(i);
       CompositeElement node = nodeList.get(i);

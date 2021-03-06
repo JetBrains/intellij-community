@@ -128,7 +128,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  private class PsiCorrectedClassType extends PsiClassType.Stub {
+  private final class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 
@@ -205,6 +205,12 @@ class TypeCorrector extends PsiTypeMapper {
     @Override
     public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
       return new PsiCorrectedClassType(languageLevel, myDelegate, myResolveResult);
+    }
+
+    @Override
+    public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+      PsiClassType newDelegate = myDelegate.annotate(provider);
+      return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
     }
 
     @NotNull

@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.util.SmartList
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -56,6 +56,6 @@ class SaveResult {
 
   @Synchronized
   fun throwIfErrored() {
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    throwIfNotEmpty(errors)
   }
 }

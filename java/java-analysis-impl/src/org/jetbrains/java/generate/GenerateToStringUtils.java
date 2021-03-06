@@ -30,9 +30,9 @@ import java.util.List;
 /**
  * Utility methods for GenerationToStringAction and the inspections.
  */
-public class GenerateToStringUtils {
+public final class GenerateToStringUtils {
 
-    private static final Logger log = Logger.getInstance("#GenerateToStringUtils");
+    private static final Logger LOG = Logger.getInstance(GenerateToStringUtils.class);
 
     private GenerateToStringUtils() {}
 
@@ -48,7 +48,7 @@ public class GenerateToStringUtils {
     }
 
     /**
-     * Filters the list of fields from the class with the given parameters from the {@link org.jetbrains.java.generate.config.Config config} settings.
+     * Filters the list of fields from the class with the given parameters from the {@link Config config} settings.
      *
      * @param clazz          the class to filter it's fields
      * @param pattern        the filter pattern to filter out unwanted fields
@@ -57,7 +57,7 @@ public class GenerateToStringUtils {
     public static PsiField @NotNull [] filterAvailableFields(PsiClass clazz,
                                                              boolean includeSuperClass,
                                                              FilterPattern pattern) {
-        if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
+        if (LOG.isDebugEnabled()) LOG.debug("Filtering fields using the pattern: " + pattern);
         List<PsiField> availableFields = new ArrayList<>();
         collectAvailableFields(clazz, clazz, includeSuperClass, pattern, availableFields, new HashSet<>());
         return availableFields.toArray(PsiField.EMPTY_ARRAY);
@@ -106,7 +106,7 @@ public class GenerateToStringUtils {
      * @return methods available for this action after the filter process.
      */
     public static PsiMethod @NotNull [] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
-        if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
+        if (LOG.isDebugEnabled()) LOG.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<>();
         collectAvailableMethods(clazz, clazz, pattern, availableMethods, new HashSet<>());
         return availableMethods.toArray(PsiMethod.EMPTY_ARRAY);
@@ -160,8 +160,8 @@ public class GenerateToStringUtils {
                 continue;
             }
 
-            if (log.isDebugEnabled())
-                log.debug("Adding the method " + methodName + " as there is not a field for this getter");
+            if (LOG.isDebugEnabled())
+                LOG.debug("Adding the method " + methodName + " as there is not a field for this getter");
             availableMethods.add(method);
         }
     }

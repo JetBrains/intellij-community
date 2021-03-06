@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StarAnnotator extends PyAnnotator {
   @Override
-  public void visitPyStarExpression(PyStarExpression node) {
+  public void visitPyStarExpression(@NotNull PyStarExpression node) {
     super.visitPyStarExpression(node);
     if (!node.isAssignmentTarget() && !allowedUnpacking(node) && !(node.getParent() instanceof PyParameterTypeList)) {
       getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.can.t.use.starred.expression.here")).create();

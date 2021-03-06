@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.util.io.CharSequenceBackedByChars;
@@ -21,8 +21,7 @@ public abstract class MessageDecoder extends Decoder {
     return parseInt(builder, 0, false, 10);
   }
 
-  @Nullable
-  protected final CharSequence readChars(@NotNull ByteBuf input) {
+  protected final @Nullable CharSequence readChars(@NotNull ByteBuf input) {
     int readableBytes = input.readableBytes();
     if (readableBytes == 0) {
       input.release();

@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
-import gnu.trove.TObjectDoubleHashMap;
-import gnu.trove.TObjectDoubleProcedure;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -29,11 +16,10 @@ import java.util.regex.Pattern;
  * Some operations or some progress indications may be skipped - this will be handled properly.
  * @author Kirill Likhodedov
  */
-public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
-
+public final class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
   // progress of each operation is stored here. this is an overhead since operations go one by one,
   // but it looks simpler than storing current operation, checking that there was no skipped, etc.
-  private final TObjectDoubleHashMap<Operation> myOperationsProgress = new TObjectDoubleHashMap<>(4);
+  private final Object2DoubleOpenHashMap<Operation> myOperationsProgress = new Object2DoubleOpenHashMap<>(4);
 
   public static GitLineHandlerListener createListener(@NotNull final ProgressIndicator indicator) {
     final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();
@@ -75,7 +61,7 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
     private final Pattern myPattern;
     private final double myFractionInTotal;
 
-    Operation(String pattern, double fractionInTotal) {
+    Operation(@NonNls String pattern, double fractionInTotal) {
       myPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
       myFractionInTotal = fractionInTotal;
     }
@@ -97,7 +83,8 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
         try {
           double operationProgress = operation.getProgress(Integer.parseInt(matcher.group(1))); // progress of this operation
           myOperationsProgress.put(operation, operationProgress);
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
           return -1;
         }
         return updateTotalProgress(operation);
@@ -114,15 +101,10 @@ public class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
       }
     }
     // counting progress
-    final double[] totalProgress = new double[1];
-    myOperationsProgress.forEachEntry(new TObjectDoubleProcedure<Operation>() {
-      @Override
-      public boolean execute(Operation operation, double progress) {
-        totalProgress[0] += operation.myFractionInTotal * progress;
-        return true;
-      }
-    });
-    return totalProgress[0];
+    double totalProgress = 0;
+    for (Object2DoubleMap.Entry<Operation> entry : myOperationsProgress.object2DoubleEntrySet()) {
+      totalProgress += entry.getKey().myFractionInTotal * entry.getDoubleValue();
+    }
+    return totalProgress;
   }
-
 }

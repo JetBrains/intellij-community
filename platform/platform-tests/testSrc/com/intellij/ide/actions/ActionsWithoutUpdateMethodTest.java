@@ -23,7 +23,10 @@ public class ActionsWithoutUpdateMethodTest extends LightPlatformTestCase {
     "MaintenanceAction",
     "ShowProjectStructureSettings",
     "FocusEditor",
-    "SearchEverywhere"
+    "SearchEverywhere",
+    "Terminal.SmartCommandExecution.Run",
+    "Terminal.SmartCommandExecution.Debug",
+    "UiInspector"
   );
 
   public void testActionsWithShortcuts() throws Exception {

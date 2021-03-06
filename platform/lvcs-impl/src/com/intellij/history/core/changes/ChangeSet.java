@@ -17,8 +17,9 @@
 package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
-import com.intellij.history.core.StreamUtil;
+import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -35,7 +36,7 @@ import java.util.function.Supplier;
 
 public class ChangeSet {
   private final long myId;
-  @Nullable private String myName;
+  @Nullable private @NlsContexts.Label String myName;
   private final long myTimestamp;
   private final List<Change> myChanges;
 
@@ -49,13 +50,13 @@ public class ChangeSet {
 
   public ChangeSet(DataInput in) throws IOException {
     myId = DataInputOutputUtil.readLONG(in);
-    myName = StreamUtil.readStringOrNull(in);
+    myName = DataStreamUtil.readStringOrNull(in); //NON-NLS
     myTimestamp = DataInputOutputUtil.readTIME(in);
 
     int count = DataInputOutputUtil.readINT(in);
     List<Change> changes = new ArrayList<>(count);
     while (count-- > 0) {
-      changes.add(StreamUtil.readChange(in));
+      changes.add(DataStreamUtil.readChange(in));
     }
     myChanges = Collections.unmodifiableList(changes);
     isLocked = true;
@@ -64,19 +65,20 @@ public class ChangeSet {
   public void write(DataOutput out) throws IOException {
     LocalHistoryLog.LOG.assertTrue(isLocked, "Changeset should be locked");
     DataInputOutputUtil.writeLONG(out, myId);
-    StreamUtil.writeStringOrNull(out, myName);
+    DataStreamUtil.writeStringOrNull(out, myName);
     DataInputOutputUtil.writeTIME(out, myTimestamp);
 
     DataInputOutputUtil.writeINT(out, myChanges.size());
     for (Change c : myChanges) {
-      StreamUtil.writeChange(out, c);
+      DataStreamUtil.writeChange(out, c);
     }
   }
 
-  public void setName(@Nullable String name) {
+  public void setName(@Nullable @NlsContexts.Label String name) {
     myName = name;
   }
 
+  @NlsContexts.Label
   @Nullable
   public String getName() {
     return myName;
@@ -90,9 +92,11 @@ public class ChangeSet {
     isLocked = true;
   }
 
+  @NlsContexts.Label
   @Nullable
   public String getLabel() {
-    return accessChanges(() -> {
+    //noinspection RedundantTypeArguments
+    return this.<@NlsContexts.Label @Nullable String>accessChanges(() -> {
       for (Change each : myChanges) {
         if (each instanceof PutLabelChange) {
           return ((PutLabelChange)each).getName();

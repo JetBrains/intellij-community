@@ -40,8 +40,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.StringInterner;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,9 +78,9 @@ public class RefManagerImpl extends RefManager {
   private final List<RefGraphAnnotator> myGraphAnnotators = ContainerUtil.createConcurrentList();
   private GlobalInspectionContext myContext;
 
-  private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
+  private final Map<Key, RefManagerExtension> myExtensions = new HashMap<>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
-  private final Interner<String> myNameInterner = new StringInterner();
+  private final Interner<String> myNameInterner = Interner.createStringInterner();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -459,7 +457,8 @@ public class RefManagerImpl extends RefManager {
       else if (processExternalElements) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
-          RefManagerExtension externalFileManagerExtension = myExtensions.values().stream().filter(ex -> ex.shouldProcessExternalFile(file)).findFirst().orElse(null);
+          RefManagerExtension<?> externalFileManagerExtension =
+            ContainerUtil.find(myExtensions.values(), ex -> ex.shouldProcessExternalFile(file));
           if (externalFileManagerExtension == null) {
             if (element instanceof PsiFile) {
               VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
@@ -678,7 +677,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs) {
+  public void removeRefElement(@NotNull RefElement refElement, @NotNull List<? super RefElement> deletedRefs) {
     List<RefEntity> children = refElement.getChildren();
     RefElement[] refElements = children.toArray(new RefElement[0]);
     for (RefElement refChild : refElements) {

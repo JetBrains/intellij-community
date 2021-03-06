@@ -468,7 +468,7 @@ public class DefaultActionGroup extends ActionGroup {
    * @param templateText template text which will be used in statistics
    * @return action group
    */
-  public static DefaultActionGroup createUserDataAwareGroup(String templateText) {
+  public static DefaultActionGroup createUserDataAwareGroup(@ActionText String templateText) {
     return new DefaultActionGroup() {
       @Nullable
       @Override

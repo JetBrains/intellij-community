@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleExecuteAction;
@@ -14,9 +15,11 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +35,7 @@ import java.util.List;
  * @author oleg
  */
 public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> {
-  private final String myConsoleTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myConsoleTitle;
 
   private ProcessHandler myProcessHandler;
   private final String myWorkingDir;
@@ -44,7 +47,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   private ProcessBackedConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
-  public AbstractConsoleRunnerWithHistory(@NotNull Project project, @NotNull String consoleTitle, @Nullable String workingDir) {
+  public AbstractConsoleRunnerWithHistory(@NotNull Project project,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String consoleTitle,
+                                          @Nullable String workingDir) {
     myProject = project;
     myConsoleTitle = consoleTitle;
     myWorkingDir = workingDir;
@@ -124,7 +129,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return null;
   }
 
-  protected String constructConsoleTitle(final @NotNull String consoleTitle) {
+  protected @BuildEventsNls.Title String constructConsoleTitle(final @NotNull @NlsContexts.TabTitle String consoleTitle) {
     return new ConsoleTitleGen(myProject, consoleTitle, shouldAddNumberToTitle()).makeTitle();
   }
 

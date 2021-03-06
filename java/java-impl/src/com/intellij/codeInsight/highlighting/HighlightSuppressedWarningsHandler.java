@@ -131,12 +131,11 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
       try {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        Runnable inspect = () -> pass.doInspectInBatch(context, managerEx, toolsCopy);
         if (indicator == null) {
-          ProgressManager.getInstance().executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
+          ProgressManager.getInstance().executeProcessUnderProgress(() -> pass.doInspectInBatch(context, managerEx, toolsCopy), new ProgressIndicatorBase());
         }
         else {
-          inspect.run();
+          pass.doInspectInBatch(context, managerEx, toolsCopy);
         }
 
         for (HighlightInfo info : pass.getInfos()) {

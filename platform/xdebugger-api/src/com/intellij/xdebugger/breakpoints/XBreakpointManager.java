@@ -4,6 +4,7 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ public interface XBreakpointManager {
    * @deprecated There could be more than one default breakpoint per type. Use {@link XBreakpointManager#getDefaultBreakpoints} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type);
 
@@ -70,22 +72,19 @@ public interface XBreakpointManager {
 
   // no externals usages, agreed to keep it anyway for now
   // cannot be default because project message bus must be used
-  /**
-   * @deprecated Use {@link XBreakpointListener#TOPIC}
-   */
-  @Deprecated
-  void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link XBreakpointListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
 
   /**
    * @deprecated Use {@link XBreakpointListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void removeBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
 
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);

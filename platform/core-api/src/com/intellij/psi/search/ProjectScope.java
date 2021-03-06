@@ -1,15 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ProjectScope {
+public final class ProjectScope {
   private static final NotNullLazyKey<GlobalSearchScope, Project> ALL_SCOPE_KEY = NotNullLazyKey.create(
     "ALL_SCOPE_KEY",
     project -> ProjectScopeBuilder.getInstance(project).buildAllScope());
@@ -61,5 +59,9 @@ public class ProjectScope {
   @NotNull
   public static GlobalSearchScope getEverythingScope(@NotNull Project project) {
     return EVERYTHING_SCOPE_KEY.getValue(project);
+  }
+
+  public static @NotNull @Nls String getProjectFilesScopeName() {
+    return CoreBundle.message("psi.search.scope.project");
   }
 }

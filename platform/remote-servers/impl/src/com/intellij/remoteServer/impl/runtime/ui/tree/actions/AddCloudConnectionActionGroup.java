@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor;
-import com.intellij.remoteServer.CloudBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,8 @@ public class AddCloudConnectionActionGroup extends ActionGroup {
     private final ServerType<?> myServerType;
 
     AddCloudConnectionAction(ServerType<?> serverType) {
-      super(serverType.getPresentableName(), String.format("Add %s connection", serverType.getPresentableName()), serverType.getIcon());
+      super(serverType.getPresentableName(), CloudBundle.message("AddCloudConnectionAction.description", serverType.getPresentableName()),
+            serverType.getIcon());
       myServerType = serverType;
     }
 

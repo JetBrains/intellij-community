@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.File
 import java.util.*
-import kotlin.collections.ArrayList
 
 @Order(ExternalSystemConstants.UNORDERED)
 class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationProcessingData, ProcessorConfigProfile>() {
@@ -189,28 +189,27 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
   }
 
 
-  override fun computeOrphanData(toImport: MutableCollection<DataNode<AnnotationProcessingData>>,
+  override fun computeOrphanData(toImport: Collection<DataNode<AnnotationProcessingData>>,
                                  projectData: ProjectData,
                                  project: Project,
-                                 modelsProvider: IdeModifiableModelsProvider): Computable<MutableCollection<ProcessorConfigProfile>> =
+                                 modelsProvider: IdeModifiableModelsProvider): Computable<Collection<ProcessorConfigProfile>> =
     Computable {
-      val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+      val profiles = ArrayList((CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl).moduleProcessorProfiles)
       val importedProcessingProfiles = ArrayList(toImport).asSequence()
         .map { it.data }
         .distinct()
         .map { createProcessorConfigProfile(it) }
         .toList()
 
-      val orphans = config
-        .moduleProcessorProfiles
+      val orphans = profiles
         .filter { importedProcessingProfiles.none { imported -> imported.matches(it) } }
         .toMutableList()
 
       orphans
     }
 
-  override fun removeData(toRemoveComputable: Computable<MutableCollection<ProcessorConfigProfile>>,
-                          toIgnore: MutableCollection<DataNode<AnnotationProcessingData>>,
+  override fun removeData(toRemoveComputable: Computable<out Collection<ProcessorConfigProfile>>,
+                          toIgnore: Collection<DataNode<AnnotationProcessingData>>,
                           projectData: ProjectData,
                           project: Project,
                           modelsProvider: IdeModifiableModelsProvider) {
@@ -241,7 +240,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
 
   private fun CompilerConfigurationImpl.findOrCreateProcessorConfigProfile(data: AnnotationProcessingData): ProcessorConfigProfile {
     val newProfile = createProcessorConfigProfile(data)
-    return this.moduleProcessorProfiles
+    return ArrayList(this.moduleProcessorProfiles)
              .find { existing -> existing.matches(newProfile) }
            ?: newProfile.also { addModuleProcessorProfile(it) }
   }

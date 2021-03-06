@@ -68,7 +68,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   @Override
   @NotNull
   public String getName() {
-    return XmlDomBundle.message("create.new.element", myTypeName, myNewName);
+    return XmlDomBundle.message("dom.quickfix.create.new.element.name", myTypeName, myNewName);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlDomBundle.message("create.new.element.family");
+    return XmlDomBundle.message("dom.quickfix.create.new.element.family");
   }
 
   @Override
@@ -124,7 +124,8 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
         onChoose.consume(files.iterator().next());
         return;
       default:
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message("choose.file"), files) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message(
+          "dom.quickfix.create.new.element.choose.file.title"), files) {
           @Override
           public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
             onChoose.consume(selectedValue);
@@ -139,9 +140,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
           @Override
           @NotNull
           public String getTextFor(final DomElement value) {
-            final String name = DomUtil.getFile(value).getName();
-            assert name != null;
-            return name;
+            return DomUtil.getFile(value).getName();
           }
         }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }

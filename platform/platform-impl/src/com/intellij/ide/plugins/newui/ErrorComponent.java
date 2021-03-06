@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ import javax.swing.text.html.StyleSheet;
 /**
  * @author Alexander Lobas
  */
-public class ErrorComponent {
+public final class ErrorComponent {
   private static final String KEY = "EnableCallback";
 
   @NotNull
@@ -33,7 +34,7 @@ public class ErrorComponent {
     HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("span {color: " + ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR) + "}");
-    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
+    sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
     editorPane.setEditorKit(kit);
 
     editorPane.addHyperlinkListener(new HyperlinkAdapter() {
@@ -59,13 +60,16 @@ public class ErrorComponent {
   }
 
   public static void show(@NotNull JComponent errorComponent,
-                          @NotNull String message,
-                          @Nullable String action,
+                          @NotNull @Nls String message,
+                          @Nullable @Nls String action,
                           @Nullable Runnable enableCallback) {
     JEditorPane editorPane = (JEditorPane)errorComponent;
 
-    editorPane.setText("<html><span>" + StringUtil.escapeXmlEntities(message) + "</span>" +
-                       (enableCallback == null ? "" : "&nbsp;<a href='link'>" + action + "</a>") + "</html>");
+    HtmlChunk.Element html = HtmlChunk.html().children(HtmlChunk.span().addText(message));
+    if (enableCallback != null) {
+      html = html.children(HtmlChunk.nbsp(), HtmlChunk.link("link", action));
+    }
+    editorPane.setText(html.toString());
 
     editorPane.putClientProperty(KEY, enableCallback);
   }
@@ -74,8 +78,8 @@ public class ErrorComponent {
   public static JComponent show(@NotNull JPanel panel,
                                 @Nullable Object constraints,
                                 @Nullable JComponent errorComponent,
-                                @NotNull String message,
-                                @Nullable String action,
+                                @NotNull @Nls String message,
+                                @Nullable @Nls String action,
                                 @Nullable Runnable enableCallback) {
     JComponent component = errorComponent == null ? create(panel, constraints) : errorComponent;
     show(component, message, action, enableCallback);

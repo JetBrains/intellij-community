@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
@@ -53,7 +52,7 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
     assertTrue("Selected element is not an expression: " + selectedText, element instanceof PsiExpression);
     PsiExpression expression = (PsiExpression)element;
     TrackingRunner.DfaProblemType problemType = getProblemType(selectedText, expression);
-    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(true, false, expression, problemType);
+    TrackingRunner.CauseItem item = TrackingRunner.findProblemCause(false, expression, problemType);
     assertNotNull(item);
     String dump = item.dump(getEditor().getDocument());
     PsiComment firstComment = PsiTreeUtil.findChildOfType(file, PsiComment.class);
@@ -78,7 +77,7 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
                    actualFile.substring(end + diff);
       String expectedFile;
       try {
-        expectedFile = new String(Files.readAllBytes(Paths.get(origPath)), StandardCharsets.UTF_8);
+        expectedFile = Files.readString(Paths.get(origPath));
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -182,4 +181,11 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
   public void testMergeOnAnd() { doTest(); }
   public void testPassedNotNull() { doTest(); }
   public void testClassCheckInStream() { doTest(); }
+  public void testEqualsLessEquals() { doTest(); }
+  public void testParameterParentheses() { doTest(); }
+  public void testParameterTernary() { doTest(); }
+  public void testParameterTernary2() { doTest(); }
+  public void testMaxParameter() { doTest(); }
+  public void testReturnThis() { doTest(); }
+  public void testComplexDisjunction() { doTest(); }
 }

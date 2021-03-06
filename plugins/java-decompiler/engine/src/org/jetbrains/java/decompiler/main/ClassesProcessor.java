@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -245,7 +245,7 @@ public class ClassesProcessor implements CodeConstants {
       }
 
       try {
-        mt.expandData();
+        mt.expandData(enclosingCl);
 
         InstructionSequence seq = mt.getInstructionSequence();
         if (seq != null) {
@@ -302,55 +302,65 @@ public class ClassesProcessor implements CodeConstants {
       return;
     }
 
+    boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
+    boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+
     DecompilerContext.getLogger().startReadingClass(cl.qualifiedName);
     try {
       ImportCollector importCollector = new ImportCollector(root);
       DecompilerContext.startClass(importCollector);
 
-      new LambdaProcessor().processClass(root);
+      if (packageInfo) {
+        ClassWriter.packageInfoToJava(cl, buffer);
 
-      // add simple class names to implicit import
-      addClassnameToImport(root, importCollector);
-
-      // build wrappers for all nested classes (that's where actual processing takes place)
-      initWrappers(root);
-
-      new NestedClassProcessor().processClass(root, root);
-
-      new NestedMemberAccess().propagateMemberAccess(root);
-
-      TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
-      new ClassWriter().classToJava(root, classBuffer, 0, null);
-
-      int index = cl.qualifiedName.lastIndexOf("/");
-      if (index >= 0) {
-        String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
-
-        buffer.append("package ");
-        buffer.append(packageName);
-        buffer.append(";");
-        buffer.appendLineSeparator();
-        buffer.appendLineSeparator();
+        importCollector.writeImports(buffer, false);
       }
+      else if (moduleInfo) {
+        TextBuffer moduleBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
+        ClassWriter.moduleInfoToJava(cl, moduleBuffer);
 
-      int import_lines_written = importCollector.writeImports(buffer);
-      if (import_lines_written > 0) {
-        buffer.appendLineSeparator();
+        importCollector.writeImports(buffer, true);
+
+        buffer.append(moduleBuffer);
       }
+      else {
+        new LambdaProcessor().processClass(root);
 
-      int offsetLines = buffer.countLines();
+        // add simple class names to implicit import
+        addClassNameToImport(root, importCollector);
 
-      buffer.append(classBuffer);
+        // build wrappers for all nested classes (that's where actual processing takes place)
+        initWrappers(root);
 
-      if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
-        BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
-        mapper.addTotalOffset(offsetLines);
-        if (DecompilerContext.getOption(IFernflowerPreferences.DUMP_ORIGINAL_LINES)) {
-          buffer.dumpOriginalLineNumbers(mapper.getOriginalLinesMapping());
+        new NestedClassProcessor().processClass(root, root);
+
+        new NestedMemberAccess().propagateMemberAccess(root);
+
+        TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
+        new ClassWriter().classToJava(root, classBuffer, 0, null);
+
+        int index = cl.qualifiedName.lastIndexOf('/');
+        if (index >= 0) {
+          String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
+          buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
         }
-        if (DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE)) {
-          buffer.appendLineSeparator();
-          mapper.dumpMapping(buffer, true);
+
+        importCollector.writeImports(buffer, true);
+
+        int offsetLines = buffer.countLines();
+
+        buffer.append(classBuffer);
+
+        if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
+          BytecodeSourceMapper mapper = DecompilerContext.getBytecodeSourceMapper();
+          mapper.addTotalOffset(offsetLines);
+          if (DecompilerContext.getOption(IFernflowerPreferences.DUMP_ORIGINAL_LINES)) {
+            buffer.dumpOriginalLineNumbers(mapper.getOriginalLinesMapping());
+          }
+          if (DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE)) {
+            buffer.appendLineSeparator();
+            mapper.dumpMapping(buffer, true);
+          }
         }
       }
     }
@@ -375,13 +385,13 @@ public class ClassesProcessor implements CodeConstants {
     }
   }
 
-  private static void addClassnameToImport(ClassNode node, ImportCollector imp) {
+  private static void addClassNameToImport(ClassNode node, ImportCollector imp) {
     if (node.simpleName != null && node.simpleName.length() > 0) {
       imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
     }
 
     for (ClassNode nd : node.nested) {
-      addClassnameToImport(nd, imp);
+      addClassNameToImport(nd, imp);
     }
   }
 

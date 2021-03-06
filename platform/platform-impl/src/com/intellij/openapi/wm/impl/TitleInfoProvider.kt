@@ -2,36 +2,43 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
 interface TitleInfoProvider {
+  @ApiStatus.Internal
+  interface TitleInfoProviderListener {
+    fun configurationChanged()
+  }
+
   companion object {
-    var EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName.create("com.intellij.titleInfoProvider")
+    @Topic.AppLevel
+    @ApiStatus.Internal
+    @JvmField
+    val TOPIC = Topic(TitleInfoProviderListener::class.java, Topic.BroadcastDirection.NONE)
+
+    @ApiStatus.Internal
+    @JvmField
+    val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
 
     @JvmStatic
-    fun getProviders(project: Project, listener: (provider: TitleInfoProvider) -> Unit): List<TitleInfoProvider> {
-      val list = EP.getExtensionList(project)
-      list.forEach{it.addUpdateListener(listener)}
-
-      return list
-    }
+    fun getProviders(): List<TitleInfoProvider> = EP.extensionList
 
     @JvmStatic
-    fun getProviders(project: Project): List<TitleInfoProvider> {
-      return EP.getExtensionList(project)
+    fun fireConfigurationChanged() {
+      ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).configurationChanged()
     }
   }
 
-  fun addUpdateListener(value: (provider: TitleInfoProvider) -> Unit) {
-    addUpdateListener(null, value)
-  }
+  fun isActive(project: Project): Boolean
 
-  fun addUpdateListener(disposable: Disposable?, value: (provider: TitleInfoProvider) -> Unit)
-  val isActive: Boolean
-  val value: String
+  fun getValue(project: Project): String
 
   val borderlessSuffix: String
   val borderlessPrefix: String
 
+  fun addUpdateListener(project: Project, disp: Disposable, value: (provider: TitleInfoProvider) -> Unit)
 }

@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -15,6 +16,7 @@ internal fun createLayoutBuilder(): LayoutBuilder {
 @Suppress("DeprecatedCallableAddReplaceWith")
 @PublishedApi
 @Deprecated(message = "isUseMagic not used anymore")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 internal fun createLayoutBuilder(isUseMagic: Boolean) = createLayoutBuilder()
 
 interface LayoutBuilderImpl {

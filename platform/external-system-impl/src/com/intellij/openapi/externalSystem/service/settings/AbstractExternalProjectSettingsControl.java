@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,17 +43,6 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   protected AbstractExternalProjectSettingsControl(@Nullable Project project, @NotNull S initialSettings) {
     super(project);
     myInitialSettings = initialSettings;
-  }
-
-  /**
-   * @deprecated see {@link ExternalSystemSettingsControlCustomizer} for details
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected AbstractExternalProjectSettingsControl(@Nullable Project project,
-                                                   @NotNull S initialSettings,
-                                                   @Nullable ExternalSystemSettingsControlCustomizer controlCustomizer) {
-    this(project, initialSettings);
   }
 
   @NotNull

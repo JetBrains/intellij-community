@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.actions;
 
+import com.intellij.find.FindBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,6 @@ import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -55,24 +55,29 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(JTable list, Object value, boolean isSelected, boolean hasFocus, int row,
                                                  @MagicConstant(intValues = {CURRENT_ASTERISK_COL, FILE_GROUP_COL, LINE_NUMBER_COL, USAGE_TEXT_COL}) int column) {
-    UsageNode usageNode = value instanceof UsageNode ? (UsageNode)value : null;
+    UsageNode usageNode = (UsageNode)value;
     Usage usage = usageNode == null ? null : usageNode.getUsage();
 
     Color fileBgColor = getBackgroundColor(isSelected, usage);
     Color selectionBg = UIUtil.getListSelectionBackground(true);
-    Color selectionFg = UIUtil.getListSelectionForeground();
+    Color selectionFg = UIUtil.getListSelectionForeground(true);
     Color rowBackground = isSelected ? selectionBg : fileBgColor == null ? list.getBackground() : fileBgColor;
     Color rowForeground = isSelected ? selectionFg : list.getForeground();
 
     if (usageNode == null || usageNode instanceof ShowUsagesAction.StringNode) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
-      textChunks.append(ObjectUtils.notNull(value, "").toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      if (usageNode == null) {
+        textChunks.append("", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+      else {
+        textChunks.append(((ShowUsagesAction.StringNode)value).getString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
     if (usage == ((ShowUsagesTable)list).MORE_USAGES_SEPARATOR) {
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
       textChunks.append("...<");
-      textChunks.append("more usages", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      textChunks.append(FindBundle.message("show.usages.more.usages.label"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
@@ -86,7 +91,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (usage == ((ShowUsagesTable)list).USAGES_FILTERED_OUT_SEPARATOR) {
       ShowUsagesAction.FilteredOutUsagesNode filtered = (ShowUsagesAction.FilteredOutUsagesNode)usageNode;
       SimpleColoredComponent textChunks = new SimpleColoredComponent();
-      textChunks.append(filtered.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      textChunks.append(filtered.getString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       JComponent component = textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
       component.setToolTipText(filtered.getTooltip());
       return component;
@@ -163,7 +168,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
           SimpleTextAttributes attributes =
             text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :
             getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, text[0]);
-          origin.append("| Current", attributes);
+          origin.append("| " + FindBundle.message("show.usages.current.usage.label"), attributes);
           origin.appendTextPadding(JBUIScale.scale(45));
           panel.add(origin, BorderLayout.EAST);
         }

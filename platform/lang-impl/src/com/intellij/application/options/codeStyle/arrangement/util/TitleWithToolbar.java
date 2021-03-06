@@ -19,6 +19,7 @@ import com.intellij.application.options.codeStyle.arrangement.ArrangementConstan
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -32,7 +33,7 @@ import java.awt.*;
  */
 public class TitleWithToolbar extends JPanel {
 
-  public TitleWithToolbar(@NotNull String title,
+  public TitleWithToolbar(@NlsContexts.BorderTitle @NotNull String title,
                           @NotNull String actionGroupId,
                           @NotNull String place,
                           @NotNull JComponent targetComponent)

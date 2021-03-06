@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +18,10 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +30,12 @@ import java.util.*;
 /**
  * Change related utilities
  */
-public class GitChangeUtils {
+public final class GitChangeUtils {
   /**
    * the pattern for committed changelist assumed.
    */
-  public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x03%n%b%n%x03";
+  public static final @NonNls String COMMITTED_CHANGELIST_FORMAT =
+    "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x03%n%b%n%x03";
 
   private static final Logger LOG = Logger.getInstance(GitChangeUtils.class);
 
@@ -137,7 +140,7 @@ public class GitChangeUtils {
           after = filePath;
           break;
         default:
-          throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
+          throw new VcsException(GitBundle.message("error.git.parse.unknown.file.status", Arrays.asList(tokens)));
       }
       consumer.consume(status, before, after);
     }
@@ -152,7 +155,7 @@ public class GitChangeUtils {
    */
   @NotNull
   public static GitRevisionNumber resolveReference(@NotNull Project project, @NotNull VirtualFile vcsRoot,
-                                                   @NotNull String reference) throws VcsException {
+                                                   @NotNull @NonNls String reference) throws VcsException {
     GitLineHandler handler = createRefResolveHandler(project, vcsRoot, reference);
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);
@@ -170,15 +173,16 @@ public class GitChangeUtils {
       catch (VcsException e) {
         LOG.info("Exception while trying to get some diagnostics info", e);
       }
-      throw new VcsException(String.format("The string '%s' does not represent a revision number. Output: [%s]\n Root: %s",
-                                           reference, output, vcsRoot));
+      throw new VcsException(GitBundle.message("error.git.parse.not.a.revision.number", reference));
     }
     Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);
   }
 
   @NotNull
-  private static GitLineHandler createRefResolveHandler(@NotNull Project project, @NotNull VirtualFile root, @NotNull String reference) {
+  private static GitLineHandler createRefResolveHandler(@NotNull Project project,
+                                                        @NotNull VirtualFile root,
+                                                        @NotNull @NonNls String reference) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REV_LIST);
     handler.addParameters("--timestamp", "--max-count=1", reference);
     handler.endOptions();
@@ -188,15 +192,13 @@ public class GitChangeUtils {
 
   /**
    * Get list of changes. Because native Git non-linear revision tree structure is not
-   * supported by the current IDEA interfaces some simplifications are made in the case
+   * supported by the current IDE interfaces some simplifications are made in the case
    * of the merge, so changes are reported as difference with the first revision
-   * listed on the the merge that has at least some changes.
+   * listed on the merge that has at least some changes.
    *
-   *
-   *
-   * @param project      the project file
-   * @param root         the git root
-   * @param revisionName the name of revision (might be tag)
+   * @param project           the project file
+   * @param root              the git root
+   * @param revisionName      the name of revision (might be tag)
    * @param skipDiffsForMerge
    * @param local
    * @param revertable
@@ -204,8 +206,8 @@ public class GitChangeUtils {
    * @throws VcsException in case of problem with running git
    */
   public static GitCommittedChangeList getRevisionChanges(Project project,
-                                                          VirtualFile root,
-                                                          String revisionName,
+                                                          @NotNull VirtualFile root,
+                                                          @NonNls String revisionName,
                                                           boolean skipDiffsForMerge,
                                                           boolean local, boolean revertable) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
@@ -221,16 +223,14 @@ public class GitChangeUtils {
   /**
    * Parse changelist
    *
-   *
-   *
-   * @param project the project
-   * @param root    the git root
-   * @param s       the scanner for log or show command output
+   * @param project           the project
+   * @param root              the git root
+   * @param s                 the scanner for log or show command output
    * @param skipDiffsForMerge
-   * @param handler the handler that produced the output to parse. - for debugging purposes.
-   * @param local   pass {@code true} to indicate that this revision should be an editable
-   *                {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
-   *                Pass {@code false} for
+   * @param handler           the handler that produced the output to parse. - for debugging purposes.
+   * @param local             pass {@code true} to indicate that this revision should be an editable
+   *                          {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
+   *                          Pass {@code false} for
    * @param revertable
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
@@ -295,42 +295,50 @@ public class GitChangeUtils {
                                       GitVcs.getInstance(project), revertable);
   }
 
-  public static long longForSHAHash(String revisionNumber) {
+  public static long longForSHAHash(@NonNls String revisionNumber) {
     return Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
   }
 
   @NotNull
   public static Collection<Change> getDiff(@NotNull Project project,
                                            @NotNull VirtualFile root,
-                                           @Nullable String oldRevision,
-                                           @Nullable String newRevision,
+                                           @Nullable @NonNls String oldRevision,
+                                           @Nullable @NonNls String newRevision,
                                            @Nullable Collection<? extends FilePath> dirtyPaths) throws VcsException {
-    return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true);
+    return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true, false);
   }
 
   @NotNull
   private static Collection<Change> getDiff(@NotNull Project project,
                                             @NotNull VirtualFile root,
-                                            @Nullable String oldRevision,
-                                            @Nullable String newRevision,
+                                            @Nullable @NonNls String oldRevision,
+                                            @Nullable @NonNls String newRevision,
                                             @Nullable Collection<? extends FilePath> dirtyPaths,
-                                            boolean detectRenames) throws VcsException {
+                                            boolean detectRenames,
+                                            boolean threeDots) throws VcsException {
     LOG.assertTrue(oldRevision != null || newRevision != null, "Both old and new revisions can't be null");
     String range;
     GitRevisionNumber newRev;
     GitRevisionNumber oldRev;
+    String dots;
+    if (threeDots) {
+      dots = "...";
+    }
+    else {
+      dots = "..";
+    }
     if (newRevision == null) { // current revision at the right
-      range = oldRevision + "..";
+      range = oldRevision + dots;
       oldRev = resolveReference(project, root, oldRevision);
       newRev = null;
     }
     else if (oldRevision == null) { // current revision at the left
-      range = ".." + newRevision;
+      range = dots + newRevision;
       oldRev = null;
       newRev = resolveReference(project, root, newRevision);
     }
     else {
-      range = oldRevision + ".." + newRevision;
+      range = oldRevision + dots + newRevision;
       oldRev = resolveReference(project, root, oldRevision);
       newRev = resolveReference(project, root, newRevision);
     }
@@ -349,12 +357,13 @@ public class GitChangeUtils {
   @NotNull
   public static Collection<GitDiffChange> getUnstagedChanges(@NotNull Project project,
                                                              @NotNull VirtualFile root,
+                                                             @Nullable Collection<FilePath> paths,
                                                              boolean detectMoves) throws VcsException {
     if (detectMoves) {
-      return getLocalChanges(project, root, null, "-M");
+      return getLocalChanges(project, root, paths, "-M");
     }
     else {
-      return getLocalChanges(project, root, null, "--no-renames");
+      return getLocalChanges(project, root, paths, "--no-renames");
     }
   }
 
@@ -375,7 +384,7 @@ public class GitChangeUtils {
   private static Collection<GitDiffChange> getLocalChanges(@NotNull Project project,
                                                            @NotNull VirtualFile root,
                                                            @Nullable Collection<FilePath> paths,
-                                                           String... parameters) throws VcsException {
+                                                           @NonNls String... parameters) throws VcsException {
     if (paths != null && paths.isEmpty()) return Collections.emptyList();
 
     GitLineHandler handler = GitUtil.createHandlerWithPaths(paths, () -> {
@@ -422,7 +431,7 @@ public class GitChangeUtils {
   @NotNull
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                          @NotNull VirtualFile root,
-                                                         @NotNull String oldRevision,
+                                                         @NotNull @NonNls String oldRevision,
                                                          @Nullable Collection<? extends FilePath> dirtyPaths,
                                                          boolean reverse) throws VcsException {
     return getDiffWithWorkingDir(project, root, oldRevision, dirtyPaths, reverse, true);
@@ -431,7 +440,7 @@ public class GitChangeUtils {
   @NotNull
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                          @NotNull VirtualFile root,
-                                                         @NotNull String oldRevision,
+                                                         @NotNull @NonNls String oldRevision,
                                                          @Nullable Collection<? extends FilePath> dirtyPaths,
                                                          boolean reverse,
                                                          boolean detectRenames) throws VcsException {
@@ -444,6 +453,7 @@ public class GitChangeUtils {
 
   /**
    * Calls {@code git diff} on the given range.
+   *
    * @param project
    * @param root
    * @param diffRange  range or just revision (will be compared with current working tree).
@@ -482,7 +492,7 @@ public class GitChangeUtils {
    */
   @Nullable
   public static Collection<Change> getDiffWithWorkingTree(@NotNull GitRepository repository,
-                                                          @NotNull String refToCompare,
+                                                          @NotNull @NonNls String refToCompare,
                                                           boolean detectRenames) {
     Collection<Change> changes;
     try {
@@ -497,11 +507,24 @@ public class GitChangeUtils {
 
   @Nullable
   public static Collection<Change> getDiff(@NotNull GitRepository repository,
-                                           @NotNull String oldRevision,
-                                           @NotNull String newRevision,
+                                           @NotNull @NonNls String oldRevision,
+                                           @NotNull @NonNls String newRevision,
                                            boolean detectRenames) {
     try {
-      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, detectRenames);
+      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, detectRenames, false);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
+      return null;
+    }
+  }
+
+  @NotNull
+  public static Collection<Change> getThreeDotDiff(@NotNull GitRepository repository,
+                                                   @NotNull @NonNls String oldRevision,
+                                                   @NotNull @NonNls String newRevision) {
+    try {
+      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, true, true);
     }
     catch (VcsException e) {
       LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
@@ -535,7 +558,7 @@ public class GitChangeUtils {
 
     @NotNull
     public FilePath getFilePath() {
-      com.intellij.openapi.vcs.@Nullable FilePath t = afterPath != null ? afterPath : beforePath;
+      @Nullable FilePath t = afterPath != null ? afterPath : beforePath;
       return Objects.requireNonNull(t);
     }
 

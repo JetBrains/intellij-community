@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.java.JavaBundle;
@@ -15,6 +14,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -39,9 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 public class MoveClassToModuleFix implements IntentionAction {
   private final Map<PsiClass, Module> myModules = new LinkedHashMap<>();
   private final String myReferenceName;
@@ -131,13 +128,13 @@ public class MoveClassToModuleFix implements IntentionAction {
 
   private void moveClass(Project project, Editor editor, PsiFile file, PsiClass aClass) {
     RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
-    DataManager dataManager = DataManager.getInstance();
-    DataContext dataContext = dataManager.getDataContext();
+    DataContext dataContext = ((EditorEx)editor).getDataContext();
     final String fqName = aClass.getQualifiedName();
     LOG.assertTrue(fqName != null);
     PsiDirectory directory = PackageUtil
       .findOrCreateDirectoryForPackage(myCurrentModule, StringUtil.getPackageName(fqName), mySourceRoot, true);
-    DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
+    DataContext context = directory == null ? dataContext :
+                          SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT, directory, dataContext);
 
     moveHandler.invoke(project, new PsiElement[]{aClass}, context);
     PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());

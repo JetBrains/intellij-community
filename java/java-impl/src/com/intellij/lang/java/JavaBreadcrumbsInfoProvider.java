@@ -4,6 +4,7 @@ package com.intellij.lang.java;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -111,8 +112,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     sb.append(")");
   }
 
-  @NotNull
-  private static String getTypeText(@Nullable PsiType type, boolean isDumb) {
+  private static @NotNull @NlsSafe String getTypeText(@Nullable PsiType type, boolean isDumb) {
     // todo PsiTypeVisitor ?
     String result;
     if (type == null) result = "";

@@ -102,7 +102,10 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       ?.let { JavaUQualifiedReferenceExpression(it, null) }
   }
 
-  override fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?): UIfExpression? {
+  override fun createIfExpression(condition: UExpression,
+                                  thenBranch: UExpression,
+                                  elseBranch: UExpression?,
+                                  context: PsiElement?): UIfExpression? {
     val conditionPsi = condition.sourcePsi ?: return null
     val thenBranchPsi = thenBranch.sourcePsi ?: return null
 
@@ -139,7 +142,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
 
     return if (expectedReturnType == null)
-      JavaUCallExpression(methodCall, null)
+      methodCall.toUElementOfType<UCallExpression>()
     else
       MethodCallUpgradeHelper(project, methodCall, expectedReturnType).tryUpgradeToExpectedType()
         ?.let { JavaUCallExpression(it, null) }
@@ -147,6 +150,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
   override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
     val literalExpr = psiFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(text), context)
+    if (literalExpr !is PsiLiteralExpressionImpl) return null
+    return JavaULiteralExpression(literalExpr, null)
+  }
+
+  override fun createNullLiteral(context: PsiElement?): ULiteralExpression? {
+    val literalExpr = psiFactory.createExpressionFromText("null", context)
     if (literalExpr !is PsiLiteralExpressionImpl) return null
     return JavaULiteralExpression(literalExpr, null)
   }
@@ -230,12 +239,13 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
   }
 
-  override fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression? {
+  override fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression? {
     return JavaUDeclarationsExpression(null, declarations)
   }
 
   override fun createReturnExpresion(expression: UExpression?,
-                                     inLambda: Boolean): UReturnExpression? {
+                                     inLambda: Boolean,
+                                     context: PsiElement?): UReturnExpression? {
     val returnStatement = psiFactory.createStatementFromText("return ;", null) as? PsiReturnStatement ?: return null
 
     expression?.sourcePsi?.node?.let { (returnStatement as CompositeElement).addChild(it, returnStatement.lastChild.node) }
@@ -253,7 +263,11 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
   }
 
-  override fun createLocalVariable(suggestedName: String?, type: PsiType?, initializer: UExpression, immutable: Boolean): ULocalVariable? {
+  override fun createLocalVariable(suggestedName: String?,
+                                   type: PsiType?,
+                                   initializer: UExpression,
+                                   immutable: Boolean,
+                                   context: PsiElement?): ULocalVariable? {
     val initializerPsi = initializer.sourcePsi as? PsiExpression ?: return null
 
     val name = createNameFromSuggested(
@@ -273,7 +287,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaULocalVariable(variable, null)
   }
 
-  override fun createBlockExpression(expressions: List<UExpression>): UBlockExpression? {
+  override fun createBlockExpression(expressions: List<UExpression>, context: PsiElement?): UBlockExpression? {
     val blockStatement = BlockUtils.createBlockStatement(project)
 
     for (expression in expressions) {
@@ -294,7 +308,8 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaUBlockExpression(blockStatement, null)
   }
 
-  override fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression): ULambdaExpression? {
+
+  override fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression, context: PsiElement?): ULambdaExpression? {
     //TODO: smart handling cases, when parameters types should exist in code
     val lambda = psiFactory.createExpressionFromText(
       buildString {
@@ -349,29 +364,31 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       ?.returnValue
     ?: block
 
-  override fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression? {
+  override fun createParenthesizedExpression(expression: UExpression, context: PsiElement?): UParenthesizedExpression? {
     val parenthesizedExpression = psiFactory.createExpressionFromText("()", null) as? PsiParenthesizedExpression ?: return null
     parenthesizedExpression.children.getOrNull(1)?.replace(expression.sourcePsi ?: return null) ?: return null
     return JavaUParenthesizedExpression(parenthesizedExpression, null)
   }
 
-  override fun createSimpleReference(name: String): USimpleNameReferenceExpression? {
+  override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression? {
     val reference = psiFactory.createExpressionFromText(name, null)
     return JavaUSimpleNameReferenceExpression(reference, name, null)
   }
 
-  override fun createSimpleReference(variable: UVariable): USimpleNameReferenceExpression? {
-    return createSimpleReference(variable.name ?: return null)
+  override fun createSimpleReference(variable: UVariable, context: PsiElement?): USimpleNameReferenceExpression? {
+    return createSimpleReference(variable.name ?: return null, context)
   }
 
   override fun createBinaryExpression(leftOperand: UExpression,
                                       rightOperand: UExpression,
-                                      operator: UastBinaryOperator): UBinaryExpression? {
+                                      operator: UastBinaryOperator,
+                                      context: PsiElement?): UBinaryExpression? {
     val leftPsi = leftOperand.sourcePsi ?: return null
     val rightPsi = rightOperand.sourcePsi ?: return null
 
     val operatorSymbol = when (operator) {
       UastBinaryOperator.LOGICAL_AND -> "&&"
+      UastBinaryOperator.PLUS -> "+"
       else -> return null
     }
     val psiBinaryExpression = psiFactory.createExpressionFromText("a $operatorSymbol b", null) as? PsiBinaryExpression
@@ -384,8 +401,9 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
 
   override fun createFlatBinaryExpression(leftOperand: UExpression,
                                           rightOperand: UExpression,
-                                          operator: UastBinaryOperator): UPolyadicExpression? {
-    val binaryExpression = createBinaryExpression(leftOperand, rightOperand, operator) ?: return null
+                                          operator: UastBinaryOperator,
+                                          context: PsiElement?): UPolyadicExpression? {
+    val binaryExpression = createBinaryExpression(leftOperand, rightOperand, operator, context) ?: return null
     val binarySourcePsi = binaryExpression.sourcePsi as? PsiBinaryExpression ?: return null
     val dummyParent = psiFactory.createStatementFromText("a;", null)
     dummyParent.firstChild.replace(binarySourcePsi)

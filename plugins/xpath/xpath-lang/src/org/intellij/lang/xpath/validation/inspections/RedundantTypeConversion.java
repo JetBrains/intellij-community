@@ -27,6 +27,7 @@ import org.intellij.lang.xpath.psi.XPathFunctionCall;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,18 +76,18 @@ public class RedundantTypeConversion extends XPathInspection {
                     final XPathQuickFixFactory fixFactory = ContextProvider.getContextProvider(expression).getQuickFixFactory();
                     LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
-                    addProblem(myManager.createProblemDescriptor(expression,
-                            "Redundant conversion to type '" + convertedType.getName() + "'", myOnTheFly, fixes,
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                  final String message = XPathBundle.message("inspection.message.redundant.conversion.to.type", convertedType.getName());
+                  addProblem(myManager.createProblemDescriptor(expression, message, myOnTheFly, fixes,
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                 } else if (CHECK_ANY) {
                     final XPathType expectedType = ExpectedTypeUtil.getExpectedType(expression);
                     if (expectedType == XPathType.ANY) {
                         final XPathQuickFixFactory fixFactory = ContextProvider.getContextProvider(expression).getQuickFixFactory();
                         LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
-                        addProblem(myManager.createProblemDescriptor(expression,
-                                "Redundant conversion to type '" + expectedType.getName() + "'", myOnTheFly, fixes,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                      final String message = XPathBundle.message("inspection.message.redundant.conversion.to.type", expectedType.getName());
+                      addProblem(myManager.createProblemDescriptor(expression, message, myOnTheFly, fixes,
+                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                     }
                 }
             }

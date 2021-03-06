@@ -1,15 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -38,7 +35,10 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public abstract class AbstractFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
@@ -205,7 +204,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), origFile.getCharset(), getModificationStamp());
     origFile.copyCopyableDataTo(copy);
     copy.setOriginalFile(origFile);
-    copy.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    UndoUtil.disableUndoFor(copy);
     copy.setCharset(origFile.getCharset());
 
     return createCopy(copy);
@@ -351,11 +350,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       return;
     }
 
-    List<FileElement> knownTreeRoots = getKnownTreeRoots();
+    List<FileASTNode> knownTreeRoots = getKnownTreeRoots();
     if (knownTreeRoots.isEmpty()) return;
 
     int fileLength = myContent.getTextLength();
-    for (FileElement fileElement : knownTreeRoots) {
+    for (FileASTNode fileElement : knownTreeRoots) {
       int nodeLength = fileElement.getTextLength();
       if (!isDocumentConsistentWithPsi(fileLength, fileElement, nodeLength)) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
@@ -371,11 +370,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private boolean isDocumentConsistentWithPsi(int fileLength, FileElement fileElement, int nodeLength) {
+  private boolean isDocumentConsistentWithPsi(int fileLength, FileASTNode fileElement, int nodeLength) {
     if (nodeLength != fileLength) return false;
 
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-      return fileElement.textMatches(myContent.getText());
+      return fileElement.getPsi().textMatches(myContent.getText());
     }
 
     return true;
@@ -396,16 +395,20 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   public abstract List<PsiFile> getCachedPsiFiles();
 
   @NotNull
-  public abstract List<FileElement> getKnownTreeRoots();
+  public abstract List<FileASTNode> getKnownTreeRoots();
 
   public final void markInvalidated() {
     invalidateCachedPsi();
-    forKnownCopies(copy -> myManager.getFileManager().setViewProvider(copy.getVirtualFile(), null));
+    for (AbstractFileViewProvider copy : getKnownCopies()) {
+      myManager.getFileManager().setViewProvider(copy.getVirtualFile(), null);
+    }
   }
 
   public final void markPossiblyInvalidated() {
     invalidateCachedPsi();
-    forKnownCopies(FileManagerImpl::markPossiblyInvalidated);
+    for (AbstractFileViewProvider copy : getKnownCopies()) {
+      FileManagerImpl.markPossiblyInvalidated(copy);
+    }
   }
 
   private void invalidateCachedPsi() {
@@ -416,15 +419,12 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  private void forKnownCopies(Consumer<? super AbstractFileViewProvider> action) {
-    Set<AbstractFileViewProvider> knownCopies = getUserData(KNOWN_COPIES);
-    if (knownCopies != null) {
-      for (AbstractFileViewProvider copy : knownCopies) {
-        if (copy.getCachedPsiFiles().stream().anyMatch(f -> f.getOriginalFile().getViewProvider() == this)) {
-          action.accept(copy);
-        }
-      }
+  private Iterable<AbstractFileViewProvider> getKnownCopies() {
+    Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
+    if (copies != null) {
+      return JBIterable.from(copies).filter(copy -> copy.getCachedPsiFiles().stream().anyMatch(f -> f.getOriginalFile().getViewProvider() == this));
     }
+    return Collections.emptySet();
   }
 
   public final void registerAsCopy(@NotNull AbstractFileViewProvider copy) {
@@ -433,10 +433,13 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
     Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
     if (copies == null) {
-      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap()));
+      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
     }
     if (copy.getUserData(KNOWN_COPIES) != null) {
-      LOG.error("A view provider copy must be registered before it may have its own copies, to avoid cycles");
+      List<AbstractFileViewProvider> derivations = JBTreeTraverser.from(AbstractFileViewProvider::getKnownCopies).withRoot(copy).toList();
+      if (derivations.contains(this)) {
+        throw new IllegalStateException("An attempted cycle in view provider copy graph involving " + this + " and " + copy);
+      }
     }
     copies.add(copy);
   }

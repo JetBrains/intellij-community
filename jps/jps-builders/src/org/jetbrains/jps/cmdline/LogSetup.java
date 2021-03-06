@@ -3,12 +3,17 @@ package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import org.apache.log4j.PropertyConfigurator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.GlobalOptions;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author Eugene Zhuravlev
@@ -24,12 +29,12 @@ public final class LogSetup {
     }
 
     try {
-      final String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
-      final File configFile = logDir != null? new File(logDir, LOG_CONFIG_FILE_NAME) : new File(LOG_CONFIG_FILE_NAME);
+      String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
+      Path configFile = logDir == null ? Paths.get(LOG_CONFIG_FILE_NAME) : Paths.get(logDir, LOG_CONFIG_FILE_NAME);
       ensureLogConfigExists(configFile);
-      String text = FileUtil.loadFile(configFile);
-      final String logFile = logDir != null? new File(logDir, LOG_FILE_NAME).getAbsolutePath() : LOG_FILE_NAME;
-      text = text.replace(LOG_FILE_MACRO, logFile.replace("\\", "\\\\"));
+      String logFile = logDir == null ? LOG_FILE_NAME : Paths.get(logDir, LOG_FILE_NAME).toAbsolutePath().toString();
+      String text = new String(Files.readAllBytes(configFile), StandardCharsets.UTF_8)
+        .replace(LOG_FILE_MACRO, logFile.replace("\\", "\\\\"));
       PropertyConfigurator.configure(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
     }
     catch (IOException e) {
@@ -42,14 +47,12 @@ public final class LogSetup {
     Logger.setFactory(category -> new Log4jBasedLogger(org.apache.log4j.Logger.getLogger(category)));
   }
 
-  private static void ensureLogConfigExists(final File logConfig) throws IOException {
-    if (!logConfig.exists()) {
-      FileUtil.createIfDoesntExist(logConfig);
-      try(InputStream in = readDefaultLogConfig()) {
+  private static void ensureLogConfigExists(@NotNull Path logConfig) throws IOException {
+    if (!Files.exists(logConfig)) {
+      Files.createDirectories(logConfig.getParent());
+      try (InputStream in = readDefaultLogConfig()) {
         if (in != null) {
-          try (FileOutputStream out = new FileOutputStream(logConfig)) {
-            FileUtil.copy(in, out);
-          }
+          Files.copy(in, logConfig);
         }
       }
     }

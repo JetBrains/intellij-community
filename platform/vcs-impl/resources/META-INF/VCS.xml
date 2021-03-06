@@ -1,18 +1,15 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-
   <module value="com.intellij.modules.vcs"/>
 
-  <extensionPoints>
-    <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-  </extensionPoints>
+  <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
 
-  <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/VcsExtensions.xml"/>
+  <xi:include href="/META-INF/VcsActions.xml"/>
 
-  <xi:include href="/META-INF/vcs-log.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/vcs-log.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/dvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/dvcs.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -47,8 +44,8 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
 
-    <projectService serviceImplementation="com.intellij.vcs.commit.CommitWorkflowManager"/>
-    <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitWorkflowManager$MyStartupActivity"/>
+    <projectService serviceImplementation="com.intellij.vcs.commit.CommitModeManager"/>
+    <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
   </extensions>
 
   <projectListeners>

@@ -26,6 +26,7 @@ public class InspectionMain implements ApplicationStarter {
       printHelp();
     }
 
+    InspectionApplication.LOG.info("Command line arguments: " + args);
     //System.setProperty("idea.load.plugins.category", "inspection");
     myApplication = new InspectionApplication();
 
@@ -56,6 +57,9 @@ public class InspectionMain implements ApplicationStarter {
         else if ("-scope".equals(arg)) {
           myApplication.myScopePattern = args.get(++i);
         }
+        else if ("-targets".equals(arg)) {
+          myApplication.myTargets = args.get(++i);
+        }
         else if ("-format".equals(arg)) {
           myApplication.myOutputFormat = args.get(++i);
         }
@@ -79,6 +83,8 @@ public class InspectionMain implements ApplicationStarter {
         }
         else if ("-changes".equals(arg)) {
           myApplication.myAnalyzeChanges = true;
+        } else if ("-qodana".equals(arg)) {
+          myApplication.myQodanaRun = true;
         }
         else {
           System.err.println("unexpected argument: " + arg);

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 /**
  * Moves members between classes via its plugins (managers).
- * To move members use {@link #getAllMembersCouldBeMoved(com.jetbrains.python.psi.PyClass)}   and {@link #moveAllMembers(java.util.Collection, com.jetbrains.python.psi.PyClass, com.jetbrains.python.psi.PyClass...)}
+ * To move members use {@link #getAllMembersCouldBeMoved(PyClass)}   and {@link #moveAllMembers(Collection, PyClass, PyClass...)}
  * To add new manager, extend this class and add it to {@link #MANAGERS}
  *
  * @author Ilya.Kazakevich
@@ -61,11 +61,11 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
 
   /**
-   * Transforms elements, manager says it could move to appropriate {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo}.
+   * Transforms elements, manager says it could move to appropriate {@link PyMemberInfo}.
    * Types are checked at runtime.
    *
    * @param pyClass class whose members we want to move
-   * @param manager manager that should check class and report list of memebers
+   * @param manager manager that should check class and report list of members
    * @return member infos
    */
   //TODO: Move to  TypeSafeMovingStrategy
@@ -183,11 +183,11 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
 
   /**
-   * Returns list of elements that may require reference storing aid from {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#rememberNamedReferences(com.intellij.psi.PsiElement, String...)}
+   * Returns list of elements that may require reference storing aid from {@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#rememberNamedReferences(PsiElement, String...)}
    *
    * @param elements members chosen by user. In most cases members their selves could be stored, but different managers may support other strategies
    * @return elements to store
-   * @see #moveAllMembers(java.util.Collection, com.jetbrains.python.psi.PyClass, com.jetbrains.python.psi.PyClass...)
+   * @see #moveAllMembers(Collection, PyClass, PyClass...)
    */
   protected Collection<? extends PyElement> getElementsToStoreReferences(@NotNull final Collection<T> elements) {
     return elements;
@@ -195,10 +195,10 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
   /**
    * Moves element from one class to another. Returns members that may require reference restoring aid from
-   * ({@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#restoreNamedReferences(com.intellij.psi.PsiElement)})
-   * Sort members according to their dependncies, before calling this method
+   * ({@link com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil#restoreNamedReferences(PsiElement)})
+   * Sort members according to their dependencies, before calling this method
    *
-   * @see #getElementsToStoreReferences(java.util.Collection)
+   * @see #getElementsToStoreReferences(Collection)
    */
   protected abstract Collection<PyElement> moveMembers(
     @NotNull PyClass from,
@@ -207,7 +207,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
 
 
   /**
-   * Creates {@link com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo} from {@link com.jetbrains.python.psi.PyElement}
+   * Creates {@link PyMemberInfo} from {@link PyElement}
    * This process is plugin-specific and should be implemented in each plugin
    *
    * @param input element
@@ -310,7 +310,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   protected abstract MultiMap<PyClass, PyElement> getDependencies(@NotNull PyElement member);
 
   /**
-   * Get dependencies by members and classes they declared in (obtained from {@link #getDependencies(com.jetbrains.python.psi.PyElement)})
+   * Get dependencies by members and classes they declared in (obtained from {@link #getDependencies(PyElement)})
    * For example manager, responsible for "extends SomeClass" members may return list of classes
    *
    * @param usedElements class-to-element dependencies
@@ -320,7 +320,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
   protected abstract Collection<PyElement> getDependencies(@NotNull MultiMap<PyClass, PyElement> usedElements);
 
 
-  private static class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
+  private static final class FindByElement extends NotNullPredicate<PyMemberInfo<PyElement>> {
     private final PyElement myPyElement;
 
     private FindByElement(final PyElement pyElement) {

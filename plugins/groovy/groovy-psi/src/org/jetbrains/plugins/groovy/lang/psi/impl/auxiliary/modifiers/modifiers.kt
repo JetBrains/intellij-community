@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant
@@ -21,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
@@ -30,7 +34,7 @@ private const val packageScopeAnno = "groovy.transform.PackageScope"
 private const val packageScopeTarget = "groovy.transform.PackageScopeTarget"
 
 fun Int.hasMaskModifier(@GrModifierConstant @NonNls name: String): Boolean {
-  return and(NAME_TO_MODIFIER_FLAG_MAP[name]) != 0
+  return and(NAME_TO_MODIFIER_FLAG_MAP.getInt(name)) != 0
 }
 
 internal fun hasExplicitVisibilityModifiers(modifierList: GrModifierList): Boolean {
@@ -41,8 +45,11 @@ internal fun hasExplicitModifier(modifierList: GrModifierList, @GrModifierConsta
   return modifierList.modifierFlags.hasMaskModifier(name)
 }
 
-internal fun hasModifierProperty(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String): Boolean {
-  return hasExplicitModifier(modifierList, name) || hasImplicitModifier(modifierList, name)
+@JvmOverloads
+internal fun hasModifierProperty(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String, includeSynthetic: Boolean = true): Boolean {
+  return hasExplicitModifier(modifierList, name) ||
+         hasImplicitModifier(modifierList, name) ||
+         (includeSynthetic && hasSyntheticModifier(modifierList, name))
 }
 
 private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String): Boolean {
@@ -50,20 +57,29 @@ private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstan
     PsiModifier.ABSTRACT -> modifierList.isAbstract()
     PsiModifier.FINAL -> modifierList.isFinal()
     PsiModifier.STATIC -> modifierList.isStatic()
-    else -> name in visibilityModifiers && name == modifierList.getImplicitVisiblity()
+    else -> name in visibilityModifiers && name == getImplicitVisibility(modifierList)
   }
 }
 
+internal fun hasCodeModifierProperty(owner : PsiModifierListOwner, @GrModifierConstant @NonNls modifierName : String) : Boolean {
+  return (owner.modifierList as? GrModifierList)?.let { hasModifierProperty(it, modifierName, false) } ?: false
+}
+
+private fun hasSyntheticModifier(modifierList: GrModifierList, name: String) : Boolean {
+  val containingTypeDefinition = modifierList.parentOfType<GrTypeDefinition>() as? GrTypeDefinitionImpl ?: return false
+  return containingTypeDefinition.getSyntheticModifiers(modifierList).contains(name)
+}
+
 private fun GrModifierList.isAbstract(): Boolean {
-  val owner = parent
-  return when (owner) {
-    is GrMethod -> owner.isAbsractMethod()
+  return when (val owner = parent) {
+    is GrMethod -> owner.isAbstractMethod()
     is GrTypeDefinition -> owner.isAbstractClass()
     else -> false
   }
 }
 
-private fun GrMethod.isAbsractMethod(): Boolean = containingClass?.isInterface ?: false
+private fun GrMethod.isAbstractMethod(): Boolean =
+  containingClass?.let { it.isInterface && !GrTraitUtil.isTrait(it) } ?: false
 
 private fun GrTypeDefinition.isAbstractClass(): Boolean {
   if (isEnum) {
@@ -75,8 +91,7 @@ private fun GrTypeDefinition.isAbstractClass(): Boolean {
 }
 
 private fun GrModifierList.isFinal(): Boolean {
-  val owner = parent
-  return when (owner) {
+  return when (val owner = parent) {
     is GrTypeDefinition -> owner.isFinalClass()
     is GrVariableDeclaration -> owner.isFinalField(this)
     is GrEnumConstant -> true
@@ -106,21 +121,20 @@ private fun GrModifierList.isStatic(): Boolean {
   return containingClass != null && (owner is GrEnumTypeDefinition || isInterface(containingClass))
 }
 
-private fun GrModifierList.getImplicitVisiblity(): String? {
-  if (hasExplicitVisibilityModifiers(this)) return null
-  val owner = parent
-  when (owner) {
-    is GrTypeDefinition -> return if (hasPackageScope(owner, "CLASS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PUBLIC
+private fun getImplicitVisibility(grModifierList: GrModifierList): String? {
+  if (hasExplicitVisibilityModifiers(grModifierList)) return null
+  when (val owner = grModifierList.parent) {
+    is GrTypeDefinition -> return if (grModifierList.hasPackageScope(owner, "CLASS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PUBLIC
     is GrMethod -> {
       val containingClass = owner.containingClass as? GrTypeDefinition ?: return null
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
       val targetName = if (owner.isConstructor) "CONSTRUCTORS" else "METHODS"
-      return if (hasPackageScope(containingClass, targetName)) PsiModifier.PACKAGE_LOCAL else PsiModifier.PUBLIC
+      return if (grModifierList.hasPackageScope(containingClass, targetName)) PsiModifier.PACKAGE_LOCAL else PsiModifier.PUBLIC
     }
     is GrVariableDeclaration -> {
       val containingClass = owner.containingClass ?: return null
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
-      return if (hasPackageScope(containingClass, "FIELDS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PRIVATE
+      return if (grModifierList.hasPackageScope(containingClass, "FIELDS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PRIVATE
     }
     is GrEnumConstant -> return PsiModifier.PUBLIC
     else -> return null

@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StringPattern;
@@ -33,21 +34,19 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Injection base class: Contains properties for language-id, prefix and suffix.
@@ -56,11 +55,11 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
-  @NotNull private final String mySupportId;
+  @NotNull private final @NlsSafe  String mySupportId;
 
-  private String myDisplayName = "";
+  private @Nls String myDisplayName = "";
 
-  private String myInjectedLanguageId = "";
+  private @NlsSafe String myInjectedLanguageId = "";
   private String myPrefix = "";
   private String mySuffix = "";
 
@@ -71,8 +70,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @NonNls
   private String myIgnorePattern = "";
   private Pattern myCompiledIgnorePattern;
-
-  private boolean mySingleFile;
 
   public BaseInjection(@NotNull String id) {
     mySupportId = id;
@@ -101,24 +98,26 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     myPlaces = places;
   }
 
+  @Override
   @NotNull
-  public String getSupportId() {
+  public @NlsSafe String getSupportId() {
     return mySupportId;
   }
 
   @Override
   @NotNull
-  public String getInjectedLanguageId() {
+  public @NlsSafe String getInjectedLanguageId() {
     return myInjectedLanguageId;
   }
 
+  @Nls
   @Override
   @NotNull
   public String getDisplayName() {
     return myDisplayName;
   }
 
-  public void setDisplayName(@NotNull String displayName) {
+  public void setDisplayName(@Nls @NotNull String displayName) {
     myDisplayName = displayName;
   }
 
@@ -240,7 +239,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     if (!myPrefix.equals(that.myPrefix)) return false;
     if (!mySuffix.equals(that.mySuffix)) return false;
     if (!myValuePattern.equals(that.myValuePattern)) return false;
-    if (mySingleFile != that.mySingleFile) return false;
     return true;
   }
 
@@ -289,7 +287,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
     setValuePattern(other.getValuePattern());
     setIgnorePattern(other.getIgnorePattern());
-    mySingleFile = other.mySingleFile;
 
     myPlaces = other.getInjectionPlaces().clone();
     return this;
@@ -298,13 +295,12 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @Override
   public void loadState(@NotNull Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
-    myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
+    myDisplayName = StringUtil.notNullize(element.getChildTextTrim("display-name"));
     myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
     myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
     setValuePattern(element.getChildText("value-pattern"));
     setIgnorePattern(element.getChildText("ignore-pattern"));
-    mySingleFile = element.getChild("single-file") != null;
     readExternalImpl(element);
     final List<Element> placeElements = element.getChildren("place");
     myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
@@ -346,9 +342,6 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
     if (StringUtil.isNotEmpty(myIgnorePattern)) {
       e.addContent(new Element("ignore-pattern").setText(myIgnorePattern));
-    }
-    if (mySingleFile) {
-      e.addContent(new Element("single-file"));
     }
     Arrays.sort(myPlaces, (o1, o2) -> Comparing.compare(o1.getText(), o2.getText()));
     for (InjectionPlace place : myPlaces) {
@@ -406,12 +399,21 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     }
   }
 
+  /**
+   * @deprecated always true
+   */
+  @Deprecated
   public boolean isSingleFile() {
-    return mySingleFile;
+    return true;
   }
 
+
+  /**
+   * @deprecated does nothing
+   */
+  @Deprecated
   public void setSingleFile(final boolean singleFile) {
-    mySingleFile = singleFile;
+
   }
 
   /**

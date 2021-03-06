@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -18,9 +18,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.async.AsyncPopupStep;
@@ -31,6 +29,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,16 +49,16 @@ public abstract class AttachToProcessActionBase extends AnAction {
   @NotNull
   private final Supplier<? extends List<XAttachDebuggerProvider>> myAttachProvidersSupplier;
   @NotNull
-  private final String myAttachActionsListTitle;
+  private final @NlsContexts.PopupTitle String myAttachActionsListTitle;
   @NotNull
   private final Supplier<? extends List<XAttachHostProvider>> myAttachHostProviderSupplier;
 
-  public AttachToProcessActionBase(@Nullable String text,
-                                   @Nullable String description,
+  public AttachToProcessActionBase(@Nullable @NlsActions.ActionText String text,
+                                   @Nullable @NlsActions.ActionDescription String description,
                                    @Nullable Icon icon,
                                    @NotNull Supplier<? extends List<XAttachDebuggerProvider>> attachProvidersSupplier,
                                    @NotNull Supplier<? extends List<XAttachHostProvider>> attachHostProviderSupplier,
-                                   @NotNull String attachActionsListTitle) {
+                                   @NotNull @NlsContexts.PopupTitle String attachActionsListTitle) {
     super(text, description, icon);
     myAttachProvidersSupplier = attachProvidersSupplier;
     myAttachActionsListTitle = attachActionsListTitle;
@@ -388,7 +387,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     @NotNull
     XAttachPresentationGroup<T> myGroup;
     boolean myIsFirstInGroup;
-    @NotNull
+    @NotNull @NlsContexts.Separator
     String myGroupName;
     @NotNull
     Project myProject;
@@ -399,7 +398,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
     public AttachItem(@NotNull XAttachPresentationGroup<T> group,
                       boolean isFirstInGroup,
-                      @NotNull String groupName,
+                      @NotNull @NlsContexts.Separator String groupName,
                       @NotNull T info,
                       @NotNull Project project,
                       @NotNull UserDataHolder dataHolder) {
@@ -416,11 +415,11 @@ public abstract class AttachToProcessActionBase extends AnAction {
     }
 
     @NotNull
-    XAttachPresentationGroup<T> getGroup() {
+    public XAttachPresentationGroup<T> getGroup() {
       return myGroup;
     }
 
-    @Nullable
+    @Nullable @NlsContexts.Separator
     String getSeparatorTitle() {
       return myIsFirstInGroup ? myGroupName : null;
     }
@@ -432,10 +431,11 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
     protected abstract boolean hasSubStep();
 
+    @Nls
     protected abstract String getText(@NotNull Project project);
 
     @Nullable
-    protected abstract String getTooltipText(@NotNull Project project);
+    protected abstract @NlsContexts.Tooltip String getTooltipText(@NotNull Project project);
 
     protected abstract List<AttachToProcessItem> getSubItems();
 
@@ -502,7 +502,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
 
     public AttachToProcessItem(@NotNull XAttachPresentationGroup<ProcessInfo> group,
                                boolean isFirstInGroup,
-                               @NotNull String groupName,
+                               @NotNull @Nls String groupName,
                                @NotNull XAttachHost host,
                                @NotNull ProcessInfo info,
                                @NotNull List<XAttachDebugger> debuggers,
@@ -598,7 +598,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     @NotNull final Project myProject;
 
     MyBasePopupStep(@NotNull Project project,
-                           @Nullable String title,
+                           @Nullable @NlsContexts.PopupTitle String title,
                            List<T> values) {
       super(title, values);
       myProject = project;
@@ -626,7 +626,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
   }
 
   public class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
-    public AttachListStep(@NotNull List<AttachItem> items, @Nullable String title, @NotNull Project project) {
+    public AttachListStep(@NotNull List<AttachItem> items, @Nullable @NlsContexts.PopupTitle String title, @NotNull Project project) {
       super(project, title, items);
     }
 
@@ -688,6 +688,11 @@ public abstract class AttachToProcessActionBase extends AnAction {
         };
       }
       return null;
+    }
+
+    @Override
+    public boolean isFinal(AttachItem value) {
+      return value instanceof AttachToProcessItem;
     }
 
     @Override

@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -95,7 +96,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         myHighlightedText.getEnding().addText(file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }
       else {
-        StringBuilder buffer = new StringBuilder(128);
+        @NlsSafe StringBuilder buffer = new StringBuilder(128);
         PsiClass containingClass = enclosingElement.getContainingClass();
         if (containingClass != null) {
           buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
@@ -183,7 +184,8 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         final PsiElement eachMethodCall = eachElement.getParent();
         if (eachMethodCall != null) {
           final TextRange textRange = eachMethodCall.getTextRange();
-          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
+          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
+                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
         }
       }
     }

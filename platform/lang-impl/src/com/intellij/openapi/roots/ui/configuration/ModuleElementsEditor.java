@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.navigation.History;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,16 +38,11 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private final EventDispatcher<ModuleElementsEditorListener> myDispatcher = EventDispatcher.create(ModuleElementsEditorListener.class);
 
-  protected History myHistory;
   private final ModuleConfigurationState myState;
 
   protected ModuleElementsEditor(@NotNull ModuleConfigurationState state) {
     myProject = state.getProject();
     myState = state;
-  }
-
-  public void setHistory(final History history) {
-    myHistory = history;
   }
 
   public void addListener(ModuleElementsEditorListener listener) {
@@ -65,7 +59,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   protected ModifiableRootModel getModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
   @NotNull

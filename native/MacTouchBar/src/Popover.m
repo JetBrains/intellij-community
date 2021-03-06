@@ -14,6 +14,8 @@ static void _setPopoverData(NSPopoverTouchBarItem * popoverItem, int itemWidth, 
 }
 
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
+__used
+NS_RETURNS_RETAINED
 id createPopover(const char * uid, int itemWidth, const char * text, const char * raster4ByteRGBA, int w, int h, id tbObjExpand, id tbObjTapAndHold) {
     NSString * nsUid = createStringFromUTF8(uid);
     nstrace(@"create popover [%@] (thread: %@)", nsUid, [NSThread currentThread]);

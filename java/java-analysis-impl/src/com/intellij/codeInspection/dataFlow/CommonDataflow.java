@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -25,7 +25,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSuperCall;
 
-public class CommonDataflow {
+public final class CommonDataflow {
   private static class DataflowPoint {
     @NotNull DfType myDfType = DfTypes.BOTTOM;
     // empty = top; null = bottom
@@ -73,12 +73,13 @@ public class CommonDataflow {
       myDfType = myDfType.join(newType);
     }
   }
-  
+
   /**
    * Represents the result of dataflow applied to some code fragment (usually a method)
    */
   public static final class DataflowResult {
-    private final Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
+    private final @NotNull Map<PsiExpression, DataflowPoint> myData = new HashMap<>();
+    private @NotNull Map<PsiExpression, DataflowPoint> myDataAssertionsDisabled = myData;
     private final RunnerResult myResult;
 
     public DataflowResult(RunnerResult result) {
@@ -93,7 +94,31 @@ public class CommonDataflow {
     }
 
     void add(PsiExpression expression, DfaMemoryState memState, DfaValue value) {
-      DataflowPoint point = myData.computeIfAbsent(expression, e -> new DataflowPoint());
+      DfaVariableValue assertionDisabled = value.getFactory().getAssertionDisabled();
+      if (assertionDisabled == null) {
+        assert myData == myDataAssertionsDisabled;
+        updateDataPoint(myData, expression, memState, value);
+      } else {
+        DfType type = memState.getDfType(assertionDisabled);
+        if (type == DfTypes.TRUE || type == DfTypes.FALSE) {
+          if (myData == myDataAssertionsDisabled) {
+            myDataAssertionsDisabled = new HashMap<>(myData);
+          }
+          updateDataPoint(type == DfTypes.TRUE ? myDataAssertionsDisabled : myData, expression, memState, value);
+        } else {
+          updateDataPoint(myData, expression, memState, value);
+          if (myData != myDataAssertionsDisabled) {
+            updateDataPoint(myDataAssertionsDisabled, expression, memState, value);
+          }
+        }
+      }
+    }
+
+    private void updateDataPoint(Map<PsiExpression, DataflowPoint> data,
+                                 PsiExpression expression,
+                                 DfaMemoryState memState,
+                                 DfaValue value) {
+      DataflowPoint point = data.computeIfAbsent(expression, e -> new DataflowPoint());
       if (DfaTypeValue.isContractFail(value)) {
         point.myMayFailByContract = true;
         return;
@@ -126,9 +151,9 @@ public class CommonDataflow {
     }
 
     /**
-     * Returns true if given call cannot fail according to its contracts 
+     * Returns true if given call cannot fail according to its contracts
      * (e.g. {@code Optional.get()} executed under {@code Optional.isPresent()}).
-     * 
+     *
      * @param call call to check
      * @return true if it cannot fail by contract; false if unknown or can fail
      */
@@ -136,7 +161,7 @@ public class CommonDataflow {
       DataflowPoint point = myData.get(call);
       return point != null && !point.myMayFailByContract;
     }
-    
+
     /**
      * Returns a set of expression values if known. If non-empty set is returned, then given expression
      * is guaranteed to have one of returned values.
@@ -154,11 +179,25 @@ public class CommonDataflow {
 
     /**
      * @param expression an expression to infer the DfType, must be deparenthesized.
-     * @return DfType for that expression. May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * @return DfType for that expression, assuming assertions are disabled.
+     * May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * @see #getDfTypeNoAssertions(PsiExpression)
      */
     @NotNull
     public DfType getDfType(PsiExpression expression) {
       DataflowPoint point = myData.get(expression);
+      return point == null ? DfTypes.TOP : point.myDfType;
+    }
+
+    /**
+     * @param expression an expression to infer the DfType, must be deparenthesized.
+     * @return DfType for that expression, assuming assertions are disabled.
+     * May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * @see #getDfType(PsiExpression)
+     */
+    @NotNull
+    public DfType getDfTypeNoAssertions(PsiExpression expression) {
+      DataflowPoint point = myDataAssertionsDisabled.get(expression);
       return point == null ? DfTypes.TOP : point.myDfType;
     }
   }
@@ -166,7 +205,7 @@ public class CommonDataflow {
   @NotNull
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
-    DataFlowRunner runner = new DataFlowRunner(block.getProject(), block);
+    DataFlowRunner runner = new DataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
     CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     if (result != RunnerResult.OK) return new DataflowResult(result);
@@ -280,11 +319,7 @@ public class CommonDataflow {
     if (expressionToAnalyze == null) return null;
     Object computed = ExpressionUtils.computeConstantExpression(expressionToAnalyze);
     if (computed != null) return computed;
-    DataflowResult dataflowResult = getDataflowResult(expressionToAnalyze);
-    if (dataflowResult != null) {
-      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expressionToAnalyze));
-    }
-    return null;
+    return getDfType(expressionToAnalyze).getConstantOfType(Object.class);
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {

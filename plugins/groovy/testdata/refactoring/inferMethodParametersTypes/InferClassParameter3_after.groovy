@@ -1,5 +1,5 @@
 class P<T> {
-  Object foo(List<? extends T> t) {
+  Object foo(ArrayList<? extends T> t) {
     m(t[0])
   }
 

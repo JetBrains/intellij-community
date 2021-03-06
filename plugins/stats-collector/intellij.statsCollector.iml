@@ -11,24 +11,23 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="intellij.statsCollector.logEvents" />
-    <orderEntry type="library" name="fluent-hc" level="project" />
-    <orderEntry type="module" module-name="intellij.statsCollector.completionRanker" />
-    <orderEntry type="module-library" exported="">
-      <library name="ngram-slp" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:ngram-slp:0.0.2" />
+    <orderEntry type="module-library">
+      <library name="completion-log-events" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-log-events:0.0.3" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.2/ngram-slp-0.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.3/completion-log-events-0.0.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.2/ngram-slp-0.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.3/completion-log-events-0.0.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

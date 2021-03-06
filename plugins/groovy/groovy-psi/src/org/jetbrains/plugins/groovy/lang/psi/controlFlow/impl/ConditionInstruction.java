@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
@@ -30,10 +31,11 @@ public class ConditionInstruction extends InstructionImpl implements Instruction
     return myNegated;
   }
 
+  @NonNls
   @NotNull
   @Override
   protected String getElementPresentation() {
-    StringBuilder builder = new StringBuilder();
+    @NonNls StringBuilder builder = new StringBuilder();
     builder.append("Condition ").append(getElement());
     if (myNegated) builder.append(", negated");
     if (myDependent.size() > 1) {

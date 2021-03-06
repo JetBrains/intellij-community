@@ -7,9 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.MergingCharSequence;
-import gnu.trove.TByteArrayList;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -40,8 +41,8 @@ public final class LineSet {
 
   @NotNull
   private static LineSet createLineSet(@NotNull CharSequence text, boolean markModified) {
-    TIntArrayList starts = new TIntArrayList();
-    TByteArrayList flags = new TByteArrayList();
+    IntList starts = new IntArrayList();
+    ByteList flags = new ByteArrayList();
 
     LineTokenizer lineTokenizer = new LineTokenizer(text);
     while (!lineTokenizer.atEnd()) {
@@ -49,7 +50,7 @@ public final class LineSet {
       flags.add((byte) (lineTokenizer.getLineSeparatorLength() | (markModified ? MODIFIED_MASK : 0)));
       lineTokenizer.advance();
     }
-    return new LineSet(starts.toNativeArray(), flags.toNativeArray(), text.length());
+    return new LineSet(starts.toIntArray(), flags.toByteArray(), text.length());
   }
 
   @NotNull
@@ -205,7 +206,7 @@ public final class LineSet {
   }
 
   @NotNull
-  final LineSet setModified(@NotNull IntArrayList indices) {
+  final LineSet setModified(@NotNull IntList indices) {
     if (indices.isEmpty()) {
       return this;
     }

@@ -115,7 +115,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       else {
         LOG.warn(e);
       }
-      throw new EvaluateException("Internal error, see logs for more details");
+      throw new EvaluateException(JavaDebuggerBundle.message("internal.debugger.error"));
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;

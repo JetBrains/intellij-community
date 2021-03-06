@@ -6,11 +6,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -34,7 +36,7 @@ public abstract class DependentSdkType extends SdkType {
   protected abstract boolean isValidDependency(@NotNull Sdk sdk);
 
   @NotNull
-  public abstract String getUnsatisfiedDependencyMessage();
+  public abstract @NlsContexts.DialogMessage String getUnsatisfiedDependencyMessage();
 
   @Override
   public boolean supportsCustomCreateUI() {
@@ -42,7 +44,8 @@ public abstract class DependentSdkType extends SdkType {
   }
 
   @Override
-  public void showCustomCreateUI(@NotNull final SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @Nullable Sdk selectedSdk,
+                                 @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     if (!checkDependency(sdkModel)) {
       if (Messages.showOkCancelDialog(parentComponent, getUnsatisfiedDependencyMessage(),
                                       ProjectBundle.message("dialog.title.cannot.create.sdk"), Messages.getWarningIcon()) != Messages.OK) {

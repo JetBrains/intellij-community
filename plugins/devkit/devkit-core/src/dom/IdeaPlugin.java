@@ -1,10 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiPackage;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorPackageConverter;
 
 import java.util.List;
 
@@ -12,14 +18,31 @@ import java.util.List;
 @Presentation(icon = "AllIcons.Nodes.Plugin", typeName = DevkitDomPresentationConstants.PLUGIN)
 @Stubbed
 public interface IdeaPlugin extends DomElement {
-  String TAG_NAME = "idea-plugin";
+  @NonNls String TAG_NAME = "idea-plugin";
 
-  @Nullable
+  @Nullable @NlsSafe
   String getPluginId();
 
+  default boolean hasRealPluginId() {
+    String pluginId = getPluginId();
+    return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
+  }
+
   @SubTag("product-descriptor")
-  @Nullable
+  @NotNull
   ProductDescriptor getProductDescriptor();
+
+  @SubTag("content")
+  @NotNull
+  @Stubbed
+  @ApiStatus.Experimental
+  ContentDescriptor getContent();
+
+  @SubTag("dependencies")
+  @NotNull
+  @Stubbed
+  @ApiStatus.Experimental
+  DependencyDescriptor getDependencies();
 
   @NotNull
   @NameValue
@@ -57,6 +80,11 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull
   @Stubbed
+  @Convert(ModuleDescriptorPackageConverter.ForIdeaPlugin.class)
+  GenericAttributeValue<PsiPackage> getPackage();
+
+  @NotNull
+  @Stubbed
   @Required(false)
   GenericDomValue<String> getName();
 
@@ -88,16 +116,21 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Stubbed
   GenericDomValue<String> getResourceBundle();
 
 
   @NotNull
   @Stubbed
   @SubTagList("depends")
-  List<Dependency> getDependencies();
+  List<Dependency> getDepends();
 
   @SubTagList("depends")
   Dependency addDependency();
+
+  @NotNull
+  @SubTagList("incompatible-with")
+  List<GenericDomValue<String>> getIncompatibilities();
 
   @NotNull
   @Stubbed
@@ -165,10 +198,4 @@ public interface IdeaPlugin extends DomElement {
   @Deprecated
   @NotNull
   List<Helpset> getHelpsets();
-
-  /**
-   * @deprecated not used anymore
-   */
-  @Deprecated
-  Helpset addHelpset();
 }

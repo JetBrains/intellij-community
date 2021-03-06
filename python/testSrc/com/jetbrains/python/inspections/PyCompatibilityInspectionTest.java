@@ -10,18 +10,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
-  public void testDictCompExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
-  public void testSetLiteralExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
-  public void testSetCompExpression() {
-    doTest(LanguageLevel.PYTHON27);
-  }
-
   public void testExceptBlock() {
     doTest(LanguageLevel.PYTHON27);
   }
@@ -64,10 +52,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   public void testReprExpression() {
     doTest();
-  }
-
-  public void testWithStatement() {
-    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testPrintStatement() {
@@ -229,7 +213,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
       () -> doTestByText(
-        "def f(pos1, <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
+        "def f(pos1, <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
         "    pass"
       )
     );
@@ -248,13 +232,18 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
                          "  try:\n" +
                          "    print(\"a\")\n" +
                          "  finally:\n" +
-                         "    <warning descr=\"Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause\">continue</warning>")
+                         "    <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause\">continue</warning>")
     );
   }
 
   // PY-35961
   public void testUnpackingInNonParenthesizedTuplesInReturnAndYield() {
     doTest(LanguageLevel.PYTHON38);
+  }
+
+  // PY-41305
+  public void testExpressionInDecorators() {
+    doTest(LanguageLevel.PYTHON39);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

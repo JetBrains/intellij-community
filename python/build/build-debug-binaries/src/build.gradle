@@ -1,5 +1,8 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
+import java.nio.file.Paths
+import java.util.regex.Pattern
+
 plugins {
   id "com.jetbrains.python.envs" version "0.0.30"
 }
@@ -8,12 +11,16 @@ ext {
   pydevDir = new File(projectDir, '/../../../helpers/pydev/')
 }
 
+boolean isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
+boolean isMac = Os.isFamily(Os.FAMILY_MAC)
+
 envs {
-  String python27version = "2.7.16"
-  String python35version = "3.5.7"
+  String python27version = "2.7.18"
+  String python35version = isWindows ? "3.5.4" : "3.5.7"
   String python36version = "3.6.8"
-  String python37version = "3.7.6"
-  String python38version = "3.8.1"
+  String python37version = "3.7.9"
+  String python38version = "3.8.5"
+  String python39version = "3.9.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
@@ -21,7 +28,7 @@ envs {
   envsDirectory = new File(buildDir, 'envs')
 
   zipRepository = new URL("https://repo.labs.intellij.net/pycharm/python-archives-windows/")
-  shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
+  shouldUseZipsFromRepository = isWindows
 
   python "python27_64", python27version, "64"
   virtualenv "py27_64", "python27_64", ["cython"]
@@ -38,7 +45,10 @@ envs {
   python "python38_64", python38version, "64"
   virtualenv "py38_64", "python38_64", ["cython"]
 
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+  python "python39_64", python39version, "64"
+  virtualenv "py39_64", "python39_64", ["cython"]
+
+  if (isWindows) {
     python "python27_32", python27version, "32"
     virtualenv "py27_32", "python27_32", ["cython"]
 
@@ -53,10 +63,13 @@ envs {
 
     python "python38_32", python38version, "32"
     virtualenv "py38_32", "python38_32", ["cython"]
+
+    python "python39_32", python39version, "32"
+    virtualenv "py39_32", "python39_32", ["cython"]
   }
 }
 
-task buildBinariesOnWindows(dependsOn: 'build_envs') << {
+task buildBinariesOnWindows(dependsOn: 'build_envs') doLast {
   exec {
     workingDir pydevDir
 
@@ -64,30 +77,86 @@ task buildBinariesOnWindows(dependsOn: 'build_envs') << {
                 MINICONDA32_ENVS: envs.envsDirectory,
                 MINICONDA64_ENVS: envs.envsDirectory
 
-    commandLine "${envs.envsDirectory}/py27_32/Scripts/python.exe", "build_tools/build_binaries_windows.py"
+    commandLine "${envs.envsDirectory}/py38_32/Scripts/python.exe", "build_tools/build_binaries_windows.py"
   }
 }
 
-task buildBinariesOnMac(dependsOn: 'build_envs') << {
+task buildBinariesOnMac(dependsOn: 'build_envs') doLast {
   exec {
     workingDir pydevDir
 
     environment PYTHONPATH: pydevDir,
                 MINICONDA64_ENVS: envs.envsDirectory
 
-    commandLine "${envs.envsDirectory}/py37_64/bin/python", "build_tools/build_binaries_osx.py"
+    commandLine "${envs.envsDirectory}/py38_64/bin/python", "build_tools/build_binaries_osx.py"
   }
 }
 
 task buildBinaries() {
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+  if (isWindows) {
     dependsOn buildBinariesOnWindows
   }
-  else if (Os.isFamily(Os.FAMILY_MAC)) {
+  else if (isMac) {
     dependsOn buildBinariesOnMac
   }
 }
 
-task wrapper(type: Wrapper) << {
-  gradleVersion = '4.2'
+task checkVersionOfCFiles() {
+  description "Checks if the binary version in C files matches the regular version."
+  doLast {
+    File additionalThreadInfoRegular = Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_additional_thread_info_regular.py").toFile()
+    File cFile = Paths.get(project.ext.pydevDir.path, "_pydevd_bundle", "pydevd_cython.c").toFile()
+    Integer regularVersion = extractVersion(additionalThreadInfoRegular, ~/version = (\d+)/)
+    Integer cVersion = extractVersion(cFile, ~/\s+version = (\d+)/)
+    assert regularVersion == cVersion : "The version '$regularVersion' in ${additionalThreadInfoRegular.name} does not matches the '$cVersion' " +
+                                        "version in ${cFile.name}"
+  }
+}
+
+task checkCFilesAreUpToDate() {
+  description "Checks if the C files are up to date by checking their creation time and binary version."
+  dependsOn checkVersionOfCFiles
+  doLast {
+    String pydevdRoot = project.ext.pydevDir.path
+
+    def mappings = [
+      ["_pydevd_bundle", "pydevd_cython"],
+      ["_pydevd_frame_eval", "pydevd_frame_evaluator_common"],
+      ["_pydevd_frame_eval", "pydevd_frame_evaluator"],
+      ["_pydevd_frame_eval", "pydevd_frame_evaluator_py39"]
+    ]
+
+    for (mapping in mappings) {
+      def (dir, extName) = mapping
+      File pxdFile = Paths.get(pydevdRoot, dir, extName + ".pxd").toFile()
+      File pyxFile = Paths.get(pydevdRoot, dir, extName + ".pyx").toFile()
+      File cFile = Paths.get(pydevdRoot, dir, extName + ".c").toFile()
+
+      def checkTimespamps = { File mainFile, File dependentFile ->
+        assert dependentFile.lastModified() > mainFile.lastModified() : "${dependentFile.name} is older than ${mainFile.name}"
+      }
+
+      checkTimespamps(pxdFile, cFile)
+      checkTimespamps(pyxFile, cFile)
+    }
+
+    println "The C files are up to date."
+  }
+}
+
+Integer extractVersion(File file, Pattern versionPattern) {
+  file.withReader {reader ->
+    def line
+    while ((line = reader.readLine()) != null) {
+      def matcher = line =~ versionPattern
+      if (matcher.find()) {
+        return Integer.parseInt(matcher.group(1))
+      }
+    }
+    throw new RuntimeException("Can't find version in ${file.path}")
+  }
+}
+
+tasks.named('wrapper') {
+  gradleVersion = '6.7.1'
 }

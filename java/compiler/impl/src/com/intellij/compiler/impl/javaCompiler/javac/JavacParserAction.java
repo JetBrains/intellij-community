@@ -17,6 +17,7 @@ package com.intellij.compiler.impl.javaCompiler.javac;
 
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.ParserAction;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -33,7 +34,7 @@ public abstract class JavacParserAction extends ParserAction {
   }
 
   @Override
-  public final boolean execute(String line, final OutputParser.Callback callback) {
+  public final boolean execute(@NlsSafe String line, final OutputParser.Callback callback) {
     myMatcher.reset(line);
     if (!myMatcher.matches()) {
       return false;
@@ -43,6 +44,6 @@ public abstract class JavacParserAction extends ParserAction {
     return true;
   }
 
-  protected abstract void doExecute(final String line, @Nullable String parsedData, final OutputParser.Callback callback);
+  protected abstract void doExecute(@NlsSafe final String line, @Nullable String parsedData, final OutputParser.Callback callback);
 
 }

@@ -6,12 +6,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class GitCommitCompareInfo extends CommitCompareInfo {
   public GitCommitCompareInfo() {
   }

@@ -94,6 +94,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_FUNC_DEFINITION = TextAttributesKey.createTextAttributesKey("PY.FUNC_DEFINITION", FUNCTION_DECLARATION);
 
+  public static final TextAttributesKey PY_NESTED_FUNC_DEFINITION = TextAttributesKey.createTextAttributesKey("PY.NESTED_FUNC_DEFINITION", PY_FUNC_DEFINITION);
+
   public static final TextAttributesKey PY_PREDEFINED_DEFINITION = TextAttributesKey.createTextAttributesKey("PY.PREDEFINED_DEFINITION", PREDEFINED_SYMBOL);
 
   public static final TextAttributesKey PY_PREDEFINED_USAGE = TextAttributesKey.createTextAttributesKey("PY.PREDEFINED_USAGE", PREDEFINED_SYMBOL);

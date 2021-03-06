@@ -5,6 +5,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,13 +94,13 @@ public abstract class ChooseByNameFilter<T> {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.add(myChooser);
     JPanel buttons = new JPanel();
-    JButton all = new JButton("All");
+    JButton all = new JButton(LangBundle.message("label.all"));
     all.addActionListener(__ -> myChooser.setAllElementsMarked(true));
     buttons.add(all);
-    JButton none = new JButton("None");
+    JButton none = new JButton(LangBundle.message("label.none"));
     none.addActionListener(__ -> myChooser.setAllElementsMarked(false));
     buttons.add(none);
-    JButton invert = new JButton("Invert");
+    JButton invert = new JButton(LangBundle.message("label.invert"));
     invert.addActionListener(__ -> myChooser.invertSelection());
     buttons.add(invert);
     panel.add(buttons);
@@ -116,7 +118,7 @@ public abstract class ChooseByNameFilter<T> {
   protected ElementsChooser<T> createChooser(@NotNull final FilteringGotoByModel<T> model,
                                              @NotNull final ChooseByNameFilterConfiguration<? super T> filterConfiguration) {
     List<T> elements = new ArrayList<>(getAllFilterValues());
-    final ElementsChooser<T> chooser = new ElementsChooser<T>(elements, true) {
+    final ElementsChooser<T> chooser = new ElementsChooser<>(elements, true) {
       @Override
       protected String getItemText(@NotNull final T value) {
         return textForFilterValue(value);
@@ -143,6 +145,7 @@ public abstract class ChooseByNameFilter<T> {
     return chooser;
   }
 
+  @NlsSafe
   protected abstract String textForFilterValue(@NotNull T value);
 
   @Nullable

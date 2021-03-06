@@ -11,9 +11,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
 
+  private static final String KEY = "xml.intention.manually.setup.external.resource";
+
   @Override
   protected String getQuickFixKeyId() {
-    return "manually.setup.external.resource";
+    return KEY;
   }
 
   @Override

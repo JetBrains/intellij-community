@@ -15,31 +15,12 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
- * @author peter
+ * @deprecated does nothing
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public class UnfocusedNameIdentifier extends CompletionConfidence {
-  @NotNull
-  @Override
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    final PsiElement position = parameters.getPosition();
-    final PsiElement parent = position.getParent();
-    if (parent instanceof PsiNameIdentifierOwner) {
-      final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)parent).getNameIdentifier();
-      if (nameIdentifier == position) {
-        return ThreeState.NO;
-      }
-
-      if (nameIdentifier != null && position.getTextRange().equals(nameIdentifier.getTextRange())) {
-        //sometimes name identifiers are non-physical (e.g. Groovy)
-        return ThreeState.NO;
-      }
-    }
-    return ThreeState.UNSURE;
-  }
 }

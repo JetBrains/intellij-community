@@ -29,8 +29,11 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
 
   @Nullable
   @Override
+  @SuppressWarnings("DialogTitleCapitalization")
   public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(ignoredClasses, "Ignored classes", "Choose class for which object allocation can be ignored");
+    return UiUtils.createTreeClassChooserList(ignoredClasses,
+                                              InspectionGadgetsBundle.message("options.title.ignored.classes"),
+                                              InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"));
   }
 
   @Nullable
@@ -48,7 +51,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
       if (name != null) {
-        result.add(new IgnoreClassFix(name, ignoredClasses, "Ignore allocations of objects with type '" + name + "'"));
+        result.add(new IgnoreClassFix(name, ignoredClasses, InspectionGadgetsBundle.message("result.of.object.allocation.fix.name", name)));
       }
     }
     ContainerUtil.addIfNotNull(result, SuppressForTestsScopeFix.build(this, expression));

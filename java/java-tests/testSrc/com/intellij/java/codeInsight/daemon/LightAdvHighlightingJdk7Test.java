@@ -88,7 +88,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testResolveConflictDiamonds() { doTest(false, false); }
 
   public void testDynamicallyAddIgnoredAnnotations() {
-    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null);
+    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint();
     EntryPoint extension = new EntryPoint() {
       @NotNull @Override public String getDisplayName() { return "duh"; }
       @Override public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) { return false; }

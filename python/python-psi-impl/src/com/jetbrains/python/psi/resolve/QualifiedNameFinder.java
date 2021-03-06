@@ -1,18 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -20,10 +25,14 @@ import com.jetbrains.python.codeInsight.typing.PyStubPackages;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author yole
@@ -125,33 +134,54 @@ public class QualifiedNameFinder {
       }
       PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
       while (dir != null) {
-        PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
+        PyFile initPy = as(PyUtil.turnDirIntoInit(dir), PyFile.class);
         if (initPy == null) {
           break;
         }
-        if (initPy instanceof PyFile) {
-          //noinspection ConstantConditions
-          final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(((PsiNamedElement)toplevel).getName());
-          final PsiElement finalTopLevel = toplevel;
-          if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
-            virtualFile = dir.getVirtualFile();
-          }
+        if (initPy.getImportTargets().isEmpty() && initPy.getFromImports().isEmpty()) {
+          initPy = jumpFromBinarySkeletonsToRealInitPy(initPy);
+        }
+
+        //noinspection ConstantConditions
+        final List<RatedResolveResult> resolved = initPy.multiResolveName(((PsiNamedElement)toplevel).getName());
+        final PsiElement finalTopLevel = toplevel;
+        if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
+          virtualFile = dir.getVirtualFile();
         }
         dir = dir.getParentDirectory();
       }
     }
     final QualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
-      final QualifiedName restored = canonizeQualifiedName(qname, foothold);
+      final QualifiedName restored = canonizeQualifiedName(symbol, qname, foothold);
       if (restored != null) return restored;
     }
     return qname;
   }
 
+  @NotNull
+  private static PyFile jumpFromBinarySkeletonsToRealInitPy(@NotNull PyFile initPy) {
+    if (PythonSdkUtil.isElementInSkeletons(initPy)) {
+      QualifiedName packageName = findShortestImportableQName(initPy);
+      if (packageName != null) {
+        List<PsiElement> namesakeResults = PyResolveImportUtil.resolveQualifiedName(packageName, PyResolveImportUtil.fromFoothold(initPy));
+        PsiElement nonSkeletonResult = ContainerUtil.find(namesakeResults, e -> !PythonSdkUtil.isElementInSkeletons(e));
+        PsiDirectory libPackage = as(nonSkeletonResult, PsiDirectory.class);
+        if (libPackage != null) {
+          PyFile libInitPy = as(PyUtil.turnDirIntoInit(libPackage), PyFile.class);
+          if (libInitPy != null && libInitPy != initPy) {
+            return libInitPy;
+          }
+        }
+      }
+    }
+    return initPy;
+  }
+
   @Nullable
-  public static QualifiedName canonizeQualifiedName(QualifiedName qname, PsiElement foothold) {
+  public static QualifiedName canonizeQualifiedName(PsiElement symbol, QualifiedName qname, PsiElement foothold) {
     for (PyCanonicalPathProvider provider : PyCanonicalPathProvider.EP_NAME.getExtensionList()) {
-      final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
+      final QualifiedName restored = provider.getCanonicalPath(symbol, qname, foothold);
       if (restored != null) {
         return restored;
       }
@@ -198,7 +228,7 @@ public class QualifiedNameFinder {
   /**
    * Tries to find roots that contain given vfile.
    */
-  private static class PathChoosingVisitor implements RootVisitor {
+  private static final class PathChoosingVisitor implements RootVisitor {
     @NotNull private final VirtualFile myVFile;
     @NotNull private final Set<QualifiedName> myResults = new LinkedHashSet<>();
 
@@ -208,50 +238,87 @@ public class QualifiedNameFinder {
 
     @Override
     public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
-      final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-      final QualifiedName result = PyStubPackages.convertStubToRuntimePackageName(pathToQualifiedName(relativePath));
-      if (result.getComponentCount() != 0) {
-        for (String component : result.getComponents()) {
-          if (!PyNames.isIdentifier(component)) {
-            return true;
-          }
-        }
-        myResults.add(result);
+      QualifiedName qName = computeQualifiedNameInRoot(root, myVFile);
+      if (qName != null && ContainerUtil.all(qName.getComponents(), PyNames::isIdentifier)) {
+        myResults.add(qName);
       }
       return true;
-    }
-
-    @NotNull
-    private QualifiedName pathToQualifiedName(@Nullable String relativePath) {
-      if (StringUtil.isEmpty(relativePath)) return QualifiedName.fromComponents();
-
-      final List<String> result = new ArrayList<>(StringUtil.split(relativePath, "/"));
-      if (!result.isEmpty()) {
-        final int lastIndex = result.size() - 1;
-        final String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(result.get(lastIndex));
-
-        if (myVFile.isDirectory() || !nameWithoutExtension.equals(PyNames.INIT)) {
-          result.set(lastIndex, nameWithoutExtension);
-        }
-        else {
-          result.remove(lastIndex);
-        }
-
-        for (String component : result) {
-          if (component.contains(".")) {
-            return QualifiedName.fromComponents();
-          }
-        }
-
-        return QualifiedName.fromComponents(result);
-      }
-
-      return QualifiedName.fromComponents();
     }
 
     @NotNull
     public List<QualifiedName> getResults() {
       return new ArrayList<>(myResults);
     }
+  }
+
+  @ApiStatus.Internal
+  public static abstract class QualifiedNameBasedScope extends GlobalSearchScope {
+    private final ProjectFileIndex myProjectFileIndex;
+
+    public QualifiedNameBasedScope(@NotNull Project project) {
+      super(project);
+      myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      return true;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return true;
+    }
+
+    @Override
+    public final boolean contains(@NotNull VirtualFile file) {
+      VirtualFile closestRoot = findClosestRoot(file);
+      if (closestRoot == null) return true;
+      QualifiedName qName = computeQualifiedNameInRoot(closestRoot, file);
+      if (qName == null) return true;
+      return containsQualifiedNameInRoot(closestRoot, qName);
+    }
+
+    protected abstract boolean containsQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull QualifiedName qName);
+
+    @Nullable
+    private VirtualFile findClosestRoot(@NotNull VirtualFile vFile) {
+      VirtualFile sourceRoot = myProjectFileIndex.getSourceRootForFile(vFile);
+      if (sourceRoot != null) return sourceRoot;
+      VirtualFile contentRoot = myProjectFileIndex.getContentRootForFile(vFile);
+      if (contentRoot != null) return contentRoot;
+      VirtualFile libraryRoot = myProjectFileIndex.getClassRootForFile(vFile);
+      if (libraryRoot != null) return libraryRoot;
+      return null;
+    }
+  }
+
+  @Nullable
+  private static QualifiedName computeQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull VirtualFile file) {
+    VirtualFile effectiveRoot = ModelBranchUtil.obtainCopyFromTheSameBranch(file, root);
+    String relativePath = VfsUtilCore.getRelativePath(file, effectiveRoot, VfsUtilCore.VFS_SEPARATOR_CHAR);
+    if (StringUtil.isEmpty(relativePath)) {
+      return null;
+    }
+
+    List<String> components = new ArrayList<>(StringUtil.split(relativePath, VfsUtilCore.VFS_SEPARATOR));
+    if (components.isEmpty()) {
+      return null;
+    }
+
+    int lastIndex = components.size() - 1;
+    String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(components.get(lastIndex));
+    if (!file.isDirectory() && nameWithoutExtension.equals(PyNames.INIT)) {
+      components.remove(lastIndex);
+    }
+    else {
+      components.set(lastIndex, nameWithoutExtension);
+    }
+
+    if (components.isEmpty() || ContainerUtil.exists(components, part -> part.contains("."))) {
+      return null;
+    }
+    // A qualified name might still contain "-stubs" non-identifier part as its first component.
+    return PyStubPackages.convertStubToRuntimePackageName(QualifiedName.fromComponents(components));
   }
 }

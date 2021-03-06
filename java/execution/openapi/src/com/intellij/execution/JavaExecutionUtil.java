@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,12 +9,17 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,16 +72,7 @@ public final class JavaExecutionUtil {
   }
 
   @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName) {
-    return getPresentableClassName(rtClassName, null);
-  }
-
-  /**
-   * @deprecated use {@link JavaExecutionUtil#getPresentableClassName(String)}
-   */
-  @Deprecated
-  @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName, @SuppressWarnings("unused") JavaRunConfigurationModule configurationModule) {
+  public static @NlsSafe String getPresentableClassName(@Nullable String rtClassName) {
     if (StringUtil.isEmpty(rtClassName)) {
       return null;
     }
@@ -97,7 +92,12 @@ public final class JavaExecutionUtil {
 
   @Nullable
   public static PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
-    if (project.isDefault() || DumbService.isDumb(project) && !DumbService.getInstance(project).isAlternativeResolveEnabled()) return null;
+    if (project.isDefault() ||
+        (DumbService.isDumb(project) &&
+         FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null &&
+         !DumbService.getInstance(project).isAlternativeResolveEnabled())) {
+      return null;
+    }
     final PsiManager psiManager = PsiManager.getInstance(project);
     final String shortName = StringUtil.getShortName(mainClassName);
     final String packageName = StringUtil.getPackageName(mainClassName);
@@ -113,6 +113,7 @@ public final class JavaExecutionUtil {
 
   public static Location stepIntoSingleClass(@NotNull final Location location) {
     PsiElement element = location.getPsiElement();
+    TextRange elementTextRange = element.getTextRange();
     if (!(element instanceof PsiClassOwner)) {
       if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != null) return location;
       element = PsiTreeUtil.getParentOfType(element, PsiClassOwner.class);
@@ -121,7 +122,9 @@ public final class JavaExecutionUtil {
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
-    if (classes[0].getTextRange() == null) return location;
+    TextRange textRange = classes[0].getTextRange();
+    if (textRange == null) return location;
+    if (elementTextRange != null && textRange.contains(elementTextRange)) return location;
     return PsiLocation.fromPsiElement(classes[0]);
   }
 
@@ -131,7 +134,8 @@ public final class JavaExecutionUtil {
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
-  public static void showExecutionErrorMessage(ExecutionException e, String title, Project project) {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static void showExecutionErrorMessage(ExecutionException e, @NlsContexts.DialogTitle String title, Project project) {
     ExecutionErrorDialog.show(e, title, project);
   }
 

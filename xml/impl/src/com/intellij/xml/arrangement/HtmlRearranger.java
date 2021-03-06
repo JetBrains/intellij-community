@@ -26,10 +26,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class HtmlRearranger extends XmlRearranger {
-  private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<>();
   private static final StdArrangementSettings DEFAULT_SETTINGS;
 
   static {
+    List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<>();
     StdArrangementMatchRule rule = new StdArrangementMatchRule(
       new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(StdArrangementTokens.EntryType.XML_ATTRIBUTE)),
       StdArrangementTokens.Order.BY_NAME);
@@ -38,7 +38,9 @@ public class HtmlRearranger extends XmlRearranger {
     DEFAULT_SETTINGS = StdArrangementSettings.createByMatchRules(Collections.emptyList(), DEFAULT_MATCH_RULES);
   }
 
-  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
+  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER =
+    new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
+
   @Nullable
   @Override
   public StdArrangementSettings getDefaultSettings() {
@@ -54,11 +56,11 @@ public class HtmlRearranger extends XmlRearranger {
   @NotNull
   @Override
   public List<XmlElementArrangementEntry> parse(@NotNull PsiElement root,
-                                      @Nullable Document document,
-                                      @NotNull Collection<TextRange> ranges,
-                                      @NotNull ArrangementSettings settings) {
+                                                @Nullable Document document,
+                                                @NotNull Collection<? extends TextRange> ranges,
+                                                @NotNull ArrangementSettings settings) {
     final XmlArrangementParseInfo parseInfo = new XmlArrangementParseInfo();
-    root.accept(new XmlArrangementVisitor(parseInfo, ranges){
+    root.accept(new XmlArrangementVisitor(parseInfo, ranges) {
       @Override
       protected void postProcessTag(@NotNull XmlTag xmlTag, @NotNull XmlElementArrangementEntry xmlTagEntry) {
         addEntriesForEmbeddedContent(xmlTag, xmlTagEntry, document, ranges);
@@ -70,7 +72,7 @@ public class HtmlRearranger extends XmlRearranger {
   private static void addEntriesForEmbeddedContent(@NotNull XmlTag xmlTag,
                                                    @NotNull XmlElementArrangementEntry xmlTagEntry,
                                                    @Nullable Document document,
-                                                   @NotNull Collection<TextRange> ranges) {
+                                                   @NotNull Collection<? extends TextRange> ranges) {
     if (!StringUtil.equals(xmlTag.getName(), HtmlUtil.SCRIPT_TAG_NAME) && !StringUtil.equals(xmlTag.getName(), HtmlUtil.STYLE_TAG_NAME)) {
       return;
     }

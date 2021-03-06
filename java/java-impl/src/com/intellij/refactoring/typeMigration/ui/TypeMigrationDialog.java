@@ -3,13 +3,14 @@ package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -50,8 +51,6 @@ import java.util.List;
 public abstract class TypeMigrationDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);
 
-  public static final String REFACTORING_NAME = "Type Migration";
-
   protected final PsiElement[] myRoots;
   private TypeMigrationRules myRules;
   private final ScopeChooserCombo myScopeChooserCombo;
@@ -71,7 +70,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         validateButtons();
       }
     });
-    setTitle(REFACTORING_NAME);
+    setTitle(JavaRefactoringBundle.message("type.migration.action.name"));
   }
 
   @Override
@@ -89,7 +88,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   @NotNull
-  protected abstract Function<PsiElement, PsiType> getMigrationTypeFunction();
+  protected abstract Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
 
   protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints cs) {
 
@@ -119,20 +118,19 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   public static class MultipleElements extends TypeMigrationDialog {
-    private final Function<PsiElement, PsiType> myMigrationTypeFunction;
+    private final Function<? super PsiElement, ? extends PsiType> myMigrationTypeFunction;
 
     public MultipleElements(@NotNull Project project,
                             PsiElement @NotNull [] roots,
-                            @NotNull Function<PsiElement, PsiType> migrationTypeFunction,
+                            @NotNull Function<? super PsiElement, ? extends PsiType> migrationTypeFunction,
                             @NotNull TypeMigrationRules rules) {
       super(project, roots, rules);
       myMigrationTypeFunction = migrationTypeFunction;
       init();
     }
 
-    @NotNull
     @Override
-    protected Function<PsiElement, PsiType> getMigrationTypeFunction() {
+    protected @NotNull Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction() {
       return myMigrationTypeFunction;
     }
   }
@@ -164,7 +162,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       final Document document = documentManager.getDocument(myTypeCodeFragment);
       assert document != null;
-      myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
+      myToTypeEditor = new EditorComboBox(document, project, JavaFileType.INSTANCE);
       final String[] types = getValidTypes(project, root);
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
       document.addDocumentListener(new DocumentListener() {
@@ -181,8 +179,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void canRun() throws ConfigurationException {
       super.canRun();
       if (!checkType(getMigrationType()))
-        throw new ConfigurationException("\'" + StringUtil.escapeXmlEntities(myTypeCodeFragment.getText()) + "\' is an invalid type");
-      if (isVoidVariableMigration()) throw new ConfigurationException("\'void\' is not applicable");
+        throw new ConfigurationException(
+          JavaBundle.message("type.migration.dialog.message.invalid.type", StringUtil.escapeXmlEntities(myTypeCodeFragment.getText())));
+      if (isVoidVariableMigration()) throw new ConfigurationException(
+        JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
     }
 
     @Override
@@ -242,9 +242,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       super.doAction();
     }
 
-    @NotNull
     @Override
-    protected Function<PsiElement, PsiType> getMigrationTypeFunction() {
+    protected @NotNull Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction() {
       return Functions.constant(getMigrationType());
     }
 

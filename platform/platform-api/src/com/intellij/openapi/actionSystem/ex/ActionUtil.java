@@ -1,59 +1,41 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
-
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PausesStat;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import java.awt.Component;
+import org.jetbrains.annotations.*;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -92,7 +74,7 @@ public final class ActionUtil {
   }
 
   @NotNull
-  private static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
+  private static @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
     String message;
     if (actionNames.isEmpty()) {
       message = getUnavailableMessage("This action", false);
@@ -108,9 +90,11 @@ public final class ActionUtil {
   }
 
   @NotNull
-  public static String getUnavailableMessage(@NotNull String action, boolean plural) {
-    return action + (plural ? " are" : " is")
-           + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+  public static @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
+    if (plural) {
+      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
+    }
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
   }
 
   /**
@@ -147,7 +131,6 @@ public final class ActionUtil {
     ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
 
-  private static int insidePerformDumbAwareUpdate;
   /**
    * @param action action
    * @param e action event
@@ -161,6 +144,8 @@ public final class ActionUtil {
     final Presentation presentation = e.getPresentation();
     if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
       presentation.setEnabledAndVisible(false);
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false);
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false);
       return false;
     }
 
@@ -176,20 +161,18 @@ public final class ActionUtil {
     boolean allowed = (!dumbMode || action.isDumbAware()) &&
                       (!Registry.is("actionSystem.honor.modal.context") || !isInModalContext || action.isEnabledInModalContext());
 
-    String presentationText = presentation.getText();
-    boolean edt = ApplicationManager.getApplication().isDispatchThread();
-    if (edt && insidePerformDumbAwareUpdate++ == 0) {
-      ActionPauses.STAT.started();
-    }
-
     action.applyTextOverride(e);
 
     try {
-      if (beforeActionPerformed) {
-        action.beforeActionPerformedUpdate(e);
+      ThrowableRunnable<RuntimeException> runnable =
+        beforeActionPerformed
+        ? () -> action.beforeActionPerformedUpdate(e)
+        : () -> action.update(e);
+      if (!beforeActionPerformed && Registry.is("actionSystem.update.actions.async")) {
+        runnable.run();
       }
       else {
-        action.update(e);
+        SlowOperations.allowSlowOperations(runnable);
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
@@ -201,9 +184,6 @@ public final class ActionUtil {
       throw e1;
     }
     finally {
-      if (edt && --insidePerformDumbAwareUpdate == 0) {
-        ActionPauses.STAT.finished(presentationText + " action update (" + action.getClass() + ")");
-      }
       if (!allowed) {
         if (wasEnabledBefore == null) {
           presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, enabledBeforeUpdate);
@@ -219,6 +199,7 @@ public final class ActionUtil {
    * @deprecated use {@link #performDumbAwareUpdate(boolean, AnAction, AnActionEvent, boolean)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
   }
@@ -238,10 +219,6 @@ public final class ActionUtil {
     ThrowableComputable<T, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(inReadAction);
     ThrowableComputable<T, RuntimeException> process = useAlternativeResolve ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
-  }
-
-  public static class ActionPauses {
-    public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
 
   /**
@@ -283,16 +260,23 @@ public final class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
+  /** @deprecated use {@link #performActionDumbAware(AnAction, AnActionEvent)} */
+  @Deprecated
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
-    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, context, e);
+    LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
+    performActionDumbAwareWithCallbacks(action, e);
+  }
+
+  public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
+    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, e.getDataContext(), e);
     performActionDumbAware(action, e);
-    manager.fireAfterActionPerformed(action, context, e);
+    manager.fireAfterActionPerformed(action, e.getDataContext(), e);
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
     try {
-      action.actionPerformed(e);
+      SlowOperations.allowSlowOperations(() -> action.actionPerformed(e));
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
@@ -328,7 +312,7 @@ public final class ActionUtil {
       if (actionIndex != -1 && targetIndex != -1) {
         if (actionIndex < targetIndex) targetIndex--;
         AnAction anAction = list.remove(actionIndex);
-        list.add(before ? Math.max(0, targetIndex) : targetIndex + 1, anAction);
+        list.add(before ? targetIndex : targetIndex + 1, anAction);
         return;
       }
     }
@@ -477,23 +461,7 @@ public final class ActionUtil {
 
   @Nullable
   public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
-    int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
-    if (mnemonic != KeyEvent.VK_UNDEFINED) {
-      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
-      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
-      CustomShortcutSet shortcutSet;
-      if (SystemInfo.isMac) {
-        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
-        } else {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
-        }
-      } else {
-        shortcutSet = new CustomShortcutSet(altShortcut);
-      }
-      return shortcutSet;
-    }
-    return null;
+    return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
   }
 
   private static class ActionUpdateData {

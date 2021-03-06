@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -26,6 +28,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
+  private boolean mySearchable = true;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
     @Override
@@ -119,6 +122,14 @@ public abstract class ActionGroup extends AnAction {
     firePropertyChange(PROP_POPUP, oldPopup, myPopup);
   }
 
+  public boolean isSearchable() {
+    return mySearchable;
+  }
+
+  public void setSearchable(boolean searchable) {
+    mySearchable = searchable;
+  }
+
   public final void addPropertyChangeListener(@NotNull PropertyChangeListener l){
     myChangeSupport.addPropertyChangeListener(l);
   }
@@ -156,6 +167,16 @@ public abstract class ActionGroup extends AnAction {
     }
   }
 
+  /**
+   * Allows the group to intercept and transform its expanded content.
+   */
+  @NotNull
+  @ApiStatus.Experimental
+  public List<AnAction> afterExpandGroup(@NotNull List<AnAction> result,
+                                         @NotNull UpdateSession updater) {
+    return result;
+  }
+
   public final boolean isPrimary(@NotNull AnAction action) {
     return mySecondaryActions == null || !mySecondaryActions.contains(action);
   }
@@ -178,11 +199,10 @@ public abstract class ActionGroup extends AnAction {
     boolean dumbAware = super.isDumbAware();
     if (dumbAware) {
       myDumbAware = Boolean.TRUE;
-    } else {
-      if (myDumbAware == null) {
-        Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
-        myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
-      }
+    }
+    else {
+      Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+      myDumbAware = AnAction.class.equals(declaringClass) || ActionGroup.class.equals(declaringClass);
     }
 
     return myDumbAware;

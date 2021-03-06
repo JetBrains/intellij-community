@@ -4,6 +4,8 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +66,7 @@ public interface RunnerAndConfigurationSettings {
    * use {@link #storeInLocalWorkspace()}, {@link #storeInDotIdeaFolder()} or {@link #storeInArbitraryFileInProject(String)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void setShared(boolean value) {
     if (value) {
       storeInDotIdeaFolder();
@@ -156,7 +159,7 @@ public interface RunnerAndConfigurationSettings {
    *
    * @param name the name of the configuration
    */
-  void setName(String name);
+  void setName(@NlsSafe String name);
 
   /**
    * Returns the name of the configuration.
@@ -164,7 +167,7 @@ public interface RunnerAndConfigurationSettings {
    * @return the name of the configuration.
    */
   @NotNull
-  String getName();
+  @NlsSafe String getName();
 
   @NotNull
   String getUniqueID();
@@ -211,13 +214,6 @@ public interface RunnerAndConfigurationSettings {
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
 
   /**
-   * @deprecated use {@link ExecutionTargetManager#canRun(RunnerAndConfigurationSettings, ExecutionTarget)} instead
-   */
-  @Deprecated
-  @SuppressWarnings({"unused"})
-  default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }
-
-  /**
    * Returns a factory object which can be used to create a copy of this configuration.
    *
    * @return copying factory instance
@@ -257,6 +253,7 @@ public interface RunnerAndConfigurationSettings {
    * @deprecated Use {@link RunConfiguration#isAllowRunningInParallel()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default boolean isSingleton() {
     return !getConfiguration().isAllowRunningInParallel();
   }
@@ -282,4 +279,6 @@ public interface RunnerAndConfigurationSettings {
    * @return the folder name, or null if the configuration is displayed on the top level.
    */
   @Nullable String getFolderName();
+
+  @NlsSafe String toString();
 }

@@ -1,4 +1,5 @@
 <idea-plugin>
+  <resource-bundle>messages.GroovyBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.console.GroovyConsoleStateService"/>
@@ -9,7 +10,6 @@
   <actions>
     <action id="Groovy.Console"
             class="org.jetbrains.plugins.groovy.console.GrNewConsoleAction"
-            text="Groovy Console..." description="Launch Groovy console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
@@ -24,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.util.Slow
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -67,13 +67,13 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     assert Integer.name == inferredType(shallowFile.scriptClass, 'test')
 
     int border = (1..max).find { int i ->
-      GroovyPsiManager.getInstance(project).dropTypesCache()
+      PsiManager.getInstance(project).dropPsiCaches()
       return inferredType(classes[i], 'foo') == Object.name
     }
 
     assert border
 
-    GroovyPsiManager.getInstance(project).dropTypesCache()
+    PsiManager.getInstance(project).dropPsiCaches()
     assert inferredType(classes[border], 'foo') == Object.name
     assert inferredType(classes[border - 1], 'foo') == Integer.name
   }

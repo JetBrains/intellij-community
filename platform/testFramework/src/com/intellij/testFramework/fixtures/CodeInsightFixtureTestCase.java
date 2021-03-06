@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.Editor;
@@ -6,29 +6,38 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 /**
- * @author yole
  * @see BasePlatformTestCase for light tests
  */
-public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder> extends UsefulTestCase {
+public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<?>> extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
   protected Module myModule;
+
+  @Override
+  protected final void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    // don't create application in EDT
+    TestApplicationManager.getInstance();
+    super.runBare(testRunnable);
+  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     String name = getClass().getName() + "." + getName();
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
+    TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    final T moduleFixtureBuilder = projectBuilder.addModule(getModuleBuilderClass());
+    T moduleFixtureBuilder = projectBuilder.addModule(getModuleBuilderClass());
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     tuneFixture(moduleFixtureBuilder);
 
@@ -38,9 +47,10 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
   }
 
   protected Class<T> getModuleBuilderClass() {
-    return (Class<T>)EmptyModuleFixtureBuilder.class;
+    //noinspection unchecked,rawtypes
+    return (Class)EmptyModuleFixtureBuilder.class;
   }
-  
+
   @Override
   protected void tearDown() throws Exception {
     myModule = null;
@@ -56,7 +66,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
     }
   }
 
-  protected void tuneFixture(final T moduleBuilder) {}
+  protected void tuneFixture(T moduleBuilder) {}
 
   /**
    * Return relative path to the test data. Path is relative to the

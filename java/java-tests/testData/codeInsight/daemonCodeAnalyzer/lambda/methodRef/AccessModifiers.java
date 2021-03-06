@@ -25,8 +25,8 @@ class AlienTest {
     static {
         IInt i1 = MyTest::<error descr="Cannot resolve method 'abracadabra'">abracadabra</error>;
         IInt i2 = MyTest::<error descr="Incompatible types: int is not convertible to String">foo</error>;
-        IInt i3 = MyTest::<error descr="Cannot resolve method 'bar'">bar</error>;
-        IIntInt i4 = MyTest::<error descr="Cannot resolve method 'bar'">bar</error>;
+        IInt i3 = MyTest::<error descr="Reference to 'bar' is ambiguous, both 'bar(Integer, Number)' and 'bar(Number, Integer)' match">bar</error>;
+        IIntInt i4 = MyTest::<error descr="Reference to 'bar' is ambiguous, both 'bar(Integer, Number)' and 'bar(Number, Integer)' match">bar</error>;
         IInt i5 = <error descr="Non-static method cannot be referenced from a static context">MyTest::baz</error>;
         IInt i6 = <error descr="'foo(int)' is not public in 'MyTest.Foo'. Cannot be accessed from outside package">MyTest.foo::foo</error>;
         IInt i7 = MyTest.<error descr="'MyTest.Foo' has private access in 'MyTest'">Foo</error>::foo;

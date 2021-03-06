@@ -15,11 +15,12 @@
  */
 package org.jetbrains.jps.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public interface JpsNamedElement extends JpsElement {
   @NotNull
-  String getName();
+  @NlsSafe String getName();
 
   void setName(@NotNull String name);
 }

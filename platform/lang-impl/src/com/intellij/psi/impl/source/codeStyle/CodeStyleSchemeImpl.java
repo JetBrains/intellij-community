@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SerializableScheme;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.options.SchemeState;
@@ -11,6 +12,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,5 +137,13 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     else {
       return dataHolder.read();
     }
+  }
+
+  @Override
+  public @NotNull @Nls String getDisplayName() {
+    if (DEFAULT_SCHEME_NAME.equals(getName())) {
+      return ApplicationBundle.message("code.style.scheme.default");
+    }
+    return super.getDisplayName();
   }
 }

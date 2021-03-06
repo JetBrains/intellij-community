@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
@@ -32,7 +33,7 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class ExistingModuleLoader extends ModuleBuilder {
+public final class ExistingModuleLoader extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance(ExistingModuleLoader.class);
 
   public static ExistingModuleLoader setUpLoader(final String moduleFilePath) {
@@ -62,41 +63,48 @@ public class ExistingModuleLoader extends ModuleBuilder {
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return null; // no matter
   }
 
   @Override
-  public boolean validate(final Project current, final Project dest) {
-    if (getName() == null) return false;
-    String moduleFilePath = getModuleFilePath();
-    if (moduleFilePath == null) return false;
-    final Path file = Paths.get(moduleFilePath);
-    if (Files.exists(file)) {
-      try {
-        final ConversionResult result = ConversionService.getInstance().convertModule(dest, file);
-        if (result.openingIsCanceled()) {
-          return false;
-        }
-        final Element root = JDOMUtil.load(file);
-        final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
-        usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
-        usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
+  public boolean validate(@Nullable Project currentProject, @NotNull Project project) {
+    if (getName() == null) {
+      return false;
+    }
 
-        if (usedMacros.size() > 0) {
-          final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(current, usedMacros);
-          if (!ok) {
-            return false;
-          }
-        }
-      }
-      catch (JDOMException | IOException e) {
-        Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
+    String moduleFilePath = getModuleFilePath();
+    if (moduleFilePath == null) {
+      return false;
+    }
+
+    Path file = Paths.get(moduleFilePath);
+    if (!Files.exists(file)) {
+      Messages.showErrorDialog(currentProject, IdeBundle.message("title.module.file.does.not.exist", moduleFilePath),
+                               CommonBundle.getErrorTitle());
+      return false;
+    }
+
+    try {
+      ConversionService conversionService = ConversionService.getInstance();
+      ConversionResult result = conversionService == null ? null : conversionService.convertModule(project, file);
+      if (result != null && result.openingIsCanceled()) {
         return false;
       }
-    } else {
-      Messages.showErrorDialog(current, IdeBundle.message("title.module.file.does.not.exist", moduleFilePath),
-                               CommonBundle.getErrorTitle());
+      final Element root = JDOMUtil.load(file);
+      final Set<String> usedMacros = PathMacrosCollector.getMacroNames(root);
+      usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
+      usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
+
+      if (usedMacros.size() > 0) {
+        final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
+        if (!ok) {
+          return false;
+        }
+      }
+    }
+    catch (JDOMException | IOException e) {
+      Messages.showMessageDialog(e.getMessage(), IdeBundle.message("title.error.reading.file"), Messages.getErrorIcon());
       return false;
     }
     return true;

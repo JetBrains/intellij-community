@@ -19,7 +19,8 @@ import org.jetbrains.concurrency.resolvedPromise
 abstract class ExecutionManager {
   companion object {
     @JvmField
-    val EXECUTION_TOPIC = Topic.create("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+    @Topic.ProjectLevel
+    val EXECUTION_TOPIC = Topic("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManager {
@@ -65,8 +66,19 @@ abstract class ExecutionManager {
     }
   }
 
+  @ApiStatus.Internal
+  @Throws(ExecutionException::class)
+  fun startRunProfileWithPromise(environment: ExecutionEnvironment,
+                                 state: RunProfileState,
+                                 executor: ThrowableConvertor<RunProfileState, Promise<RunContentDescriptor?>, ExecutionException>) {
+    startRunProfile(environment) {
+      executor.convert(state)
+    }
+  }
+
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun startRunProfile(starter: RunProfileStarter, @Suppress("UNUSED_PARAMETER") state: RunProfileState, environment: ExecutionEnvironment) {
     startRunProfile(starter, environment)
   }

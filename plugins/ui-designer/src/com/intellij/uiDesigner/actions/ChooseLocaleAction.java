@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 
 /**
@@ -44,7 +46,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     if (editor != null) {
       Locale[] locales = FormEditingUtil.collectUsedLocales(editor.getModule(), editor.getRootContainer());
       if (locales.length > 1 || (locales.length == 1 && locales [0].getDisplayName().length() > 0)) {
-        Arrays.sort(locales, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
+        Arrays.sort(locales, Comparator.comparing(Locale::getDisplayName));
         for(Locale locale: locales) {
           group.add(new SetLocaleAction(editor, locale, true));
         }
@@ -72,9 +74,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     private final boolean myUpdateText;
 
     SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
-      super(locale.getDisplayName().length() == 0
-            ? UIDesignerBundle.message("choose.locale.default")
-            : locale.getDisplayName());
+      super(getLocaleText(locale));
       myUpdateText = updateText;
       myEditor = editor;
       myLocale = locale;
@@ -87,5 +87,9 @@ public class ChooseLocaleAction extends ComboBoxAction {
         myPresentation.setText(getTemplatePresentation().getText());
       }
     }
+  }
+
+  private static @NlsSafe String getLocaleText(Locale locale) {
+    return locale.getDisplayName().length() == 0 ? UIDesignerBundle.message("choose.locale.default") : locale.getDisplayName();
   }
 }

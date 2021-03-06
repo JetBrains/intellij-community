@@ -22,13 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ChooseByNameModelEx extends ChooseByNameModel {
-  /** @deprecated use {@link #processNames(Processor, FindSymbolParameters)} instead */
-  @Deprecated
-  default void processNames(@NotNull Processor<? super String> processor, @NotNull boolean inLibraries) {
-  }
 
   default void processNames(@NotNull Processor<? super String> processor, @NotNull FindSymbolParameters parameters) {
-    processNames(processor, parameters.isSearchInLibraries());
   }
 
   @NotNull

@@ -2,7 +2,9 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -10,7 +12,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -19,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -64,7 +66,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   public static AllVcsesI getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, AllVcsesI.class);
+    return project.getService(AllVcsesI.class);
   }
 
   @Override
@@ -84,7 +86,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         registerVcs(vcs);
       }
     });
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
   }
 
   @Override
@@ -100,7 +102,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
         unregisterVcs(vcs);
       }
     });
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
   }
 
   @Override
@@ -204,8 +206,19 @@ public final class AllVcses implements AllVcsesI, Disposable {
         result.add(vcsEP.createDescriptor());
       }
     }
-    Collections.sort(result);
+    result.sort(Comparator.comparing(VcsDescriptor::getName, String::compareTo));
     return result.toArray(new VcsDescriptor[0]);
+  }
+
+  @Override
+  public AbstractVcs[] getSupportedVcses() {
+    List<String> names;
+    synchronized (myLock) {
+      names = new ArrayList<>(myExtensions.keySet());
+    }
+    names.sort(String::compareTo);
+    return ContainerUtil.mapNotNull(names, this::getByName)
+      .toArray(new AbstractVcs[0]);
   }
 
   private class MyExtensionPointListener implements ExtensionPointListener<VcsEP> {
@@ -224,7 +237,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
           unregisterVcs(oldVcs);
         }
       }
-      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
     }
 
     @Override
@@ -242,7 +255,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
           LOG.error(String.format("removing unregistered EP. name: %s, ep: %s", name, extension.vcsClass));
         }
       }
-      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).scheduleMappingsUpdate();
+      ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).updateMappedVcsesImmediately();
     }
   }
 
@@ -267,8 +280,8 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
-    String message = "The " + vcs + " plugin was unbundled and needs to be installed manually";
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null);
+    String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null, "vcs.obsolete.plugin.unbundled");
     notification
       .addAction(NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.install"), () -> {
       notification.expire();
@@ -281,7 +294,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
   }
 
   private void installPlugin(@NotNull ObsoleteVcs vcs) {
-    new Task.Backgroundable(myProject, "Installing Plugin") {
+    new Task.Backgroundable(myProject, VcsBundle.message("impl.progress.title.installing.plugin")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -295,7 +308,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
             }
           }
           else {
-            showErrorNotification(vcs, "Couldn't find the plugin " + vcs.pluginId);
+            showErrorNotification(vcs, VcsBundle.message("impl.notification.content.could.not.find.plugin", vcs.pluginId));
           }
         }
         catch (IOException e) {
@@ -304,9 +317,9 @@ public final class AllVcses implements AllVcsesI, Disposable {
         }
       }
 
-      private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull String message) {
-        String title = "Failed to Install Plugin";
-        Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
+      private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull @NlsContexts.NotificationContent String message) {
+        String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
+        Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null, "plugin.install.failed");
         notification.addAction(
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
           BrowserUtil.browse(vcs.pluginUrl);

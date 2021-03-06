@@ -39,10 +39,10 @@ fun instantiateTypeParameters(driver: InferenceDriver,
   return reducedMethod
 }
 
-fun createVirtualMethodWithoutVararg(method: GrMethod, typeParameterList: PsiTypeParameterList) : GrMethod {
-  val virtualMethod = createVirtualMethod(method, typeParameterList) ?: return method
-  virtualMethod.parameters.lastOrNull()?.ellipsisDots?.delete()
-  return virtualMethod
+fun createVirtualMethodWithoutVararg(method: GrMethod, typeParameterList: PsiTypeParameterList) : SmartPsiElementPointer<GrMethod>? {
+  val virtualMethodPointer: SmartPsiElementPointer<GrMethod>? = createVirtualMethod(method, typeParameterList, true)
+  virtualMethodPointer?.element?.parameters?.lastOrNull()?.ellipsisDots?.delete()
+  return virtualMethodPointer
 }
 
 
@@ -69,7 +69,7 @@ class RenamingTypeMapper(private val nameMap: Map<in String, String>,
 
   override fun visitClassType(classType: PsiClassType): PsiType {
     val resolved = classType.resolve() ?: return classType
-    if (resolved is PsiTypeParameter && classType.name in nameMap) {
+    if (resolved is PsiTypeParameter && nameMap.containsKey(classType.name)) {
       val newName = nameMap.getValue(classType.name)
       return if (sourceMethod != null && newName in sourceTypeParameterNames!!) {
         sourceMethod.typeParameters.find { it.name == newName }!!.type()
@@ -143,7 +143,7 @@ fun createCompleteSubstitutor(method: GrMethod,
   }
   val endpointTypeParameters = endpoints.map { it.core.initialTypeParameter }
   val endpointSubstitutor = PsiSubstitutor.EMPTY.putAll(endpointTypeParameters.toTypedArray(), endpointTypes.toTypedArray())
-  val completeTypedMethod = createVirtualMethodWithoutVararg(method, collector.typeParameterList)
+  val completeTypedMethod = createVirtualMethodWithoutVararg(method, collector.typeParameterList)?.element ?: method
   return resultSubstitutor.putAll(endpointSubstitutor) to completeTypedMethod
 }
 
@@ -175,7 +175,7 @@ private fun buildResidualTypeParameterList(resultMethod: GrMethod,
   val resultTypeParameterList = factory
     .createMethodFromText("def <${(remainedConstantParameters + necessaryTypeParameters).joinToString { it.text }}> void foo() {}")
     .typeParameterList!!
-  val newMethod = createVirtualMethodWithoutVararg(method, resultTypeParameterList)
+  val newMethod = createVirtualMethodWithoutVararg(method, resultTypeParameterList)?.element ?: method
   return newMethod to (necessaryTypeNames - method.typeParameters.map { it.name!! })
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class SecondaryFunctionsHelper {
+public final class SecondaryFunctionsHelper {
 
   private static final int[] funcsnot = new int[]{
     FunctionExprent.FUNCTION_NE,
@@ -170,6 +170,17 @@ public class SecondaryFunctionsHelper {
               }
 
               if (desttype >= 0) {
+                if (functype != FunctionExprent.FUNCTION_LCMP) {
+                  boolean oneForNan = functype == FunctionExprent.FUNCTION_DCMPL || functype == FunctionExprent.FUNCTION_FCMPL;
+                  boolean trueForOne = desttype == FunctionExprent.FUNCTION_LT || desttype == FunctionExprent.FUNCTION_LE;
+                  boolean trueForNan = oneForNan == trueForOne;
+                  if (trueForNan) {
+                    List<Exprent> operands = new ArrayList<>();
+                    operands.add(new FunctionExprent(funcsnot[desttype - FunctionExprent.FUNCTION_EQ],
+                      funcexpr.getLstOperands(), funcexpr.bytecode));
+                    return new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, operands, funcexpr.bytecode);
+                  }
+                }
                 return new FunctionExprent(desttype, funcexpr.getLstOperands(), funcexpr.bytecode);
               }
             }
@@ -378,6 +389,7 @@ public class SecondaryFunctionsHelper {
           FunctionExprent fparam = (FunctionExprent)param;
 
           int ftype = fparam.getFuncType();
+          boolean canSimplify = false;
           switch (ftype) {
             case FunctionExprent.FUNCTION_BOOL_NOT:
               Exprent newexpr = fparam.getLstOperands().get(0);
@@ -394,12 +406,24 @@ public class SecondaryFunctionsHelper {
               }
             case FunctionExprent.FUNCTION_EQ:
             case FunctionExprent.FUNCTION_NE:
+              canSimplify = true;
             case FunctionExprent.FUNCTION_LT:
             case FunctionExprent.FUNCTION_GE:
             case FunctionExprent.FUNCTION_GT:
             case FunctionExprent.FUNCTION_LE:
-              fparam.setFuncType(funcsnot[ftype - FunctionExprent.FUNCTION_EQ]);
-              return fparam;
+              if (!canSimplify) {
+                operands = fparam.getLstOperands();
+                VarType left = operands.get(0).getExprType();
+                VarType right = operands.get(1).getExprType();
+                VarType commonSupertype = VarType.getCommonSupertype(left, right);
+                if (commonSupertype != null) {
+                  canSimplify = commonSupertype.type != CodeConstants.TYPE_FLOAT && commonSupertype.type != CodeConstants.TYPE_DOUBLE;
+                }
+              }
+              if (canSimplify) {
+                fparam.setFuncType(funcsnot[ftype - FunctionExprent.FUNCTION_EQ]);
+                return fparam;
+              }
           }
         }
       }

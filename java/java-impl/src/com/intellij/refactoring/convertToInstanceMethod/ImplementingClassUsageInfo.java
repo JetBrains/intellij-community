@@ -15,13 +15,16 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
-import com.intellij.usageView.UsageInfo;
+import com.intellij.model.BranchableUsageInfo;
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.PsiClass;
+import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-public class ImplementingClassUsageInfo extends UsageInfo {
+public final class ImplementingClassUsageInfo extends UsageInfo implements BranchableUsageInfo {
   private final PsiClass myClass;
   public ImplementingClassUsageInfo(PsiClass aClass) {
     super(aClass);
@@ -30,5 +33,10 @@ public class ImplementingClassUsageInfo extends UsageInfo {
 
   public PsiClass getPsiClass() {
     return myClass;
+  }
+
+  @Override
+  public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
+    return new ImplementingClassUsageInfo(branch.obtainPsiCopy(getPsiClass()));
   }
 }

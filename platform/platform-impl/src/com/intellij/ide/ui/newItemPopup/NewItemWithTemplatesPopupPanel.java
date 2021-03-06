@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ui.ScrollingUtil;
@@ -66,7 +66,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     }
   }
 
-  protected void updateTemplatesList(List<T> templatesList) {
+  protected void updateTemplatesList(List<? extends T> templatesList) {
     myTemplatesListModel.update(templatesList);
   }
 
@@ -94,15 +94,15 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     return list;
   }
 
-  protected class MyListModel extends AbstractListModel<T> {
+  protected final class MyListModel extends AbstractListModel<T> {
 
     private final List<T> myItems = new ArrayList<>();
 
-    private MyListModel(List<T> items) {
+    private MyListModel(List<? extends T> items) {
       myItems.addAll(items);
     }
 
-    public void update(List<T> newItems) {
+    public void update(List<? extends T> newItems) {
       if (!myItems.isEmpty()) {
         int end = myItems.size() - 1;
         myItems.clear();

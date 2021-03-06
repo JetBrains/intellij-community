@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDirectory;
 
 import javax.swing.*;
@@ -28,11 +29,11 @@ public abstract class TemplateKindProvider {
   public abstract Kind[] getAdditionalKinds(PsiDirectory dir);
 
   public static class Kind {
-    public final String name;
+    public final @NlsContexts.ListItem String name;
     public final String templateName;
     public final Icon icon;
 
-    public Kind(String name, String templateName, Icon icon) {
+    public Kind(@NlsContexts.ListItem String name, String templateName, Icon icon) {
       this.name = name;
       this.templateName = templateName;
       this.icon = icon;

@@ -23,7 +23,7 @@ public final class PropertyAccessor implements MutableAccessor {
   private final Method myWriteMethod;
   private final Type myGenericType;
 
-  public PropertyAccessor(@NotNull String name, @NotNull Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
+  PropertyAccessor(@NotNull String name, @NotNull Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
     myName = name;
     myType = type;
     myReadMethod = readMethod;
@@ -102,7 +102,7 @@ public final class PropertyAccessor implements MutableAccessor {
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
       // see KotlinXmlSerializerTest.nullInMap
-      if (cause instanceof IllegalArgumentException &&
+      if (cause instanceof NullPointerException &&
           myGenericType instanceof Class &&
           ((Class<?>)myGenericType).isEnum() &&
           cause.getMessage().contains("Parameter specified as non-null is null:")) {

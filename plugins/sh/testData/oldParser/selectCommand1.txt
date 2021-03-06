@@ -5,7 +5,7 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       PsiElement(word)('a')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('b')
       LIST_TERMINATOR

@@ -1,5 +1,5 @@
-<caret>foo() {
+<caret>foo() (
   echo "Sample text"
-}
+)
 
 foo

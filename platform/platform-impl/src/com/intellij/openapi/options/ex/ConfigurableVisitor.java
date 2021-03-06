@@ -40,7 +40,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @Nullable
-  public static Configurable find(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static Configurable find(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     for (ConfigurableGroup group : groups) {
       Configurable result = find(visitor, group.getConfigurables());
       if (result != null) {
@@ -51,7 +51,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @Nullable
-  public static Configurable find(@NotNull Predicate<Configurable> visitor, Configurable @NotNull [] configurables) {
+  public static Configurable find(@NotNull Predicate<? super Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       if (visitor.test(configurable)) {
         return configurable;
@@ -71,7 +71,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @NotNull
-  public static List<Configurable> findAll(@NotNull Predicate<Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static List<Configurable> findAll(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     List<Configurable> list = new ArrayList<>();
     Consumer<Configurable> consumer = configurable -> {
       if (visitor.test(configurable)) {
@@ -85,7 +85,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
   }
 
   @ApiStatus.Internal
-  public static void collect(@NotNull Consumer<Configurable> visitor, Configurable @NotNull [] configurables) {
+  public static void collect(@NotNull Consumer<? super Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       visitor.accept(configurable);
       if (configurable instanceof Configurable.Composite) {
@@ -98,6 +98,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
    * @deprecated Use {@link #findById}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final class ByID extends ConfigurableVisitor {
     private final String id;
 

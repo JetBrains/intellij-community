@@ -3,6 +3,9 @@
   <item name='java.text.DateFormat java.lang.Object parseObject(java.lang.String, java.text.ParsePosition) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.text.DateFormat java.lang.String format(java.util.Date)'>
+    <annotation name='org.jetbrains.annotations.Nls'/>
+  </item>
   <item name='java.text.Format java.lang.Object parseObject(java.lang.String, java.text.ParsePosition) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -23,6 +26,9 @@
   </item>
   <item name="java.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true" />
+    </annotation>
   </item>
   <item name="java.text.MessageFormat java.lang.String format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />

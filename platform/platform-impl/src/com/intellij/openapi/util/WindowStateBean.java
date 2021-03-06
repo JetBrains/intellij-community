@@ -122,7 +122,7 @@ final class WindowStateBean implements ModificationTracker, WindowState {
   }
 
   @Nullable
-  private static <T, R> R apply(@NotNull Function<T, R> function, @Nullable T value) {
+  private static <T, R> R apply(@NotNull Function<? super T, ? extends R> function, @Nullable T value) {
     return value == null ? null : function.apply(value);
   }
 }

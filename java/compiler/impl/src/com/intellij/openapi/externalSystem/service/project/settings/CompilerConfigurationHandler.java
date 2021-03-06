@@ -47,13 +47,14 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
                     @NotNull ConfigurationData configuration) {
     Object obj = configuration.find("compiler");
     if (!(obj instanceof Map)) return;
-    Map configurationMap = ((Map)obj);
+
+    @SuppressWarnings("unchecked")
+    Map<String, ?> configurationMap = (Map<String, ?>)obj;
 
     ApplicationManager.getApplication().invokeLater(() -> {
       final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
       final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(project);
       final JpsJavaCompilerOptions javacConfiguration = JavacConfiguration.getOptions(project, JavacConfiguration.class);
-
 
       boolean changed = false;
       String resourcePatterns = getString(configurationMap, "resourcePatterns");
@@ -109,8 +110,8 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
       Boolean parallelCompilation = getBoolean(configurationMap, "parallelCompilation");
-      if (parallelCompilation != null && workspaceConfiguration.PARALLEL_COMPILATION != parallelCompilation) {
-        workspaceConfiguration.PARALLEL_COMPILATION = parallelCompilation;
+      if (parallelCompilation != null && compilerConfiguration.isParallelCompilationEnabled() != parallelCompilation) {
+        compilerConfiguration.setParallelCompilationEnabled(parallelCompilation);
         changed = true;
       }
       Boolean rebuildOnDependencyChange = getBoolean(configurationMap, "rebuildModuleOnDependencyChange");
@@ -124,7 +125,7 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
 
-      Map<String, Object> javacOptions = getMap(configurationMap, "javacOptions");
+      Map<String, ?> javacOptions = getMap(configurationMap, "javacOptions");
       if (javacOptions != null) {
         Boolean preferTargetJDKCompiler = getBoolean(javacOptions, "preferTargetJDKCompiler");
         if (preferTargetJDKCompiler != null && javacConfiguration.PREFER_TARGET_JDK_COMPILER != preferTargetJDKCompiler) {
@@ -135,6 +136,12 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         String javacAdditionalOptions = getString(javacOptions, "javacAdditionalOptions");
         if (javacAdditionalOptions != null && !javacConfiguration.ADDITIONAL_OPTIONS_STRING.equals(javacAdditionalOptions)) {
           javacConfiguration.ADDITIONAL_OPTIONS_STRING = javacAdditionalOptions;
+          changed = true;
+        }
+
+        Map<String, String> moduleJavacAdditionalOptions = getMap(javacOptions, "moduleJavacAdditionalOptions");
+        if (moduleJavacAdditionalOptions != null && !javacConfiguration.ADDITIONAL_OPTIONS_OVERRIDE.equals(moduleJavacAdditionalOptions)) {
+          javacConfiguration.ADDITIONAL_OPTIONS_OVERRIDE = moduleJavacAdditionalOptions;
           changed = true;
         }
 
@@ -157,33 +164,34 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         }
       }
 
-      if (changed) {
+      if (changed && !project.isDefault()) {
         BuildManager.getInstance().clearState(project);
       }
     });
   }
 
   @Nullable
-  private static Boolean getBoolean(Map map, String key) {
+  private static Boolean getBoolean(Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof Boolean ? (Boolean)o : null;
   }
 
   @Nullable
-  private static Number getNumber(Map map, String key) {
+  private static Number getNumber(Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof Number ? (Number)o : null;
   }
 
   @Nullable
-  private static String getString(Map map, String key) {
+  private static String getString(Map<String, ?> map, String key) {
     Object o = map.get(key);
     return o instanceof String ? (String)o : null;
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
-  private static Map<String, Object> getMap(@NotNull Map map, String key) {
+  private static <T> Map<String, T> getMap(@NotNull Map<String, ?> map, String key) {
     Object o = map.get(key);
-    return o instanceof Map ? (Map)o : null;
+    return o instanceof Map ? (Map<String, T>)o : null;
   }
 }

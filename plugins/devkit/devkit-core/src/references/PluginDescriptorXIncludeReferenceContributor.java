@@ -30,7 +30,7 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
   private static XmlAttributeValuePattern getPattern() {
     return XmlPatterns.xmlAttributeValue().withLocalName("href")
       .withSuperParent(2, XmlPatterns.xmlTag().withLocalName("include").withNamespace(XmlUtil.XINCLUDE_URI))
-      .with(new PatternCondition<XmlAttributeValue>("XInclude inside plugin.xml") {
+      .with(new PatternCondition<>("XInclude inside plugin.xml") {
         @Override
         public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {
           return PsiUtil.isPluginXmlPsiElement(value);

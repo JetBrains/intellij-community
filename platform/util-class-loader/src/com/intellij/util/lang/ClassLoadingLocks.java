@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,12 +12,11 @@ import java.util.concurrent.ConcurrentMap;
  * Provides storage for locks returned from ClassLoader#getClassLoadingLock implementation. The returned locks are stored via weak references,
  * so when they become unreachable the corresponding entries are removed from the map, so class names won't waste the memory.
  */
-class ClassLoadingLocks {
-  private final ConcurrentMap<String, WeakLockReference> myMap = new ConcurrentHashMap<String, WeakLockReference>();
-  private final ReferenceQueue<Object> myQueue = new ReferenceQueue<Object>();
+final class ClassLoadingLocks {
+  private final ConcurrentMap<String, WeakLockReference> myMap = new ConcurrentHashMap<>();
+  private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
 
-  @NotNull
-  Object getOrCreateLock(@NotNull String className) {
+  @NotNull Object getOrCreateLock(@NotNull String className) {
     WeakLockReference lockReference = myMap.get(className);
     if (lockReference != null) {
       Object lock = lockReference.get();
@@ -31,13 +30,15 @@ class ClassLoadingLocks {
     while (true) {
       processQueue();
       WeakLockReference oldRef = myMap.putIfAbsent(className, newRef);
-      if (oldRef == null) return newLock;
+      if (oldRef == null) {
+        return newLock;
+      }
       Object oldLock = oldRef.get();
       if (oldLock != null) {
         return oldLock;
       }
-      else {
-        if (myMap.replace(className, oldRef, newRef)) return newLock;
+      else if (myMap.replace(className, oldRef, newRef)) {
+        return newLock;
       }
     }
   }
@@ -50,7 +51,7 @@ class ClassLoadingLocks {
     }
   }
 
-  private static class WeakLockReference extends WeakReference<Object> {
+  private static final class WeakLockReference extends WeakReference<Object> {
     final String myClassName;
 
     private WeakLockReference(@NotNull String className, @NotNull Object lock, @NotNull ReferenceQueue<Object> q) {

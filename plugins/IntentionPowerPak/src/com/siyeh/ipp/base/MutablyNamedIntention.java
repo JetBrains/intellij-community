@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.base;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -22,9 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class MutablyNamedIntention extends Intention {
 
-  private String m_text = null;
+  private @IntentionName String m_text = null;
 
-  protected abstract String getTextForElement(PsiElement element);
+  protected abstract @IntentionName String getTextForElement(PsiElement element);
 
   @Override
   @NotNull

@@ -16,12 +16,13 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
 public interface PyExecutionFix {
-  @NotNull String getName();
+  @NotNull @Nls String getName();
   void run(@NotNull Sdk sdk);
 }

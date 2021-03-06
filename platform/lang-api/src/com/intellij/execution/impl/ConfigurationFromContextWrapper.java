@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Wraps a {@link com.intellij.execution.junit.RuntimeConfigurationProducer} in a {@link com.intellij.execution.actions.ConfigurationFromContext}.
+ * Wraps a {@link RuntimeConfigurationProducer} in a {@link ConfigurationFromContext}.
  *
  * @author yole
  */

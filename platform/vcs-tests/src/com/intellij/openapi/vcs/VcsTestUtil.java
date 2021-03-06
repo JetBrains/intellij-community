@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
@@ -6,7 +6,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,14 +23,14 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class VcsTestUtil {
+public final class VcsTestUtil {
   public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
                                        @Nullable final String content) {
     try {
       return WriteCommandAction.writeCommandAction(project).compute(() -> {
         VirtualFile file = parent.createChildData(parent, name);
         if (content != null) {
-          file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
+          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8));
         }
         return file;
       });

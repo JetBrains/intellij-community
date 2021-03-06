@@ -1,17 +1,23 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.options.MasterDetails
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DetailsComponent
 import javax.swing.JComponent
 
-class TargetEnvironmentsConfigurable(project: Project, initialSelectedName: String? = null) : SearchableConfigurable, MasterDetails {
-  @Suppress("unused")
-  constructor(project: Project) : this(project, null)
+class TargetEnvironmentsConfigurable(private val project: Project,
+                                     initialSelectedName: String? = null,
+                                     defaultLanguageRuntime: LanguageRuntimeType<*>? = null)
+  : SearchableConfigurable, MasterDetails {
 
-  private val editor = TargetEnvironmentsMasterDetails(project, initialSelectedName)
+  @Suppress("unused")
+  constructor(project: Project) : this(project, null, null)
+
+  private val editor = TargetEnvironmentsMasterDetails(project, initialSelectedName, defaultLanguageRuntime)
 
   override fun initUi() = editor.initUi()
 
@@ -25,11 +31,11 @@ class TargetEnvironmentsConfigurable(project: Project, initialSelectedName: Stri
 
   override fun getId(): String = "Runtime.Targets.Configurable"
 
-  override fun getDisplayName(): String = "Runtime Targets"
+  override fun getDisplayName(): String = ExecutionBundle.message("configurable.name.runtime.targets")
 
   override fun createComponent(): JComponent = editor.createComponent()
 
-  override fun getHelpTopic(): String? = "reference.remote.targets"
+  override fun getHelpTopic(): String = "reference.run.targets"
 
   override fun apply() {
     editor.apply()
@@ -42,5 +48,16 @@ class TargetEnvironmentsConfigurable(project: Project, initialSelectedName: Stri
   override fun disposeUIResources() {
     editor.disposeUIResources()
     super.disposeUIResources()
+  }
+
+  fun openForEditing(): Boolean {
+    return ShowSettingsUtil.getInstance().editConfigurable(project, DIMENSION_KEY, this, true)
+  }
+
+  val selectedTargetConfig: TargetEnvironmentConfiguration? get() = editor.selectedConfig
+
+  companion object {
+    @JvmStatic
+    private val DIMENSION_KEY = TargetEnvironmentsConfigurable::class.simpleName + ".size"
   }
 }

@@ -38,7 +38,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBLoadingPanel;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,6 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
     myFocusTrackerSupport = new FocusTrackerSupport.Threeside(myHolders);
     myContentPanel = new ThreesideContentPanel.Holders(myHolders);
-    myContentPanel.setTitles(createTitles());
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
     myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -75,25 +74,26 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   @Override
   protected void onInit() {
     super.onInit();
-    myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
+    myContentPanel.setTitles(createTitles());
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorHolders();
     super.onDispose();
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myFocusTrackerSupport.processContextHints(myRequest, myContext);
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
     super.updateContextHints();
     myFocusTrackerSupport.updateContextHints(myRequest, myContext);
@@ -119,7 +119,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSyncHeightComponents(DiffUtil.createSimpleTitles(myRequest));
+    return DiffUtil.createSimpleTitles(this, myRequest);
   }
 
   //

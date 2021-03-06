@@ -31,5 +31,6 @@
     <orderEntry type="library" scope="TEST" name="http-client" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

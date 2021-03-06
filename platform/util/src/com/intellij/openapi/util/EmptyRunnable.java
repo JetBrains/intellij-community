@@ -10,4 +10,9 @@ public class EmptyRunnable implements Runnable {
 
   @Override
   public void run() { }
+
+  @Override
+  public String toString() {
+    return "EmptyRunnable";
+  }
 }

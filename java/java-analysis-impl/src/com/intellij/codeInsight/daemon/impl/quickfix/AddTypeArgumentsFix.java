@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -32,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class AddTypeArgumentsFix extends MethodArgumentFix {
+public final class AddTypeArgumentsFix extends MethodArgumentFix {
   private static final Logger LOG = Logger.getInstance(AddTypeArgumentsFix.class);
 
-  private AddTypeArgumentsFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
+  private AddTypeArgumentsFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
   }
 
@@ -67,7 +53,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Nullable
-  public static PsiExpression addTypeArguments(PsiExpression expression, PsiType toType) {
+  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
     if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
     PsiExpression orig = expression;
@@ -113,10 +99,11 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           if (methodExpression.getQualifierExpression() == null) {
             final PsiExpression qualifierExpression;
             final PsiClass containingClass = method.getContainingClass();
-            LOG.assertTrue(containingClass != null);
+            if (containingClass == null) return null; // not actual method but some copy in DummyHolder, ignore
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
               qualifierExpression = factory.createReferenceExpression(containingClass);
-            } else {
+            }
+            else {
               qualifierExpression = RefactoringChangeUtil.createThisExpression(method.getManager(), null);
             }
             methodExpression.setQualifierExpression(qualifierExpression);
@@ -136,7 +123,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
     return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
                                    myArgumentFixerActionFactory);
   }

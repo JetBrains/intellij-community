@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +67,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
   @Override
   public boolean isCollapsedByDefault(@NotNull FoldingDescriptor foldingDescriptor) {
     final FoldingBuilder builder = ((FoldingDescriptorWrapper) foldingDescriptor).myBuilder;
-    return mayUseBuilder(foldingDescriptor.getElement(), builder) && builder.isCollapsedByDefault(foldingDescriptor.getElement());
+    return mayUseBuilder(foldingDescriptor.getElement(), builder) && builder.isCollapsedByDefault(foldingDescriptor);
   }
 
   private static boolean mayUseBuilder(@NotNull ASTNode node, @Nullable FoldingBuilder builder) {
@@ -112,7 +111,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     return null;
   }
 
-  static class FoldingDescriptorWrapper extends FoldingDescriptor {
+  private static class FoldingDescriptorWrapper extends FoldingDescriptor {
     @NotNull private final FoldingDescriptor myFoldingDescriptor;
     @NotNull private final FoldingBuilder myBuilder;
 
@@ -135,13 +134,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
       // getPlaceholderText() will be delegate to the folding builder, which we achieve by not storing any cached text.
       String textFromGetText = foldingDescriptor.getPlaceholderText();
       boolean placeholderTextIsFallback = Objects.equals(textFromGetText, foldingDescriptor.getElement().getText());
-      if (cachedText == null && placeholderTextIsFallback) {
-        return null;
-      }
-      if (!placeholderTextIsFallback) {
-        return textFromGetText;
-      }
-      return cachedText;
+      return placeholderTextIsFallback ? cachedText : textFromGetText;
     }
 
     @NotNull

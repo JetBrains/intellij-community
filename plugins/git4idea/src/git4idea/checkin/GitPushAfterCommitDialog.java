@@ -1,16 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.dvcs.push.ui.PushUtils;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.GuiUtils;
+import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -28,7 +35,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
   @NotNull
   @Override
   protected JPanel createOptionsPanel() {
-    myDontShowAgainCheckbox = new JCheckBox("For Commit and Push to non-protected branches, preview commits before push");
+    myDontShowAgainCheckbox = new JCheckBox(GitBundle.message("push.dialog.preview.commits.before.push"));
     myDontShowAgainCheckbox.setSelected(GitVcsSettings.getInstance(myProject).shouldPreviewPushOnCommitAndPush());
 
     JPanel basePanel = super.createOptionsPanel();
@@ -62,5 +69,17 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
     else {
       push(false);
     }
+  }
+
+  public static void showOrPush(@NotNull Project project, @NotNull Collection<GitRepository> selectedRepositories) {
+    ModalityState modality = ModalityState.defaultModalityState();
+    TransactionGuard.getInstance().assertWriteSafeContext(modality);
+
+    List<GitRepository> repositories = new ArrayList<>(selectedRepositories);
+    GuiUtils.invokeLaterIfNeeded(
+      () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush(),
+      modality,
+      project.getDisposed()
+    );
   }
 }

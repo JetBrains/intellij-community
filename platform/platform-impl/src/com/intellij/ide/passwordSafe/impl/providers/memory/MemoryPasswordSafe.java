@@ -9,6 +9,7 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @deprecated potentially unsafe
  */
 @Deprecated
-// used in https://github.com/groboclown/p4ic4idea, cannot be deleted
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class MemoryPasswordSafe implements PasswordStorage {
   /**
    * The key to use to encrypt data
@@ -35,7 +36,7 @@ public class MemoryPasswordSafe implements PasswordStorage {
   /**
    * The password database
    */
-  private final transient PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>>() {
+  private final transient PasswordSafeTimed<Map<ByteArrayWrapper, byte[]>> database = new PasswordSafeTimed<>() {
     @Override
     protected Map<ByteArrayWrapper, byte[]> compute() {
       return Collections.synchronizedMap(new HashMap<>());

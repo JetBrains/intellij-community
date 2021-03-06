@@ -30,6 +30,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_ABORT_ERROR;
+
 public class HgAbortRebaseAction extends HgProcessStateAction {
 
   public HgAbortRebaseAction() {
@@ -48,7 +50,10 @@ public class HgAbortRebaseAction extends HgProcessStateAction {
           HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.abortRebase();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"), HgBundle.message("action.hg4idea.Rebase.Abort.error"));
+            new HgCommandResultNotifier(project).notifyError(REBASE_ABORT_ERROR,
+                                                             result,
+                                                             HgBundle.message("hg4idea.hg.error"),
+                                                             HgBundle.message("action.hg4idea.Rebase.Abort.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }

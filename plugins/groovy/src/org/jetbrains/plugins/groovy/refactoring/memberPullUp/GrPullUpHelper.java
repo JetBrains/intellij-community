@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -362,7 +362,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  private static class StaticReferenceResult {
+  private static final class StaticReferenceResult {
     final GrReferenceElement<?> reference;
     final GrMember referee;
     final PsiClass refereeClass;
@@ -376,7 +376,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  private class StaticReferencesCollector extends GrClassMemberReferenceVisitor {
+  private final class StaticReferencesCollector extends GrClassMemberReferenceVisitor {
 
     private final Set<PsiMember> myMovedMembers;
     final List<StaticReferenceResult> results = new ArrayList<>();

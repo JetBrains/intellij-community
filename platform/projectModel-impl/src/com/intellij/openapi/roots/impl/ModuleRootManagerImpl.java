@@ -22,9 +22,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ThrowableRunnable;
-import gnu.trove.THashMap;
 import kotlin.NotImplementedError;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,6 +32,12 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its base class {@link ModuleRootManagerEx} should be used instead. If absolutely needed, its instance must be
+ * taken from {@link ModuleRootManager#getInstance(Module)} under instanceof check.
+ */
+@ApiStatus.Internal
 public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(ModuleRootManagerImpl.class);
 
@@ -42,7 +48,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   private boolean myIsDisposed;
   private boolean myLoaded;
   private final OrderRootsCache myOrderRootsCache;
-  private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
+  private final Map<RootModelImpl, Throwable> myModelCreations = new HashMap<>();
 
   protected final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
@@ -53,7 +59,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
 
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
-    ModuleExtension.EP_NAME.getPoint(module).addExtensionPointListener(new ExtensionPointListener<ModuleExtension>() {
+    MODULE_EXTENSION_NAME.getPoint(module).addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ModuleExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         myRootModel.addModuleExtension(extension);
@@ -102,7 +108,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   @Override
   @NotNull
   public ModifiableRootModel getModifiableModel() {
-    return getModifiableModel(new RootConfigurationAccessor());
+    return getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE);
   }
 
   @Override

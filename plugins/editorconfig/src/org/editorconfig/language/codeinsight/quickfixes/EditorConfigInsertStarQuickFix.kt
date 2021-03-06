@@ -10,7 +10,7 @@ import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigInsertStarQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.header.insert.star.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.header.insert.star.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return

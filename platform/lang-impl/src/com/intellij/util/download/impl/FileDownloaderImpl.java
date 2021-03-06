@@ -8,11 +8,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,12 +32,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FileDownloaderImpl implements FileDownloader {
+class FileDownloaderImpl implements FileDownloader {
   private static final Logger LOG = Logger.getInstance(FileDownloaderImpl.class);
   private static final String LIB_SCHEMA = "lib://";
 
@@ -47,9 +46,9 @@ public class FileDownloaderImpl implements FileDownloader {
   private final JComponent myParentComponent;
   @Nullable private final Project myProject;
   private String myDirectoryForDownloadedFilesPath;
-  private final String myDialogTitle;
+  private final @NlsContexts.DialogTitle String myDialogTitle;
 
-  public FileDownloaderImpl(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
+  FileDownloaderImpl(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
                             @Nullable Project project,
                             @Nullable JComponent parentComponent,
                             @NotNull String presentableDownloadName) {
@@ -97,6 +96,27 @@ public class FileDownloaderImpl implements FileDownloader {
   }
 
   @Nullable
+  @Override
+  public CompletableFuture<List<Pair<VirtualFile, DownloadableFileDescription>>> downloadWithBackgroundProgress(@Nullable String targetDirectoryPath,
+                                                                                                               @Nullable Project project) {
+    File dir;
+    if (targetDirectoryPath != null) {
+      dir = new File(targetDirectoryPath);
+    }
+    else {
+      VirtualFile virtualDir = chooseDirectoryForFiles(project, null);
+      if (virtualDir != null) {
+        dir = VfsUtilCore.virtualToIoFile(virtualDir);
+      }
+      else {
+        return null;
+      }
+    }
+
+    return downloadWithBackgroundProcess(dir, project);
+  }
+
+  @Nullable
   private List<Pair<VirtualFile,DownloadableFileDescription>> downloadWithProcess(final File targetDir,
                                                                                   Project project,
                                                                                   JComponent parentComponent) {
@@ -125,6 +145,48 @@ public class FileDownloaderImpl implements FileDownloader {
     }
 
     return findVirtualFiles(localFiles.get());
+  }
+
+  private @NotNull CompletableFuture<@Nullable List<Pair<VirtualFile,DownloadableFileDescription>>> downloadWithBackgroundProcess(final File targetDir,
+                                                                                  Project project) {
+    final Ref<List<Pair<File, DownloadableFileDescription>>> localFiles = Ref.create(null);
+    final Ref<IOException> exceptionRef = Ref.create(null);
+
+    CompletableFuture<List<Pair<VirtualFile, DownloadableFileDescription>>> result = new CompletableFuture<>();
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, myDialogTitle, true) {
+      @Override
+      public boolean shouldStartInBackground() {
+        return true;
+      }
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          localFiles.set(download(targetDir));
+        }
+        catch (IOException exception) {
+          final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, exception.getMessage());
+          if (tryAgain) {
+            downloadWithBackgroundProcess(targetDir, project).thenAccept(pairs -> result.complete(pairs));
+          }
+          result.complete(null);
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        List<Pair<File, DownloadableFileDescription>> files = localFiles.get();
+        result.complete(files != null ? findVirtualFiles(files) : null);
+      }
+
+      @Override
+      public void onCancel() {
+        result.complete(null);
+      }
+    });
+
+    return result;
   }
 
   @NotNull
@@ -242,7 +304,7 @@ public class FileDownloaderImpl implements FileDownloader {
   }
 
   @NotNull
-  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(List<Pair<File, DownloadableFileDescription>> ioFiles) {
+  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(@NotNull List<Pair<File, DownloadableFileDescription>> ioFiles) {
     List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<>();
     for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
       final File ioFile = pair.getFirst();
@@ -271,7 +333,7 @@ public class FileDownloaderImpl implements FileDownloader {
     final String presentableUrl = description.getPresentableDownloadUrl();
     indicator.setText(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
-    return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<File>() {
+    return HttpRequests.request(description.getDownloadUrl()).connect(new HttpRequests.RequestProcessor<>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         int size = request.getConnection().getContentLength();
@@ -296,11 +358,5 @@ public class FileDownloaderImpl implements FileDownloader {
   public VirtualFile @Nullable [] download() {
     List<VirtualFile> files = downloadFilesWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
     return files != null ? VfsUtilCore.toVirtualFileArray(files) : null;
-  }
-
-  @Nullable
-  @Override
-  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions() {
-    return downloadWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
   }
 }

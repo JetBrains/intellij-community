@@ -2,43 +2,37 @@
 package com.intellij.externalDependencies;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.Arrays;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Describes a plugin (and optionally its versions range) which is required for a project to operate normally.
  */
 public class DependencyOnPlugin implements ProjectExternalDependency, Comparable<DependencyOnPlugin> {
   private final String myPluginId;
-  private final String myMinVersion;
-  private final String myMaxVersion;
+  private final @NlsSafe String myMinVersion;
+  private final @NlsSafe String myMaxVersion;
 
-  /**
-   * @deprecated use {@link #DependencyOnPlugin(String, String, String)} instead
-   */
-  @Deprecated
-  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion, @Nullable String channel) {
-    this(pluginId, minVersion, maxVersion);
-  }
-
-  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion) {
+  public DependencyOnPlugin(@NotNull String pluginId, @NlsSafe @Nullable String minVersion, @NlsSafe @Nullable String maxVersion) {
     myPluginId = pluginId;
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
   }
 
-  public String getPluginId() {
+  public @NlsSafe String getPluginId() {
     return myPluginId;
   }
 
-  public String getMinVersion() {
+  public @NlsSafe String getMinVersion() {
     return myMinVersion;
   }
 
-  public String getMaxVersion() {
+  public @NlsSafe String getMaxVersion() {
     return myMaxVersion;
   }
 

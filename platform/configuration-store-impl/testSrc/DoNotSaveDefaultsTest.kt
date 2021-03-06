@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.testFramework.ApplicationRule
@@ -22,7 +23,6 @@ import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Paths
 
 internal class DoNotSaveDefaultsTest {
   companion object {
@@ -89,12 +89,12 @@ internal class DoNotSaveDefaultsTest {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
     }
 
-    if (componentManager is Project) {
-      assertThat(Paths.get(componentManager.projectFilePath!!)).doesNotExist()
+    if (componentManager is ProjectStoreOwner) {
+      assertThat((componentManager as ProjectStoreOwner).componentStore.projectFilePath).doesNotExist()
       return
     }
 
-    val directoryTree = Paths.get(componentManager.stateStore.storageManager.expandMacros(APP_CONFIG)).getDirectoryTree(hashSetOf(
+    val directoryTree = componentManager.stateStore.storageManager.expandMacro(APP_CONFIG).getDirectoryTree(hashSetOf(
       "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
       "stubIndex.xml" /* low-level non-roamable stuff */,
       "usage.statistics.xml" /* SHOW_NOTIFICATION_ATTR in internal mode */,

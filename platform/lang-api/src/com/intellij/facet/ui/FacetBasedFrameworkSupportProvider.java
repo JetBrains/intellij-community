@@ -40,7 +40,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
   @NonNls private static final String FACET_SUPPORT_PREFIX = "facet:";
   private final FacetType<F, ?> myFacetType;
 
-  protected FacetBasedFrameworkSupportProvider(FacetType<F, ?> facetType) {
+  protected FacetBasedFrameworkSupportProvider(@NotNull FacetType<F, ?> facetType) {
     super(getProviderId(facetType), facetType.getPresentableName());
     myFacetType = facetType;
   }
@@ -52,7 +52,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
    * @return ID.
    * @see #getPrecedingFrameworkProviderIds()
    */
-  public static String getProviderId(final FacetType facetType) {
+  public static String getProviderId(@NotNull FacetType<?, ?> facetType) {
     return FACET_SUPPORT_PREFIX + facetType.getStringId();
   }
 

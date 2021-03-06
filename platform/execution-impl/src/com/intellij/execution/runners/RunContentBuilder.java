@@ -4,6 +4,7 @@ package com.intellij.execution.runners;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.ui.*;
@@ -137,9 +138,8 @@ public final class RunContentBuilder extends RunTab {
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
     final AnAction[] actions = contentDescriptor.getRestartActions();
     actionGroup.addAll(actions);
-    if (actions.length > 0) {
-      actionGroup.addSeparator();
-    }
+    actionGroup.add(new CreateAction());
+    actionGroup.addSeparator();
 
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));
     actionGroup.addAll(myExecutionResult.getActions());
@@ -177,31 +177,33 @@ public final class RunContentBuilder extends RunTab {
   }
 
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
-    @NotNull private final RunConfigurationBase myRunConfigurationBase;
     @NotNull private final Project myProject;
     @NotNull private final Executor myExecutor;
     @NotNull private final RunContentDescriptor myRunContentDescriptor;
     @NotNull private final RunnerLayoutUi myUi;
+    private final boolean myShowConsoleOnStdOut;
+    private final boolean myShowConsoleOnStdErr;
 
     public ConsoleToFrontListener(@NotNull RunConfigurationBase runConfigurationBase,
                                   @NotNull Project project,
                                   @NotNull Executor executor,
                                   @NotNull RunContentDescriptor runContentDescriptor,
                                   @NotNull RunnerLayoutUi ui) {
-      myRunConfigurationBase = runConfigurationBase;
       myProject = project;
       myExecutor = executor;
       myRunContentDescriptor = runContentDescriptor;
       myUi = ui;
+      myShowConsoleOnStdOut = runConfigurationBase.isShowConsoleOnStdOut();
+      myShowConsoleOnStdErr = runConfigurationBase.isShowConsoleOnStdErr();
     }
 
     @Override
-    public void contentAdded(@NotNull Collection<ConsoleViewContentType> types) {
+    public void contentAdded(@NotNull Collection<? extends ConsoleViewContentType> types) {
       if (myProject.isDisposed() || myUi.isDisposed())
         return;
       for (ConsoleViewContentType type : types) {
-        if ((type == ConsoleViewContentType.NORMAL_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdOut()
-            || (type == ConsoleViewContentType.ERROR_OUTPUT) && myRunConfigurationBase.isShowConsoleOnStdErr()) {
+        if ((type == ConsoleViewContentType.NORMAL_OUTPUT) && myShowConsoleOnStdOut
+            || (type == ConsoleViewContentType.ERROR_OUTPUT) && myShowConsoleOnStdErr) {
           RunContentManager.getInstance(myProject).toFrontRunContent(myExecutor, myRunContentDescriptor);
           myUi.selectAndFocus(myUi.findContent(ExecutionConsole.CONSOLE_CONTENT_ID), false, false);
           return;

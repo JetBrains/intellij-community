@@ -14,7 +14,7 @@ class YieldStatements {
       case 1 -> { while (true) yield ref; }
       case 2 -> { while (true) break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 3 -> { yield ref; }
-      case 4 -> { yield (ref); }
+      case 4 -> { <error descr="Illegal reference to restricted type 'yield'">yield</error> (ref); }
       case 5 -> { break <error descr="Undefined label: 'wtf'">wtf</error>; }
       case 6 -> {
         int a = 0;
@@ -35,15 +35,15 @@ class YieldStatements {
       }
       case 11 -> { yield <error descr="Expression type should not be 'void'">m(0)</error>; }
       case 12 -> {
-        switch (i) { default: <error descr="Break outside of enclosing switch expression">break out;</error>; }
+        switch (i) { default: <error descr="Break out of switch expression is not allowed">break out;</error>; }
       }
       default -> throw new RuntimeException();
     });
 
     out: while (true) {
       System.out.println(switch (i) {
-        case 0: <error descr="Break outside of enclosing switch expression">break;</error>
-        default: <error descr="Break outside of enclosing switch expression">break out;</error>
+        case 0: <error descr="Break out of switch expression is not allowed">break;</error>
+        default: <error descr="Break out of switch expression is not allowed">break out;</error>
       });
     }
   }

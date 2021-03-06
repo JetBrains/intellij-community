@@ -26,7 +26,7 @@ public interface ValidatableSdkAdditionalData extends SdkAdditionalData {
    * if they are not.
    *
    * @param sdkModel the model containing all configured SDKs.
-   * @throws com.intellij.openapi.options.ConfigurationException if the SDK is not configured correctly.
+   * @throws ConfigurationException if the SDK is not configured correctly.
    */
   void checkValid(SdkModel sdkModel) throws ConfigurationException;
 }

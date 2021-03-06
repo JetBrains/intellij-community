@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -10,10 +10,12 @@ import com.intellij.ui.BackgroundSupplier;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -22,13 +24,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.AbstractLayoutCache;
+import javax.swing.tree.FixedHeightLayoutCache;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.VariableHeightLayoutCache;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -38,21 +46,19 @@ import java.util.Collection;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.SystemInfo.isMac;
+import static com.intellij.openapi.util.registry.Registry.intValue;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
+import static com.intellij.util.EditSourceOnDoubleClickHandler.isExpandPreferable;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
 public final class DefaultTreeUI extends BasicTreeUI {
-  /**
-   * @deprecated use {@link RenderingHelper#SHRINK_LONG_RENDERER} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
+  @ApiStatus.Internal
+  public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -76,8 +82,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Nullable
   private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+    // to be consistent with com.intellij.ui.components.WideSelectionListUI#getBackground
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
+    }
+    if (row == TreeHoverListener.getHoveredRow(tree)) {
+      Color background = RenderingUtil.getHoverBackground(tree);
+      if (background != null) return background;
     }
     Object node = TreeUtil.getLastUserObject(path);
     if (node instanceof ColoredItem) {
@@ -95,6 +106,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
       if (background != null) return background;
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  public static void setBackground(@NotNull JTree tree, @NotNull Component component, int row) {
+    TreePath path = tree.getPathForRow(row);
+    Color background = path == null ? null : getBackground(tree, path, row, tree.isRowSelected(row));
+    setBackground(tree, component, background, true);
   }
 
   private static void setBackground(@NotNull JTree tree, @NotNull Component component, @Nullable Color background, boolean opaque) {
@@ -124,6 +142,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   private static boolean isLargeModelAllowed(@Nullable JTree tree) {
     return is("ide.tree.large.model.allowed") || UIUtil.isClientPropertyTrue(tree, LARGE_MODEL_ALLOWED);
+  }
+
+  private static boolean isAutoExpandAllowed(@NotNull JTree tree) {
+    Boolean allowed = UIUtil.getClientProperty(tree, AUTO_EXPAND_ALLOWED);
+    return allowed != null ? allowed : tree.isShowing();
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -217,16 +240,19 @@ public final class DefaultTreeUI extends BasicTreeUI {
           painter.paint(tree, g, insets.left, bounds.y, offset, bounds.height, control, depth, leaf, expanded, selected && focused);
           // TODO: editingComponent, editingRow ???
           if (editingComponent == null || editingRow != row) {
-            int width = helper.getX() + helper.getWidth() - insets.left - offset - helper.getRightMargin();
+            int width = helper.getX() + helper.getWidth() - insets.left - offset;
             if (width > 0) {
               Object value = path.getLastPathComponent();
               Component component = getRenderer(tree, value, selected, expanded, leaf, row, lead);
               if (component != null) {
+                width -= helper.getRightMargin(); // shrink a long node according to the right margin
                 if (width < bounds.width && helper.isRendererShrinkingDisabled(row)) {
                   width = bounds.width; // disable shrinking a long nodes
                 }
-                setBackground(tree, component, background, false);
-                rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                if (width > 0) {
+                  setBackground(tree, component, background, false);
+                  rendererPane.paintComponent(g, component, tree, insets.left + offset, bounds.y, width, bounds.height, true);
+                }
               }
             }
             if (!isMac && lead && g instanceof Graphics2D) {
@@ -245,10 +271,11 @@ public final class DefaultTreeUI extends BasicTreeUI {
         }
       }
       paintDropLine(g);
-      rendererPane.removeAll();
     }
     finally {
       g.dispose();
+      // remove all renderers
+      rendererPane.removeAll();
     }
   }
 
@@ -276,6 +303,13 @@ public final class DefaultTreeUI extends BasicTreeUI {
   }
 
   @Override
+  protected boolean isToggleEvent(MouseEvent event) {
+    if (!super.isToggleEvent(event)) return false;
+    JTree tree = getTree();
+    return tree != null && isExpandPreferable(tree, tree.getSelectionPath());
+  }
+
+  @Override
   protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
     JTree tree = getTree();
     if (tree == null) return false;
@@ -292,6 +326,75 @@ public final class DefaultTreeUI extends BasicTreeUI {
       bounds.height = height;
     }
     return bounds.contains(mouseX, mouseY);
+  }
+
+  @Override
+  protected void configureLayoutCache() {
+    super.configureLayoutCache();
+    JTree tree = getTree();
+    if (tree != null && null == ReflectionUtil.getField(BasicTreeUI.class, this, null, "componentListener")) {
+      ComponentListener listener = createComponentListener();
+      ComponentAdapter adapter = new ComponentAdapter() {
+        @Override
+        public void componentMoved(ComponentEvent event) {
+          AbstractLayoutCache cache = treeState; // TODO: treeState ???
+          if (cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
+            listener.componentMoved(event);
+          }
+        }
+      };
+      ReflectionUtil.setField(BasicTreeUI.class, this, null, "componentListener", adapter);
+      tree.addComponentListener(adapter);
+    }
+  }
+
+  @Override
+  protected void updateCachedPreferredSize() {
+    JTree tree = getTree();
+    AbstractLayoutCache cache = treeState; // TODO: treeState ???
+    if (tree != null && isValid(tree) && cache != null && tree.isLargeModel() && is("ide.tree.experimental.preferred.width")) {
+      Rectangle paintBounds = tree.getVisibleRect();
+      if (!paintBounds.isEmpty()) {
+        JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
+        if (pane != null) {
+          JScrollBar bar = pane.getHorizontalScrollBar();
+          if (bar != null && bar.isOpaque() && bar.isVisible()) {
+            paintBounds.height += bar.getPreferredSize().height;
+          }
+        }
+        Insets insets = tree.getInsets();
+        TreePath path = cache.getPathClosestTo(0, paintBounds.y - insets.top);
+        int row = cache.getRowForPath(path);
+        if (row >= 0) {
+          Rectangle buffer = new Rectangle();
+          int maxPaintX = paintBounds.x + paintBounds.width;
+          int maxPaintY = paintBounds.y + paintBounds.height;
+          int width = 0;
+          while (path != null) {
+            Rectangle bounds = cache.getBounds(path, buffer);
+            if (bounds == null) continue; // something goes wrong
+            width = Math.max(width, bounds.x + bounds.width);
+            if ((bounds.y + bounds.height) >= maxPaintY) break;
+            path = cache.getPathForRow(++row);
+          }
+          width += insets.left + insets.right;
+          if (width < maxPaintX) {
+            if (!is("ide.tree.prefer.to.shrink.width.on.scroll")) {
+              width = maxPaintX;
+            }
+            else if (paintBounds.width < width || !is("ide.tree.prefer.aggressive.scrolling.to.the.left")) {
+              int margin = intValue("ide.tree.preferable.right.margin", 25);
+              if (margin > 0) width = Math.min(width + paintBounds.width * margin / 100, maxPaintX);
+            }
+          }
+          preferredSize.width = width;
+          preferredSize.height = insets.top + insets.bottom + cache.getPreferredHeight();
+          validCachedPreferredSize = true;
+          return;
+        }
+      }
+    }
+    super.updateCachedPreferredSize();
   }
 
   @Override
@@ -376,12 +479,46 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Override
   protected AbstractLayoutCache createLayoutCache() {
-    return super.createLayoutCache();
+    if (isLargeModel() && getRowHeight() > 0) {
+      return new FixedHeightLayoutCache();
+    }
+    return new VariableHeightLayoutCache() {
+      @Override
+      public void setExpandedState(TreePath path, boolean isExpanded) {
+        int oldRowCount = getRowCount();
+        super.setExpandedState(path, isExpanded);
+        if (isExpanded) onSingleChildInserted(path, oldRowCount);
+      }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent event) {
+        int oldRowCount = getRowCount();
+        super.treeNodesInserted(event);
+        onSingleChildInserted(event.getTreePath(), oldRowCount);
+      }
+
+      private void onSingleChildInserted(TreePath path, int oldRowCount) {
+        if (path == null || oldRowCount + 1 != getRowCount()) return;
+        JTree tree = getTree();
+        if (tree == null || !isAutoExpandAllowed(tree) || !tree.isVisible(path)) return;
+        TreeModel model = tree.getModel();
+        if (model instanceof AsyncTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
+          int pathCount = 1 + path.getPathCount();
+          for (int i = 0; i <= oldRowCount; i++) {
+            TreePath row = getPathForRow(i);
+            if (row != null && pathCount == row.getPathCount() && path.equals(row.getParentPath())) {
+              ((AsyncTreeModel)model).onValidThread(() -> tree.expandPath(row));
+              return; // this code is intended to auto-expand a single child node
+            }
+          }
+        }
+      }
+    };
   }
 
   @Override
   protected MouseListener createMouseListener() {
-    return new MouseEventAdapter<MouseListener>(super.createMouseListener()) {
+    return new MouseEventAdapter<>(super.createMouseListener()) {
       @Override
       public void mouseDragged(MouseEvent event) {
         Object property = UIUtil.getClientProperty(event.getSource(), "DnD Source"); // DnDManagerImpl.SOURCE_KEY

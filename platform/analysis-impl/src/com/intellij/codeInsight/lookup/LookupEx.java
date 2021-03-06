@@ -10,6 +10,8 @@ import java.awt.event.InputEvent;
  * @author peter
  */
 public interface LookupEx extends Lookup {
+  boolean performGuardedChange(Runnable change);
+
   void setCurrentItem(LookupElement item);
 
   Component getComponent();

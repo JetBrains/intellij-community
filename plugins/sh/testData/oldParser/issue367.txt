@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/usr/bin/env bash\n')
+  PsiComment(shebang)('#!/usr/bin/env bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     ASSIGNMENT_COMMAND
@@ -63,7 +64,8 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
               REDIRECTION
-                PsiElement(<<<)('<<< ')
+                PsiElement(<<<)('<<<')
+                PsiWhiteSpace(' ')
                 PsiElement(word)('[')
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION
@@ -104,7 +106,7 @@ SHELL_SCRIPT
           CONDITIONAL_COMMAND
             PsiElement([[)('[[')
             PsiWhiteSpace(' ')
-            EQUALITY_CONDITION
+            REGEX_CONDITION
               LITERAL_CONDITION
                 PsiElement($)('$')
                 SUBSHELL_COMMAND
@@ -120,8 +122,9 @@ SHELL_SCRIPT
               PsiWhiteSpace(' ')
               PsiElement(=~)('=~')
               PsiWhiteSpace(' ')
-              LITERAL_CONDITION
-                PsiElement(word)('$output')
+              REGEX_PATTERN
+                VARIABLE
+                  PsiElement(var)('$output')
             PsiWhiteSpace(' ')
             PsiElement(]])(']]')
         PsiWhiteSpace(' ')

@@ -2,9 +2,9 @@
 package com.intellij.laf.win10;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -14,7 +14,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
-  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
+  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(13)).asUIResource();
 
   @Override
   protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {

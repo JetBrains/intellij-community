@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.project.Project;
@@ -11,9 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SourceLineCounterUtil {
-  public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo, 
-                                                   final PackageAnnotator.PackageCoverageInfo packageCoverageInfo, byte[] content, 
+public final class SourceLineCounterUtil {
+  public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
+                                                   final PackageAnnotator.PackageCoverageInfo packageCoverageInfo, byte[] content,
                                                    final boolean excludeLines,
                                                    final Condition<? super String> includeDescriptionCondition) {
     if (content == null) return false;
@@ -31,7 +31,7 @@ public class SourceLineCounterUtil {
       }
       return true;
     });
-    
+
     classCoverageInfo.totalMethodCount += descriptions.size();
     packageCoverageInfo.totalMethodCount += descriptions.size();
 
@@ -46,13 +46,13 @@ public class SourceLineCounterUtil {
   }
 
   public static void collectSrcLinesForUntouchedFiles(final List<? super Integer> uncoveredLines,
-                                                      byte[] content, 
-                                                      final boolean excludeLines, 
+                                                      byte[] content,
+                                                      final boolean excludeLines,
                                                       final Project project) {
     final ClassReader reader = new ClassReader(content);
     final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null);
     reader.accept(collector, 0);
-    
+
     String qualifiedName = reader.getClassName();
     Condition<String> includeDescriptionCondition = description -> !JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description);
     TIntObjectHashMap lines = collector.getSourceLines();

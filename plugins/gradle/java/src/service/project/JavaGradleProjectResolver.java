@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.CommandLineUtil;
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.JavaVersion;
@@ -38,7 +37,8 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,12 +173,13 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   public void enhanceTaskProcessing(@NotNull List<String> taskNames,
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
-    String testExecutionExpected = parameters.get(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY);
 
-    if (Boolean.valueOf(testExecutionExpected)) {
-      try (InputStream stream = getClass().getResourceAsStream("/org/jetbrains/plugins/gradle/java/addTestListener.groovy")) {
-        String addTestListenerScript = StreamUtil.readText(stream, StandardCharsets.UTF_8);
-        initScriptConsumer.consume(addTestListenerScript);
+    boolean testsWillBeExecuted = Boolean.parseBoolean(parameters.get(TEST_EXECUTION_EXPECTED_KEY));
+    boolean testLauncherWillBeUsed = Boolean.parseBoolean(parameters.get(TEST_LAUNCHER_WILL_BE_USED_KEY));
+    if (testsWillBeExecuted && !testLauncherWillBeUsed) {
+      String name = "/org/jetbrains/plugins/gradle/java/addTestListener.groovy";
+      try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
+        initScriptConsumer.consume(StreamUtil.readText(reader));
       }
       catch (IOException e) {
         LOG.info(e);
@@ -190,9 +191,11 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   }
 
   private String loadTestEventListenerDefinition() {
-    try(InputStream stream = getClass().getResourceAsStream("/org/jetbrains/plugins/gradle/IJTestLogger.groovy")) {
-      return StreamUtil.readText(stream, StandardCharsets.UTF_8);
-    } catch (IOException e) {
+    String name = "/org/jetbrains/plugins/gradle/IJTestLogger.groovy";
+    try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
+      return StreamUtil.readText(reader);
+    }
+    catch (IOException e) {
       LOG.info(e);
     }
     return "";
@@ -222,7 +225,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
         "    }",
         "}",
       };
-      final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
+      final String script = StringUtil.join(lines, System.lineSeparator());
       initScriptConsumer.consume(script);
     }
 
@@ -232,7 +235,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
 
   @NotNull
   private static String toStringListLiteral(@NotNull List<String> strings, @NotNull String separator) {
-    final List<String> quotedStrings = ContainerUtil.map(strings, s -> toStringLiteral(s));
+    final List<String> quotedStrings = ContainerUtil.map(strings, s -> StringUtil.escapeChar(toStringLiteral(s), '$'));
     return StringUtil.join(quotedStrings, separator);
   }
 

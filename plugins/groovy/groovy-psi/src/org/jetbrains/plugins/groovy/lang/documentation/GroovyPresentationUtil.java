@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,6 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -18,12 +19,15 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamData;
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamsUtil;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
  */
-public class GroovyPresentationUtil {
+public final class GroovyPresentationUtil {
   private static final int CONSTRAINTS_NUMBER = 2;
 
   public static void appendParameterPresentation(GrParameter parameter,
@@ -70,15 +74,7 @@ public class GroovyPresentationUtil {
           PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
           if (argTypes != null) {
             builder1.append("(");
-            if (argTypes.length > 0) {
-              builder1.append(argTypes.length);
-              if (argTypes.length == 1) {
-                builder1.append(" arg");
-              }
-              else {
-                builder1.append(" args");
-              }
-            }
+            builder1.append(GroovyBundle.message("parameter.hint.number.of.arguments", argTypes.length));
             builder1.append(')');
           }
 

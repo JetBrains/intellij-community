@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +10,7 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public class ToggleOptionAction extends ToggleAction {
-  private final Function<AnActionEvent, Option> optionSupplier;
+  private final @NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier;
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Option option) {
@@ -24,11 +23,11 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   @SuppressWarnings("unused")
-  public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier) {
+  public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier) {
     this(optionSupplier, null);
   }
 
-  public ToggleOptionAction(@NotNull Function<AnActionEvent, Option> optionSupplier, @Nullable Icon icon) {
+  public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier, @Nullable Icon icon) {
     super(() -> null, () -> null, icon);
     this.optionSupplier = optionSupplier;
   }
@@ -48,10 +47,12 @@ public class ToggleOptionAction extends ToggleAction {
   @Override
   public final void update(@NotNull AnActionEvent event) {
     Option option = optionSupplier.apply(event);
-    boolean supported = option != null && option.isEnabled();
+    boolean enabled = option != null && option.isEnabled();
+    boolean visible = enabled || option != null && option.isAlwaysVisible();
     Presentation presentation = event.getPresentation();
-    presentation.setEnabledAndVisible(supported);
-    if (supported) {
+    presentation.setEnabled(enabled);
+    presentation.setVisible(visible);
+    if (visible) {
       Toggleable.setSelected(presentation, option.isSelected());
       String name = option.getName();
       if (name != null) presentation.setText(name);
@@ -82,6 +83,10 @@ public class ToggleOptionAction extends ToggleAction {
 
     default boolean isEnabled() {
       return true;
+    }
+
+    default boolean isAlwaysVisible() {
+      return false;
     }
 
     boolean isSelected();

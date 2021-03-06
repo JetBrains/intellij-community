@@ -2,9 +2,14 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.text.MessageFormat
 
+@CompileStatic
 class ApplicationInfoProperties {
   final String majorVersion
   final String minorVersion
@@ -31,8 +36,9 @@ class ApplicationInfoProperties {
   final String patchesUrl
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
-  ApplicationInfoProperties(String appInfoXmlPath) {
-    def root = new XmlParser().parse(new File(appInfoXmlPath))
+  @CompileStatic(TypeCheckingMode.SKIP)
+  ApplicationInfoProperties(Path appInfoXmlPath) {
+    def root = Files.newBufferedReader(appInfoXmlPath).withCloseable { new XmlParser().parse(it) }
 
     def versionTag = root.version.first()
     majorVersion = versionTag.@major

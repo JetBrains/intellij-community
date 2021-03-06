@@ -5,9 +5,9 @@ import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateInBackground
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
@@ -16,9 +16,10 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitWorkflowHandler
+import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.removeEllipsisSuffix
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -27,17 +28,15 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
   return roots.flatMap { manager.getChangesIn(it) }.toSet()
 }
 
-internal fun Project.getNonModalCommitWorkflowHandler() = ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
-
-internal fun AnActionEvent.isProjectUsesNonModalCommit() = getProjectCommitWorkflowHandler() != null
-internal fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? = project?.getNonModalCommitWorkflowHandler()
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   override fun update(vcsContext: VcsContext, presentation: Presentation) {
     val project = vcsContext.project
 
-    if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) {
+    if (project == null ||
+        !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() ||
+        !ChangeListManager.getInstance(project).areChangeListsEnabled()) {
       presentation.isEnabledAndVisible = false
     }
     else if (!approximatelyHasRoots(vcsContext)) {
@@ -52,7 +51,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
 
   protected abstract fun approximatelyHasRoots(dataContext: VcsContext): Boolean
 
-  protected open fun getActionName(dataContext: VcsContext): String? = null
+  protected open fun getActionName(dataContext: VcsContext): @NlsActions.ActionText String? = null
 
   public override fun actionPerformed(context: VcsContext) {
     LOG.debug("actionPerformed. ")
@@ -80,13 +79,14 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     context: VcsContext,
     roots: Array<FilePath>
   ) {
-    ChangeListManager.getInstance(project).invokeAfterUpdate(
-      { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-      VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current()
-    )
+    ChangeListManager.getInstance(project).invokeAfterUpdateWithModal(
+      true, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message")) {
+      performCheckIn(context, project, roots)
+    }
   }
 
   @Deprecated("getActionName() will be used instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected open fun getMnemonicsFreeActionName(context: VcsContext): String? = null
 
   protected abstract fun getRoots(dataContext: VcsContext): Array<FilePath>
@@ -118,7 +118,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
 
     val executor = getExecutor(project)
-    val workflowHandler = project.getNonModalCommitWorkflowHandler()
+    val workflowHandler = ChangesViewManager.getInstanceEx(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
       workflowHandler.run {
         setCommitState(initialChangeList, included, isForceUpdateCommitStateFromContext())

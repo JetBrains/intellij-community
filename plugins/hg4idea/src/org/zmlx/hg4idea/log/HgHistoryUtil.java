@@ -4,6 +4,9 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -21,6 +24,7 @@ import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -36,7 +40,9 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class HgHistoryUtil {
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.LOG_CMD_EXEC_ERROR;
+
+public final class HgHistoryUtil {
 
   private static final Logger LOG = Logger.getInstance(HgHistoryUtil.class);
 
@@ -59,26 +65,7 @@ public class HgHistoryUtil {
     templateList.add("{desc}");
     String[] templates = ArrayUtilRt.toStringArray(templateList);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
-    HgBaseLogParser<VcsCommitMetadata> baseParser = new HgBaseLogParser<VcsCommitMetadata>() {
-
-      @Override
-      protected VcsCommitMetadata convertDetails(@NotNull String rev,
-                                                 @NotNull String changeset,
-                                                 @NotNull SmartList<? extends HgRevisionNumber> parents,
-                                                 @NotNull Date revisionDate,
-                                                 @NotNull String author,
-                                                 @NotNull String email,
-                                                 @NotNull List<String> attributes) {
-        String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-        String subject = extractSubject(message);
-        List<Hash> parentsHash = new SmartList<>();
-        for (HgRevisionNumber parent : parents) {
-          parentsHash.add(factory.createHash(parent.getChangeset()));
-        }
-        return factory.createCommitMetadata(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
-                                            subject, author, email, message, author, email, revisionDate.getTime());
-      }
-    };
+    HgBaseLogParser<VcsCommitMetadata> baseParser = createMetadataParser(root, factory);
     return getCommitRecords(project, result, baseParser);
   }
 
@@ -91,7 +78,7 @@ public class HgHistoryUtil {
    */
   @NotNull
   public static List<VcsFullCommitDetails> history(@NotNull Project project, @NotNull VirtualFile root, int limit,
-                                                   @NotNull List<String> hashParameters, boolean silent)
+                                                   @NotNull List<@NonNls String> hashParameters, boolean silent)
     throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
@@ -116,7 +103,9 @@ public class HgHistoryUtil {
     }
     catch (VcsException e) {
       if (!silent) {
-        VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), e.getMessage());
+        VcsNotifier.getInstance(project).notifyError(LOG_CMD_EXEC_ERROR,
+                                                     HgBundle.message("hg4idea.error.log.command.execution"),
+                                                     e.getMessage());
       }
       throw e;
     }
@@ -325,14 +314,17 @@ public class HgHistoryUtil {
       return revisions;
     }
 
-    List<String> errors = result.getErrorLines();
+    List<@NlsSafe String> errors = result.getErrorLines();
     if (!errors.isEmpty()) {
       if (result.getExitValue() != 0) {
         if (silent) {
           LOG.debug(errors.toString());
         }
         else {
-          VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.error.log.command.execution"), errors.toString());
+          String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
+          VcsNotifier.getInstance(project).notifyError(LOG_CMD_EXEC_ERROR,
+                                                       HgBundle.message("hg4idea.error.log.command.execution"),
+                                                       message);
         }
         return Collections.emptyList();
       }
@@ -343,15 +335,12 @@ public class HgHistoryUtil {
     return ContainerUtil.mapNotNull(changeSets, converter);
   }
 
-  @NotNull
-  public static List<? extends VcsCommitMetadata> readCommitMetadata(@NotNull final Project project,
-                                                                     @NotNull final VirtualFile root,
-                                                                     @NotNull List<String> hashes)
-    throws VcsException {
+  public static void readCommitMetadata(@NotNull Project project,
+                                        @NotNull VirtualFile root,
+                                        @NotNull List<String> hashes,
+                                        @NotNull Consumer<? super VcsCommitMetadata> consumer) throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return Collections.emptyList();
-    }
+    if (factory == null) return;
 
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
@@ -360,32 +349,41 @@ public class HgHistoryUtil {
     templateList.add("{desc}");
     final String[] templates = ArrayUtilRt.toStringArray(templateList);
 
-    return VcsFileUtil.foreachChunk(prepareHashes(hashes), 2,
-                                    strings -> {
-                                      HgCommandResult logResult =
-                                        getLogResult(project, root, version, -1, strings, HgChangesetUtil.makeTemplate(templates));
+    HgBaseLogParser<VcsCommitMetadata> parser = createMetadataParser(root, factory);
 
-                                      return getCommitRecords(project, logResult, new HgBaseLogParser<VcsCommitMetadata>() {
-                                        @Override
-                                        protected VcsCommitMetadata convertDetails(@NotNull String rev,
-                                                                                   @NotNull String changeset,
-                                                                                   @NotNull SmartList<? extends HgRevisionNumber> parents,
-                                                                                   @NotNull Date revisionDate,
-                                                                                   @NotNull String author,
-                                                                                   @NotNull String email,
-                                                                                   @NotNull List<String> attributes) {
-                                          String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-                                          String subject = extractSubject(message);
-                                          List<Hash> parentsHash = new SmartList<>();
-                                          for (HgRevisionNumber parent : parents) {
-                                            parentsHash.add(factory.createHash(parent.getChangeset()));
-                                          }
-                                          return factory
-                                            .createCommitMetadata(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
-                                                                  subject, author, email, message, author, email, revisionDate.getTime());
-                                        }
-                                      });
-                                    });
+    readLog(project, root, hgvcs.getVersion(), -1,
+            prepareHashes(hashes),
+            HgChangesetUtil.makeTemplate(templates),
+            stringBuilder -> {
+              VcsCommitMetadata metadata = parser.convert(stringBuilder.toString());
+              if (metadata != null) {
+                consumer.consume(metadata);
+              }
+            });
+  }
+
+  @NotNull
+  private static HgBaseLogParser<VcsCommitMetadata> createMetadataParser(@NotNull VirtualFile root, VcsLogObjectsFactory factory) {
+    return new HgBaseLogParser<>() {
+
+      @Override
+      protected VcsCommitMetadata convertDetails(@NotNull String rev,
+                                                 @NotNull String changeset,
+                                                 @NotNull SmartList<? extends HgRevisionNumber> parents,
+                                                 @NotNull Date revisionDate,
+                                                 @NotNull String author,
+                                                 @NotNull String email,
+                                                 @NotNull List<String> attributes) {
+        String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
+        String subject = extractSubject(message);
+        List<Hash> parentsHash = new SmartList<>();
+        for (HgRevisionNumber parent : parents) {
+          parentsHash.add(factory.createHash(parent.getChangeset()));
+        }
+        return factory.createCommitMetadata(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
+                                            subject, author, email, message, author, email, revisionDate.getTime());
+      }
+    };
   }
 
   @NotNull
@@ -407,7 +405,7 @@ public class HgHistoryUtil {
     HgVersion version = hgvcs.getVersion();
     String[] templates = ArrayUtilRt.toStringArray(HgBaseLogParser.constructDefaultTemplate(version));
     HgCommandResult result = getLogResult(project, root, version, limit, params, HgChangesetUtil.makeTemplate(templates));
-    return getCommitRecords(project, result, new HgBaseLogParser<TimedVcsCommit>() {
+    return getCommitRecords(project, result, new HgBaseLogParser<>() {
 
       @Override
       protected TimedVcsCommit convertDetails(@NotNull String rev,
@@ -487,7 +485,7 @@ public class HgHistoryUtil {
     String template = HgChangesetUtil.makeTemplate("{branch}", "{bookmarks}");
     HgCommandResult logResult = hgLogCommand.execute(root, template, -1, null, params);
     if (logResult == null || logResult.getExitValue() != 0) {
-      throw new VcsException("Couldn't get commit details: log command execution error.");
+      throw new VcsException(HgBundle.message("error.history.cant.get.commit.details.log.command.error"));
     }
     String output = logResult.getRawOutput();
     List<String> changeSets = StringUtil.split(output, HgChangesetUtil.CHANGESET_SEPARATOR);

@@ -16,6 +16,7 @@
 package com.intellij.diagnostic.hprof.analysis
 
 import com.google.common.base.Stopwatch
+import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
@@ -28,14 +29,14 @@ import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
-class HProfAnalysis(private val hprofFileChannel: FileChannel,
-                    private val tempFilenameSupplier: TempFilenameSupplier) {
+internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
+                    private val tempFilenameSupplier: TempFilenameSupplier,
+                    private val analysisCallback: (AnalysisContext, ProgressIndicator) -> String) {
 
   interface TempFilenameSupplier {
     fun getTempFilePath(type: String): Path
@@ -51,10 +52,12 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
   private var includeMetaInfo = true
 
-  @TestOnly
   fun setIncludeMetaInfo(value: Boolean) {
     includeMetaInfo = value
   }
+
+  var onlyStrongReferences = false
+  var includeClassesAsRoots = true
 
   private fun openTempEmptyFileChannel(@NonNls type: String): FileChannel {
     val tempPath = tempFilenameSupplier.getTempFilePath(type)
@@ -76,25 +79,25 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
     val prepareFilesStopwatch = Stopwatch.createStarted()
     val analysisStopwatch = Stopwatch.createUnstarted()
 
-    progress.text = "Analyze Heap"
-    progress.text2 = "Open heap file"
+    progress.text = DiagnosticBundle.message("hprof.analysis.progress.text.analyze.heap")
+    progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.open.heap.file")
     progress.fraction = 0.0
 
     val parser = HProfEventBasedParser(hprofFileChannel)
     try {
-      progress.text2 = "Create class definition map"
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.class.definition.map")
       progress.fraction = 0.0
 
       val hprofMetadata = HProfMetadata.create(parser)
 
-      progress.text2 = "Create class histogram"
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.class.histogram")
       progress.fraction = 0.1
 
       val histogram = Histogram.create(parser, hprofMetadata.classStore)
 
       val nominatedClasses = ClassNomination(histogram, 5).nominateClasses()
 
-      progress.text2 = "Create id mapping file"
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.id.mapping.file")
       progress.fraction = 0.2
 
       // Currently, there is a maximum count of supported instances. Produce simplified report
@@ -113,7 +116,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       parser.setIdRemappingFunction(remapIDsVisitor.getRemappingFunction())
       hprofMetadata.remapIds(remapIDsVisitor.getRemappingFunction())
 
-      progress.text2 = "Create object graph files"
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.object.graph.files")
       progress.fraction = 0.3
 
       val navigator = ObjectNavigator.createOnAuxiliaryFiles(
@@ -135,7 +138,8 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
       val nominatedClassNames = nominatedClasses.map { it.classDefinition.name }
       val analysisConfig = AnalysisConfig(perClassOptions = AnalysisConfig.PerClassOptions(classNames = nominatedClassNames),
-                                          metaInfoOptions = AnalysisConfig.MetaInfoOptions(include = includeMetaInfo))
+                                          metaInfoOptions = AnalysisConfig.MetaInfoOptions(include = includeMetaInfo),
+                                          traverseOptions = AnalysisConfig.TraverseOptions(onlyStrongReferences = onlyStrongReferences, includeClassesAsRoots = includeClassesAsRoots))
       val analysisContext = AnalysisContext(
         navigator,
         analysisConfig,
@@ -146,9 +150,10 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
         histogram
       )
 
-      val analysisReport = AnalyzeGraph(analysisContext).analyze(PartialProgressIndicator(progress, 0.4, 0.4))
-
-      result.appendln(analysisReport)
+      val analysisReport = analysisCallback(analysisContext, PartialProgressIndicator(progress, 0.4, 0.4))
+      if (analysisReport.isNotBlank()) {
+        result.appendln(analysisReport)
+      }
 
       analysisStopwatch.stop()
 

@@ -3,6 +3,7 @@ package com.jetbrains.env;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -145,13 +147,15 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myFixture = fixtureFactory.createCodeInsightFixture(fixtureBuilder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+    PyEnvTestToolsKt.replaceServicesWithMocks(myFixture.getProjectDisposable());
 
     final Module module = myFixture.getModule();
     assert module != null;
     PlatformPythonModuleType.ensureModuleRegistered();
 
     if (StringUtil.isNotEmpty(myRelativeTestDataPath)) {
-      myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath();
+      // Without performing the copy deliberately in the EDT, this code may stuck in a livelock for unclear reason.
+      EdtTestUtil.runInEdtAndWait(() -> myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath());
     }
 
     final VirtualFile projectRoot = myFixture.getTempDirFixture().getFile(".");
@@ -202,7 +206,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
           UIUtil.dispatchAllInvocationEvents();
         }
         for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
-          WriteAction.run(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
+          WriteAction.run(() -> {
+            if (sdk instanceof Disposable && !Disposer.isDisposed((Disposable)sdk)) {
+              ProjectJdkTable.getInstance().removeJdk(sdk);
+            }
+          });
         }
       });
       // Teardown should be called on main thread because fixture teardown checks for

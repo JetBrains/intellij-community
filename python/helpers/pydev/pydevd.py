@@ -3,9 +3,15 @@ Entry point module (keep at root):
 
 This module starts the debugger.
 '''
+import os
 import sys
 from contextlib import contextmanager
 import weakref
+
+# allow the debugger to work in isolated mode Python
+here = os.path.dirname(os.path.abspath(__file__))
+if here not in sys.path:
+    sys.path.insert(0, here)
 
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_return_info
 
@@ -22,7 +28,7 @@ from collections import defaultdict
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON
+    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -346,6 +352,35 @@ class ThreadsSuspendedSingleNotification(AbstractSingleNotificationBehavior):
             yield
 
 
+# noinspection SpellCheckingInspection
+def stoptrace():
+    """Stops tracing in the current process and undoes all monkey-patches done by the debugger."""
+    global connected
+
+    if connected:
+        pydevd_tracing.restore_sys_set_trace_func()
+        sys.settrace(None)
+        try:
+            # Not available in Jython!
+            threading.settrace(None)  # Disable tracing for all future threads.
+        except:
+            pass
+
+        from _pydev_bundle.pydev_monkey import undo_patch_thread_modules
+        undo_patch_thread_modules()
+
+        debugger = get_global_debugger()
+
+        if debugger:
+
+            debugger.set_trace_for_frame_and_parents(get_frame(), disable=True)
+            debugger.exiting()
+
+            kill_all_pydev_threads()
+
+        connected = False
+
+
 #=======================================================================================================================
 # PyDB
 #=======================================================================================================================
@@ -460,6 +495,9 @@ class PyDB(object):
         self.communication_role = None
 
         self.collect_return_info = collect_return_info
+
+        # If True, pydevd will stop on assertion errors in tests.
+        self.stop_on_failed_tests = False
 
     def get_thread_local_trace_func(self):
         try:
@@ -576,6 +614,12 @@ class PyDB(object):
 
     def is_top_level_trace_in_project_scope(self, trace):
         return pydevd_utils.is_top_level_trace_in_project_scope(trace)
+
+    def is_test_item_or_set_up_caller(self, frame):
+        return pydevd_utils.is_test_item_or_set_up_caller(frame)
+
+    def set_unit_tests_debugging_mode(self):
+        self.stop_on_failed_tests = True
 
     def has_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():
@@ -1033,7 +1077,7 @@ class PyDB(object):
             if curr_func_name in ('?', '<module>'):
                 curr_func_name = ''
 
-            if curr_func_name == func_name:
+            if func_name == '*' or curr_func_name == func_name:
                 line = next_line
                 frame.f_trace = self.trace_dispatch
                 frame.f_lineno = line
@@ -1156,10 +1200,11 @@ class PyDB(object):
                 except ValueError as e:
                     response_msg = "%s" % e
                 finally:
-                    seq = info.pydev_message
-                    cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
-                    self.writer.add_command(cmd)
-                    info.pydev_message = ''
+                    if GOTO_HAS_RESPONSE:
+                        seq = info.pydev_message
+                        cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
+                        self.writer.add_command(cmd)
+                        info.pydev_message = ''
 
                 if stop:
                     cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)
@@ -1458,8 +1503,16 @@ class PyDB(object):
         return globals
 
     def exiting(self):
-        sys.stdout.flush()
-        sys.stderr.flush()
+        # noinspection PyBroadException
+        try:
+            sys.stdout.flush()
+        except:
+            pass
+        # noinspection PyBroadException
+        try:
+            sys.stderr.flush()
+        except:
+            pass
         self.check_output_redirect()
         cmd = self.cmd_factory.make_exit_message()
         self.writer.add_command(cmd)
@@ -1488,6 +1541,15 @@ class PyDB(object):
     frame_eval_func = frame_eval_func
     dummy_trace_dispatch = dummy_trace_dispatch
 
+    # noinspection SpellCheckingInspection
+    @staticmethod
+    def stoptrace():
+        """A proxy method for calling :func:`stoptrace` from the modules where direct import
+        is impossible because, for example, a circular dependency."""
+        PyDBDaemonThread.created_pydb_daemon_threads = {}
+        stoptrace()
+
+
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
     setup['DEBUG_TRACE_BREAKPOINTS'] = 1
@@ -1506,11 +1568,11 @@ def dump_threads(stream=None):
     pydevd_utils.dump_threads(stream)
 
 
-def usage(doExit=0):
+def usage(do_exit=True, exit_code=0):
     sys.stdout.write('Usage:\n')
-    sys.stdout.write('pydevd.py --port N [(--client hostname) | --server] --file executable [file_options]\n')
-    if doExit:
-        sys.exit(0)
+    sys.stdout.write('\tpydevd.py --port N [(--client hostname) | --server] --file executable [file_options]\n')
+    if do_exit:
+        sys.exit(exit_code)
 
 
 class _CustomWriter(object):
@@ -1679,6 +1741,7 @@ def _locked_settrace(
             SetupHolder.setup = setup
 
         debugger = PyDB()
+        pydev_log.debug("pydev debugger: process %d is connecting\n" % os.getpid())
         debugger.connect(host, port)  # Note: connect can raise error.
 
         # Mark connected only if it actually succeeded.
@@ -1753,31 +1816,6 @@ def _locked_settrace(
             debugger.set_suspend(t, CMD_SET_BREAK)
 
 
-def stoptrace():
-    global connected
-    if connected:
-        pydevd_tracing.restore_sys_set_trace_func()
-        sys.settrace(None)
-        try:
-            #not available in jython!
-            threading.settrace(None) # for all future threads
-        except:
-            pass
-
-        from _pydev_bundle.pydev_monkey import undo_patch_thread_modules
-        undo_patch_thread_modules()
-
-        debugger = get_global_debugger()
-
-        if debugger:
-
-            debugger.set_trace_for_frame_and_parents(get_frame(), disable=True)
-            debugger.exiting()
-
-            kill_all_pydev_threads()
-
-        connected = False
-
 class Dispatcher(object):
     def __init__(self):
         self.port = None
@@ -1787,7 +1825,7 @@ class Dispatcher(object):
         self.port = port
         self.client = start_client(self.host, self.port)
         self.reader = DispatchReader(self)
-        self.reader.pydev_do_not_trace = False #we run reader in the same thread so we don't want to loose tracing
+        self.reader.pydev_do_not_trace = False  # We run reader in the same thread so we don't want to loose tracing.
         self.reader.run()
 
     def close(self):
@@ -1966,7 +2004,11 @@ def main():
         SetupHolder.setup = setup
     except ValueError:
         traceback.print_exc()
-        usage(1)
+        usage(exit_code=1)
+
+    # noinspection PyUnboundLocalVariable
+    if setup['help']:
+        usage()
 
     if setup['print-in-debugger-startup']:
         try:
@@ -2013,8 +2055,8 @@ def main():
                 dispatcher.connect(host, port)
                 if dispatcher.port is not None:
                     port = dispatcher.port
-                    pydev_log.debug("Received port %d\n" %port)
-                    pydev_log.info("pydev debugger: process %d is connecting\n"% os.getpid())
+                    pydev_log.debug("Received port %d\n" % port)
+                    pydev_log.debug("pydev debugger: process %d is connecting\n" % os.getpid())
 
                     try:
                         pydev_monkey.patch_new_process_functions()

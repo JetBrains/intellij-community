@@ -3,13 +3,13 @@ package com.intellij.compiler.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.compiler.CompilerMessageImpl;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.codeStyle.CodeStyleDefaults;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public class MessagesContainer {
 
   private static int getTabSize(@NotNull Project project) {
     try {
-      return CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
+      return CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -61,8 +62,10 @@ public class MessagesContainer {
   }
 
   @Nullable
-  public CompilerMessage addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable);
+  public CompilerMessage addMessage(CompilerMessageCategory category,
+                                    @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                    String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable, moduleNames);
     if (addMessage(msg)) {
       msg.setColumnAdjuster((m, line, col) -> adjustColumn(m, line, col));
       return msg;

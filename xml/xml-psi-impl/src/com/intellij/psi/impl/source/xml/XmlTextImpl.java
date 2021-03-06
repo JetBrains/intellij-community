@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -34,7 +22,8 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +66,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     if (displayText != null) return displayText;
     StringBuilder buffer = new StringBuilder();
     ASTNode child = getFirstChildNode();
-    final TIntArrayList gapsStarts = new TIntArrayList();
-    final TIntArrayList gapsShifts = new TIntArrayList();
+    final IntList gapsStarts = new IntArrayList();
+    final IntList gapsShifts = new IntArrayList();
     while (child != null) {
       final int start = buffer.length();
       IElementType elementType = child.getElementType();
@@ -116,8 +105,8 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
     int currentGapsSum = 0;
     for (int i = 0; i < gapDisplayStarts.length; i++) {
-      currentGapsSum += gapsShifts.get(i);
-      gapDisplayStarts[i] = gapsStarts.get(i);
+      currentGapsSum += gapsShifts.getInt(i);
+      gapDisplayStarts[i] = gapsStarts.getInt(i);
       gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
     myGapDisplayStarts = gapDisplayStarts;
@@ -369,6 +358,13 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return this;
   }
 
+  @Override
+  public @NotNull Language getLanguage() {
+    PsiElement parent = getParent();
+    return parent != null ? parent.getLanguage()
+                          : super.getLanguage();
+  }
+
   @Nullable
   private XmlText _splitText(final int displayOffset) throws IncorrectOperationException{
     final XmlTag xmlTag = (XmlTag)getParent();
@@ -414,7 +410,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
       if (childElement.getNextSibling() != null) {
         result.rawAddChildren((TreeElement)childElement.getNextSibling());
       }
-      ((TreeElement)childElement).rawRemove();
+      DebugUtil.performPsiModification("xmlText split",  () -> ((TreeElement)childElement).rawRemove());
       this.rawAddChildren(leftElement);
     }
     else {

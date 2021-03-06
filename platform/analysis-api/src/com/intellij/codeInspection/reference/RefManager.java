@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -113,9 +114,9 @@ public abstract class RefManager {
   public abstract boolean belongsToScope(@Nullable PsiElement psiElement);
 
   @Nullable
-  public abstract String getQualifiedName(@Nullable RefEntity refEntity);
+  public abstract @NlsSafe String getQualifiedName(@Nullable RefEntity refEntity);
 
-  public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs);
+  public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<? super RefElement> deletedRefs);
 
   @NotNull
   public abstract PsiManager getPsiManager();

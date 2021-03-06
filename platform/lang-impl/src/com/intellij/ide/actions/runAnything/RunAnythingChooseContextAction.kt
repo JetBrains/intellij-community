@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything
 
 import com.intellij.ide.IdeBundle
@@ -75,8 +75,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
 
     val updateToolbar = {
-      val toolbar = UIUtil.uiParents(component, true).filter(ActionToolbar::class.java).first()
-      toolbar!!.updateActionsImmediately()
+      ActionToolbar.findToolbarBy(component)!!.updateActionsImmediately()
     }
 
     val dataContext = e.dataContext
@@ -99,7 +98,6 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         is ModuleContext -> ModuleItem(it)
         is BrowseRecentDirectoryContext -> BrowseDirectoryItem(it)
         is RecentDirectoryContext -> RecentDirectoryItem(it)
-        else -> throw UnsupportedOperationException()
       }
     }
   }
@@ -213,7 +211,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         .plus(ProjectContext(project))
         .plus(ModuleManager.getInstance(project).modules.map {
           ModuleContext(it)
-        }.let { if (it.size > 1) it else emptyList<RunAnythingContext>() })
+        }.let { if (it.size > 1) it else emptyList() })
         .toList()
     }
   }

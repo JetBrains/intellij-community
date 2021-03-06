@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.replace;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ReplacementInfo {
@@ -13,11 +14,12 @@ public interface ReplacementInfo {
 
   int getMatchesCount();
 
-  MatchResult getNamedMatchResult(String name);
+  MatchResult getNamedMatchResult(@NotNull String name);
 
+  @NotNull
   MatchResult getMatchResult();
 
-  String getVariableName(PsiElement element);
+  String getVariableName(@NotNull PsiElement element);
 
-  String getSearchPatternName(String sourceName);
+  String getSearchPatternName(@NotNull String sourceName);
 }

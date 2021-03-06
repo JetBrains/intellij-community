@@ -32,7 +32,7 @@ public class GrAnnotationPattern extends GroovyElementPattern<GrAnnotation, GrAn
 
   @NotNull
   public GrAnnotationPattern withQualifiedName(@NotNull final String qname) {
-    return with(new PatternCondition<GrAnnotation>("withQualifiedName") {
+    return with(new PatternCondition<>("withQualifiedName") {
       @Override
       public boolean accepts(@NotNull GrAnnotation annotation, ProcessingContext context) {
         return qname.equals(annotation.getQualifiedName());

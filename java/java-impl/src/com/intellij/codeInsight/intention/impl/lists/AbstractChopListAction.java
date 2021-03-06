@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.intellij.openapi.editor.Document;
@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
@@ -37,12 +39,16 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
       }
     }
     E first = elements.get(0);
-    if (needHeadBreak(first)){
+    if (needHeadBreak(first)) {
       document.insertString(findOffsetOfBreakBeforeFirst(first), "\n");
     }
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    SmartPsiElementPointer<L> pointer = SmartPointerManager.createPointer(context.list);
     documentManager.commitDocument(document);
-    CodeStyleManager.getInstance(project).adjustLineIndent(context.list.getContainingFile(), context.list.getParent().getTextRange());
+    L list = pointer.getElement();
+    if (list != null) {
+      CodeStyleManager.getInstance(project).adjustLineIndent(list.getContainingFile(), list.getParent().getTextRange());
+    }
   }
 
   abstract int findOffsetForBreakAfter(E element);
@@ -55,7 +61,7 @@ public abstract class AbstractChopListAction<L extends PsiElement, E extends Psi
     return true;
   }
 
-  private static class Context<L extends PsiElement, E extends PsiElement> {
+  private static final class Context<L extends PsiElement, E extends PsiElement> {
     final @NotNull L list;
     final @NotNull List<E> elements;
 

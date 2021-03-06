@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
@@ -134,7 +135,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // Check if project does not support remote creation at all
     if (!myAllowRemoteProjectCreation && PythonSdkUtil.isRemote(sdk)) {
       throw new PyNoProjectAllowedOnSdkException(
-        "Can't create project of this type on remote interpreter. Choose local interpreter.");
+        PyBundle.message("python.remote.interpreter.can.t.create.project.this.type"));
     }
 
 
@@ -190,13 +191,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
           break;
         }
         userProvidedPath = null; // According to checkSynchronizationAvailable should be cleared
-        final String message = String.format("Local/Remote synchronization is not configured correctly.\n%s\n" +
-                                             "You may need to sync local and remote project manually.\n\n Do you want to continue? \n\n" +
-                                             "Say 'Yes' to stay with misconfigured  mappings or 'No' to start manual configuration process.",
-                                             syncError);
+        final String message =
+          PyBundle.message("python.new.project.synchronization.not.configured.dialog.message", syncError);
         if (Messages.showYesNoDialog(project,
                                      message,
-                                     PyBundle.message("python.new.project.synchronization.not.configured"),
+                                     PyBundle.message("python.new.project.synchronization.not.configured.dialog.title"),
                                      General.WarningDialog) == Messages.YES) {
           break;
         }
@@ -281,15 +280,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   public void afterProjectGenerated(@NotNull final Project project) {
   }
 
-  /**
-   * @deprecated This method no longer has any effect. The standard interpreter chooser UI is always shown.
-   */
-  @Deprecated
-  @Contract(" -> false")
-  public boolean hideInterpreter() {
-    return false;
-  }
-
   public void addErrorLabelMouseListener(@NotNull final MouseListener mouseListener) {
     myErrorLabelMouseListener = mouseListener;
   }
@@ -326,7 +316,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
 
     if (errorDescription == null) {
-      errorDescription = ErrorDescription.fromMessage("Choose another SDK");
+      errorDescription = ErrorDescription.fromMessage(PyBundle.message("python.new.project.error.solution.another.sdk"));
     }
     return errorDescription;
   }
@@ -361,21 +351,21 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
     if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
       //Modal is used because it is insane to create project when framework is not installed
-      ProgressManager.getInstance().run(new Task.Modal(project, String.format("Ensuring %s is installed", frameworkName), false) {
+      ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
 
           boolean installed = false;
           if (!forceInstallFramework) {
             // First check if we need to do it
-            indicator.setText(String.format("Checking if %s is installed...", frameworkName));
+            indicator.setText(PyBundle.message("python.install.framework.checking.is.installed", frameworkName));
             final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
             installed = PyPsiPackageUtil.findPackage(packages, requirement) != null;
           }
 
 
           if (!installed) {
-            indicator.setText(String.format("Installing %s...", frameworkName));
+            indicator.setText(PyBundle.message("python.install.framework.installing", frameworkName));
             try {
               packageManager.install(requirement);
               packageManager.refresh();
@@ -409,6 +399,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return null;
   }
 
+  @Nullable
+  public String getNewProjectPrefix() {
+    return null;
+  }
+
   /**
    * To be thrown if project can't be created on this sdk
    *
@@ -418,7 +413,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     /**
      * @param reason why project can't be created
      */
-    PyNoProjectAllowedOnSdkException(@NotNull final String reason) {
+    PyNoProjectAllowedOnSdkException(@NotNull @DialogMessage final String reason) {
       super(reason);
     }
   }

@@ -12,10 +12,9 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
-import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog;
 import org.jetbrains.plugins.github.i18n.GithubBundle;
 
 import javax.swing.*;
@@ -23,10 +22,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 
-/**
- * @author Dennis.Ushakov
- */
-public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository> {
+final class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepository> {
   private MyTextField myRepoAuthor;
   private MyTextField myRepoName;
   private MyTextField myToken;
@@ -36,7 +32,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private JBLabel myRepositoryLabel;
   private JBLabel myTokenLabel;
 
-  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<? super GithubRepository> changeListener) {
+  GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<? super GithubRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myUsernameLabel.setVisible(false);
@@ -123,10 +119,9 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   }
 
   private void generateToken() {
-    GithubLoginDialog dialog = new GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), myProject);
-    dialog.withServer(getHost(), false);
-    if (dialog.showAndGet()) {
-      myToken.setText(dialog.getToken());
+    String token = GHRepositoryEditorKt.INSTANCE.askToken(myProject, getHost());
+    if (token != null) {
+      myToken.setText(token);
     }
   }
 
@@ -176,7 +171,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   public static class MyTextField extends JBTextField {
     private int myWidth = -1;
 
-    public MyTextField(@NotNull String hintCaption) {
+    public MyTextField(@Nls @NotNull String hintCaption) {
       getEmptyText().setText(hintCaption);
     }
 

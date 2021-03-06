@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -7,11 +7,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +28,9 @@ public abstract class XDebugView implements Disposable {
 
   protected final void requestClear() {
     if (ApplicationManager.getApplication().isUnitTestMode()) { // no delay in tests
-      clear();
+      if (!myClearAlarm.isDisposed()) {
+        clear();
+      }
     }
     else {
       myClearAlarm.cancelAndRequest();
@@ -55,19 +55,6 @@ public abstract class XDebugView implements Disposable {
   public static XDebugSession getSession(@NotNull Component component) {
     return getData(XDebugSession.DATA_KEY, component);
   }
-
-  @Nullable
-  protected VirtualFile getCurrentFile(@NotNull Component component) {
-    XDebugSession session = getSession(component);
-    if (session != null) {
-      XSourcePosition position = session.getCurrentPosition();
-      if (position != null) {
-        return position.getFile();
-      }
-    }
-    return null;
-  }
-
 
   @Nullable
   public static <T> T getData(DataKey<T> key, @NotNull Component component) {

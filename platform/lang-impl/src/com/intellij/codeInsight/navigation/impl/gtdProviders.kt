@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
-import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil.findTargetElementsFromProviders
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
+import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
@@ -28,16 +27,20 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
-  val fromProviders: Array<out PsiElement>? = findTargetElementsFromProviders(leafElement, adjustedOffset, editor)
-  if (fromProviders.isNullOrEmpty()) {
-    return null
+  for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
+    val fromProvider: Array<out PsiElement>? = handler.getGotoDeclarationTargets(leafElement, offset, editor)
+    if (fromProvider.isNullOrEmpty()) {
+      continue
+    }
+    return GTDProviderData(leafElement, fromProvider.toList(), handler)
   }
-  return GTDProviderData(leafElement, fromProviders.toList())
+  return null
 }
 
 private class GTDProviderData(
   private val leafElement: PsiElement,
-  private val targetElements: Collection<PsiElement>
+  private val targetElements: Collection<PsiElement>,
+  private val navigationProvider: GotoDeclarationHandler
 ) : GTDActionData {
 
   init {
@@ -55,21 +58,19 @@ private class GTDProviderData(
   }
 
   override fun result(): GTDActionResult? {
-    val singleTarget = targetElements.singleOrNull()
-    if (singleTarget != null) {
-      return gtdTargetNavigatable(singleTarget)?.let(GTDActionResult::SingleTarget)
-    }
-    val result: List<Pair<Navigatable, PsiElement>> = targetElements.mapNotNullTo(SmartList()) { targetElement ->
-      psiNavigatable(targetElement)?.let { navigatable ->
-        Pair(navigatable, targetElement)
-      }
-    }
-    return when (result.size) {
+    return when (targetElements.size) {
       0 -> null
-      1 -> GTDActionResult.SingleTarget(result.single().first)
-      else -> GTDActionResult.MultipleTargets(result.map { (navigatable, targetElement) ->
-        Pair(navigatable, PsiElementTargetPopupPresentation(targetElement))
-      })
+      1 -> {
+        val navigatable = gtdTargetNavigatable(targetElements.single())
+        GTDActionResult.SingleTarget(navigatable, navigationProvider)
+      }
+      else -> {
+        val targets = targetElements.mapTo(SmartList()) { targetElement ->
+          val navigatable = psiNavigatable(targetElement)
+          GTDTarget(navigatable, targetPresentation(targetElement), navigationProvider)
+        }
+        GTDActionResult.MultipleTargets(targets)
+      }
     }
   }
 }

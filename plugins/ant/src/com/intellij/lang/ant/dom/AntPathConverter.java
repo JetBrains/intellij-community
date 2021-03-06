@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,12 +84,12 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   @Nullable
-  protected String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
+  protected @NlsSafe String getPathResolveRoot(ConvertContext context, AntDomProject antProject) {
     return antProject.getProjectBasedirPath();
   }
 
   @Nullable
-  protected String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
+  protected @NlsSafe String getAttributeDefaultValue(ConvertContext context, GenericAttributeValue attribValue) {
     return null;
   }
 

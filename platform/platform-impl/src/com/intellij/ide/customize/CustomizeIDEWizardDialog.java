@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -7,6 +7,7 @@ import com.intellij.idea.SplashManager;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
@@ -23,24 +24,26 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionListener {
-  private static final String BUTTONS = "BUTTONS";
-  private static final String NO_BUTTONS = "NO_BUTTONS";
+import static com.intellij.openapi.util.text.HtmlChunk.*;
 
-  private final JButton mySkipButton = new JButton(IdeBundle.message("button.skip.remaining.and.set.defaults"));
-  private final JButton myBackButton = new JButton(IdeBundle.message("button.back"));
-  private final JButton myNextButton = new JButton(IdeBundle.message("button.next"));
+public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCustomizeIDEWizardDialog {
+  protected static final String BUTTONS = "BUTTONS";
+  protected static final String NO_BUTTONS = "NO_BUTTONS";
 
-  private final JBCardLayout myCardLayout = new JBCardLayout();
-  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
-  private int myIndex = 0;
-  private final JBLabel myNavigationLabel = new JBLabel();
-  private final JBLabel myHeaderLabel = new JBLabel();
-  private final JBLabel myFooterLabel = new JBLabel();
-  private final CardLayout myButtonWrapperLayout = new CardLayout();
-  private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
-  private JPanel myContentPanel;
-  private final boolean myHideSkipButton;
+  protected final JButton mySkipButton = new JButton(IdeBundle.message("button.skip.remaining.and.set.defaults"));
+  protected final JButton myBackButton = new JButton(IdeBundle.message("button.back"));
+  protected final JButton myNextButton = new JButton(IdeBundle.message("button.next"));
+
+  protected final JBCardLayout myCardLayout = new JBCardLayout();
+  protected final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
+  protected int myIndex = 0;
+  protected final JBLabel myNavigationLabel = new JBLabel();
+  protected final JBLabel myHeaderLabel = new JBLabel();
+  protected final JBLabel myFooterLabel = new JBLabel();
+  protected final CardLayout myButtonWrapperLayout = new CardLayout();
+  protected final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
+  protected JPanel myContentPanel;
+  protected final boolean myHideSkipButton;
 
   public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     this(stepsProvider, null, true, true);
@@ -82,14 +85,16 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   }
 
   @Override
-  public final void show() {
+  public void show() {
     if (mySteps.isEmpty()) {
-      throw new IllegalStateException("no steps provided");  // use showIfNeeded() instead
+      // use showIfNeeded() instead
+      throw new IllegalStateException("no steps provided");
     }
     CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.WizardDisplayed);
     SplashManager.executeWithHiddenSplash(getWindow(), () -> super.show());
   }
 
+  @Override
   public final boolean showIfNeeded() {
     boolean willBeShown = !mySteps.isEmpty() && !isDisposed();
     if (willBeShown) {
@@ -208,7 +213,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     return false;
   }
 
-  private void initCurrentStep(boolean forward) {
+  protected void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
     myCurrentStep.beforeShown(forward);
     myCardLayout.swipe(myContentPanel, myCurrentStep.getTitle(), JBCardLayout.SwipeDirection.AUTO, () -> {
@@ -228,20 +233,29 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
                          : IdeBundle.message("button.start.using.0", ApplicationNamesInfo.getInstance().getFullProductName()));
     myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
     myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
-    if (mySteps.size() > 1) {
-      StringBuilder navHTML = new StringBuilder("<html><body>");
-      String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
-      for (int i = 0; i < mySteps.size(); i++) {
-        if (i > 0) navHTML.append("&nbsp;").append(arrow).append("&nbsp;");
-        if (i == myIndex) navHTML.append("<b>");
-        navHTML.append(mySteps.get(i).getTitle());
-        if (i == myIndex) navHTML.append("</b>");
-      }
-      myNavigationLabel.setText(navHTML.toString());
+    if (mySteps.size() <= 1) {
+      return;
     }
+
+    Element body = body();
+    String arrow = myNavigationLabel.getFont().canDisplay(0x2192) ? "&#8594;" : "&gt;";
+    for (int i = 0; i < mySteps.size(); i++) {
+      if (i > 0) {
+        body = body.children(nbsp(), raw(arrow), nbsp());
+      }
+      if (i == myIndex) {
+        body = body.children(
+          tag("b").addText(mySteps.get(i).getTitle()));
+      } else {
+        body = body.addText(mySteps.get(i).getTitle());
+      }
+    }
+    String navHtml = new HtmlBuilder().append(html().child(body)).toString();
+
+    myNavigationLabel.setText(navHtml);
   }
 
-  @Contract("!null->!null")
+  @Contract(value = "!null->!null" ,pure = true)
   private static String ensureHTML(@Nullable String s) {
     return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXmlEntities(s) + "</html>";
   }

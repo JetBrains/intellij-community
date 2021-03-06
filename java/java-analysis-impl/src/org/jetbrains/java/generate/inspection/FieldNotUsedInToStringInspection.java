@@ -20,13 +20,14 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringContext;
 import org.jetbrains.java.generate.GenerateToStringUtils;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Inspection to check if the current class toString() method is out of
@@ -34,8 +35,7 @@ import java.util.Collections;
  * to exclude certain fields (eg. constants etc.). Will only warn if the
  * class has a toString() method.
  */
-public class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
-
+public final class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
   @Override
   @NotNull
   public String getShortName() {
@@ -53,7 +53,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     return new FieldNotUsedInToStringVisitor(holder);
   }
 
-  private static class FieldNotUsedInToStringVisitor extends JavaElementVisitor{
+  private static final class FieldNotUsedInToStringVisitor extends JavaElementVisitor{
 
     private final ProblemsHolder myHolder;
 
@@ -96,22 +96,21 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         final String fieldName = field.getName();
         myHolder.registerProblem(field.getNameIdentifier(),
                                  JavaAnalysisBundle.message("inspection.field.not.used.in.to.string.description2", fieldName),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes());
       }
       for (PsiMethod unusedMethod : visitor.getUnusedMethods()) {
         final PsiIdentifier identifier = unusedMethod.getNameIdentifier();
         final PsiElement target = identifier == null ? unusedMethod : identifier;
         myHolder.registerProblem(target,
                                  JavaAnalysisBundle.message("inspection.field.not.used.in.to.string.description", unusedMethod.getName()),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(myHolder));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes());
       }
     }
   }
 
-  private static class FieldUsedVisitor extends JavaRecursiveElementWalkingVisitor {
-
-    private final THashSet<PsiField> myUnusedFields = new THashSet<>();
-    private final THashSet<PsiMethod> myUnusedMethods = new THashSet<>();
+  private static final class FieldUsedVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final Set<PsiField> myUnusedFields = new HashSet<>();
+    private final Set<PsiMethod> myUnusedMethods = new HashSet<>();
 
     FieldUsedVisitor(PsiField[] fields, PsiMethod[] methods) {
       Collections.addAll(myUnusedFields, fields);
@@ -160,11 +159,11 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
       return false;
     }
 
-    THashSet<PsiField> getUnusedFields() {
+    Set<PsiField> getUnusedFields() {
       return myUnusedFields;
     }
 
-    THashSet<PsiMethod> getUnusedMethods() {
+    Set<PsiMethod> getUnusedMethods() {
       return myUnusedMethods;
     }
   }

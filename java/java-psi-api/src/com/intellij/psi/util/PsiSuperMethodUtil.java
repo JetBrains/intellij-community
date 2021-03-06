@@ -1,39 +1,26 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class PsiSuperMethodUtil {
+public final class PsiSuperMethodUtil {
   private PsiSuperMethodUtil() {}
 
   public static boolean isSuperMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-    for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
-      PsiMethod supsigme = supsig.getMethod();
+    for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
+      PsiMethod supsigme = superSignature.getMethod();
       if (superMethod.equals(supsigme) || isSuperMethod(supsigme, superMethod)) return true;
     }
 
@@ -55,7 +42,7 @@ public class PsiSuperMethodUtil {
       PsiType type = superSubstitutor.substitute(typeParameter);
       final PsiType t = derivedSubstitutor.substitute(type);
       if (map == null) {
-        map = new THashMap<>();
+        map = new HashMap<>();
       }
       map.put(typeParameter, t);
     }
@@ -66,7 +53,7 @@ public class PsiSuperMethodUtil {
   @NotNull
   public static Map<MethodSignature, Set<PsiMethod>> collectOverrideEquivalents(@NotNull PsiClass aClass) {
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalent =
-      new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     final GlobalSearchScope resolveScope = aClass.getResolveScope();
     PsiClass[] supers = aClass.getSupers();
     for (int i = 0; i < supers.length; i++) {

@@ -16,9 +16,10 @@
 package com.intellij.diff.merge;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,16 +29,26 @@ import org.jetbrains.annotations.Nullable;
 public abstract class MergeRequest implements UserDataHolder {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
+  @NlsContexts.DialogTitle
   @Nullable
   public abstract String getTitle();
 
   /**
    * Called on conflict resolve end. Should be called exactly once for each request that was shown.
-   *
+   * <p>
    * MergeRequest should keep the initial state of its content and restore it on {@link MergeResult#CANCEL}
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void applyResult(@NotNull MergeResult result);
+
+  /**
+   * Called when merge request life cycle is retargeted to another one.
+   * <p>
+   * In this case, {@link #applyResult} will never be called for this request.
+   * The caller should appropriately transfer {@link MergeCallback}.
+   */
+  public void resultRetargeted() {
+  }
 
   @Nullable
   @Override

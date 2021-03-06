@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -46,7 +47,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    return "#ref statement can be simplified #loc";
+    return GroovyBundle.message("inspection.message.ref.statement.can.be.simplified");
   }
 
   @Override
@@ -58,7 +59,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Simplify";
+      return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override

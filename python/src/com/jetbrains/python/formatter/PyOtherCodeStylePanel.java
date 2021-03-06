@@ -43,6 +43,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   private JPanel myPanel;
   private JBCheckBox myAddTrailingBlankLineCheckbox;
+  private JBCheckBox myUseContinuationIndentForParameters;
   private JBCheckBox myUseContinuationIndentForArguments;
   private JBCheckBox myUseContinuationIndentForCollectionsAndComprehensions;
   private ComboBox myDictAlignmentCombo;
@@ -74,6 +75,13 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
       }
     });
     
+    myUseContinuationIndentForParameters.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        somethingChanged();
+      }
+    });
+
     myUseContinuationIndentForArguments.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -113,6 +121,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
       }
     }
     myAddTrailingBlankLineCheckbox.setSelected(pySettings.BLANK_LINE_AT_FILE_END);
+    myUseContinuationIndentForParameters.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS);
     myUseContinuationIndentForArguments.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS);
     myUseContinuationIndentForCollectionsAndComprehensions.setSelected(pySettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS);
   }
@@ -122,6 +131,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
+    customSettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS = useContinuationIndentForParameters();
     customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS = useContinuationIndentForArguments();
     customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = useContinuationIndentForCollectionLiterals();
   }
@@ -131,6 +141,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
            customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine() || 
+           customSettings.USE_CONTINUATION_INDENT_FOR_PARAMETERS != useContinuationIndentForParameters() ||
            customSettings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS != useContinuationIndentForArguments() ||
            customSettings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS != useContinuationIndentForCollectionLiterals();
   }
@@ -153,6 +164,10 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return myAddTrailingBlankLineCheckbox.isSelected();
   }
 
+  private boolean useContinuationIndentForParameters() {
+    return myUseContinuationIndentForParameters.isSelected();
+  }
+
   private boolean useContinuationIndentForArguments() {
     return myUseContinuationIndentForArguments.isSelected();
   }
@@ -165,6 +180,12 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
                                        "    1,\n" +
                                        "    2,\n" +
                                        "    3)\n" +
+                                       "\n" +
+                                       "def foo_decl(\n" +
+                                       "    a,\n" +
+                                       "    b,\n" +
+                                       "    c):\n" +
+                                       "    pass\n" +
                                        "\n" +
                                        "{\n" +
                                        "    \"green\": 42,\n" +

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -17,7 +17,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
 /**
  * @author ven
  */
-public class CompletionProcessor extends ResolverProcessorImpl {
+public final class CompletionProcessor extends ResolverProcessorImpl {
   private CompletionProcessor(PsiElement place, final EnumSet<DeclarationKind> resolveTargets, final String name) {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);
   }

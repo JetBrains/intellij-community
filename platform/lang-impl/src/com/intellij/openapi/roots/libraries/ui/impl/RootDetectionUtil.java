@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.ide.util.ChooseElementsDialog;
@@ -33,6 +19,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-public class RootDetectionUtil {
+public final class RootDetectionUtil {
   private static final Logger LOG = Logger.getInstance(RootDetectionUtil.class);
 
   private RootDetectionUtil() {
@@ -138,8 +125,8 @@ public class RootDetectionUtil {
       }
       else {
         String title = LangBundle.message("dialog.title.choose.categories.selected.files");
-        String description = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain.<br>" +
-                                                      "Choose the appropriate categories from the list.");
+        String description = XmlStringUtil.wrapInHtml(
+          LangBundle.message("root.detector.cannot.determine.file.kind", ApplicationNamesInfo.getInstance().getProductName()));
         ChooseElementsDialog<String> dialog;
         if (parentComponent != null) {
           dialog = new ChooseRootTypeElementsDialog(parentComponent, names, title, description);
@@ -181,7 +168,7 @@ public class RootDetectionUtil {
     }
 
     @Override
-    protected String getItemText(String item) {
+    protected String getItemText(@NlsSafe String item) {
       return item;
     }
 

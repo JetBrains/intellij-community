@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -24,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,7 @@ import java.util.function.Function;
 /**
  * @author Pavel.Dolgov
  */
-public class JavaReflectionReferenceUtil {
+public final class JavaReflectionReferenceUtil {
   // MethodHandle (Java 7) and VarHandle (Java 9) infrastructure
   public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
   public static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";
@@ -90,7 +89,7 @@ public class JavaReflectionReferenceUtil {
 
   @Contract("null -> null")
   public static ReflectiveType getReflectiveType(@Nullable PsiExpression context) {
-    context = ParenthesesUtils.stripParentheses(context);
+    context = PsiUtil.skipParenthesizedExprDown(context);
     if (context == null) {
       return null;
     }
@@ -107,7 +106,7 @@ public class JavaReflectionReferenceUtil {
         if (method != null && isJavaLangClass(method.getContainingClass())) {
           final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
           if (expressions.length == 1) {
-            final PsiExpression argument = findDefinition(ParenthesesUtils.stripParentheses(expressions[0]));
+            final PsiExpression argument = findDefinition(PsiUtil.skipParenthesizedExprDown(expressions[0]));
             final String className = computeConstantExpression(argument, String.class);
             if (className != null) {
               return ReflectiveType.create(findClass(className, context), true);
@@ -118,7 +117,7 @@ public class JavaReflectionReferenceUtil {
       else if (GET_CLASS.equals(methodReferenceName) && methodCall.getArgumentList().isEmpty()) {
         final PsiMethod method = methodCall.resolveMethod();
         if (method != null && isJavaLangObject(method.getContainingClass())) {
-          final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodCall.getMethodExpression().getQualifierExpression());
+          final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression());
           if (qualifier instanceof PsiReferenceExpression) {
             final PsiExpression definition = findVariableDefinition((PsiReferenceExpression)qualifier);
             if (definition != null) {
@@ -186,7 +185,7 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   private static ReflectiveType getClassInstanceType(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return null;
     }
@@ -221,7 +220,7 @@ public class JavaReflectionReferenceUtil {
   @Contract("null,_->null")
   @Nullable
   public static <T> T computeConstantExpression(@Nullable PsiExpression expression, @NotNull Class<T> expectedType) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     final Object computed = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
     return ObjectUtils.tryCast(computed, expectedType);
   }
@@ -557,7 +556,7 @@ public class JavaReflectionReferenceUtil {
   }
 
 
-  public static class ReflectiveType {
+  public static final class ReflectiveType {
     final PsiType myType;
     final boolean myIsExact;
 
@@ -677,7 +676,7 @@ public class JavaReflectionReferenceUtil {
     }
   }
 
-  public static class ReflectiveSignature implements Comparable<ReflectiveSignature> {
+  public static final class ReflectiveSignature implements Comparable<ReflectiveSignature> {
     public static final ReflectiveSignature NO_ARGUMENT_CONSTRUCTOR_SIGNATURE =
       new ReflectiveSignature(null, PsiKeyword.VOID, ArrayUtilRt.EMPTY_STRING_ARRAY);
 
@@ -730,8 +729,7 @@ public class JavaReflectionReferenceUtil {
       return getText(false, PsiNameHelper::getShortClassName);
     }
 
-    @Nullable
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon != null ? myIcon : PlatformIcons.METHOD_ICON;
     }
 
@@ -755,7 +753,7 @@ public class JavaReflectionReferenceUtil {
 
     @Override
     public int hashCode() {
-      return Objects.hash(myReturnType, myArgumentTypes);
+      return Objects.hash(myReturnType, Arrays.hashCode(myArgumentTypes));
     }
 
     @Override

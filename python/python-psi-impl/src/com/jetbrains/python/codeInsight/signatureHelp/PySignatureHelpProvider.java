@@ -24,11 +24,14 @@ public final class PySignatureHelpProvider implements SignatureHelpProvider {
   @Override
   public SignatureHelpResult getSignatureHelp(PsiFile file, int offset) {
     PyArgumentList argumentList = PyParameterInfoUtils.findArgumentList(file, offset, -1);
-    if (argumentList == null) {
+    if (argumentList == null || (!argumentList.getTextRange().contains(offset) && argumentList.getText().endsWith(")"))) {
       return null;
     }
 
     List<Pair<PyCallExpression, PyCallableType>> signatures = PyParameterInfoUtils.findCallCandidates(argumentList);
+    if (signatures == null) {
+      return null;
+    }
 
     int currentParamOffset = PyParameterInfoUtils.findCurrentParameter(argumentList, offset, file);
 

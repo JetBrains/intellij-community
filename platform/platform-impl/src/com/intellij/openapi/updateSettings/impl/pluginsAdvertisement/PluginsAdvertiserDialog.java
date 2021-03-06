@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author anna
@@ -25,19 +26,20 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
 
   @Nullable private final Project myProject;
-  private final PluginDownloader[] myUploadedPlugins;
-  //TODO: change it to custom plugins - non custom plugins will be checked during installation
-  private final List<? extends IdeaPluginDescriptor> myAllPlugins;
+  private final PluginDownloader[] myToInstallPlugins;
+  private final List<? extends IdeaPluginDescriptor> myCustomPlugins;
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
 
   private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
-  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<? extends IdeaPluginDescriptor> allPlugins) {
+  private @NotNull Function<? super Boolean, Void> myFinishFunction;
+
+  PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<? extends IdeaPluginDescriptor> customPlugins) {
     super(project);
     myProject = project;
     Arrays.sort(plugins, (o1, o2) -> o1.getPluginName().compareToIgnoreCase(o2.getPluginName()));
-    myUploadedPlugins = plugins;
-    myAllPlugins = allPlugins;
+    myToInstallPlugins = plugins;
+    myCustomPlugins = customPlugins;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
   }
@@ -52,7 +54,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       }
     };
 
-    for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
+    for (PluginDownloader uploadedPlugin : myToInstallPlugins) {
       foundPluginsPanel.add(uploadedPlugin);
     }
     TableUtil.ensureSelectionExists(foundPluginsPanel.getEntryTable());
@@ -66,10 +68,14 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     }
   }
 
+  public void setFinishFunction(@NotNull Function<? super Boolean, Void> finishFunction) {
+    myFinishFunction = finishFunction;
+  }
+
   public boolean doInstallPlugins() {
     Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
     List<PluginNode> nodes = new ArrayList<>();
-    for (PluginDownloader downloader : myUploadedPlugins) {
+    for (PluginDownloader downloader : myToInstallPlugins) {
       PluginDescriptor plugin = downloader.getDescriptor();
       if (!mySkippedPlugins.contains(plugin.getPluginId())) {
         pluginsToEnable.add(plugin);
@@ -93,7 +99,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     DisabledPluginsState.enablePlugins(pluginsToEnable, true);
     if (!nodes.isEmpty()) {
       try {
-        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, true, notifyRunnable, pluginHelper, null);
+        PluginManagerMain.downloadPlugins(nodes, myCustomPlugins, true, notifyRunnable, pluginHelper, myFinishFunction);
       }
       catch (IOException e) {
         LOG.error(e);

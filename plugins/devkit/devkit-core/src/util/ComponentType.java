@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.components.BaseComponent;
@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -16,8 +17,11 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 public enum ComponentType {
+  @SuppressWarnings("deprecation")
   MODULE(ModuleComponent.class, "module-components", "new.menu.module.component.text"),
+  @SuppressWarnings("deprecation")
   PROJECT(ProjectComponent.class, "project-components", "new.menu.project.component.text"),
+  @SuppressWarnings("deprecation")
   APPLICATION(BaseComponent.class, "application-components", "new.menu.application.component.text");
 
   public final String myClassName;
@@ -29,7 +33,7 @@ public enum ComponentType {
     boolean process(ComponentType type, XmlTag component, @Nullable XmlTagValue impl, @Nullable XmlTagValue intf);
   }
 
-  ComponentType(Class<? extends BaseComponent> clazz, @NonNls String name,
+  ComponentType(@SuppressWarnings("deprecation") Class<? extends BaseComponent> clazz, @NonNls String name,
                 @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String propertyKey) {
     myPropertyKey = propertyKey;
     myClassName = clazz.getName();
@@ -60,6 +64,8 @@ public enum ComponentType {
           }
         }
       }
+
+      PsiNavigateUtil.navigate(cmp);
     }
   }
 

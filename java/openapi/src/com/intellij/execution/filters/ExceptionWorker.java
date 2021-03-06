@@ -1,27 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
+import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
+import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -30,10 +21,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,9 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
@@ -82,13 +74,8 @@ public class ExceptionWorker {
 
     myMethod = myInfo.methodNameRange.substring(line);
 
-    myClassResolveInfo = myCache.resolveClass(myInfo.classFqnRange.substring(line).trim());
-    if (myClassResolveInfo.myClasses.isEmpty() && myInfo.fileName != null) {
-      // try find the file with the required name
-      //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
-      PsiFile[] files = PsiShortNamesCache.getInstance(myProject).getFilesByName(myInfo.fileName);
-      myClassResolveInfo = ExceptionInfoCache.ClassResolveInfo.create(myProject, files);
-    }
+    String className = myInfo.classFqnRange.substring(line).trim();
+    myClassResolveInfo = myCache.resolveClassOrFile(className, myInfo.fileName);
     if (myClassResolveInfo.myClasses.isEmpty()) return null;
 
     /*
@@ -105,16 +92,21 @@ public class ExceptionWorker {
     int highlightEndOffset = textStartOffset + myInfo.fileLineRange.getEndOffset();
 
     List<VirtualFile> virtualFiles = new ArrayList<>(myClassResolveInfo.myClasses.keySet());
-    BiConsumer<PsiFile, Editor> action =
-      elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
+    HyperlinkInfoFactory.HyperlinkHandler action =
+      elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1, textEndOffset);
     HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(
       virtualFiles, myInfo.lineNumber - 1, myProject, action);
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, myClassResolveInfo.myInLibrary);
     if (myMethod.startsWith("access$")) {
+      // Bridge method: just skip it
       myLocationRefiner = elementMatcher;
     }
+    else if (elementMatcher instanceof FunctionCallMatcher && className.matches(".+\\$\\$Lambda\\$\\d+/0x[0-9a-f]+")) {
+      // Like at com.example.MyClass$$Lambda$3363/0x00000008026d6440.fun(Unknown Source)
+      myLocationRefiner = new FunctionCallMatcher(myMethod);
+    }
     else if (myMethod.startsWith("lambda$")) {
-      myLocationRefiner = new FunctionCallMatcher();
+      myLocationRefiner = new FunctionCallMatcher(null);
     }
     else {
       myLocationRefiner = new StackFrameMatcher(line, myInfo);
@@ -173,17 +165,22 @@ public class ExceptionWorker {
     return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
   }
 
-  private static int findFirstRParenAfterDigit(@NotNull String line) {
-    int rParenIdx = -1;
+  private static int findRParenAfterLocation(@NotNull String line) {
+    int afterDigit = -1;
     int rParenCandidate = line.lastIndexOf(')');
-    //Looking for minimal position for ')' after a digit
+    boolean singleOccurrence = true;
     while (rParenCandidate > 0) {
       if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
-        rParenIdx = rParenCandidate;
+        afterDigit = rParenCandidate;
       }
-      rParenCandidate = line.lastIndexOf(')', rParenCandidate - 1);
+      int prev = line.lastIndexOf(')', rParenCandidate - 1);
+      if (prev < 0 && singleOccurrence) {
+        return rParenCandidate;
+      }
+      rParenCandidate = prev;
+      singleOccurrence = false;
     }
-    return rParenIdx;
+    return afterDigit;
   }
 
   @Nullable
@@ -197,7 +194,7 @@ public class ExceptionWorker {
   @Nullable
   private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
     int startIdx = findAtPrefix(line);
-    int rParenIdx = findFirstRParenAfterDigit(line);
+    int rParenIdx = findRParenAfterLocation(line);
     if (rParenIdx < 0) return null;
 
     TextRange methodName = findMethodNameCandidateBefore(line, startIdx, rParenIdx);
@@ -207,7 +204,7 @@ public class ExceptionWorker {
     int dotIdx = methodName.getStartOffset() - 1;
     int moduleIdx = line.indexOf('/');
     int classNameIdx;
-    if (moduleIdx > -1 && moduleIdx < dotIdx) {
+    if (moduleIdx > -1 && moduleIdx < dotIdx && !line.startsWith("0x", moduleIdx + 1)) {
       classNameIdx = moduleIdx + 1;
     }
     else {
@@ -246,7 +243,7 @@ public class ExceptionWorker {
         if (methodName != null) {
           return ParsedLine.createFromFileAndLine(new TextRange(0, methodName.getStartOffset() - 1),
                                                   methodName,
-                                                  spaceIndex + 1, lineEnd + 1, 
+                                                  spaceIndex + 1, lineEnd + 1,
                                                   line);
         }
       }
@@ -262,7 +259,7 @@ public class ExceptionWorker {
     String linePrefix = "line=";
     int lineNumberStart = line.indexOf(linePrefix);
     if (lineNumberStart < 0) return null;
-    
+
     int lineNumberEnd = line.indexOf(' ', lineNumberStart);
     if (lineNumberEnd < 0) return null;
 
@@ -272,18 +269,18 @@ public class ExceptionWorker {
     int lineNumber = getLineNumber(line.substring(lineNumberStart + linePrefix.length(), lineNumberEnd));
     if (lineNumber < 0) return null;
 
-    return new ParsedLine(trimRange(line, TextRange.create(line.indexOf(dash) + dash.length(), methodName.getStartOffset() - 1)), 
-                          methodName, 
+    return new ParsedLine(trimRange(line, TextRange.create(line.indexOf(dash) + dash.length(), methodName.getStartOffset() - 1)),
+                          methodName,
                           TextRange.create(lineNumberStart, lineNumberEnd), null, lineNumber);
   }
-  
+
   private static TextRange findMethodNameCandidateBefore(@NotNull String line, int start, int end) {
     int lParenIdx = line.lastIndexOf('(', end);
     if (lParenIdx < 0) return null;
 
     int dotIdx = line.lastIndexOf('.', lParenIdx);
     if (dotIdx < 0 || dotIdx < start) return null;
-    
+
     return TextRange.create(dotIdx + 1, lParenIdx);
   }
 
@@ -321,6 +318,10 @@ public class ExceptionWorker {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
 
+      if ("Native Method".equals(fileAndLine) || "Unknown Source".equals(fileAndLine)) {
+        return new ParsedLine(classFqnRange, methodNameRange, fileLineRange, null, -1);
+      }
+
       int colonIndex = fileAndLine.lastIndexOf(':');
       if (colonIndex < 0) return null;
 
@@ -328,12 +329,12 @@ public class ExceptionWorker {
       if (lineNumber < 0) return null;
 
       return new ParsedLine(classFqnRange, methodNameRange, fileLineRange, fileAndLine.substring(0, colonIndex).trim(), lineNumber);
-    } 
+    }
   }
-  
-  private static class StackFrameMatcher implements ExceptionLineRefiner {
-    private final String myMethodName;
-    private final String myClassName;
+
+  private static final class StackFrameMatcher implements ExceptionLineRefiner {
+    private final @NonNls String myMethodName;
+    private final @NonNls String myClassName;
     private final boolean myHasDollarInName;
 
     private StackFrameMatcher(@NotNull String line, @NotNull ParsedLine info) {
@@ -391,56 +392,77 @@ public class ExceptionWorker {
     }
   }
 
-  private static class ExceptionColumnFinder implements BiConsumer<PsiFile, Editor> {
+  private static final class ExceptionColumnFinder implements HyperlinkInfoFactory.HyperlinkHandler {
     private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
+    private final int myTextEndOffset;
+    private boolean myAnalysisWasActivated;
 
-    private ExceptionColumnFinder(@NotNull ExceptionLineRefiner elementMatcher, int lineNumber) {
+    private ExceptionColumnFinder(@NotNull ExceptionLineRefiner elementMatcher, int lineNumber, int textEndOffset) {
       myElementMatcher = elementMatcher;
       myLineNumber = lineNumber;
+      myTextEndOffset = textEndOffset;
     }
 
     @Override
-    public void accept(PsiFile file, Editor editor) {
-      if (DumbService.isDumb(file.getProject())) return; // may need to resolve refs
+    public void onLinkFollowed(@NotNull PsiFile file, @NotNull Editor targetEditor, @Nullable Editor originalEditor) {
+      Project project = file.getProject();
+      if (DumbService.isDumb(project)) return; // may need to resolve refs
       Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
       if (document == null || document.getLineCount() <= myLineNumber) return;
-      if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return;
+      if (!PsiDocumentManager.getInstance(project).isCommitted(document)) return;
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
-      PsiElement element = file.findElementAt(startOffset);
-      List<PsiElement> candidates = new ArrayList<>();
-      while (element != null && element.getTextRange().getStartOffset() < endOffset) {
-        PsiElement matched = myElementMatcher.matchElement(element);
-        if (matched != null) {
-          candidates.add(matched);
-          if (candidates.size() > 1) return;
-        }
-        element = PsiTreeUtil.nextLeaf(element);
+      LinkInfo info = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(() -> ReadAction.compute(() -> computeLinkInfo(file, startOffset, endOffset, originalEditor)),
+                                             JavaBundle.message("exception.navigation.fetching.target.position"), true, project);
+      if (info == null) return;
+      TextRange range = info.target.getTextRange();
+      targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
+      if (info.analysisAction != null) {
+        displayAnalysisAction(project, info.target, targetEditor, info.analysisAction);
       }
-      if (candidates.size() == 1) {
-        PsiElement foundElement = candidates.get(0);
-        TextRange range = foundElement.getTextRange();
-        editor.getCaretModel().moveToOffset(range.getStartOffset());
-        displayAnalysisAction(file.getProject(), foundElement, editor);
+    }
+    
+    private static class LinkInfo {
+      final @NotNull PsiElement target;
+      final @Nullable AnAction analysisAction;
+
+      private LinkInfo(@NotNull PsiElement target, @Nullable AnAction action) {
+        this.target = target;
+        analysisAction = action;
       }
     }
 
-    private void displayAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @NotNull Editor editor) {
-      ExceptionInfo info = myElementMatcher.getExceptionInfo();
-      ExceptionAnalysisProvider exceptionAnalysisProvider = project.getService(ExceptionAnalysisProvider.class);
-      AnAction action;
-      if (info == null) {
-        action = exceptionAnalysisProvider.getIntermediateRowAnalysisAction(element);
-      } else {
-        action = exceptionAnalysisProvider.getAnalysisAction(element, info);
+    private @Nullable LinkInfo computeLinkInfo(@NotNull PsiFile file, int lineStart, int lineEnd, @Nullable Editor originalEditor) {
+      PsiElement target = getExceptionOrigin(file, lineStart, lineEnd);
+      if (target == null) return null;
+      AnAction action = findAnalysisAction(file.getProject(), target, originalEditor);
+      return new LinkInfo(target, action);
+    }
+
+    private @Nullable PsiElement getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+      PsiElement element = file.findElementAt(lineStart);
+      List<PsiElement> candidates = new ArrayList<>();
+      while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
+        PsiElement finalElement = element;
+        PsiElement matched = myElementMatcher.matchElement(finalElement);
+        if (matched != null) {
+          candidates.add(matched);
+          if (candidates.size() > 1) return null;
+        }
+        element = PsiTreeUtil.nextLeaf(element);
       }
-      if (action == null) return;
-      String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
+      return ContainerUtil.getOnlyItem(candidates);
+    }
+
+    private void displayAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @NotNull Editor editor, AnAction action) {
+      String actionName = action.getTemplatePresentation().getDescription();
+      Objects.requireNonNull(actionName);
       Ref<Balloon> ref = Ref.create();
       Balloon balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(String.format("<a href=\"analyze\">%s</a>", StringUtil.escapeXmlEntities(actionName)),
-                                      null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
+        .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null, 
+                                      MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(HyperlinkEvent e) {
               if (e.getDescription().equals("analyze")) {
@@ -448,6 +470,8 @@ public class ExceptionWorker {
                 if (b != null) {
                   Disposer.dispose(b);
                 }
+                myAnalysisWasActivated = true;
+                ActionsCollector.getInstance().record(project, action, null, element.getLanguage());
                 action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
               }
             }
@@ -457,13 +481,62 @@ public class ExceptionWorker {
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       balloon.show(point, Balloon.Position.below);
+      editor.getScrollingModel().addVisibleAreaListener(e -> {
+        Disposer.dispose(balloon);
+      }, balloon);
+    }
+
+    @Nullable
+    private AnAction findAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @Nullable Editor originalEditor) {
+      if (myAnalysisWasActivated) {
+        // Do not show the balloon if analysis was already activated once on this link
+        return null;
+      }
+      Supplier<List<StackLine>> supplier;
+      if (originalEditor != null) {
+        Document origDocument = originalEditor.getDocument();
+        supplier = () -> {
+          int stackLineNumber = origDocument.getLineNumber(myTextEndOffset);
+          if (stackLineNumber < 1) return Collections.emptyList();
+          int lineCount = Math.min(origDocument.getLineCount(), stackLineNumber + 100);
+          List<StackLine> nextLines = new ArrayList<>();
+          for (int i = stackLineNumber - 1; i < lineCount; i++) {
+            String traceLine = origDocument.getText(TextRange.create(origDocument.getLineStartOffset(i), origDocument.getLineEndOffset(i)));
+            ParsedLine line = parseExceptionLine(traceLine);
+            if (line == null) break;
+            String methodName = line.methodNameRange.substring(traceLine);
+            if (methodName.startsWith("access$")) continue;
+            StackLine stackLine = new StackLine(line.classFqnRange.substring(traceLine), methodName, line.fileName);
+            nextLines.add(stackLine);
+          }
+          return nextLines;
+        };
+      } else {
+        supplier = Collections::emptyList;
+      }
+      ExceptionInfo info = myElementMatcher.getExceptionInfo();
+      ExceptionAnalysisProvider exceptionAnalysisProvider = project.getService(ExceptionAnalysisProvider.class);
+      AnAction action;
+      if (info == null) {
+        action = exceptionAnalysisProvider.getIntermediateRowAnalysisAction(element, supplier);
+      } else {
+        action = exceptionAnalysisProvider.getAnalysisAction(element, info, supplier);
+      }
+      return action;
     }
   }
 
   private static class FunctionCallMatcher implements ExceptionLineRefiner {
+    private final @Nullable String myMethodName;
+
+    private FunctionCallMatcher(@Nullable String name) {
+      myMethodName = name;
+    }
+
     @Override
     public PsiElement matchElement(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return null;
+      if (myMethodName != null && !element.textMatches(myMethodName)) return null;
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) return null;
       PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);

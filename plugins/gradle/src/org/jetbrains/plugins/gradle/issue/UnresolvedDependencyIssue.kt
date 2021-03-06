@@ -6,7 +6,7 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -53,9 +53,9 @@ class UnresolvedDependencySyncIssue(dependencyName: String,
 
   inner class DisableOfflineAndReimport(private val projectPath: String) : BuildIssueQuickFix {
     override val id = offlineQuickFixId
-    override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+    override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false
-      return tryRerun(dataProvider) ?: requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
+      return tryRerun(dataContext) ?: requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
     }
   }
 }
@@ -69,22 +69,22 @@ class UnresolvedDependencyBuildIssue(dependencyName: String,
 
   inner class DisableOfflineAndRerun : BuildIssueQuickFix {
     override val id = offlineQuickFixId
-    override fun runQuickFix(project: Project, dataProvider: DataProvider): CompletableFuture<*> {
+    override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false
-      return tryRerun(dataProvider) ?: CompletableFuture.completedFuture(null)
+      return tryRerun(dataContext) ?: CompletableFuture.completedFuture(null)
     }
   }
 }
 
-private fun tryRerun(dataProvider: DataProvider): CompletableFuture<*>? {
-  val environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(dataProvider)
+private fun tryRerun(dataContext: DataContext): CompletableFuture<*>? {
+  val environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(dataContext)
   if (environment != null) {
     return runAsync { ExecutionUtil.restart(environment) }
   }
-  val restartActions = BuildView.RESTART_ACTIONS.getData(dataProvider)
+  val restartActions = BuildView.RESTART_ACTIONS.getData(dataContext)
   val reimportActionText = ExternalSystemBundle.message("action.refresh.project.text", GradleConstants.SYSTEM_ID.readableName)
   restartActions?.find { it.templateText == reimportActionText }?.let { action ->
-    val actionEvent = AnActionEvent.createFromAnAction(action, null, "BuildView", dataProvider::getData)
+    val actionEvent = AnActionEvent.createFromAnAction(action, null, "BuildView", dataContext)
     action.update(actionEvent)
     if (actionEvent.presentation.isEnabledAndVisible) {
       return runAsync { action.actionPerformed(actionEvent) }

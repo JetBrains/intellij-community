@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
@@ -20,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 /**
  * @author ven
  */
-public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
+public final class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
   private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
 
@@ -106,7 +104,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     if (cachedValue == null) {
       cachedValue = CachedValuesManager.getManager(original.getProject()).createCachedValue(
         () -> CachedValueProvider.Result.create(new GrGdkMethodImpl(original, isStatic, originInfo),
-                                                PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
+                                                PsiModificationTracker.MODIFICATION_COUNT), false);
       original.putUserData(cachedValueKey, cachedValue);
     }
 

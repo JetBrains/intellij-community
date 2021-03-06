@@ -176,7 +176,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
 
     final ComboBoxCompositeEditorStrategy strategy = getStrategy(editableComponent);
 
-    myComponent = new ComboBoxCompositeEditor.EditorComponent<F, I>() {
+    myComponent = new ComboBoxCompositeEditor.EditorComponent<>() {
 
       I myItem;
 

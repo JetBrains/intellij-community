@@ -11,6 +11,8 @@ import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListUtil;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
@@ -20,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-import static com.intellij.vcs.commit.CommitWorkflowManager.setCommitFromLocalChanges;
+import static com.intellij.vcs.commit.CommitModeManager.setCommitFromLocalChanges;
 
 public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguration>, Disposable {
   @NotNull private final Project myProject;
@@ -43,6 +45,12 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
     myMoveToFailedCommitChangeList.setRenderer(
       SimpleListCellRenderer.create("", VcsShowConfirmationOption::getConfirmationOptionText));
     myMoveToFailedCommitChangeList.setModel(myMoveToFailedCommitChangeListModel);
+
+    ChangeListUtil.onChangeListAvailabilityChanged(myProject, this, true, () -> {
+      boolean changeListsEnabled = ChangeListManager.getInstance(myProject).areChangeListsEnabled();
+      myMoveToFailedCommitChangeList.setEnabled(changeListsEnabled);
+      myMoveUncommittedToAnotherChangeList.setEnabled(changeListsEnabled);
+    });
   }
 
   @NotNull
@@ -75,7 +83,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
 
   @Override
   public void apply(@NotNull VcsConfiguration settings) throws ConfigurationException {
-    setCommitFromLocalChanges(myCommitFromLocalChanges.isSelected());
+    setCommitFromLocalChanges(myProject, myCommitFromLocalChanges.isSelected());
     settings.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
     settings.CLEAR_INITIAL_COMMIT_MESSAGE = myClearInitialCommitMessage.isSelected();
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyCommitMessage.isSelected();

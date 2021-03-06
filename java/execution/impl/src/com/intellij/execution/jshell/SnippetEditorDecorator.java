@@ -9,6 +9,7 @@ import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
@@ -45,7 +46,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
     private final ConfigurationModuleSelector myModuleSelector;
     private MessageBusConnection myBusConnection;
 
-    ConfigurationPane(Project project) {
+    ConfigurationPane(@NotNull Project project) {
       final DefaultActionGroup actions = new DefaultActionGroup(ExecuteJShellAction.getSharedInstance(), DropJShellStateAction.getSharedInstance());
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("JShellSnippetEditor", actions, true);
 
@@ -58,7 +59,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
       modulePane.setComponent(modulesCombo);
       modulePane.setLabelLocation(BorderLayout.WEST);
       modulePane.setText(ExecutionBundle.message("use.classpath.of"));
-      myModuleSelector = new ConfigurationModuleSelector(project, modulesCombo, "<whole project>");
+      myModuleSelector = new ConfigurationModuleSelector(project, modulesCombo, JavaCompilerBundle.message("whole.project"));
 
       JPanel mainPane = new JPanel(new GridBagLayout());
       mainPane.add(toolbar.getComponent(), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(2, 3, 0, 0), 0, 0));
@@ -83,7 +84,7 @@ public final class SnippetEditorDecorator extends EditorNotifications.Provider<S
         }
 
         @Override
-        public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+        public void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
           reloadModules();
         }
       });

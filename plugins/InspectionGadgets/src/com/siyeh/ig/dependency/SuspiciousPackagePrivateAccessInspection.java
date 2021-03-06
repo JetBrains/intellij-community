@@ -67,7 +67,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     );
   }
 
-  private static class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
+  private static final class SuspiciousApiUsageProcessor implements ApiUsageProcessor {
 
     private final ProblemsHolder myProblemsHolder;
     private final Map<String, ModulesSet> myModuleNameToModulesSet;
@@ -251,9 +251,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     public Set<String> modules = new LinkedHashSet<>();
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
+  public @NotNull JComponent createOptionsPanel() {
     JBTextArea component = new JBTextArea(5, 80);
     component.setText(MODULES_SETS_LOADED_TOGETHER.stream().map(it -> String.join(",", it.modules)).collect(Collectors.joining("\n")));
     component.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -285,7 +284,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     myModuleSetByModuleName.drop();
   }
 
-  private static class MarkModulesAsLoadedTogetherFix implements LocalQuickFix {
+  private static final class MarkModulesAsLoadedTogetherFix implements LocalQuickFix {
     private final String myModule1;
     private final String myModule2;
 

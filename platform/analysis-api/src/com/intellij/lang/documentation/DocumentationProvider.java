@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -6,10 +6,13 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,9 +21,18 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Provides documentation for PSI elements.
+ * Contributes content to the following IDE features:
+ * <ul>
+ *   <li>Quick Documentation (invoked via explicit action or shown on mouse hover)</li>
+ *   <li>Navigation info (shown in editor on Ctrl/Cmd+mouse hover)</li>
+ *   <li>Rendered representation of documentation comments</li>
+ * </ul>
  * <p>
  * Extend {@link AbstractDocumentationProvider}.
+ * <p>
+ * Language-specific instance should be registered in {@code com.intellij.lang.documentationProvider} extension point; otherwise use
+ * {@code com.intellij.documentationProvider}.
+ * </p>
  *
  * @see com.intellij.lang.LanguageDocumentation
  * @see DocumentationProviderEx
@@ -30,7 +42,7 @@ import java.util.function.Consumer;
 public interface DocumentationProvider {
 
   /**
-   * Please use {@link com.intellij.lang.LanguageDocumentation} instead of this for language-specific documentation
+   * Please use {@code com.intellij.lang.documentationProvider} instead of this for language-specific documentation.
    */
   ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
 
@@ -58,7 +70,7 @@ public interface DocumentationProvider {
    * If the list contains a single URL, it will be opened.
    * If the list contains multiple URLs, the user will be prompted to choose one of them.
    * For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
-   * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List)} will be used.
+   * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List, boolean)} will be used.
    */
   @Nullable
   default List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
@@ -89,7 +101,7 @@ public interface DocumentationProvider {
    * for the given element
    */
   @Nullable
-  default String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  default @NlsSafe String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
   }
 
@@ -109,7 +121,7 @@ public interface DocumentationProvider {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
 
@@ -119,7 +131,7 @@ public interface DocumentationProvider {
    * @see #collectDocComments(PsiFile, Consumer)
    */
   @ApiStatus.Experimental
-  default @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     return generateRenderedDoc(target == null ? comment : target);
   }
@@ -127,9 +139,28 @@ public interface DocumentationProvider {
   /**
    * This defines documentation comments in file, which can be rendered in place. HTML content to be displayed will be obtained using
    * {@link #generateRenderedDoc(PsiDocCommentBase)} method.
+   * <p>
+   * To support cases, when rendered fragment doesn't have representing {@code PsiDocCommentBase} element (e.g. for the sequence of line
+   * comments in languages not having a block comment concept), fake elements (not existing in the {@code file}) might be returned. In such
+   * a case, {@link #findDocComment(PsiFile, TextRange)} should also be implemented by the documentation provider, for the rendered
+   * documentation view to work correctly.
    */
   @ApiStatus.Experimental
-  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}
+  default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {}
+
+  /**
+   * This method is needed to support rendered representation of documentation comments in editor. It should return doc comment located at
+   * the provided text range in a file. Overriding the default implementation only makes sense for languages which use fake
+   * {@code PsiDocCommentBase} implementations (e.g. in cases when rendered view is provided for a set of adjacent line comments, and
+   * there's no real {@code PsiDocCommentBase} element in a file representing the range to render).
+   *
+   * @see #collectDocComments(PsiFile, Consumer)
+   */
+  @ApiStatus.Experimental
+  default @Nullable PsiDocCommentBase findDocComment(@NotNull PsiFile file, @NotNull TextRange range) {
+    PsiDocCommentBase comment = PsiTreeUtil.getParentOfType(file.findElementAt(range.getStartOffset()), PsiDocCommentBase.class, false);
+    return comment == null || !range.equals(comment.getTextRange()) ? null : comment;
+  }
 
   @Nullable
   default PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {

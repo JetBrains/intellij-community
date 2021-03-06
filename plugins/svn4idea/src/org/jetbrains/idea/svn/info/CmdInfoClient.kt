@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info
 
 import com.intellij.execution.process.ProcessOutput
@@ -6,17 +6,14 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnUtil.resolvePath
 import org.jetbrains.idea.svn.api.*
 import org.jetbrains.idea.svn.api.Target
 import org.jetbrains.idea.svn.checkin.CommitInfo
-import org.jetbrains.idea.svn.commandLine.CommandUtil
+import org.jetbrains.idea.svn.commandLine.*
 import org.jetbrains.idea.svn.commandLine.CommandUtil.parse
-import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
-import org.jetbrains.idea.svn.commandLine.LineCommandAdapter
-import org.jetbrains.idea.svn.commandLine.SvnBindException
-import org.jetbrains.idea.svn.commandLine.SvnCommandName
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription
 import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
@@ -60,7 +57,7 @@ private fun buildParameters(target: Target, revision: Revision?): List<String> =
 }
 
 class CmdInfoClient : BaseSvnClient(), InfoClient {
-  private fun execute(parameters: List<String>, path: File): String {
+  private fun execute(command: Command, target: Target): String {
     // workaround: separately capture command output - used in exception handling logic to overcome svn 1.8 issue (see below)
     val output = ProcessOutput()
     val listener = object : LineCommandAdapter() {
@@ -72,7 +69,7 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
     }
 
     return try {
-      execute(myVcs, Target.on(path), SvnCommandName.info, parameters, listener).output
+      execute(myVcs, target, null, command, listener).output
     }
     catch (e: SvnBindException) {
       val text = e.message
@@ -84,7 +81,7 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
         // "E155007: '' is not a working copy"
         // Workaround: in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder, if there are files with
         // conflicts. But the requested info is still in the output except root closing tag.
-        "is not a working copy" in text && !output.stdout.isEmpty() -> "${output.stdout}</info>"
+        NOT_WORKING_COPY in text && output.stdout.isNotEmpty() -> output.stdout + INFO_CLOSING_TAG
         else -> throw e
       }
     }
@@ -92,8 +89,11 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
 
   @Throws(SvnBindException::class)
   override fun doInfo(path: File, revision: Revision?): Info? {
-    val base = requireExistingParent(path)
-    return parseResult(base, execute(buildParameters(Target.on(path), revision), path))
+    val target = Target.on(path)
+    val command = Command(SvnCommandName.info).apply { put(buildParameters(target, revision)) }
+    val result = execute(command, target)
+
+    return parseResult(command.workingDirectory, result)
   }
 
   @Throws(SvnBindException::class)
@@ -106,24 +106,23 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
 
   @Throws(SvnBindException::class)
   override fun doInfo(paths: Collection<File>, handler: InfoConsumer?) {
-    val firstPath = paths.firstOrNull()
-    if (firstPath != null) {
-      val base = requireExistingParent(firstPath)
-      val parameters = mutableListOf<String>().apply {
-        paths.forEach { CommandUtil.put(this, it) }
-        add("--xml")
-      }
-
-      // Currently do not handle exceptions here like in SvnVcs.handleInfoException - just continue with parsing in case of warnings for
-      // some of the requested items
-      val result = execute(parameters, base)
-      if (handler != null) {
-        parseResult(handler, base, result)
-      }
+    val firstPath = paths.firstOrNull() ?: return
+    val target = Target.on(firstPath)
+    val command = Command(SvnCommandName.info).apply {
+      paths.forEach { put(it) }
+      put("--xml")
     }
+
+    // Currently do not handle exceptions here like in SvnVcs.handleInfoException - just continue with parsing in case of warnings for
+    // some of the requested items
+    val result = execute(command, target)
+    handler?.let { parseResult(it, command.workingDirectory, result) }
   }
 
   companion object {
+    @NonNls private const val NOT_WORKING_COPY = "is not a working copy"
+    @NonNls private const val INFO_CLOSING_TAG = "</info>"
+
     fun parseResult(base: File?, result: String): Info? {
       val ref = Ref<Info?>()
       parseResult(InfoConsumer(ref::set), base, result)
@@ -136,8 +135,12 @@ private class InfoRevisionNumberAdapter : XmlAdapter<String, Long>() {
   override fun marshal(v: Long) = throw UnsupportedOperationException()
 
   override fun unmarshal(v: String) = when (v) {
-    "Resource is not under version control." -> -1L
+    NOT_SVN_RESOURCE -> -1L
     else -> v.toLong()
+  }
+
+  companion object {
+    @NonNls private const val NOT_SVN_RESOURCE = "Resource is not under version control."
   }
 }
 

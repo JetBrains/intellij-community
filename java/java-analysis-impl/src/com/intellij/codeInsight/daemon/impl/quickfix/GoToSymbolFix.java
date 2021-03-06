@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.NavigatablePsiElement;
@@ -28,21 +29,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class GoToSymbolFix implements IntentionAction {
   private final SmartPsiElementPointer<NavigatablePsiElement> myPointer;
-  private final String myMessage;
+  private final @IntentionName String myMessage;
 
   public GoToSymbolFix(@NotNull NavigatablePsiElement symbol, @NotNull @Nls String message) {
     myPointer = SmartPointerManager.getInstance(symbol.getProject()).createSmartPsiElementPointer(symbol);
     myMessage = message;
   }
 
-  @Nls
   @NotNull
   @Override
   public String getText() {
     return myMessage;
   }
 
-  @Nls
   @NotNull
   @Override
   public String getFamilyName() {

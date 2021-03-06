@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,51 +79,36 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
     if (type instanceof PsiArrayType) {
       if (className.startsWith("[") && className.length() > 1) {
         PsiType componentType = ((PsiArrayType)type).getComponentType();
-        switch (className.charAt(1)) {
-          case '[':
-            return castClassMatches(componentType, className.substring(1));
-          case 'B':
-            return componentType.equals(PsiType.BYTE);
-          case 'C':
-            return componentType.equals(PsiType.CHAR);
-          case 'D':
-            return componentType.equals(PsiType.DOUBLE);
-          case 'F':
-            return componentType.equals(PsiType.FLOAT);
-          case 'Z':
-            return componentType.equals(PsiType.BOOLEAN);
-          case 'I':
-            return componentType.equals(PsiType.INT);
-          case 'J':
-            return componentType.equals(PsiType.LONG);
-          case 'S':
-            return componentType.equals(PsiType.SHORT);
-          case 'L':
-            if (className.charAt(className.length() - 1) == ';') {
-              return castClassMatches(componentType, className.substring(2, className.length() - 1));
-            }
-            return false;
-          default:
-            return false;
+        char descriptorChar = className.charAt(1);
+        PsiPrimitiveType expected = PsiPrimitiveType.fromJvmTypeDescriptor(descriptorChar);
+        if (expected != null) {
+          return componentType.equals(expected);
         }
+        if (descriptorChar == '[') {
+          return castClassMatches(componentType, className.substring(1));
+        }
+        if (descriptorChar == 'L' && className.charAt(className.length() - 1) == ';') {
+          return castClassMatches(componentType, className.substring(2, className.length() - 1));
+        }
+        return false;
       }
     }
     if (type instanceof PsiClassType) {
-      return classTypeMatches(className, (PsiClassType)type, new THashSet<>());
+      return classTypeMatches(className, (PsiClassType)type, new HashSet<>());
     }
     return true;
   }
 
   private static boolean classTypeMatches(String className, PsiClassType classType, Set<PsiClass> visited) {
     PsiClass psiClass = PsiUtil.resolveClassInType(classType);
-    if (!visited.add(psiClass)) {
-      return true;
-    }
     if (psiClass instanceof PsiTypeParameter) {
+      if (!visited.add(psiClass)) {
+        return true;
+      }
       for (PsiClassType bound : ((PsiTypeParameter)psiClass).getExtendsList().getReferencedTypes()) {
         if (classTypeMatches(className, bound, visited)) return true;
       }
-      return false;
+      return className.equals(CommonClassNames.JAVA_LANG_OBJECT); // e.g. cast to Object[] array
     }
     String name = classType.getClassName();
     if (name == null) return true;

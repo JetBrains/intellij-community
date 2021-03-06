@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -27,11 +13,12 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -40,6 +27,7 @@ import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesMod
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +47,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.messagePointer("inspection.action.title"), InspectionsBundle.messagePointer("inspection.action.noun"));
   }
 
-  public CodeInspectionAction(String title, String analysisNoon) {
+  public CodeInspectionAction(@NlsContexts.DialogTitle String title, @Nls String analysisNoon) {
     super(title, analysisNoon);
   }
 
@@ -83,7 +71,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
     InspectionProfileImpl externalProfile = myExternalProfile;
     final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
-    inspectionContext.setRerunAction(() -> ApplicationManager.getApplication().invokeLater(() -> {
+    inspectionContext.setRerunAction(() -> DumbService.getInstance(project).smartInvokeLater(() -> {
       //someone called the runInspections before us, we cannot restore the state
       if (runId != myRunId) return;
       if (project.isDisposed()) return;
@@ -124,6 +112,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   @Override
   protected JComponent getAdditionalActionSettings(@NotNull final Project project, final BaseAnalysisActionDialog dialog) {
+    dialog.setShowInspectInjectedCode(true);
     final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     final SchemesCombo<InspectionProfileImpl> profiles = (SchemesCombo<InspectionProfileImpl>)panel.myBrowseProfilesCombo.getComboBox();
@@ -214,7 +203,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         final InspectionProfileImpl profile = appProfileManager.getProfile(lastSelectedProfileName, false);
         if (profile != null) return profile;
       } else {
-        LOG.assertTrue(type == 'p', "Unexpected last selected profile: \'" + lastSelectedProfile + "\'");
+        LOG.assertTrue(type == 'p', "Unexpected last selected profile: '" + lastSelectedProfile + "'");
         final InspectionProfileImpl profile = projectProfileManager.getProfile(lastSelectedProfileName, false);
         if (profile != null && profile.isProjectLevel()) return profile;
       }

@@ -48,8 +48,8 @@ public interface Action extends ActionOrGroup {
   AddToGroup addAddToGroup();
 
   @NotNull
-  List<OverrideText> getOverrideTexts();
-  OverrideText addOverrideText();
+  List<Synonym> getSynonyms();
+  Synonym addSynonym();
 
   @NotNull
   @Convert(KeymapConverter.class)

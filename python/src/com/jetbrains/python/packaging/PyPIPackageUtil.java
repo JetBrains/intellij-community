@@ -4,7 +4,6 @@ package com.jetbrains.python.packaging;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,11 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.webcore.packaging.RepoPackage;
-import com.jetbrains.python.PythonHelpersLocator;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +30,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +53,7 @@ public class PyPIPackageUtil {
    * @see #getPackageVersionsFromAdditionalRepositories(String)
    */
   private final LoadingCache<String, List<String>> myAdditionalPackagesReleases = CacheBuilder.newBuilder().build(
-    new CacheLoader<String, List<String>>() {
+    new CacheLoader<>() {
       @Override
       public List<String> load(@NotNull String key) throws Exception {
         LOG.debug("Searching for versions of package '" + key + "' in additional repositories");
@@ -86,7 +81,7 @@ public class PyPIPackageUtil {
    * Contains cached packages taken from additional repositories.
    */
   protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
-    new CacheLoader<String, List<RepoPackage>>() {
+    new CacheLoader<>() {
       @Override
       public List<RepoPackage> load(@NotNull String key) throws Exception {
         return getPackagesFromAdditionalRepository(key);
@@ -99,7 +94,7 @@ public class PyPIPackageUtil {
    * @see #refreshAndGetPackageDetailsFromPyPI(String, boolean)
    */
   private final LoadingCache<String, PackageDetails> myPackageToDetails = CacheBuilder.newBuilder().build(
-    new CacheLoader<String, PackageDetails>() {
+    new CacheLoader<>() {
       @Override
       public PackageDetails load(@NotNull String key) throws Exception {
         LOG.debug("Fetching details for the package '" + key + "' on PyPI");
@@ -208,6 +203,7 @@ public class PyPIPackageUtil {
   private String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
+    if (project.isDisposed()) return null;
     return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
@@ -240,7 +236,7 @@ public class PyPIPackageUtil {
   @Nullable
   public String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
     String version = null;
-    // Package is on PyPI not a, say, some system package on Ubuntu
+    // Package is on PyPI, not, say, some system package on Ubuntu
     if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
       version = getLatestPackageVersionFromPyPI(project, packageName);
     }
@@ -319,12 +315,11 @@ public class PyPIPackageUtil {
     final PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return;
     PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
   private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
-    LOG.debug("Fetching index of all packages available on " + url);
+    LOG.info("Fetching index of all packages available on " + url);
     return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
@@ -388,7 +383,12 @@ public class PyPIPackageUtil {
       private String homePage = "";
       @SerializedName("summary")
       private String summary = "";
-
+      @SerializedName("description")
+      private String description = "";
+      @SerializedName("description_content_type")
+      private String descriptionContentType = "";
+      @SerializedName("project_urls")
+      private Map<String, String>  projectUrls = Collections.emptyMap();
 
       @NotNull
       public String getVersion() {
@@ -413,6 +413,21 @@ public class PyPIPackageUtil {
       @NotNull
       public String getSummary() {
         return StringUtil.notNullize(summary);
+      }
+
+      @NotNull
+      public String getDescription() {
+        return StringUtil.notNullize(description);
+      }
+
+      @NotNull
+      public String getDescriptionContentType() {
+        return StringUtil.notNullize(descriptionContentType);
+      }
+
+      @NotNull
+      public Map<String, String> getProjectUrls() {
+        return ContainerUtil.notNullize(projectUrls);
       }
     }
 

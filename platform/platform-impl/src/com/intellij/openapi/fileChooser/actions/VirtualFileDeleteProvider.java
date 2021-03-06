@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -112,7 +113,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
     }
   }
 
-  private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
+  private static @NlsContexts.DialogMessage String createConfirmationMessage(VirtualFile[] filesToDelete) {
     if (filesToDelete.length == 1) {
       if (filesToDelete[0].isDirectory()) {
         return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message", filesToDelete[0].getName());

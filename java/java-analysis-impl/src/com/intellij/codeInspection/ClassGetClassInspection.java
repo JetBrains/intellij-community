@@ -5,6 +5,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -30,8 +31,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
         if (qualifier == null) return;
         PsiType type = qualifier.getType();
-        if (!(type instanceof PsiClassType)) return;
-        if (!((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS)) return;
+        if (!PsiTypesUtil.classNameEquals(type, CommonClassNames.JAVA_LANG_CLASS)) return;
         holder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
                                JavaAnalysisBundle.message("inspection.class.getclass.message"),
                                new RemoveGetClassCallFix(), new ReplaceWithClassClassFix());

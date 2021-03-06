@@ -1,24 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.project.DumbServiceMergingTaskQueue.QueuedDumbModeTask;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-@Service
 public final class DumbServiceSyncTaskQueue {
-  private final Object myLock = new Object();
-  private boolean myIsRunning = false;
-  private final Map<Object, DumbModeTask> myTasksQueue = new LinkedHashMap<>();
+  private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
+  private final DumbServiceMergingTaskQueue myTaskQueue;
+
+  public DumbServiceSyncTaskQueue(@NotNull DumbServiceMergingTaskQueue queue) {
+    myTaskQueue = queue;
+  }
 
   /**
    * It is possible to have yet another synchronous task execution from
@@ -29,38 +30,27 @@ public final class DumbServiceSyncTaskQueue {
    * similar to what we have in the GUI version of {@link DumbServiceImpl}
    */
   public void runTaskSynchronously(@NotNull DumbModeTask task) {
-    synchronized (myLock) {
-      if (myIsRunning) {
-        DumbModeTask oldTask = myTasksQueue.put(task.getEquivalenceObject(), task);
-        if (oldTask != null) {
-          Disposer.dispose(oldTask);
-        }
-        return;
-      }
+    myTaskQueue.addTask(task);
 
-      myIsRunning = true;
+    if (!myIsRunning.compareAndSet(false, true)) return;
+
+    try {
+      processQueue();
+    } finally {
+      myIsRunning.set(false);
     }
+  }
 
-    while (task != null) {
-      try {
-        doRunTaskSynchronously(task);
-      }
-      finally {
-        synchronized (myLock) {
-          if (myTasksQueue.isEmpty()) {
-            myIsRunning = false;
-            task = null;
-          }
-          else {
-            Object next = myTasksQueue.keySet().iterator().next();
-            task = myTasksQueue.remove(next);
-          }
-        }
+  private void processQueue() {
+    while (true) {
+      try (QueuedDumbModeTask nextTask = myTaskQueue.extractNextTask()) {
+        if (nextTask == null) break;
+        doRunTaskSynchronously(nextTask);
       }
     }
   }
 
-  private static void doRunTaskSynchronously(@NotNull DumbModeTask task) {
+  private static void doRunTaskSynchronously(@NotNull QueuedDumbModeTask task) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) {
       indicator = new EmptyProgressIndicator();
@@ -68,13 +58,12 @@ public final class DumbServiceSyncTaskQueue {
 
     indicator.pushState();
     ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
-    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task", HeavyProcessLatch.Type.Indexing)) {
-      task.performInDumbMode(indicator);
+    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.performing.indexing.tasks"), HeavyProcessLatch.Type.Indexing)) {
+      task.executeTask(indicator);
     }
     finally {
       ((CoreProgressManager)ProgressManager.getInstance()).restorePrioritizing();
       indicator.popState();
-      Disposer.dispose(task);
     }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -97,7 +98,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       if (file != null) {
         String toCopy = getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
         CopyPasteManager.getInstance().setContents(new StringSelection(toCopy));
-        setStatusBarText(project, toCopy + " has been copied");
+        setStatusBarText(project, LangBundle.message("status.bar.text.reference.has.been.copied", toCopy));
       }
       return;
     }
@@ -105,7 +106,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     highlight(editor, project, elements);
   }
 
-  protected String getQualifiedName(Editor editor, List<PsiElement> elements) {
+  protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     return CopyReferenceUtil.doCopy(elements, editor);
   }
 

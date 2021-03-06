@@ -4,6 +4,7 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,9 +27,6 @@ import java.util.HashSet;
  */
 @Deprecated
 public class GitSimpleHandler extends GitTextHandler {
-
-  public static final String DURING_EXECUTING_ERROR_MESSAGE = "during executing";
-
   /**
    * Stderr output
    */
@@ -91,15 +89,7 @@ public class GitSimpleHandler extends GitTextHandler {
     }
     else {
       LOG.debug(stderr.trim());
-      OUTPUT_LOG.debug(stdout.trim());
     }
-  }
-
-  /**
-   * For silent handlers, print out everything
-   */
-  @Deprecated
-  public void unsilence() {
   }
 
   /**
@@ -169,6 +159,7 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * @return stderr contents
    */
+  @NlsSafe
   public String getStderr() {
     return myStderr.toString();
   }
@@ -176,6 +167,7 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * @return stdout contents
    */
+  @NlsSafe
   public String getStdout() {
     return myStdout.toString();
   }
@@ -186,6 +178,7 @@ public class GitSimpleHandler extends GitTextHandler {
    * @return a value if process was successful
    * @throws VcsException exception if process failed to start.
    */
+  @NlsSafe
   public String run() throws VcsException {
     Ref<VcsException> exRef = Ref.create();
     Ref<String> resultRef = Ref.create();
@@ -214,8 +207,7 @@ public class GitSimpleHandler extends GitTextHandler {
 
       @Override
       public void startFailed(@NotNull final Throwable exception) {
-        exRef.set(
-          new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
+        exRef.set(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
       }
     });
     try {
@@ -225,10 +217,10 @@ public class GitSimpleHandler extends GitTextHandler {
       exRef.set(new VcsException(e.getMessage(), e));
     }
     if (!exRef.isNull()) {
-      throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
+      throw exRef.get();
     }
     if (resultRef.isNull()) {
-      throw new VcsException("The git command returned null: " + printableCommandLine());
+      throw new VcsException(GitBundle.message("git.error.cant.process.output", printableCommandLine()));
     }
     return resultRef.get();
   }

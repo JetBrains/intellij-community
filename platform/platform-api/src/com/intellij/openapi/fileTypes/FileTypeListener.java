@@ -25,11 +25,4 @@ public interface FileTypeListener extends EventListener {
 
   default void fileTypesChanged(@NotNull FileTypeEvent event) {
   }
-
-  /**
-   * @deprecated Use {@link FileTypeListener}
-   */
-  @Deprecated
-  class Adapter implements FileTypeListener {
-  }
 }

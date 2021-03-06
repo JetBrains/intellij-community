@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,7 +33,7 @@ public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
   }
 
   @NotNull
-  private static String getPresentableText(Project project, String name) {
+  private static @NlsSafe String getPresentableText(Project project, String name) {
     String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(name);
     final int lastIndexOf = nameWithoutExtension.lastIndexOf(" - ");
     if (lastIndexOf > 0) {

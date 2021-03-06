@@ -12,19 +12,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -34,11 +35,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsLast;
 
-public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
+public class MemberChooser<T extends ClassMember> extends DialogWrapper implements DataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   protected JComponent[] myOptionControls;
@@ -56,7 +60,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private final JComponent myHeaderPanel;
 
   protected T[] myElements;
-  protected Comparator<ElementNode> myComparator = new OrderComparator();
+  protected Comparator<? super ElementNode> myComparator = new OrderComparator();
 
   protected final HashMap<MemberNode,ParentNode> myNodeToParentMap = new HashMap<>();
   protected final HashMap<ClassMember, MemberNode> myElementToNodeMap = new HashMap<>();
@@ -129,12 +133,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     resetElements(elements, null, false);
   }
 
-  @SuppressWarnings("unchecked")
-  public void resetElements(T[] elements, final @Nullable Comparator<T> sortComparator, final boolean restoreSelectedElements) {
+  public void resetElements(T[] elements, final @Nullable Comparator<? super T> sortComparator, final boolean restoreSelectedElements) {
     final List<T> selectedElements  = restoreSelectedElements && mySelectedElements != null ? new ArrayList<>(mySelectedElements) : null;
     myElements = elements;
     if (sortComparator != null) {
-      myComparator = new ElementNodeComparatorWrapper(sortComparator);
+      myComparator = new ElementNodeComparatorWrapper<>(sortComparator);
     }
     mySelectedNodes.clear();
     myNodeToParentMap.clear();
@@ -400,9 +403,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
       if (lastPathComponent == null) return null;
       String text = lastPathComponent.getDelegate().getText();
-      if (text != null) {
-        text = convertElementText(text);
-      }
+      text = convertElementText(text);
       return text;
     });
     treeSpeedSearch.setComparator(getSpeedSearchComparator());
@@ -490,12 +491,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return myAlphabeticallySorted;
   }
 
-  @SuppressWarnings("unchecked")
-  protected void changeSortComparator(final Comparator<T> comparator) {
-    setSortComparator(new ElementNodeComparatorWrapper(comparator));
+  protected void changeSortComparator(final Comparator<? super T> comparator) {
+    setSortComparator(new ElementNodeComparatorWrapper<>(comparator));
   }
 
-  private void setSortComparator(Comparator<ElementNode> sortComparator) {
+  private void setSortComparator(Comparator<? super ElementNode> sortComparator) {
     if (myComparator.equals(sortComparator)) return;
     myComparator = sortComparator;
     doSort();
@@ -590,7 +590,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreTree();
   }
 
-  protected String getAllContainersNodeName() {
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getAllContainersNodeName() {
     return IdeBundle.message("node.memberchooser.all.classes");
   }
 
@@ -657,16 +657,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     super.dispose();
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    if (key.equals(CommonDataKeys.PSI_ELEMENT)) {
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
         T selectedElement = mySelectedElements.iterator().next();
-        if (selectedElement instanceof ClassMemberWithElement) {
-          sink.put(CommonDataKeys.PSI_ELEMENT, ((ClassMemberWithElement)selectedElement).getElement());
-        }
+        return selectedElement instanceof ClassMemberWithElement ?
+               ((ClassMemberWithElement)selectedElement).getElement() : null;
       }
     }
+    return null;
   }
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
@@ -796,8 +797,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class SortEmAction extends ToggleAction {
     SortEmAction() {
-      super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), PlatformEditorBundle.messagePointer("action.sort.alphabetically"),
-            AllIcons.ObjectBrowser.Sorted);
+      super(PlatformEditorBundle.messagePointer("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
 
     @Override
@@ -816,12 +816,21 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected ShowContainersAction getShowContainersAction() {
-    return new ShowContainersAction(IdeBundle.message("action.show.classes"), PlatformIcons.CLASS_ICON);
+    return new ShowContainersAction(IdeBundle.messagePointer("action.show.classes"), PlatformIcons.CLASS_ICON);
   }
 
   protected class ShowContainersAction extends ToggleAction {
-    public ShowContainersAction(final String text, final Icon icon) {
-      super(text, text, icon);
+    /**
+     * @deprecated use {@linkplain #ShowContainersAction(Supplier, Icon)} instead
+     */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public ShowContainersAction(@NlsActions.ActionText String text, final Icon icon) {
+      this(() -> text, icon);
+    }
+
+    public ShowContainersAction(@NotNull Supplier<@NlsActions.ActionText String> text, final Icon icon) {
+      super(text, icon);
     }
 
     @Override
@@ -844,7 +853,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class ExpandAllAction extends AnAction {
     ExpandAllAction() {
-      super(IdeBundle.messagePointer("action.expand.all"), IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
+      super(IdeBundle.messagePointer("action.expand.all"), AllIcons.Actions.Expandall);
     }
 
     @Override
@@ -855,7 +864,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   private class CollapseAllAction extends AnAction {
     CollapseAllAction() {
-      super(IdeBundle.messagePointer("action.collapse.all"), IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
+      super(IdeBundle.messagePointer("action.collapse.all"), AllIcons.Actions.Collapseall);
     }
 
     @Override
@@ -880,9 +889,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (n1.getDelegate() instanceof ClassMemberWithElement && n2.getDelegate() instanceof ClassMemberWithElement) {
         PsiElement element1 = ((ClassMemberWithElement)n1.getDelegate()).getElement();
         PsiElement element2 = ((ClassMemberWithElement)n2.getDelegate()).getElement();
-        if (Comparing.equal(element1.getContainingFile(), element2.getContainingFile()) &&
-            !(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
-          return element1.getTextOffset() - element2.getTextOffset();
+        if (!(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
+          final PsiFile file1 = element1.getContainingFile();
+          final PsiFile file2 = element2.getContainingFile();
+          if (Comparing.equal(file1, file2)) {
+            return element1.getTextOffset() - element2.getTextOffset();
+          }
+          else {
+            if (file2 == null) return -1;
+            if (file1 == null) return 1;
+            return comparing(PsiFile::getVirtualFile, nullsLast(comparing(VirtualFile::getPath))).compare(file1, file2);
+          }
         }
       }
       return n1.getOrder() - n2.getOrder();

@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -27,18 +26,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnFormatWorker extends Task.Backgroundable {
 
   private final List<Throwable> myExceptions;
-  private final Project myProject;
   @NotNull private final WorkingCopyFormat myNewFormat;
   private final List<? extends WCInfo> myWcInfos;
   private List<LocalChangeList> myBeforeChangeLists;
   private final SvnVcs myVcs;
 
   public SvnFormatWorker(final Project project, @NotNull final WorkingCopyFormat newFormat, final List<? extends WCInfo> wcInfos) {
-    super(project, SvnBundle.message("action.change.wcopy.format.task.title"), false, DEAF);
-    myProject = project;
+    super(project, message("progress.title.convert.working.copy.format"), false, DEAF);
     myNewFormat = newFormat;
     myExceptions = new ArrayList<>();
     myWcInfos = wcInfos;
@@ -70,7 +69,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
         messages.add(exception.getMessage());
       }
       AbstractVcsHelper.getInstance(myProject)
-          .showErrors(Collections.singletonList(new VcsException(messages)), SvnBundle.message("action.change.wcopy.format.task.title"));
+        .showErrors(Collections.singletonList(new VcsException(messages)), message("dialog.title.convert.working.copy.format"));
     }
   }
 
@@ -90,10 +89,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
           path = SvnUtil.getWorkingCopyRoot(path);
         }
         try {
-          String cleanupMessage = SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath());
-          String upgradeMessage =
-            SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(), wcInfo.getFormat(), myNewFormat);
-          ProgressTracker handler = createUpgradeHandler(indicator, cleanupMessage, upgradeMessage);
+          ProgressTracker handler = createUpgradeHandler(indicator, path, wcInfo.getFormat());
 
           myVcs.getFactory(path).createUpgradeClient().upgrade(path, myNewFormat, handler);
         } catch (Throwable e) {
@@ -116,23 +112,23 @@ public class SvnFormatWorker extends Task.Backgroundable {
     }
   }
 
-  private static ProgressTracker createUpgradeHandler(@NotNull final ProgressIndicator indicator,
-                                                       @NotNull final String cleanupMessage,
-                                                       @NotNull final String upgradeMessage) {
+  private @NotNull ProgressTracker createUpgradeHandler(@NotNull ProgressIndicator indicator,
+                                                        @NotNull File path,
+                                                        @NotNull WorkingCopyFormat format) {
     return new ProgressTracker() {
       @Override
       public void consume(ProgressEvent event) {
         if (event.getFile() != null) {
           if (EventAction.UPGRADED_PATH.equals(event.getAction())) {
-            indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
+            indicator.setText2(message("progress.details.upgraded.path", VcsUtil.getPathForProgressPresentation(event.getFile())));
           }
           // fake event indicating cleanup start
           if (EventAction.UPDATE_STARTED.equals(event.getAction())) {
-            indicator.setText(cleanupMessage);
+            indicator.setText(message("progress.text.performing.path.cleanup", path.getAbsolutePath()));
           }
           // fake event indicating upgrade start
           if (EventAction.UPDATE_COMPLETED.equals(event.getAction())) {
-            indicator.setText(upgradeMessage);
+            indicator.setText(message("progress.text.converting.working.copy.format", path.getAbsolutePath(), format, myNewFormat));
           }
         }
       }

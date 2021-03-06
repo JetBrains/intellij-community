@@ -10,14 +10,15 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface Filter {
   Filter[] EMPTY_ARRAY = new Filter[0];
@@ -132,7 +133,8 @@ public interface Filter {
   }
 
   class ResultItem {
-    private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = ContainerUtil.newConcurrentMap(2);
+    private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = new ConcurrentHashMap<>(2);
+
     static {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
@@ -148,11 +150,13 @@ public interface Filter {
     /**
      * @deprecated use {@link #getHighlightAttributes()} instead, the visibility of this field will be decreased.
      */
-    @Deprecated public final @Nullable TextAttributes highlightAttributes;
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public final @Nullable TextAttributes highlightAttributes;
     /**
      * @deprecated use {@link #getHyperlinkInfo()} instead, the visibility of this field will be decreased.
      */
-    @Deprecated public final @Nullable HyperlinkInfo hyperlinkInfo;
+    @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public final @Nullable HyperlinkInfo hyperlinkInfo;
 
     private final TextAttributes myFollowedHyperlinkAttributes;
 
@@ -217,9 +221,9 @@ public interface Filter {
     }
 
     private static @Nullable TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
-      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.get(normalHyperlinkAttrsKey);
       if (grayedHyperlinkAttrs == null) {
+        EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
         if (normalHyperlinkAttrs != null) {
           grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();

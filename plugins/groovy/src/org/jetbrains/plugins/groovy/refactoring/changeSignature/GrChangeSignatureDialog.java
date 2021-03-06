@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -76,15 +77,14 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     return new GrChangeSignatureProcessor(myProject, info);
   }
 
-  @NotNull
   @Override
-  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+  protected @NotNull List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
     myExceptionsModel = new ExceptionsTableModel(myMethod.getMethod().getThrowsList());
     myExceptionsModel.setTypeInfos(myMethod.getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
-    table.setStriped(true);
+    table.setShowGrid(false);
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
@@ -241,7 +241,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
         }
 
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", myMethod.getMethod().getResolveScope());
+        PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, myMethod.getMethod().getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return GroovyRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

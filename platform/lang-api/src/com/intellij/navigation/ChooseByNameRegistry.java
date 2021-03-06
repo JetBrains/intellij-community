@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public final class ChooseByNameRegistry {
    * @return the registry instance.
    */
   public static ChooseByNameRegistry getInstance() {
-    return ServiceManager.getService(ChooseByNameRegistry.class);
+    return ApplicationManager.getApplication().getService(ChooseByNameRegistry.class);
   }
 
   /**
@@ -30,6 +31,7 @@ public final class ChooseByNameRegistry {
    * @deprecated use {@link ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void contributeToSymbols(ChooseByNameContributor contributor) {
     myGotoSymbolContributors.add(contributor);
   }

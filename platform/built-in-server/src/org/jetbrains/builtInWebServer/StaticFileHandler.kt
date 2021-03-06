@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpUtil
 import io.netty.handler.stream.ChunkedStream
+import org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 import org.jetbrains.builtInWebServer.ssi.SsiExternalResolver
 import org.jetbrains.builtInWebServer.ssi.SsiProcessor
 import org.jetbrains.io.FileResponses
@@ -20,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 private class StaticFileHandler : WebServerFileHandler() {
+  @Suppress("HardCodedStringLiteral")
   override val pageFileExtensions = arrayOf("html", "htm", "shtml", "stm", "shtm")
 
   private var ssiProcessor: SsiProcessor? = null
@@ -34,7 +36,8 @@ private class StaticFileHandler : WebServerFileHandler() {
         return true
       }
 
-      FileResponses.sendFile(request, channel, ioFile, extraHeaders)
+      val extraSuffix = WebServerPageConnectionService.getInstance().fileRequested(request, pathInfo::getOrResolveVirtualFile)
+      FileResponses.sendFile(request, channel, ioFile, extraHeaders, extraSuffix)
       return true
     }
 
@@ -58,7 +61,7 @@ private class StaticFileHandler : WebServerFileHandler() {
 
   private fun processSsi(file: Path, path: String, project: Project, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders) {
     if (ssiProcessor == null) {
-      ssiProcessor = SsiProcessor(false)
+      ssiProcessor = SsiProcessor()
     }
 
     val buffer = channel.alloc().ioBuffer()

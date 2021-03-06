@@ -63,7 +63,7 @@ componentConstrains:
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true
-  'HyperlinkLabel #1':
+  Async profiler README.md [link]:
     horizontal:
       gapBefore:
         min: &id012 {horizontal: true, value: 20.0}

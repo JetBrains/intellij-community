@@ -15,7 +15,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -45,8 +45,8 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
 
   init {
     val app = ApplicationManager.getApplication()
-    val result = HashMap<Any, MutableList<InspectionFactory>>()
-    val shortNames: MutableMap<String, InspectionEP> = THashMap()
+    val result = CollectionFactory.createSmallMemoryFootprintMap<Any, MutableList<InspectionFactory>>()
+    val shortNames = CollectionFactory.createSmallMemoryFootprintMap<String, InspectionEP>()
     registerToolProviders(app, result)
     registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
     registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)
@@ -77,7 +77,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
         unregisterInspectionOrProvider(inspection, factories)
         shortNames.remove(inspection.getShortName())
       }
-    }, app)
+    }, null)
   }
 
   private fun registerToolProviders(app: Application, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
@@ -101,7 +101,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
       override fun extensionRemoved(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         unregisterInspectionOrProvider(provider, factories)
       }
-    }, app)
+    }, null)
   }
 
   private fun fireToolAdded(factory: InspectionFactory) {
@@ -132,10 +132,6 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     }
     return tools
   }
-
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated("use {@link #createTools()} instead", ReplaceWith("createTools()"))
-  fun get() = createTools()
 }
 
 private fun <T : InspectionEP> registerInspection(inspection: T,

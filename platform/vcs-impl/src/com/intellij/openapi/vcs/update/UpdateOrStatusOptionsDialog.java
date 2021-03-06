@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.CommonBundle;
@@ -8,10 +8,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +23,6 @@ import java.util.List;
 import java.util.*;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
-  protected final Project myProject;
-
   private final JComponent myMainPanel;
   private final List<Configurable> myConfigurables = new ArrayList<>();
   private final Action myHelpAction = new MyHelpAction();
@@ -31,7 +30,6 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   public UpdateOrStatusOptionsDialog(Project project, @NlsContexts.DialogTitle String title, Map<Configurable, AbstractVcs> envToConfMap) {
     super(project);
     setTitle(title);
-    myProject = project;
     if (envToConfMap.size() == 1) {
       myMainPanel = new JPanel(new BorderLayout());
       addComponent(envToConfMap.keySet().iterator().next(), BorderLayout.CENTER);
@@ -47,10 +45,12 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   @Override
+  @NlsSafe
   protected String getDimensionServiceKey() {
     return "com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog" + getActionNameForDimensions();
   }
 
+  @NlsSafe
   protected abstract String getActionNameForDimensions();
 
   private void addComponent(Configurable configurable, String constraint) {
@@ -106,7 +106,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     return helpTopic;
   }
 
-  private class MyHelpAction extends AbstractAction {
+  private final class MyHelpAction extends AbstractAction {
     private MyHelpAction() {
       super(CommonBundle.getHelpButtonText());
     }

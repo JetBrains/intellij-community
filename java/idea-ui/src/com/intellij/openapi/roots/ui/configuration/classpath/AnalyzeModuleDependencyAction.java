@@ -23,6 +23,7 @@ import com.intellij.packageDependencies.actions.AnalyzeDependenciesOnSpecifiedTa
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -61,7 +62,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
     List<GlobalSearchScope> scopes = new ArrayList<>(additionalScopes.keySet());
     scopes.add(mainScope);
-    new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getRootModel().getModule()),
+    new AnalyzeDependenciesOnSpecifiedTargetHandler(myPanel.getProject(), new AnalysisScope(myPanel.getModuleConfigurationState().getCurrentRootModel().getModule()),
                                                     GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY))) {
       @Override
       protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
@@ -76,7 +77,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
         List<OrderEntry> usedEntries = usedScopes.stream().map(additionalScopes::get).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         if (usedEntries.isEmpty()) {
-          String message = "No code dependencies were found." + generateSkipImportsWarning() + " Would you like to remove the dependency?";
+          final String message = JavaUiBundle.message("analyze.module.dependency.action.dialog.message.no.dependency.found", generateSkipImportsWarning());
           if (Messages.showOkCancelDialog(myProject, message, getTemplateText(), CommonBundle.message("button.remove"),
                                           Messages.getCancelButton(),
                                           Messages.getWarningIcon()) == Messages.OK) {
@@ -85,19 +86,34 @@ class AnalyzeModuleDependencyAction extends AnAction {
           return false;
         }
 
-        String usedExportedEntriesText = "'" + usedEntries.get(0).getPresentableName() + "'";
-        if (usedEntries.size() == 2) {
-          usedExportedEntriesText += " and '" + usedEntries.get(1).getPresentableName() + "'";
+        final String firstEntry = usedEntries.get(0).getPresentableName();
+        final List<OrderEntry> tailEntries;
+        final String secondEntry;
+        if (usedEntries.size() > 1) {
+          tailEntries = usedEntries.subList(1, usedEntries.size() - 1);
+          secondEntry = usedEntries.get(1).getPresentableName();
         }
-        else if (usedEntries.size() > 2) {
-          usedExportedEntriesText += " and " + (usedEntries.size() - 1) + " more dependencies";
+        else {
+          tailEntries = Collections.emptyList();
+          secondEntry = null;
         }
 
-        String replacementText = usedEntries.size() == 1 ? "a direct dependency on '" + usedEntries.get(0).getPresentableName() + "'" : "direct dependencies";
-        String message = "No direct code dependencies were found." + generateSkipImportsWarning() + "\nHowever " + usedExportedEntriesText + " exported by '"
-                         + StringUtil.decapitalize(selectedEntry.getPresentableName()) + "' " + (usedEntries.size() > 1 ? "are" : "is") + " used in code.\n" +
-                         "Do you want to replace dependency on '" + selectedEntry.getPresentableName() + "' by " + replacementText + "?";
-        String[] options = {"Replace", "Show Dependencies", Messages.getCancelButton()};
+        final String howeverExportedBy = JavaUiBundle.message("analyze.module.dependency.however.exported.by",
+                                                    firstEntry,
+                                                    secondEntry,
+                                                    StringUtil.decapitalize(selectedEntry.getPresentableName()),
+                                                    tailEntries.size(),
+                                                    usedEntries.size());
+        final String confirmReplace = JavaUiBundle.message("analyze.module.dependency.replace.dialog.confirm.replace",
+                                                    selectedEntry.getPresentableName(),
+                                                    usedEntries.size(),
+                                                    firstEntry);
+        final String message = JavaUiBundle.message("analyze.module.dependency.replace.dialog.message",
+                                                    generateSkipImportsWarning(),
+                                                    howeverExportedBy, confirmReplace
+                                                    );
+
+        String[] options = {JavaUiBundle.message("button.text.replace"), JavaUiBundle.message("show.dependencies"), Messages.getCancelButton()};
         switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
           case 0:
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);
@@ -116,7 +132,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
     }.analyze();
   }
 
-  private String generateSkipImportsWarning() {
+  private @Nls(capitalization = Nls.Capitalization.Sentence) String generateSkipImportsWarning() {
     if (DependencyVisitorFactory.VisitorOptions.fromSettings(myPanel.getProject()).skipImports()) {
       return " " + CodeInsightBundle.message("dependencies.in.imports.message");
     }

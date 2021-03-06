@@ -1,16 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
@@ -51,7 +53,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     //set custom label for correct work spotlighting in settings
     JLabel label = new JLabel(title);
     label.setIcon(icon);
-    label.setBorder(new EmptyBorder(1, 1, 1, 1));
+    label.setBorder(JBUI.Borders.empty(1));
     label.setFont(getFont());
     setTabComponentAt(index, label);
     label.putClientProperty(LABEL_FROM_TABBED_PANE, Boolean.TRUE);
@@ -64,7 +66,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
   }
 
   @Override
-  public void setTitleAt(int index, String title) {
+  public void setTitleAt(int index, @NlsContexts.TabTitle String title) {
     super.setTitleAt(index, title);
     Component tabComponent = getTabComponentAt(index);
     if (tabComponent instanceof JLabel) {
@@ -90,6 +92,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
 
   /** @deprecated Use {@link JBTabbedPane#setTabComponentInsets(Insets)} instead of overriding */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   protected Insets getInsetsForTabComponent() {
     return myTabComponentInsets;

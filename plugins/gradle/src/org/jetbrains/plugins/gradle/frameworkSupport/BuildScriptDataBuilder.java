@@ -1,23 +1,28 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
  */
 public class BuildScriptDataBuilder {
+  private final static Logger LOG = Logger.getInstance(BuildScriptDataBuilder.class);
+
   @NotNull private final VirtualFile myBuildScriptFile;
   protected final Set<String> imports = new TreeSet<>();
   protected final Set<String> plugins = new TreeSet<>();
@@ -126,55 +131,60 @@ public class BuildScriptDataBuilder {
     }
   }
 
-  public BuildScriptDataBuilder addImport(@NotNull String importString) {
+  public BuildScriptDataBuilder addImport(@NonNls @NotNull String importString) {
     imports.add(importString);
     return this;
   }
 
-  public BuildScriptDataBuilder addBuildscriptPropertyDefinition(@NotNull String definition) {
+  public BuildScriptDataBuilder addBuildscriptPropertyDefinition(@NonNls @NotNull String definition) {
     buildScriptProperties.add(definition.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addBuildscriptRepositoriesDefinition(@NotNull String definition) {
+  public BuildScriptDataBuilder addBuildscriptRepositoriesDefinition(@NonNls @NotNull String definition) {
     buildScriptRepositories.add(definition.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addBuildscriptDependencyNotation(@NotNull String notation) {
+  public BuildScriptDataBuilder addBuildscriptDependencyNotation(@NonNls @NotNull String notation) {
     buildScriptDependencies.add(notation.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addPluginDefinitionInPluginsGroup(@NotNull String definition) {
+  public BuildScriptDataBuilder addPluginDefinitionInPluginsGroup(@NonNls @NotNull String definition) {
     pluginsInGroup.add(definition.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addPluginDefinition(@NotNull String definition) {
+  public BuildScriptDataBuilder addPluginDefinition(@NonNls @NotNull String definition) {
     plugins.add(definition.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addRepositoriesDefinition(@NotNull String definition) {
+  public BuildScriptDataBuilder addRepositoriesDefinition(@NonNls @NotNull String definition) {
     repositories.add(definition.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addDependencyNotation(@NotNull String notation) {
+  public BuildScriptDataBuilder addDependencyNotation(@NonNls @NotNull String notation) {
+    if (notation.matches("\\s*(compile|testCompile|runtime|testRuntime)[^\\w].*")) {
+      LOG.warn(notation);
+      LOG.warn("compile, testCompile, runtime and testRuntime dependency notations were deprecated in Gradle 3.4, " +
+               "use implementation, api, compileOnly and runtimeOnly instead", new Throwable());
+    }
     dependencies.add(notation.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addPropertyDefinition(@NotNull String definition) {
+  public BuildScriptDataBuilder addPropertyDefinition(@NonNls @NotNull String definition) {
     properties.add(definition.trim());
     return this;
   }
 
-  public BuildScriptDataBuilder addOther(@NotNull String definition) {
+  public BuildScriptDataBuilder addOther(@NonNls @NotNull String definition) {
     other.add(definition.trim());
     return this;
   }
 
-  private static String padding(String s) {return StringUtil.isNotEmpty(s) ? "    " + s : "";}
+  private static String padding(@NonNls String s) {return StringUtil.isNotEmpty(s) ? "    " + s : "";}
 }

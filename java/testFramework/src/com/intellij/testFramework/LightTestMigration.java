@@ -81,7 +81,7 @@ class LightTestMigration {
   }
 
   private Pair<Path, String> processSingleFileTest(Path javaFile) throws Exception {
-    String fileText = new String(Files.readAllBytes(javaFile), StandardCharsets.UTF_8);
+    String fileText = Files.readString(javaFile);
     String testName = myName.isEmpty() ? javaFile.getFileName().toString().replaceFirst(".java$", "") : myName;
     myBaseDir = myName.isEmpty() ? myDir : myDir.getParent();
     Path targetFile = myBaseDir.resolve(testName + ".java");
@@ -128,7 +128,7 @@ class LightTestMigration {
         String pathText = '/' + relativePath.toString().replace('\\', '/');
         if (pathText.startsWith(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH)) {
           importedClasses.add(LightJavaInspectionTestCase.class);
-          pathSpec = "LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
+          pathSpec = "LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH + \"" +
                      StringUtil.escapeStringCharacters(
                        pathText.substring(LightJavaInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH.length())) + '"';
         }

@@ -13,6 +13,11 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * An object representing a simple document change done at {@link InsertionContext#getTailOffset()} after completion,
+ * namely, inserting a character, sometimes with spaces for formatting.
+ * Please consider putting this logic into {@link com.intellij.codeInsight.lookup.LookupElement#handleInsert} or
+ * {@link com.intellij.codeInsight.completion.InsertHandler},
+ * as they're more flexible, and having all document modification code in one place will probably be more comprehensive.
  * @author peter
  */
 public abstract class TailType {
@@ -87,7 +92,7 @@ public abstract class TailType {
    */
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
   /**
-   * insert a space unless there's one at the caret position already, followed by a word
+   * insert a space unless there's one at the caret position already, followed by a word or '@'
    */
   public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
 
@@ -95,8 +100,11 @@ public abstract class TailType {
     public boolean isApplicable(@NotNull InsertionContext context) {
       CharSequence text = context.getDocument().getCharsSequence();
       int tail = context.getTailOffset();
-      if (text.length() > tail + 1 && text.charAt(tail) == ' ' && Character.isLetter(text.charAt(tail + 1))) {
-        return false;
+      if (text.length() > tail + 1 && text.charAt(tail) == ' ') {
+        char ch = text.charAt(tail + 1);
+        if (ch == '@' || Character.isLetter(ch)) {
+          return false;
+        }
       }
       return super.isApplicable(context);
     }

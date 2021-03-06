@@ -6,33 +6,36 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.util.ReflectionUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else MyProjectStore(project)
-  }
+private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryImpl() {
+  override fun createStore(project: Project) = MyProjectStore(project)
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
-  internal val isConfigurationFileListenerAdded = AtomicBoolean()
+  val isConfigurationFileListenerAdded = AtomicBoolean()
   private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
-  internal fun configurationFileChanged() {
+  fun configurationFileChanged() {
     if (storages.isNotEmpty()) {
       StoreReloadManager.getInstance().storageFilesChanged(mapOf(project to storages.values.toList()))
     }
   }
 
-  override fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? {
+  override fun unloadComponent(component: Any) {
+    super.unloadComponent(component)
+    if (component is PersistentStateComponent<*>) {
+      storages.remove(component.javaClass)
+    }
+  }
+
+  override fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage {
     // service container ensures that one key is never requested from different threads
-    return storages.getOrPut(componentClass) { ReadOnlyStorage(configurationSchemaKey, componentClass, this) }
+    return storages.computeIfAbsent(componentClass) { ReadOnlyStorage(configurationSchemaKey, componentClass, this) }
   }
 
   override fun doCreateStateGetter(reloadData: Boolean,
@@ -45,12 +48,8 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
     val configurationFileManager = ConfigurationFileManager.getInstance(project)
     val node = configurationFileManager.findValueNode(configurationSchemaKey) ?: return stateGetter
     return object : StateGetter<Any> {
-      override fun getState(mergeInto: Any?): Any? {
-        var state = stateGetter.getState(mergeInto)
-        if (state == null) {
-          state = ReflectionUtil.newInstance(stateClass, false)
-        }
-
+      override fun getState(mergeInto: Any?): Any {
+        val state = stateGetter.getState(mergeInto) ?: ReflectionUtil.newInstance(stateClass, false)
         val affectedProperties = mutableListOf<String>()
         readIntoObject(state as BaseState, node) { affectedProperties.add(it.name!!) }
         info.affectedPropertyNames = affectedProperties

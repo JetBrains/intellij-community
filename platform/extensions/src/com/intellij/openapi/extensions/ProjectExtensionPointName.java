@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     return ExtensionProcessingHelper.findFirstSafe(predicate, getPointImpl(areaInstance));
   }
 
-  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
+  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<? super T, ? extends R> processor) {
     return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(areaInstance));
   }
 
@@ -74,5 +75,10 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
 
   public void processWithPluginDescriptor(@NotNull AreaInstance areaInstance, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     getPointImpl(areaInstance).processWithPluginDescriptor(true, consumer);
+  }
+
+  @ApiStatus.Experimental
+  public final @NotNull Iterable<T> getIterable(@NotNull AreaInstance areaInstance) {
+    return getPointImpl(areaInstance);
   }
 }

@@ -144,7 +144,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     myProcessHandler = processHandler;
 
     myPrimaryConsoleView.attachToProcess(processHandler);
@@ -287,7 +287,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     });
   }
 
-  private class MergedWrapTextAction extends MergedToggleAction {
+  private final class MergedWrapTextAction extends MergedToggleAction {
 
     private MergedWrapTextAction(@NotNull ToggleUseSoftWrapsToolbarAction action1, @NotNull ToggleUseSoftWrapsToolbarAction action2) {
       super(action1, action2);
@@ -360,7 +360,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
-  private static class MergedAction extends AnAction implements DumbAware {
+  private static final class MergedAction extends AnAction implements DumbAware {
     @NotNull
     private final AnAction myAction1;
     @NotNull

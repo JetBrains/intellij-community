@@ -7,6 +7,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.impl.ToolWindowEventSource
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.util.ui.UIUtil
 
 internal class HideToolWindowAction : AnAction(), DumbAware {
@@ -18,9 +20,9 @@ internal class HideToolWindowAction : AnAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val toolWindowManager = ToolWindowManager.getInstance(e.project ?: return)
+    val toolWindowManager = ToolWindowManager.getInstance(e.project ?: return) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
-    toolWindowManager.getToolWindow(id)?.hide(null)
+    toolWindowManager.hideToolWindow(id, false, true, ToolWindowEventSource.HideToolWindowAction)
   }
 
   override fun update(event: AnActionEvent) {

@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -28,7 +14,7 @@ import java.util.*;
 /**
  * @author ilyas
  */
-public class DuplicatesUtil {
+public final class DuplicatesUtil {
   public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<? super GrMethod> duplicateMethodsWarning, HashSet<? super GrMethod> duplicateMethodsErrors) {
     for (GrMethod method : map.keySet()) {
       List<GrMethod> duplicateMethods = map.get(method);
@@ -62,11 +48,12 @@ public class DuplicatesUtil {
     }
   }
 
-  public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, TObjectHashingStrategy<D> strategy) {
-    if (elements == null || elements.length == 0) return Collections.emptyMap();
+  public static <D extends PsiElement> Map<D, List<D>> factorDuplicates(D[] elements, Hash.Strategy<D> strategy) {
+    if (elements == null || elements.length == 0) {
+      return Collections.emptyMap();
+    }
 
-    THashMap<D, List<D>> map = new THashMap<>(strategy);
-
+    Map<D, List<D>> map = new Object2ObjectOpenCustomHashMap<>(strategy);
     for (D element : elements) {
       List<D> list = map.get(element);
       if (list == null) {

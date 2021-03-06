@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,14 +29,6 @@ public class ConfigurationFileCrcFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport");
 
   private final VirtualFile myFile;
-
-  /**
-   * @deprecated left for plugin compatibility
-   */
-  @Deprecated
-  public ConfigurationFileCrcFactory(@NotNull Project project, @NotNull VirtualFile file) {
-    this(file);
-  }
 
   public ConfigurationFileCrcFactory(VirtualFile file) {
     myFile = file;

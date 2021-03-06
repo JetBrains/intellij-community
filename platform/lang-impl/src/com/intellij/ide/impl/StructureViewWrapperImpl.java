@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.ActivityTracker;
@@ -41,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
@@ -65,7 +65,7 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
  * @author Eugene Belyaev
  */
 public final class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
-  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class);
+  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class, Topic.BroadcastDirection.NONE);
   private static final Logger LOG = Logger.getInstance(StructureViewWrapperImpl.class);
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
   private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
@@ -142,6 +142,10 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
         }
       }
     });
+    if (component.isShowing()) {
+      loggedRun("initial structure rebuild", this::checkUpdate);
+      scheduleRebuild();
+    }
     myToolWindow.getContentManager().addContentManagerListener(new ContentManagerListener() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
@@ -169,7 +173,7 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     if (myStructureView != null) {
       myStructureView.disableStoreState();
     }
-    scheduleRebuild();
+    rebuild();
   }
 
   private void checkUpdate() {
@@ -460,6 +464,9 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       if (WRAPPER_DATA_KEY.is(dataId)) return StructureViewWrapperImpl.this;
+      if (QuickActionProvider.KEY.is(dataId)) {
+        return myStructureView instanceof QuickActionProvider ? myStructureView : null;
+      }
       return null;
     }
   }

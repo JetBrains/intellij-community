@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.ExecutionBundle;
@@ -81,9 +81,10 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
                          @NotNull ConfigurationContext context,
                          @NotNull Runnable performRunnable) {
     ConfigurationData configurationData = extractConfigurationData(context);
+    Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
     if (configurationData == null) {
       LOG.warn("Cannot extract configuration data from context, uses raw run configuration");
-      performRunnable.run();
+      runnableWithCheck.run();
       return;
     }
     String locationName = String.format("'%s'", configurationData.getLocationName());
@@ -95,11 +96,11 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
         Function1<PsiElement, String> createFilter = (e) -> createTestFilterFrom(configurationData.psiPackage, /*hasSuffix=*/false);
         if (!applyTestConfiguration(settings, context.getModule(), tasks, sourceElements, createFilter)) {
           LOG.warn("Cannot apply package test configuration, uses raw run configuration");
-          performRunnable.run();
+          runnableWithCheck.run();
           return;
         }
       configuration.setName(suggestName(configurationData));
-        performRunnable.run();
+        runnableWithCheck.run();
     });
   }
 
@@ -155,7 +156,7 @@ public final class AllInPackageGradleConfigurationProducer extends GradleTestRun
     return ExecutionBundle.message("test.in.scope.presentable.text", configurationData.getLocationName());
   }
 
-  private static class ConfigurationData {
+  private static final class ConfigurationData {
     public final @NotNull Module module;
     public final @NotNull PsiPackage psiPackage;
     public final @NotNull PsiElement sourceElement;

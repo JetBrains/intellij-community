@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,7 +25,20 @@ public class GitUnstash extends GitRepositoryAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("unstash.action.name");
+    return GitBundle.message("unstash.action.name");
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    AnAction showStashAction = ActionManager.getInstance().getAction("Git.Show.Stash");
+    AnActionEvent newEvent = AnActionEvent.createFromDataContext(e.getPlace(),
+                                                                 showStashAction.getTemplatePresentation().clone(),
+                                                                 e.getDataContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(showStashAction, newEvent, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(showStashAction, newEvent);
+    } else {
+      super.actionPerformed(e);
+    }
   }
 
   /**

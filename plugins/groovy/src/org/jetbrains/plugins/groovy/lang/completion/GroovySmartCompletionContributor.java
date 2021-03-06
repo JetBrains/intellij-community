@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -21,8 +21,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -45,14 +45,13 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovySmartCompletionContributor extends CompletionContributor {
+public final class GroovySmartCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> INSIDE_EXPRESSION = PlatformPatterns.psiElement().withParent(GrExpression.class);
   private static final ElementPattern<PsiElement> IN_CAST_PARENTHESES =
     PlatformPatterns.psiElement().withSuperParent(3, PlatformPatterns.psiElement(GrTypeCastExpression.class).withParent(
@@ -64,21 +63,20 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> IN_ANNOTATION = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
 
-  private static final TObjectHashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY =
-    new TObjectHashingStrategy<TypeConstraint>() {
-      @Override
-      public int computeHashCode(final TypeConstraint object) {
-        return object.getType().hashCode();
-      }
+  private static final Hash.Strategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY = new Hash.Strategy<>() {
+    @Override
+    public int hashCode(@Nullable TypeConstraint object) {
+      return object == null ? 0 : object.getType().hashCode();
+    }
 
-      @Override
-      public boolean equals(final TypeConstraint o1, final TypeConstraint o2) {
-        return o1.getClass().equals(o2.getClass()) && o1.getType().equals(o2.getType());
-      }
-    };
+    @Override
+    public boolean equals(@Nullable TypeConstraint o1, @Nullable TypeConstraint o2) {
+      return o1 == o2 || (o1 != null && o2 != null && o1.getClass().equals(o2.getClass()) && o1.getType().equals(o2.getType()));
+    }
+  };
 
   public GroovySmartCompletionContributor() {
-    extend(CompletionType.SMART, INSIDE_EXPRESSION, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, INSIDE_EXPRESSION, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters params,
                                     @NotNull ProcessingContext context,
@@ -125,7 +123,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, IN_CAST_PARENTHESES, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, IN_CAST_PARENTHESES, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -144,8 +142,10 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final Set<TypeConstraint> typeConstraints = getExpectedTypeInfos(parameters);
         for (TypeConstraint typeConstraint : typeConstraints) {
           final PsiType type = typeConstraint.getType();
-          final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
-          item.setInsertHandler(new InsertHandler<LookupElement>() {
+          final PsiTypeLookupItem item =
+            PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER)
+              .setShowPackage();
+          item.setInsertHandler(new InsertHandler<>() {
             @Override
             public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.casting");
@@ -175,7 +175,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, AFTER_NEW, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     @NotNull final ProcessingContext matchingContext,
@@ -184,7 +184,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, IN_ANNOTATION, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, IN_ANNOTATION, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters params,
                                     @NotNull ProcessingContext context,
@@ -262,7 +262,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiType _type = GenericsUtil.eliminateWildcards(type);
         final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
         if (item.getObject() instanceof PsiClass) {
-          item.setInsertHandler(new InsertHandler<LookupElement>() {
+          item.setInsertHandler(new InsertHandler<>() {
             @Override
             public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
@@ -401,7 +401,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   private static Set<TypeConstraint> getExpectedTypeInfos(final CompletionParameters params) {
-    return new THashSet<>(Arrays.asList(getExpectedTypes(params)), EXPECTED_TYPE_INFO_STRATEGY);
+    return new ObjectOpenCustomHashSet<>(getExpectedTypes(params), EXPECTED_TYPE_INFO_STRATEGY);
   }
 
   public static TypeConstraint @NotNull [] getExpectedTypes(CompletionParameters params) {

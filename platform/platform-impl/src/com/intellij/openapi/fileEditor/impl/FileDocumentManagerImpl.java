@@ -4,6 +4,10 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -15,13 +19,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
+import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,6 +36,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -36,7 +44,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -44,17 +51,16 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.pom.core.impl.PomModelImpl;
-import com.intellij.psi.AbstractFileViewProvider;
-import com.intellij.psi.ExternalChangeAction;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -62,28 +68,25 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManagerBase implements SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
 
-  public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
   public static final Key<Object> NOT_RELOADABLE_DOCUMENT_KEY = new Key<>("NOT_RELOADABLE_DOCUMENT_KEY");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
-  private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
-  private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
 
-  private static final Object lock = new Object();
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
 
@@ -98,14 +101,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
-      final Document document = e.getDocument();
+      Document document = e.getDocument();
       if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
         myUnsavedDocuments.add(document);
       }
-      final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
+      Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
-      if (project == null)
+      if (project == null) {
         project = ProjectUtil.guessProjectForFile(getFile(document));
+      }
       String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
@@ -117,7 +121,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   };
 
   public FileDocumentManagerImpl() {
-    InvocationHandler handler = (proxy, method, args) -> {
+    InvocationHandler handler = (__, method, args) -> {
+      if (method.getDeclaringClass() != FileDocumentManagerListener.class) {
+        // only FileDocumentManagerListener methods should be called on this proxy
+        throw new UnsupportedOperationException(method.toString());
+      }
       multiCast(method, args);
       return null;
     };
@@ -125,7 +133,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
 
-    BinaryFileTypeDecompilers.getInstance().addExtensionPointChangeListener(this::clearCachedDocumentsForBinaryFiles, null);
+    // remove VirtualFiles sitting in the DocumentImpl.rmTreeQueue reference queue which could retain plugin-registered FS in their VirtualDirectoryImpl.myFs
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        DocumentImpl.processQueue();
+      }
+    });
   }
 
   static final class MyProjectCloseHandler implements ProjectCloseHandler {
@@ -185,47 +199,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
   }
 
-  @Override
-  @Nullable
-  public Document getDocument(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    DocumentEx document = (DocumentEx)getCachedDocument(file);
-    if (document == null) {
-      if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
-
-      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-      if (file.getFileType().isBinary() && tooLarge) return null;
-
-      final CharSequence text = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-      synchronized (lock) {
-        document = (DocumentEx)getCachedDocument(file);
-        if (document != null) return document; // Double checking
-
-        document = (DocumentEx)createDocument(text, file);
-        document.setModificationStamp(file.getModificationStamp());
-        document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
-        final FileType fileType = file.getFileType();
-        document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
-
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
-          document.addDocumentListener(myPhysicalDocumentChangeTracker);
-        }
-
-        if (file instanceof LightVirtualFile) {
-          registerDocument(document, file);
-        }
-        else {
-          document.putUserData(FILE_KEY, file);
-          cacheDocument(file, document);
-        }
-      }
-
-      myMultiCaster.fileContentLoaded(file, document);
-    }
-
-    return document;
-  }
-
   public static boolean areTooManyDocumentsInTheQueue(@NotNull Collection<? extends Document> documents) {
     if (documents.size() > 100) return true;
     int totalSize = 0;
@@ -236,34 +209,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     return false;
   }
 
+  @Override
   @NotNull
-  private static Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
+  protected Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
     DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
     document.documentCreatedFrom(file);
     return document;
-  }
-
-  @Override
-  @Nullable
-  public Document getCachedDocument(@NotNull VirtualFile file) {
-    Document hard = file.getUserData(HARD_REF_TO_DOCUMENT_KEY);
-    return hard != null ? hard : getDocumentFromCache(file);
-  }
-
-  public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
-    synchronized (lock) {
-      document.putUserData(FILE_KEY, virtualFile);
-      virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
-    }
-  }
-
-  @Override
-  @Nullable
-  public VirtualFile getFile(@NotNull Document document) {
-    if (document instanceof FrozenDocument) return null;
-    return document.getUserData(FILE_KEY);
   }
 
   @TestOnly
@@ -281,7 +234,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
     ApplicationManager.getApplication().invokeLater(() -> {
-      final Document[] unsavedDocuments = getUnsavedDocuments();
+      Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
         if (file == null) continue;
@@ -303,18 +256,28 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
    * @param isExplicit caused by user directly (Save action) or indirectly (e.g. Compile)
    */
   public void saveAllDocuments(boolean isExplicit) {
+    saveDocuments(null, isExplicit);
+  }
+
+  @Override
+  public void saveDocuments(@NotNull Predicate<? super Document> filter) {
+    saveDocuments(filter, true);
+  }
+
+  private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
 
-    final Map<Document, IOException> failedToSave = new HashMap<>();
-    final Set<Document> vetoed = new HashSet<>();
+    Map<Document, IOException> failedToSave = new HashMap<>();
+    Set<Document> vetoed = new HashSet<>();
     while (true) {
       int count = 0;
 
       for (Document document : myUnsavedDocuments) {
+        if (filter != null && !filter.test(document)) continue;
         if (failedToSave.containsKey(document)) continue;
         if (vetoed.contains(document)) continue;
         try {
@@ -338,11 +301,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
-  public void saveDocument(@NotNull final Document document) {
+  public void saveDocument(@NotNull Document document) {
     saveDocument(document, true);
   }
 
-  public void saveDocument(@NotNull final Document document, final boolean explicit) {
+  public void saveDocument(@NotNull Document document, boolean explicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
@@ -378,7 +341,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private static class SaveVetoException extends Exception {}
 
-  private void doSaveDocument(@NotNull final Document document, boolean isExplicit) throws IOException, SaveVetoException {
+  private void doSaveDocument(@NotNull Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
     if (LOG.isTraceEnabled()) LOG.trace("saving: " + file);
 
@@ -407,7 +370,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
            FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
   }
 
-  private void doSaveDocumentInWriteAction(@NotNull final Document document, @NotNull final VirtualFile file) throws IOException {
+  private void doSaveDocumentInWriteAction(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
     if (!file.isValid()) {
       removeFromUnsaved(document);
       return;
@@ -418,11 +381,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
 
     boolean saveNeeded = false;
-    IOException ioException = null;
+    Exception ioException = null;
     try {
       saveNeeded = isSaveNeeded(document, file);
     }
-    catch (IOException e) {
+    catch (IOException|RuntimeException e) {
       // in case of corrupted VFS try to stay consistent
       ioException = e;
     }
@@ -432,7 +395,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       }
       removeFromUnsaved(document);
       updateModifiedProperty(file);
-      if (ioException != null) throw ioException;
+      if (ioException instanceof IOException) throw (IOException)ioException;
+      if (ioException != null) throw (RuntimeException)ioException;
       return;
     }
 
@@ -484,7 +448,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   private static boolean needsRefresh(@NotNull VirtualFile file) {
-    final VirtualFileSystem fs = file.getFileSystem();
+    VirtualFileSystem fs = file.getFileSystem();
     return fs instanceof NewVirtualFileSystem && file.getTimeStamp() != ((NewVirtualFileSystem)fs).getTimeStamp(file);
   }
 
@@ -516,7 +480,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   @NotNull
   @Override
   public WriteAccessStatus requestWritingStatus(@NotNull Document document, @Nullable Project project) {
-    final VirtualFile file = getInstance().getFile(document);
+    VirtualFile file = getInstance().getFile(document);
     if (project != null && file != null && file.isValid()) {
       if (file.getFileType().isBinary()) return WriteAccessStatus.NON_WRITABLE;
       ReadonlyStatusHandler.OperationStatus writableStatus =
@@ -534,10 +498,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   }
 
   @Override
-  public void reloadFiles(final VirtualFile @NotNull ... files) {
+  public void reloadFiles(VirtualFile @NotNull ... files) {
     for (VirtualFile file : files) {
       if (file.exists()) {
-        final Document doc = getCachedDocument(file);
+        Document doc = getCachedDocument(file);
         if (doc != null) {
           reloadFromDisk(doc);
         }
@@ -562,48 +526,49 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
-    final Document doc = getCachedDocument(file);
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    if (branch != null && ((ModelBranchImpl)branch).hasModifications(file)) {
+      return true;
+    }
+    Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
 
-  @Override
-  public boolean isPartialPreviewOfALargeFile(@NotNull Document document) {
-    return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
-  }
-
   private void propertyChanged(@NotNull VFilePropertyChangeEvent event) {
-    final VirtualFile file = event.getFile();
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
-      final Document document = getCachedDocument(file);
+      VirtualFile file = event.getFile();
+      Document document = getCachedDocument(file);
       if (document != null) {
         ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> document.setReadOnly(!file.isWritable()));
       }
     }
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+      VirtualFile file = event.getFile();
       Document document = getCachedDocument(file);
-      if (document != null) {
+      if (document == null) {
+        return;
+      }
+      if (isBinaryWithoutDecompiler(file)) {
         // a file is linked to a document - chances are it is an "unknown text file" now
-        if (isBinaryWithoutDecompiler(file)) {
-          unbindFileFromDocument(file, document);
-        }
+        unbindFileFromDocument(file, document);
+        // to avoid weird inconsistencies when file opened in an editor tab got renamed to unknown extension and then typed into
+        closeAllEditorsFor(file);
+      }
+      else if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor()) && isBinaryWithDecompiler(file)) {
+        reloadFromDisk(document);
       }
     }
   }
 
-  private void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
-    removeDocumentFromCache(file);
-    file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-    document.putUserData(FILE_KEY, null);
+  private static void closeAllEditorsFor(@NotNull VirtualFile file) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      FileEditorManager.getInstance(project).closeFile(file);
+    }
   }
 
   private static boolean isBinaryWithDecompiler(@NotNull VirtualFile file) {
-    final FileType ft = file.getFileType();
-    return ft.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(ft) != null;
-  }
-
-  private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return fileType.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(fileType) == null;
+    FileType type = file.getFileType();
+    return type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) != null;
   }
 
   static final class MyAsyncFileListener implements AsyncFileListener {
@@ -659,12 +624,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
               myFileDocumentManager.propertyChanged((VFilePropertyChangeEvent)event);
             }
           }
-          ObjectUtils.reachabilityFence(strongRefsToDocuments);
+          Reference.reachabilityFence(strongRefsToDocuments);
         }
       };
     }
 
-    private void prepareForRangeMarkerUpdate(Map<VirtualFile, Document> strongRefsToDocuments, VirtualFile virtualFile) {
+    private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
+                                             @NotNull VirtualFile virtualFile) {
       Document document = myFileDocumentManager.getCachedDocument(virtualFile);
       if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
         // re-create document with the old contents prior to this event
@@ -682,7 +648,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
+    boolean shouldTraceEvent = document != null && LOG.isTraceEnabled();
+    String eventMessage = null;
+
+    if (shouldTraceEvent) {
+      eventMessage = "content changed for " + event.getFile() + " with document stamp =  " + document.getModificationStamp();
+    }
+
     if (event.isFromSave()) {
+      if (shouldTraceEvent) {
+        eventMessage += " , dispatched from save";
+        LOG.trace(eventMessage);
+      }
+
       return;
     }
 
@@ -690,16 +668,23 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl
     }
 
-    if (document != null && (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document))) {
-      reloadFromDisk(document);
+    if (document != null) {
+      if (shouldTraceEvent) {
+        eventMessage += " event old modification stamp = " + event.getOldModificationStamp() + ", is unsaved = " + isDocumentUnsaved(document);
+        LOG.trace(eventMessage);
+      }
+
+      if (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document)) {
+        reloadFromDisk(document);
+      }
     }
   }
 
   @Override
-  public void reloadFromDisk(@NotNull final Document document) {
+  public void reloadFromDisk(@NotNull Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final VirtualFile file = getFile(document);
+    VirtualFile file = getFile(document);
     assert file != null;
     if (!file.isValid()) return;
 
@@ -707,7 +692,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       return;
     }
 
-    final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     boolean[] isReloadable = {isReloadable(file, document, project)};
     if (isReloadable[0]) {
       CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
@@ -725,7 +710,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
               if (isReloadable[0]) {
                 CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
                 ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
+                setDocumentTooLarge(document, tooLarge);
               }
               document.setReadOnly(!wasWritable);
             }
@@ -752,7 +737,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   @TestOnly
   void setAskReloadFromDisk(@NotNull Disposable disposable, @NotNull MemoryDiskConflictResolver newProcessor) {
-    final MemoryDiskConflictResolver old = myConflictResolver;
+    MemoryDiskConflictResolver old = myConflictResolver;
     myConflictResolver = newProcessor;
     Disposer.register(disposable, () -> myConflictResolver = old);
   }
@@ -794,10 +779,20 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     return FileDocumentManagerListener.EP_NAME.getExtensionList();
   }
 
-  private static int getPreviewCharCount(@NotNull VirtualFile file) {
-    Charset charset = EncodingManager.getInstance().getEncoding(file, false);
-    float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
+  @Override
+  public @Nullable FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
+    ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
+    for (Project project : manager.getOpenProjects()) {
+      FileViewProvider vp = PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(file);
+      if (vp != null) return vp;
+    }
+
+    if (manager.isDefaultProjectInitialized()) {
+      FileViewProvider vp = PsiManagerEx.getInstanceEx(manager.getDefaultProject()).getFileManager().findCachedViewProvider(file);
+      if (vp != null) return vp;
+    }
+
+    return null;
   }
 
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
@@ -811,75 +806,66 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       LOG.warn("file: " + getFile(entry.getKey()), entry.getValue());
     }
 
-    final String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
+    // later to get out of write action
+    ApplicationManager.getApplication().invokeLater(() -> {
+      String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
 
-    final DialogWrapper dialog = new DialogWrapper(null) {
-      {
-        init();
-        setTitle(UIBundle.message("cannot.save.files.dialog.title"));
-      }
-
-      @Override
-      protected void createDefaultActions() {
-        super.createDefaultActions();
-        myOKAction.putValue(Action.NAME, UIBundle
-          .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
-        myOKAction.putValue(DEFAULT_ACTION, null);
-
-        if (!myOnClose) {
-          myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+      DialogWrapper dialog = new DialogWrapper(null) {
+        {
+          init();
+          setTitle(UIBundle.message("cannot.save.files.dialog.title"));
         }
-      }
 
-      @Override
-      protected JComponent createCenterPanel() {
-        final JPanel panel = new JPanel(new BorderLayout(0, 5));
+        @Override
+        protected void createDefaultActions() {
+          super.createDefaultActions();
+          myOKAction.putValue(Action.NAME, UIBundle
+            .message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
+          myOKAction.putValue(DEFAULT_ACTION, null);
 
-        panel.add(new JLabel(UIBundle.message("cannot.save.files.dialog.message")), BorderLayout.NORTH);
+          if (!myOnClose) {
+            myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+          }
+        }
 
-        final JTextPane area = new JTextPane();
-        area.setText(text);
-        area.setEditable(false);
-        area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
-        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
-                  BorderLayout.CENTER);
+        @Override
+        protected JComponent createCenterPanel() {
+          JPanel panel = new JPanel(new BorderLayout(0, 5));
 
-        return panel;
-      }
-    };
+          panel.add(new JLabel(UIBundle.message("cannot.save.files.dialog.message")), BorderLayout.NORTH);
 
-    if (dialog.showAndGet()) {
-      for (Document document : failures.keySet()) {
-        reloadFromDisk(document);
-      }
-    }
-  }
+          JTextPane area = new JTextPane();
+          area.setText(text);
+          area.setEditable(false);
+          area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
+          panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER),
+                    BorderLayout.CENTER);
 
-  private void clearCachedDocumentsForBinaryFiles() {
-    myDocumentCache.keySet().forEach(key -> {
-      if (key.getFileType().isBinary()) {
-        key.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
-        removeDocumentFromCache(key);
+          return panel;
+        }
+      };
+
+      if (dialog.showAndGet()) {
+        for (Document document : failures.keySet()) {
+          reloadFromDisk(document);
+        }
       }
     });
   }
 
-  private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
-
   /** @deprecated another dirty Rider hack; don't use */
   @Deprecated
-  @SuppressWarnings("ALL")
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean ourConflictsSolverEnabled = true;
 
-  protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
-    myDocumentCache.put(file, document);
+  @Override
+  protected void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
+    myMultiCaster.fileContentLoaded(file, document);
   }
 
-  protected void removeDocumentFromCache(@NotNull VirtualFile file) {
-    myDocumentCache.remove(file);
-  }
-
-  protected Document getDocumentFromCache(@NotNull VirtualFile file) {
-    return myDocumentCache.get(file);
+  @Override
+  protected @NotNull DocumentListener getDocumentListener() {
+    return myPhysicalDocumentChangeTracker;
   }
 }

@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LibraryUtil {
+public final class LibraryUtil {
 
   private LibraryUtil() {}
 

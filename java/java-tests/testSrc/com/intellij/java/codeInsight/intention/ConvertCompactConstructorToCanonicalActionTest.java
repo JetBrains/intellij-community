@@ -17,9 +17,8 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 public class ConvertCompactConstructorToCanonicalActionTest extends LightIntentionActionTestCase {
   @Override
@@ -29,6 +28,6 @@ public class ConvertCompactConstructorToCanonicalActionTest extends LightIntenti
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 }

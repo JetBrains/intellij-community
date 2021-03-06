@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -19,7 +20,6 @@ import com.intellij.uiDesigner.propertyInspector.editors.ComboBoxPropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,28 +221,6 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     return toEdge;
   }
 
-  @Override public void createSnapshotLayout(final SnapshotContext context,
-                                             final JComponent parent,
-                                             final RadContainer container,
-                                             final LayoutManager layout) {
-    BorderLayout borderLayout = (BorderLayout) layout;
-    container.setLayout(new BorderLayout(borderLayout.getHgap(), borderLayout.getVgap()));
-  }
-
-  @Override public void addSnapshotComponent(final JComponent parent,
-                                             final JComponent child,
-                                             final RadContainer container,
-                                             final RadComponent component) {
-    BorderLayout borderLayout = (BorderLayout) parent.getLayout();
-    final Object constraints = borderLayout.getConstraints(child);
-    if (constraints != null) {
-      // sometimes the container sets the layout manager to BorderLayout but
-      // overrides the layout() method so that the component constraints are not used
-      component.setCustomLayoutConstraints(constraints);
-      container.addComponent(component);
-    }
-  }
-
   private static class MyDropLocation implements ComponentDropLocation {
     private final RadContainer myContainer;
     private final String myQuadrant;
@@ -381,7 +359,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
   private static class BorderSideEditor extends ComboBoxPropertyEditor<String> {
     BorderSideEditor() {
-      String[] sides = new String[] {
+      @NlsSafe String[] sides = new String[] {
         BorderLayout.CENTER, BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.WEST, BorderLayout.EAST,
         BorderLayout.PAGE_START, BorderLayout.PAGE_END, BorderLayout.LINE_START, BorderLayout.LINE_END
       };
@@ -389,7 +367,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
+    public JComponent getComponent(RadComponent component, @NlsSafe String value, InplaceContext inplaceContext) {
       myCbx.setSelectedItem(value);
       return myCbx;
     }

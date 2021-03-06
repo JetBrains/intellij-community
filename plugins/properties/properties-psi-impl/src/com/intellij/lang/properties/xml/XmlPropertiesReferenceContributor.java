@@ -18,6 +18,7 @@ package com.intellij.lang.properties.xml;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,8 +32,14 @@ import org.jetbrains.annotations.NotNull;
 public class XmlPropertiesReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("key"),
-                                        new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("key"), new PsiReferenceProvider() {
+
+      @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PomTargetPsiElement &&
+               ((PomTargetPsiElement)target).getTarget() instanceof XmlProperty;
+      }
+
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(element.getContainingFile());

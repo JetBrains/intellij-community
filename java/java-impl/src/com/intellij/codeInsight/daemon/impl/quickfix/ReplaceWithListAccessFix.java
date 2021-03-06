@@ -16,11 +16,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class ReplaceWithListAccessFix implements IntentionAction {
+public class ReplaceWithListAccessFix implements IntentionActionWithFixAllOption {
   private final PsiArrayAccessExpression myArrayAccessExpression;
 
   public ReplaceWithListAccessFix(@NotNull PsiArrayAccessExpression arrayAccessExpression) {
@@ -107,34 +109,39 @@ public class ReplaceWithListAccessFix implements IntentionAction {
     replaceWithGet(factory, codeStyleManager, arrayExpression, indexExpression, myArrayAccessExpression);
   }
 
-  @NotNull
-  private static PsiElement replaceWithGet(@NotNull PsiElementFactory factory,
-                                           @NotNull CodeStyleManager codeStyleManager,
-                                           @NotNull PsiExpression arrayExpression,
-                                           @NotNull PsiExpression indexExpression,
-                                           @NotNull PsiElement anchor) {
+  private static void replaceWithGet(@NotNull PsiElementFactory factory,
+                                     @NotNull CodeStyleManager codeStyleManager,
+                                     @NotNull PsiExpression arrayExpression,
+                                     @NotNull PsiExpression indexExpression,
+                                     @NotNull PsiElement anchor) {
 
     final PsiElement listAccess = factory.createExpressionFromText(
       arrayExpression.getText() + ".get(" + indexExpression.getText() + ")",
       anchor);
-    return anchor.replace(codeStyleManager.reformat(listAccess));
+    anchor.replace(codeStyleManager.reformat(listAccess));
   }
 
-  private static PsiElement replaceWithSet(@NotNull PsiElementFactory factory,
-                                           @NotNull CodeStyleManager codeStyleManager,
-                                           @NotNull PsiExpression arrayExpression,
-                                           @NotNull PsiExpression indexExpression,
-                                           @NotNull PsiExpression expression,
-                                           @NotNull PsiElement anchor) {
+  private static void replaceWithSet(@NotNull PsiElementFactory factory,
+                                     @NotNull CodeStyleManager codeStyleManager,
+                                     @NotNull PsiExpression arrayExpression,
+                                     @NotNull PsiExpression indexExpression,
+                                     @NotNull PsiExpression expression,
+                                     @NotNull PsiElement anchor) {
     final PsiElement listAccess = factory.createExpressionFromText(
       arrayExpression.getText() + ".set(" + indexExpression.getText() + "," + expression.getText() + ")",
       anchor
     );
-    return anchor.replace(codeStyleManager.reformat(listAccess));
+    anchor.replace(codeStyleManager.reformat(listAccess));
   }
 
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ReplaceWithListAccessFix(PsiTreeUtil.findSameElementInCopy(myArrayAccessExpression, target));
   }
 }

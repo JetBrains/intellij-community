@@ -1,4 +1,4 @@
-// "Remove folded 'ifPresent' call" "false"
+// "Remove folded 'ifPresent()' call" "false"
 import java.util.Optional;
 
 class Sample {

@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -57,7 +58,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private Icon mySmallIcon;
   /**
    * @see #getIconPath()
-   * @see #setIconPath(java.lang.String)
+   * @see #setIconPath(String)
    */
   private String myIconPath;
   /**
@@ -161,14 +162,15 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * Note, that the method never returns {@code null}. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
-  @NotNull public Icon getIcon() {
+  @NotNull
+  public Icon getIcon() {
     // Check cached value first
-    if(myIcon != null){
+    if (myIcon != null) {
       return myIcon;
     }
 
     // Create new icon
-    if(myIconPath != null && myIconPath.length() > 0) {
+    if (myIconPath != null && myIconPath.length() > 0) {
       final VirtualFile iconFile = ResourceFileUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
       if (iconFile != null) {
         try {
@@ -182,10 +184,9 @@ public final class ComponentItem implements Cloneable, PaletteItem {
         myIcon = IconLoader.findIcon(myIconPath);
       }
     }
-    if(myIcon == null){
+    if (myIcon == null) {
       myIcon = UIDesignerIcons.Unknown;
-     }
-    LOG.assertTrue(myIcon != null);
+    }
     return myIcon;
   }
 
@@ -221,7 +222,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     return myClassName;
   }
 
-  public String getClassShortName() {
+  public @NlsSafe String getClassShortName() {
     final int lastDotIndex = myClassName.lastIndexOf('.');
     if (lastDotIndex != -1 && lastDotIndex != myClassName.length() - 1/*not the last char in class name*/) {
       return myClassName.substring(lastDotIndex + 1).replace('$', '.');
@@ -242,7 +243,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     myClassName = className;
   }
 
-  public String getToolTipText() {
+  public @NlsSafe String getToolTipText() {
     return myToolTipText != null ? myToolTipText : calcToolTipText(myClassName);
   }
 

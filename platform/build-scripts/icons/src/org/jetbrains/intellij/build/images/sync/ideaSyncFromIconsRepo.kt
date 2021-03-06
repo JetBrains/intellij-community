@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.intellij.build.images.generateIconsClasses
+import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import kotlin.system.exitProcess
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = try {
   if (args.isEmpty()) System.err.println("If you haven't intended to start full icons sync" +
                                          " then please specify required icons repo's commit hashes" +
                                          " joined by comma, semicolon or space in arguments")
@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
   echo("Syncing icons..")
   checkIcons()
   echo("Generating classes..")
-  generateIconsClasses()
+  generateIconsClasses(dbFile = null)
   // TODO: perform compilation
   echo("Running tests..")
   val tests = mapOf(
@@ -27,13 +27,10 @@ fun main(args: Array<String>) {
     "intellij.platform.images.build" to listOf("org.jetbrains.intellij.build.images.CommunityIconClassesTest",
                                                "org.jetbrains.intellij.build.images.CommunityImageResourcesSanityTest")
   )
-  try {
-    runTests(tests = tests.values.flatten(), modules = tests.keys)
-  }
-  finally {
-    // in case of non-daemon threads spawned from tests
-    exitProcess(0)
-  }
+  runTests(tests = tests.values.flatten(), modules = tests.keys)
+}
+finally {
+  shutdownAppScheduledExecutorService()
 }
 
 private fun echo(msg: String) = println("\n** $msg")
@@ -45,8 +42,8 @@ private fun runTests(tests: Collection<String>, modules: Collection<String>) {
     .flatMap { File(it).listFiles()?.toList() ?: error(it) }
     .filter { it.isDirectory || it.extension == "jar" }
     .plus(modules.flatMap { dependencies(project, it) })
-    .map { it.toURI().toURL() }
-  val testClassLoader = UrlClassLoader.build().urls(classpath).get()
+    .map { it.toPath() }
+  val testClassLoader = UrlClassLoader.build().files(classpath).get()
   val testRunner = testClassLoader
     .loadClass("org.jetbrains.intellij.build.images.sync.IdeaTestRunnerKt")
     .getDeclaredMethod("runTest", Class::class.java)

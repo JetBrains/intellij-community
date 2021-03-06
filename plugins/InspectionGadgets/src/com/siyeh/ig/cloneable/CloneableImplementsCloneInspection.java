@@ -31,6 +31,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -102,7 +103,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)parent;
-      final StringBuilder methodText = new StringBuilder();
+      @NonNls final StringBuilder methodText = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(aClass) &&
           JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");

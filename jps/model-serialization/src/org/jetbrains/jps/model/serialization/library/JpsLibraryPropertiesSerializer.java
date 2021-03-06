@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.serialization.library;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -28,5 +29,11 @@ public abstract class JpsLibraryPropertiesSerializer<P extends JpsElement> exten
 
   public abstract P loadProperties(@Nullable Element propertiesElement);
 
-  public abstract void saveProperties(P properties, Element element);
+  /**
+   * @deprecated the build process doesn't save project configuration so there is no need to implement this method, it isn't called by the platform
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public void saveProperties(P properties, Element element) {
+  }
 }

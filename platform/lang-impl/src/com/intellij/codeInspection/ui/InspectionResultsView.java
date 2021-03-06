@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
@@ -127,7 +128,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     });
     add(mySplitter, BorderLayout.CENTER);
-    myExclusionHandler = new ExclusionHandler<InspectionTreeNode>() {
+    myExclusionHandler = new ExclusionHandler<>() {
       @Override
       public boolean isNodeExclusionAvailable(@NotNull InspectionTreeNode node) {
         return true;
@@ -159,7 +160,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       public void onDone(boolean isExcludeAction) {
         if (isExcludeAction) {
           myTree.removeSelectedProblems();
-        } else {
+        }
+        else {
           myTree.repaint();
         }
         syncRightPanel();
@@ -283,7 +285,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   boolean isAutoScrollMode() {
     String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
-           (activeToolWindowId == null || activeToolWindowId.equals(ToolWindowId.INSPECTION));
+           (activeToolWindowId == null
+            || activeToolWindowId.equals(ProblemsView.ID)
+            // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
+            // see RIDER-59000
+            //noinspection deprecation
+            || activeToolWindowId.equals(ToolWindowId.INSPECTION));
   }
 
   public void setApplyingFix(boolean applyingFix) {
@@ -539,12 +546,14 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                                             contents,
                                             problems::get);
 
-        myLoadingProgressPreviewAlarm.cancelAllRequests();
-        myLoadingProgressPreviewAlarm.addRequest(() -> {
-          if (myLoadingProgressPreview != null) {
-            myLoadingProgressPreview.updateLoadingProgress();
-          }
-        }, 200);
+        if (!myLoadingProgressPreviewAlarm.isDisposed()) {
+          myLoadingProgressPreviewAlarm.cancelAllRequests();
+          myLoadingProgressPreviewAlarm.addRequest(() -> {
+            if (myLoadingProgressPreview != null) {
+              myLoadingProgressPreview.updateLoadingProgress();
+            }
+          }, 200);
+        }
       }
     }));
   }

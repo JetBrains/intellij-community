@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
@@ -71,7 +72,7 @@ public class TextFieldWithHistory extends ComboBox {
     getTextEditor().setText(aText);
   }
 
-  public String getText() {
+  public @NlsSafe String getText() {
     return getTextEditor().getText();
   }
 

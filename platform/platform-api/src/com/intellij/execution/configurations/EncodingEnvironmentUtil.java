@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
 import java.util.Locale;
 import java.util.Map;
 
-public class EncodingEnvironmentUtil {
+public final class EncodingEnvironmentUtil {
   private static final Logger LOG = Logger.getInstance(EncodingEnvironmentUtil.class);
 
   private static final String LC_ALL = "LC_ALL";
@@ -26,7 +26,7 @@ public class EncodingEnvironmentUtil {
    * <p/>
    * Unfortunately, Mac OSX has a special behavior:<br/>
    * These environment variables aren't passed to an IDE, if the IDE is launched from Spotlight.<br/>
-   * Unfortunately, even {@link EnvironmentUtil#getEnvironment()} doesn't have these variables.<p/>
+   * Unfortunately, even {@link EnvironmentUtil#getEnvironmentMap()} doesn't have these variables.<p/>
    * As a result, no encoding environment variables are passed to Ruby/Node.js/Python/other processes that are launched from IDE.
    * Thus, these processes wrongly assume that the default encoding is US-ASCII.
    * <p/>

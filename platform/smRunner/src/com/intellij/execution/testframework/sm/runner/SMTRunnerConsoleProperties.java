@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
@@ -25,25 +11,21 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.sm.FileUrlProvider;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.config.Storage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,18 +43,19 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   /**
    * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit". 
+   *                          Is used to distinguish problems of different test frameworks in logged exceptions
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NlsSafe @NotNull String testFrameworkName, @NotNull Executor executor) {
     this(config.getProject(), config, testFrameworkName, executor);
   }
-  
-  public SMTRunnerConsoleProperties(@NotNull Project project, 
+
+  public SMTRunnerConsoleProperties(@NotNull Project project,
                                     @NotNull RunProfile config,
-                                    @NotNull String testFrameworkName, 
+                                    @NlsSafe @NotNull String testFrameworkName,
                                     @NotNull Executor executor) {
-    super(getStorage(testFrameworkName), project, executor);
+    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()), project, executor);
     myConfiguration = config;
     myTestFrameworkName = testFrameworkName;
     myCustomFilter = new CompositeFilter(project);
@@ -83,17 +66,13 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @deprecated Fix your runner and stop adding "\n" before TC message.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean serviceMessageHasNewLinePrefix() {
     return false;
   }
 
-  @NotNull
-  private static Storage.PropertiesComponentStorage getStorage(String testFrameworkName) {
-    return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());
-  }
-
   @Override
-  public RunProfile getConfiguration() {
+  public @NotNull RunProfile getConfiguration() {
     return myConfiguration;
   }
 
@@ -106,6 +85,10 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return myIdBasedTestTree;
   }
 
+  /**
+   * To switch between {@link GeneralIdBasedToSMTRunnerEventsConvertor} and 
+   * {@link GeneralToSMTRunnerEventsConvertor}. Use first one if framework provides unique ids for tests
+   */
   public void setIdBasedTestTree(boolean idBasedTestTree) {
     myIdBasedTestTree = idBasedTestTree;
   }
@@ -177,34 +160,16 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myCustomFilter.addFilter(filter);
   }
 
-  @Nullable
-  @Deprecated
-  protected Navigatable findSuitableNavigatableForLine(@NotNull Project project, @NotNull VirtualFile file, int line) {
-    // lets find first non-ws psi element
-    
-    final Document doc = FileDocumentManager.getInstance().getDocument(file);
-    final PsiFile psi = doc == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(doc);
-    if (psi == null) {
-      return null;
-    }
-
-    int offset = doc.getLineStartOffset(line);
-    int endOffset = doc.getLineEndOffset(line);
-    for (int i = offset + 1; i < endOffset; i++) {
-      PsiElement el = psi.findElementAt(i);
-      if (el != null && !(el instanceof PsiWhiteSpace)) {
-        offset = el.getTextOffset();
-        break;
-      }
-    }
-
-    return PsiNavigationSupport.getInstance().createNavigatable(project, file, offset);
-  }
-
+  /**
+   * Called if no tests were detected in the suite. Show suggestion to change the configuration so some tests would be found
+   */
   public boolean fixEmptySuite() {
     return false;
   }
 
+  /**
+   * @return custom test locator which would be combined with default {@link FileUrlProvider}
+   */
   @Nullable
   public SMTestLocator getTestLocator() {
     return null;
@@ -214,7 +179,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   public TestProxyFilterProvider getFilterProvider() {
     return null;
   }
-  
+
   @Nullable
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return null;
@@ -225,6 +190,9 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return myTestFrameworkName;
   }
 
+  /**
+   * @return true to make test status progress indeterminate, e.g. if repeat count set to `until failure`, so it's impossible to predict total number of tests
+   */
   public boolean isUndefined() {
     return false;
   }

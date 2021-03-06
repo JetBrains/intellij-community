@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -24,11 +25,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
@@ -134,7 +132,7 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
         return;
       }
 
-      if (!isTheSameArray(src, dest)) return;
+      if (!PsiEquivalenceUtil.areElementsEquivalent(src, dest)) return;
       LongRangeSet srcRange = getDefiniteRange(srcPosSet, lengthSet);
       LongRangeSet destRange = getDefiniteRange(destPosSet, lengthSet);
       if (srcRange.intersects(destRange)) {
@@ -152,17 +150,6 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       long minRightBorder = startSet.plus(lengthMinusOne, false).min();
       if (maxLeftBorder > minRightBorder) return LongRangeSet.empty();
       return LongRangeSet.range(maxLeftBorder, minRightBorder);
-    }
-
-    private static boolean isTheSameArray(@NotNull PsiExpression src,
-                                          @NotNull PsiExpression dest) {
-      PsiReferenceExpression srcReference = tryCast(ParenthesesUtils.stripParentheses(src), PsiReferenceExpression.class);
-      PsiReferenceExpression destReference = tryCast(ParenthesesUtils.stripParentheses(dest), PsiReferenceExpression.class);
-      if (srcReference == null || destReference == null) return false;
-      PsiElement srcVariable = srcReference.resolve();
-      PsiElement destVariable = destReference.resolve();
-      if (srcVariable == null || srcVariable != destVariable) return false;
-      return true;
     }
   }
 }

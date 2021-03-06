@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddThisQualifierFix extends InspectionGadgetsFix {
+public final class AddThisQualifierFix extends InspectionGadgetsFix {
 
   private AddThisQualifierFix() {}
 

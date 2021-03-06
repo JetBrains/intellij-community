@@ -86,6 +86,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
   public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
+  public void testEphemeralDefaultCaseVisited() { doTest(); }
+  public void testEphemeralInIfChain() { doTest(); }
   public void testIncompleteSwitchEnum() { doTest(); }
   public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
@@ -524,7 +526,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldUsedBeforeInitialization() { doTest(); }
 
   public void testImplicitlyInitializedField() {
-    ImplicitUsageProvider.EP_NAME.getPoint(null).registerExtension(new ImplicitUsageProvider() {
+    ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
         return false;
@@ -624,6 +626,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNewBoxedNumberEquality() { doTest(); }
   public void testBoxingIncorrectLiteral() { doTest(); }
   public void testImplicitUnboxingOnCast() { doTest(); }
+  public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
   public void testSameArguments() { doTest(); }
@@ -670,5 +673,23 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testStringContains() { doTest(); }
   public void testSwitchLabelNull() { doTest(); }
   public void testMutationContractInFlush() { doTest(); }
+  public void testMutationContractFromSource() { doTest(); }
   public void testDefaultConstructor() { doTest(); }
+  public void testInstanceOfUnresolved() { doTest(); }
+  public void testProtobufNotNullGetters() { doTest(); }
+  public void testAIOOBETransfer() { doTest(); }
+  public void testBoxingShortByte() { doTest(); }
+  public void testBoxingIncrement() { doTest(); }
+  public void testUnboxingWithConversionCalls() { doTest(); }
+  public void testNullableAliasing() { doTest(); }
+  public void testReapplyTypeArguments() { doTest(); }
+  public void testDoubleArrayDiff() { doTest(); }
+  public void testInferenceInPrivateOrLocalClass() { doTest(); }
+  public void testArraysCopyOf() { doTest(); }
+  public void testArrayNegativeSize() { doTest(); }
+  public void testPresizedList() { doTest(); }
+  public void testCollectionToArray() { doTest(); }
+  public void testStringToCharArray() { doTest(); }
+  public void testFinalStaticFields() { doTest(); }
+  public void testReassignInConstructor() { doTest(); }
 }

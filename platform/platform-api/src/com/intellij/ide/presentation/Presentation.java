@@ -3,6 +3,7 @@ package com.intellij.ide.presentation;
 
 import com.intellij.ide.TypeNameEP;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,6 +27,6 @@ public @interface Presentation {
   /**
    * Non-localized type name. Use {@link TypeNameEP} or provide localized text via {@link PresentationProvider#getTypeName(Object)} for i18n.
    */
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NonNls
   String typeName() default "";
 }

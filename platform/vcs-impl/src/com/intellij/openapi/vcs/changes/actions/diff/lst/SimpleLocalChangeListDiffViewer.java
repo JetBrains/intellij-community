@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
@@ -38,7 +38,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   private final boolean myAllowExcludeChangesFromCommit;
 
   private final LocalTrackerDiffUtil.LocalTrackerActionProvider myTrackerActionProvider;
-  private LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
+  private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
 
 
   public SimpleLocalChangeListDiffViewer(@NotNull DiffContext context,
@@ -48,6 +48,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     myAllowExcludeChangesFromCommit = DiffUtil.isUserDataFlagSet(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, context);
     myTrackerActionProvider = new MyLocalTrackerActionProvider(this, localRequest, myAllowExcludeChangesFromCommit);
+    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor2());
     myExcludeAllCheckboxPanel.init(myLocalRequest, myAllowExcludeChangesFromCommit);
 
     LocalTrackerDiffUtil.installTrackerListener(this, myLocalRequest);
@@ -56,16 +57,14 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull
   @Override
   protected List<JComponent> createTitles() {
-    List<JComponent> titles = DiffUtil.createTextTitles(myRequest, getEditors());
+    List<JComponent> titles = DiffUtil.createTextTitles(this, myRequest, getEditors());
     assert titles.size() == 2;
-
-    myExcludeAllCheckboxPanel = new LocalTrackerDiffUtil.ExcludeAllCheckboxPanel(this, getEditor2());
 
     BorderLayoutPanel titleWithCheckbox = JBUI.Panels.simplePanel();
     if (titles.get(1) != null) titleWithCheckbox.addToCenter(titles.get(1));
     titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel);
 
-    return DiffUtil.createSyncHeightComponents(Arrays.asList(titles.get(0), titleWithCheckbox));
+    return Arrays.asList(titles.get(0), titleWithCheckbox);
   }
 
   @NotNull
@@ -102,7 +101,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     );
   }
 
-  private class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
+  private final class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
     @NotNull private final ProgressIndicator myIndicator;
 
     private MyLocalTrackerDiffHandler(@NotNull ProgressIndicator indicator) {
@@ -202,7 +201,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
   }
 
-  private static class MySimpleDiffChangeUi extends SimpleDiffChangeUi {
+  private static final class MySimpleDiffChangeUi extends SimpleDiffChangeUi {
     private MySimpleDiffChangeUi(@NotNull SimpleLocalChangeListDiffViewer viewer, @NotNull MySimpleDiffChange change) {
       super(viewer, change);
     }
@@ -247,7 +246,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
 
-  private static class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
+  private static final class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
     @NotNull private final SimpleLocalChangeListDiffViewer myViewer;
 
     private MyLocalTrackerActionProvider(@NotNull SimpleLocalChangeListDiffViewer viewer,

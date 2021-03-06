@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,9 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
   private final ClsTypeElementImpl[] myTypeParameters;
   private volatile PsiType[] myTypeParametersCachedTypes;
 
-  public ClsReferenceParameterListImpl(PsiElement parent, String[] classParameters) {
+  public ClsReferenceParameterListImpl(PsiElement parent,
+                                       @NotNull String @NotNull [] classParameters,
+                                       @NotNull TypeAnnotationContainer annotations) {
     myParent = parent;
 
     int length = classParameters.length;
@@ -61,7 +64,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
         }
       }
 
-      myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance);
+      myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance, annotations.forTypeArgument(length - i - 1));
     }
   }
 

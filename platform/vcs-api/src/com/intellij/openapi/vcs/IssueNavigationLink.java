@@ -82,6 +82,7 @@ public class IssueNavigationLink {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "IssueNavigationLink{" +

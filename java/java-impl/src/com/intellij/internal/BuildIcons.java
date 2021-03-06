@@ -1,32 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.internal;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 
-public class BuildIcons {
+public final class BuildIcons {
   public static void main(String[] args) throws Exception {
     File root = new File("/Users/max/IDEA/out/classes/production/");
     final MultiMap<Couple<Integer>, String> dimToPath = new MultiMap<>();
 
     walk(root, dimToPath, root);
 
-    ArrayList<Couple<Integer>> keys = new ArrayList<>(dimToPath.keySet());
+    List<Couple<Integer>> keys = new ArrayList<>(dimToPath.keySet());
     keys.sort((o1, o2) -> {
       int d0 = dimToPath.get(o2).size() - dimToPath.get(o1).size();
       if (d0 != 0) return d0;
@@ -51,8 +45,7 @@ public class BuildIcons {
     System.out.println("Total icons: " + total);
   }
 
-  private static final Set<String> IMAGE_EXTENSIONS =
-    new THashSet<>(Arrays.asList("png", "gif", "jpg", "jpeg"), FileUtil.PATH_HASHING_STRATEGY);
+  private static final Set<String> IMAGE_EXTENSIONS = CollectionFactory.createFilePathSet(Arrays.asList("png", "gif", "jpg", "jpeg"));
 
   private static void walk(File root, MultiMap<Couple<Integer>, String> dimToPath, File file) throws IOException {
     if (file.isDirectory()) {

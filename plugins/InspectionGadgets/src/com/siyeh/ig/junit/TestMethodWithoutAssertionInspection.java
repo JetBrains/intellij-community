@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,14 +62,16 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()), "Assertion class name",
+      new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()),
+                                 InspectionGadgetsBundle.message("column.assertion.class.name"),
                                  InspectionGadgetsBundle.message("method.name.regex")));
     final CheckBox checkBox1 =
       new CheckBox(InspectionGadgetsBundle.message("assert.keyword.is.considered.an.assertion"), this, "assertKeywordIsAssertion");
     final CheckBox checkBox2 =
       new CheckBox(InspectionGadgetsBundle.message("inspection.test.method.without.assertions.exceptions.option"), this, "ignoreIfExceptionThrown");
+    final String title = InspectionGadgetsBundle.message("test.without.assertion.options.choose.class");
     return new FormBuilder()
-      .addComponentFillVertically(UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose assertion class"), 0)
+      .addComponentFillVertically(UiUtils.createAddRemoveTreeClassChooserPanel(table, title), 0)
       .addComponent(checkBox1)
       .addComponent(checkBox2)
       .getPanel();

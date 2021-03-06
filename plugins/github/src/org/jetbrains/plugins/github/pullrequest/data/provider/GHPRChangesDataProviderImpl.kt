@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.google.common.graph.Traverser
 import com.intellij.openapi.Disposable
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
-import java.util.function.BiFunction
 
 class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService,
                                   private val pullRequestId: GHPRIdentifier,
@@ -46,10 +46,8 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
 
   private val changesProviderValue = LazyCancellableBackgroundProcessValue.create { indicator ->
     val commitsRequest = apiCommitsRequestValue.value
-    val fetchFuture = CompletableFuture.allOf(baseBranchFetchRequestValue.value, headBranchFetchRequestValue.value)
 
     detailsData.loadDetails()
-      .thenCombine<Void, GHPullRequest>(fetchFuture, BiFunction { details, _ -> details })
       .thenCompose {
         changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid)
       }.thenCompose { mergeBase ->
@@ -71,7 +69,15 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
   override fun addChangesListener(disposable: Disposable, listener: () -> Unit) =
     changesProviderValue.addDropEventListener(disposable, listener)
 
-  override fun loadCommitsFromApi() = apiCommitsRequestValue.value
+  override fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>> = apiCommitsRequestValue.value.thenApply {
+    val (lastCommit, graph) = it
+    Traverser.forGraph(graph).depthFirstPostOrder(lastCommit).toList()
+  }
+
+  override fun addCommitsListener(disposable: Disposable, listener: () -> Unit) =
+    apiCommitsRequestValue.addDropEventListener(disposable, listener)
+
+  override fun fetchBaseBranch() = baseBranchFetchRequestValue.value
 
   override fun fetchHeadBranch() = headBranchFetchRequestValue.value
 

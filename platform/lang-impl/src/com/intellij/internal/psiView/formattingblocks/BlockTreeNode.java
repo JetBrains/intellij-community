@@ -58,8 +58,8 @@ public class BlockTreeNode extends SimpleNode {
     }
     if (myBlock.getAlignment() != null) {
       float d = 1.f * System.identityHashCode(myBlock.getAlignment()) / Integer.MAX_VALUE;
-      Color color = new JBColor(Color.HSBtoRGB(1.0f * d, .3f, .7f),
-                                Color.HSBtoRGB(1.0f * d, .3f, .8f));
+      Color color = new JBColor(Color.HSBtoRGB(d, .3f, .7f),
+                                Color.HSBtoRGB(d, .3f, .8f));
       presentation
         .addText(" " + myBlock.getAlignment(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, color));
     }

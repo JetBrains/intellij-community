@@ -39,6 +39,6 @@ class ConvertProjectLibraryToRepositoryLibraryAction(private val librariesConfig
 
     val editor = modifiableModel.getLibraryEditor(newLibrary)
     configureNewLibrary(editor)
-    ProjectStructureConfigurable.getInstance(project).selectProjectOrGlobalLibrary(newLibrary, true)
+    librariesConfigurable.projectStructureConfigurable.selectProjectOrGlobalLibrary(newLibrary, true)
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.PackageWrapper;
@@ -71,6 +72,16 @@ public class MoveClassTest extends LightMultiFileTestCase {
     }
   }
 
+  public void testToDefaultPackage() {
+    try {
+      doTest(new String[]{"pack1.Class1"}, "");
+      fail("Conflicts expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("class <b><code>pack1.Class1</code></b> won't be accessible from the default package", e.getMessage());
+    }
+  }
+
   public void testIdeadev27996() {
     doTest(new String[] { "pack1.X" }, "pack2");
   }
@@ -100,7 +111,7 @@ public class MoveClassTest extends LightMultiFileTestCase {
 
     PsiPackage aPackage = myFixture.findPackage(newPackageName);
     assertNotNull("Package " + newPackageName + " not found", aPackage);
-    final PsiDirectory[] dirs = aPackage.getDirectories();
+    final PsiDirectory[] dirs = aPackage.getDirectories(GlobalSearchScope.projectScope(getProject()));
     assertEquals(1, dirs.length);
 
     new MoveClassesOrPackagesProcessor(getProject(), classes,

@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -13,6 +15,7 @@ import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -20,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
@@ -28,6 +32,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -51,6 +56,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +109,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }.installOn(myLanguageChooser);
 
     // setup expand button
-    myExpandButton.setToolTipText(KeymapUtil.createTooltipText("Expand", "ExpandExpandableComponent"));
+    myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
     myExpandButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myExpandButton.setBorder(JBUI.Borders.empty(0, 3));
     myExpandButton.setDisabledIcon(AllIcons.General.ExpandComponent);
@@ -330,17 +336,20 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return myDebuggerEditorsProvider;
   }
 
-  public Project getProject() {
+  public final Project getProject() {
     return myProject;
   }
 
   protected Document createDocument(final XExpression text) {
+    if (myProject.isDefault()) {
+      return new DocumentImpl(text.getExpression());
+    }
     XDebuggerEditorsProvider provider = getEditorsProvider();
     if (myContext != null && provider instanceof XDebuggerEditorsProviderBase) {
-      return ((XDebuggerEditorsProviderBase)provider).createDocument(getProject(), text, myContext, myMode);
+      return ((XDebuggerEditorsProviderBase)provider).createDocument(myProject, text, myContext, myMode);
     }
     else {
-      return provider.createDocument(getProject(), text, mySourcePosition, myMode);
+      return provider.createDocument(myProject, text, mySourcePosition, myMode);
     }
   }
 
@@ -383,7 +392,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     });
   }
 
-  protected void prepareEditor(Editor editor) {
+  protected void prepareEditor(EditorEx editor) {
   }
 
   protected final void setExpandable(Editor editor) {
@@ -494,7 +503,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     JScrollPane pane = editor.getScrollPane();
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
-      setToolTipText(KeymapUtil.createTooltipText("Collapse", "CollapseExpandableComponent"));
+      setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"));
       setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       setBorder(JBUI.Borders.empty(5, 0, 5, 5));
       addMouseListener(new MouseAdapter() {
@@ -517,10 +526,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   @NotNull
-  private static String getAdText() {
+  private static @NlsContexts.Label String getAdText() {
     return XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
-                                   KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_DOWN)) + ", " +
-                                   KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_UP)));
+                                   NlsMessages.formatAndList(Arrays.asList(
+                                     KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_DOWN)),
+                                     KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_UP)))));
   }
 
   public static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {
@@ -555,7 +565,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       Icon dropdownIcon = AllIcons.General.Dropdown;
       int width = dropdownIcon.getIconWidth();
       dropdownIcon = IconUtil.cropIcon(dropdownIcon, new Rectangle(width / 2, 0, width - width / 2, dropdownIcon.getIconHeight()));
-      LayeredIcon icon = JBUI.scale(new LayeredIcon(1));
+      LayeredIcon icon = JBUIScale.scaleIcon(new LayeredIcon(1));
       icon.setIcon(dropdownIcon, 0, 0, -5);
       setIcon(icon);
       setDisabledIcon(IconLoader.getDisabledIcon(icon));

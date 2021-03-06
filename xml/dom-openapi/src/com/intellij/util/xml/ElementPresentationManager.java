@@ -1,47 +1,43 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
-import com.intellij.ide.IconProvider;
 import com.intellij.ide.TypePresentationService;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public abstract class ElementPresentationManager {
-  private static final ConcurrentMap<Class,Method> ourNameValueMethods = ConcurrentFactoryMap.createMap(key-> {
-      for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
-      if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
-        return method;
-      }
-    }
-    return null;
-    }
-  );
+  private static final ConcurrentMap<Class<?>, Optional<Method>> ourNameValueMethods = ConcurrentFactoryMap.create(key -> ReflectionUtil
+      .getClassPublicMethods(key)
+      .stream()
+      .filter(method -> JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null)
+      .findFirst(), CollectionFactory::createConcurrentWeakKeySoftValueMap);
 
   private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 
   public static ElementPresentationManager getInstance() {
-    return ServiceManager.getService(ElementPresentationManager.class);
+    return ApplicationManager.getApplication().getService(ElementPresentationManager.class);
   }
 
   public <T> Object @NotNull [] createVariants(Collection<T> elements) {
@@ -65,28 +61,6 @@ public abstract class ElementPresentationManager {
   public abstract <T> Object @NotNull [] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);
 
 
-  private static final List<Function<Object, String>> ourNameProviders = new ArrayList<>();
-  private static final List<Function<Object, String>> ourDocumentationProviders = new ArrayList<>();
-  private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<>();
-
-  static {
-    ourIconProviders.add(
-      (NullableFunction<Object, Icon>)o -> o instanceof Iconable ? ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS) : null);
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.ide.presentation.Presentation#provider()}
-   */
-  @Deprecated
-  public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
-
-  /**
-   * @deprecated use {@link Documentation}
-   */
-  @Deprecated
-  public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
-
-
   public static <T>NullableFunction<T, String> NAMER() {
     return o -> getElementName(o);
   }
@@ -99,12 +73,6 @@ public abstract class ElementPresentationManager {
 
   @Nullable
   public static String getElementName(@NotNull Object element) {
-    for (final Function<Object, String> function : ourNameProviders) {
-      final String s = function.fun(element);
-      if (s != null) {
-        return s;
-      }
-    }
     Object o = invokeNameValueMethod(element);
     if (o == null || o instanceof String) return (String)o;
     if (o instanceof GenericValue) {
@@ -121,27 +89,23 @@ public abstract class ElementPresentationManager {
     return null;
   }
 
+
+  /**
+   * @deprecated always return {@code null}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   @Nullable
   public static String getDocumentationForElement(Object element) {
-    for (final Function<Object, String> function : ourDocumentationProviders) {
-      final String s = function.fun(element);
-      if (s != null) {
-        return s;
-      }
-    }
     return null;
   }
 
   @Nullable
   public static Object invokeNameValueMethod(@NotNull final Object element) {
-    final Method nameValueMethod = findNameValueMethod(element.getClass());
-    if (nameValueMethod == null) {
-      return null;
-    }
-
-    return DomReflectionUtil.invokeMethod(nameValueMethod, element);
+    return ourNameValueMethods.get(element.getClass()).map(method -> DomReflectionUtil.invokeMethod(method, element)).orElse(null);
   }
 
+  @NlsSafe
   public static String getTypeNameForObject(Object o) {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;
@@ -155,50 +119,22 @@ public abstract class ElementPresentationManager {
   }
 
   public static Icon getIcon(@NotNull Object o) {
-    for (final Function<Object, Icon> function : ourIconProviders) {
-      final Icon icon = function.fun(o);
+    if (o instanceof Iconable) {
+      Icon icon = ((Iconable)o).getIcon(Iconable.ICON_FLAG_READ_STATUS);
       if (icon != null) {
         return icon;
       }
     }
     if (o instanceof DomElement) {
-      final DomElement domElement = (DomElement)o;
-      final boolean dumb = DumbService.getInstance(domElement.getManager().getProject()).isDumb();
-
-      for (final IconProvider provider : IconProvider.EXTENSION_POINT_NAME.getPoint(null).getExtensions()) {
-        if (provider instanceof DomIconProvider) {
-          if (dumb && !DumbService.isDumbAware(provider)) {
-            continue;
-          }
-
-          final Icon icon = ((DomIconProvider)provider).getIcon(domElement, 0);
-          if (icon != null) {
-            return icon;
-          }
-        }
-      }
+      return ((DomElement)o).getPresentation().getIcon();
     }
 
-    final Icon[] icons = getIconsForClass(o.getClass(), o);
-    if (icons != null && icons.length > 0) {
-      return icons[0];
-    }
-    return null;
+    return getIconOld(o);
   }
 
   @Nullable
   public static Icon getIconOld(Object o) {
-    for (final Function<Object, Icon> function : ourIconProviders) {
-      final Icon icon = function.fun(o);
-      if (icon != null) {
-        return icon;
-      }
-    }
-    final Icon[] icons = getIconsForClass(o.getClass(), o);
-    if (icons != null && icons.length > 0) {
-      return icons[0];
-    }
-    return null;
+    return getFirst(getIconsForClass(o.getClass(), o));
   }
 
   @Nullable
@@ -220,12 +156,6 @@ public abstract class ElementPresentationManager {
     }
 
     return null;
-  }
-
-  public static Method findNameValueMethod(final Class<?> aClass) {
-    synchronized (ourNameValueMethods) {
-      return ourNameValueMethods.get(aClass);
-    }
   }
 
   @Nullable

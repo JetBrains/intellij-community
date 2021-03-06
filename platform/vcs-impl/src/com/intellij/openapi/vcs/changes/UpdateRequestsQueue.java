@@ -4,12 +4,12 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -17,8 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.intellij.util.ObjectUtils.notNull;
+import java.util.function.BooleanSupplier;
 
 /**
  * ChangeListManager updates scheduler.
@@ -27,11 +26,11 @@ import static com.intellij.util.ObjectUtils.notNull;
  */
 @SomeQueue
 public final class UpdateRequestsQueue {
-  private final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
+  private static final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;
-  private final Runnable myDelegate;
+  private final BooleanSupplier myDelegate;
   private final Object myLock = new Object();
   private volatile boolean myStarted;
   private volatile boolean myStopped;
@@ -42,7 +41,9 @@ public final class UpdateRequestsQueue {
   private final List<Runnable> myWaitingUpdateCompletionQueue = new ArrayList<>();
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
 
-  public UpdateRequestsQueue(@NotNull Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, @NotNull Runnable delegate) {
+  public UpdateRequestsQueue(@NotNull Project project,
+                             @NotNull ChangeListManagerImpl.Scheduler scheduler,
+                             @NotNull BooleanSupplier delegate) {
     myProject = project;
     myScheduler = scheduler;
     myDelegate = delegate;
@@ -148,31 +149,26 @@ public final class UpdateRequestsQueue {
 
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
-                                @Nullable String title,
-                                @Nullable ModalityState state) {
+                                @Nullable @Nls String title) {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
-    final CallbackData data = CallbackData.create(myProject, mode, afterUpdate, title, state);
+    InvokeAfterUpdateCallback.Callback callback = InvokeAfterUpdateCallback.create(myProject, mode, afterUpdate, title);
 
     boolean stopped;
     synchronized (myLock) {
       stopped = myStopped;
       if (!stopped) {
-        myWaitingUpdateCompletionQueue.add(data.getCallback());
+        myWaitingUpdateCompletionQueue.add(callback::endProgress);
         schedule();
       }
     }
     if (stopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          afterUpdate.run();
-        }
-      }, notNull(state, ModalityState.defaultModalityState()));
-      return;
+      callback.handleStoppedQueue();
     }
-    // invoke progress if needed
-    data.getWrapperStarter().run();
-    LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+    else {
+      callback.startProgress();
+      LOG.debug("invokeAfterUpdate: exit for project: " + myProject.getName());
+    }
   }
 
   // true = do not execute
@@ -188,7 +184,7 @@ public final class UpdateRequestsQueue {
   private final class MyRunnable implements Runnable {
     @Override
     public void run() {
-      final List<Runnable> copy = new ArrayList<>(myWaitingUpdateCompletionQueue.size());
+      final List<Runnable> copy = new ArrayList<>();
       try {
         synchronized (myLock) {
           if (!myRequestSubmitted) return;
@@ -213,8 +209,17 @@ public final class UpdateRequestsQueue {
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
-        myDelegate.run();
-        LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
+        boolean success = myDelegate.getAsBoolean(); // CLM.updateImmediately
+        LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", was success: " + success +
+                  ", runnable: " + hashCode());
+
+        if (!success) {
+          // Refresh was cancelled, will fire events later
+          synchronized (myLock) {
+            myWaitingUpdateCompletionQueue.addAll(0, copy);
+            copy.clear();
+          }
+        }
       }
       finally {
         synchronized (myLock) {
@@ -236,7 +241,7 @@ public final class UpdateRequestsQueue {
 
     @Override
     public String toString() {
-      return "UpdateRequestQueue delegate: " + myDelegate;
+      return "UpdateRequestQueue delegate: " + myDelegate; //NON-NLS
     }
   }
 

@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import icons.PythonIcons;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
@@ -36,9 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.findInRootDirectory;
-
-public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
+public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   private CondaEnvSdkFlavor() {
   }
 
@@ -59,16 +46,12 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     try {
       final List<String> environments = PyCondaRunKt.listCondaEnvironments(sdk);
       for (String environment : environments) {
-        results.addAll(ReadAction.compute(() -> {
-          final VirtualFile root = StandardFileSystems.local().findFileByPath(environment);
-          final Collection<String> found = findInRootDirectory(root);
-          if (PyCondaSdkCustomizer.Companion.getInstance().getDetectEnvironmentsOutsideEnvsFolder()) {
-            return found;
-          }
-          else {
-            return StreamEx.of(found).filter(s -> getCondaEnvRoot(s) != null).toList();
-          }
-        }));
+        results.addAll(
+          ReadAction.compute(() -> VirtualEnvSdkFlavor.findInRootDirectory(StandardFileSystems.local().findFileByPath(environment)))
+        );
+      }
+      if (!PyCondaSdkCustomizer.Companion.getInstance().getDetectBaseEnvironment()) {
+        results.removeIf(path -> PythonSdkUtil.isBaseConda(path));
       }
     }
     catch (ExecutionException e) {
@@ -105,5 +88,29 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public Icon getIcon() {
     return PythonIcons.Python.Anaconda;
+  }
+
+  @Nullable
+  public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable) {
+    final String message;
+
+    if (StringUtil.isEmptyOrSpaces(condaExecutable)) {
+      message = PyBundle.message("python.add.sdk.conda.executable.path.is.empty");
+    }
+    else {
+      final var file = new File(condaExecutable);
+
+      if (!file.exists()) {
+        message = PyBundle.message("python.add.sdk.conda.executable.not.found");
+      }
+      else if (!file.isFile() || !file.canExecute()) {
+        message = PyBundle.message("python.add.sdk.conda.executable.path.is.not.executable");
+      }
+      else {
+        message = null;
+      }
+    }
+
+    return message == null ? null : new ValidationInfo(message);
   }
 }

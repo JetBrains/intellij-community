@@ -8,18 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="cd390" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="5" bottom="0" right="0"/>
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none">
-          <title-color color="-16777216"/>
-        </border>
-        <children/>
-      </grid>
-      <grid id="bb10e" layout-manager="GridLayoutManager" row-count="1" column-count="7" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="bb10e" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="5" bottom="3" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -46,7 +35,7 @@
           </component>
           <component id="d7b04" class="com.intellij.ui.components.JBCheckBox" binding="myIsAllowRunningInParallelCheckBox">
             <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/ExecutionBundle" key="run.configuration.allow.running.parallel"/>
@@ -60,37 +49,13 @@
               </grid>
             </constraints>
           </hspacer>
-          <hspacer id="4d019">
+          <grid id="18a4f" binding="myRCStoragePanel" layout-manager="FlowLayout" hgap="0" vgap="5" flow-align="1">
             <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <minimum-size width="10" height="-1"/>
-                <preferred-size width="10" height="-1"/>
-              </grid>
-            </constraints>
-          </hspacer>
-          <grid id="18a4f" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <grid row="0" column="5" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
-            <children>
-              <component id="898ad" class="com.intellij.ui.components.JBCheckBox" binding="myStoreAsFileCheckBox" default-binding="true">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="messages/ExecutionBundle" key="run.configuration.store.as.project.file"/>
-                </properties>
-              </component>
-              <component id="fd617" class="com.intellij.openapi.actionSystem.impl.ActionButton" binding="myStoreAsFileGearButton" custom-create="true">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-              </component>
-            </children>
+            <children/>
           </grid>
         </children>
       </grid>
@@ -136,7 +101,7 @@
                 </constraints>
                 <properties/>
               </component>
-              <component id="292eb" class="javax.swing.JLabel" binding="myManageTargetsLabel" custom-create="true" default-binding="true">
+              <component id="292eb" class="com.intellij.ui.components.ActionLink" binding="myManageTargetsLabel" custom-create="true" default-binding="true">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false">
                     <preferred-size width="115" height="16"/>

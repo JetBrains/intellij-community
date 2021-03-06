@@ -44,7 +44,7 @@ class CStyleCommentPredicate implements PsiElementPredicate {
       return false;
     }
     final String whitespaceText = sibling.getText();
-    return whitespaceText.indexOf((int)'\n') >= 0 ||
-           whitespaceText.indexOf((int)'\r') >= 0;
+    return whitespaceText.indexOf('\n') >= 0 ||
+           whitespaceText.indexOf('\r') >= 0;
   }
 }

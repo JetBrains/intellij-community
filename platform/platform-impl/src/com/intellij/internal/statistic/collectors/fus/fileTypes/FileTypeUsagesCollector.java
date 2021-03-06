@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -36,10 +38,10 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
   private final EventLogGroup GROUP = new EventLogGroup("file.types", 3);
 
-  private final EventId3<Object, String, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
+  private final EventId3<Object, FileType, Integer> FILE_IN_PROJECT = GROUP.registerEvent(
     "file.in.project",
     EventFields.PluginInfoFromInstance,
-    EventFields.String("file_type").withCustomRule("file_type"),
+    EventFields.FileType,
     EventFields.Int("count")
   );
 
@@ -76,20 +78,11 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
         Integer count = counter.get();
         if (count != 0) {
-          events.add(FILE_IN_PROJECT.metric(fileType, getSafeFileTypeName(fileType), StatisticsUtil.getNextPowerOfTwo(count)));
+          events.add(FILE_IN_PROJECT.metric(fileType, fileType, StatisticsUtil.getNextPowerOfTwo(count)));
         }
       }).wrapProgress(indicator).expireWith(project).submit(NonUrgentExecutor.getInstance()));
     }
     return ((CancellablePromise<Set<MetricEvent>>)Promises.all(promises).then(o -> events));
-  }
-
-  @NotNull
-  public static FeatureUsageData newFeatureUsageData(@NotNull FileType type) {
-    final FeatureUsageData data = new FeatureUsageData();
-    final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(type.getClass());
-    data.addPluginInfo(info);
-    data.addData("file_type", getSafeFileTypeName(type));
-    return data;
   }
 
   public static String getSafeFileTypeName(@NotNull FileType fileType) {
@@ -97,7 +90,7 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return info.isDevelopedByJetBrains() ? fileType.getName() : DEFAULT_ID;
   }
 
-  public static class ValidationRule extends CustomWhiteListRule {
+  public static class ValidationRule extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "file_type".equals(ruleId);

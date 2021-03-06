@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,28 +6,13 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class RunAnythingScrollingUtil {
-
-  /**
-   * @deprecated unused
-   */
-  @NonNls
-  @Deprecated
-  protected static final String SELECT_PREVIOUS_ROW_ACTION_ID = ListActions.Up.ID;
-
-  /**
-   * @deprecated unused
-   */
-  @NonNls
-  @Deprecated
-  protected static final String SELECT_NEXT_ROW_ACTION_ID = ListActions.Down.ID;
+public final class RunAnythingScrollingUtil {
 
   public static void installActions(@NotNull JList list,
                                     @NotNull JTextField focusParent,

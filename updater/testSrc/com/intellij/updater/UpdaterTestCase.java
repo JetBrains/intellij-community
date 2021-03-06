@@ -26,7 +26,7 @@ public abstract class UpdaterTestCase {
   protected CheckSums CHECKSUMS;
 
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     dataDir = PathManagerEx.findFileUnderCommunityHome("updater/testData");
 
     Runner.checkCaseSensitivity(dataDir.getPath());
@@ -40,7 +40,7 @@ public abstract class UpdaterTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     Utils.cleanup();
   }
 
@@ -68,7 +68,7 @@ public abstract class UpdaterTestCase {
 
     public CheckSums(boolean crLfs, boolean backwardSlashes) {
       README_TXT = crLfs ? 1272723667L : 7256327L;
-      IDEA_BAT = crLfs ? 3088608749L : 1493936069L;
+      IDEA_BAT = crLfs ? 3088608749L : 2420230276L;
       LINK_TO_DOT_README_TXT = backwardSlashes ? 2305843011210142148L : 2305843009503057206L;
     }
   }

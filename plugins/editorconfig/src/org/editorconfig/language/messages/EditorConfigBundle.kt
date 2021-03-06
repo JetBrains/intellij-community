@@ -2,6 +2,7 @@
 package org.editorconfig.language.messages
 
 import com.intellij.DynamicBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
@@ -12,16 +13,20 @@ private const val BUNDLE_NAME: String = "messages.EditorConfigBundle"
 object EditorConfigBundle : DynamicBundle(BUNDLE_NAME) {
   const val BUNDLE = BUNDLE_NAME
 
+  @Nls
   fun get(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) =
     getMessage(key, *params)
 
   @Suppress("RemoveRedundantSpreadOperator")
+  @Nls
   operator fun get(@PropertyKey(resourceBundle = BUNDLE) key: String) = get(key, *emptyArray())
 
   @JvmStatic
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String) = EditorConfigBundle[key]
+  @Nls
+  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String) = get(key)
 
   @JvmStatic
+  @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, param: String) = get(key, param)
 
   @JvmStatic

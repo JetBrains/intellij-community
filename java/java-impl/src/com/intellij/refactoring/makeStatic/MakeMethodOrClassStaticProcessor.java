@@ -18,6 +18,7 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.model.PsiElementUsageInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -196,21 +197,10 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
   private static void createInaccessibleFieldsConflictDescription(ArrayList<PsiField> inaccessible, PsiElement container,
                                                                                      MultiMap<PsiElement, String> conflicts) {
-    if (inaccessible.size() == 1) {
-      final PsiField field = inaccessible.get(0);
-      conflicts.putValue(field, JavaRefactoringBundle.message("field.0.is.not.accessible",
-                                       CommonRefactoringUtil.htmlEmphasize(field.getName()),
-                                       RefactoringUIUtil.getDescription(container, true)));
-    } else {
-
-      for (int j = 0; j < inaccessible.size(); j++) {
-        PsiField field = inaccessible.get(j);
-        conflicts.putValue(field, JavaRefactoringBundle.message("field.0.is.not.accessible",
-                                       CommonRefactoringUtil.htmlEmphasize(field.getName()),
-                                       RefactoringUIUtil.getDescription(container, true)));
-
-
-      }
+    for (PsiField field : inaccessible) {
+      conflicts.putValue(field, JavaRefactoringBundle.message(
+        "field.0.is.not.accessible", CommonRefactoringUtil.htmlEmphasize(field.getName()), 
+        RefactoringUIUtil.getDescription(container, true)));
     }
   }
 
@@ -248,7 +238,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         if (qualifier instanceof PsiThisExpression) qualifier = null;
       }
       if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
-        result.add(new UsageInfo(element));
+        result.add(new PsiElementUsageInfo(element));
       }
 
       processExternalReference(element, method, result);

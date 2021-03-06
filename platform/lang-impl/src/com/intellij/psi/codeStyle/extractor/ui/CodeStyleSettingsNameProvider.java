@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
@@ -11,6 +12,8 @@ import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentatio
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation.SettingsGroup;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +36,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   protected void addSetting(@NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting, @Nullable OptionAnchor anchor,
-                            @Nullable String anchorFieldName) {
+                            @Nullable @Nls String anchorFieldName) {
     for (Map.Entry<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> entry: mySettings.entrySet()) {
       if (entry.getValue().containsKey(group)) {
         addSetting(entry.getKey(), group, setting, anchor, anchorFieldName);
@@ -44,7 +47,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   protected void addSetting(@NotNull SettingsType settingsType, @NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting,
-                            @Nullable OptionAnchor anchor, @Nullable String anchorFieldName) {
+                            @Nullable OptionAnchor anchor, @Nullable @Nls String anchorFieldName) {
     Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> groups = mySettings.get(settingsType);
     if (groups == null) {
       groups = new LinkedHashMap<>();
@@ -105,13 +108,22 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title, @Nullable String groupName, Object... options) {
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NotNull @NonNls String fieldName,
+                               @NotNull @NlsContexts.Label String title,
+                               @Nls @Nullable String groupName,
+                               Object... options) {
     showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, @NotNull String fieldName, @NotNull String title,
-                               @Nullable String groupName, @Nullable OptionAnchor anchor, @Nullable String anchorFieldName, Object... options) {
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NonNls @NotNull String fieldName,
+                               @NlsContexts.Label @NotNull String title,
+                               @Nls @Nullable String groupName,
+                               @Nullable OptionAnchor anchor,
+                               @Nls @Nullable String anchorFieldName,
+                               Object... options) {
     if (options.length == 2) {
       addSetting(new SettingsGroup(groupName), new CodeStyleSelectSettingPresentation(fieldName, title, (int[])options[1],
                                                                                         (String[])options[0]), anchor, anchorFieldName);
@@ -121,7 +133,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   @Override
-  public void renameStandardOption(String fieldName, String newTitle) {
+  public void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
     for (SettingsType settingsType : SettingsType.values()) {
       Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = mySettings.get(settingsType);
       if (standardGroups == null) {
@@ -139,7 +151,7 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
   }
 
   @Override
-  public void moveStandardOption(String fieldName, String newGroup) {
+  public void moveStandardOption(@NonNls @NotNull String fieldName, @Nls @NotNull String newGroup) {
     for (SettingsType settingsType : SettingsType.values()) {
       Map<SettingsGroup, List<CodeStyleSettingPresentation>> standardGroups = mySettings.get(settingsType);
       if (standardGroups == null) {
@@ -162,13 +174,13 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
     }
   }
 
-  public static String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
+  public static @Nls String getSettingsTypeName(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
     switch (settingsType) {
       case BLANK_LINES_SETTINGS: return ApplicationBundle.message("title.blank.lines");
       case SPACING_SETTINGS: return ApplicationBundle.message("title.spaces");
-      case WRAPPING_AND_BRACES_SETTINGS: return ApplicationBundle.message("wrapping.and.braces");
+      case WRAPPING_AND_BRACES_SETTINGS: return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
       case INDENT_SETTINGS: return ApplicationBundle.message("title.tabs.and.indents");
-      case LANGUAGE_SPECIFIC: return "Language-specific"; //TODO should load from ApplciationBundle here
+      case LANGUAGE_SPECIFIC: return ApplicationBundle.message("code.style.title.lang.specific");
       default: throw new IllegalArgumentException("Unknown settings type: " + settingsType);
     }
   }

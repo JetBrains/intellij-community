@@ -72,13 +72,6 @@ public interface RunContentManager {
 
   void selectRunContent(@NotNull RunContentDescriptor descriptor);
 
-  /** @deprecated use {@link #getContentDescriptorToolWindowId(RunConfiguration)} */
-  @Nullable
-  @Deprecated
-  default String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {
-    return getContentDescriptorToolWindowId(settings != null ? settings.getConfiguration() : null);
-  }
-
   /**
    * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
    */

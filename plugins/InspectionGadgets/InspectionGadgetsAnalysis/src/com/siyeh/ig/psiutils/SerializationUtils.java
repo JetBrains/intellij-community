@@ -20,7 +20,10 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SerializationUtils {
+import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
+import static com.intellij.psi.PsiModifier.*;
+
+public final class SerializationUtils {
 
   private SerializationUtils() {}
 
@@ -96,12 +99,39 @@ public class SerializationUtils {
     return MethodUtils.methodMatches(method, null, PsiType.VOID, "writeObject", type);
   }
 
+  public static boolean isReadObjectNoData(@NotNull PsiMethod method) {
+    return MethodUtils.methodMatches(method, null, PsiType.VOID, "readObjectNoData");
+  }
+
   public static boolean isReadResolve(@NotNull PsiMethod method) {
     return MethodUtils.simpleMethodMatches(method, null, CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
   }
 
   public static boolean isWriteReplace(@NotNull PsiMethod method) {
     return MethodUtils.simpleMethodMatches(method, null, CommonClassNames.JAVA_LANG_OBJECT, "writeReplace");
+  }
+
+  public static boolean isReadExternal(@NotNull PsiMethod method) {
+    final PsiClassType type = TypeUtils.getType("java.io.ObjectInput", method);
+    return MethodUtils.methodMatches(method, null, PsiType.VOID, "readExternal", type);
+  }
+
+  public static boolean isWriteExternal(@NotNull PsiMethod method) {
+    final PsiClassType type = TypeUtils.getType("java.io.ObjectOutput", method);
+    return MethodUtils.methodMatches(method, null, PsiType.VOID, "writeExternal", type);
+  }
+
+  public static boolean isSerialVersionUid(@NotNull PsiField field) {
+    return isConstant(field) && field.getName().equals(SERIAL_VERSION_UID_FIELD_NAME) && field.getType().equals(PsiType.LONG);
+  }
+
+  public static boolean isSerialPersistentFields(@NotNull PsiField field) {
+    return isConstant(field) && field.getName().equals("serialPersistentFields") &&
+           field.getType().equalsToText("java.io.ObjectStreamField[]");
+  }
+
+  private static boolean isConstant(@NotNull PsiField field) {
+    return field.hasModifierProperty(PRIVATE) && field.hasModifierProperty(STATIC) && field.hasModifierProperty(FINAL);
   }
 
   public static boolean isProbablySerializable(PsiType type) {

@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -41,13 +42,13 @@ public class ReplaceWithXslAttribute implements IntentionAction {
     @Override
     @NotNull
     public String getText() {
-        return "Replace with 'xsl:attribute'";
+        return getFamilyName();
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Replace with xsl:attribute";
+        return XPathBundle.message("intention.family.name.replace.with.xsl.attribute");
     }
 
     @Override

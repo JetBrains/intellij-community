@@ -27,12 +27,12 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
     if ((parent instanceof PsiMethod || parent instanceof PsiField) && parent.getParent() instanceof PsiClass) {
       // record R() {} is parsed as method if records aren't supported
       // record R incomplete declaration is also possible
-      HighlightUtil.registerIncreaseLanguageLevelFixes(registrar, ref, HighlightingFeature.RECORDS);
+      HighlightUtil.registerIncreaseLanguageLevelFixes(ref, HighlightingFeature.RECORDS, registrar);
     }
     if (parent instanceof PsiLocalVariable && parent.getParent() instanceof PsiDeclarationStatement
         && ((PsiDeclarationStatement)parent.getParent()).getDeclaredElements().length == 1) {
       // record R() declaration inside method
-      HighlightUtil.registerIncreaseLanguageLevelFixes(registrar, ref, HighlightingFeature.RECORDS);
+      HighlightUtil.registerIncreaseLanguageLevelFixes(ref, HighlightingFeature.RECORDS, registrar);
     }
   }
 
@@ -46,7 +46,7 @@ public class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFix
     else {
       feature = HighlightingFeature.LVTI;
     }
-    HighlightUtil.registerIncreaseLanguageLevelFixes(registrar, ref, feature);
+    HighlightUtil.registerIncreaseLanguageLevelFixes(ref, feature, registrar);
   }
 
   @NotNull

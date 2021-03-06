@@ -35,7 +35,7 @@ import static com.intellij.openapi.util.Pair.pair;
 public class JavaModuleRenameListener implements ModuleListener {
   @Override
   @SuppressWarnings("BoundedWildcard")
-  public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+  public void modulesRenamed(@NotNull Project project, @NotNull List<? extends Module> modules, @NotNull Function<? super Module, String> oldNameProvider) {
     List<Pair<SmartPsiElementPointer<PsiJavaModule>, String>> suggestions = new ArrayList<>();
 
     for (Module module : modules) {
@@ -65,7 +65,7 @@ public class JavaModuleRenameListener implements ModuleListener {
       }
     }
 
-    if (!renamer.getElements().isEmpty()) {
+    if (renamer.hasAnythingToRename()) {
       AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(project, renamer);
       dialog.showOptionsPanel();
 

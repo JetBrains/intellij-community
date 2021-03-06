@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public class MoveFilesOrDirectoriesUtil {
+public final class MoveFilesOrDirectoriesUtil {
   private MoveFilesOrDirectoriesUtil() { }
 
   /**
@@ -45,7 +46,9 @@ public class MoveFilesOrDirectoriesUtil {
     catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
-    DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
+    if (ModelBranch.getPsiBranch(destDirectory) == null) {
+      DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
+    }
   }
 
   /**
@@ -61,10 +64,7 @@ public class MoveFilesOrDirectoriesUtil {
       // do actual move
       checkMove(file, newDirectory);
 
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile == null) {
-        throw new IncorrectOperationException("Non-physical file: " + file + " (" + file.getClass() + ")");
-      }
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
 
       try {
         vFile.move(file.getManager(), newDirectory.getVirtualFile());
@@ -92,7 +92,7 @@ public class MoveFilesOrDirectoriesUtil {
                             final PsiElement[] elements,
                             final PsiElement[] targetElement,
                             final MoveCallback moveCallback,
-                            final Function<PsiElement[], PsiElement[]> adjustElements) {
+                            final Function<? super PsiElement[], ? extends PsiElement[]> adjustElements) {
     if (adjustElements == null) {
       for (PsiElement element : elements) {
         if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
@@ -144,7 +144,8 @@ public class MoveFilesOrDirectoriesUtil {
         for (PsiElement psiElement : adjustedElements) {
           if (psiElement instanceof PsiFile) {
             PsiFile file = (PsiFile)psiElement;
-            if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), "Move")) continue;
+            if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(),
+                                                             RefactoringBundle.message("command.name.move"))) continue;
           }
           checkMove(psiElement, targetDirectory);
           els.add(psiElement);

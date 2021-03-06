@@ -20,17 +20,41 @@ package com.intellij.remoteServer.agent.util.log;
  */
 public interface LogListener {
 
+  // TODO: rename lineLogged -> print
   void lineLogged(String line);
+
+  void printHyperlink(String line, Runnable action);
 
   void close();
 
+  void clear();
+
+  void scrollTo(int offset);
+
   LogListener NULL = new LogListener() {
 
+    @Override
     public void lineLogged(String line) {
       //
     }
 
+    @Override
+    public void printHyperlink(String line, Runnable action) {
+      //
+    }
+
+    @Override
     public void close() {
+      //
+    }
+
+    @Override
+    public void clear() {
+      //
+    }
+
+    @Override
+    public void scrollTo(int offset) {
       //
     }
   };

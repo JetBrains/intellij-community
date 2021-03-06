@@ -1,28 +1,37 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
+import org.jetbrains.jps.model.library.JpsLibrary
 
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
-class CommunityStandaloneJpsBuilder {
+@CompileStatic
+final class CommunityStandaloneJpsBuilder {
   private final BuildContext buildContext
 
   CommunityStandaloneJpsBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   void processJpsLayout(String targetDir, String buildNumber, ProjectStructureMapping projectStructureMapping,
                         boolean copyFiles, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
-    def context = buildContext
+    BuildContext context = buildContext
     new LayoutBuilder(buildContext, false).process(targetDir, projectStructureMapping, copyFiles) {
       zip(getZipName(buildNumber)) {
         jar("util.jar") {
           module("intellij.platform.util.rt")
           module("intellij.platform.util")
           module("intellij.platform.util.classLoader")
+          module("intellij.platform.util.text.matching")
+          module("intellij.platform.util.collections")
+          module("intellij.platform.util.strings")
+          module("intellij.platform.util.diagnostic")
         }
 
         jar("jps-launcher.jar") {
@@ -39,7 +48,6 @@ class CommunityStandaloneJpsBuilder {
           module("intellij.java.guiForms.compiler")
           module("intellij.java.compiler.instrumentationUtil")
           module("intellij.java.compiler.instrumentationUtil.java8")
-          module("intellij.java.jps.javacRefScanner8")
           module("intellij.platform.jps.build")
           module("intellij.tools.jps.build.standalone")
         }
@@ -49,42 +57,40 @@ class CommunityStandaloneJpsBuilder {
         jar("jps-builders-6.jar") {
           module("intellij.platform.jps.build.javac.rt")
         }
+        dir("rt") {
+          jar("jps-javac-rt-rpc.jar") {
+            module("intellij.platform.jps.build.javac.rt.rpc")
+          }
+          moduleLibrary("intellij.platform.jps.build.javac.rt.rpc", "protobuf-java6")
+        }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
-        jar("groovy-jps-plugin.jar") {
-          module("intellij.groovy.jps")
-        }
-        jar("groovy_rt.jar") {
-          module("intellij.groovy.rt")
-        }
-        jar("groovy-rt-constants.jar") {
-          module("intellij.groovy.constants.rt")
-        }
-        jar("ui-designer-jps-plugin.jar") { module("intellij.java.guiForms.jps") }
+        jar("groovy-jps.jar") { module("intellij.groovy.jps") }
+        jar("groovy-rt.jar") { module("intellij.groovy.rt") }
+        jar("groovy-constants-rt.jar") { module("intellij.groovy.constants.rt") }
+        jar("java-guiForms-jps.jar") { module("intellij.java.guiForms.jps") }
 
 
-        jar("maven-jps-plugin.jar") { module("intellij.maven.jps") }
+        jar("maven-jps.jar") { module("intellij.maven.jps") }
         jar("aether-dependency-resolver.jar") { module("intellij.java.aetherDependencyResolver") }
-        jar("gradle-jps-plugin.jar") { module("intellij.gradle.jps") }
+        jar("gradle-jps.jar") { module("intellij.gradle.jps") }
 
-        jar("eclipse-jps-plugin.jar") {
-          module("intellij.eclipse.common")
-          module("intellij.eclipse.jps")
-        }
-        jar("devkit-jps-plugin.jar") { module("intellij.devkit.jps") }
-        jar("intellilang-jps-plugin.jar") { module("intellij.java.langInjection.jps") }
+        jar("eclipse-jps.jar") { module("intellij.eclipse.jps") }
+        jar("eclipse-common.jar") { module("intellij.eclipse.common") }
+        jar("devkit-jps.jar") { module("intellij.devkit.jps") }
+        jar("java-langInjection-jps.jar") { module("intellij.java.langInjection.jps") }
 
-        [
+        for (String name in List.of(
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5", "qdox-java-parser", "gson"
-        ].each {
-          projectLibrary(it)
+          "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8"
+        )) {
+          projectLibrary(name)
         }
-        context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries.each {
-          jpsLibrary(it)
+        for (JpsLibrary library in context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries) {
+          jpsLibrary(library)
         }
 
-        jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
+        jar("ant-jps.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }
       jar("jps-build-test-${buildNumber}.jar") {
@@ -97,6 +103,6 @@ class CommunityStandaloneJpsBuilder {
   }
 
   static String getZipName(String buildNumber) {
-    "standalone-jps-${buildNumber}.zip"
+    return "standalone-jps-${buildNumber}.zip"
   }
 }

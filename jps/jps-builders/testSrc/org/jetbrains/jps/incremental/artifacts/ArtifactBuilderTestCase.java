@@ -138,7 +138,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertDeletedAndCopied(String[] deletedPaths, String... copiedPaths) {
-    assertCompiled(IncArtifactBuilder.BUILDER_NAME, copiedPaths);
+    assertCompiled(IncArtifactBuilder.BUILDER_ID, copiedPaths);
     super.assertDeleted(deletedPaths);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,10 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-/**
- * @author dsl
- */
-public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
+public final class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerContainer.class);
   private static final int UNINITIALIZED = -1;
   @NotNull private final ConcurrentList<VirtualFilePointer> myList = ContainerUtil.createConcurrentList();
@@ -191,7 +189,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   public String @NotNull [] getUrls() {
     if (myTimeStampOfCachedThings == UNINITIALIZED) {
       // optimization: when querying urls, and nothing was cached yet, do not access disk (in cacheThings()) - can be expensive
-      return myList.stream().map(VirtualFilePointer::getUrl).toArray(String[]::new);
+      return ContainerUtil.map2Array(myList, ArrayUtil.EMPTY_STRING_ARRAY, VirtualFilePointer::getUrl);
     }
     return getOrCache().first;
   }

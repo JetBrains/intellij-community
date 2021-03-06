@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing
 
-import com.intellij.openapi.externalSystem.util.use as utilUse
 import com.intellij.ide.actions.ImportModuleAction
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -17,17 +17,17 @@ import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.replaceService
-import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import java.awt.Component
+import com.intellij.openapi.externalSystem.util.use as utilUse
 
 interface ExternalSystemSetupProjectTestCase {
-
   data class ProjectInfo(val projectFile: VirtualFile, val modules: List<String>) {
     constructor(projectFile: VirtualFile, vararg modules: String) : this(projectFile, modules.toList())
   }
@@ -36,36 +36,29 @@ interface ExternalSystemSetupProjectTestCase {
 
   fun getSystemId(): ProjectSystemId
 
-  fun assertDefaultProjectSettings(project: Project)
+  fun assertDefaultProjectSettings(project: Project) {}
 
-  fun attachProject(project: Project, projectFile: VirtualFile) {
-    doAttachProject(project, projectFile)
-    waitForImportCompletion(project)
-  }
+  fun assertDefaultProjectState(project: Project) {}
 
-  fun attachProjectFromScript(project: Project, projectFile: VirtualFile) {
-    doAttachProjectFromScript(project, projectFile)
-    waitForImportCompletion(project)
-  }
+  fun attachProject(project: Project, projectFile: VirtualFile)
 
-  fun doAttachProject(project: Project, projectFile: VirtualFile)
-  fun doAttachProjectFromScript(project: Project, projectFile: VirtualFile)
-  fun waitForImportCompletion(project: Project)
+  fun attachProjectFromScript(project: Project, projectFile: VirtualFile)
+
+  fun <R> waitForImport(action: () -> R): R
 
   fun openPlatformProjectFrom(projectDirectory: VirtualFile): Project {
-    return invokeAndWaitIfNeeded {
-      val openProcessor = PlatformProjectOpenProcessor.getInstance()
-      openProcessor.doOpenProject(projectDirectory, null, true)!!
-    }
+    return ProjectManagerEx.getInstanceEx()
+      .openProject(
+        projectDirectory.toNioPath(),
+        OpenProjectTask(
+          forceOpenInNewFrame = true,
+          useDefaultProjectAsTemplate = false,
+          isRefreshVfsNeeded = false
+        )
+      )!!
   }
 
-  fun openProjectFrom(projectFile: VirtualFile): Project {
-    return detectOpenedProject {
-      invokeAndWaitIfNeeded {
-        ProjectUtil.openOrImport(projectFile.path, null, true)
-      }
-    }
-  }
+  fun openProjectFrom(projectFile: VirtualFile) = Companion.openProjectFrom(projectFile)
 
   fun importProjectFrom(projectFile: VirtualFile): Project {
     return detectOpenedProject {
@@ -74,10 +67,19 @@ interface ExternalSystemSetupProjectTestCase {
   }
 
   fun assertModules(project: Project, vararg projectInfo: ProjectInfo) {
-    val expectedNames = projectInfo.flatMap { it.modules }
+    val expectedNames = projectInfo.flatMap { it.modules }.toSet()
     val actual = ModuleManager.getInstance(project).modules
-    val actualNames = actual.map { it.name }
-    assertEquals(HashSet(expectedNames), HashSet(actualNames))
+    val actualNames = actual.map { it.name }.toSet()
+    val truePositive = expectedNames.intersect(actualNames)
+    val falseNegative = expectedNames.minus(actualNames)
+    val falsePositive = actualNames.minus(expectedNames)
+    val hasErrors = falseNegative.isEmpty() && falsePositive.isEmpty()
+    assertTrue("""
+        Found unexpected or not found expected modules
+        TP: $truePositive
+        FN: $falseNegative
+        FP: $falsePositive
+      """.trimIndent(), hasErrors)
   }
 
   fun AnAction.perform(project: Project? = null, selectedFile: VirtualFile? = null) {
@@ -116,13 +118,6 @@ interface ExternalSystemSetupProjectTestCase {
     }
   }
 
-  private fun detectOpenedProject(action: () -> Unit): Project {
-    val projectManager = ProjectManager.getInstance()
-    val openProjects = projectManager.openProjects.map { it.name }.toSet()
-    action()
-    return projectManager.openProjects.first { it.name !in openProjects }
-  }
-
   fun cleanupProjectTestResources(project: Project) {}
 
   fun Project.use(save: Boolean = false, action: (Project) -> Unit) {
@@ -133,6 +128,23 @@ interface ExternalSystemSetupProjectTestCase {
       finally {
         cleanupProjectTestResources(this)
       }
+    }
+  }
+
+  companion object {
+    fun openProjectFrom(projectFile: VirtualFile): Project {
+      return detectOpenedProject {
+        invokeAndWaitIfNeeded {
+          ProjectUtil.openOrImport(projectFile.toNioPath())
+        }
+      }
+    }
+
+    private fun detectOpenedProject(action: () -> Unit): Project {
+      val projectManager = ProjectManager.getInstance()
+      val openProjects = projectManager.openProjects.toSet()
+      action()
+      return projectManager.openProjects.first { it !in openProjects }
     }
   }
 }

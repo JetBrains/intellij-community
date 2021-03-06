@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -54,8 +55,9 @@ public class PythonFileType extends LanguageFileType {
 
   @Override
   @NotNull
+  @NlsSafe
   public String getDescription() {
-    return PyPsiApiBundle.message("python.file.type");
+    return "Python";
   }
 
   @Override

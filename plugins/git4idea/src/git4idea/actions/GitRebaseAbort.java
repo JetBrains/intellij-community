@@ -17,15 +17,19 @@ package git4idea.actions;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 public class GitRebaseAbort extends GitAbstractRebaseAction {
+
+  @NlsContexts.ProgressTitle
   @NotNull
   @Override
   protected String getProgressTitle() {
-    return "Aborting Rebase Process...";
+    return GitBundle.message("rebase.progress.indicator.aborting.title");
   }
 
   @Override

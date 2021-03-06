@@ -20,10 +20,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -219,13 +222,7 @@ public class PyOverrideImplementUtil {
 
       if (namedParameter != null) {
         final StringBuilder parameterBuilder = new StringBuilder();
-        if (namedParameter.isPositionalContainer()) {
-          parameterBuilder.append("*");
-        }
-        else if (namedParameter.isKeywordContainer()) {
-          parameterBuilder.append("**");
-        }
-        parameterBuilder.append(namedParameter.getName());
+        parameterBuilder.append(ParamHelper.getNameInSignature(namedParameter));
         final PyAnnotation annotation = namedParameter.getAnnotation();
         if (annotation != null && !level.isPython2()) {
           parameterBuilder.append(annotation.getText());
@@ -378,7 +375,7 @@ public class PyOverrideImplementUtil {
     private final List<PyReferenceExpression> myUnresolved = new ArrayList<>();
 
     @Override
-    public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
+    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression referenceExpression) {
       super.visitPyReferenceExpression(referenceExpression);
       final PyResolveContext resolveContext = PyResolveContext.defaultContext();
       if (referenceExpression.getReference(resolveContext).multiResolve(false).length == 0) {
@@ -416,7 +413,7 @@ public class PyOverrideImplementUtil {
     }
 
     @Override
-    public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
+    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression referenceExpression) {
       super.visitPyReferenceExpression(referenceExpression);
 
       if (myExpressionsToResolve.containsKey(referenceExpression.getName())) {

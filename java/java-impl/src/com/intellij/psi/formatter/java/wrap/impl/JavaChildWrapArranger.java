@@ -71,7 +71,9 @@ public class JavaChildWrapArranger {
     IElementType nodeType = parent.getElementType();
     IElementType childType = child.getElementType();
 
-    if (childType == JavaElementType.EXTENDS_LIST || childType == JavaElementType.IMPLEMENTS_LIST) {
+    if (childType == JavaElementType.EXTENDS_LIST ||
+        childType == JavaElementType.IMPLEMENTS_LIST ||
+        childType == JavaElementType.PERMITS_LIST) {
       return Wrap.createWrap(settings.EXTENDS_KEYWORD_WRAP, true);
     }
 
@@ -81,6 +83,7 @@ public class JavaChildWrapArranger {
 
     else if (nodeType == JavaElementType.EXTENDS_LIST ||
              nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.PERMITS_LIST ||
              nodeType == JavaElementType.THROWS_LIST) {
       return role == ChildRole.REFERENCE_IN_LIST ? suggestedWrap : null;
     }
@@ -287,6 +290,9 @@ public class JavaChildWrapArranger {
     }
 
     if (nodeType == JavaElementType.CLASS) {
+      if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        return CommonCodeStyleSettings.DO_NOT_WRAP;
+      }
       // There is a possible case that current document state is invalid from language syntax point of view, e.g. the user starts
       // typing field definition and re-formatting is triggered by 'auto insert javadoc' processing. Example:
       //     class Test {

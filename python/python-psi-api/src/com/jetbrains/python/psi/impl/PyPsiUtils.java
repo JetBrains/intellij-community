@@ -98,7 +98,7 @@ public final class PyPsiUtils {
   }
 
   /**
-   * Finds first non-whitespace sibling after given PSI element but stops at first whitespace containing line feed.
+   * Returns the first non-whitespace sibling following the given element but within its line boundaries.
    */
   @Nullable
   public static PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
@@ -111,6 +111,24 @@ public final class PyPsiUtils {
         break;
       }
       cur = cur.getNextSibling();
+    }
+    return null;
+  }
+
+  /**
+   * Returns the first non-whitespace sibling preceding the given element but within its line boundaries.
+   */
+  @Nullable
+  public static PsiElement getPrevNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
+    PsiElement cur = element.getPrevSibling();
+    while (cur != null) {
+      if (!(cur instanceof PsiWhiteSpace)) {
+        return cur;
+      }
+      else if (cur.textContains('\n')) {
+        break;
+      }
+      cur = cur.getPrevSibling();
     }
     return null;
   }
@@ -609,18 +627,18 @@ public final class PyPsiUtils {
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
     @Override
-    public void visitPyElement(final PyElement node) {
+    public void visitPyElement(final @NotNull PyElement node) {
       super.visitPyElement(node);
       checkAddElement(node);
     }
 
     @Override
-    public void visitPyClass(final PyClass node) {
+    public void visitPyClass(final @NotNull PyClass node) {
       checkAddElement(node);  // do not recurse into functions
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node) {
+    public void visitPyFunction(final @NotNull PyFunction node) {
       checkAddElement(node);  // do not recurse into classes
     }
 
@@ -643,5 +661,22 @@ public final class PyPsiUtils {
     else {
       return element.getText();
     }
+  }
+
+  @Nullable
+  public static PsiComment findSameLineComment(@NotNull PsiElement elem) {
+    // If `elem` is a compound multi-line element, stick to its first line nonetheless
+    PsiElement next = PsiTreeUtil.getDeepestFirst(elem);
+    do {
+      if (next instanceof PsiComment) {
+        return (PsiComment)next;
+      }
+      if (next != elem && next.textContains('\n')) {
+        break;
+      }
+      next = PsiTreeUtil.nextLeaf(next);
+    }
+    while (next != null);
+    return null;
   }
 }

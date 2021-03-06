@@ -1,9 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -15,15 +18,12 @@ import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SelectedBlockHistoryAction extends AbstractVcsAction {
+public class SelectedBlockHistoryAction extends DumbAwareAction {
 
-  protected boolean isEnabled(VcsContext context) {
-    Project project = context.getProject();
-    if (project == null) return false;
-
-    VcsSelection selection = VcsSelectionUtil.getSelection(context);
-    if (selection == null) return false;
+  private static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
+    if (project == null || selection == null) return false;
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
     if (file == null) return false;
@@ -40,11 +40,11 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final VcsContext context) {
-    final Project project = context.getProject();
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
     assert project != null;
 
-    final VcsSelection selection = VcsSelectionUtil.getSelection(context);
+    final VcsSelection selection = VcsSelectionUtil.getSelection(event.getDataContext());
     assert selection != null;
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
@@ -71,15 +71,19 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
   }
 
   @Override
-  protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
-    Editor editor = context.getEditor();
+  public void update(@NotNull AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null) {
       presentation.setEnabledAndVisible(false);
       return;
     }
 
-    presentation.setEnabled(isEnabled(context));
-    VcsSelection selection = VcsSelectionUtil.getSelection(context);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    VcsSelection selection = VcsSelectionUtil.getSelection(event.getDataContext());
+
+    presentation.setEnabled(isEnabled(project, selection));
     if (selection != null) {
       presentation.setText(selection.getActionName());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,11 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class GraphAlgorithmsImpl extends GraphAlgorithms {
-  @Override
-  public <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish) {
-    return findShortestPath((InboundSemiGraph<Node>)graph, start, finish);
-  }
+public final class GraphAlgorithmsImpl extends GraphAlgorithms {
 
   @Nullable
   @Override

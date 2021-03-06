@@ -37,7 +37,7 @@ public class OrderRootsCache {
     if (myRootsDisposable != null) {
       Disposer.dispose(myRootsDisposable);
     }
-    if (!Disposer.isDisposing(myParentDisposable)) {
+    if (!Disposer.isDisposed(myParentDisposable)) {
       Disposer.register(myParentDisposable, myRootsDisposable = Disposer.newDisposable());
     }
   }
@@ -64,18 +64,18 @@ public class OrderRootsCache {
     CacheKey key = new CacheKey(rootType, flags);
     VirtualFilePointerContainer cached = map == null ? null : map.get(key);
     if (cached == null) {
-      map = ConcurrencyUtil.cacheOrGet(myRoots, new ConcurrentHashMap<CacheKey, VirtualFilePointerContainer>());
+      map = ConcurrencyUtil.cacheOrGet(myRoots, new ConcurrentHashMap<>());
       cached = map.computeIfAbsent(key, __ -> createContainer(rootUrlsComputer.get()));
     }
     return cached == EMPTY ? null : cached;
   }
 
-  VirtualFile @NotNull [] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+  public VirtualFile @NotNull [] getOrComputeRoots(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
     VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
     return container == null ? VirtualFile.EMPTY_ARRAY : container.getFiles();
   }
 
-  String @NotNull [] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
+  public String @NotNull [] getOrComputeUrls(@NotNull OrderRootType rootType, int flags, @NotNull Supplier<? extends Collection<String>> computer) {
     VirtualFilePointerContainer container = getOrComputeContainer(rootType, flags, computer);
     return container == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : container.getUrls();
   }
@@ -87,11 +87,11 @@ public class OrderRootsCache {
     myRoots.set(null);
   }
 
-  private static final class CacheKey {
+  protected static final class CacheKey {
     private final OrderRootType myRootType;
     private final int myFlags;
 
-    private CacheKey(@NotNull OrderRootType rootType, int flags) {
+    public CacheKey(@NotNull OrderRootType rootType, int flags) {
       myRootType = rootType;
       myFlags = flags;
     }

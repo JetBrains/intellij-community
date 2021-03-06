@@ -17,23 +17,24 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class DefaultMatchResultSink implements MatchResultSink {
   @Override
-  public void newMatch(MatchResult result) {
+  public void newMatch(@NotNull MatchResult result) {
 
   }
 
   @Override
-  public void processFile(PsiFile element) {
+  public void processFile(@NotNull PsiFile element) {
 
   }
 
   @Override
-  public void setMatchingProcess(MatchingProcess matchingProcess) {
+  public void setMatchingProcess(@NotNull MatchingProcess matchingProcess) {
 
   }
 

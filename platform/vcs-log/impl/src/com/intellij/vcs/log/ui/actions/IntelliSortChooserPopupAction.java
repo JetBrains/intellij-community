@@ -20,6 +20,7 @@ import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.event.InputEvent;
 
 public class IntelliSortChooserPopupAction extends DumbAwareAction {
   public IntelliSortChooserPopupAction() {
@@ -40,18 +41,23 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, settingsGroup, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
                               ActionPlaces.TOOLWINDOW_POPUP);
-    Component component = e.getInputEvent().getComponent();
-    if (component instanceof ActionButtonComponent) {
-      popup.showUnderneathOf(component);
-    }
-    else {
-      popup.showInCenterOf(component);
+
+    InputEvent inputEvent = e.getInputEvent();
+    if (inputEvent != null) {
+      Component component = inputEvent.getComponent();
+      if (component instanceof ActionButtonComponent) {
+        popup.showUnderneathOf(component);
+      }
+      else {
+        popup.showInCenterOf(component);
+      }
+    } else {
+      popup.showInFocusCenter();
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabled(properties != null);
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {

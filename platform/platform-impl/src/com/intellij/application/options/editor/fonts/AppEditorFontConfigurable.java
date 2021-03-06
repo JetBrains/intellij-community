@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.ide.IdeBundle;
@@ -8,24 +8,20 @@ import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.LazyInstance;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public final class AppEditorFontConfigurable implements SearchableConfigurable, NoScroll {
+public final class AppEditorFontConfigurable implements SearchableConfigurable, Configurable.NoMargin, NoScroll {
   @NonNls public static final String ID = "editor.preferences.fonts.default";
-  private final LazyInstance<AppEditorFontPanel> myFontPanelInstance = new LazyInstance<AppEditorFontPanel>() {
-    @Override
-    protected Class<AppEditorFontPanel> getInstanceClass() {
-      return AppEditorFontPanel.class;
-    }
-  };
+  private final NotNullLazyValue<AppEditorFontPanel> myFontPanelInstance = NotNullLazyValue.lazy(() -> new AppEditorFontPanel());
 
   @NotNull
   @Override

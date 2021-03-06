@@ -19,6 +19,7 @@ import java.util.TreeSet;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class MergingFileManager implements FileManager {
 
   @Override

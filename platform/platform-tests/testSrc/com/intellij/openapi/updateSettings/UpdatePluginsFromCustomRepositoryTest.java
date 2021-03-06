@@ -18,7 +18,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,7 +34,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     BuildNumber currentBuildNumber = BuildNumber.fromString("IU-142.100");
     for (IdeaPluginDescriptor descriptor : descriptors) {
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, currentBuildNumber);
-      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null);
+      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null, null);
     }
     assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
 

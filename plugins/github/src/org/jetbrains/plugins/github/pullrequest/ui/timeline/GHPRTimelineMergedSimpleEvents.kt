@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import org.jetbrains.plugins.github.api.data.GHLabel
@@ -34,10 +34,14 @@ class GHPRTimelineMergedSimpleEvents : GHPRTimelineMergedEvents<GHPRTimelineEven
       is GHPRAssignedEvent -> if (!_unassignedPeople.remove(event.user)) _assignedPeople.add(event.user)
       is GHPRUnassignedEvent -> if (!_assignedPeople.remove(event.user)) _unassignedPeople.add(event.user)
 
-      is GHPRReviewRequestedEvent -> if (!_removedReviewers.remove(event.requestedReviewer)) _addedReviewers.add(
-        event.requestedReviewer)
-      is GHPRReviewUnrequestedEvent -> if (!_addedReviewers.remove(event.requestedReviewer)) _removedReviewers.add(
-        event.requestedReviewer)
+      is GHPRReviewRequestedEvent -> {
+        val reviewer = event.requestedReviewer
+        if (reviewer != null && !_removedReviewers.remove(reviewer)) _addedReviewers.add(reviewer)
+      }
+      is GHPRReviewUnrequestedEvent -> {
+        val reviewer = event.requestedReviewer
+        if (reviewer != null && !_addedReviewers.remove(reviewer)) _removedReviewers.add(reviewer)
+      }
 
       is GHPRRenamedTitleEvent -> _rename = (_rename?.first ?: event.previousTitle) to event.currentTitle
     }

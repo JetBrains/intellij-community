@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.update.GitUpdateResult;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +20,9 @@ import java.util.List;
  * Includes information about the number of pushed commits (or -1 if undefined),
  * and tells whether the repository was updated after the push was rejected.
  *
- * @see git4idea.push.GitPushNativeResult
+ * @see GitPushNativeResult
  */
-public class GitPushRepoResult {
+public final class GitPushRepoResult {
 
   public enum Type {
     SUCCESS,
@@ -133,16 +121,18 @@ public class GitPushRepoResult {
     return myTargetBranch;
   }
 
+  @NlsSafe
   @Nullable
-  String getError() {
+  public String getError() {
     return myError;
   }
 
   @NotNull
-  List<String> getPushedTags() {
+  List<@NlsSafe String> getPushedTags() {
     return myPushedTags;
   }
 
+  @NlsSafe
   @NotNull
   public String getTargetRemote() {
     return myTargetRemote;
@@ -171,6 +161,7 @@ public class GitPushRepoResult {
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("%s (%d, '%s'), update: %s}", myType, myCommits, mySourceBranch, myUpdateResult);

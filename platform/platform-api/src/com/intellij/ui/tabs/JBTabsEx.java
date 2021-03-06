@@ -3,10 +3,14 @@ package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
+import com.intellij.util.Producer;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Comparator;
 
 /**
@@ -31,7 +35,12 @@ public interface JBTabsEx extends JBTabs {
 
   int getDropInfoIndex();
 
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  int getDropSide();
+
   boolean isEmptyVisible();
 
   void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo);
+
+  void setTitleProducer(@Nullable Producer<Pair<Icon, String>> titleProducer);
 }

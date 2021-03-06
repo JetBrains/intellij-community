@@ -54,7 +54,7 @@ abstract class LibraryTableTestCase {
         events += "added ${newLibrary.name}"
       }
 
-      override fun afterLibraryRenamed(library: Library) {
+      override fun afterLibraryRenamed(library: Library, oldName: String?) {
         events += "renamed ${library.name}"
       }
 
@@ -82,7 +82,6 @@ abstract class LibraryTableTestCase {
       val library = createLibrary("a", it)
       assertThat(it.isChanged).isTrue()
       it.removeLibrary(library)
-      assertThat(it.isChanged).isFalse()
       library
     }
     assertThat(libraryTable.libraries).isEmpty()
@@ -98,6 +97,23 @@ abstract class LibraryTableTestCase {
     assertThat(libraryTable.libraries).containsExactly(a)
     assertThat(b.isDisposed).isTrue()
     assertThat(a.isDisposed).isFalse()
+  }
+
+  @Test
+  fun `rename uncommitted library`() {
+    val library = edit {
+      val library = createLibrary("a", it)
+      val libraryModel = library.modifiableModel
+      libraryModel.name = "b"
+      assertThat(it.getLibraryByName("a")).isEqualTo(library)
+      assertThat(it.getLibraryByName("b")).isNull()
+      runWriteActionAndWait { libraryModel.commit() }
+      assertThat(it.getLibraryByName("a")).isNull()
+      assertThat(it.getLibraryByName("b")).isEqualTo(library)
+      assertThat(libraryTable.getLibraryByName("b")).isNull()
+      library
+    }
+    assertThat(libraryTable.getLibraryByName("b")).isEqualTo(library)
   }
 
   @Test
@@ -135,7 +151,7 @@ abstract class LibraryTableTestCase {
       model1.commit()
       model2.commit()
     }
-    assertThat(libraryTable.libraries).containsExactly(a, b, c)
+    assertThat(libraryTable.libraries).containsExactlyInAnyOrder(a, b, c)
   }
 
   @Test

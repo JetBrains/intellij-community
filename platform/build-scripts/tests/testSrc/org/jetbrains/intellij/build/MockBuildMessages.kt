@@ -1,10 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
-import groovy.lang.Closure
 import junit.framework.AssertionFailedError
+import java.util.*
+import java.util.function.Supplier
 
 class MockBuildMessages : BuildMessages {
+  override fun getName() = ""
+
+  override fun isLoggable(level: System.Logger.Level) = false
+
+  override fun log(level: System.Logger.Level, bundle: ResourceBundle?, msg: String?, thrown: Throwable?) {
+  }
+
+  override fun log(level: System.Logger.Level?, bundle: ResourceBundle?, format: String?, vararg params: Any?) {
+  }
+
   override fun info(message: String?) {
   }
 
@@ -37,8 +48,8 @@ class MockBuildMessages : BuildMessages {
   override fun setParameter(parameterName: String?, value: String?) {
   }
 
-  override fun <V : Any?> block(blockName: String, body: Closure<V>): V {
-    return body.call()
+  override fun <V : Any?> block(blockName: String, body: Supplier<V>): V {
+    return body.get()
   }
 
   override fun artifactBuilt(relativeArtifactPath: String?) {

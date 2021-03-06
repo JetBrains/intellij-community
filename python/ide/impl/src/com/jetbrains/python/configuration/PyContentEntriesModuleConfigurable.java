@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.jetbrains.python.PyBundle;
@@ -69,7 +70,12 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
     final ModuleConfigurationStateImpl moduleConfigurationState =
       new ModuleConfigurationStateImpl(myModule.getProject(), new DefaultModulesProvider(myModule.getProject())) {
         @Override
-        public ModifiableRootModel getRootModel() {
+        public ModifiableRootModel getModifiableRootModel() {
+          return myModifiableModel;
+        }
+
+        @Override
+        public ModuleRootModel getCurrentRootModel() {
           return myModifiableModel;
         }
 

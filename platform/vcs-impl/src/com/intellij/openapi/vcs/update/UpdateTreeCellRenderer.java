@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -20,7 +21,7 @@ public class UpdateTreeCellRenderer extends ColoredTreeCellRenderer{
     final String errorText = treeNode.getErrorText();
     if (errorText != null) {
       append(" - ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      append("Error: ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+      append(VcsBundle.message("update.error.label"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       append(errorText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     setIcon(treeNode.getIcon(false));

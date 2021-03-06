@@ -16,6 +16,7 @@
 package com.intellij.execution.filters;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,6 +189,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
 
   @NotNull
   @Override
+  @Nls
   public String getUpdateMessage() {
     List<Filter> filters = myFilters;
     final List<String> updateMessage = new ArrayList<>();
@@ -199,7 +202,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
         updateMessage.add(((FilterMixin)filter).getUpdateMessage());
       }
     }
-    return updateMessage.size() == 1 ? updateMessage.get(0) : "Updating...";
+    return updateMessage.size() == 1 ? updateMessage.get(0) : LangBundle.message("updating.filters");
   }
 
   public boolean isEmpty() {

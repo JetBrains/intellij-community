@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.*;
@@ -18,7 +17,6 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +29,7 @@ import java.util.Set;
  */
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed =
-    ContainerUtil.set(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe");
+    Set.of(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe");
 
   @Override
   public boolean isEnabledByDefault() {

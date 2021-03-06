@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -18,6 +17,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -41,6 +41,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-public class ReplaceInProjectManager {
+public final class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
@@ -172,11 +173,10 @@ public class ReplaceInProjectManager {
       super(project, findModel);
     }
 
-    @NotNull
     @Override
-    public String getLongDescriptiveName() {
+    public @Nls @NotNull String getLongDescriptiveName() {
       UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myFindModel);
-      return "Replace " + StringUtil.decapitalize(presentation.getToolwindowTitle()) + " with '" + myFindModel.getStringToReplace() + "'";
+      return StringUtil.decapitalize(presentation.getToolwindowTitle());
     }
 
     @Override
@@ -194,7 +194,7 @@ public class ReplaceInProjectManager {
   }
 
   public void searchAndShowUsages(@NotNull UsageViewManager manager,
-                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
+                                  @NotNull Factory<? extends UsageSearcher> usageSearcherFactory,
                                   @NotNull final FindModel findModelCopy,
                                   @NotNull UsageViewPresentation presentation,
                                   @NotNull FindUsagesProcessPresentation processPresentation) {
@@ -231,13 +231,19 @@ public class ReplaceInProjectManager {
   }
 
   public boolean showReplaceAllConfirmDialog(@NotNull String usagesCount, @NotNull String stringToFind, @NotNull String filesCount, @NotNull String stringToReplace) {
-    return Messages.YES == MessageDialogBuilder.yesNo(
-      FindBundle.message("find.replace.all.confirmation.title"),
-      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXmlEntities(stringToFind), filesCount,
-                         StringUtil.escapeXmlEntities(stringToReplace)))
-                                               .yesText(FindBundle.message("find.replace.command"))
-                                               .project(myProject)
-                                               .noText(Messages.getCancelButton()).show();
+    String message = stringToFind.length() < 400 && stringToReplace.length() < 400
+                     ? FindBundle.message("find.replace.all.confirmation", usagesCount,
+                                          StringUtil.escapeXmlEntities(stringToFind),
+                                          filesCount,
+                                          StringUtil.escapeXmlEntities(stringToReplace))
+                     : FindBundle.message("find.replace.all.confirmation.long.text", usagesCount,
+                                          StringUtil.trimMiddle(StringUtil.escapeXmlEntities(stringToFind), 400),
+                                          filesCount,
+                                          StringUtil.trimMiddle(StringUtil.escapeXmlEntities(stringToReplace), 400));
+    return MessageDialogBuilder.yesNo(FindBundle.message("find.replace.all.confirmation.title"), message)
+      .yesText(FindBundle.message("find.replace.command"))
+      .noText(Messages.getCancelButton())
+      .ask(myProject);
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
@@ -388,15 +394,14 @@ public class ReplaceInProjectManager {
     //replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
-  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
+  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }
 
     int[] replacedCount = {0};
-    final boolean[] success = {true};
-
-    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+    boolean[] success = {true};
+    boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       FindBundle.message("find.replace.all.confirmation.title"),
       myProject,
       null,
@@ -430,9 +435,10 @@ public class ReplaceInProjectManager {
             }
           });
         }
+        FileDocumentManager.getInstance().saveAllDocuments();
       }
     );
-
+    success[0] &= result;
     replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];
@@ -583,7 +589,7 @@ public class ReplaceInProjectManager {
     return !myIsFindInProgress && !FindInProjectManager.getInstance(myProject).isWorkInProgress();
   }
 
-  private class UsageSearcherFactory implements Factory<UsageSearcher> {
+  private final class UsageSearcherFactory implements Factory<UsageSearcher> {
     private final FindModel myFindModelCopy;
     private final FindUsagesProcessPresentation myProcessPresentation;
 

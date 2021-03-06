@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -16,7 +19,9 @@ import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NamedRunnable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.HtmlChunk.link
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
@@ -29,6 +34,8 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.svn.RootsToWorkingCopies
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnConfigurable.selectConfigurationDirectory
 import org.jetbrains.idea.svn.SvnConfiguration
@@ -48,32 +55,39 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Paths
 import java.util.Collections.synchronizedMap
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
 private val LOG = logger<SvnAuthenticationNotifier>()
 
-private val AUTH_KINDS = listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username",
-                                "svn.ssl.server", "svn.ssh.server")
+@NonNls
+private val AUTH_KINDS =
+  listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username", "svn.ssl.server", "svn.ssh.server")
 
-class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url>(
-  myVcs.project, myVcs.displayName, "Not Logged In to Subversion", NotificationType.ERROR) {
+@Service
+class SvnAuthenticationNotifier(project: Project) :
+  GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url>(
+    project,
+    SvnVcs.VCS_DISPLAY_NAME,
+    message("notification.title.not.logged.into.subversion"),
+    NotificationType.ERROR
+  ),
+  Disposable {
+
   private val myCopiesPassiveResults = synchronizedMap(mutableMapOf<Url, Boolean>())
-  private var myTimer: ScheduledFuture<*>? = null
+  private val myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay(
+    { myCopiesPassiveResults.clear() },
+    10, 10 * 60, TimeUnit.SECONDS
+  )
+
   @Volatile
   private var myVerificationInProgress = false
 
-  fun init() {
-    if (myTimer != null) {
-      stop()
-    }
-    myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay({ myCopiesPassiveResults.clear() }, 10, 10 * 60, TimeUnit.SECONDS)
-  }
+  private val vcs: SvnVcs get() = SvnVcs.getInstance(myProject)
+  private val rootsToWorkingCopies: RootsToWorkingCopies get() = RootsToWorkingCopies.getInstance(myProject)
 
-  fun stop() {
-    myTimer?.cancel(false)
-    myTimer = null
+  override fun dispose() {
+    myTimer.cancel(false)
   }
 
   override fun ask(obj: AuthenticationRequest, description: String?): Boolean {
@@ -115,14 +129,14 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
 
     SwingUtilities.convertPointToScreen(point, component)
     JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null)
+      .createHtmlTextBalloonBuilder(message("popup.content.already.checking"), MessageType.WARNING, null)
       .createBalloon()
       .show(RelativePoint(point), Balloon.Position.below)
   }
 
   private fun onStateChangedToSuccess(obj: AuthenticationRequest) {
     myCopiesPassiveResults[getKey(obj)] = true
-    myVcs.invokeRefreshSvnRoots()
+    vcs.invokeRefreshSvnRoots()
 
     val outdatedRequests = mutableListOf<Url>()
     for (key in allCurrentKeys) {
@@ -151,7 +165,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
     if (obj.isOutsideCopies) return null
     if (obj.wcUrl != null) return obj.wcUrl
 
-    val copy = myVcs.rootsToWorkingCopies.getMatchingCopy(obj.url)
+    val copy = rootsToWorkingCopies.getMatchingCopy(obj.url)
     if (copy != null) {
       obj.isOutsideCopies = false
       obj.wcUrl = copy.url
@@ -166,7 +180,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
    * Bases on presence of notifications!
    */
   fun isAuthenticatedFor(vf: VirtualFile, factory: ClientFactory?): ThreeState {
-    val wcCopy = myVcs.rootsToWorkingCopies.getWcRoot(vf) ?: return ThreeState.UNSURE
+    val wcCopy = rootsToWorkingCopies.getWcRoot(vf) ?: return ThreeState.UNSURE
 
     val haveCancellation = getStateFor(wcCopy.url)
     if (haveCancellation) return ThreeState.NO
@@ -175,12 +189,17 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
     if (java.lang.Boolean.TRUE == keptResult) return ThreeState.YES
     if (java.lang.Boolean.FALSE == keptResult) return ThreeState.NO
 
-    val calculatedResult = if (factory == null) passiveValidation(myVcs, wcCopy.url) else passiveValidation(factory, wcCopy.url)
+    val calculatedResult = if (factory == null) passiveValidation(vcs, wcCopy.url) else passiveValidation(factory, wcCopy.url)
     myCopiesPassiveResults[wcCopy.url] = calculatedResult
     return ThreeState.fromBoolean(calculatedResult)
   }
 
-  override fun getNotificationContent(obj: AuthenticationRequest) = "<a href=\"\">Click to fix.</a> Not logged In to Subversion '${obj.realm}' (${obj.url.toDecodedString()})"
+  override fun getNotificationContent(obj: AuthenticationRequest): @NlsContexts.NotificationContent String {
+    val action = link("", message("notification.action.click.to.fix")).toString()
+    val content = message("notification.content.not.logged.into.subversion", obj.realm, obj.url.toDecodedString())
+
+    return "$action $content"
+  }
 
   class AuthenticationRequest(val myProject: Project, val kind: String, val url: Url, val realm: String) {
     var wcUrl: Url? = null
@@ -188,6 +207,9 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
   }
 
   companion object {
+    @JvmStatic
+    fun getInstance(project: Project): SvnAuthenticationNotifier = project.service()
+
     // TODO: Looks like passive authentication for command line integration could show dialogs for proxy errors. So, it could make sense to
     // TODO: reuse some logic from validationImpl().
     // TODO: Also SvnAuthenticationNotifier is not called for command line integration (ensureNotify() is called only in SVNKit lifecycle).
@@ -295,7 +317,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
     private fun showAuthenticationFailedWithHotFixes(project: Project, configuration: SvnConfiguration, e: SvnBindException) =
       getApplication().invokeLater(Runnable {
         showOverChangesView(
-          project, "Authentication failed: " + e.message, MessageType.ERROR,
+          project, message("notification.content.authentication.failed", e.message), MessageType.ERROR,
           object : NamedRunnable(message("confirmation.title.clear.authentication.cache")) {
             override fun run() = clearAuthenticationCache(project, null, configuration.configurationDirectory)
           },
@@ -331,11 +353,11 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
         val process: () -> Unit = {
           val ind = ProgressManager.getInstance().progressIndicator
           ind?.isIndeterminate = true
-          ind?.text = "Clearing stored credentials in $authDir"
+          ind?.text = message("progress.text.clearing.stored.credentials", authDir)
 
           authDir.directoryStreamIfExists({ it.fileName.toString() in AUTH_KINDS }) {
             for (dir in it) {
-              ind?.text = "Deleting $dir"
+              ind?.text = message("progress.text.deleting", dir)
               dir.delete()
             }
           }
@@ -344,8 +366,8 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
           process()
         }
         else {
-          ProgressManager.getInstance()
-            .runProcessWithProgressSynchronously(process, message("button.text.clear.authentication.cache"), false, configuration.project)
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            process, message("progress.title.clear.authentication.cache"), false, configuration.project)
         }
       }
     }

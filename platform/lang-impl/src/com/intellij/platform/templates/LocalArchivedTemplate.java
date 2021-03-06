@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -9,10 +9,12 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,22 +31,21 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class LocalArchivedTemplate extends ArchivedProjectTemplate {
-  public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
-  static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
-  static final String TEMPLATE_META_XML = "template-meta.xml";
+public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
+  public static final @NonNls String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
+  static final @NonNls String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
+  static final @NonNls String TEMPLATE_META_XML = "template-meta.xml";
   static final String META_TEMPLATE_DESCRIPTOR_PATH = Project.DIRECTORY_STORE_FOLDER + "/"+TEMPLATE_META_XML;
-  public static final String UNENCODED_ATTRIBUTE = "unencoded";
-  static final String ROOT_FILE_NAME = "root";
+  public static @NonNls final String UNENCODED_ATTRIBUTE = "unencoded";
+  static final @NonNls String ROOT_FILE_NAME = "root";
 
   private final URL myArchivePath;
-  private final ModuleType myModuleType;
+  private final ModuleType<?> myModuleType;
   @Nullable private final List<RootDescription> myModuleDescriptions;
   private boolean myEscaped = true;
   private Icon myIcon;
 
-  public LocalArchivedTemplate(@NotNull URL archivePath,
-                               @NotNull ClassLoader classLoader) {
+  public LocalArchivedTemplate(@NotNull URL archivePath, @NotNull ClassLoader classLoader) {
     super(getTemplateName(archivePath), null);
 
     myArchivePath = archivePath;
@@ -111,7 +112,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return null;
   }
 
-  private static String getTemplateName(URL url) {
+  private static @NlsSafe String getTemplateName(URL url) {
     String fileName = new File(url.getPath()).getName();
     return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }
@@ -130,16 +131,16 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return myEscaped;
   }
 
-  @Nullable
+  @Nullable @NlsSafe
   String readEntry(@NotNull final String endsWith) {
     try {
-      return processStream(new StreamProcessor<String>() {
+      return processStream(new StreamProcessor<>() {
         @Override
         public String consume(@NotNull ZipInputStream stream) throws IOException {
           ZipEntry entry;
           while ((entry = stream.getNextEntry()) != null) {
             if (entry.getName().endsWith(endsWith)) {
-              return StreamUtil.readText(stream, StandardCharsets.UTF_8);
+              return new String(StreamUtil.readBytes(stream), StandardCharsets.UTF_8);
             }
           }
           return null;
@@ -171,7 +172,9 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @Override
   public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
-    return consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
+    try (ZipInputStream zip = new ZipInputStream(myArchivePath.openStream())) {
+      return consumer.consume(zip);
+    }
   }
 
   public URL getArchivePath() {
@@ -197,10 +200,10 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   static class RootDescription {
-    private static final String ROOTS_ELEMENT = "roots";
-    private static final String ROOT_ELEMENT = "root";
-    private static final String INDEX_ATTRIBUTE = "index";
-    private static final String PATH_ATTRIBUTE = "path";
+    private static final @NonNls String ROOTS_ELEMENT = "roots";
+    private static final @NonNls String ROOT_ELEMENT = "root";
+    private static final @NonNls String INDEX_ATTRIBUTE = "index";
+    private static final @NonNls String PATH_ATTRIBUTE = "path";
     final VirtualFile myFile;
     final String myRelativePath;
     final int myIndex;

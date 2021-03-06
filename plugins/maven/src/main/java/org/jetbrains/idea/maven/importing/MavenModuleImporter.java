@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -34,12 +19,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -48,11 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MavenModuleImporter {
-
+public final class MavenModuleImporter {
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
 
-  private static final Set<String> IMPORTED_CLASSIFIERS = ImmutableSet.of("client");
+  private static final Set<String> IMPORTED_CLASSIFIERS = Set.of("client");
 
   private static final Map<String, LanguageLevel> MAVEN_IDEA_PLUGIN_LEVELS = ImmutableMap.of(
     "JDK_1_3", LanguageLevel.JDK_1_3,
@@ -265,7 +251,8 @@ public class MavenModuleImporter {
             addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
           }
 
-          if (IMPORTED_CLASSIFIERS.contains(artifact.getClassifier())
+          String classifier = artifact.getClassifier();
+          if (classifier != null && IMPORTED_CLASSIFIERS.contains(classifier)
               && !isTestJar
               && !"system".equals(artifact.getScope())
               && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
@@ -275,7 +262,7 @@ public class MavenModuleImporter {
               artifact.getVersion(),
               artifact.getBaseVersion(),
               dependencyType,
-              artifact.getClassifier(),
+              classifier,
               artifact.getScope(),
               artifact.isOptional(),
               artifact.getExtension(),
@@ -421,15 +408,30 @@ public class MavenModuleImporter {
       }
     }
 
-    // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
+    // default source and target settings of maven-compiler-plugin is 1.5 for versions less than 3.8.1 and 1.6 for 3.8.1 and above
+    // see details at http://maven.apache.org/plugins/maven-compiler-plugin and https://issues.apache.org/jira/browse/MCOMPILER-335
     if (level == null) {
-      level = LanguageLevel.JDK_1_5;
+      level = getDefaultLevel(mavenProject);
     }
 
     if (level.isAtLeast(LanguageLevel.JDK_11)) {
       level = adjustPreviewLanguageLevel(mavenProject, level);
     }
     return level;
+  }
+
+  @NotNull
+  public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
+    MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (plugin != null && plugin.getVersion() != null) {
+      if (VersionComparatorUtil.compare("3.8.1", plugin.getVersion()) <= 0) {
+        return LanguageLevel.JDK_1_6;
+      }
+      else {
+        return LanguageLevel.JDK_1_5;
+      }
+    }
+    return LanguageLevel.JDK_1_5;
   }
 
   private static LanguageLevel adjustPreviewLanguageLevel(MavenProject mavenProject, LanguageLevel level) {

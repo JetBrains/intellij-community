@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ui.tree.TreeUtil.EMPTY_TREE_PATH;
 
-public class TreePathUtil {
+public final class TreePathUtil {
   /**
    * @param parent    the parent path or {@code null} to indicate the root
    * @param component the last path component
@@ -220,7 +220,7 @@ public class TreePathUtil {
    * @param predicate a predicate that tests every ancestor of the given path
    * @return an ancestor of the given path, or {@code null} if the path does not have any applicable ancestor
    */
-  public static TreePath findAncestor(TreePath path, @NotNull Predicate<TreePath> predicate) {
+  public static TreePath findAncestor(TreePath path, @NotNull Predicate<? super TreePath> predicate) {
     while (path != null) {
       if (predicate.test(path)) return path;
       path = path.getParentPath();

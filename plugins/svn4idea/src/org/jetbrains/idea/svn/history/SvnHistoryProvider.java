@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -30,9 +30,9 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
@@ -49,6 +49,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
@@ -96,7 +99,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         }
 
         {
-          statusText.setText("Merge sources");
+          statusText.setText(message("status.text.merge.sources"));
           setWrapStyleWord(true);
           setLineWrap(true);
         }
@@ -229,7 +232,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final Ref<Boolean> sessionReported = new Ref<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));
+      indicator.setText(message("progress.text2.collecting.history", path.getName()));
     }
     final Consumer<VcsFileRevision> consumer = vcsFileRevision -> {
       if (!Boolean.TRUE.equals(sessionReported.get())) {
@@ -287,7 +290,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected abstract void load();
   }
 
-  private static class LocalLoader extends LogLoader {
+  private static final class LocalLoader extends LogLoader {
     private Info myInfo;
 
     private LocalLoader(SvnVcs vcs, FilePath file, Revision from, Revision to, int limit, Revision peg, boolean showMergeSources) {
@@ -298,11 +301,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected void preliminary() {
       myInfo = myVcs.getInfo(myFile.getIOFile());
       if (myInfo == null || myInfo.getRepositoryRootUrl() == null) {
-        myException = new VcsException("File " + myFile.getPath() + " is not under version control");
+        myException = new VcsException(message("error.file.is.not.under.version.control", myFile.getPath()));
         return;
       }
       if (myInfo.getUrl() == null) {
-        myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
+        myException = new VcsException(message("error.file.is.not.under.subversion", myFile.getPath()));
         return;
       }
       myUrl = myInfo.getUrl();
@@ -312,9 +315,9 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     protected void load() {
       Url repoRootURL = myInfo.getRepositoryRootUrl();
       String relativeUrl = getRelativeUrl(repoRootURL, myUrl);
-      
+
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
+        myPI.setText2(message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
       final Revision pegRevision = myInfo.getRevision();
       final Target target = Target.on(myFile.getIOFile(), myPeg);
@@ -332,7 +335,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private static class RepositoryLoader extends LogLoader {
+  private static final class RepositoryLoader extends LogLoader {
     private final boolean myForceBackwards;
 
     private RepositoryLoader(SvnVcs vcs,
@@ -354,7 +357,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     @Override
     protected void load() {
       if (myPI != null) {
-        myPI.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
+        myPI.setText2(message("progress.text2.changes.establishing.connection", myUrl.toDecodedString()));
       }
 
       try {
@@ -371,7 +374,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         // TODO: non-interactive mode)
         final Url rootURL = getRepositoryRoot(myVcs, myUrl);
         if (rootURL == null) {
-          throw new VcsException("Could not find repository root for URL: " + myUrl.toDecodedString());
+          throw new VcsException(message("error.can.not.find.repository.root.for.url", myUrl.toDecodedString()));
         }
         String relativeUrl = getRelativeUrl(rootURL, myUrl);
         Target target = Target.on(myUrl, myPeg == null ? myFrom : myPeg);
@@ -392,7 +395,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       // command to get repository url
       Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
       if (info == null || info.getRepositoryRootUrl() == null) {
-        throw new VcsException("Could not find repository root for URL: " + svnurl + " in revision " + myPeg);
+        throw new VcsException(message("error.can.not.find.repository.root.for.url.in.revision", svnurl, myPeg));
       }
 
       Url rootURL = info.getRepositoryRootUrl();
@@ -471,7 +474,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
         if (myIndicator != null) {
           myIndicator.checkCanceled();
-          myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+          myIndicator.setText2(message("progress.text2.revision.processed", logEntry.getRevision()));
         }
         LogEntryPath entryPath = null;
         String copyPath = null;
@@ -594,7 +597,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private static class RevisionMergeSourceInfo {
+  private static final class RevisionMergeSourceInfo {
 
     @NotNull private final VcsFileRevision revision;
 
@@ -609,36 +612,28 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     // will be used, for instance, while copying (to clipboard) data from table
     @Override
-    public String toString() {
+    public @Nls @NotNull String toString() {
       return toString(revision);
     }
 
-    private static String toString(@Nullable VcsFileRevision value) {
-      if (!(value instanceof SvnFileRevision)) return "";
-      final SvnFileRevision revision = (SvnFileRevision)value;
-      final List<SvnFileRevision> mergeSources = revision.getMergeSources();
-      if (mergeSources.isEmpty()) {
-        return "";
-      }
-      final StringBuilder sb = new StringBuilder();
-      for (SvnFileRevision source : mergeSources) {
-        if (sb.length() != 0) {
-          sb.append(", ");
-        }
-        sb.append(source.getRevisionNumber().asString());
-        if (!source.getMergeSources().isEmpty()) {
-          sb.append("*");
-        }
-      }
-      return sb.toString();
+    private static @Nls @NotNull String toString(@Nullable VcsFileRevision revision) {
+      if (!(revision instanceof SvnFileRevision)) return "";
+      return join(((SvnFileRevision)revision).getMergeSources(), it -> getRevisionNumberWithMergeMark(it), ", ");
+    }
+
+    private static @Nls @NotNull String getRevisionNumberWithMergeMark(@NotNull SvnFileRevision revision) {
+      String revisionNumber = revision.getRevisionNumber().asString();
+      String mergeSuffix = !revision.getMergeSources().isEmpty() ? "*" : "";
+
+      return revisionNumber + mergeSuffix;
     }
   }
 
-  private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, RevisionMergeSourceInfo> {
+  private final class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, RevisionMergeSourceInfo> {
     private final MergeSourceRenderer myRenderer;
 
     private MergeSourceColumnInfo(final SvnHistorySession session) {
-      super("Merge Sources");
+      super(message("column.name.merge.sources"));
       myRenderer = new MergeSourceRenderer(session);
     }
 
@@ -669,7 +664,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   private static final Object MERGE_SOURCE_DETAILS_TAG = new Object();
 
-  private class MergeSourceDetailsLinkListener extends TableLinkMouseListener {
+  private final class MergeSourceDetailsLinkListener extends TableLinkMouseListener {
     private final VirtualFile myFile;
     private final Object myTag;
 
@@ -719,7 +714,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private class MergeSourceRenderer extends ColoredTableCellRenderer {
+  private final class MergeSourceRenderer extends ColoredTableCellRenderer {
     private MergeSourceDetailsLinkListener myListener;
     private final VirtualFile myFile;
 
@@ -732,7 +727,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     @Override
-    protected void customizeCellRenderer(final JTable table,
+    protected void customizeCellRenderer(final @NotNull JTable table,
                                          final Object value,
                                          final boolean selected,
                                          final boolean hasFocus,
@@ -742,10 +737,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
         myListener.installOn(table);
       }
-      appendMergeSourceText(table, row, column, value instanceof RevisionMergeSourceInfo ? value.toString() : null);
+      appendMergeSourceText(
+        table, row, column,
+        value instanceof RevisionMergeSourceInfo ? ((RevisionMergeSourceInfo)value).toString() : null
+      );
     }
 
-    private void appendMergeSourceText(JTable table, int row, int column, @Nullable String text) {
+    private void appendMergeSourceText(JTable table, int row, int column, @Nls @Nullable String text) {
       if (StringUtil.isEmpty(text)) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -755,22 +753,19 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       }
     }
 
-    private String cutString(final String text, final double value) {
-      final FontMetrics m = getFontMetrics(getFont());
-      final Graphics g = getGraphics();
+    private @Nls @NotNull String cutString(@Nls @NotNull String text, double maxWidth) {
+      FontMetrics m = getFontMetrics(getFont());
+      Graphics g = getGraphics();
+      String suffix = ELLIPSIS;
 
-      if (m.getStringBounds(text, g).getWidth() < value) return text;
+      if (m.getStringBounds(text, g).getWidth() < maxWidth) return text;
 
-      final String dots = "...";
-      final double dotsWidth = m.getStringBounds(dots, g).getWidth();
-      if (dotsWidth >= value) {
-        return dots;
-      }
+      double suffixWidth = m.getStringBounds(suffix, g).getWidth();
+      if (suffixWidth >= maxWidth) return suffix;
 
       for (int i = 1; i < text.length(); i++) {
-        if ((m.getStringBounds(text, 0, i, g).getWidth() + dotsWidth) >= value) {
-          if (i < 2) return dots;
-          return text.substring(0, i - 1) + dots;
+        if ((m.getStringBounds(text, 0, i, g).getWidth() + suffixWidth) >= maxWidth) {
+          return text.substring(0, i - 1) + suffix;
         }
       }
       return text;
@@ -781,7 +776,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private final Icon myIcon = PlatformIcons.COPY_ICON;
     private final ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(final JTable table,
+      protected void customizeCellRenderer(final @NotNull JTable table,
                                            final Object value,
                                            final boolean selected,
                                            final boolean hasFocus,
@@ -789,7 +784,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                            final int column) {
         if (value instanceof String && ((String)value).length() > 0) {
           setIcon(myIcon);
-          setToolTipText(SvnBundle.message("copy.column.tooltip", value));
+          setToolTipText(message("copy.column.tooltip", value));
         }
         else {
           setToolTipText("");
@@ -798,7 +793,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     };
 
     CopyFromColumnInfo() {
-      super(SvnBundle.message("copy.column.title"));
+      super(message("copy.column.title"));
     }
 
     @Override
@@ -813,7 +808,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     @Override
     public String getMaxStringValue() {
-      return SvnBundle.message("copy.column.title");
+      return message("copy.column.title");
     }
 
     @Override

@@ -53,7 +53,6 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ELEMENT_KEYWORDS3 = "keywords3";
   @NonNls private static final String ELEMENT_KEYWORDS4 = "keywords4";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls static final String ELEMENT_EXTENSION_MAP = "extensionMap";
 
   public AbstractFileType(@NotNull SyntaxTable syntaxTable) {
     mySyntaxTable = syntaxTable;
@@ -111,8 +110,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
     for (Element element : root.getChildren()) {
       if (ELEMENT_OPTIONS.equals(element.getName())) {
-        for (final Object o1 : element.getChildren(ELEMENT_OPTION)) {
-          Element e = (Element)o1;
+        for (final Element e : element.getChildren(ELEMENT_OPTION)) {
           String name = e.getAttributeValue(ATTRIBUTE_NAME);
           String value = e.getAttributeValue(ATTRIBUTE_VALUE);
           if (VALUE_LINE_COMMENT.equals(name)) {
@@ -175,8 +173,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
         if (!keyword.isEmpty()) keywords.add(keyword);
       }
     }
-    for (final Object o1 : element.getChildren(ELEMENT_KEYWORD)) {
-      keywords.add(((Element)o1).getAttributeValue(ATTRIBUTE_NAME));
+    for (final Element e : element.getChildren(ELEMENT_KEYWORD)) {
+      keywords.add(e.getAttributeValue(ATTRIBUTE_NAME));
     }
   }
 
@@ -353,5 +351,10 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   public void setCommenter(@NotNull Commenter commenter) {
     myCommenter = commenter;
+  }
+
+  @Override
+  public String toString() {
+    return "AbstractFileType "+mySyntaxTable;
   }
 }

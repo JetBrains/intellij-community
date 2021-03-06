@@ -7,7 +7,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,7 +36,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,10 +50,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class FileSystemTreeImpl implements FileSystemTree {
@@ -70,7 +66,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final MyExpansionListener myExpansionListener = new MyExpansionListener();
 
-  private final Set<VirtualFile> myEverExpanded = new THashSet<>();
+  private final Set<VirtualFile> myEverExpanded = new HashSet<>();
 
   public FileSystemTreeImpl(@Nullable final Project project, final FileChooserDescriptor descriptor) {
     this(project, descriptor, new Tree(), null, null, null);
@@ -190,7 +186,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel,
                                                   AbstractTreeStructure treeStructure,
-                                                  Comparator<NodeDescriptor<?>> comparator,
+                                                  Comparator<? super NodeDescriptor<?>> comparator,
                                                   FileChooserDescriptor descriptor,
                                                   @Nullable Runnable onInitialized) {
     return new FileTreeBuilder(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
@@ -241,7 +237,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   public void registerMouseListener(final ActionGroup group) {
-    PopupHandler.installUnknownPopupHandler(myTree, group, ActionManager.getInstance());
+    PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN);
   }
 
   @Override
@@ -250,7 +246,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       return myDescriptor.isShowHiddenFiles();
     }
     else {
-      return myTreeStructure.areHiddensShown();
+      return myTreeStructure.areHiddenShown();
     }
   }
 
@@ -261,7 +257,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       if (myFileTreeModel != null) myFileTreeModel.invalidate();
     }
     else {
-      myTreeStructure.showHiddens(showHidden);
+      myTreeStructure.showHidden(showHidden);
     }
     updateTree();
   }

@@ -8,6 +8,7 @@ import org.editorconfig.language.codeinsight.quickfixes.EditorConfigRemoveOption
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigVisitor
+import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigQualifiedKeyDescriptor
 import org.editorconfig.language.util.EditorConfigDescriptorUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.findShadowingSections
@@ -31,13 +32,12 @@ class EditorConfigShadowedOptionInspection : LocalInspectionTool() {
   companion object {
     fun equalOptions(first: EditorConfigOption, second: EditorConfigOption): Boolean {
       val firstDescriptor = first.getDescriptor(false) ?: return false
-      val firstDeclarations = findDeclarations(first)
       if (first.keyParts.size != second.keyParts.size) return false
       val secondDescriptor = second.getDescriptor(false)
       if (firstDescriptor != secondDescriptor) return false
       if (EditorConfigDescriptorUtil.isConstant(firstDescriptor.key)) return true
-      val secondDeclarations = findDeclarations(second)
-      return equalToIgnoreCase(firstDeclarations, secondDeclarations)
+      if (!equalToIgnoreCase(findDeclarations(first), findDeclarations(second))) return false
+      return equalToIgnoreCase(findConstants(first), findConstants(second))
     }
 
     private fun equalToIgnoreCase(first: List<String>, second: List<String>): Boolean {
@@ -48,13 +48,15 @@ class EditorConfigShadowedOptionInspection : LocalInspectionTool() {
     private fun equalToIgnoreCase(pair: Pair<String, String>) =
       pair.first.equals(pair.second, true)
 
-    private fun findDeclarations(option: EditorConfigOption): List<String> {
+    private fun findDeclarations(option: EditorConfigOption) = findMatching(option, EditorConfigDescriptorUtil::isVariable)
+
+    private fun findConstants(option: EditorConfigOption) = findMatching(option, EditorConfigDescriptorUtil::isConstant)
+
+    private fun findMatching(option: EditorConfigOption, filter: (EditorConfigDescriptor) -> Boolean): List<String> {
       val descriptor = option.getDescriptor(false) ?: return emptyList()
       val keyDescriptor = descriptor.key as? EditorConfigQualifiedKeyDescriptor ?: return emptyList()
       if (option.keyParts.size != keyDescriptor.children.size) throw IllegalStateException()
-      return option.keyParts.filterIndexed { index, _ ->
-        EditorConfigDescriptorUtil.isVariable(keyDescriptor.children[index])
-      }
+      return option.keyParts.filterIndexed { index, _ -> filter(keyDescriptor.children[index]) }
     }
   }
 }

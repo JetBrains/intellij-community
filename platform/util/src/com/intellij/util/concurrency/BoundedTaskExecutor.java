@@ -9,6 +9,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Async;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,14 +37,14 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   private final boolean myChangeThreadName;
 
-  BoundedTaskExecutor(@NotNull String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
+  BoundedTaskExecutor(@NotNull @NonNls String name, @NotNull Executor backendExecutor, int maxThreads, boolean changeThreadName) {
     this(name, backendExecutor, maxThreads, changeThreadName, new LinkedBlockingQueue<>());
     if (name.isEmpty() || !Character.isUpperCase(name.charAt(0))) {
       Logger.getInstance(getClass()).warn("Pool name must be capitalized but got: '" + name + "'", new IllegalArgumentException());
     }
   }
 
-  BoundedTaskExecutor(@NotNull String name,
+  BoundedTaskExecutor(@NotNull @NonNls String name,
                       @NotNull Executor backendExecutor,
                       int maxThreads,
                       boolean changeThreadName,
@@ -226,16 +227,24 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  public void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+  public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     CountDownLatch started = new CountDownLatch(myMaxThreads);
     CountDownLatch readyToFinish = new CountDownLatch(1);
-    Runnable runnable = () -> {
-      try {
-        started.countDown();
-        readyToFinish.await();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          started.countDown();
+          readyToFinish.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
+
+      @Override
+      public String toString() {
+        return "LastTask to waitAllTasksExecuted for " + timeout + " " + unit + " (" + System.identityHashCode(this) + ")";
       }
     };
     // Submit 'myMaxTasks' runnables and wait for them all to start.
@@ -264,6 +273,10 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   public boolean isEmpty() {
     return (int)myStatus.get() == 0;
+  }
+
+  public int getQueueSize() {
+    return myTaskQueue.size();
   }
 
   @NotNull

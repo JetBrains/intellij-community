@@ -7,15 +7,13 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -145,10 +143,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
         final MarkupModel markupModel = editor.getMarkupModel();
         markupModel.removeAllHighlighters();
         if (!errorProblems.isEmpty() && editor.getDocument().getLineCount() > 0) {
-          final TextAttributes attributes = SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes();
-          attributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-          attributes.setEffectColor(attributes.getForegroundColor());
-          markupModel.addLineHighlighter(0, 0, attributes);
+          markupModel.addLineHighlighter(CodeInsightColors.ERRORS_ATTRIBUTES, 0, 0);
           editor.getContentComponent().setToolTipText(errorProblems.get(0).getDescriptionTemplate());
         }
       }

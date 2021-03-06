@@ -34,7 +34,6 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
     }
 
     final Rectangle rowRect = myComponent.getCellRect(selectedRow, 0, true);
-    LOG.assertTrue(rowRect != null);
     final Rectangle visibleRect = myComponent.getVisibleRect();
     if(visibleRect.intersects(rowRect)){
       return visibleRect.intersection(rowRect);

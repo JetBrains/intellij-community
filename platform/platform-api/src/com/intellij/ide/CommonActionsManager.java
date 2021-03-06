@@ -3,15 +3,16 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public abstract class CommonActionsManager {
   public static CommonActionsManager getInstance() {
-    return ServiceManager.getService(CommonActionsManager.class);
+    return ApplicationManager.getApplication().getService(CommonActionsManager.class);
   }
 
   public abstract AnAction createPrevOccurenceAction(OccurenceNavigator navigator);
@@ -22,6 +23,7 @@ public abstract class CommonActionsManager {
    * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract AnAction createExpandAllAction(TreeExpander expander);
 
   public abstract AnAction createExpandAllAction(TreeExpander expander, JComponent component);
@@ -34,6 +36,7 @@ public abstract class CommonActionsManager {
    * @deprecated use {@link #createCollapseAllAction(TreeExpander, JComponent)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract AnAction createCollapseAllAction(TreeExpander expander);
 
   public abstract AnAction createCollapseAllAction(TreeExpander expander, JComponent component);

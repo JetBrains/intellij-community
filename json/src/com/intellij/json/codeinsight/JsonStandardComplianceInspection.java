@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -7,10 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.json.JsonBundle;
-import com.intellij.json.JsonDialectUtil;
-import com.intellij.json.JsonElementTypes;
-import com.intellij.json.JsonLanguage;
+import com.intellij.json.*;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +36,6 @@ import javax.swing.*;
  * @author Mikhail Golubev
  */
 public class JsonStandardComplianceInspection extends LocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
 
   public boolean myWarnAboutComments = true;
   public boolean myWarnAboutNanInfinity = true;
@@ -103,7 +99,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> element.replace(replacement));
       }
       else {
-        LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
+        Logger.getInstance(JsonStandardComplianceInspection.class)
+          .error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
     }
 
@@ -201,7 +198,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
     @Override
     public void visitArray(@NotNull JsonArray array) {
-      if (myWarnAboutTrailingCommas && !allowTrailingCommas()) {
+      if (myWarnAboutTrailingCommas && !allowTrailingCommas() &&
+          JsonStandardComplianceProvider.shouldWarnAboutTrailingComma(array)) {
         final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
@@ -212,7 +210,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
     @Override
     public void visitObject(@NotNull JsonObject object) {
-      if (myWarnAboutTrailingCommas && !allowTrailingCommas()) {
+      if (myWarnAboutTrailingCommas && !allowTrailingCommas() &&
+          JsonStandardComplianceProvider.shouldWarnAboutTrailingComma(object)) {
         final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
         if (trailingComma != null) {
           myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
@@ -225,7 +224,10 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitValue(@NotNull JsonValue value) {
       if (value.getContainingFile() instanceof JsonFile) {
         final JsonFile jsonFile = (JsonFile)value.getContainingFile();
-        if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
+        if (myWarnAboutMultipleTopLevelValues &&
+            value.getParent() == jsonFile &&
+            value != jsonFile.getTopLevelValue() &&
+            jsonFile.getFileType() != JsonLinesFileType.INSTANCE) {
           myHolder.registerProblem(value, JsonBundle.message("inspection.compliance.msg.multiple.top.level.values"));
         }
       }

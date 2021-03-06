@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -17,7 +18,8 @@ import java.util.List;
 public class TopCommitsCache {
   private static final Logger LOG = Logger.getInstance(TopCommitsCache.class);
   @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final IntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
+  @NotNull private final IntObjectMap<VcsCommitMetadata> myCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   @NotNull private List<VcsCommitMetadata> mySortedDetails = new ArrayList<>();
 
   public TopCommitsCache(@NotNull VcsLogStorage storage) {
@@ -65,7 +67,7 @@ public class TopCommitsCache {
     mySortedDetails.clear();
   }
 
-  private static class MergingIterator implements Iterator<VcsCommitMetadata> {
+  private static final class MergingIterator implements Iterator<VcsCommitMetadata> {
     private final PeekingIterator<VcsCommitMetadata> myFirst;
     private final PeekingIterator<VcsCommitMetadata> mySecond;
 

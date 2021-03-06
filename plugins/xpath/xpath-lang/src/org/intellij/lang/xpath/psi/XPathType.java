@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public class XPathType {
@@ -38,7 +39,7 @@ public class XPathType {
         return "XPathType: " + type;
     }
 
-    public String getName() {
+    public @NlsSafe String getName() {
         return type;
     }
 

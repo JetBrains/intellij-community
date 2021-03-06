@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
@@ -15,7 +14,6 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,23 +26,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
 
 public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
@@ -57,11 +52,11 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return e.getData(InspectionResultsView.DATA_KEY);
   }
 
-  protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
+  protected QuickFixAction(@NlsActions.ActionText String text, @NotNull InspectionToolWrapper toolWrapper) {
     this(text, AllIcons.Actions.IntentionBulb, null, toolWrapper);
   }
 
-  protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
+  protected QuickFixAction(@NlsActions.ActionText String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
     super(text, null, icon);
     myToolWrapper = toolWrapper;
     if (keyStroke != null) {
@@ -95,18 +90,17 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return false;
   }
 
-  public String getText() {
+  public @NlsActions.ActionText String getText() {
     return getTemplatePresentation().getText();
   }
 
   @Override
-  @ReviseWhenPortedToJDK("9")
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
       Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
-      Set<VirtualFile> readOnlyFiles = new THashSet<>();
+      Set<VirtualFile> readOnlyFiles = new HashSet<>();
       TreePath[] paths = tree.getSelectionPaths();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -221,7 +215,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   private static Set<VirtualFile> getReadOnlyFiles(RefEntity @NotNull [] refElements) {
-    Set<VirtualFile> readOnlyFiles = new THashSet<>();
+    Set<VirtualFile> readOnlyFiles = new HashSet<>();
     for (RefEntity refElement : refElements) {
       PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
       if (psiElement == null || psiElement.getContainingFile() == null) continue;
@@ -286,11 +280,10 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        final ActionToolbar toolbar = ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)button);
         actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
                                                          event,
                                                          place,
-                                                         toolbar == null ? DataManager.getInstance().getDataContext(button) : toolbar.getToolbarDataContext()));
+                                                         ActionToolbar.getDataContextFor(button)));
         return true;
       }
     }.installOn(button);

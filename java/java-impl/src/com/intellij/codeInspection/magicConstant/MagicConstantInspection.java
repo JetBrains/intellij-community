@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -11,6 +11,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -32,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import gnu.trove.THashSet;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -162,6 +162,11 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       return null;
     }
 
+    Sdk jdk = getJDKToAnnotate(project);
+    return jdk == null ? null : () -> attachAnnotationsLaterTo(project, jdk);
+  }
+
+  private static Sdk getJDKToAnnotate(@NotNull Project project) {
     PsiClass awtInputEvent = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
     if (awtInputEvent == null) return null;
     PsiMethod[] methods = awtInputEvent.findMethodsByName("getModifiers", false);
@@ -170,7 +175,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     Sdk jdk = JdkUtils.getJdkForElement(getModifiers);
     if (jdk == null) return null;
     PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
-    return annotation == null ? () -> attachAnnotationsLaterTo(project, jdk) : null;
+    return annotation == null ? jdk : null;
   }
 
   private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
@@ -179,10 +184,17 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       SdkModificator modificator = sdk.getSdkModificator();
       boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
       // daemon will restart automatically
-      modificator.commitChanges();
-      // avoid endless loop on JDK misconfiguration
       if (success) {
-        project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
+        modificator.commitChanges();
+      }
+      if (success) {
+        DumbService.getInstance(project).runWhenSmart(() -> {
+          // check if we really attached the necessary annotations, to avoid IDEA-247322
+          if (getJDKToAnnotate(project) == null) {
+            // avoid endless loop on JDK misconfiguration
+            project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
+          }
+        });
       }
     }, project.getDisposed());
   }
@@ -364,7 +376,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
                                           @Nullable Set<PsiExpression> visited) {
     PsiExpression expression = PsiUtil.deparenthesizeExpression(argument);
     if (expression == null) return true;
-    if (visited == null) visited = new THashSet<>();
+    if (visited == null) visited = new HashSet<>();
     if (!visited.add(expression)) return true;
     if (expression instanceof PsiConditionalExpression) {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
@@ -467,6 +479,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static class ReplaceWithMagicConstantFix extends LocalQuickFixOnPsiElement {
+    @SafeFieldForPreview
     private final List<SmartPsiElementPointer<PsiAnnotationMemberValue>> myMemberValuePointers;
 
     ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, PsiAnnotationMemberValue @NotNull ... values) {

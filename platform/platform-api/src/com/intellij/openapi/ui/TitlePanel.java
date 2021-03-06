@@ -1,21 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public final class TitlePanel extends JPanel {
-  public TitlePanel(String title, String description) {
+  public TitlePanel(@Nls(capitalization = Nls.Capitalization.Title) String title, @NlsContexts.Label String description) {
     super(new BorderLayout());
     JLabel label = new JLabel(title);
     add(label, BorderLayout.NORTH);
@@ -45,7 +43,7 @@ public final class TitlePanel extends JPanel {
     RoundRectangle2D rect = new RoundRectangle2D.Double(0, 0, width - 1, height - 1, 0, 0);
     g2.fill(rect);
     g2.setPaint(new JBColor(Color.GRAY, Gray._100));
-    LinePainter2D.paint((Graphics2D)g2, 0, height - 1, width - 1, height - 1);
+    LinePainter2D.paint(g2, 0, height - 1, width - 1, height - 1);
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing);
   }
 }

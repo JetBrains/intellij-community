@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -23,7 +9,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,7 +19,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.*;
-import com.intellij.util.containers.SmartHashSet;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -46,10 +32,9 @@ import java.util.*;
 /**
  * @author ven
  */
-public class PackageAnnotator {
-
+public final class PackageAnnotator {
   private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
-  private static final String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
+  private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
 
   private final PsiPackage myPackage;
   private final Project myProject;
@@ -170,7 +155,7 @@ public class PackageAnnotator {
                              .productionOnly()
                              .classes()
                              .getRoots());
-      final Set<VirtualFile> productionRootsSet = new SmartHashSet<>();
+      final Set<VirtualFile> productionRootsSet = new HashSet<>();
 
       if (productionRoots != null) {
         Map<VirtualFile, DirCoverageInfo> dirsMap = new HashMap<>();
@@ -245,13 +230,13 @@ public class PackageAnnotator {
     return result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  private static File findRelativeFile(String rootPackageVMName, VirtualFile output) {
+  private static @NotNull File findRelativeFile(@NotNull String rootPackageVMName, VirtualFile output) {
     File outputRoot = VfsUtilCore.virtualToIoFile(output);
     outputRoot = rootPackageVMName.length() > 0 ? new File(outputRoot, FileUtil.toSystemDependentName(rootPackageVMName)) : outputRoot;
     return outputRoot;
   }
 
-  public void annotateFilteredClass(PsiClass psiClass, CoverageSuitesBundle bundle, Annotator annotator) {
+  public void annotateFilteredClass(PsiClass psiClass, @NotNull CoverageSuitesBundle bundle, Annotator annotator) {
     final ProjectData data = bundle.getCoverageData();
     if (data == null) return;
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
@@ -260,13 +245,13 @@ public class PackageAnnotator {
         .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
       final CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
       final VirtualFile outputPath = isInTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
-      
+
       if (outputPath != null) {
         final String qualifiedName = psiClass.getQualifiedName();
         if (qualifiedName == null) return;
         final String packageVMName = StringUtil.getPackageName(qualifiedName).replace('.', '/');
         final File packageRoot = findRelativeFile(packageVMName, outputPath);
-        if (packageRoot != null && packageRoot.exists()) {
+        if (packageRoot.exists()) {
           Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<>();
           final File[] files = packageRoot.listFiles();
           if (files != null) {
@@ -289,7 +274,7 @@ public class PackageAnnotator {
     }
   }
 
-  private class RootWalker {
+  private final class RootWalker {
     private final Map<String, PackageCoverageInfo> packageCoverageMap;
     private final Map<VirtualFile, DirCoverageInfo> dirsCoverageMap;
     private final Map<String, PackageCoverageInfo> flattenPackageCoverageMap;
@@ -371,8 +356,7 @@ public class PackageAnnotator {
               if (virtualFile != null) {
                 coverageInfoForClass = dirsCoverageMap.computeIfAbsent(virtualFile.getParent(), DirCoverageInfo::new);
               }
-              else if (Arrays.stream(JavaCoverageEngineExtension.EP_NAME.getExtensions())
-                             .anyMatch(extension -> extension.keepCoverageInfoForClassWithoutSource(bundle, child))) {
+              else if (ContainerUtil.exists(JavaCoverageEngineExtension.EP_NAME.getExtensions(), extension -> extension.keepCoverageInfoForClassWithoutSource(bundle, child))) {
                 coverageInfoForClass = classWithoutSourceCoverageInfo;
               }
               else {
@@ -417,7 +401,7 @@ public class PackageAnnotator {
   }
 
   private void collectClassCoverageInformation(final File classFile,
-                                               @Nullable final PsiClass psiClass, 
+                                               @Nullable final PsiClass psiClass,
                                                final PackageCoverageInfo packageCoverageInfo,
                                                ProjectData projectInfo,
                                                final Map<String, ClassCoverageInfo> toplevelClassCoverage,
@@ -541,7 +525,7 @@ public class PackageAnnotator {
       if (privateEmpty && constructors.length == 1 && constructors[0].hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiCodeBlock body = constructors[0].getBody();
         return body != null && body.isEmpty() &&
-               Arrays.stream(aClass.getMethods()).allMatch(method -> method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC));
+               ContainerUtil.and(aClass.getMethods(), method -> method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC));
       }
       return implicitConstructor && constructors.length == 0;
     });
@@ -585,7 +569,7 @@ public class PackageAnnotator {
     if (coverageSuite == null) return false;
     return SourceLineCounterUtil
       .collectNonCoveredClassInfo(classCoverageInfo, packageCoverageInfo, content, coverageSuite.isTracingEnabled(),
-                                  myIgnoreEmptyPrivateConstructors || myIgnoreImplicitConstructor 
+                                  myIgnoreEmptyPrivateConstructors || myIgnoreImplicitConstructor
                                   ? description -> !isGeneratedDefaultConstructor(psiClass, description, myIgnoreImplicitConstructor, myIgnoreEmptyPrivateConstructors) : Conditions.alwaysTrue());
   }
 }

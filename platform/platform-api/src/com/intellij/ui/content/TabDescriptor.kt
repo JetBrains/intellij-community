@@ -3,18 +3,20 @@ package com.intellij.ui.content
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.Nls
+import com.intellij.openapi.util.NlsContexts.TabTitle
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-class TabDescriptor(val component: JComponent, private val displayNamePointer: Supplier<@Nls String>) : Disposable {
-  val displayName: @Nls String
+class TabDescriptor(val component: JComponent, private val displayNamePointer: Supplier<@TabTitle String>) : Disposable {
+  @Suppress("HardCodedStringLiteral")
+  @get:TabTitle
+  val displayName: @TabTitle String
     get() = displayNamePointer.get()
 
-  constructor(component: JComponent, @Nls displayName: String) : this(component, Supplier { displayName })
+  constructor(component: JComponent, @TabTitle displayName: String) : this(component, Supplier { displayName })
 
-  constructor(component: JComponent, displayNamePointer: Supplier<@Nls String>, disposable: Disposable?) :
+  constructor(component: JComponent, displayNamePointer: Supplier<@TabTitle String>, disposable: Disposable?) :
     this(component, displayNamePointer) {
     if (disposable != null) {
       Disposer.register(this, disposable)
@@ -22,7 +24,7 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
   }
 
   override fun dispose() = Unit
-  
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -39,13 +41,17 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
   }
 }
 
-class TabGroupId(@NonNls val id: String, private val displayNamePointer: Supplier<@Nls String>) {
-  val displayName: @Nls String
+class TabGroupId @JvmOverloads constructor(@NonNls val id: String,
+                                           private val displayNamePointer: Supplier<@TabTitle String>,
+                                           val splitByDefault: Boolean = false) {
+  @Suppress("HardCodedStringLiteral")
+  @get:TabTitle
+  val displayName: @TabTitle String
     get() = displayNamePointer.get()
 
-  constructor(@NonNls id: String, @Nls displayName: String) : this(id, Supplier { displayName })
+  constructor(@NonNls id: String, @TabTitle displayName: String) : this(id, Supplier { displayName })
 
-  @Nls
+  @TabTitle
   fun getDisplayName(tab: TabDescriptor): String {
     if (tab.displayName.isBlank()) return displayName
     return displayName + ": " + tab.displayName

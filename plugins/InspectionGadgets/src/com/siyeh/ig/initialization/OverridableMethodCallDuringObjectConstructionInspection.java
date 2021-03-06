@@ -84,6 +84,10 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Bas
       if (calledMethod == null || !PsiUtil.canBeOverridden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         return;
       }
+      final PsiClass methodClass = calledMethod.getContainingClass();
+      if (methodClass == null || methodClass != containingClass && !containingClass.isInheritor(methodClass, true)) {
+        return;
+      }
       registerMethodCallError(expression, expression);
     }
   }

@@ -12,7 +12,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.event.PomModelListener;
+import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.TreeChangeEvent;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
@@ -24,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;
 
 public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
@@ -50,42 +60,27 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
                               @NotNull Editor editor,
                               @NotNull Disposable disposable,
                               @NotNull Runnable changesHandler) {
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        PsiFile psiFile = event.getFile();
-        VirtualFile changedFile = psiFile == null ? null : psiFile.getVirtualFile();
-        if (!Comparing.equal(changedFile, file)) return;
-        changesHandler.run();
-      }
+    PomManager.getModel(myProject).addModelListener(
+      new PomModelListener() {
+        @Override
+        public void modelChanged(@NotNull PomModelEvent event) {
+          TreeAspect aspect = ContainerUtil.findInstance(event.getChangedAspects(), TreeAspect.class);
+          if (aspect == null) return;
+          TreeChangeEvent change = tryCast(event.getChangeSet(aspect), TreeChangeEvent.class);
+          if (change == null) return;
+          PsiFile psiFile = change.getRootElement().getPsi().getContainingFile();
+          VirtualFile changedFile = psiFile == null ? null : psiFile.getVirtualFile();
+          if (!Comparing.equal(changedFile, file)) return;
+          changesHandler.run();
+        }
 
-      @Override
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        propertyChanged(event);
-      }
-
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        propertyChanged(event);
-      }
-
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        propertyChanged(event);
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        propertyChanged(event);
-      }
-
-      @Override
-      public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        propertyChanged(event);
-      }
-    }, disposable);
-
+        @Override
+        public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
+          return aspect instanceof TreeAspect;
+        }
+      },
+      disposable
+    );
   }
 
   @Override
@@ -230,7 +225,9 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
   }
 
   @Nullable
-  private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider, boolean checkSettings) {
+  private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element,
+                                                            BreadcrumbsProvider defaultProvider,
+                                                            boolean checkSettings) {
     Language language = element.getLanguage();
     if (checkSettings && !BreadcrumbsUtilEx.isBreadcrumbsShownFor(language)) return defaultProvider;
     BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);

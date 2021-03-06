@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
@@ -8,6 +7,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -41,7 +40,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UMethod;
@@ -50,7 +48,7 @@ import org.jetbrains.uast.UastContextKt;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
+public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
 
   private Map<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
@@ -63,38 +61,38 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
   @Override
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
-    if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<>();
+    if (myClassUsagesRequests == null) myClassUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
 
   }
   @Override
   public void enqueueDerivedClassesProcessor(RefClass refClass, DerivedClassesProcessor p) {
-    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new THashMap<>();
+    if (myDerivedClassesRequests == null) myDerivedClassesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myDerivedClassesRequests, p);
   }
 
   @Override
   public void enqueueDerivedMethodsProcessor(RefMethod refMethod, DerivedMethodsProcessor p) {
     if (refMethod.isConstructor() || refMethod.isStatic()) return;
-    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new THashMap<>();
+    if (myDerivedMethodsRequests == null) myDerivedMethodsRequests = new HashMap<>();
     enqueueRequestImpl(refMethod, myDerivedMethodsRequests, p);
   }
 
   @Override
   public void enqueueFieldUsagesProcessor(RefField refField, UsagesProcessor p) {
-    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new THashMap<>();
+    if (myFieldUsagesRequests == null) myFieldUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refField, myFieldUsagesRequests, p);
   }
 
   @Override
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
-    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<>();
+    if (myMethodUsagesRequests == null) myMethodUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
   }
 
   @Override
   public void enqueueQualifiedNameOccurrencesProcessor(RefClass refClass, Runnable c) {
-    if (myQNameUsagesRequests == null) myQNameUsagesRequests = new THashMap<>();
+    if (myQNameUsagesRequests == null) myQNameUsagesRequests = new HashMap<>();
     enqueueRequestImpl(refClass, myQNameUsagesRequests, c);
   }
 
@@ -168,7 +166,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
             }
             else {
               Set<String> detectedUrls =
-                Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(file -> file.getUrl()).collect(Collectors.toSet());
+                Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(VirtualFile::getUrl).collect(Collectors.toSet());
               Set<String> declaredUrls = ContainerUtil.set(library.getUrls(OrderRootType.CLASSES));
               declaredUrls.removeAll(detectedUrls);
               declaredUrls.removeIf(library::isJarDirectory);
@@ -228,7 +226,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           return true;
         }
         //e.g. xml files were not included in the graph, so usages there should be processed as external
-        boolean inGraph = processedReferences ? refManager.isInGraph(file) : FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.JAVA);
+        boolean inGraph = processedReferences ? refManager.isInGraph(file) : FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE);
         return !inGraph;
       }
 
@@ -263,7 +261,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final UMethod uMethod = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(sortedID), UMethod.class));
         if (uMethod == null) continue;
-        final RefMethod refMethod = (RefMethod)refManager.getReference(uMethod.getSourcePsi());
+        final RefMethod refMethod = ReadAction.compute(() -> (RefMethod)refManager.getReference(uMethod.getSourcePsi()));
 
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -134,7 +135,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     htmlDocument.setCharacterAttributes(0, htmlDocument.getLength(), style, false);
   }
 
-  private class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
+  private final class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
     @NotNull
     private final JEditorPane myEditorPane;
 
@@ -181,7 +182,9 @@ public class NotificationMessageElement extends NavigatableMessageElement {
           try {
             Document document = MyEditorPane.this.getDocument();
             String result = document.getText(0, document.getLength());
-            return AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(result);
+            @NlsSafe String resultWithPunctuation =
+              AccessibleContextUtil.replaceLineSeparatorsWithPunctuation(result);
+            return resultWithPunctuation;
           }
           catch (BadLocationException e) {
             return super.getAccessibleName();

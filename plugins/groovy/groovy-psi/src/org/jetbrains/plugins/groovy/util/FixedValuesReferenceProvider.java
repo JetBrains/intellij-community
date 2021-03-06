@@ -44,7 +44,7 @@ public class FixedValuesReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     return new PsiReference[]{
-      new PsiReferenceBase<PsiElement>(element, mySoft) {
+      new PsiReferenceBase<>(element, mySoft) {
         @Nullable
         @Override
         public PsiElement resolve() {

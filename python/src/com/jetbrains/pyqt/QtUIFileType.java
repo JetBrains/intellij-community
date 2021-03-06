@@ -2,6 +2,7 @@
 package com.jetbrains.pyqt;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.jetbrains.python.PyBundle;
 import icons.PythonIcons;
 
 import javax.swing.*;
@@ -12,8 +13,8 @@ import javax.swing.*;
 public class QtUIFileType extends QtFileType implements FileType {
   public static final QtUIFileType INSTANCE = new QtUIFileType();
 
-  protected QtUIFileType() {
-    super("Qt UI file", "Qt UI Designer form", "ui");
+  private QtUIFileType() {
+    super("Qt UI file", PyBundle.message("qt.ui.designer.form.filetype.description"), "ui");
   }
 
   @Override

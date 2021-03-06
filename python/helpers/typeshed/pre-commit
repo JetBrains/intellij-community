@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# An example hook script that will run flake8, black, and isort
+# prior to committing and will stop the commit if there are any
+# warnings. Adjust BIN_DIR to the virtual environment where flake8,
+# black, and isort are installed.
+#
+# To enable this hook, copy this file to ".git/hooks".
+
+BIN_DIR=./.venv/bin
+
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=AM | grep .pyi || true)
+
+if test -n "${CHANGED_FILES}" -a -d "${BIN_DIR}"; then
+    ${BIN_DIR}/flake8 ${CHANGED_FILES}
+    ${BIN_DIR}/black --check ${CHANGED_FILES}
+    ${BIN_DIR}/isort --check-only ${CHANGED_FILES}
+
+    # Replace the last two lines with the following lines
+    # if you want to reformat changed files automatically
+    # before committing. Please note that partial commits
+    # (git add -p) will not work and will commit the whole
+    # file!
+    #
+    # ${BIN_DIR}/black ${CHANGED_FILES} || true
+    # ${BIN_DIR}/isort -y ${CHANGED_FILES} || true
+    # git add ${CHANGED_FILES}
+fi

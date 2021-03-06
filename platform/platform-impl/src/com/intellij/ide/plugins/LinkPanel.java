@@ -18,11 +18,19 @@ public class LinkPanel {
   private final JLabel myLinkLabel;
   private Runnable myRunnable;
 
-  public LinkPanel(@NotNull JPanel parent, boolean icon, @Nullable Object labelConstraints, @Nullable Object linkConstraints) {
+  public LinkPanel(@NotNull JPanel parent, boolean icon, boolean tiny, @Nullable Object labelConstraints, @Nullable Object linkConstraints) {
     myLinkLabel = createLink(icon);
     myTextLabel.setForeground(ListPluginComponent.GRAY_COLOR);
+    if (tiny) {
+      PluginManagerConfigurable.setTinyFont(myLinkLabel);
+      PluginManagerConfigurable.setTinyFont(myTextLabel);
+    }
     parent.add(myTextLabel, labelConstraints);
     parent.add(myLinkLabel, linkConstraints);
+  }
+
+  public LinkPanel(@NotNull JPanel parent, boolean tiny) {
+    this(parent, true, tiny, null, null);
   }
 
   @NotNull

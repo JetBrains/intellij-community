@@ -88,9 +88,13 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
             ListPluginComponent lastComponent = group.ui.plugins.get(fromIndex - 1);
             int uiIndex = getComponentIndex(lastComponent);
             int eventIndex = myEventHandler.getCellIndex(lastComponent);
-            PluginLogo.startBatchMode();
-            addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
-            PluginLogo.endBatchMode();
+            try {
+              PluginLogo.startBatchMode();
+              addToGroup(group, group.descriptors.subList(fromIndex, toIndex), uiIndex, eventIndex);
+            }
+            finally {
+              PluginLogo.endBatchMode();
+            }
 
             if (group.descriptors.size() == group.ui.plugins.size()) {
               scrollBar.removeAdjustmentListener(this);
@@ -247,7 +251,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void removeFromGroup(@NotNull PluginsGroup group, @NotNull IdeaPluginDescriptor descriptor) {
-    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
+    int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.getPluginDescriptor() == descriptor);
     assert index != -1;
     ListPluginComponent component = group.ui.plugins.remove(index);
     component.close();

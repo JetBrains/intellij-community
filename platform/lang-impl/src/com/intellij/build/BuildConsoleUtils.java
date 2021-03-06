@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.Failure;
@@ -7,12 +7,15 @@ import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
@@ -34,12 +37,12 @@ import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildConsoleUtils {
+public final class BuildConsoleUtils {
   private static final Logger LOG = Logger.getInstance(BuildConsoleUtils.class);
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
   private static final String A_CLOSING = "</a>";
-  private static final Set<String> NEW_LINES = ContainerUtil.set("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
+  private static final Set<@NlsSafe String> NEW_LINES = ContainerUtil.set("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
 
   public static void printDetails(@NotNull ConsoleView consoleView, @Nullable Failure failure, @Nullable String details) {
     String text = failure == null ? details : ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
@@ -57,7 +60,9 @@ public class BuildConsoleUtils {
     for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
       listenerMap.put(quickFix.getId(), (notification, event) -> {
         BuildView buildView = findBuildView(consoleView);
-        quickFix.runQuickFix(project, buildView == null ? consoleView : buildView);
+        Component component = buildView == null ? consoleView : buildView;
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        quickFix.runQuickFix(project, dataContext);
       });
     }
     NotificationListener listener = new NotificationListener.Adapter() {
@@ -98,7 +103,7 @@ public class BuildConsoleUtils {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
           consoleView.printHyperlink(linkText, new HyperlinkInfo() {
             @Override
-            public void navigate(Project project) {
+            public void navigate(@NotNull Project project) {
               if (notification != null && notification.getListener() != null) {
                 notification.getListener().hyperlinkUpdate(
                   notification, IJSwingUtilities.createHyperlinkEvent(href, consoleView.getComponent()));
@@ -126,37 +131,38 @@ public class BuildConsoleUtils {
   public static String getMessageTitle(@NotNull String message) {
     message = stripHtml(message, true);
     int sepIndex = message.indexOf(". ");
-    if (sepIndex < 0) {
-      sepIndex = message.indexOf("\n");
+    int eolIndex = message.indexOf("\n");
+    if (sepIndex < 0 || sepIndex > eolIndex && eolIndex > 0) {
+      sepIndex = eolIndex;
     }
     if (sepIndex > 0) {
       message = message.substring(0, sepIndex);
     }
-    return StringUtil.trimEnd(message, '.');
+    return StringUtil.trimEnd(message.trim(), '.');
   }
 
   @ApiStatus.Experimental
   @NotNull
-  public static DataProvider getDataProvider(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull AbstractViewManager buildListener) {
     BuildView buildView = buildListener.getBuildView(buildId);
-    return (buildView != null) ? buildView : dataId -> null;
+    return buildView != null ? new MyDelegatingDataContext(buildView) : DataContext.EMPTY_CONTEXT;
   }
 
   @ApiStatus.Experimental
   @NotNull
-  public static DataProvider getDataProvider(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
-    DataProvider provider;
+  public static DataContext getDataContext(@NotNull Object buildId, @NotNull BuildProgressListener buildListener) {
+    DataContext dataContext;
     if (buildListener instanceof BuildView) {
-      provider = (BuildView)buildListener;
+      dataContext = new MyDelegatingDataContext((BuildView)buildListener);
     }
     else if (buildListener instanceof AbstractViewManager) {
-      provider = getDataProvider(buildId, (AbstractViewManager)buildListener);
+      dataContext = getDataContext(buildId, (AbstractViewManager)buildListener);
     }
     else {
-      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataProvider for build console quick fixes");
-      provider = dataId -> null;
+      LOG.error("BuildView or AbstractViewManager expected to obtain proper DataContext for build console quick fixes");
+      dataContext = DataContext.EMPTY_CONTEXT;
     }
-    return provider;
+    return dataContext;
   }
 
 
@@ -169,5 +175,18 @@ public class BuildConsoleUtils {
       }
     }
     return null;
+  }
+
+  private static class MyDelegatingDataContext implements DataContext {
+    private final AtomicNotNullLazyValue<DataContext> myDelegatedDataContextValue;
+
+    private MyDelegatingDataContext(@NotNull BuildView buildView) {
+      myDelegatedDataContextValue = AtomicNotNullLazyValue.createValue(() -> DataManager.getInstance().getDataContext(buildView));
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      return myDelegatedDataContextValue.getValue().getData(dataId);
+    }
   }
 }

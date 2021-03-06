@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.jar.JarFile;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class CaptureAgent {
+public final class CaptureAgent {
   public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
 
@@ -274,6 +274,9 @@ public class CaptureAgent {
               }
             }
             else { // insert
+              if (CONSTRUCTOR.equals(name)) {
+                throw new IllegalStateException("Unable to create insert point at " + methodDisplayName +". Constructors are not yet supported.");
+              }
               generateWrapper(access, name, desc, signature, exceptions, point, methodDisplayName);
               return super.visitMethod(access, getNewName(name), desc, signature, exceptions);
             }
@@ -592,6 +595,9 @@ public class CaptureAgent {
 
     addCapture("java/util/concurrent/CompletableFuture$UniRun", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY_PROVIDER);
+    
+    addCapture("java/util/concurrent/ForkJoinTask", "fork", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/ForkJoinTask", "doExec", THIS_KEY_PROVIDER);
 
     // netty
     addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);

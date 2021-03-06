@@ -20,5 +20,4 @@ package org.intellij.plugins.xsltDebugger;
  * Thrown by the EDTGuard when some method cannot be completed due to the target VM being paused.
  */
 public class VMPausedException extends RuntimeException {
-  public static final String MESSAGE = "Target VM is not responding";
 }

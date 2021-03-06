@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -39,6 +40,6 @@ public class XmlContextType extends TemplateContextType {
   @Nullable
   @Override
   public SyntaxHighlighter createHighlighter() {
-    return SyntaxHighlighterFactory.getSyntaxHighlighter(StdFileTypes.XML, null, null);
+    return SyntaxHighlighterFactory.getSyntaxHighlighter(XmlFileType.INSTANCE, null, null);
   }
 }

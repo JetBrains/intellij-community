@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.CallTraceInterpreter;
@@ -112,7 +112,7 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     return result;
   }
 
-  private static class MyDistinctInfo extends ValuesOrderInfo {
+  private static final class MyDistinctInfo extends ValuesOrderInfo {
     private final Map<TraceElement, List<TraceElement>> myDirectTrace;
     private final Map<TraceElement, List<TraceElement>> myReverseTrace;
 

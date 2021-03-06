@@ -40,4 +40,7 @@ public interface ShForClause extends ShCompositeElement {
   @Nullable
   PsiElement getRightDoubleParen();
 
+  @Nullable
+  PsiElement getIn();
+
 }

@@ -1,99 +1,149 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.util
 
-import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.util.IconLoader
-import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.util.ui.JBHtmlEditorKit
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.Graphics2DDelegate
 import com.intellij.util.ui.JBUI
-import icons.GithubIcons
-import java.awt.Graphics
-import java.awt.Shape
-import javax.swing.JEditorPane
-import javax.swing.SizeRequirements
-import javax.swing.text.DefaultCaret
+import com.intellij.util.ui.codereview.BaseHtmlEditorPane
+import org.jetbrains.plugins.github.GithubIcons
+import java.awt.*
+import java.awt.image.ImageObserver
 import javax.swing.text.Element
+import javax.swing.text.FlowView
+import javax.swing.text.ParagraphView
 import javax.swing.text.View
-import javax.swing.text.ViewFactory
-import javax.swing.text.html.HTML
-import javax.swing.text.html.InlineView
-import javax.swing.text.html.ParagraphView
-import kotlin.math.max
+import javax.swing.text.html.BlockView
+import javax.swing.text.html.ImageView
+import javax.swing.text.html.StyleSheet
 
-internal class HtmlEditorPane() : JEditorPane() {
-  constructor(body: String) : this() {
+internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
+  constructor(@NlsSafe body: String) : this() {
     setBody(body)
   }
 
-  init {
-    editorKit = object : JBHtmlEditorKit(true) {
-      override fun getViewFactory(): ViewFactory {
-        return object : JBHtmlFactory() {
-          override fun create(elem: Element): View {
-            if ("icon-inline" == elem.name) {
-              val icon = elem.attributes.getAttribute(HTML.Attribute.SRC)
-                ?.let { IconLoader.getIcon(it as String, GithubIcons::class.java) }
+  override fun createViewFactory(iconsClass: Class<*>) = GHViewFactory()
 
-              if (icon != null) {
-                return object : InlineView(elem) {
+  protected class GHViewFactory : BaseHtmlEditorPane.HtmlEditorViewFactory(GithubIcons::class.java) {
+    override fun create(elem: Element): View {
+      val view = super.create(elem)
+      if (view is ImageView) {
+        return MyScalingImageView(elem)
+      }
+      if (elem.name == "blockquote") {
+        return GitHubQuoteView(elem)
+      }
+      if (view is ParagraphView) {
+        return GHParagraphView(elem)
+      }
+      return view
+    }
+  }
 
-                  override fun getPreferredSpan(axis: Int): Float {
-                    when (axis) {
-                      View.X_AXIS -> return icon.iconWidth.toFloat() + super.getPreferredSpan(axis)
-                      else -> return super.getPreferredSpan(axis)
-                    }
-                  }
+  private class GitHubQuoteView(element: Element) : BlockView(element, Y_AXIS) {
 
-                  override fun paint(g: Graphics, allocation: Shape) {
-                    super.paint(g, allocation)
-                    icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
-                  }
-                }
-              }
+    override fun setPropertiesFromAttributes() {
+      super.setPropertiesFromAttributes()
+      setInsets(topInset, 0, bottomInset, rightInset)
+    }
+
+    override fun getStyleSheet(): StyleSheet = super.getStyleSheet().apply {
+      val borderWidth = JBUI.scale(2)
+      val borderColor = ColorUtil.toHex(DarculaUIUtil.getOutlineColor(true, false))
+      val padding = JBUI.scale(10)
+      //language=CSS
+      addRule("""
+        html body blockquote p {
+          border-left: ${borderWidth}px solid ${borderColor};
+          padding-left: ${padding}px;
+        }
+      """.trimIndent())
+    }
+  }
+
+  private class GHParagraphView(elem: Element) : MyParagraphView(elem) {
+    init {
+      //language=CSS
+      styleSheet.addRule("""
+        p {
+          margin-bottom: ${JBUI.scale(10)}px;
+        }
+      """.trimIndent())
+    }
+  }
+
+  // Copied from: com.intellij.codeInsight.documentation.render.DocRenderer.MyScalingImageView
+  private class MyScalingImageView(element: Element) : ImageView(element) {
+
+    private var myAvailableWidth = 0
+
+    override fun getResizeWeight(axis: Int) = 1
+
+    override fun getMaximumSpan(axis: Int) = getPreferredSpan(axis)
+
+    override fun getPreferredSpan(axis: Int): Float {
+      val baseSpan = super.getPreferredSpan(axis)
+      if (axis == X_AXIS) return baseSpan
+
+      var availableWidth = getAvailableWidth()
+      if (availableWidth <= 0) return baseSpan
+
+      val baseXSpan = super.getPreferredSpan(X_AXIS)
+      if (baseXSpan <= 0) return baseSpan
+
+      if (availableWidth > baseXSpan) {
+        availableWidth = baseXSpan.toInt()
+      }
+      if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
+        preferenceChanged(null, false, true)
+      }
+      myAvailableWidth = availableWidth
+
+      return baseSpan * availableWidth / baseXSpan
+    }
+
+    private fun getAvailableWidth(): Int {
+      var v: View? = this
+      while (v != null) {
+        val parent = v.parent
+        if (parent is FlowView) {
+          val childCount = parent.getViewCount()
+          for (i in 0 until childCount) {
+            if (parent.getView(i) === v) {
+              return parent.getFlowSpan(i)
             }
-
-            val view = super.create(elem)
-            if (view is ParagraphView) {
-              return object : ParagraphView(elem) {
-                override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements {
-                  var r = r
-                  if (r == null) {
-                    r = SizeRequirements()
-                  }
-                  r.minimum = layoutPool.getMinimumSpan(axis).toInt()
-                  r.preferred = max(r.minimum, layoutPool.getPreferredSpan(axis).toInt())
-                  r.maximum = Integer.MAX_VALUE
-                  r.alignment = 0.5f
-                  return r
-                }
-              }
-            }
-            return view
           }
         }
+        v = parent
       }
+      return 0
     }
 
-    isEditable = false
-    isOpaque = false
-    addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-    margin = JBUI.emptyInsets()
+    override fun paint(g: Graphics, a: Shape) {
+      val targetRect = if (a is Rectangle) a else a.bounds
+      val scalingGraphics = object : Graphics2DDelegate(g as Graphics2D) {
+        override fun drawImage(img: Image, x: Int, y: Int, width: Int, height: Int, observer: ImageObserver): Boolean {
+          var newWidth = width
+          var newHeight = height
 
-    val caret = caret as DefaultCaret
-    caret.updatePolicy = DefaultCaret.NEVER_UPDATE
-  }
+          val maxWidth = 0.coerceAtLeast(targetRect.width - 2 * (x - targetRect.x)) // assuming left and right insets are the same
+          val maxHeight = 0.coerceAtLeast(targetRect.height - 2 * (y - targetRect.y)) // assuming top and bottom insets are the same
 
-  fun setBody(body: String) {
-    if (body.isEmpty()) {
-      text = ""
+          if (width > maxWidth) {
+            newHeight = height * maxWidth / width
+            newWidth = maxWidth
+          }
+
+          if (height > maxHeight) {
+            newWidth = width * maxHeight / height
+            newHeight = maxHeight
+          }
+
+          return super.drawImage(img, x, y, newWidth, newHeight, observer)
+        }
+      }
+      super.paint(scalingGraphics, a)
     }
-    else {
-      text = "<html><body>$body</body></html>"
-    }
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    UISettings.setupComponentAntialiasing(this)
   }
 }

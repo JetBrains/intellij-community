@@ -7,38 +7,20 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Roman Chernyatchik
  */
 public class TestFailedState extends AbstractState implements Disposable{
-  private final List<String> myPresentationText;
+  private final String myErrorMsgPresentation;
+  private final String myStacktracePresentation;
 
   public TestFailedState(@Nullable final String localizedMessage,
-                         @Nullable final String stackTrace)
-  {
-    myPresentationText =
-      ContainerUtil.createLockFreeCopyOnWriteList(Collections.singleton(buildErrorPresentationText(localizedMessage, stackTrace)));
+                         @Nullable final String stackTrace) {
+    myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
+    myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
   }
-
-  public void addError(@Nullable String localizedMessage, @Nullable String stackTrace, Printer printer) {
-    final String msg = buildErrorPresentationText(localizedMessage, stackTrace);
-    if (msg != null) {
-      myPresentationText.add(msg);
-      if (printer != null) {
-        printError(printer, Collections.singletonList(msg), false);
-      }
-    }
-  }
-
-  @Override
-  public void dispose() {}
 
   @Nullable
   public static String buildErrorPresentationText(@Nullable final String localizedMessage,
@@ -48,34 +30,19 @@ public class TestFailedState extends AbstractState implements Disposable{
                         (StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace + CompositePrintable.NEW_LINE);
     return StringUtil.isEmptyOrSpaces(text) ? null : text;
   }
+  
+  @Override
+  public void dispose() {}
 
-  public static void printError(@NotNull final Printer printer,
-                                @NotNull final List<String> errorPresentationText)
-  {
-    printError(printer, errorPresentationText, true);
-  }
-
-  private static void printError(@NotNull final Printer printer,
-                                @NotNull final List<String> errorPresentationText,
-                                final boolean setMark)
-  {
-    boolean addMark = setMark;
-    for (final String errorText : errorPresentationText) {
-      if (errorText != null) {
-        printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-        if (addMark) {
-          printer.mark();
-          addMark = false;
-        }
-        printer.printWithAnsiColoring(errorText, ProcessOutputTypes.STDERR);
-      }
-    }
-  }
 
   @Override
   public void printOn(final Printer printer) {
-    super.printOn(printer);
-    printError(printer, myPresentationText);
+    printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    String compoundMessage = buildErrorPresentationText(myErrorMsgPresentation, myStacktracePresentation);
+    if (compoundMessage != null) {
+      printer.mark();
+      printer.printWithAnsiColoring(compoundMessage, ProcessOutputTypes.STDERR);
+    }
   }
 
   @Override
@@ -106,6 +73,14 @@ public class TestFailedState extends AbstractState implements Disposable{
   @Override
   public Magnitude getMagnitude() {
     return Magnitude.FAILED_INDEX;
+  }
+
+  protected String getErrorMsgPresentation() {
+    return myErrorMsgPresentation;
+  }
+
+  protected String getStacktracePresentation() {
+    return myStacktracePresentation;
   }
 
   @Override

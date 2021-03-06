@@ -59,8 +59,7 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
     fixes.add(new AddArgumentFix("java.util.Locale.ENGLISH", "Locale.ENGLISH"));
     if (annotatableQualifier != null) {
-      fixes.add(new DelegatingFix(new AddAnnotationPsiFix(
-        AnnotationUtil.NON_NLS, annotatableQualifier,PsiNameValuePair.EMPTY_ARRAY)));
+      fixes.add(new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier)));
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }

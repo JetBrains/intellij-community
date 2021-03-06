@@ -74,9 +74,7 @@ abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProces
 
       Element exec = element.getChild(EXEC);
       if (exec != null) {
-        for (final Object o1 : exec.getChildren(ELEMENT_OPTION)) {
-          Element optionElement = (Element)o1;
-
+        for (final Element optionElement : exec.getChildren(ELEMENT_OPTION)) {
           String name = optionElement.getAttributeValue(ATTRIBUTE_NAME);
           String value = optionElement.getAttributeValue(ATTRIBUTE_VALUE);
 
@@ -95,9 +93,7 @@ abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProces
         }
       }
 
-      for (final Object o2 : element.getChildren(FILTER)) {
-        Element childNode = (Element)o2;
-
+      for (final Element childNode : element.getChildren(FILTER)) {
         FilterInfo filterInfo = new FilterInfo();
         filterInfo.readExternal(childNode);
         tool.addOutputFilter(filterInfo);

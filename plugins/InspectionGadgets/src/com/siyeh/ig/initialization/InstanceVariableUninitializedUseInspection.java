@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,24 +57,13 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
 
     final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       annotationNames, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message("primitive.fields.ignore.option"), this, "m_ignorePrimitives");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(annotationsPanel, constraints);
-
-    constraints.gridy = 1;
-    constraints.weighty = 0.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(checkBox, constraints);
+    panel.add(annotationsPanel, "growx, wrap");
+    panel.addCheckbox(InspectionGadgetsBundle.message("primitive.fields.ignore.option"), "m_ignorePrimitives");
 
     return panel;
   }

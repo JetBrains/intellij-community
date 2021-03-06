@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -133,11 +135,8 @@ public class CallTracer implements OverheadProducer {
           myDebugProcess.printToConsole(res.toString());
         }
       }
-      catch (VMDisconnectedException vmd) {
-        throw vmd;
-      }
       catch (Exception e) {
-        LOG.error(e);
+        DebuggerUtilsImpl.logError(e);
       }
     }
   }
@@ -171,7 +170,7 @@ public class CallTracer implements OverheadProducer {
 
   @Override
   public void customizeRenderer(SimpleColoredComponent renderer) {
-    renderer.append("Call Tracer");
+    renderer.append(JavaDebuggerBundle.message("call.tracer"));
   }
 
   @NotNull
@@ -184,7 +183,7 @@ public class CallTracer implements OverheadProducer {
     return tracer;
   }
 
-  private class ThreadRequest {
+  private final class ThreadRequest {
     private final List<MethodEntryRequest> myEntryRequests = new ArrayList<>(1);
     private final int myStartIndent;
 

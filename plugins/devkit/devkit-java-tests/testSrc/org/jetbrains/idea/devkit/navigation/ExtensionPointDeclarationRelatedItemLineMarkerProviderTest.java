@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -47,35 +34,43 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   public void testMyStringEP() {
-    assertSingleEPDeclaration("MyStringEP.java");
+    assertStringEP("MyStringEP.java");
   }
 
   public void testMyStringEPViaConstant() {
-    assertSingleEPDeclaration("MyStringEPViaConstant.java");
+    assertStringEP("MyStringEPViaConstant.java");
   }
 
   public void testMyStringEPConstructor() {
-    assertSingleEPDeclaration("MyStringEPConstructor.java");
+    assertStringEP("MyStringEPConstructor.java");
   }
 
   public void testMyStringProjectEP() {
-    assertSingleEPDeclaration("MyStringProjectEP.java");
+    assertStringEP("MyStringProjectEP.java");
   }
 
   public void testMyStringKeyedLazyInstanceEP() {
-    assertSingleEPDeclaration("MyStringKeyedLazyInstanceEP.java");
+    assertStringEP("MyStringKeyedLazyInstanceEP.java");
   }
 
-  private void assertSingleEPDeclaration(String filePath) {
+  public void testMyBeanClassStringEP() {
+    assertSingleEPDeclaration("MyBeanClassStringEP.java", "com.intellij.myBeanClassStringEP");
+  }
+
+  private void assertStringEP(String filePath) {
+    assertSingleEPDeclaration(filePath, "com.intellij.myStringEP");
+  }
+
+  private void assertSingleEPDeclaration(String filePath, String epFqn) {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assertNotNull(module);
     String color = ColorUtil.toHex(UIUtil.getInactiveTextColor());
-    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
+    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"" + StringUtil.substringAfterLast(epFqn, ".") + "\"");
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
-                             + ":" + expectedTagPosition + "\">myStringEP</a> EP declaration in plugin.xml " +
-                             "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
+                             + ":" + expectedTagPosition + "\">" + epFqn + "</a> extension point declaration in plugin.xml " +
+                             "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevkitIcons.Gutter.Plugin, "extensionPoint");

@@ -1,18 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.AbstractExtensionPointBean
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -22,12 +21,10 @@ import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.util.*
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.catch
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.io.*
 import com.intellij.util.text.UniqueNameGenerator
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Document
 import org.jdom.Element
 import java.io.File
@@ -36,6 +33,7 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import java.util.function.Predicate
@@ -66,10 +64,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   internal val schemeExtension: String
   private val updateExtension: Boolean
 
-  internal val filesToDelete = ContainerUtil.newConcurrentSet<String>()
+  internal val filesToDelete: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
   // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
-  internal val schemeToInfo = ConcurrentCollectionFactory.createMap<T, ExternalInfo>(ContainerUtil.identityStrategy())
+  internal val schemeToInfo = ConcurrentCollectionFactory.createConcurrentIdentityMap<T, ExternalInfo>()
 
   init {
     if (processor is SchemeExtensionProvider) {
@@ -110,24 +108,45 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     directory.refresh(true, false)
   }
 
-  override fun loadBundledScheme(resourceName: String, requestor: Any) {
+  override fun loadBundledScheme(resourceName: String, requestor: Any?, pluginDescriptor: PluginDescriptor?) {
     try {
-      val url = when (requestor) {
-        is AbstractExtensionPointBean -> requestor.loaderForClass.getResource(resourceName)
-        is TempUIThemeBasedLookAndFeelInfo -> File(resourceName).toURI().toURL()
-        is UITheme -> DecodeDefaultsUtil.getDefaults(requestor.providerClassLoader, resourceName)
-        else -> DecodeDefaultsUtil.getDefaults(requestor, resourceName)
+      val bytes: ByteArray
+      if (pluginDescriptor == null) {
+        when (requestor) {
+          is TempUIThemeBasedLookAndFeelInfo -> {
+            bytes = Files.readAllBytes(Path.of(resourceName))
+          }
+          is UITheme -> {
+            val stream = requestor.providerClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
+            if (stream == null) {
+              LOG.error("Cannot find $resourceName in ${requestor.providerClassLoader}")
+              return
+            }
+            bytes = stream.use { it.readAllBytes()  }
+          }
+          else -> {
+            val stream = (if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader)
+              .getResourceAsStream(resourceName.removePrefix("/"))
+            if (stream == null) {
+              LOG.error("Cannot read scheme from $resourceName")
+              return
+            }
+            bytes = stream.use { it.readAllBytes()  }
+          }
+        }
+      }
+      else {
+        val stream = pluginDescriptor.pluginClassLoader.getResourceAsStream(resourceName.removePrefix("/"))
+        if (stream == null) {
+          LOG.error("Cannot found scheme $resourceName in ${pluginDescriptor.pluginClassLoader}")
+          return
+        }
+        bytes = stream.use { it.readAllBytes()  }
       }
 
-      if (url == null) {
-        LOG.error("Cannot read scheme from $resourceName")
-        return
-      }
-
-      val bytes = URLUtil.openStream(url).readBytes()
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
         val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-        val fileName = PathUtilRt.getFileName(url.path)
+        val fileName = PathUtilRt.getFileName(resourceName)
         val extension = getFileExtension(fileName, true)
         val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
 
@@ -162,7 +181,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   internal fun createSchemeLoader(isDuringLoad: Boolean = false): SchemeLoader<T, MUTABLE_SCHEME> {
-    val filesToDelete = ObjectOpenHashSet(filesToDelete)
+    val filesToDelete = HashSet(filesToDelete)
     // caller must call SchemeLoader.apply to bring back scheduled for delete files
     this.filesToDelete.removeAll(filesToDelete)
     // SchemeLoader can use retain list to bring back previously  scheduled for delete file,
@@ -308,7 +327,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    val filesToDelete = ObjectOpenHashSet(filesToDelete)
+    val filesToDelete = HashSet(filesToDelete)
     for (scheme in changedSchemes) {
       try {
         saveScheme(scheme, nameGenerator, filesToDelete)
@@ -318,7 +337,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    if (!filesToDelete.isEmpty()) {
+    if (filesToDelete.isNotEmpty()) {
       val iterator = schemeToInfo.values.iterator()
       for (info in iterator) {
         if (filesToDelete.contains(info.fileName)) {

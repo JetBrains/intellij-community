@@ -16,6 +16,9 @@
 package org.jetbrains.ether;
 
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
 
 /**
@@ -85,6 +88,14 @@ public class FieldPropertyTest extends IncrementalTestCase {
 
   public void testStringConstantChange() {
     doTest();
+  }
+
+  public void testStringConstantChangeWithECJ() {
+    setupInitialProject();
+    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject);
+    config.setJavaCompilerId(JavaCompilers.ECLIPSE_ID);
+
+    doTestBuild(1);
   }
 
   public void testStringConstantLessAccessible() {

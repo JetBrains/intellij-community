@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -42,6 +29,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,9 +41,9 @@ import java.util.*;
  * @author Konstantin Bulenkov
  * @author: lesya
  */
-public class AnnotateToggleAction extends ToggleAction implements DumbAware {
+public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public static final ExtensionPointName<Provider> EP_NAME =
-    ExtensionPointName.create("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
+    new ExtensionPointName<>("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
 
   public AnnotateToggleAction() {
     setEnabledInModalContext(true);
@@ -65,7 +53,26 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Provider provider = getProvider(e);
-    e.getPresentation().setEnabled(provider != null && !provider.isSuspended(e));
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
+    presentation.setEnabled(provider != null && !provider.isSuspended(e));
+    if (project != null) {
+      presentation.setText(getActionName(project));
+    }
+  }
+
+  private static @Nls @NotNull String getActionName(@NotNull Project project) {
+    String defaultName = ActionsBundle.message("action.Annotate.text");
+
+    Set<String> names = ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), vcs -> {
+      AnnotationProvider provider = vcs.getAnnotationProvider();
+      if (provider != null) {
+        return provider.getActionName();
+      }
+      return defaultName;
+    });
+
+    return ContainerUtil.getOnlyItem(names, defaultName);
   }
 
   @Override
@@ -111,6 +118,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
                                  final boolean warnAboutSuspiciousAnnotations) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (project.isDisposed() || editor.isDisposed()) return;
 
     if (warnAboutSuspiciousAnnotations) {
@@ -197,8 +205,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       switchAction.addSourceSwitchListener(currentRevisionGutter);
       switchAction.addSourceSwitchListener(mergeSourceGutter);
 
-      currentRevisionGutter.consume(switcher.getDefaultSource());
-      mergeSourceGutter.consume(switcher.getDefaultSource());
+      currentRevisionGutter.accept(switcher.getDefaultSource());
+      mergeSourceGutter.accept(switcher.getDefaultSource());
 
       gutters.add(currentRevisionGutter);
       gutters.add(mergeSourceGutter);
@@ -238,7 +246,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   @NotNull
   static List<ActiveAnnotationGutter> getVcsAnnotations(@NotNull Editor editor) {
-    List<TextAnnotationGutterProvider> annotations = ((EditorGutterComponentEx)editor.getGutter()).getTextAnnotations();
+    List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
     return ContainerUtil.filterIsInstance(annotations, ActiveAnnotationGutter.class);
   }
 
@@ -248,7 +256,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   static void closeVcsAnnotations(@NotNull Editor editor) {
     List<ActiveAnnotationGutter> vcsAnnotations = getVcsAnnotations(editor);
-    ((EditorGutterComponentEx)editor.getGutter()).closeTextAnnotations(vcsAnnotations);
+    editor.getGutter().closeTextAnnotations(vcsAnnotations);
   }
 
   @Nullable
@@ -372,7 +380,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
 
       createActionLabel(VcsBundle.message("link.label.display.anyway"), () -> showAnnotations());
-      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText("Hide this notification");
+      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText(
+        VcsBundle.message("hide.this.notification"));
     }
 
     public void showAnnotations() {

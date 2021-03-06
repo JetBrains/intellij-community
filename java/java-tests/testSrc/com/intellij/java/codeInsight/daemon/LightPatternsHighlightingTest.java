@@ -3,6 +3,8 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +18,13 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testInstanceOfBasics() {
+    doTest();
+  }
+  public void testInstanceOfAnnotations() {
     doTest();
   }
   public void testInstanceOfNameConflicts() {
@@ -31,8 +36,11 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   public void testInstanceOfInSwitch() {
     doTest();
   }
-  public void testReassignPatternVariable() {
+  public void testReassignPatternVariableJava15() {
     doTest();
+  }
+  public void testReassignPatternVariable() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
   }
   public void testUnusedPatternVariable() {
     myFixture.enableInspections(new UnusedDeclarationInspection());
@@ -40,6 +48,12 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   }
   public void testInstanceOfNonReified() {
     doTest();
+  }
+  public void testInstanceOfSubtypeJava15() {
+    doTest();
+  }
+  public void testInstanceOfSubtype() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, this::doTest);
   }
 
   private void doTest() {

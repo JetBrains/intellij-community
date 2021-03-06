@@ -1,0 +1,12 @@
+<idea-plugin package="mypackage">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <content>
+    <module name="anotherModule" package="mypackage.subpackage"/>
+
+    <module name="<error descr="Cannot resolve module descriptor 'invalidModuleName.xml' in source roots of module 'invalidModuleName'">invalidModuleName</error>" package="<error descr="Invalid value: 'mypackage'">mypackage</error>"/>
+  </content>
+
+</idea-plugin>

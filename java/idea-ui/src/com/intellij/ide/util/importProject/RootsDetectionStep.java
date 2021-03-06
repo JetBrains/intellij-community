@@ -99,7 +99,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   private void updateSelectedTypes() {
     Set<String> selectedTypes = new LinkedHashSet<>();
 
-    selectedTypes.add("Existing Sources");
+    selectedTypes.add(JavaUiBundle.message("existing.sources"));
 
     for (DetectedRootData rootData : myDetectedRootsChooser.getMarkedElements()) {
       for (ProjectStructureDetector detector : rootData.getSelectedDetectors()) {

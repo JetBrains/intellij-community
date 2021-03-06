@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/usr/bin/env bash\n')
+  PsiComment(shebang)('#!/usr/bin/env bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     IF_COMMAND
@@ -41,15 +42,18 @@ SHELL_SCRIPT
                 PsiWhiteSpace(' ')
                 PsiElement(||)('||')
                 PsiWhiteSpace(' ')
-                EQUALITY_CONDITION
+                REGEX_CONDITION
                   LITERAL_CONDITION
                     VARIABLE
                       PsiElement(var)('$1')
                   PsiWhiteSpace(' ')
                   PsiElement(=~)('=~')
                   PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    PsiElement(word)('"b"')
+                  REGEX_PATTERN
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('b')
+                      PsiElement(CLOSE_QUOTE)('"')
               PsiElement())(')')
           PsiWhiteSpace(' ')
           PsiElement(]])(']]')

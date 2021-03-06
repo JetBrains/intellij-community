@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonBundle;
@@ -208,7 +208,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  private static class FakeDocElement extends FakePsiElement {
+  private static final class FakeDocElement extends FakePsiElement {
     private final PsiElement myContextElement;
     private final String myAltName;
 

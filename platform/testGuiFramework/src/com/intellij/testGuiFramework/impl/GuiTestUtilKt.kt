@@ -28,14 +28,12 @@ import org.fest.swing.timing.Wait
 import java.awt.Component
 import java.awt.Container
 import java.awt.Window
-import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.JCheckBox
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JRadioButton
-import kotlin.collections.ArrayList
 
 /**
  * @author Sergey Karashevich
@@ -403,7 +401,7 @@ object GuiTestUtilKt {
       val messageBuilder = StringBuilder(errorMessage.message ?: "")
       val additionalInfo: String? = errorMessage.additionalInfo
       if (additionalInfo != null && additionalInfo.isNotEmpty())
-        messageBuilder.append(System.getProperty("line.separator")).append("Additional Info: ").append(additionalInfo)
+        messageBuilder.append(System.lineSeparator()).append("Additional Info: ").append(additionalInfo)
       val error = Error(messageBuilder.toString(), errorMessage.throwable)
       errors.add(error)
     }

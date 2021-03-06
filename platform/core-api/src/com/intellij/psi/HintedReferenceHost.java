@@ -22,8 +22,8 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * Instead of {@link PsiElement#getReferences()}, clients can call {@link #getReferences(PsiReferenceService.Hints)} and the implementation
  * may use the hints for performance optimizations, e.g. to avoid finding and creating references that won't intersect the given offset
- * ({@link com.intellij.psi.PsiReferenceService.Hints#offsetInElement}) or that have no chance of resolving to a particular target
- * ({@link com.intellij.psi.PsiReferenceService.Hints#target}).
+ * ({@link PsiReferenceService.Hints#offsetInElement}) or that have no chance of resolving to a particular target
+ * ({@link PsiReferenceService.Hints#target}).
  *
  * @author peter
  */

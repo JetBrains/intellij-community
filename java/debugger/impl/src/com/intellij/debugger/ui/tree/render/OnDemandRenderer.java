@@ -16,6 +16,7 @@ import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
     return null;
   }
 
-  String getLinkText();
+  @Nls String getLinkText();
 
   default boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
     return isOnDemandForced((DebugProcessImpl)evaluationContext.getDebugProcess());
@@ -40,7 +41,7 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
     return !isOnDemand(evaluationContext, valueDescriptor) || isCalculated(valueDescriptor);
   }
 
-  static XFullValueEvaluator createFullValueEvaluator(String text) {
+  static XFullValueEvaluator createFullValueEvaluator(@Nls String text) {
     return new XFullValueEvaluator(text) {
       @Override
       public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {

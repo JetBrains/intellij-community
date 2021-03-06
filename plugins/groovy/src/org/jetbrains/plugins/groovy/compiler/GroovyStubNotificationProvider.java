@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -17,6 +17,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.util.Arrays;
 
@@ -46,16 +47,16 @@ public final class GroovyStubNotificationProvider extends EditorNotifications.Pr
     return JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.moduleScope(module));
   }
 
-  private static EditorNotificationPanel decorateStubFile(final VirtualFile file, final Project project) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("This stub is generated for Groovy class to make Groovy-Java cross-compilation possible");
-    panel.createActionLabel("Go to the Groovy class", () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+  private static EditorNotificationPanel decorateStubFile(final VirtualFile file, final Project project, @NotNull FileEditor fileEditor) {
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    panel.setText(GroovyBundle.message("generated.stub.message"));
+    panel.createActionLabel(GroovyBundle.message("generated.stub.navigate.link.label"), () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       final PsiClass original = findClassByStub(project, file);
       if (original != null) {
         original.navigate(true);
       }
     }));
-    panel.createActionLabel("Exclude from stub generation", () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+    panel.createActionLabel(GroovyBundle.message("generated.stub.exclude.link.label"), () -> DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       final PsiClass psiClass = findClassByStub(project, file);
       if (psiClass != null) {
         ExcludeFromStubGenerationAction.doExcludeFromStubGeneration(psiClass.getContainingFile());
@@ -76,7 +77,7 @@ public final class GroovyStubNotificationProvider extends EditorNotifications.Pr
     if (file.getName().endsWith(".java") && file.getPath().contains(GROOVY_STUBS)) {
       final PsiClass psiClass = findClassByStub(project, file);
       if (psiClass != null) {
-        return decorateStubFile(file, project);
+        return decorateStubFile(file, project, fileEditor);
       }
     }
 

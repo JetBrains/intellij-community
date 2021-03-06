@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.io.generateInVirtualTempDir
 import com.intellij.util.io.zipFile
@@ -75,5 +76,10 @@ class ConvertToRepositoryLibraryActionTest : LightPlatformTestCase() {
     assertEquals("myGroupId", coordinates2.groupId)
     assertEquals("myArtifactId2", coordinates2.artifactId)
     assertEquals("1.0", coordinates2.version)
+  }
+
+  override fun tearDown() {
+    JarFileSystemImpl.cleanupForNextTest()
+    super.tearDown()
   }
 }

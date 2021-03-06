@@ -20,6 +20,7 @@ public class ShHeredocImpl extends ShCompositeElementImpl implements ShHeredoc {
     visitor.visitHeredoc(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
@@ -41,6 +42,12 @@ public class ShHeredocImpl extends ShCompositeElementImpl implements ShHeredoc {
   @Nullable
   public PsiElement getAndAnd() {
     return findChildByType(AND_AND);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getHeredocContent() {
+    return findChildByType(HEREDOC_CONTENT);
   }
 
   @Override

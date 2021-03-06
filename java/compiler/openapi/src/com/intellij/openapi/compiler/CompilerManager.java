@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +62,7 @@ public abstract class CompilerManager {
    * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
   /**
@@ -70,6 +71,7 @@ public abstract class CompilerManager {
    * @deprecated use {@link CompileTask} extension instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeCompiler(@NotNull Compiler compiler);
 
   /**
@@ -96,6 +98,7 @@ public abstract class CompilerManager {
    * @deprecated use {@link CompilableFileTypesProvider} extension point to register compilable file types
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void removeCompilableFileType(@NotNull FileType type);
 
   /**
@@ -106,7 +109,7 @@ public abstract class CompilerManager {
    *
    * @param type the type to check.
    * @return true if the file type is compilable, false otherwise.
-   * @see com.intellij.openapi.compiler.CompilableFileTypesProvider#getCompilableFileTypes()
+   * @see CompilableFileTypesProvider#getCompilableFileTypes()
    */
   public abstract boolean isCompilableFileType(@NotNull FileType type);
 
@@ -121,6 +124,7 @@ public abstract class CompilerManager {
    * @deprecated Use {@code compiler.task} extension point instead (see {@link CompileTask} for details).
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**
@@ -130,14 +134,6 @@ public abstract class CompilerManager {
    */
   @NotNull
   public abstract List<CompileTask> getBeforeTasks();
-
-  /**
-   * @deprecated Use {@link #getAfterTaskList}
-   */
-  @Deprecated
-  public CompileTask @NotNull [] getAfterTasks() {
-    return getAfterTaskList().toArray(new CompileTask[0]);
-  }
 
   /**
    * Returns the list of all tasks to be executed after compilation.
@@ -219,6 +215,7 @@ public abstract class CompilerManager {
    * @return true if make on the scope specified wouldn't do anything or false if something is to be compiled or deleted
    */
   public abstract boolean isUpToDate(@NotNull CompileScope scope);
+
   /**
    * Rebuild the whole project from scratch. Compiler excludes are honored.
    *
@@ -242,12 +239,6 @@ public abstract class CompilerManager {
    */
   @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
-
-  /**
-   * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead
-   */
-  @Deprecated
-  public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link CompilerTopics#COMPILATION_STATUS} instead

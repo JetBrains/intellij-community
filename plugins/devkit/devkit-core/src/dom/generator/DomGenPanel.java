@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.generator;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -20,6 +21,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -48,8 +51,11 @@ public class DomGenPanel {
 
   private void createUIComponents() {
     mySchemaLocation = new TextFieldWithBrowseButton();
-    final String title = "Choose XSD or DTD Schema";
-    mySchemaLocation.addBrowseFolderListener(title, "Make sure there are only necessary schemes in directory where your XSD or DTD schema is located", myProject, new FileTypeDescriptor(title, "xsd", "dtd"));
+    mySchemaLocation.addBrowseFolderListener(DevKitBundle.message("dom.generator.dialog.choose.scheme.label"),
+                                             DevKitBundle.message("dom.generator.dialog.folder.browser.description"),
+                                             myProject,
+                                             new FileTypeDescriptor(DevKitBundle.message("dom.generator.dialog.choose.scheme.label"), "xsd",
+                                                                    "dtd"));
     mySchemaLocation.getTextField().setEditable(false);
     mySchemaLocation.addActionListener(new ActionListener() {
       @Override
@@ -89,7 +95,7 @@ public class DomGenPanel {
     });
     myOutputDir = new TextFieldWithBrowseButton();
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myOutputDir.addBrowseFolderListener("Select Output Directory For Generated Files", "", myProject, descriptor);
+    myOutputDir.addBrowseFolderListener(DevKitBundle.message("dom.generator.dialog.folder.output"), "", myProject, descriptor);
   }
 
   public JComponent getComponent() {
@@ -97,7 +103,8 @@ public class DomGenPanel {
   }
 
   public NamespaceDesc getNamespaceDescriptor() {
-    return new NamespaceDesc(myNamespace.getText().trim(), myPackage.getText().trim(), mySuperClass.getText().trim(), "", null, null, null, null);
+    return new NamespaceDesc(myNamespace.getText().trim(), myPackage.getText().trim(), mySuperClass.getText().trim(), "", null, null, null,
+                             null);
   }
 
   public String getLocation() {
@@ -108,7 +115,8 @@ public class DomGenPanel {
     return myOutputDir.getText();
   }
 
-  private static final String PREFIX = "DomGenPanel.";
+  private static final @NonNls String PREFIX = "DomGenPanel.";
+
   public void restore() {
     myNamespace.setText(getValue("namespace", ""));
     myPackage.setText(getValue("package", "com.intellij.myframework.model"));
@@ -120,11 +128,11 @@ public class DomGenPanel {
     myUseQualifiedClassNames.setSelected(getValue("useFQNs", "false").equals("true"));
   }
 
-  private static String getValue(String name, String defaultValue) {
+  private static @NonNls String getValue(@NonNls String name, @NonNls String defaultValue) {
     return PropertiesComponent.getInstance().getValue(PREFIX + name, defaultValue);
   }
 
-  private static void setValue(String name, String value) {
+  private static void setValue(@NonNls String name, @NonNls String value) {
     PropertiesComponent.getInstance().setValue(PREFIX + name, value);
   }
 
@@ -141,13 +149,15 @@ public class DomGenPanel {
 
   public boolean validate() {
     if (!new File(mySchemaLocation.getText()).exists()) {
-      Messages.showErrorDialog(myProject, "Schema location doesn't exist", "Error");
+      Messages.showErrorDialog(myProject, DevKitBundle.message("dom.generator.dialog.error.schema.not.exist"),
+                               CommonBundle.getErrorTitle());
       IdeFocusManager.getInstance(myProject).requestFocus(mySchemaLocation, true);
       return false;
     }
 
     if (!new File(myOutputDir.getText()).exists()) {
-      Messages.showErrorDialog(myProject, "Output dir doesn't exist", "Error");
+      Messages.showErrorDialog(myProject, DevKitBundle.message("dom.generator.dialog.error.output.not.exist"),
+                         CommonBundle.getErrorTitle());
       IdeFocusManager.getInstance(myProject).requestFocus(myOutputDir, true);
       return false;
     }

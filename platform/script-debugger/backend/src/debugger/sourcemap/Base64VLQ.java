@@ -15,6 +15,8 @@
  */
 package org.jetbrains.debugger.sourcemap;
 
+import org.jetbrains.annotations.NonNls;
+
 final class Base64VLQ {
   private Base64VLQ() {
   }
@@ -60,7 +62,7 @@ final class Base64VLQ {
      * A map used to convert integer values in the range 0-63 to their base64
      * values.
      */
-    private static final String BASE64_MAP =
+    private static final @NonNls String BASE64_MAP =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
       "abcdefghijklmnopqrstuvwxyz" +
       "0123456789+/";

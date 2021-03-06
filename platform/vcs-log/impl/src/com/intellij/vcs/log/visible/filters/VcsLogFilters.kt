@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
 import com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER
@@ -14,20 +13,21 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcsUtil.VcsUtil
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters") // NON-NLS
-
 object VcsLogFilterObject {
+  private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
+
   const val ME = "*"
 
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
-    if (isRegexpAllowed && VcsLogUtil.maybeRegexp(text)) {
+    if (isRegexpAllowed && VcsLogUtil.isRegexp(text)) {
       try {
         return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
       }
@@ -64,51 +64,60 @@ object VcsLogFilterObject {
     return VcsLogRangeFilterImpl(ranges)
   }
 
+  @JvmOverloads
   @JvmStatic
-  fun fromBranchPatterns(strings: Collection<String>, existingBranches: Set<String>): VcsLogBranchFilter {
-    val branchNames = ArrayList<String>()
-    val excludedBranches = ArrayList<String>()
-    val patterns = ArrayList<Pattern>()
-    val excludedPatterns = ArrayList<Pattern>()
+  fun fromBranchPatterns(patterns: Collection<String>,
+                         existingBranches: Set<String>,
+                         excludeNotMatched: Boolean = false): VcsLogBranchFilter {
 
-    for (s in strings) {
-      val isExcluded = s.startsWith("-")
-      val string = if (isExcluded) s.substring(1) else s
-      val isRegexp = (existingBranches.isNotEmpty() && !existingBranches.contains(string)) ||
-                     (existingBranches.isEmpty() && VcsLogUtil.maybeRegexp(string))
+    val includedBranches = ArrayList<String>()
+    val excludedBranches = ArrayList<String>()
+    val includedPatterns = ArrayList<Pattern>()
+    val excludedPatterns = ArrayList<Pattern>()
+    val shouldExcludeNotMatched = existingBranches.isNotEmpty() && excludeNotMatched
+
+    for (pattern in patterns) {
+      val isExcluded = pattern.startsWith("-")
+      val string = if (isExcluded) pattern.substring(1) else pattern
+      val isRegexp = !existingBranches.contains(string) && VcsLogUtil.isRegexp(string)
 
       if (isRegexp) {
         try {
-          val pattern = Pattern.compile(string)
+          val regex = Pattern.compile(string)
           if (isExcluded) {
-            excludedPatterns.add(pattern)
+            excludedPatterns.add(regex)
           }
           else {
-            patterns.add(pattern)
+            includedPatterns.add(regex)
           }
         }
         catch (e: PatternSyntaxException) {
           LOG.warn("Pattern $string is not a proper regular expression and no branch can be found with that name.", e)
+          if (shouldExcludeNotMatched) {
+            continue
+          }
           if (isExcluded) {
             excludedBranches.add(string)
           }
           else {
-            branchNames.add(string)
+            includedBranches.add(string)
           }
         }
-
       }
       else {
+        if (shouldExcludeNotMatched && !existingBranches.contains(string)) {
+          continue
+        }
         if (isExcluded) {
           excludedBranches.add(string)
         }
         else {
-          branchNames.add(string)
+          includedBranches.add(string)
         }
       }
     }
 
-    return VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns)
+    return VcsLogBranchFilterImpl(includedBranches, includedPatterns, excludedBranches, excludedPatterns)
   }
 
   @JvmStatic
@@ -189,8 +198,8 @@ object VcsLogFilterObject {
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {
-      if (f != null) {
-        if (filterSet.replace(f)) LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
+      if (f != null && replace(filterSet, f)) {
+        LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
       }
     }
     return VcsLogFilterCollectionImpl(filterSet)
@@ -205,7 +214,7 @@ fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
 
   val filterSet = createFilterSet()
   filterSet.addAll(this.filters)
-  filterSet.replace(filter)
+  replace(filterSet, filter)
   return VcsLogFilterCollectionImpl(filterSet)
 }
 
@@ -232,12 +241,12 @@ fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
-  return filters.joinToString(" ") { filter ->
+  return StringUtil.join(filters, { filter: VcsLogFilter ->
     if (filters.size != 1) {
       filter.withPrefix()
     }
     else filter.displayText
-  }
+  }, " ")
 }
 
 @Nls
@@ -250,23 +259,21 @@ private fun VcsLogFilter.withPrefix(): String {
     is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
     is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)
   }
-  return ""
+  return displayText
 }
 
-private fun createFilterSet() = OpenTHashSet(FilterByKeyHashingStrategy())
+private fun createFilterSet() = ObjectOpenCustomHashSet(object : Hash.Strategy<VcsLogFilter> {
+  override fun hashCode(o: VcsLogFilter?): Int {
+    return o?.key?.hashCode() ?: 0
+  }
 
-private fun <T> OpenTHashSet<T>.replace(element: T): Boolean {
-  val isModified = remove(element)
-  add(element)
+  override fun equals(o1: VcsLogFilter?, o2: VcsLogFilter?): Boolean {
+    return o1 === o2 || (o1?.key == o2?.key)
+  }
+})
+
+private fun <T> replace(set: ObjectOpenCustomHashSet<T>, element: T): Boolean {
+  val isModified = set.remove(element)
+  set.add(element)
   return isModified
-}
-
-internal class FilterByKeyHashingStrategy : TObjectHashingStrategy<VcsLogFilter> {
-  override fun computeHashCode(`object`: VcsLogFilter): Int {
-    return `object`.key.hashCode()
-  }
-
-  override fun equals(o1: VcsLogFilter, o2: VcsLogFilter): Boolean {
-    return o1.key == o2.key
-  }
 }

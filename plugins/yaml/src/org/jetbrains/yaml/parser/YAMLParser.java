@@ -529,7 +529,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         marker.done(YAMLElementTypes.SEQUENCE_ITEM);
       }
       else {
-        marker.error("Sequence item expected");
+        marker.error(YAMLBundle.message("parsing.error.sequence.item.expected"));
       }
 
       if (getTokenType() == YAMLTokenTypes.COMMA) {
@@ -608,7 +608,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     return type == INDENT || type == EOL;
   }
 
-  private static int findLeftRange(@NotNull List<IElementType> tokens) {
+  private static int findLeftRange(@NotNull List<? extends IElementType> tokens) {
     int i = tokens.indexOf(COMMENT);
     return i != -1 ? i : tokens.size();
   }

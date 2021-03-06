@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -30,12 +31,23 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayHashCodeInspection extends BaseInspection {
+  enum Kind {
+    ARRAY_HASH_CODE,
+    OBJECTS_HASH
+  }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "array.hash.code.problem.descriptor");
+    switch (((Kind)infos[1])) {
+      case ARRAY_HASH_CODE:
+        return InspectionGadgetsBundle.message("array.hash.code.problem.descriptor");
+      case OBJECTS_HASH:
+          return InspectionGadgetsBundle.message("objects.hash.problem.descriptor");
+      default:
+        assert false;
+        return null;
+    }
   }
 
   @Override
@@ -46,10 +58,14 @@ public class ArrayHashCodeInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiArrayType type = (PsiArrayType)infos[0];
-    if (type.getComponentType() instanceof PsiArrayType) {
-      return new ArrayHashCodeFix(true);
+    final boolean deepHashCode = type.getComponentType() instanceof PsiArrayType;
+    switch (((Kind)infos[1])) {
+      case ARRAY_HASH_CODE:
+        return new ArrayHashCodeFix(deepHashCode);
+      case OBJECTS_HASH:
+        return new ObjectsHashFix(deepHashCode);
+      default: return null;
     }
-    return new ArrayHashCodeFix(false);
   }
 
   private static class ArrayHashCodeFix extends InspectionGadgetsFix {
@@ -100,6 +116,35 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
   }
 
+  private static class ObjectsHashFix extends InspectionGadgetsFix {
+    private final boolean deepHashCode;
+
+    ObjectsHashFix(boolean deepHashCode) {
+      this.deepHashCode = deepHashCode;
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return InspectionGadgetsBundle.message("wrap.with.arrays.hash.code.quickfix", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("objects.hash.fix.family.name");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      CommentTracker tracker = new CommentTracker();
+      String text =
+        (deepHashCode ? "java.util.Arrays.deepHashCode(" : "java.util.Arrays.hashCode(") + tracker.text(descriptor.getPsiElement()) + ')';
+      PsiElement result = tracker.replaceAndRestoreComments(descriptor.getPsiElement(), text);
+      JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
+    }
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ArrayHashCodeVisitor();
@@ -112,14 +157,31 @@ public class ArrayHashCodeInspection extends BaseInspection {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.HASH_CODE.equals(methodName)) return;
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (!argumentList.isEmpty()) return;
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) return;
-      final PsiType type = qualifier.getType();
-      if (!(type instanceof PsiArrayType)) return;
-      registerMethodCallError(expression, type);
+      if (HardcodedMethodConstants.HASH_CODE.equals(methodName)) {
+        if (!argumentList.isEmpty()) return;
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if (qualifier == null) return;
+        final PsiType type = qualifier.getType();
+        if (!(type instanceof PsiArrayType)) return;
+        registerMethodCallError(expression, type, Kind.ARRAY_HASH_CODE);
+      } else if ("hash".equals(methodName)) {
+        if (argumentList.getExpressionCount() == 1) return;
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null) {
+          return;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null || !CommonClassNames.JAVA_UTIL_OBJECTS.equals(containingClass.getQualifiedName())) {
+          return;
+        }
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        for (PsiExpression arg : expressions) {
+          final PsiType type = arg.getType();
+          if (!(type instanceof PsiArrayType)) continue;
+          registerError(arg, type, Kind.OBJECTS_HASH);
+        }
+      }
     }
   }
 }

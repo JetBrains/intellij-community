@@ -38,6 +38,7 @@ public abstract class PathMacros {
    * @deprecated Use {@link PathMacroContributor}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void removeMacro(@NotNull String name) {
     setMacro(name, null);
   }

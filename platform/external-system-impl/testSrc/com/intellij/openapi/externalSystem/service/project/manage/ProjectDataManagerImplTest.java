@@ -11,11 +11,14 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
   public void testDataServiceIsCalledIfNoNodes() {
@@ -52,6 +55,59 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
                         "removeDataAfter");
   }
 
+  public void testConcurrentDataServiceAccess() {
+    int n = 100;
+    final List<String> callTrace = new ArrayList<>();
+    TestDataService[] dataServiceArray = new TestDataService[n];
+    for (int i = 0; i < n; i++) {
+      dataServiceArray[i] = new TestDataService(callTrace);
+    }
+    maskProjectDataServices(dataServiceArray);
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final Ref<Throwable> caughtCME = new Ref<>(null);
+
+    Thread iterating = new Thread(() -> {
+      await(latch);
+      try {
+        List<ProjectDataService<?, ?>> services = ProjectDataManagerImpl.getInstance().findService(TestDataService.TEST_KEY);
+        for (ProjectDataService<?, ?> service : services) {
+          Thread.yield();
+        }
+      } catch (ConcurrentModificationException e) {
+        caughtCME.set(e);
+      }
+    }, "Iterating over services");
+
+    Thread lookup = new Thread(() -> {
+      await(latch);
+      try {
+        for (int i = 0; i < n; i++) {
+          Thread.yield();
+          ProjectDataManagerImpl.getInstance().findService(TestDataService.TEST_KEY);
+        }
+      } catch (ConcurrentModificationException e) {
+        caughtCME.set(e);
+      }
+    }, "Lookup service with sorting");
+
+    iterating.start();
+    lookup.start();
+    latch.countDown();
+    ConcurrencyUtil.joinAll(iterating, lookup);
+
+    assertNull(caughtCME.get());
+  }
+
+  private static void await(CountDownLatch latch) {
+    try {
+      latch.await();
+    }
+    catch (InterruptedException e) {
+      // do nothing
+    }
+  }
+
   private void maskProjectDataServices(TestDataService... services) {
     ((ExtensionPointImpl<ProjectDataService<?,?>>)ProjectDataService.EP_NAME.getPoint()).maskAll(Arrays.asList(services),
                                                                                                  getTestRootDisposable(),
@@ -70,8 +126,8 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void removeData(@NotNull Computable toRemove,
-                           @NotNull Collection toIgnore,
+    public void removeData(Computable<? extends Collection<?>> toRemove,
+                           Collection<? extends DataNode<Object>> toIgnore,
                            @NotNull ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -80,7 +136,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
 
     @NotNull
     @Override
-    public Computable<Collection> computeOrphanData(@NotNull Collection toImport,
+    public Computable<Collection<Object>> computeOrphanData(Collection<? extends DataNode<Object>> toImport,
                                                     @NotNull ProjectData projectData,
                                                     @NotNull Project project,
                                                     @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -89,7 +145,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void importData(@NotNull Collection toImport,
+    public void importData(Collection<? extends DataNode<Object>> toImport,
                            @Nullable ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -120,8 +176,8 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void removeData(@NotNull Computable toRemove,
-                           @NotNull Collection toIgnore,
+    public void removeData(Computable<? extends Collection<?>> toRemove,
+                           Collection<? extends DataNode<Object>> toIgnore,
                            @NotNull ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -130,7 +186,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
 
     @NotNull
     @Override
-    public Computable<Collection> computeOrphanData(@NotNull Collection toImport,
+    public Computable<Collection<Object>> computeOrphanData(Collection<? extends DataNode<Object>> toImport,
                                                     @NotNull ProjectData projectData,
                                                     @NotNull Project project,
                                                     @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -139,7 +195,7 @@ public class ProjectDataManagerImplTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public void importData(@NotNull Collection toImport,
+    public void importData(Collection<? extends DataNode<Object>> toImport,
                            @Nullable ProjectData projectData,
                            @NotNull Project project,
                            @NotNull IdeModifiableModelsProvider modelsProvider) {

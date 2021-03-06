@@ -1,13 +1,26 @@
+import sys
+
+# If no common frame evaluator library is found, there is no point to continue looking the version dependent
+# frame evaluator extension, and we let the exception to be propagated to the upper context.
 try:
-    try:
-        from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
-    except ImportError:
-        from _pydevd_frame_eval import pydevd_frame_evaluator as mod
+    from _pydevd_frame_eval_ext import pydevd_frame_evaluator_common
+except ImportError:
+    from _pydevd_frame_eval import pydevd_frame_evaluator_common
+
+try:
+    if sys.version_info[:2] < (3, 9):  # Python 3.9's extension has a different name.
+        try:
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
+        except ImportError:
+            from _pydevd_frame_eval import pydevd_frame_evaluator as mod
+    else:
+        try:
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_py39 as mod
+        except ImportError:
+            from _pydevd_frame_eval import pydevd_frame_evaluator_py39 as mod
 
 except ImportError:
     try:
-        import sys
-
         try:
             is_64bits = sys.maxsize > 2 ** 32
         except:
@@ -40,4 +53,4 @@ dummy_trace_dispatch = mod.dummy_trace_dispatch
 
 get_thread_info_py = mod.get_thread_info_py
 
-clear_thread_local_info = mod.clear_thread_local_info
+clear_thread_local_info = mod.clear_thread_local_info_py

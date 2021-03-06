@@ -15,13 +15,14 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,8 +33,7 @@ public abstract class AntDomDirname extends AntDomPropertyDefiningTask {
   public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
   @Override
-  @Nullable
-  protected final String calcPropertyValue(String propertyName) {
+  protected final @NlsSafe String calcPropertyValue(@NonNls String propertyName) {
     final PsiFileSystemItem fsItem = getFile().getValue();
     if (fsItem != null) {
       final PsiFileSystemItem parent = fsItem.getParent();

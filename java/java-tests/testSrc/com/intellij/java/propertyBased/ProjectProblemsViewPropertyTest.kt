@@ -4,14 +4,12 @@ package com.intellij.java.propertyBased
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.problems.MemberCollector
 import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
-import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.daemon.problems.Problem
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.codeInsight.javadoc.JavaDocUtil
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -25,14 +23,13 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.propertyBased.MadTestingUtil
-import com.intellij.usages.UsageInfo2UsageAdapter
-import com.intellij.usages.UsageViewManager
 import com.intellij.util.ArrayUtilRt
 import com.siyeh.ig.psiutils.TypeUtils
 import junit.framework.TestCase
@@ -40,11 +37,7 @@ import one.util.streamex.StreamEx
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import java.awt.Point
-import java.awt.event.MouseEvent
-import javax.swing.JPanel
 import kotlin.math.absoluteValue
-import kotlin.test.assertNotEquals
 
 @SkipSlowTestLocally
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
@@ -57,7 +50,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment) {
-    val changedFiles = mutableSetOf<VirtualFile>()
+    val changedFiles = mutableMapOf<VirtualFile, Set<VirtualFile>>()
 
     MadTestingUtil.changeAndRevert(myProject) {
       val nFilesToChange = env.generateValue(Generator.integers(1, 3), "Files to change: %s")
@@ -72,15 +65,16 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
         val editor = openEditor(fileToChange.virtualFile)
         rehighlight(fileToChange, editor)
-        if (getFilesReportedByProblemSearch(editor, fileToChange).isNotEmpty()) continue
+        if (getFilesReportedByProblemSearch(editor).isNotEmpty()) continue
 
         env.logMessage("Selected file: ${fileToChange.name}")
 
         val actual = changeSelectedFile(env, members, fileToChange)
+        if (actual == null) break
 
-        changedFiles.add(fileToChange.virtualFile)
+        changedFiles[fileToChange.virtualFile] = relatedFiles
 
-        val expected = findFilesWithBrokenUsages(relatedFiles, members)
+        val expected = findFilesWithProblems(relatedFiles, members)
         assertContainsElements(actual, expected)
 
         i++
@@ -89,39 +83,45 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
     // check that all problems disappeared after revert
     val psiManager = PsiManager.getInstance(myProject)
-    for (changedFile in changedFiles) {
+    for ((changedFile, relatedFiles) in changedFiles) {
       val psiFile = psiManager.findFile(changedFile)!!
       val editor = openEditor(changedFile)
       rehighlight(psiFile, editor)
-      val reportedChanges = ProjectProblemPassUtils.getInlays(editor)
-      for ((member, inlay) in reportedChanges) {
-        if (inlay != null) {
-          TestCase.fail("Problems are still reported even after the fix. " +
-                        "File: ${changedFile.name}, " +
-                        "Member: ${JavaDocUtil.getReferenceText(myProject, member)}, " +
-                        "Reported problems: ${extractProblems(changedFile, inlay)}")
+      val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(editor)
+      if (problems.isNotEmpty()) {
+        val relatedProblems = findRelatedProblems(problems, relatedFiles)
+        if (relatedProblems.isNotEmpty()) {
+          TestCase.fail("""
+          Problems are still reported even after the fix.
+          File: ${changedFile.name}, 
+          ${relatedProblems.map { (member, memberProblems) -> extractMemberProblems(member, memberProblems) }}
+          """.trimIndent())
         }
       }
     }
   }
 
+  private data class ScopedMember(val psiMember: PsiMember, var scope: SearchScope)
+
   private fun changeSelectedFile(env: ImperativeCommand.Environment,
-                                 members: List<PsiMember>,
-                                 fileToChange: PsiJavaFile): Set<VirtualFile> {
+                                 members: List<ScopedMember>,
+                                 fileToChange: PsiJavaFile): Set<VirtualFile>? {
     val reportedFiles = mutableSetOf<VirtualFile>()
     val nChanges = env.generateValue(Generator.integers(1, 5), "Changes to make: %s")
     for (j in 0 until nChanges) {
       val editor = (FileEditorManager.getInstance(myProject).selectedEditor as TextEditor).editor
       val member = env.generateValue(Generator.sampledFrom(members), null)
-      env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, member)}")
-      val usages = findUsages(member)
+      val psiMember = member.psiMember
+      val prevScope = psiMember.useScope
+      env.logMessage("Changing member: ${JavaDocUtil.getReferenceText(myProject, psiMember)}")
+      val usages = findUsages(psiMember)
       if (usages == null || usages.isEmpty()) {
         env.logMessage("Member has no usages (or too many). Skipping.")
         continue
       }
       env.logMessage("Found ${usages.size} usages of member and its parents")
 
-      val modifications = Modification.getPossibleModifications(member, env)
+      val modifications = Modification.getPossibleModifications(psiMember, env)
       if (modifications.isEmpty()) {
         env.logMessage("Don't know how to modify this member, skipping it.")
         continue
@@ -138,14 +138,20 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       WriteCommandAction.runWriteCommandAction(myProject) { modification.apply(myProject) }
       env.logMessage("Modification applied")
       rehighlight(fileToChange, editor)
-      reportedFiles.addAll(getFilesReportedByProblemSearch(editor, fileToChange))
+      if (!isCheapToSearch(psiMember)) {
+        env.logMessage("Too costly to analyze element after change, skipping all iteration")
+        return null
+      }
+      reportedFiles.addAll(getFilesReportedByProblemSearch(editor))
+      val curScope = psiMember.useScope
+      member.scope = prevScope.union(curScope)
     }
     return reportedFiles
   }
 
-  private fun getMembersToSearch(member: PsiMember, modification: Modification, members: List<PsiMember>): List<PsiMember>? {
+  private fun getMembersToSearch(member: ScopedMember, modification: Modification, members: List<ScopedMember>): List<ScopedMember>? {
     if (!modification.searchAllMembers()) return listOf(member)
-    if (members.any { !isCheapToSearch(it) }) return null
+    if (members.any { !isCheapToSearch(it.psiMember) }) return null
     return members
   }
 
@@ -172,12 +178,12 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       }
   }
 
-  private fun findMembers(psiFile: PsiClassOwner): List<PsiMember> {
+  private fun findMembers(psiFile: PsiClassOwner): List<ScopedMember> {
     return MemberCollector.collectMembers(psiFile) { member ->
       if (member is PsiMethod && member.isConstructor) return@collectMembers false
       val modifiers = member.modifierList ?: return@collectMembers true
       return@collectMembers !modifiers.hasExplicitModifier(PsiModifier.PRIVATE)
-    }
+    }.map { ScopedMember(it, it.useScope) }
   }
 
   private fun findUsages(target: PsiMember): List<PsiElement>? {
@@ -195,9 +201,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
           else -> null
         }
       }
-      val collector = MemberUsageCollector(name, member.containingFile, usageExtractor)
-      PsiSearchHelper.getInstance(myProject).processAllFilesWithWord(name, scope, collector, true)
-      val memberUsages = collector.collectedUsages ?: return null
+      val memberUsages = MemberUsageCollector.collect(name, member.containingFile, scope, usageExtractor) ?: return null
       usages.addAll(memberUsages)
     }
     return usages
@@ -219,7 +223,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return possibleOverride == JavaOverridingMethodsSearcher.findOverridingMethod(overrideClass, target, targetClass)
   }
 
-  private fun findFilesWithBrokenUsages(relatedFiles: Set<VirtualFile>, members: List<PsiMember>): Set<VirtualFile> {
+  private fun findFilesWithProblems(relatedFiles: Set<VirtualFile>, members: List<ScopedMember>): Set<VirtualFile> {
     val psiManager = PsiManager.getInstance(myProject)
     val filesWithErrors = mutableSetOf<VirtualFile>()
     for (file in relatedFiles) {
@@ -229,7 +233,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     return filesWithErrors
   }
 
-  private fun hasErrors(psiFile: PsiFile, members: List<PsiMember>? = null): Boolean {
+  private fun hasErrors(psiFile: PsiFile, members: List<ScopedMember>? = null): Boolean {
     val infos = rehighlight(psiFile, openEditor(psiFile.virtualFile))
     return infos.any { info ->
       if (info.severity != HighlightSeverity.ERROR) return@any false
@@ -243,80 +247,49 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
                                                          PsiMethod::class.java, PsiField::class.java,
                                                          PsiReferenceList::class.java) ?: return@any false
       return@any StreamEx.ofTree(context, { StreamEx.of(*it.children) })
-        .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m) } }
+        .anyMatch { el -> el is PsiReference && members.any { m -> el.isReferenceTo(m.psiMember) && inScope(el.containingFile, m.scope) } }
     }
   }
 
-  private fun extractProblems(virtualFile: VirtualFile, inlay: Inlay<*>): String {
-    data class Problem(val fileName: String, val offset: Int, val selectedElement: String,
-                       val context: String?, val fileErrors: List<HighlightInfo>)
+  private fun inScope(psiFile: PsiFile, scope: SearchScope): Boolean = scope.contains(psiFile.virtualFile)
 
-    fun getProblem(openedFile: VirtualFile, textEditor: TextEditor): Problem {
-      val editor = textEditor.editor
-      val psiFile = PsiManager.getInstance(myProject).findFile(openedFile)!!
-      val offset = editor.caretModel.offset
-      val selectedElement = psiFile.findElementAt(offset)!!
-      val context = PsiTreeUtil.getParentOfType(selectedElement,
-                                                PsiStatement::class.java, PsiExpression::class.java,
-                                                PsiMethod::class.java, PsiClass::class.java)
-      val fileErrors = rehighlight(psiFile, editor).filter { it.severity == HighlightSeverity.ERROR }
-      return Problem(openedFile.name, offset, selectedElement.text, context?.text, fileErrors)
-    }
-
-    clickOnInlay(inlay)
-
-    val textEditor = FileEditorManager.getInstance(myProject).selectedEditor as TextEditor
-    val openedFile = textEditor.file!!
-    if (openedFile != virtualFile) return getProblem(openedFile, textEditor).toString()
-
-    val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-    val problems = usageView.usages.map { usage ->
-      usage.navigate(true)
-      val editor = FileEditorManager.getInstance(myProject).selectedEditor as TextEditor
-      val file = editor.file!!
-      getProblem(file, editor)
-    }
-    return problems.joinToString { it.toString() }
-  }
-
-  private fun getFilesReportedByProblemSearch(editor: Editor, psiFile: PsiFile): Set<VirtualFile> {
-    val reportedChanges: Map<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(editor)
-    val virtualFile = psiFile.virtualFile
-    val filesWithProblems = mutableSetOf<VirtualFile>()
-    for (inlay in reportedChanges.values) {
-      clickOnInlay(inlay)
-      val openedFile = FileEditorManager.getInstance(myProject).selectedEditor!!.file!!
-      if (openedFile != virtualFile) {
-        filesWithProblems.add(openedFile)
-        openEditor(virtualFile)
-        continue
+  private fun findRelatedProblems(problems: Map<PsiMember, Set<Problem>>, relatedFiles: Set<VirtualFile>): Map<PsiMember, Set<Problem>> {
+    val relatedProblems = mutableMapOf<PsiMember, Set<Problem>>()
+    for ((member, memberProblems) in problems) {
+      val memberRelatedProblems = mutableSetOf<Problem>()
+      for (memberProblem in memberProblems) {
+        val problemFile = memberProblem.reportedElement.containingFile
+        if (problemFile.virtualFile in relatedFiles) memberRelatedProblems.add(memberProblem)
       }
-      val usageView = UsageViewManager.getInstance(myProject).selectedUsageView!!
-      for (usage in usageView.usages) {
-        val usageFile = (usage as UsageInfo2UsageAdapter).usageInfo.virtualFile!!
-        assertNotEquals(usageFile, virtualFile)
-        filesWithProblems.add(usageFile)
-      }
+      if (memberRelatedProblems.isNotEmpty()) relatedProblems[member] = memberRelatedProblems
     }
-    return filesWithProblems
+    return relatedProblems
   }
 
-  companion object {
-    private fun clickOnInlay(inlay: Inlay<*>) {
-      val click = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 0, true, MouseEvent.BUTTON1)
-      val point = Point(0, 0)
-      val renderer = inlay.renderer as BlockInlayRenderer
-      val constrainedPresentations = renderer.getConstrainedPresentations()
-      val presentation = constrainedPresentations[0]
-      val rootPresentation = presentation.root
-      val settingsOnClickPresentation = (rootPresentation.content as SequencePresentation).presentations[1] as OnClickPresentation
-      val usagesHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
-      usagesHoverPresentation.mouseMoved(click, point)
-      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
-      val usagesClickPresentation = delegatePresentation.delegate as OnClickPresentation
-      usagesClickPresentation.mouseClicked(click, point)
+  private fun extractMemberProblems(member: PsiMember, memberProblems: Set<Problem>): String {
+    data class ProblemData(val fileName: String, val offset: Int, val reportedElement: String,
+                           val context: String?, val fileErrors: List<HighlightInfo>)
+
+    fun getProblemData(problem: Problem): ProblemData {
+      val context = problem.context
+      val reportedElement = problem.reportedElement
+      val psiFile = reportedElement.containingFile
+      val fileName = psiFile.name
+      val offset = reportedElement.textOffset
+      val textEditor = FileEditorManager.getInstance(myProject).openFile(psiFile.virtualFile, true)[0] as TextEditor
+      val fileErrors = rehighlight(psiFile, textEditor.editor).filter { it.severity == HighlightSeverity.ERROR }
+      return ProblemData(fileName, offset, reportedElement.text, context.text, fileErrors)
     }
+
+    return "Member: ${JavaDocUtil.getReferenceText(member.project, member)}," +
+           " Problems: ${memberProblems.map { getProblemData(it) }}\n"
   }
+
+  private fun getFilesReportedByProblemSearch(editor: Editor): Set<VirtualFile> =
+    ProjectProblemUtils.getReportedProblems(editor).asSequence()
+      .flatMap { it.value.asSequence() }
+      .map { it.reportedElement.containingFile }
+      .mapTo(mutableSetOf()) { it.virtualFile }
 
   private sealed class Modification(protected val member: PsiMember, env: ImperativeCommand.Environment) {
 

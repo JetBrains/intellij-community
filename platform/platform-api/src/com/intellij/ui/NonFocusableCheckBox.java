@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsContexts;
 
 import javax.swing.*;
 
@@ -24,7 +25,7 @@ import javax.swing.*;
  *  @author dsl
  */
 public class NonFocusableCheckBox extends JCheckBox {
-  public NonFocusableCheckBox(String text) {
+  public NonFocusableCheckBox(@NlsContexts.Checkbox String text) {
     super(text);
     initFocusability();
   }

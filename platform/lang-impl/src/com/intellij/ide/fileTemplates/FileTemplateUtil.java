@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
+import com.intellij.model.ModelBranch;
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -34,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
@@ -43,7 +44,7 @@ import java.util.regex.Pattern;
 /**
  * @author MYakovlev
  */
-public class FileTemplateUtil {
+public final class FileTemplateUtil {
   private static final Logger LOG = Logger.getInstance(FileTemplateUtil.class);
   private static final CreateFromTemplateHandler DEFAULT_HANDLER = new DefaultCreateFromTemplateHandler();
 
@@ -82,15 +83,14 @@ public class FileTemplateUtil {
       Node apacheChild = apacheNode.jjtGetChild(i);
       collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies, visitedIncludes, project);
       if (apacheChild instanceof ASTReference) {
-        ASTReference apacheReference = (ASTReference)apacheChild;
-        String s = apacheReference.literal();
+        String s = apacheChild.literal();
         s = referenceToAttribute(s, includeDummies);
         if (s != null && s.length() > 0 && !propertiesNames.contains(s)) {
           referenced.add(s);
         }
       }
       else if (apacheChild instanceof ASTSetDirective) {
-        ASTReference lhs = (ASTReference)apacheChild.jjtGetChild(0);
+        Node lhs = apacheChild.jjtGetChild(0);
         String attr = referenceToAttribute(lhs.literal(), false);
         if (attr != null) {
           defined.add(attr);
@@ -171,9 +171,9 @@ public class FileTemplateUtil {
   }
 
   @NotNull
-  public static String mergeTemplate(@NotNull Map attributes, @NotNull String content, boolean useSystemLineSeparators) throws IOException {
+  public static String mergeTemplate(@NotNull Map attributes, @NotNull String content, boolean useSystemLineSeparators) {
     VelocityContext context = createVelocityContext();
-    for (final Object o : attributes.keySet()) {
+    for (Object o : attributes.keySet()) {
       String name = (String)o;
       context.put(name, attributes.get(name));
     }
@@ -188,7 +188,7 @@ public class FileTemplateUtil {
   }
 
   @NotNull
-  public static String mergeTemplate(@NotNull Properties attributes, @NotNull String content, boolean useSystemLineSeparators) throws IOException {
+  public static String mergeTemplate(@NotNull Properties attributes, @NotNull String content, boolean useSystemLineSeparators) {
     return mergeTemplate(attributes, content, useSystemLineSeparators, null);
   }
 
@@ -218,7 +218,7 @@ public class FileTemplateUtil {
       else {
         project = null;
       }
-      VelocityTemplateContext.withContext(project, ()->VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
+      VelocityTemplateContext.withContext(project, () -> VelocityWrapper.evaluate(project, context, stringWriter, templateContent));
     }
     catch (final VelocityException e) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -320,7 +320,7 @@ public class FileTemplateUtil {
       propsMap.put(dummyRef, "");
     }
 
-    handler.prepareProperties(propsMap, fileName, template);
+    handler.prepareProperties(propsMap, fileName, template, project);
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;
@@ -330,16 +330,21 @@ public class FileTemplateUtil {
       () -> template.getText(props_));
     String templateText = StringUtil.convertLineSeparators(mergedText);
 
+    if (ModelBranch.getPsiBranch(directory) != null) {
+      return handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
+    }
+
     return WriteCommandAction
-        .writeCommandAction(project)
-        .withName(handler.commandName(template))
-        .compute(()->handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
+      .writeCommandAction(project)
+      .withName(handler.commandName(template))
+      .compute(() -> handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
   }
 
   @Nullable
-  private static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+  public static String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {
+    VirtualFile dirVfile = directory.getVirtualFile();
     VirtualFile baseDir = directory.getProject().getBaseDir();
-    return baseDir != null ? VfsUtilCore.getRelativePath(directory.getVirtualFile(), baseDir) : null;
+    return baseDir != null ? VfsUtilCore.getRelativePath(dirVfile, ModelBranchUtil.obtainCopyFromTheSameBranch(dirVfile, baseDir)) : null;
   }
 
   @NotNull
@@ -384,10 +389,12 @@ public class FileTemplateUtil {
     return getFileType(fileTemplate).getIcon();
   }
 
-  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p) {
+  public static void putAll(@NotNull Map<String, Object> props, @NotNull Properties p){
     for (Enumeration<?> e = p.propertyNames(); e.hasMoreElements(); ) {
       String s = (String)e.nextElement();
-      props.putIfAbsent(s, p.getProperty(s));
+
+      //noinspection UseOfPropertiesAsHashtable
+      props.putIfAbsent(s, p.containsKey(s) ? p.get(s) : p.getProperty(s)); // pass object for explicit values or string for defaults
     }
   }
 
@@ -413,7 +420,7 @@ public class FileTemplateUtil {
   @NotNull
   public static Pattern getTemplatePattern(@NotNull FileTemplate template,
                                            @NotNull Project project,
-                                           @NotNull TIntObjectHashMap<String> offsetToProperty) {
+                                           @NotNull Int2ObjectMap<String> offsetToProperty) {
     String templateText = template.getText().trim();
     String regex = templateToRegex(templateText, offsetToProperty, project);
     regex = StringUtil.replace(regex, "with", "(?:with|by)");
@@ -422,7 +429,7 @@ public class FileTemplateUtil {
   }
 
   @NotNull
-  private static String templateToRegex(@NotNull String text, @NotNull TIntObjectHashMap<String> offsetToProperty, @NotNull Project project) {
+  private static String templateToRegex(@NotNull String text, @NotNull Int2ObjectMap<String> offsetToProperty, @NotNull Project project) {
     List<Object> properties = new ArrayList<>(FileTemplateManager.getInstance(project).getDefaultProperties().keySet());
     properties.add(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
 
@@ -436,8 +443,7 @@ public class FileTemplateUtil {
       for (int i = regex.indexOf(escaped); i != -1 && i < regex.length(); i = regex.indexOf(escaped, i + 1)) {
         String replacement = first ? "([^\\n]*)" : "\\" + groupNumber;
         int delta = escaped.length() - replacement.length();
-        int[] offs = offsetToProperty.keys();
-        for (int off : offs) {
+        for (int off : offsetToProperty.keySet().toIntArray()) {
           if (off > i) {
             String prop = offsetToProperty.remove(off);
             offsetToProperty.put(off - delta, prop);

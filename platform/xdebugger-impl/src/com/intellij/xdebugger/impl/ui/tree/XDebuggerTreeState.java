@@ -16,7 +16,7 @@ import javax.swing.tree.TreePath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XDebuggerTreeState {
+public final class XDebuggerTreeState {
   private final NodeInfo myRootInfo;
   private Rectangle myLastVisibleNodeRect;
 

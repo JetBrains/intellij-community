@@ -57,7 +57,7 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
       return null;
     }
     XPath xPath = lazyCompile(selector.getPath());
-    String s = xPath.valueOf(context);
+    String s = xPath.valueOf(context); //NON-NLS
     if (s == null) {
       throw new Exception(String.format("XPath expression '%s' doesn't match", xPath.getXPath()));
     }

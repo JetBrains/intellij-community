@@ -90,7 +90,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     else {
       return null;
     }
-    final PsiExpression deparenthesizedArgument = ParenthesesUtils.stripParentheses(arrayAccessExpression);
+    final PsiExpression deparenthesizedArgument = PsiUtil.skipParenthesizedExprDown(arrayAccessExpression);
     if (!(deparenthesizedArgument instanceof PsiArrayAccessExpression)) {
       return null;
     }
@@ -132,8 +132,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       PsiReplacementUtil.replaceStatementAndShortenClassNames(loop, newExpression);
     }
 
-    @Nullable
-    private static String getCollectionsAddAllText(PsiForeachStatement foreachStatement) {
+    private static @Nullable @NonNls String getCollectionsAddAllText(PsiForeachStatement foreachStatement) {
       final PsiStatement body = getBody(foreachStatement);
       if (!(body instanceof PsiExpressionStatement)) return null;
       final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)body;
@@ -151,10 +150,9 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       return collectionText + ".addAll(java.util.Arrays.asList(" + arrayText + "));";
     }
 
-    @Nullable
-    private static String getCollectionsAddAllText(PsiForStatement forStatement) {
+    private static @Nullable @NonNls String getCollectionsAddAllText(PsiForStatement forStatement) {
       final PsiExpression expression = forStatement.getCondition();
-      final PsiBinaryExpression condition = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+      final PsiBinaryExpression condition = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
       if (condition == null) return null;
       final PsiDeclarationStatement declaration = tryCast(forStatement.getInitialization(), PsiDeclarationStatement.class);
       if (declaration == null) return null;
@@ -229,7 +227,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
 
     @Nullable
     private static String getIndexOffset(PsiExpression expression, PsiLocalVariable variable) {
-      expression = ParenthesesUtils.stripParentheses(expression);
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression == null) {
         return null;
       }
@@ -442,7 +440,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     private static boolean expressionIsArrayToCollectionCopy(PsiExpression expression,
                                                              PsiVariable variable,
                                                              boolean shouldBeOffsetArrayAccess) {
-      expression = ParenthesesUtils.stripParentheses(expression);
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (expression == null) return false;
       if (!(expression instanceof PsiMethodCallExpression)) return false;
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;

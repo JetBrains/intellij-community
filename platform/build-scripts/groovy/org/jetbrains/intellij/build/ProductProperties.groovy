@@ -1,7 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+
+import java.nio.file.Path
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -54,6 +58,8 @@ abstract class ProductProperties {
    */
   boolean toolsJarRequired = false
 
+  boolean isAntRequired = false
+
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
    */
@@ -69,7 +75,7 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "${applicationInfo.productName}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
@@ -186,7 +192,7 @@ abstract class ProductProperties {
    */
   List<String> additionalModulesRequiredForScrambling = []
 
-  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.VANILLA
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.DCEVM
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
@@ -206,4 +212,17 @@ abstract class ProductProperties {
    * the same sources
    */
   String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
+
+  /**
+   * Paths to externally built plugins to be included into the IDE. They will be copied into the build, as well as included into
+   * the IDE classpath when launching it to build search index, jar order, etc
+   */
+  @NotNull List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
+    return Collections.emptyList()
+  }
+
+  /**
+   * @return custom properties for {@link org.jetbrains.intellij.build.impl.productInfo.ProductInfoData}
+   */
+  List<CustomProperty> generateCustomPropertiesForProductInfo() { [] }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Range;
@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,16 +22,16 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class SyncScrollSupport {
+public final class SyncScrollSupport {
   public interface SyncScrollable {
-    @CalledInAwt
+    @RequiresEdt
     boolean isSyncScrollEnabled();
 
-    @CalledInAwt
+    @RequiresEdt
     int transfer(@NotNull Side baseSide, int line);
 
     @NotNull
-    @CalledInAwt
+    @RequiresEdt
     Range getRange(@NotNull Side baseSide, int line);
   }
 

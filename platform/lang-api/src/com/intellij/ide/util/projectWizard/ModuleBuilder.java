@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -43,8 +42,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
-
-  public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
+  private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = new ExtensionPointName<>("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance(ModuleBuilder.class);
   private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<>();
@@ -59,16 +57,21 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static List<ModuleBuilder> getAllBuilders() {
-    final ArrayList<ModuleBuilder> result = new ArrayList<>();
-    for (final ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
-      result.add(moduleType.createModuleBuilder());
+  public static @NotNull List<ModuleBuilder> getAllBuilders() {
+    List<ModuleBuilder> result = new ArrayList<>();
+    for (ModuleType<?> moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
+      ModuleBuilder builder = moduleType.createModuleBuilder();
+      if (builder.isAvailable()) {
+        result.add(builder);
+      }
     }
-    for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
-      result.add(factory.createBuilder());
-    }
-    return ContainerUtil.filter(result, moduleBuilder -> moduleBuilder.isAvailable());
+    EP_NAME.forEachExtensionSafe(factory -> {
+      ModuleBuilder builder = factory.createBuilder();
+      if (builder.isAvailable()) {
+        result.add(builder);
+      }
+    });
+    return result;
   }
 
   public static void deleteModuleFile(String moduleFilePath) {
@@ -82,7 +85,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     }
   }
 
-  protected boolean isAvailable() {
+  public boolean isAvailable() {
     return true;
   }
 
@@ -102,7 +105,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @Override
   @Nullable
-  public String getBuilderId() {
+  public @NonNls String getBuilderId() {
     ModuleType<?> moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
@@ -363,7 +366,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   @Nls(capitalization = Nls.Capitalization.Title)
   protected String getModuleTypeName() {
     String name = getModuleType().getName();
-    return StringUtil.trimEnd(name, " Module");
+    return StringUtil.trimEnd(name, " Module");  // NON-NLS
   }
 
   public String getGroupName() {

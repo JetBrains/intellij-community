@@ -50,7 +50,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(final PyReferenceExpression node) {
+    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
       if (PyResolveUtil.allowForwardReferences(node)) {
         return;
       }
@@ -207,7 +207,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
+    public void visitPyNonlocalStatement(final @NotNull PyNonlocalStatement node) {
       for (PyTargetExpression var : node.getVariables()) {
         final String name = var.getName();
         final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(var, name);

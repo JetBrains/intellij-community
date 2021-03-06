@@ -4,19 +4,22 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
-import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
+import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
+/**
+ * Navigate from {@code ExtensionPointName} field to declaration in {@code plugin.xml}.
+ */
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   @Override
@@ -27,51 +30,25 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
   }
 
   private static void process(PsiField psiField, Collection<? super RelatedItemLineMarkerInfo<?>> result) {
-    final ExtensionPointType epType = isExtensionPointNameDeclarationField(psiField);
-    if (epType == ExtensionPointType.NONE) return;
+    if (!isExtensionPointNameDeclarationField(psiField)) return;
 
-    final PsiClass epClass = resolveExtensionPointClass(psiField, epType);
-    if (epClass == null) return;
+    final String epFqn = resolveEpFqn(psiField);
+    if (epFqn == null) return;
 
-    final String epName = resolveEpName(psiField);
-    if (epName == null) return;
+    final Project project = psiField.getProject();
+    final ExtensionPoint point = ExtensionPointIndex.findExtensionPoint(project,
+                                                                        PluginRelatedLocatorsUtils.getCandidatesScope(project),
+                                                                        epFqn);
+    if (point == null) return;
 
-
-    ExtensionPointLocator locator = new ExtensionPointLocator(epClass);
-    List<ExtensionPointCandidate> targets =
-      ContainerUtil.filter(locator.findDirectCandidates(), candidate -> epName.equals(candidate.epName));
-    if (targets.isEmpty()) {
-      return;
-    }
-
+    final ExtensionPointCandidate candidate = new ExtensionPointCandidate(SmartPointerManager.createPointer(point.getXmlTag()), epFqn);
     RelatedItemLineMarkerInfo<PsiElement> info =
-      LineMarkerInfoHelper.createExtensionPointLineMarkerInfo(targets, psiField.getNameIdentifier());
+      LineMarkerInfoHelper.createExtensionPointLineMarkerInfo(Collections.singletonList(candidate), psiField.getNameIdentifier());
     result.add(info);
   }
 
   @Nullable
-  private static PsiClass resolveExtensionPointClass(PsiField psiField,
-                                                     ExtensionPointType epType) {
-    final PsiType epNameType = PsiUtil.substituteTypeParameter(psiField.getType(),
-                                                               epType.qualifiedClassName,
-                                                               0, false);
-    if (!(epNameType instanceof PsiClassType)) {
-      return null;
-    }
-    PsiClassType classType = (PsiClassType)epNameType;
-
-    final PsiClass typePsiClass = PsiTypesUtil.getPsiClass(classType);
-    if (classType.getParameterCount() != 1) {
-      return typePsiClass;
-    }
-
-    // ExtensionPointName<KeyedLazyInstance<T>>
-    if (typePsiClass == null || !KeyedLazyInstance.class.getName().equals(typePsiClass.getQualifiedName())) return null;
-    PsiType keyedLazyInstanceType = PsiUtil.substituteTypeParameter(epNameType, typePsiClass, 0, false);
-    return PsiTypesUtil.getPsiClass(keyedLazyInstanceType);
-  }
-
-  private static String resolveEpName(PsiField psiField) {
+  private static String resolveEpFqn(PsiField psiField) {
     final PsiExpression initializer = psiField.getInitializer();
 
     PsiExpressionList expressionList = null;
@@ -92,49 +69,31 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
     return o instanceof String ? (String)o : null;
   }
 
-
-  enum ExtensionPointType {
-    NONE(""),
-    APPLICATION(ExtensionPointName.class.getName()),
-    PROJECT(ProjectExtensionPointName.class.getName());
-
-    private final String qualifiedClassName;
-
-    ExtensionPointType(String qualifiedClassName) {
-      this.qualifiedClassName = qualifiedClassName;
-    }
-
-    static ExtensionPointType find(String qualifiedClassName) {
-      if (APPLICATION.qualifiedClassName.equals(qualifiedClassName)) return APPLICATION;
-      if (PROJECT.qualifiedClassName.equals(qualifiedClassName)) return PROJECT;
-      return NONE;
-    }
-  }
-
-  private static ExtensionPointType isExtensionPointNameDeclarationField(PsiField psiField) {
+  private static boolean isExtensionPointNameDeclarationField(PsiField psiField) {
     // *do* allow non-public
     if (!psiField.hasModifierProperty(PsiModifier.FINAL) ||
         !psiField.hasModifierProperty(PsiModifier.STATIC) ||
         psiField.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return ExtensionPointType.NONE;
+      return false;
     }
 
     if (!psiField.hasInitializer()) {
-      return ExtensionPointType.NONE;
+      return false;
     }
 
     final PsiExpression initializer = psiField.getInitializer();
     if (!(initializer instanceof PsiMethodCallExpression) &&
         !(initializer instanceof PsiNewExpression)) {
-      return ExtensionPointType.NONE;
+      return false;
     }
 
     final PsiClass fieldClass = PsiTypesUtil.getPsiClass(psiField.getType());
     if (fieldClass == null) {
-      return ExtensionPointType.NONE;
+      return false;
     }
 
     final String qualifiedClassName = fieldClass.getQualifiedName();
-    return ExtensionPointType.find(qualifiedClassName);
+    return ExtensionPointName.class.getName().equals(qualifiedClassName) ||
+           ProjectExtensionPointName.class.getName().equals(qualifiedClassName);
   }
 }

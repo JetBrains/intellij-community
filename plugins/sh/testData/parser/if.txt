@@ -465,9 +465,9 @@ SHELL_SCRIPT
                   PsiElement(CLOSE_QUOTE)('"')
             PsiWhiteSpace(' ')
             PsiElement(&&)('&&')
+            PsiElement(\n)('\n')
+            PsiWhiteSpace('      ')
             LITERAL_CONDITION
-              PsiElement(\n)('\n')
-              PsiWhiteSpace('      ')
               PsiElement(word)('-z')
           PsiWhiteSpace(' ')
           LITERAL_CONDITION

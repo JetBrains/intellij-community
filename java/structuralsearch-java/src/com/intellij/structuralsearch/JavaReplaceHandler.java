@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,10 +41,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     myProject = project;
     myReplaceOptions = replaceOptions;
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
+    final LanguageFileType fileType = matchOptions.getFileType();
+    assert fileType != null;
     patternElements = MatcherImplUtil.createTreeFromText(
       matchOptions.getSearchPattern(),
       PatternTreeContext.Block,
-      matchOptions.getFileType(),
+      fileType,
       project
     );
   }
@@ -359,7 +362,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
     final List<? extends PsiElement> unmatchedAnnotations = originalModifierList.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
     final PsiElement anchor = replacementModifierList.getFirstChild();
-    boolean append = (anchor == null);
+    boolean append = anchor == null;
     PsiElement child = originalModifierList.getFirstChild();
     while (child != null) {
       if (child instanceof PsiKeyword) {
@@ -417,7 +420,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void replace(final ReplacementInfo info, ReplaceOptions options) {
+  public void replace(final @NotNull ReplacementInfo info, @NotNull ReplaceOptions options) {
     final PsiElement elementToReplace = StructuralSearchUtil.getPresentableElement(info.getMatch(0));
     if (elementToReplace == null) {
       return;
@@ -431,12 +434,14 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       replacementToMake = "@" + replacementToMake;
     }
 
+    final LanguageFileType fileType = myReplaceOptions.getMatchOptions().getFileType();
+    assert fileType != null;
     final PsiElement[] replacements = MatcherImplUtil.createTreeFromText(
       replacementToMake,
       elementToReplace instanceof PsiMember && !isSymbolReplacement(elementToReplace) ?
       PatternTreeContext.Class :
       PatternTreeContext.Block,
-      myReplaceOptions.getMatchOptions().getFileType(),
+      fileType,
       myProject);
 
     if (elementToReplace instanceof PsiAnnotation && replacements.length == 1) {
@@ -689,7 +694,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   @Override
-  public void postProcess(PsiElement affectedElement, ReplaceOptions options) {
+  public void postProcess(@NotNull PsiElement affectedElement, @NotNull ReplaceOptions options) {
     if (!affectedElement.isValid()) {
       return;
     }

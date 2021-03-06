@@ -1,15 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.style
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle
-import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEF
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.isDefUnnecessary
 import javax.swing.JComponent
 
-class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), CleanupLocalInspectionTool {
+class GrUnnecessaryDefModifierInspection : LocalInspectionTool(), CleanupLocalInspectionTool {
 
   companion object {
     private val FIX = GrRemoveModifierFix(GrModifier.DEF)
@@ -33,7 +33,7 @@ class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), C
   @JvmField var reportExplicitTypeOnly: Boolean = true
 
   override fun createOptionsPanel(): JComponent? = MultipleCheckboxOptionsPanel(this).apply {
-    addCheckbox(GroovyInspectionBundle.message("unnecessary.def.explicitly.typed.only"), "reportExplicitTypeOnly")
+    addCheckbox(GroovyBundle.message("unnecessary.def.explicitly.typed.only"), "reportExplicitTypeOnly")
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
@@ -44,7 +44,7 @@ class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), C
       if (!isModifierUnnecessary(modifierList)) return
       holder.registerProblem(
         modifier,
-        GroovyInspectionBundle.message("unnecessary.modifier.description", GrModifier.DEF),
+        GroovyBundle.message("unnecessary.modifier.description", GrModifier.DEF),
         ProblemHighlightType.LIKE_UNUSED_SYMBOL,
         FIX
       )

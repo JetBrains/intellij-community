@@ -18,8 +18,8 @@ import com.intellij.execution.services.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -238,12 +238,14 @@ public class RunDashboardServiceViewContributor
     }
 
     @Override
-    public DataProvider getDataProvider() {
+    public @Nullable DataProvider getDataProvider() {
       Content content = myNode.getContent();
       if (content == null) return null;
 
-      DataContext context = DataManager.getInstance().getDataContext(content.getComponent());
-      return context::getData;
+      // Try to get data provider from content's component itself.
+      // No need to search for data providers in content's component swing hierarchy,
+      // because it is inside service view component for which data is provided.
+      return DataManagerImpl.getDataProviderEx(content.getComponent());
     }
 
     @Override

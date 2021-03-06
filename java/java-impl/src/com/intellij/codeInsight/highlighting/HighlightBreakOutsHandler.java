@@ -70,7 +70,7 @@ public final class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<
   private void collectSiblings(PsiStatement currentStatement, PsiElement container, @NotNull PsiElement block) {
     try {
       ControlFlow controlFlow =
-        ControlFlowFactory.getInstance(block.getProject()).getControlFlow(block, new LocalsControlFlowPolicy(block), false, false);
+        ControlFlowFactory.getControlFlow(block, new LocalsControlFlowPolicy(block), ControlFlowOptions.NO_CONST_EVALUATE);
       Collection<PsiStatement> statements = ControlFlowUtil
         .findExitPointsAndStatements(controlFlow, 0, controlFlow.getSize(), new IntArrayList(), ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       for (PsiStatement psiStatement: statements) {

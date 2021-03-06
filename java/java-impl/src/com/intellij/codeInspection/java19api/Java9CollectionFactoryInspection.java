@@ -17,6 +17,7 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -25,6 +26,7 @@ import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -32,7 +34,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,8 +240,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       if (defs.length == 1 && defs[0] == variable) {
         PsiExpression initializer = variable.getInitializer();
         if (!ConstructionUtils.isEmptyCollectionInitializer(initializer)) return null;
-        PsiClassType type = tryCast(initializer.getType(), PsiClassType.class);
-        if (type == null || !type.rawType().equalsToText(collectionClass)) return null;
+        if (!PsiTypesUtil.classNameEquals(initializer.getType(), collectionClass)) return null;
         Set<PsiElement> refs = ContainerUtil.set(DefUseUtil.getRefs(block, variable, initializer));
         refs.remove(expression);
         PsiStatement cur = declaration;
@@ -318,20 +318,18 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
-    private final String myMessage;
+    private final @IntentionName String myMessage;
 
-    ReplaceWithCollectionFactoryFix(String message) {
+    ReplaceWithCollectionFactoryFix(@IntentionName String message) {
       myMessage = message;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
       return myMessage;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {

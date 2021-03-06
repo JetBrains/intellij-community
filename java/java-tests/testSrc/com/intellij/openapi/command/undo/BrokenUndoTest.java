@@ -17,11 +17,11 @@ public class BrokenUndoTest extends UndoTestCase {
     assertNotNull(document);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("Some initial text content"));
 
-    performInEditor(document, false, editor -> executeCommand((Runnable)() ->
+    performInEditor(document, false, editor -> executeCommand(() ->
                                                                 WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("Some initial text modification")),
                                                               "Initial modification"));
 
-    performInEditor(document, true, editor -> executeCommand((Runnable)() ->
+    performInEditor(document, true, editor -> executeCommand(() ->
                                                                WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("Some breaking modification")),
                                                              "Breaking modification"));
 

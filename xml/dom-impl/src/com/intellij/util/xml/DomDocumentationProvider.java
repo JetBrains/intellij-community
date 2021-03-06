@@ -29,6 +29,6 @@ public class DomDocumentationProvider implements DocumentationProvider {
       String documentation = template.createPresentation(domElement).getDocumentation();
       if (documentation != null) return documentation;
     }
-    return ElementPresentationManager.getDocumentationForElement(domElement);
+    return null;
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.cfg;
 
 import org.jetbrains.java.decompiler.code.*;
 import org.jetbrains.java.decompiler.code.interpreter.InstructionImpact;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.DataPoint;
@@ -96,9 +97,9 @@ public class ControlFlowGraph implements CodeConstants {
     return buf.toString();
   }
 
-  public void inlineJsr(StructMethod mt) {
+  public void inlineJsr(StructClass cl, StructMethod mt) {
     processJsr();
-    removeJsr(mt);
+    removeJsr(cl, mt);
 
     removeMarkers();
 
@@ -432,7 +433,7 @@ public class ControlFlowGraph implements CodeConstants {
     }
   }
 
-  private static class JsrRecord {
+  private static final class JsrRecord {
     private final BasicBlock jsr;
     private final Set<BasicBlock> range;
     private final BasicBlock ret;
@@ -668,8 +669,8 @@ public class ControlFlowGraph implements CodeConstants {
     }
   }
 
-  private void removeJsr(StructMethod mt) {
-    removeJsrInstructions(mt.getClassStruct().getPool(), first, DataPoint.getInitialDataPoint(mt));
+  private void removeJsr(StructClass cl, StructMethod mt) {
+    removeJsrInstructions(cl.getPool(), first, DataPoint.getInitialDataPoint(mt));
   }
 
   private static void removeJsrInstructions(ConstantPool pool, BasicBlock block, DataPoint data) {

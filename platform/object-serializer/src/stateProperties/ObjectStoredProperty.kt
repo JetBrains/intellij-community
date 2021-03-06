@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.*
@@ -14,7 +14,14 @@ abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : Stored
 
   override fun setValue(thisRef: BaseState, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
     if (value != newValue) {
-      thisRef.intIncrementModificationCount()
+      // new value mod count can lead to a combination when resulting mod count equals to old, so, add old value mod count to fix this issue
+      val v = value
+      if (v is BaseState) {
+        thisRef.addModificationCount(v.modificationCount + 1)
+      }
+      else {
+        thisRef.intIncrementModificationCount()
+      }
       value = newValue
     }
   }

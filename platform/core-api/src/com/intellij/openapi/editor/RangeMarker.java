@@ -17,6 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -29,6 +30,14 @@ import java.util.Comparator;
  * text at the start or end of the marker optionally extends the marker, depending on
  * {@link #setGreedyToLeft(boolean)} and {@link #setGreedyToRight(boolean)} settings. Deleting
  * the entire text range containing the marker causes the marker to become invalid.
+ * <p>
+ * <b>A note about lifetime.</b>
+ * Range markers are weakly referenced and eventually got garbage-collected
+ * after a long and painful fight with the garbage collector.
+ * So calling its {@link #dispose()} method is not strictly necessary
+ * (exactly like helping an old lady to cross the road is not strictly compulsory)
+ * but it wouldn't hurt, and would actually help GC when <strike>the old lady is struggling</strike>
+ * the allocation rate is very high.
  *
  * @see Document#createRangeMarker(int, int)
  */
@@ -47,6 +56,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    * @return the start offset.
    */
   @Override
+  @Contract(pure = true)
   int getStartOffset();
 
   /**
@@ -55,6 +65,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    * @return the end offset.
    */
   @Override
+  @Contract(pure = true)
   int getEndOffset();
 
   /**
@@ -63,6 +74,7 @@ public interface RangeMarker extends UserDataHolder, Segment {
    *
    * @return true if the marker is valid, false if it has been invalidated.
    */
+  @Contract(pure = true)
   boolean isValid();
 
   /**
@@ -86,5 +98,12 @@ public interface RangeMarker extends UserDataHolder, Segment {
   boolean isGreedyToRight();
   boolean isGreedyToLeft();
 
+  /**
+   * Destroys and de-registers the range marker.
+   * After this method call the {@link #isValid()} returns {@code true} always,
+   * and the behaviour of all other methods is undefined, which means they could throw exceptions.                    `
+   * Calling this method is not strictly necessary, because range markers are garbage-collectable,
+   * but could help performance in case of high GC pressure (see {@link RangeMarker} javadoc).
+   */
   void dispose();
 }

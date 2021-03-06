@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.SmartList;
@@ -16,7 +16,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TableUtil {
+public final class TableUtil {
   private TableUtil() {
   }
 
@@ -146,9 +146,7 @@ public class TableUtil {
       }
     }
     Rectangle cellRect = table.getCellRect(selectionModel.getMinSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      table.scrollRectToVisible(cellRect);
-    }
+    table.scrollRectToVisible(cellRect);
     table.repaint();
     return counter;
   }
@@ -173,9 +171,7 @@ public class TableUtil {
       }
     }
     Rectangle cellRect = table.getCellRect(selectionModel.getMaxSelectionIndex(), 0, true);
-    if (cellRect != null) {
-      table.scrollRectToVisible(cellRect);
-    }
+    table.scrollRectToVisible(cellRect);
     table.repaint();
     return counter;
   }

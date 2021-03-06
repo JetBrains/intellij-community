@@ -16,13 +16,16 @@
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Sets;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
@@ -60,9 +63,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     for (PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult : calleeResults.getResults()) {
       if (argumentResult.isMatched()) continue;
 
-      visitor.registerProblem(argumentResult.getArgument(),
-                              getSingleCalleeProblemMessage(argumentResult, context),
-                              getSingleCalleeHighlightType(argumentResult.getExpectedTypeAfterSubstitution()));
+      visitor.registerProblem(argumentResult.getArgument(), getSingleCalleeProblemMessage(argumentResult, context));
     }
   }
 
@@ -76,14 +77,13 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
     else {
       visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
-                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)),
-                              getMultiCalleeHighlightType(calleesResults));
+                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)));
     }
   }
 
   @NotNull
-  private static String getSingleCalleeProblemMessage(@NotNull PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult,
-                                                      @NotNull TypeEvalContext context) {
+  private static @InspectionMessage String getSingleCalleeProblemMessage(@NotNull PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult,
+                                                                         @NotNull TypeEvalContext context) {
     final PyType actualType = argumentResult.getActualType();
     final PyType expectedType = argumentResult.getExpectedType();
 
@@ -98,31 +98,34 @@ class PyTypeCheckerInspectionProblemRegistrar {
 
       if (actualAttributes != null) {
         final Sets.SetView<String> missingAttributes = Sets.difference(expectedAttributes, actualAttributes);
-        if (missingAttributes.size() == 1) {
-          return String.format("Type '%s' doesn't have expected attribute '%s'", actualTypeName, missingAttributes.iterator().next());
-        }
-        else {
-          return String.format("Type '%s' doesn't have expected attributes %s",
-                               actualTypeName,
-                               StringUtil.join(missingAttributes, s -> String.format("'%s'", s), ", "));
-        }
+        String missingAttributeList = StringUtil.join(missingAttributes, s -> String.format("'%s'", s), ", ");
+        return PyPsiBundle.message("INSP.type.checker.type.does.not.have.expected.attribute",
+                                   actualTypeName, missingAttributes.size(), missingAttributeList);
       }
     }
 
-    final String expectedTypeRepresentation = getSingleCalleeExpectedTypeRepresentation(expectedType,
-                                                                                        argumentResult.getExpectedTypeAfterSubstitution(),
-                                                                                        context);
+    @Nullable PyType expectedTypeAfterSubstitution = argumentResult.getExpectedTypeAfterSubstitution();
+    String expectedTypeName = PythonDocumentationProvider.getTypeName(expectedType, context);
+    String expectedSubstitutedName = expectedTypeAfterSubstitution != null
+                                     ? PythonDocumentationProvider.getTypeName(expectedTypeAfterSubstitution, context)
+                                     : null;
 
     if (PyProtocolsKt.matchingProtocolDefinitions(expectedType, actualType, context)) {
-      return "Only concrete class can be used where " + expectedTypeRepresentation + " protocol is expected";
+      if (expectedSubstitutedName != null) {
+        return PyPsiBundle.message("INSP.type.checker.only.concrete.class.can.be.used.where.matched.protocol.expected",
+                                   expectedSubstitutedName, expectedTypeName);
+      }
+      else {
+        return PyPsiBundle.message("INSP.type.checker.only.concrete.class.can.be.used.where.protocol.expected", expectedTypeName);
+      }
     }
 
-    return String.format("Expected type %s, got '%s' instead", expectedTypeRepresentation, actualTypeName);
-  }
-
-  @NotNull
-  private static ProblemHighlightType getSingleCalleeHighlightType(@Nullable PyType expectedTypeAfterSubstitution) {
-    return expectedTypeAfterSubstitution == null ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING;
+    if (expectedSubstitutedName != null) {
+      return PyPsiBundle.message("INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName, actualTypeName);
+    }
+    else {
+      return PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName);
+    }
   }
 
   private static void registerMultiCalleeProblemForBinaryExpression(@NotNull PyInspectionVisitor visitor,
@@ -146,8 +149,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     else {
       visitor.registerProblem(
         allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
-        getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor)),
-        getMultiCalleeHighlightType(preferredOperatorsResults)
+        getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor))
       );
     }
   }
@@ -176,43 +178,24 @@ class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   @NotNull
-  private static String getMultiCalleeProblemMessage(@NotNull List<PyType> argumentTypes,
-                                                     @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                                     @NotNull TypeEvalContext context,
-                                                     boolean isOnTheFly) {
-    final String separator = isOnTheFly ? "<br>" : " ";
+  private static @InspectionMessage String getMultiCalleeProblemMessage(@NotNull List<PyType> argumentTypes,
+                                                                        @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                                        @NotNull TypeEvalContext context,
+                                                                        boolean isOnTheFly) {
     final String actualTypesRepresentation = getMultiCalleeActualTypesRepresentation(argumentTypes, context);
     final String expectedTypesRepresentation = getMultiCalleePossibleExpectedTypesRepresentation(calleesResults, context, isOnTheFly);
 
     if (isOnTheFly) {
-      return XmlStringUtil.wrapInHtml(
-        "Unexpected type(s):" + separator +
-        XmlStringUtil.escapeString(actualTypesRepresentation) + separator +
-        "Possible types:" + separator +
-        expectedTypesRepresentation
-      );
+      return new HtmlBuilder()
+        .append(PyPsiBundle.message("INSP.type.checker.unexpected.types.prefix")).br().appendRaw(actualTypesRepresentation).br()
+        .append(PyPsiBundle.message("INSP.type.checker.expected.types.prefix")).br().appendRaw(expectedTypesRepresentation)
+        .wrapWith("html").toString();
     }
     else {
-      return "Unexpected type(s):" + separator +
-             actualTypesRepresentation + separator +
-             "Possible types:" + separator +
+      return PyPsiBundle.message("INSP.type.checker.unexpected.types.prefix") + " " + actualTypesRepresentation + " " +
+             PyPsiBundle.message("INSP.type.checker.expected.types.prefix") + " " +
              expectedTypesRepresentation;
     }
-  }
-
-  /**
-   * @param calleesResults results of analyzing arguments passed to callees
-   * @return {@link ProblemHighlightType#WEAK_WARNING} if all expected types were substituted for all callees,
-   * {@link ProblemHighlightType#GENERIC_ERROR_OR_WARNING} otherwise.
-   */
-  @NotNull
-  private static ProblemHighlightType getMultiCalleeHighlightType(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults) {
-    final boolean allExpectedTypesWereSubstituted = calleesResults
-      .stream()
-      .flatMap(calleeResults -> calleeResults.getResults().stream())
-      .allMatch(argumentResult -> argumentResult.getExpectedTypeAfterSubstitution() != null);
-
-    return allExpectedTypesWereSubstituted ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   }
 
   private static boolean isOnTheFly(@NotNull PyInspectionVisitor visitor) {
@@ -232,20 +215,8 @@ class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   @NotNull
-  private static String getSingleCalleeExpectedTypeRepresentation(@NotNull PyType expectedType,
-                                                                  @Nullable PyType expectedTypeAfterSubstitution,
-                                                                  @NotNull TypeEvalContext context) {
-    final String expectedTypeName = PythonDocumentationProvider.getTypeName(expectedType, context);
-
-    return expectedTypeAfterSubstitution == null
-           ? String.format("'%s'", expectedTypeName)
-           : String.format("'%s' (matched generic type '%s')",
-                           PythonDocumentationProvider.getTypeName(expectedTypeAfterSubstitution, context),
-                           expectedTypeName);
-  }
-
-  @NotNull
-  private static String getMultiCalleeActualTypesRepresentation(@NotNull List<PyType> argumentTypes, @NotNull TypeEvalContext context) {
+  private static @NlsSafe String getMultiCalleeActualTypesRepresentation(@NotNull List<PyType> argumentTypes,
+                                                                         @NotNull TypeEvalContext context) {
     return argumentTypes
       .stream()
       .map(type -> PythonDocumentationProvider.getTypeName(type, context))
@@ -253,9 +224,9 @@ class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   @NotNull
-  private static String getMultiCalleePossibleExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                                                          @NotNull TypeEvalContext context,
-                                                                          boolean isOnTheFly) {
+  private static @NlsSafe String getMultiCalleePossibleExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                                                   @NotNull TypeEvalContext context,
+                                                                                   boolean isOnTheFly) {
     return calleesResults
       .stream()
       .map(calleeResult -> {

@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper.CELL_VALIDATION_PROPERTY;
 
 public class StatefulValidatingCellEditor extends DefaultCellEditor implements Supplier<ValidationInfo> {
-  private Consumer<ValidationInfo> stateUpdater = (vi) -> {};
+  private @NotNull Consumer<? super ValidationInfo> stateUpdater = (vi) -> {};
 
   public StatefulValidatingCellEditor(JTextField textField, Disposable disposable) {
     super(textField);
@@ -54,7 +54,7 @@ public class StatefulValidatingCellEditor extends DefaultCellEditor implements S
   }
 
   @ApiStatus.Experimental
-  public StatefulValidatingCellEditor withStateUpdater(@NotNull Consumer<ValidationInfo> stateUpdater) {
+  public StatefulValidatingCellEditor withStateUpdater(@NotNull Consumer<? super ValidationInfo> stateUpdater) {
     this.stateUpdater = stateUpdater;
     return this;
   }

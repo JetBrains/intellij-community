@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -13,6 +13,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -22,7 +24,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * A stripped-down version of {@link com.intellij.openapi.util.io.FileUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
-@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
@@ -33,25 +34,6 @@ public class FileUtilRt {
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
-
-  public static final FileFilter ALL_FILES = new FileFilter() {
-    public boolean accept(File file) {
-      return true;
-    }
-  };
-  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
-    public boolean accept(File file) {
-      return file.isDirectory();
-    }
-  };
-
-  public static final int THREAD_LOCAL_BUFFER_LENGTH = 1024 * 20;
-  protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    @Override
-    protected byte[] initialValue() {
-      return new byte[THREAD_LOCAL_BUFFER_LENGTH];
-    }
-  };
 
   private static String ourCanonicalTempPathCache;
 
@@ -67,6 +49,34 @@ public class FileUtilRt {
     // do not use getName to avoid extra String creation (File.getName() calls substring)
     final String path = file.getPath();
     return StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip");
+  }
+
+  @NotNull
+  public static List<String> splitPath(@NotNull String path, char separatorChar) {
+    List<String> list = new ArrayList<String>();
+    int index = 0;
+    int nextSeparator;
+    while ((nextSeparator = path.indexOf(separatorChar, index)) != -1) {
+      list.add(path.substring(index, nextSeparator));
+      index = nextSeparator + 1;
+    }
+    list.add(path.substring(index));
+    return list;
+  }
+
+  public static boolean isFilePathAcceptable(@NotNull File root, @Nullable FileFilter fileFilter) {
+    if (fileFilter == null) {
+      return true;
+    }
+    File file = root;
+    do {
+      if (!fileFilter.accept(file)) {
+        return false;
+      }
+      file = file.getParentFile();
+    }
+    while (file != null);
+    return true;
   }
 
   protected interface SymlinkResolver {
@@ -123,6 +133,7 @@ public class FileUtilRt {
         final Object Result_Skip = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("SKIP_SUBTREE").get(null);
 
         ourDeletionVisitor = Proxy.newProxyInstance(FileUtilRt.class.getClassLoader(), new Class[]{visitorClass}, new InvocationHandler() {
+          @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             if (args.length == 2) {
               String methodName = method.getName();
@@ -155,6 +166,7 @@ public class FileUtilRt {
 
           private void performDelete(final Object fileObject) throws IOException {
             Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
+              @Override
               public Boolean execute(boolean lastAttempt) {
                 try {
                   //Files.deleteIfExists(file);
@@ -228,7 +240,7 @@ public class FileUtilRt {
                                           final char separatorChar,
                                           final boolean removeLastSlash,
                                           @Nullable SymlinkResolver resolver) {
-    if (path == null || path.length() == 0) {
+    if (path == null || path.isEmpty()) {
       return path;
     }
     if (path.charAt(0) == '.') {
@@ -337,7 +349,7 @@ public class FileUtilRt {
         return shareEnd;
       }
 
-      if (path.length() > 0 && path.charAt(0) == '/') {
+      if (!path.isEmpty() && path.charAt(0) == '/') {
         result.append('/');
         return 1;
       }
@@ -410,7 +422,7 @@ public class FileUtilRt {
     return fileName.subSequence(index + 1, fileName.length());
   }
 
-  public static boolean extensionEquals(@NotNull String filePath, @NotNull String extension) {
+  public static boolean extensionEquals(@NotNull @NonNls String filePath, @NotNull @NonNls String extension) {
     int extLen = extension.length();
     if (extLen == 0) {
       int lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
@@ -419,6 +431,15 @@ public class FileUtilRt {
     int extStart = filePath.length() - extLen;
     return extStart >= 1 && filePath.charAt(extStart-1) == '.'
            && filePath.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
+  }
+
+  public static boolean fileNameEquals(@NotNull File file, @NonNls @NotNull String name) {
+    return fileNameEquals(file.getName(), name);
+  }
+
+  public static boolean fileNameEquals(@NotNull @NonNls CharSequence fileName,
+                                       @NotNull @NonNls CharSequence expectedName) {
+    return StringUtilRt.equal(expectedName, fileName, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @NotNull
@@ -567,7 +588,7 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull String prefix, @Nullable String suffix, boolean deleteOnExit) throws IOException {
+  public static File createTempFile(@NonNls @NotNull String prefix, @NonNls @Nullable String suffix, boolean deleteOnExit) throws IOException {
     final File dir = new File(getTempDirectory());
     return createTempFile(dir, prefix, suffix, true, deleteOnExit);
   }
@@ -709,19 +730,6 @@ public class FileUtilRt {
     return normalizeFile(file);
   }
 
-  /** @deprecated not needed in 'util-rt'; use {@link com.intellij.openapi.util.io.FileUtil} or {@link File} methods; for removal in IDEA 2020 */
-  @Deprecated
-  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    try {
-      File file = new File(path);
-      //noinspection Since15
-      if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
-        logger().warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
-      }
-    }
-    catch (LinkageError ignored) { }
-  }
-
   @NotNull
   public static String loadFile(@NotNull File file) throws IOException {
     return loadFile(file, null, false);
@@ -751,7 +759,7 @@ public class FileUtilRt {
   @NotNull
   public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
-    Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+    Reader reader = encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding);
     try {
       return loadText(reader, (int)file.length());
     }
@@ -784,9 +792,7 @@ public class FileUtilRt {
       return chars;
     }
     else {
-      char[] newChars = new char[count];
-      System.arraycopy(chars, 0, newChars, 0, count);
-      return newChars;
+      return Arrays.copyOf(chars, count);
     }
   }
 
@@ -808,18 +814,13 @@ public class FileUtilRt {
   @NotNull
   public static List<String> loadLines(@NotNull String path, @Nullable String encoding) throws IOException {
     InputStream stream = new FileInputStream(path);
+    BufferedReader reader =
+      new BufferedReader(encoding == null ? new InputStreamReader(stream, Charset.defaultCharset()) : new InputStreamReader(stream, encoding));
     try {
-      BufferedReader reader =
-        new BufferedReader(encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding));
-      try {
-        return loadLines(reader);
-      }
-      finally {
-        reader.close();
-      }
+      return loadLines(reader);
     }
     finally {
-      stream.close();
+      reader.close();
     }
   }
 
@@ -953,7 +954,6 @@ public class FileUtilRt {
       if (result != null) return result;
 
       try {
-        //noinspection BusyWait
         Thread.sleep(10);
       }
       catch (InterruptedException ignored) { }
@@ -963,6 +963,7 @@ public class FileUtilRt {
 
   protected static boolean deleteFile(@NotNull final File file) {
     Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
+      @Override
       public Boolean execute(boolean lastAttempt) {
         if (file.delete() || !file.exists()) return Boolean.TRUE;
         else if (lastAttempt) return Boolean.FALSE;
@@ -1032,9 +1033,9 @@ public class FileUtilRt {
 
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
     if (USE_FILE_CHANNELS && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
-      final FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
+      FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
       try {
-        final FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
+        FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
         try {
           fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
         }
@@ -1047,7 +1048,7 @@ public class FileUtilRt {
       }
     }
     else {
-      final byte[] buffer = getThreadLocalBuffer();
+      byte[] buffer = new byte[8192];
       while (true) {
         int read = inputStream.read(buffer);
         if (read < 0) break;
@@ -1055,12 +1056,6 @@ public class FileUtilRt {
       }
     }
   }
-
-  @NotNull
-  public static byte[] getThreadLocalBuffer() {
-    return BUFFER.get();
-  }
-
 
   public static int getUserFileSizeLimit() {
     return parseKilobyteProperty("idea.max.intellisense.filesize", DEFAULT_INTELLISENSE_LIMIT);
@@ -1087,11 +1082,13 @@ public class FileUtilRt {
 
   private interface CharComparingStrategy {
     CharComparingStrategy IDENTITY = new CharComparingStrategy() {
+      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return ch1 == ch2;
       }
     };
     CharComparingStrategy CASE_INSENSITIVE = new CharComparingStrategy() {
+      @Override
       public boolean charsEqual(char ch1, char ch2) {
         return StringUtilRt.charsEqualIgnoreCase(ch1, ch2);
       }
@@ -1100,8 +1097,78 @@ public class FileUtilRt {
     boolean charsEqual(char ch1, char ch2);
   }
 
-  @NotNull
   private static LoggerRt logger() {
     return LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilRt");
   }
+
+  /**
+   * Energy-efficient variant of {@link File#toURI()}. Unlike the latter, doesn't check whether a given file is a directory,
+   * so URIs never have a trailing slash (but are nevertheless compatible with {@link File#File(URI)}).
+   */
+  public static @NotNull URI fileToUri(@NotNull File file) {
+    String path = file.getAbsolutePath();
+    if (File.separatorChar != '/') path = path.replace(File.separatorChar, '/');
+    if (!path.startsWith("/")) path = '/' + path;
+    if (path.startsWith("//")) path = "//" + path;
+    try {
+      return new URI("file", null, path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new IllegalArgumentException(path, e);  // unlikely, as `File#toURI()` doesn't declare any exceptions
+    }
+  }
+
+  public static int pathHashCode(@Nullable String path) {
+    if (path == null || path.isEmpty()) {
+      return 0;
+    }
+    path = toCanonicalPath(path, File.separatorChar, true);
+    return SystemInfoRt.isFileSystemCaseSensitive ? path.hashCode() : StringUtilRt.stringHashCodeInsensitive(path);
+  }
+
+  public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
+    // on macOS java.io.File.equals() is incorrectly case-sensitive
+    return pathsEqual(file1 == null ? null : file1.getPath(),
+                      file2 == null ? null : file2.getPath());
+  }
+
+  public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
+    if (path1 == path2) {
+      return true;
+    }
+    if (path1 == null || path2 == null) {
+      return false;
+    }
+
+    path1 = toCanonicalPath(path1, File.separatorChar, true);
+    path2 = toCanonicalPath(path2, File.separatorChar, true);
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      return path1.equals(path2);
+    }
+    else {
+      return path1.equalsIgnoreCase(path2);
+    }
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated please use {@code FileFilters#EVERYTHING} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static final FileFilter ALL_FILES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return true;
+    }
+  };
+
+  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
+    @Override
+    public boolean accept(File file) {
+      return file.isDirectory();
+    }
+  };
+  //</editor-fold>
 }

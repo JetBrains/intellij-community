@@ -2,6 +2,8 @@
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -10,6 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,10 +22,10 @@ import java.awt.*;
 import static com.intellij.ui.SimpleTextAttributes.*;
 
 public class RunAnythingItemBase extends RunAnythingItem {
-  @NotNull private final String myCommand;
+  @NotNull private final @NlsSafe String myCommand;
   @Nullable protected final Icon myIcon;
 
-  public RunAnythingItemBase(@NotNull String command, @Nullable Icon icon) {
+  public RunAnythingItemBase(@NotNull @NlsSafe String command, @Nullable Icon icon) {
     myCommand = command;
     myIcon = icon;
   }
@@ -34,18 +37,13 @@ public class RunAnythingItemBase extends RunAnythingItem {
   }
 
   @Nullable
-  public String getDescription() {
+  public @Nls String getDescription() {
     return null;
   }
 
   @NotNull
   @Override
   public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
-    Component oldComponent = createComponent(isSelected);
-    if (oldComponent != null) {
-      return oldComponent;
-    }
-
     JPanel component = new JPanel(new BorderLayout());
     Color background = UIUtil.getListBackground(isSelected, true);
     component.setBackground(background);
@@ -100,7 +98,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
   }
 
   protected static void appendDescription(@NotNull SimpleColoredComponent component,
-                                          @Nullable String description,
+                                          @NlsContexts.DetailedDescription @Nullable String description,
                                           @NotNull Color foreground) {
     if (description != null) {
       SimpleTextAttributes smallAttributes = new SimpleTextAttributes(STYLE_SMALLER, foreground);

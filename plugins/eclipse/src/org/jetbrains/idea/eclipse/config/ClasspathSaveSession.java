@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.configurationStore.SaveSession;
@@ -8,13 +8,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.output.EclipseJDOMUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +28,14 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 final class ClasspathSaveSession implements SaveSessionProducer, SaveSession, SafeWriteRequestor {
-  private final Map<String, Element> modifiedContent = new THashMap<>();
-  private final Set<String> deletedContent = new THashSet<>();
+  private final Map<String, Element> modifiedContent = new HashMap<>();
+  private final Set<String> deletedContent = new HashSet<>();
 
   private final Module module;
 
@@ -66,7 +66,7 @@ final class ClasspathSaveSession implements SaveSessionProducer, SaveSession, Sa
       oldClassPath = null;
     }
 
-    ModuleRootManagerImpl moduleRootManager = (ModuleRootManagerImpl)component;
+    ModuleRootManager moduleRootManager = (ModuleRootManager)component;
     if (oldClassPath != null || moduleRootManager.getSourceRoots().length > 0 || moduleRootManager.getOrderEntries().length > 2) {
       Element newClassPathElement = new EclipseClasspathWriter().writeClasspath(oldClassPath, moduleRootManager);
       if (oldClassPath == null || !JDOMUtil.areElementsEqual(newClassPathElement, oldClassPath)) {

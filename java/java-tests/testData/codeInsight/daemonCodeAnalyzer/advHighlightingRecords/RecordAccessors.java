@@ -18,3 +18,10 @@ record RecThrows(int x) {
   public int x() <error descr="Record component accessor cannot declare thrown exceptions">throws Exception</error> {return x;}
   public int y() throws Exception {return x;}
 }
+record CheckOverride(int x) {
+  @Override public int x() { return x; }
+  <error descr="Method does not override method from its superclass">@Override</error> public int y() { return x; }
+}
+record VarArg(int... x) {
+  public int[] x() { return x; }
+}

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,7 @@ import java.util.Set;
  */
 public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierOwner, PsiModifierListOwner, PsiJavaDocumentedElement {
   String MODULE_INFO_CLASS = "module-info";
-  String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
+  @NlsSafe String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
   String MODULE_INFO_CLS_FILE = MODULE_INFO_CLASS + ".class";
   String JAVA_BASE = "java.base";
   String AUTO_MODULE_NAME = "Automatic-Module-Name";

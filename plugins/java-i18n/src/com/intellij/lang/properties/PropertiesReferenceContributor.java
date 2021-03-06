@@ -65,7 +65,12 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
       .registerUastReferenceProvider(registrar, UastPatterns.injectionHostUExpression(), new UastInjectionHostReferenceProvider() {
       private final ResourceBundleReferenceProvider myUnderlying = new ResourceBundleReferenceProvider();
 
-      @Override
+        @Override
+        public boolean acceptsTarget(@NotNull PsiElement target) {
+          return target instanceof PsiFile;
+        }
+
+        @Override
       public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
                                                                     @NotNull PsiLanguageInjectionHost host,
                                                                     @NotNull ProcessingContext context) {
@@ -112,6 +117,11 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
     }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
     registrar.registerReferenceProvider(PsiJavaPatterns.psiElement(PropertyValueImpl.class), new PsiReferenceProvider() {
+      @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PsiClass;
+      }
+
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
         String text = element.getText();

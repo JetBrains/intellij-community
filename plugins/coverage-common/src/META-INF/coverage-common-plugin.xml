@@ -17,9 +17,13 @@
     <projectService serviceImplementation="com.intellij.coverage.view.CoverageViewManager"/>
     <projectService serviceImplementation="com.intellij.coverage.CoverageDataManagerImpl"/>
     <executor implementation="com.intellij.coverage.CoverageExecutor" />
+    <editorFactoryListener implementation="com.intellij.coverage.CoverageDataManagerImpl$CoverageEditorFactoryListener"/>
+    <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
   </extensions>
-
-  <actions>
+  <applicationListeners>
+    <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+  <actions resource-bundle="messages.CoverageBundle">
     <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
       <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"
@@ -32,5 +36,4 @@
       <add-to-group group-id="RunTestGroup" anchor="last"/>
     </group>
   </actions>
-  <resource-bundle>messages.CoverageBundle</resource-bundle>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.windows;
 
 import com.sun.jna.Memory;
@@ -17,7 +17,7 @@ public final class WindowsCryptUtils {
    * Protect the specified byte range
    *
    * @param data the data to protect
-   * @return the the protected form the data
+   * @return the protected form of the data
    */
   public static byte @NotNull [] protect(byte @NotNull [] data) {
     if (data.length == 0) return data;
@@ -31,7 +31,7 @@ public final class WindowsCryptUtils {
    * Unprotect the specified byte range
    *
    * @param data the data to protect
-   * @return the the protected form the data
+   * @return the unprotected form of the data
    */
   public static byte @NotNull [] unprotect(byte[] data) {
     if (data.length == 0) return data;

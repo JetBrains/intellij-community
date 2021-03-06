@@ -4,13 +4,16 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -25,6 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.InputMethodEvent;
+import java.awt.font.TextHitInfo;
+import java.text.AttributedString;
+import java.util.Collections;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() {
@@ -305,7 +312,7 @@ public class EditorImplTest extends AbstractEditorTest {
     document.addDocumentListener(new DocumentListener() {
       @Override
       public void bulkUpdateFinished(@NotNull Document document) {
-        getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, null, HighlighterTargetArea.EXACT_RANGE);
+        getEditor().getMarkupModel().addRangeHighlighter(null, 7, 8, 0, HighlighterTargetArea.EXACT_RANGE);
       }
     }, getTestRootDisposable());
     runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
@@ -320,7 +327,8 @@ public class EditorImplTest extends AbstractEditorTest {
     addCollapsedFoldRegion(2, 6, "...");
     runFoldingOperation(() -> {
       ((FoldingModelEx)getEditor().getFoldingModel()).clearFoldRegions();
-      getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, new TextAttributes(null, null, null, null, Font.BOLD),
+      getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0,
+                                                       new TextAttributes(null, null, null, null, Font.BOLD),
                                                        HighlighterTargetArea.EXACT_RANGE);
     });
     RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();
@@ -659,5 +667,95 @@ public class EditorImplTest extends AbstractEditorTest {
     finally {
       EditorSettingsExternalizable.getInstance().setCamelWords(savedOption);
     }
+  }
+
+  public void testSettingFontPreferences() {
+    initText("");
+    EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
+
+    FontPreferencesImpl preferences = new FontPreferencesImpl();
+    preferences.register("CustomFont", 32);
+    preferences.setUseLigatures(true);
+    colorsScheme.setFontPreferences(preferences);
+
+    FontPreferences p = colorsScheme.getFontPreferences();
+    assertEquals(Collections.singletonList("CustomFont"), p.getRealFontFamilies());
+    assertEquals(32, p.getSize("CustomFont"));
+    assertTrue(p.useLigatures());
+
+    FontPreferencesImpl preferences2 = new FontPreferencesImpl();
+    preferences2.register("CustomFont2", 23);
+    preferences2.setUseLigatures(false);
+    colorsScheme.setFontPreferences(preferences2);
+
+    FontPreferences p2 = colorsScheme.getFontPreferences();
+    assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
+    assertEquals(23, p2.getSize("CustomFont2"));
+    assertFalse(p.useLigatures());
+  }
+
+  public void testDocumentChangeAfterWidthChange() {
+    initText("Some long line of text");
+    configureSoftWraps(15);
+
+    // emulate adding editor to a wide component
+    SoftWrapApplianceManager.VisibleAreaWidthProvider widthProvider =
+      ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).getApplianceManager().getWidthProvider();
+    ((EditorTestUtil.TestWidthProvider)widthProvider).setVisibleAreaWidth(1_000_000);
+    new JPanel().add(getEditor().getComponent());
+
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, " "));
+    verifySoftWrapPositions();
+  }
+
+  public void testClickOnBlockInlayDoesNotRemoveSelection() {
+    initText("<selection>text<caret></selection>");
+    addBlockInlay(0, true, 100);
+    mouse().clickAtXY(50, getEditor().getLineHeight() / 2);
+    checkResultByText("<selection>text<caret></selection>");
+  }
+
+  public void testWordSelectionOnMouseDragAroundPunctuation() {
+    initText("((some (text)))");
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 12).release();
+    checkResultByText("((<selection>some (text)<caret></selection>))");
+  }
+
+  public void testSurrogatePairInputInOverwriteMode() {
+    initText("ab<caret>cd");
+    ((EditorEx)getEditor()).setInsertMode(false);
+    JComponent component = getEditor().getContentComponent();
+    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                 new AttributedString("\uD83D\uDE00" /* 'GRINNING FACE' emoji (U+1F600) */).getIterator(),
+                                                 2, null, null));
+    checkResultByText("ab\uD83D\uDE00d");
+  }
+
+  public void testInputMethodComposing() {
+    initText("hello<caret>");
+    JComponent component = getEditor().getContentComponent();
+    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                 new AttributedString("\u3145" /* ㅅ */).getIterator(),
+                                                 0, TextHitInfo.afterOffset(0),
+                                                 TextHitInfo.afterOffset(-1)));
+    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                 new AttributedString("\u3146" /* ㅆ */).getIterator(),
+                                                 0, TextHitInfo.afterOffset(0),
+                                                 TextHitInfo.afterOffset(-1)));
+    checkResultByText("hello\u3146");
+  }
+
+  public void testInputMethodCaretMove() {
+    initText("hello<caret>");
+    JComponent component = getEditor().getContentComponent();
+    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                 new AttributedString("\u3145" /* ㅅ */).getIterator(),
+                                                 0, null, null));
+    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                 new AttributedString("\u3146" /* ㅆ */).getIterator(),
+                                                 0, null, null));
+    mouse().clickAtXY(0, getEditor().getLineHeight() / 2);
+    checkResultByText("<caret>hello\u3146");
   }
 }

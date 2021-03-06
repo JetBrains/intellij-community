@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
 
@@ -58,6 +59,7 @@ public final class HgProjectConfigurable extends ConfigurableBase<HgConfiguratio
     }
   }
 
+  @Nls
   public static String getDISPLAY_NAME() {
     return HgBundle.message("hg4idea.mercurial");
   }

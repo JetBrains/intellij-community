@@ -2,12 +2,14 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,6 +24,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +37,8 @@ import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 /**
  * @author dcheryasov
  */
-public class ResolveImportUtil {
+public final class ResolveImportUtil {
+
   private ResolveImportUtil() {
   }
 
@@ -44,6 +48,10 @@ public class ResolveImportUtil {
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
         if (pyFile.getLanguageLevel().isPy3K()) {
+          PsiElement originalFoothold = CompletionUtilCoreImpl.getOriginalOrSelf(foothold);
+          if (foothold.getManager().isInProject(originalFoothold) && Registry.is("python.explicit.namespace.packages")) {
+            return false;
+          }
           return true;
         }
         return pyFile.hasImportFromFuture(ABSOLUTE_IMPORT);
@@ -218,6 +226,7 @@ public class ResolveImportUtil {
    * @deprecated Use {@link #resolveChildren(PsiElement, String, PsiFile, boolean, boolean, boolean, boolean)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent,
                                         @NotNull final String referencedName,

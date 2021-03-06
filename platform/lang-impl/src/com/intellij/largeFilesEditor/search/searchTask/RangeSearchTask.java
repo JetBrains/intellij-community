@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class RangeSearchTask extends SearchTaskBase {
     myCallback = callback;
   }
 
-  public String getTitleForBackgroundableTask() {
+  public @NlsContexts.ProgressTitle String getTitleForBackgroundableTask() {
     final int maxStrToFindLength = 16;
     final int maxFileNameLength = 20;
 

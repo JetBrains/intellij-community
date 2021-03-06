@@ -15,11 +15,11 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 
 /**
@@ -38,10 +38,8 @@ public class NewParameterCollidesWithLocalUsageInfo extends UnresolvableCollisio
 
   @Override
   public String getDescription() {
-    String buffer = RefactoringBundle.message("there.is.already.a.0.in.1.it.will.conflict.with.the.new.parameter",
+    return RefactoringBundle.message("there.is.already.a.0.in.1.it.will.conflict.with.the.new.parameter",
                                      RefactoringUIUtil.getDescription(myConflictingElement, true),
                                      RefactoringUIUtil.getDescription(myMethod, true));
-
-    return CommonRefactoringUtil.capitalize(buffer);
   }
 }

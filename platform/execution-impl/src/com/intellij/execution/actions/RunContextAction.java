@@ -13,6 +13,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -36,14 +37,21 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @Override
-  protected void perform(@NotNull ConfigurationContext context) {
-    RunnerAndConfigurationSettings configuration = context.findExisting();
+  protected void perform(ConfigurationContext context) {
+    perform(findExisting(context), context);
+  }
+
+  @Override
+  protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     if (configuration == null) {
       configuration = context.getConfiguration();
       if (configuration == null) {
         return;
       }
+      runManager.setTemporaryConfiguration(configuration);
+    }
+    else if (configuration != findExisting(context)) {
       runManager.setTemporaryConfiguration(configuration);
     }
     if (Registry.is("select.run.configuration.from.context")) {
@@ -53,6 +61,9 @@ public class RunContextAction extends BaseRunConfigurationAction {
     if (LOG.isDebugEnabled()) {
       String configurationClass = configuration.getConfiguration().getClass().getName();
       LOG.debug(String.format("Execute run configuration: %s", configurationClass));
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
     }
     ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, context.getDataContext());
   }
@@ -84,7 +95,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   private Pair<Boolean, Boolean> isEnabledAndVisible(ConfigurationContext context) {
-    RunnerAndConfigurationSettings configuration = context.findExisting();
+    RunnerAndConfigurationSettings configuration = findExisting(context);
     if (configuration == null) {
       configuration = context.getConfiguration();
     }
@@ -134,4 +145,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     };
   }
 
+  public Executor getExecutor() {
+    return myExecutor;
+  }
 }

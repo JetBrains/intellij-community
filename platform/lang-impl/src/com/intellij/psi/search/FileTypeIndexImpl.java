@@ -2,8 +2,9 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ import java.util.Collections;
 public final class FileTypeIndexImpl
         extends ScalarIndexExtension<FileType>
         implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
+  private static final boolean USE_LOG_INDEX = SystemProperties.getBooleanProperty("use.log.file.type.index", true);
   @NotNull
   @Override
   public ID<FileType, Void> getName() {
@@ -44,12 +46,13 @@ public final class FileTypeIndexImpl
 
   @Override
   public int getVersion() {
-    return 3;
+    return 3 + (USE_LOG_INDEX ? 0xFF : 0);
   }
 
-  @NotNull
   @Override
-  public UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension, @NotNull IndexStorage<FileType, Void> storage) throws StorageException, IOException {
-    return new FileTypeMapReduceIndex(extension, storage);
+  public @NotNull UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension,
+                                                                                        @NotNull VfsAwareIndexStorageLayout<FileType, Void> indexStorageLayout)
+    throws StorageException, IOException {
+    return USE_LOG_INDEX ? new LogFileTypeIndex(extension) : new FileTypeMapReduceIndex(extension, indexStorageLayout);
   }
 }

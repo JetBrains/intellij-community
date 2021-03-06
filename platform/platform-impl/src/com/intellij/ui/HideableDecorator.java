@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Locale;
 
 /**
  * @author evgeny zakrevsky
@@ -96,10 +96,11 @@ public class HideableDecorator {
     return myOn;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.Separator String title) {
     myTitledSeparator.setText(title);
   }
 
+  @NlsContexts.Separator
   public String getTitle() {
     return myTitledSeparator.getText();
   }
@@ -162,15 +163,15 @@ public class HideableDecorator {
   }
 
   private void registerMnemonic() {
-    int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
-    if (mnemonicIndex != -1) {
+    TextWithMnemonic text = TextWithMnemonic.parse(getTitle());
+    if (text.hasMnemonic()) {
       myPanel.getActionMap().put(ACTION_KEY, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myOn) off(); else on();
         }
       });
-      char c = UIUtil.removeMnemonic(getTitle()).toUpperCase(Locale.getDefault()).charAt(mnemonicIndex);
+      char c = (char)text.getMnemonic();
       myPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(c, InputEvent.ALT_MASK, false), ACTION_KEY);
     }
   }

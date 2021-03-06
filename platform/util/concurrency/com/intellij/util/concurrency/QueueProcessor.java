@@ -9,9 +9,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -42,7 +43,7 @@ public final class QueueProcessor<T> {
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
-  private final Map<Object, ModalityState> myModalityState = ContainerUtil.newIdentityTroveMap();
+  private final Map<Object, ModalityState> myModalityState = new Reference2ObjectOpenHashMap<>();
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
@@ -223,7 +224,12 @@ public final class QueueProcessor<T> {
       }
     }
     else {
-      application.executeOnPooledThread(runnable);
+      if (application != null) {
+        application.executeOnPooledThread(runnable);
+      }
+      else {
+        SwingUtilities.invokeLater(runnable);
+      }
     }
   }
 

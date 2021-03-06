@@ -3,6 +3,8 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.generation.GenerateMembersUtil
+import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -13,10 +15,11 @@ import com.intellij.refactoring.extractMethod.InputVariables
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
 import java.util.*
 
 object MapFromDialog {
-  fun mapFromDialog(extractOptions: ExtractOptions, title: String, helpId: String): ExtractOptions? {
+  fun mapFromDialog(extractOptions: ExtractOptions, @NlsContexts.DialogTitle title: String, helpId: String): ExtractOptions? {
     val dialog = createDialog(extractOptions, title, helpId)
     val isOk = dialog.showAndGet()
     if (isOk){
@@ -27,7 +30,7 @@ object MapFromDialog {
     }
   }
 
-  private fun createDialog(extractOptions: ExtractOptions, refactoringName: String, helpId: String): ExtractMethodDialog {
+  private fun createDialog(extractOptions: ExtractOptions, @NlsContexts.DialogTitle refactoringName: String, helpId: String): ExtractMethodDialog {
     val project = extractOptions.project
     val returnType = extractOptions.dataOutput.type
     val thrownExceptions = extractOptions.thrownExceptions.toTypedArray()
@@ -35,7 +38,7 @@ object MapFromDialog {
     val typeParameters = extractOptions.typeParameters
     val targetClass = extractOptions.anchor.containingClass
     val elements = extractOptions.elements.toTypedArray()
-    val nullability = extractOptions.dataOutput.nullability
+    val nullability = extractOptions.dataOutput.nullability.takeIf { ExtractMethodHelper.isNullabilityAvailable(extractOptions) }
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
     val staticOptions = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions)
     val canBeStatic = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions) != null
@@ -57,7 +60,7 @@ object MapFromDialog {
     val typeParameterList = PsiElementFactory.getInstance(extractOptions.project).createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }
 
-    val methodNames = suggestInitialMethodName(extractOptions)
+    val methodNames = ExtractMethodHelper.guessMethodName(extractOptions)
 
     return object: ExtractMethodDialog(project, targetClass, inputVariables, returnType, typeParameterList,
                                        thrownExceptions, isStatic, canBeStatic, canBeChainedConstructor,
@@ -65,7 +68,7 @@ object MapFromDialog {
       override fun areTypesDirected() = true
 
       override fun suggestMethodNames(): Array<String> {
-        return methodNames
+        return methodNames.toTypedArray()
       }
 
       override fun isVoidReturn(): Boolean = false
@@ -100,50 +103,13 @@ object MapFromDialog {
           val paramName = parameter.name
           val variable = vars[paramName]
           if (variable != null) {
-            //TODO bundle
-            conflicts.putValue(variable, "Variable with name $paramName is already defined in the selected scope")
+            conflicts.putValue(variable, JavaRefactoringBundle.message("extract.method.conflict.variable", paramName))
           }
         }
       }
 
       override fun hasPreviewButton() = false
     }
-  }
-
-  private fun suggestInitialMethodName(options: ExtractOptions): Array<String> {
-    val project = options.project
-    val initialMethodNames: MutableSet<String> = LinkedHashSet()
-    val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
-    val returnType = options.dataOutput.type
-
-    val expression = options.elements.singleOrNull() as? PsiExpression
-    if (expression != null || returnType !is PsiPrimitiveType) {
-        codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
-          .forEach { name ->
-            initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
-          }
-    }
-
-    val outVariable = (options.dataOutput as? DataOutput.VariableOutput)?.variable
-    if (outVariable != null) {
-      val outKind = codeStyleManager.getVariableKind(outVariable)
-      val propertyName = codeStyleManager.variableNameToPropertyName(outVariable.name!!, outKind)
-      val names = codeStyleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, outVariable.type).names
-      names.forEach { name ->
-        initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
-      }
-    }
-
-    val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
-    val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
-    fun suggestGetterName(name: String): String? {
-      field.name = name
-      return GenerateMembersUtil.suggestGetterName(field)
-    }
-
-    val getters: List<String> = initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
-      .mapNotNull { propertyName -> suggestGetterName(propertyName) }
-    return getters.toTypedArray()
   }
 
 }

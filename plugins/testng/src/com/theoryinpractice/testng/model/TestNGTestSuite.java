@@ -17,6 +17,8 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,9 +27,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtilCore;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.testng.xml.Parser;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -60,8 +65,13 @@ public class TestNGTestSuite extends TestNGTestObject {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     String suiteName = myConfig.getPersistantData().getSuiteName();
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(suiteName);
+    Document document = virtualFile != null ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+    if (document == null) {
+      throw new RuntimeConfigurationException(TestngBundle.message("dialog.message.file.not.found", suiteName));
+    }
     try {
-      final Parser parser = new Parser(suiteName);
+      final Parser parser = new Parser(new ByteArrayInputStream(document.getText().getBytes(StandardCharsets.UTF_8)));
       parser.setLoadClasses(false);
       synchronized (PARSE_LOCK) {
         parser.parse();//try to parse suite.xml
@@ -72,7 +82,8 @@ public class TestNGTestSuite extends TestNGTestObject {
       // but yaml parser tries to load classes despite loadClasses = false here and thus it will fail anyway
       //no validation for yaml suites possible
       if (!suiteName.endsWith(".yaml")) { 
-        throw new RuntimeConfigurationException("Unable to parse '" + suiteName + "' specified");
+        throw new RuntimeConfigurationException(
+          TestngBundle.message("testng.dialog.message.unable.to.parse.specified.exception", suiteName));
       }
     }
   }

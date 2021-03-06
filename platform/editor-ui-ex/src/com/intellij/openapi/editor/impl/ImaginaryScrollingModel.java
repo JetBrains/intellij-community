@@ -22,12 +22,12 @@ public class ImaginaryScrollingModel implements ScrollingModel {
 
   @Override
   public @NotNull Rectangle getVisibleArea() {
-    throw notImplemented();
+    return new Rectangle(0, 0);
   }
 
   @Override
   public @NotNull Rectangle getVisibleAreaOnScrollingFinished() {
-    throw notImplemented();
+    return new Rectangle(0, 0);
   }
 
   @Override
@@ -82,11 +82,11 @@ public class ImaginaryScrollingModel implements ScrollingModel {
 
   @Override
   public void addVisibleAreaListener(@NotNull VisibleAreaListener listener) {
-    throw notImplemented();
+    // no-op
   }
 
   @Override
   public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
-    throw notImplemented();
+    // no-op
   }
 }

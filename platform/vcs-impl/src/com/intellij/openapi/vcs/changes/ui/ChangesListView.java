@@ -15,10 +15,11 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.UtilKt;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,22 +32,20 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getPathsCaseSensitive;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
-import static com.intellij.util.containers.UtilKt.*;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
-import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Stream<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
-  @NonNls public static final DataKey<Stream<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
-  @NonNls public static final DataKey<Stream<FilePath>> IGNORED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
+  @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
+  @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
@@ -131,33 +130,33 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       return this;
     }
     if (VcsDataKeys.CHANGES.is(dataId)) {
-      return getSelectedChanges().toArray(Change[]::new);
+      return getSelectedChanges().toList().toArray(Change[]::new);
     }
     if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return getLeadSelection().toArray(Change[]::new);
+      return getLeadSelection().toList().toArray(Change[]::new);
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      return getSelectedChangeLists().toArray(ChangeList[]::new);
+      return getSelectedChangeLists().toList().toArray(ChangeList[]::new);
     }
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return getSelectedFiles().toArray(VirtualFile[]::new);
+      return getSelectedFiles().toList().toArray(VirtualFile[]::new);
     }
-    if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(dataId)) {
+    if (VcsDataKeys.VIRTUAL_FILES.is(dataId)) {
       return getSelectedFiles();
     }
-    if (VcsDataKeys.FILE_PATH_STREAM.is(dataId)) {
+    if (VcsDataKeys.FILE_PATHS.is(dataId)) {
       return getSelectedFilePaths();
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFile file = getIfSingle(getNavigatableFiles());
+      VirtualFile file = getNavigatableFiles().single();
       return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
                                                                        .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray(myProject, getNavigatableFiles());
+      return getNavigatableArray(myProject, StreamEx.of(getNavigatableFiles().iterator()));
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))
+      return getSelectionObjects().find(userObject -> !(userObject instanceof ChangeList)) != null
              ? new VirtualFileDeleteProvider()
              : null;
     }
@@ -171,22 +170,22 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       return getSelectedIgnoredFiles();
     }
     if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
-      return getSelectedModifiedWithoutEditing().collect(toList());
+      return getSelectedModifiedWithoutEditing().toList();
     }
     if (LOCALLY_DELETED_CHANGES.is(dataId)) {
-      return getSelectedLocallyDeletedChanges().collect(toList());
+      return getSelectedLocallyDeletedChanges().toList();
     }
     if (MISSING_FILES_DATA_KEY.is(dataId)) {
-      return getSelectedMissingFiles().collect(toList());
+      return getSelectedMissingFiles().toList();
     }
     if (VcsDataKeys.HAVE_LOCALLY_DELETED.is(dataId)) {
-      return getSelectedMissingFiles().findAny().isPresent();
+      return getSelectedMissingFiles().isNotEmpty();
     }
     if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING.is(dataId)) {
-      return getSelectedModifiedWithoutEditing().findAny().isPresent();
+      return getSelectedModifiedWithoutEditing().isNotEmpty();
     }
     if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
-      return !UtilKt.isEmpty(getSelectedChanges());
+      return getSelectedChanges().isNotEmpty();
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
@@ -196,58 +195,56 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   public Stream<FilePath> getUnversionedFiles() {
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Enumeration<ChangesBrowserNode<?>> nodes = (Enumeration)getRoot().children();
-    ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
-                                                                         ChangesBrowserUnversionedFilesNode.class);
-    if (node == null) return Stream.empty();
+    ChangesBrowserUnversionedFilesNode node = TreeUtil.nodeChildren(getRoot())
+      .filter(ChangesBrowserUnversionedFilesNode.class).first();
+    if (node == null) return StreamEx.empty();
     return node.getFilePathsUnderStream();
   }
 
   @NotNull
-  static Stream<FilePath> getSelectedUnversionedFiles(@NotNull JTree tree) {
+  static JBIterable<FilePath> getSelectedUnversionedFiles(@NotNull JTree tree) {
     return getSelectedFilePaths(tree, UNVERSIONED_FILES_TAG);
   }
 
   @NotNull
-  public Stream<FilePath> getSelectedUnversionedFiles() {
+  public JBIterable<FilePath> getSelectedUnversionedFiles() {
     return getSelectedUnversionedFiles(this);
   }
 
   @NotNull
-  private Stream<FilePath> getSelectedIgnoredFiles() {
+  private JBIterable<FilePath> getSelectedIgnoredFiles() {
     return getSelectedFilePaths(IGNORED_FILES_TAG);
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedModifiedWithoutEditing() {
+  private JBIterable<VirtualFile> getSelectedModifiedWithoutEditing() {
     return getSelectedVirtualFiles(MODIFIED_WITHOUT_EDITING_TAG);
   }
 
   @NotNull
-  protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    return getSelectionNodesStream(this, tag)
-      .flatMap(ChangesBrowserNode::getFilesUnderStream)
-      .distinct();
+  protected JBIterable<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
+    return getSelectionNodes(this, tag)
+      .flatMap(node -> JBIterable.create(() -> node.getFilesUnderStream().iterator()))
+      .unique();
   }
 
   @NotNull
-  protected Stream<FilePath> getSelectedFilePaths(@Nullable Object tag) {
+  protected JBIterable<FilePath> getSelectedFilePaths(@Nullable Object tag) {
     return getSelectedFilePaths(this, tag);
   }
 
   @NotNull
-  private static Stream<FilePath> getSelectedFilePaths(@NotNull JTree tree, @Nullable Object tag) {
-    return getSelectionNodesStream(tree, tag)
-      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
-      .distinct();
+  private static JBIterable<FilePath> getSelectedFilePaths(@NotNull JTree tree, @Nullable Object tag) {
+    return getSelectionNodes(tree, tag)
+      .flatMap(node -> JBIterable.create(() -> node.getFilePathsUnderStream().iterator()))
+      .unique();
   }
 
   @NotNull
-  static Stream<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
+  static JBIterable<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
     VcsTreeModelData exactlySelected = VcsTreeModelData.exactlySelected(tree);
 
-    return exactlySelected.rawUserObjectsStream().map(object -> {
+    return JBIterable.create(() -> exactlySelected.rawUserObjectsStream().iterator()).map(object -> {
       if (object instanceof VirtualFile) return (VirtualFile)object;
       if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
       return null;
@@ -255,41 +252,41 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream() {
-    return getSelectionNodesStream(this, null);
+  private JBIterable<ChangesBrowserNode<?>> getSelectionNodes() {
+    return getSelectionNodes(this, null);
   }
 
   @NotNull
-  private static Stream<ChangesBrowserNode<?>> getSelectionNodesStream(@NotNull JTree tree, @Nullable Object tag) {
-    return stream(tree.getSelectionPaths())
+  private static JBIterable<ChangesBrowserNode<?>> getSelectionNodes(@NotNull JTree tree, @Nullable Object tag) {
+    return JBIterable.of(tree.getSelectionPaths())
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node));
   }
 
   @NotNull
-  private Stream<Object> getSelectionObjectsStream() {
-    return getSelectionNodesStream().map(ChangesBrowserNode::getUserObject);
+  private JBIterable<Object> getSelectionObjects() {
+    return getSelectionNodes().map(ChangesBrowserNode::getUserObject);
   }
 
   @NotNull
-  static Stream<VirtualFile> getVirtualFiles(TreePath @Nullable [] paths, @Nullable Object tag) {
-    return stream(paths)
+  static JBIterable<VirtualFile> getVirtualFiles(TreePath @Nullable [] paths, @Nullable Object tag) {
+    return JBIterable.of(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(ChangesBrowserNode::getFilesUnderStream)
-      .distinct();
+      .flatMap(node -> JBIterable.create(() -> node.getFilesUnderStream().iterator()))
+      .unique();
   }
 
   @NotNull
-  static Stream<FilePath> getFilePaths(TreePath @Nullable [] paths, @Nullable Object tag) {
-    return stream(paths)
+  static JBIterable<FilePath> getFilePaths(TreePath @Nullable [] paths, @Nullable Object tag) {
+    return JBIterable.of(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
-      .distinct();
+      .flatMap(node -> JBIterable.create(() -> node.getFilePathsUnderStream().iterator()))
+      .unique();
   }
 
   static boolean isUnderTag(@NotNull TreePath path, @Nullable Object tag) {
@@ -303,17 +300,17 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<Change> getChanges(@NotNull Project project, TreePath @Nullable [] paths) {
-    Stream<Change> changes = stream(paths)
+  static JBIterable<Change> getChanges(@NotNull Project project, TreePath @Nullable [] paths) {
+    JBIterable<Change> changes = JBIterable.of(paths)
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(node -> node.getObjectsUnderStream(Change.class))
-      .map(Change.class::cast);
-    Stream<Change> hijackedChanges = getVirtualFiles(paths, MODIFIED_WITHOUT_EDITING_TAG)
+      .flatMap(node -> node.traverseObjectsUnder())
+      .filter(Change.class);
+    JBIterable<Change> hijackedChanges = getVirtualFiles(paths, MODIFIED_WITHOUT_EDITING_TAG)
       .map(file -> toHijackedChange(project, file))
       .filter(Objects::nonNull);
 
-    return Stream.concat(changes, hijackedChanges)
+    return changes.append(hijackedChanges)
       .filter(new DistinctChangePredicate());
   }
 
@@ -328,47 +325,48 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  private Stream<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    return getSelectionNodesStream(this, LOCALLY_DELETED_NODE_TAG)
-      .flatMap(node -> node.getObjectsUnderStream(LocallyDeletedChange.class))
-      .distinct();
+  private JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
+    return getSelectionNodes(this, LOCALLY_DELETED_NODE_TAG)
+      .flatMap(node -> node.traverseObjectsUnder())
+      .filter(LocallyDeletedChange.class)
+      .unique();
   }
 
   @NotNull
-  private Stream<FilePath> getSelectedMissingFiles() {
+  private JBIterable<FilePath> getSelectedMissingFiles() {
     return getSelectedLocallyDeletedChanges().map(LocallyDeletedChange::getPath);
   }
 
   @NotNull
-  private Stream<FilePath> getSelectedFilePaths() {
-    return concat(
-      getSelectedChanges().map(ChangesUtil::getFilePath),
-      getSelectedVirtualFiles(null).map(VcsUtil::getFilePath),
-      getSelectedFilePaths(null)
-    ).distinct();
+  private JBIterable<FilePath> getSelectedFilePaths() {
+    return JBIterable.<FilePath>empty()
+      .append(getSelectedChanges().map(ChangesUtil::getFilePath))
+      .append(getSelectedVirtualFiles(null).map(VcsUtil::getFilePath))
+      .append(getSelectedFilePaths(null))
+      .unique();
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedFiles() {
-    return concat(
-      getAfterRevisionsFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null),
-      getFilesFromPaths(getSelectedFilePaths(null))
-    ).distinct();
+  private JBIterable<VirtualFile> getSelectedFiles() {
+    return JBIterable.<VirtualFile>empty()
+      .append(getSelectedChanges().filterMap(ChangesUtil::getAfterPath).filterMap(FilePath::getVirtualFile))
+      .append(getSelectedVirtualFiles(null))
+      .append(getSelectedFilePaths(null).filterMap(FilePath::getVirtualFile))
+      .unique();
   }
 
   @NotNull
-  private Stream<VirtualFile> getNavigatableFiles() {
-    return concat(
-      getFiles(getSelectedChanges()),
-      getSelectedVirtualFiles(null),
-      getFilesFromPaths(getSelectedFilePaths(null))
-    ).distinct();
+  private JBIterable<VirtualFile> getNavigatableFiles() {
+    return JBIterable.<VirtualFile>empty()
+      .append(getSelectedChanges().flatMap(o -> JBIterable.create(() -> getPathsCaseSensitive(o).iterator())).filterMap(FilePath::getVirtualFile))
+      .append(getSelectedVirtualFiles(null))
+      .append(getSelectedFilePaths(null).filterMap(FilePath::getVirtualFile))
+      .unique();
   }
 
   @NotNull
-  private Stream<Change> getLeadSelection() {
-    return getSelectionNodesStream()
+  private JBIterable<Change> getLeadSelection() {
+    return getSelectionNodes()
       .filter(node -> node instanceof ChangesBrowserChangeNode)
       .map(ChangesBrowserChangeNode.class::cast)
       .map(ChangesBrowserChangeNode::getUserObject)
@@ -376,8 +374,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  public Stream<Change> getChanges() {
-    return getRoot().getObjectsUnderStream(Change.class);
+  public JBIterable<Change> getChanges() {
+    return getRoot().traverseObjectsUnder().filter(Change.class);
   }
 
   @Nullable
@@ -396,16 +394,16 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  public Stream<Change> getSelectedChanges() {
+  public JBIterable<Change> getSelectedChanges() {
     return getChanges(myProject, getSelectionPaths());
   }
 
   @NotNull
-  private Stream<ChangeList> getSelectedChangeLists() {
-    return getSelectionObjectsStream()
+  private JBIterable<ChangeList> getSelectedChangeLists() {
+    return getSelectionObjects()
       .filter(userObject -> userObject instanceof ChangeList)
       .map(ChangeList.class::cast)
-      .distinct();
+      .unique();
   }
 
   @Override
@@ -473,11 +471,12 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
   }
 
-  private static class DistinctChangePredicate implements Predicate<Change> {
-    private final Set<Object> seen = new THashSet<>(ChangeListChange.HASHING_STRATEGY);
+  private static class DistinctChangePredicate extends JBIterable.SCond<Change> {
+    private Set<Object> seen;
 
     @Override
-    public boolean test(Change change) {
+    public boolean value(Change change) {
+      if (seen == null) seen = new ObjectOpenCustomHashSet<>(ChangeListChange.HASHING_STRATEGY);
       return seen.add(change);
     }
   }

@@ -1,6 +1,5 @@
 package com.siyeh.igtest.style.field_final;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -106,7 +105,7 @@ public class FieldMayBeFinal {
         private static String hostName;
         static {
             try {
-                hostName = java.net.InetAddress.getLocalHost().getHostName();
+                hostName = Test3.class.getName();
             } catch (Exception ignored) {
                 hostName = "localhost";
             }
@@ -117,7 +116,7 @@ public class FieldMayBeFinal {
         private static String <warning descr="Field 'hostName' may be 'final'">hostName</warning>;
         static {
             try {
-                hostName = java.net.InetAddress.getLocalHost().getHostName();
+                hostName = Test4.class.getName();
             } catch (Exception ignored) {
                 throw new RuntimeException();
             }

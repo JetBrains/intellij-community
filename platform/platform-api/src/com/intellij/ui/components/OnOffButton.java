@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
@@ -16,29 +18,29 @@ import java.util.Locale;
  * @author Konstantin Bulenkov
  */
 public class OnOffButton extends JToggleButton {
-  private String myOnText = "ON";
-  private String myOffText = "OFF";
+  private @NlsContexts.Button String myOnText = IdeBundle.message("onoff.button.on");
+  private @NlsContexts.Button String myOffText = IdeBundle.message("onoff.button.off");
 
   public OnOffButton() {
     setBorder(null);
     setOpaque(false);
   }
 
-  public String getOnText() {
+  public @NlsContexts.Button String getOnText() {
     return myOnText;
   }
 
   @SuppressWarnings("unused")
-  public void setOnText(String onText) {
+  public void setOnText(@NlsContexts.Button String onText) {
     myOnText = onText;
   }
 
-  public String getOffText() {
+  public @NlsContexts.Button String getOffText() {
     return myOffText;
   }
 
   @SuppressWarnings("unused")
-  public void setOffText(String offText) {
+  public void setOffText(@NlsContexts.Button String offText) {
     myOffText = offText;
   }
 

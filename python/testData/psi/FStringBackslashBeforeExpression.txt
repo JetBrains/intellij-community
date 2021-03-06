@@ -11,7 +11,7 @@ PyFile:FStringBackslashBeforeExpression.py
         PsiElement(Py:FSTRING_TEXT)('foo')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             PsiElement(Py:BACKSLASH)('\')
             PsiWhiteSpace(' ')
             PsiElement(Py:INTEGER_LITERAL)('42')

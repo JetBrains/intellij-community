@@ -9,11 +9,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThrowableConvertor
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
@@ -34,12 +34,12 @@ sealed class GithubApiRequestExecutor {
 
   protected val authDataChangedEventDispatcher = EventDispatcher.create(AuthDataChangeListener::class.java)
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
   @TestOnly
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(IOException::class, ProcessCanceledException::class)
   fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
 
@@ -106,6 +106,18 @@ sealed class GithubApiRequestExecutor {
         twoFactorCode = twoFactorCodeSupplier.get() ?: throw e
         executeWithBasicHeader(indicator, request, header)
       }
+    }
+  }
+
+  class NoAuth internal constructor(githubSettings: GithubSettings) : Base(githubSettings) {
+    override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
+      indicator.checkCanceled()
+      return createRequestBuilder(request)
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+        }
+        .useProxy(true)
+        .execute(request, indicator)
     }
   }
 
@@ -243,6 +255,9 @@ sealed class GithubApiRequestExecutor {
     internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String?>): WithBasicAuth {
       return WithBasicAuth(GithubSettings.getInstance(), login, password, twoFactorCodeSupplier)
     }
+
+    @CalledInAny
+    fun create() = NoAuth(GithubSettings.getInstance())
 
     companion object {
       @JvmStatic

@@ -1,4 +1,4 @@
-// "Make 'bar' return 'Foo'" "true"
+// "Make 'bar' return 'Foo'" "false"
 public class Foo {
   public Foo(int i) {}
 

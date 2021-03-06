@@ -2,9 +2,12 @@
 
 package com.intellij.mocks
 
-import com.intellij.stats.network.service.RequestService
-import com.intellij.stats.sender.StatisticSender
-import com.intellij.stats.storage.UniqueFilesProvider
+import com.intellij.completion.ml.experiment.ExperimentInfo
+import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.lang.Language
+import com.intellij.stats.completion.network.service.RequestService
+import com.intellij.stats.completion.sender.StatisticSender
+import com.intellij.stats.completion.storage.UniqueFilesProvider
 import org.mockito.Mockito
 import java.io.File
 
@@ -23,6 +26,31 @@ internal class TestRequestService : RequestService() {
 
 internal class TestStatisticSender : StatisticSender {
     override fun sendStatsData(url: String) {
+    }
+}
+
+
+internal class TestExperimentStatus : ExperimentStatus {
+    companion object {
+        const val VERSION = 0
+    }
+    private var inExperiment = false
+    private var shouldRank = false
+    private var shouldShowArrows = false
+    private var shouldCalculateFeatures = false
+
+    override fun forLanguage(language: Language): ExperimentInfo =
+      ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
+
+    override fun disable() = Unit
+
+    override fun isDisabled(): Boolean = false
+
+    fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
+        this.inExperiment = inExperiment
+        this.shouldRank = shouldRank
+        this.shouldShowArrows = shouldShowArrows
+        this.shouldCalculateFeatures = shouldCalculateFeatures
     }
 }
 

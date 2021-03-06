@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class NewProjectSettingsTest extends CodeStyleTestCase {
-  private final static Map<String,Runnable> ourSetupMap = new HashMap<String, Runnable>();
+  private final static Map<String,Runnable> ourSetupMap = new HashMap<>();
 
   static {
     ourSetupMap.put("nonDefaultSettings", () -> {

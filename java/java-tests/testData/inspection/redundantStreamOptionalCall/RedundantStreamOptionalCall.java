@@ -73,6 +73,12 @@ public class RedundantStreamOptionalCall {
     Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: subsequent 'min' call doesn't depend on the sort order">sorted(String.CASE_INSENSITIVE_ORDER)</warning>.min(String.CASE_INSENSITIVE_ORDER);
     Stream.of("foo", "bar", "baz").sorted(String.CASE_INSENSITIVE_ORDER).min(Comparator.naturalOrder());
   }
+  
+  public static void flatMapStreamOf(String[] arr1, String[] arr2) {
+    Stream.of(1,2,3,4,5).<warning descr="Redundant 'flatMap' call">flatMap(Stream::of)</warning>.toArray();
+    Stream.of(1,2,3,4,5).<warning descr="Redundant 'flatMap' call">flatMap(t -> Stream.of(t))</warning>.toArray();
+    Stream.of(arr1, arr2).flatMap(Stream::of).toArray();
+  }
 
   public static Stream<SomeClazz> fun1(Stream<Stream<SomeClazz>> objectStreams) {
     return objectStreams.<Stream<SomeClazz>>map(Stream::distinct).flatMap(Function.identity());

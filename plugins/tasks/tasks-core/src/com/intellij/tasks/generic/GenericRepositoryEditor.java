@@ -2,6 +2,7 @@ package com.intellij.tasks.generic;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.EditorTextField;
@@ -56,7 +57,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
 
   public GenericRepositoryEditor(final Project project,
                                  final T repository,
-                                 final Consumer<T> changeListener) {
+                                 final Consumer<? super T> changeListener) {
     super(project, repository, changeListener);
 
     myTest2Button.addActionListener(new ActionListener() {
@@ -91,9 +92,9 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myTextRadioButton.addActionListener(radioButtonListener);
     myJsonRadioButton.addActionListener(radioButtonListener);
 
-    myLoginMethodTypeComboBox.setSelectedItem(myRepository.getLoginMethodType().toString());
-    myTasksListMethodTypeComboBox.setSelectedItem(myRepository.getTasksListMethodType().toString());
-    mySingleTaskMethodComboBox.setSelectedItem(myRepository.getSingleTaskMethodType().toString());
+    myLoginMethodTypeComboBox.setSelectedItem(myRepository.getLoginMethodType().toString()); //NON-NLS
+    myTasksListMethodTypeComboBox.setSelectedItem(myRepository.getTasksListMethodType().toString()); //NON-NLS
+    mySingleTaskMethodComboBox.setSelectedItem(myRepository.getSingleTaskMethodType().toString()); //NON-NLS
 
     // set default listener updating model fields
     installListener(myLoginMethodTypeComboBox);
@@ -103,7 +104,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     installListener(myTasksListURLText);
     installListener(mySingleTaskURLText);
     installListener(myDownloadTasksInSeparateRequests);
-    myTabbedPane.addTab("Server Configuration", myPanel);
+    myTabbedPane.addTab(TaskBundle.message("server.configuration"), myPanel);
 
     // Put appropriate configuration components on the card panel
     ResponseHandler xmlHandler = myRepository.getResponseHandler(ResponseType.XML);

@@ -1,14 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -19,7 +20,7 @@ import java.util.Set;
 public class PyTestFrameworkService implements PersistentStateComponent<PyTestFrameworkService> {
 
   public static PyTestFrameworkService getInstance() {
-    return ServiceManager.getService(PyTestFrameworkService.class);
+    return ApplicationManager.getApplication().getService(PyTestFrameworkService.class);
   }
 
   public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<>();
@@ -49,7 +50,7 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
   }
 
   @NotNull
-  public static String getSdkReadableNameByFramework(@NotNull final String frameworkName) {
+  public static @Nls String getSdkReadableNameByFramework(@NotNull final String frameworkName) {
     switch (frameworkName) {
       case PyNames.PY_TEST: {
         return PyBundle.message("runcfg.pytest.display_name");

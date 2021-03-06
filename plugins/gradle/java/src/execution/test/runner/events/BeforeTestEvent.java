@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
+import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +30,21 @@ public class BeforeTestEvent extends AbstractTestEvent {
     final String name = eventXml.getTestName();
     final String fqClassName = eventXml.getTestClassName();
 
+    doProcess(testId, parentTestId, name, fqClassName);
+  }
+
+  @Override
+  public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
+    TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
+    final String testId = testEvent.getEventId();
+    final String parentTestId = testEvent.getParentEventId();
+    final String name = ObjectUtils.coalesce(testDescriptor.getDisplayName(), testDescriptor.getMethodName(), testId);
+    final String fqClassName = testDescriptor.getClassName();
+
+    doProcess(testId, parentTestId, name, fqClassName);
+  }
+
+  private void doProcess(String testId, String parentTestId, String name, String fqClassName) {
     String locationUrl = findLocationUrl(name, fqClassName);
     final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, false, locationUrl, fqClassName);
 
@@ -55,6 +73,7 @@ public class BeforeTestEvent extends AbstractTestEvent {
           if (parentTestProxy1 != null) {
             parentTestProxy1.addChild(gradleSMTestProxy);
             getResultsViewer().onSuiteStarted(gradleSMTestProxy);
+            getExecutionConsole().getEventPublisher().onSuiteStarted(gradleSMTestProxy);
           }
         }
         parentTestProxy.addChild(testProxy);
@@ -62,5 +81,6 @@ public class BeforeTestEvent extends AbstractTestEvent {
     }
 
     getResultsViewer().onTestStarted(testProxy);
+    getExecutionConsole().getEventPublisher().onTestStarted(testProxy);
   }
 }

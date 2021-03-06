@@ -11,6 +11,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -44,6 +45,15 @@ class ServiceSingleView extends ServiceView {
 
   @Override
   Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return matches(service);
+  }
+
+  @Override
+  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return matches(service);
+  }
+
+  private Promise<Void> matches(@NotNull Object service) {
     ServiceViewItem item = myRef.get();
     return item == null || !item.getValue().equals(service) ? Promises.rejectedPromise("Service not found") : Promises.resolvedPromise();
   }
@@ -79,14 +89,16 @@ class ServiceSingleView extends ServiceView {
   }
 
   private void updateItem() {
-    ServiceViewItem oldValue = myRef.get();
+    WeakReference<ServiceViewItem> oldValueRef = new WeakReference<>(myRef.get());
     ServiceViewItem newValue = ContainerUtil.getOnlyItem(getModel().getRoots());
+    WeakReference<ServiceViewItem> newValueRef = new WeakReference<>(newValue);
     myRef.set(newValue);
     AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
       if (mySelected) {
-        if (newValue != null) {
-          ServiceViewDescriptor descriptor = newValue.getViewDescriptor();
-          if (oldValue == null) {
+        ServiceViewItem value = newValueRef.get();
+        if (value != null) {
+          ServiceViewDescriptor descriptor = value.getViewDescriptor();
+          if (oldValueRef.get() == null) {
             onViewSelected(descriptor);
           }
           myUi.setDetailsComponent(descriptor.getContentComponent());

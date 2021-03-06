@@ -6,7 +6,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,6 +58,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     new ClassFilter("javassist.*"),
     new ClassFilter("org.apache.webbeans.*"),
     new ClassFilter("com.ibm.ws.*"),
+    new ClassFilter("org.mockito.*")
   };
 
   public boolean TRACING_FILTERS_ENABLED = true;
@@ -112,7 +112,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   }
 
   public static DebuggerSettings getInstance() {
-    return ServiceManager.getService(DebuggerSettings.class);
+    return ApplicationManager.getApplication().getService(DebuggerSettings.class);
   }
 
   public void setSteppingFilters(ClassFilter[] steppingFilters) {

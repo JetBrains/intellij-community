@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,7 +41,7 @@ public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
                                     PsiExpression expr,
                                     PsiExpression[] occurrences,
                                     TypeSelectorManagerImpl selectorManager,
-                                    String title) {
+                                    @NlsContexts.Command String title) {
     super(project, settings, chosenAnchor, editor, expr, true, occurrences, selectorManager, title);
   }
 

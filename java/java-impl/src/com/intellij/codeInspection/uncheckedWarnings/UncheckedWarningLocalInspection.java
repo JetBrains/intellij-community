@@ -13,6 +13,9 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -23,15 +26,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,54 +55,54 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                         JBUI.emptyInsets(), 0, 0);
+    final JPanel panel = new InspectionOptionsPanel();
 
-    panel.add(createSetting("Ignore unchecked assignment", IGNORE_UNCHECKED_ASSIGNMENT, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_ASSIGNMENT = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.assignment"), IGNORE_UNCHECKED_ASSIGNMENT,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_ASSIGNMENT = cb.isSelected();
+                              }
+                            }));
 
-    panel.add(createSetting("Ignore unchecked generics array creation for vararg parameter", IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
+    panel.add(createSetting(
+      JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.generics.array.creation.for.vararg.parameter"), IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION,
+      new Pass<>() {
+        @Override
+        public void pass(JCheckBox cb) {
           IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION = cb.isSelected();
-      }
-    }), gc);
+        }
+      }));
 
-    panel.add(createSetting("Ignore unchecked call as member of raw type", IGNORE_UNCHECKED_CALL, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_CALL = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.call.as.member.of.raw.type"), IGNORE_UNCHECKED_CALL,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_CALL = cb.isSelected();
+                              }
+                            }));
 
-    panel.add(createSetting("Ignore unchecked cast", IGNORE_UNCHECKED_CAST, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_CAST = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.cast"), IGNORE_UNCHECKED_CAST,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_CAST = cb.isSelected();
+                              }
+                            }));
 
-    panel.add(createSetting("Ignore unchecked overriding", IGNORE_UNCHECKED_OVERRIDING, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_OVERRIDING = cb.isSelected();
-      }
-    }), gc);
-
-    gc.fill = GridBagConstraints.BOTH;
-    gc.weighty = 1;
-    panel.add(Box.createVerticalBox(), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.overriding"), IGNORE_UNCHECKED_OVERRIDING,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_OVERRIDING = cb.isSelected();
+                              }
+                            }));
 
     return panel;
   }
 
   @NotNull
-  static JCheckBox createSetting(@NotNull String cbText, final boolean option, @NotNull Pass<? super JCheckBox> pass) {
+  static JCheckBox createSetting(@NotNull @Nls String cbText, final boolean option, @NotNull Pass<? super JCheckBox> pass) {
     final JCheckBox uncheckedCb = new JCheckBox(cbText, option);
     uncheckedCb.addActionListener(e -> pass.pass(uncheckedCb));
     return uncheckedCb;
@@ -173,14 +175,14 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
 
     return new UncheckedWarningsVisitor(isOnTheFly, languageLevel){
       @Override
-      protected void registerProblem(@NotNull String message,
+      protected void registerProblem(@NotNull @InspectionMessage String message,
                                      @Nullable PsiElement callExpression,
                                      @NotNull PsiElement psiElement,
                                      LocalQuickFix @NotNull [] quickFixes) {
         final String rawExpression = isMethodCalledOnRawType(callExpression);
         if (rawExpression != null) {
           final String referenceName = ((PsiMethodCallExpression)callExpression).getMethodExpression().getReferenceName();
-          message += ". Reason: '" + rawExpression + "' has raw type, so result of " + referenceName + " is erased";
+          message += JavaBundle.message("unchecked.warning.inspection.reason.expr.has.raw.type.so.result.erased", rawExpression, referenceName);
         }
 
         PsiElement element2Highlight = null;
@@ -223,7 +225,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       myGenerifyFixes = onTheFly ? createFixes() : LocalQuickFix.EMPTY_ARRAY;
     }
 
-    protected abstract void registerProblem(@NotNull String message,
+    protected abstract void registerProblem(@NotNull @InspectionMessage String message,
                                             PsiElement callExpression,
                                             @NotNull PsiElement psiElement,
                                             LocalQuickFix @NotNull [] quickFixes);
@@ -234,7 +236,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
       final JavaResolveResult result = expression.advancedResolve(false);
       if (JavaGenericsUtil.isUncheckedWarning(expression, result, myLanguageLevel)) {
-        registerProblem("Unchecked generics array creation for varargs parameter", null, expression, LocalQuickFix.EMPTY_ARRAY);
+        registerProblem(JavaBundle.message("unchecked.warning.inspection.message.unchecked.generics.array.creation.for.varargs.parameter"), null, expression, LocalQuickFix.EMPTY_ARRAY);
       }
     }
 
@@ -244,7 +246,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       if (IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION) return;
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null && JavaGenericsUtil.isUncheckedWarning(classReference, expression.resolveMethodGenerics(), myLanguageLevel)) {
-        registerProblem("Unchecked generics array creation for varargs parameter", expression, classReference, LocalQuickFix.EMPTY_ARRAY);
+        registerProblem(JavaBundle.message("unchecked.warning.inspection.message.unchecked.generics.array.creation.for.varargs.parameter"), expression, classReference, LocalQuickFix.EMPTY_ARRAY);
       }
     }
 
@@ -500,7 +502,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Nullable
-    private String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
+    private @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiMethod)) return null;
       final PsiMethod method = (PsiMethod)element;

@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -109,7 +110,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented, final List<ReferenceTransferableData> values) {
+                                      Ref<? super Boolean> indented, final List<? extends ReferenceTransferableData> values) {
     if (DumbService.getInstance(project).isDumb()) {
       return;
     }
@@ -244,7 +245,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     }
   }
 
-  private static void showHint(@NotNull Editor editor, @NotNull String info, HyperlinkListener hyperlinkListener) {
+  private static void showHint(@NotNull Editor editor, @NotNull @NlsContexts.HintText String info, HyperlinkListener hyperlinkListener) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(info, hyperlinkListener, null, null));
 

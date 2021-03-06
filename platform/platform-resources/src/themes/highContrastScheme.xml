@@ -5,6 +5,8 @@
     <property name="ideVersion">2019.1.0.0</property>
     <property name="modified">2018-11-06T13:11:49</property>
     <property name="originalScheme">_@user_High contrast</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">high.contrast.color.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="9924" />
@@ -59,6 +61,10 @@
     <option name="WHITESPACES" value="ffffff" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="666666" />
     <option name="STRING_CONTENT_INDENT_GUIDE" value="54b33e"/>
+    <option name="BookmarkIcon.background" value="E0861F"/>
+    <option name="MnemonicIcon.foreground" value="FFFFFF"/>
+    <option name="MnemonicIcon.background" value="000000"/>
+    <option name="MnemonicIcon.borderColor" value="E0861F"/>
     <option name="ScrollBar.background" value="000000"/>
     <option name="ScrollBar.trackColor" value="000000"/>
     <option name="ScrollBar.thumbColor" value="FFFFFFBE"/>
@@ -85,6 +91,8 @@
     <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="FFFFFFBE"/>
     <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="000000"/>
     <option name="ActionButton.iconTextForeground" value="FFFFFF"/>
+    <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="CCCCCC8c"/>
+    <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="CCCCCC8c"/>
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
@@ -543,6 +551,17 @@
         <option name="BACKGROUND" value="ffffff" />
       </value>
     </option>
+    <option name="INLAY_DEFAULT">
+      <value>
+        <option name="FOREGROUND" value="0" />
+        <option name="BACKGROUND" value="ffffff" />
+      </value>
+    </option>
+    <option name="INLAY_TEXT_WITHOUT_BACKGROUND">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
+      </value>
+    </option>
     <option name="JAVA_KEYWORD" baseAttributes="DEFAULT_KEYWORD" />
     <option name="JSP_DIRECTIVE_NAME" baseAttributes="DEFAULT_KEYWORD" />
     <option name="KOTLIN_BACKING_FIELD_VARIABLE">
@@ -786,6 +805,22 @@
     <option name="YAML_ANCHOR">
       <value>
         <option name="FOREGROUND" value="ffcf40" />
+      </value>
+    </option>
+    <option name="LIVE_TEMPLATE_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="EFFECT_COLOR" value="1AEBFF"/>
+        <option name="EFFECT_TYPE" value="0"/>
+      </value>
+    </option>
+    <option name="LIVE_TEMPLATE_INACTIVE_SEGMENT">
+      <value>
+        <option name="FOREGROUND"/>
+        <option name="BACKGROUND"/>
+        <option name="EFFECT_COLOR" value="999999"/>
+        <option name="EFFECT_TYPE" value="0"/>
       </value>
     </option>
   </attributes>

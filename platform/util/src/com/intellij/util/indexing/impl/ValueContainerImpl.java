@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing.impl;
 
@@ -116,8 +102,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           fileSetObjects = new SmartList<>();
           valueObjects = new SmartList<>();
         }
-        else if (IndexDebugAssertions.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + IndexDebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+        else if (IndexDebugProperties.DEBUG) {
+          LOG.error("Expected only one value per-inputId for " + IndexDebugProperties.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -363,7 +349,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  private static final ValueContainer.IntIterator EMPTY_ITERATOR = new IntIdsIterator() {
+  public static final IntIdsIterator EMPTY_ITERATOR = new IntIdsIterator() {
     @Override
     public boolean hasNext() {
       return false;
@@ -448,7 +434,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
         IntIdsIterator intIterator = originalInput.sortedIntIterator();
-        if (IndexDebugAssertions.DEBUG) IndexDebugAssertions.assertTrue(intIterator.hasAscendingOrder());
+        if (IndexDebugProperties.DEBUG) LOG.assertTrue(intIterator.hasAscendingOrder());
 
         if (intIterator.size() == 1) {
           DataInputOutputUtil.writeINT(out, intIterator.next());
@@ -477,14 +463,25 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       final int valueCount = DataInputOutputUtil.readINT(stream);
       if (valueCount < 0) {
         // ChangeTrackingValueContainer marked inputId as invalidated, see ChangeTrackingValueContainer.saveTo
-        final int[] inputIds = remapping.remap(-valueCount);
+        @NotNull Object inputIds = remapping.remap(-valueCount);
 
         if (mapping == null && size() > NUMBER_OF_VALUES_THRESHOLD) { // avoid O(NumberOfValues)
           mapping = new FileId2ValueMapping<>(this);
         }
 
         boolean doCompact = false;
-        for (int inputId : inputIds) {
+        if (inputIds instanceof int[]) {
+          for (int inputId : (int[])inputIds) {
+            if(mapping != null) {
+              if (mapping.removeFileId(inputId)) doCompact = true;
+            } else {
+              removeAssociatedValue(inputId);
+              doCompact = true;
+            }
+          }
+        }
+        else {
+          int inputId = (int)inputIds;
           if(mapping != null) {
             if (mapping.removeFileId(inputId)) doCompact = true;
           } else {
@@ -501,8 +498,16 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           int idCountOrSingleValue = DataInputOutputUtil.readINT(stream);
 
           if (idCountOrSingleValue > 0) {
-            int[] inputIds = remapping.remap(idCountOrSingleValue);
-            for (int inputId : inputIds) {
+            @NotNull Object inputIds = remapping.remap(idCountOrSingleValue);
+
+            if (inputIds instanceof int[]) {
+              for (int inputId : (int[])inputIds) {
+                addValue(inputId, value);
+                if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+              }
+            }
+            else {
+              int inputId = (int)inputIds;
               addValue(inputId, value);
               if (mapping != null) mapping.associateFileIdToValue(inputId, value);
             }
@@ -514,8 +519,17 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
             for (int i = 0; i < idCountOrSingleValue; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
-              int[] inputIds = remapping.remap(prev + id);
-              for (int inputId : inputIds) {
+              @NotNull Object inputIds = remapping.remap(prev + id);
+
+              if (inputIds instanceof int[]) {
+                for (int inputId : (int[])inputIds) {
+                  if (changeBufferingList != null) changeBufferingList.add(inputId);
+                  else addValue(inputId, value);
+                  if (mapping != null) mapping.associateFileIdToValue(inputId, value);
+                }
+              }
+              else {
+                int inputId = (int)inputIds;
                 if (changeBufferingList != null) changeBufferingList.add(inputId);
                 else addValue(inputId, value);
                 if (mapping != null) mapping.associateFileIdToValue(inputId, value);
@@ -529,7 +543,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  private static class SingleValueIterator implements IntIdsIterator {
+  private static final class SingleValueIterator implements IntIdsIterator {
     private final int myValue;
     private boolean myValueRead;
 

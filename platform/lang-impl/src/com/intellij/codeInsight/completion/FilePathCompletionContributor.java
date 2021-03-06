@@ -54,7 +54,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(FilePathCompletionContributor.class);
 
   public FilePathCompletionContributor() {
-    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.BASIC, psiElement(), new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -67,7 +67,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       }
     });
 
-    CompletionProvider<CompletionParameters> provider = new CompletionProvider<CompletionParameters>() {
+    CompletionProvider<CompletionParameters> provider = new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -116,7 +116,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
           final CompletionResultSet __result = result.withPrefixMatcher(prefix).caseInsensitive();
 
-          
+
           if (contextFile != null) {
             Set<String> resultNames = new TreeSet<>();
             String finalPrefix = prefix;
@@ -147,9 +147,9 @@ public class FilePathCompletionContributor extends CompletionContributor {
                   ProgressManager.checkCanceled();
 
                   final VirtualFile virtualFile = file.getVirtualFile();
-                  if (virtualFile == null || 
-                      !virtualFile.isValid() || 
-                      Comparing.equal(virtualFile, contextFile) || 
+                  if (virtualFile == null ||
+                      !virtualFile.isValid() ||
+                      Comparing.equal(virtualFile, contextFile) ||
                       parent != null && !VfsUtilCore.isAncestor(parent, virtualFile, true)) {
                     continue;
                   }

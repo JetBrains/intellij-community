@@ -22,6 +22,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
@@ -56,6 +57,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
    * @deprecated Please use {@link TypedHandlerUtil#handleGenericGT} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void handleLTDeletion(@NotNull final Editor editor,
                                       final int offset,
                                       @NotNull final IElementType lt,

@@ -2,9 +2,11 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyedExtensionCollector
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,13 +30,31 @@ interface ExternalSystemExecutionAware {
     project: Project
   )
 
-  companion object {
+  @JvmDefault
+  fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
+                                          project: Project): TargetEnvironmentConfigurationProvider? = null
 
+  @JvmDefault
+  fun getEnvironmentConfigurationProvider(projectPath: String,
+                                          isPreviewMode: Boolean,
+                                          project: Project): TargetEnvironmentConfigurationProvider? = null
+
+  @JvmDefault
+  fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project) = false
+
+  companion object {
+    private val TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER: Key<TargetEnvironmentConfigurationProvider> =
+      Key.create("Target environment configuration provider")
     private val EP_COLLECTOR = KeyedExtensionCollector<ExternalSystemExecutionAware, ProjectSystemId>("com.intellij.externalExecutionAware")
 
     @JvmStatic
-    fun getExtensions(systemId: ProjectSystemId): List<ExternalSystemExecutionAware> {
-      return EP_COLLECTOR.forKey(systemId)
+    fun getExtensions(systemId: ProjectSystemId): List<ExternalSystemExecutionAware> = EP_COLLECTOR.forKey(systemId)
+
+    fun ExternalSystemExecutionSettings.getEnvironmentConfigurationProvider() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER)
+
+    @ApiStatus.Internal
+    fun ExternalSystemExecutionSettings.setEnvironmentConfigurationProvider(configuration: TargetEnvironmentConfigurationProvider?) {
+      putUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER, configuration)
     }
   }
 }

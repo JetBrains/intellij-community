@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -382,7 +382,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  public void processClassPrepared(final ClassPrepareEvent event) {
+  public void processClassPrepared(final ClassPrepareEvent event, Set<ClassPrepareRequestor> notifiedRequestors) {
     if (!myDebugProcess.isAttached()) {
       return;
     }
@@ -395,10 +395,17 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       ClassPrepareRequestor requestor = (ClassPrepareRequestor)event.request().getProperty(REQUESTOR);
       if (requestor != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("requestor found " + refType.signature());
+        if (notifiedRequestors.add(requestor)) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("requestor found " + refType.signature());
+          }
+          requestor.processClassPrepare(myDebugProcess, refType);
         }
-        requestor.processClassPrepare(myDebugProcess, refType);
+        else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("requestor " + requestor + " already notified " + refType.signature());
+          }
+        }
       }
     }
   }

@@ -10,12 +10,12 @@ Object $paramName){
 
   #addClassInstance()
 
-  return new org.apache.commons.lang.builder.EqualsBuilder()
+  return new org.apache.commons.lang.builder.EqualsBuilder()##
   #if($superHasEquals)
-    .appendSuper(super.equals($paramName))
+    .appendSuper(super.equals($paramName))##
   #end
   #foreach($field in $fields)
-    .append($field.accessor, ${classInstanceName}.$field.accessor)
+    .append($field.accessor, ${classInstanceName}.$field.accessor)##
   #end
     .isEquals();
 }

@@ -1,0 +1,5 @@
+ctypes.wintypes
+os.MFD_HUGE_32MB
+os.MFD_HUGE_512MB
+time.CLOCK_PROF
+time.CLOCK_UPTIME

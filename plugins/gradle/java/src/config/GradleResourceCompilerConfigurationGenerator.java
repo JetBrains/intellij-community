@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ProjectTopics;
@@ -26,7 +26,6 @@ import com.intellij.util.Function;
 import com.intellij.util.JdomKt;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +40,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -72,8 +68,8 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       @Override
       public void modulesRenamed(@NotNull Project project,
-                                 @NotNull List<Module> modules,
-                                 @NotNull Function<Module, String> oldNameProvider) {
+                                 @NotNull List<? extends Module> modules,
+                                 @NotNull Function<? super Module, String> oldNameProvider) {
         for (Module module : modules) {
           moduleRemoved(project, module);
         }
@@ -100,7 +96,7 @@ public class GradleResourceCompilerConfigurationGenerator {
 
     boolean configurationUpdateRequired = context.isRebuild() || !gradleConfigFile.exists();
 
-    final Map<String, Integer> affectedConfigurationHash = new THashMap<>();
+    final Map<String, Integer> affectedConfigurationHash = new HashMap<>();
     for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedGradleModuleConfigurations.entrySet()) {
       Integer moduleLastConfigurationHash = myModulesConfigurationHash.get(entry.getKey());
       int moduleCurrentConfigurationHash = entry.getValue().computeConfigurationHash();
@@ -156,7 +152,7 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private @NotNull Map<String, GradleModuleResourceConfiguration> generateAffectedGradleModulesConfiguration(@NotNull CompileContext context) {
-    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = new THashMap<>();
+    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = new HashMap<>();
 
     final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.create(
       gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(gradleProjectPath1));
@@ -172,7 +168,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
         String message = GradleBundle.message("compiler.build.messages.gradle.configuration.not.found", module.getName());
-        context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1);
+        context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1, null, Collections.singleton(module.getName()));
         continue;
       }
 

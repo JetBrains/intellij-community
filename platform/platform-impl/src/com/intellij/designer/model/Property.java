@@ -17,8 +17,11 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.TextTransferable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,12 +147,12 @@ public abstract class Property<T extends PropertiesContainer> {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @NotNull
-  public final String getName() {
+  public final @NlsSafe String getName() {
     return myName;
   }
 
   @Nullable
-  public String getTooltip() {
+  public @NlsContexts.Tooltip String getTooltip() {
     return null;
   }
 
@@ -199,7 +202,7 @@ public abstract class Property<T extends PropertiesContainer> {
   }
 
   @Nullable
-  public String getJavadocText() {
+  public @Nls String getJavadocText() {
     return null;
   }
 

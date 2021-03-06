@@ -13,8 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SearchListModel;
-
 public class SearchModelTest extends BasePlatformTestCase {
 
   private final static SearchEverywhereContributor<Object> STUB_CONTRIBUTOR_1 = createStubContributor(100);
@@ -22,7 +20,7 @@ public class SearchModelTest extends BasePlatformTestCase {
   private final static SearchEverywhereContributor<Object> STUB_CONTRIBUTOR_3 = createStubContributor(300);
 
   public void testElementsAdding() {
-    SearchListModel model = new SearchListModel();
+    SearchListModel model = new GroupedSearchListModel();
 
     // adding to empty -----------------------------------------------------------------------
     model.addElements(Arrays.asList(
@@ -67,7 +65,7 @@ public class SearchModelTest extends BasePlatformTestCase {
 
     actualItems = model.getItems();
     expectedItems = Arrays.asList("item_1_10", "item_1_20", "item_1_25", "item_1_30", "item_1_35", SearchListModel.MORE_ELEMENT,
-                                  "item_2_05", "item_2_10", "item_2_20","item_2_23", "item_2_25","item_2_30", "item_2_40",
+                                  "item_2_05", "item_2_10", "item_2_20", "item_2_23", "item_2_25", "item_2_30", "item_2_40",
                                   "item_3_03", "item_3_05", "item_3_10", "item_3_20", "item_3_30", "item_3_40", "item_3_50", SearchListModel.MORE_ELEMENT);
     Assert.assertEquals(expectedItems, actualItems);
 
@@ -110,7 +108,7 @@ public class SearchModelTest extends BasePlatformTestCase {
   @NotNull
   private static SearchEverywhereContributor<Object> createStubContributor(int weight) {
     String id = UUID.randomUUID().toString();
-    return new SearchEverywhereContributor<Object>() {
+    return new SearchEverywhereContributor<>() {
       @NotNull
       @Override
       public String getSearchProviderId() {

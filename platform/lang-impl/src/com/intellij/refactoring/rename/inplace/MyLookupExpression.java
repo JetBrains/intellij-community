@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -13,10 +13,12 @@ import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,15 +29,15 @@ import java.util.LinkedHashSet;
 public class MyLookupExpression extends Expression {
   protected final String myName;
   protected final LookupElement[] myLookupItems;
-  private final String myAdvertisementText;
+  private final @NlsContexts.PopupAdvertisement String myAdvertisementText;
   private volatile LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
 
-  public MyLookupExpression(String name,
-                            @Nullable LinkedHashSet<String> names,
+  public MyLookupExpression(@NlsSafe String name,
+                            @Nullable LinkedHashSet<@NlsSafe String> names,
                             @Nullable PsiNamedElement elementToRename,
                             @Nullable PsiElement nameSuggestionContext,
                             boolean shouldSelectAll,
-                            String advertisement) {
+                            @NlsContexts.PopupAdvertisement String advertisement) {
     myName = name;
     myAdvertisementText = advertisement;
     myLookupItems = initLookupItems(names, elementToRename, nameSuggestionContext, shouldSelectAll);
@@ -54,11 +56,11 @@ public class MyLookupExpression extends Expression {
     final Iterator<String> iterator = names.iterator();
     for (int i = 0; i < lookupElements.length; i++) {
       final String suggestion = iterator.next();
-      lookupElements[i] = LookupElementBuilder.create(suggestion).withInsertHandler(new InsertHandler<LookupElement>() {
+      lookupElements[i] = LookupElementBuilder.create(suggestion).withInsertHandler(new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           if (shouldSelectAll) return;
-          final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(context.getEditor());
+          final Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(context.getEditor());
           final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
           if (templateState != null) {
             final TextRange range = templateState.getCurrentVariableRange();
@@ -75,11 +77,6 @@ public class MyLookupExpression extends Expression {
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return myLookupItems;
-  }
-
-  @Override
-  public Result calculateQuickResult(ExpressionContext context) {
-    return calculateResult(context);
   }
 
   @Override

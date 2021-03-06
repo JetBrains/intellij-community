@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-public class GoToChangePopupBuilder {
+public final class GoToChangePopupBuilder {
   private static final Key<JBPopup> POPUP_KEY = Key.create("Diff.RequestChainGoToPopup");
 
   public interface Chain extends DiffRequestChain {
@@ -26,7 +26,7 @@ public class GoToChangePopupBuilder {
   }
 
   @NotNull
-  public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected, int defaultSelection) {
+  public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
     if (chain instanceof Chain) {
       AnAction action = ((Chain)chain).createGoToChangeAction(onSelected, defaultSelection);
       if (action != null) return action;
@@ -84,10 +84,10 @@ public class GoToChangePopupBuilder {
   }
 
   private static class SimpleGoToChangePopupAction extends BaseGoToChangePopupAction<DiffRequestChain> {
-    @NotNull private final Consumer<Integer> myOnSelected;
+    private final @NotNull Consumer<? super Integer> myOnSelected;
     private final int myDefaultSelection;
 
-    SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected, int defaultSelection) {
+    SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
       super(chain);
       myOnSelected = onSelected;
       myDefaultSelection = defaultSelection;

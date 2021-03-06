@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.jsp;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,14 +48,14 @@ public abstract class JspSpiUtil {
 
   protected abstract int _escapeCharsInJspContext(JspFile file, int offset, String toEscape) throws IncorrectOperationException;
 
-  public static void visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<BaseJspFile> visitor) {
+  public static void visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<? super BaseJspFile> visitor) {
     final JspSpiUtil util = getJspSpiUtil();
     if (util != null) {
       util._visitAllIncludedFilesRecursively(jspFile, visitor);
     }
   }
 
-  protected abstract void _visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<BaseJspFile> visitor);
+  protected abstract void _visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<? super BaseJspFile> visitor);
 
   @Nullable
   public static PsiElement resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
@@ -131,6 +131,16 @@ public abstract class JspSpiUtil {
     return urls;
   }
 
+  public static List<Path> buildFiles(@Nullable VirtualFile virtualFile, @Nullable Module module, boolean includeModuleOutput) {
+    List<Path> result = new ArrayList<>();
+    processClassPathItems(virtualFile, module, file -> {
+      if (file != null && file.isValid()) {
+        result.add(file.toNioPath());
+      }
+    }, includeModuleOutput);
+    return result;
+  }
+
   public static void processClassPathItems(final VirtualFile virtualFile, final Module module, final Consumer<? super VirtualFile> consumer) {
     processClassPathItems(virtualFile, module, consumer, true);
   }
@@ -196,22 +206,4 @@ public abstract class JspSpiUtil {
       return null;
     }
   }
-
-  @Nullable
-  public static IElementType getJspElementType(@NotNull final JspElementType.Kind kind) {
-    final JspSpiUtil spiUtil = getJspSpiUtil();
-    return spiUtil != null ? spiUtil._getJspElementType(kind) : null;
-  }
-
-  @Nullable
-  public static IElementType getJspScriptletType() {
-    return getJspElementType(JspElementType.Kind.JSP_SCRIPTLET);
-  }
-
-  @Nullable
-  public static IElementType getJspExpressionType() {
-    return getJspElementType(JspElementType.Kind.JSP_EXPRESSION);
-  }
-
-  protected abstract IElementType _getJspElementType(@NotNull final JspElementType.Kind kind);
 }

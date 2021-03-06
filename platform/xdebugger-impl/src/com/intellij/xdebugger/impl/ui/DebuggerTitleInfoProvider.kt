@@ -2,74 +2,99 @@
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
 import com.intellij.xdebugger.*
 
-class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(RegistryOption("ide.title.debug", project), RegistryOption("ide.borderless.title.debug", project)) {
-  private var subscriptionDisposable: Disposable? = null
+private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
+  companion object {
+    private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
+  }
 
-  private var debuggerSessionStarted = false
-    set(value) {
-      if (field == value) return
-
-      field = value
-      updateValue()
+  init {
+    option.listener = {
+      ProjectManager.getInstance().openProjects.forEach {
+        updateSubscriptions(it)
+      }
+      updateNotify()
     }
+  }
 
-  override fun updateSubscriptions() {
-    checkState()
+  override fun addSubscription(project: Project, disp: Disposable, value: (provider: TitleInfoProvider) -> Unit) {
+    super.addSubscription(project, disp, value)
+    updateSubscriptions(project)
+  }
 
+  override fun isActive(project: Project): Boolean {
+    return isEnabled() && getHelper(project).debuggerSessionStarted
+  }
+
+  override fun getValue(project: Project): String {
+    return if (getHelper(project).debuggerSessionStarted) "[Debugger]" else ""
+  }
+
+  private fun updateSubscriptions(project: Project) {
+    val helper = getHelper(project)
+    helper.checkState(this)
+
+    val disposable = helper.subscriptionDisposable
     if (!isEnabled()) {
-      subscriptionDisposable?.dispose()
-      subscriptionDisposable = null
+      helper.subscriptionDisposable = null
+      if (disposable != null) {
+        Disposer.dispose(disposable)
+      }
       return
     }
+    else if (disposable == null) {
+      helper.subscriptionDisposable = helper.addSubscription(this)
+    }
+  }
 
-    if (subscriptionDisposable == null) {
-      subscriptionDisposable = addSubscription(project)
+  @Service
+  private class DebuggerTitleInfoProviderService(private val project: Project) {
+    var debuggerSessionStarted = false
+    var subscriptionDisposable: Disposable? = null
+
+    fun checkState(provider: DebuggerTitleInfoProvider) {
+      debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
+        provider.isEnabled() && it.debugSessions.isNotEmpty()
+      } ?: false
+
+      provider.updateNotify()
     }
 
-    super.updateSubscriptions()
-  }
-
-  private fun addSubscription(baseDisposable: Disposable): Disposable {
-    val connection = project.messageBus.connect()
-    connection.subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
-      override fun processStarted(debugProcess: XDebugProcess) {
-        debuggerSessionStarted = true
-
-        debugProcess.session.addSessionListener(object : XDebugSessionListener {
-          override fun sessionStopped() {
-            checkState()
-          }
-        })
+    fun addSubscription(provider: DebuggerTitleInfoProvider): Disposable {
+      val disposable = Disposable {
+        subscriptionDisposable = null
       }
+      Disposer.register(project, disposable)
 
-      override fun processStopped(debugProcess: XDebugProcess) {
-        checkState()
-      }
+      project.messageBus.connect(disposable).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
+        override fun processStarted(debugProcess: XDebugProcess) {
+          debuggerSessionStarted = true
 
-      override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-        checkState()
-      }
-    })
+          debugProcess.session.addSessionListener(object : XDebugSessionListener {
+            override fun sessionStopped() {
+              checkState(provider)
+            }
+          })
+        }
 
-    val dsp = Disposable {
-      connection.disconnect()
-      subscriptionDisposable = null
+        override fun processStopped(debugProcess: XDebugProcess) {
+          checkState(provider)
+        }
+
+        override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
+          checkState(provider)
+        }
+      })
+      return disposable
     }
-    Disposer.register(baseDisposable, dsp)
-    return dsp
   }
-
-  private fun checkState() {
-    debuggerSessionStarted = isEnabled() && XDebuggerManager.getInstance(project).debugSessions.isNotEmpty()
-  }
-
-  override val isActive: Boolean
-    get() = super.isActive && debuggerSessionStarted
-  override val value: String = "[Debugger]"
 }

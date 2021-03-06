@@ -99,12 +99,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.junit.ConvertJUnit3TestCaseToJUnit4Intention</className>
-      <bundleName>messages.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.junit</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.junit.DataPointHolderConversionIntention</className>
       <bundleName>messages.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.junit</categoryKey>
@@ -346,11 +340,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.MergeCallSequenceToChainIntention</className>
-      <bundleName>messages.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.opassign.ReplaceWithOperatorAssignmentIntention</className>
       <bundleName>messages.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

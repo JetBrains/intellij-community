@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @author peter
  */
-class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
+final class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
   private final DfaValueFactory myFactory;
 
   /**
@@ -49,7 +49,7 @@ class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
     buf.append(")");
     return buf.toString();
   }
-  
+
   DfaVariableValue getVariable(int index) {
     return (DfaVariableValue)myFactory.getValue(get(index));
   }
@@ -82,9 +82,9 @@ class EqClass extends SortedIntSet implements Iterable<DfaVariableValue> {
   @NotNull
   @Override
   public Iterator<DfaVariableValue> iterator() {
-    return new Iterator<DfaVariableValue>() {
+    return new Iterator<>() {
       int pos;
-      
+
       @Override
       public boolean hasNext() {
         return pos < size();

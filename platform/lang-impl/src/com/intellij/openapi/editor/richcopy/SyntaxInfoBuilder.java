@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -209,7 +209,7 @@ public final class SyntaxInfoBuilder {
       }
     }
 
-    private final Comparator<IteratorWrapper> RANGE_SORTER = new Comparator<IteratorWrapper>() {
+    private final Comparator<IteratorWrapper> RANGE_SORTER = new Comparator<>() {
       @Override
       public int compare(IteratorWrapper o1, IteratorWrapper o2) {
         if (o1 == null) {
@@ -269,7 +269,7 @@ public final class SyntaxInfoBuilder {
       }
     }
 
-    private static class IteratorWrapper {
+    private static final class IteratorWrapper {
       private final RangeIterator iterator;
       private final int order;
 
@@ -285,7 +285,7 @@ public final class SyntaxInfoBuilder {
     }
   }
 
-  private static class MarkupModelRangeIterator implements RangeIterator {
+  private static final class MarkupModelRangeIterator implements RangeIterator {
     private final boolean myUnsupportedModel;
     private final int myStartOffset;
     private final int myEndOffset;
@@ -362,9 +362,7 @@ public final class SyntaxInfoBuilder {
             HighlightInfoType type = info.type;
             key = type.getAttributesKey();
           }
-          if (key != null) {
-            attributes = myColorsScheme.getAttributes(key);
-          }
+          attributes = myColorsScheme.getAttributes(key);
         }
         if (attributes == null) {
           continue;
@@ -449,13 +447,16 @@ public final class SyntaxInfoBuilder {
 
     @Override
     public void advance() {
+      int prevEnd = myCurrentEnd;
       myCurrentStart = getCurrentStart();
       myCurrentEnd = getCurrentEnd();
-      assert myCurrentStart <= myCurrentEnd : "Unexpected range returned by highlighter: " +
-                                              myIterator.getStart() + ":" + myIterator.getEnd() +
-                                              ", scanned range: " + myStartOffset + ":" + myEndOffset +
-                                              ", resulting range: " + myCurrentStart + ":" + myCurrentEnd +
-                                              ", highlighter: " + myHighlighter;
+      assert prevEnd <= myCurrentStart && myCurrentStart <= myCurrentEnd
+        : "Unexpected range returned by highlighter: " +
+          myIterator.getStart() + ":" + myIterator.getEnd() +
+          ", prevEnd: " + prevEnd +
+          ", scanned range: " + myStartOffset + ":" + myEndOffset +
+          ", resulting range: " + myCurrentStart + ":" + myCurrentEnd +
+          ", highlighter: " + myHighlighter;
       myCurrentAttributes = myIterator.getTokenType() == TokenType.BAD_CHARACTER ? EMPTY_ATTRIBUTES : myIterator.getTextAttributes();
       myIterator.advance();
     }
@@ -478,9 +479,14 @@ public final class SyntaxInfoBuilder {
     @Override
     public void dispose() {
     }
+
+    @Override
+    public String toString() {
+      return "HighlighterRangeIterator[" + myHighlighter + "]";
+    }
   }
 
-  private static class SegmentIterator {
+  private static final class SegmentIterator {
     private final FontFallbackIterator myIterator = new FontFallbackIterator();
     private final CharSequence myCharSequence;
     private int myEndOffset;

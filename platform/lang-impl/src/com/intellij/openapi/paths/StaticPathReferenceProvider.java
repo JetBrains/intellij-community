@@ -44,7 +44,7 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
   public boolean createReferences(@NotNull final PsiElement psiElement,
                                   final int offset,
                                   final String text,
-                                  final @NotNull List<PsiReference> references,
+                                  final @NotNull List<? super PsiReference> references,
                                   final boolean soft) {
 
     FileReferenceSet set = new FileReferenceSet(text, psiElement, offset, null, true, myEndingSlashNotAllowed, mySuitableFileTypes) {

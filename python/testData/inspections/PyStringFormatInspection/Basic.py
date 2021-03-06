@@ -5,7 +5,7 @@
 "%()s" % {'': "name"} #ok
 <warning descr="Format specifier character missing">'test%(name)'</warning> % {'name': 23} #There are no format specifier character
 'work%*d' % (2, 34) #ok
-<warning descr="Can't use '*' in formats when using a mapping">'work%(name)*d'</warning> % (12, 32) #Can't use '*' in formats when using a mapping
+<warning descr="Cannot use '*' in formats when using a mapping">'work%(name)*d'</warning> % (12, 32) #Can't use '*' in formats when using a mapping
 '%*.*d' % (2, 5, 5) #ok
 '%*.*d' % (<warning descr="Too few arguments for format string">2, 4</warning>) #Too few arguments for format string
 '%*.*d' % (<warning descr="Too many arguments for format string">2, 4, 5, 6</warning>) #Too many arguments for format string
@@ -15,7 +15,7 @@
 '%%%(name)ld' % {'name': 12} #ok
 "%(name)f(name)" % <warning descr="Format requires a mapping">23.2</warning> #Format requires a mapping
 "%(name)f(name)" % (<warning descr="Format requires a mapping">23.2</warning>) #Format requires a mapping
-'%d%d' % <warning descr="Format doesn't require a mapping">{'name1': 2, 'name2': 3}</warning> #Format doesn't require a mapping
+'%d%d' % <warning descr="Format does not require a mapping">{'name1': 2, 'name2': 3}</warning> #Format doesn't require a mapping
 '%12.2f' % 2.74 #ok
 'Hello world' % () #ok
 'Hello world' % [] #ok

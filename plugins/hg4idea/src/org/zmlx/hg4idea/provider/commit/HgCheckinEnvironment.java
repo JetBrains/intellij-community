@@ -116,10 +116,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
 
   @NotNull
   @Override
-  public List<VcsException> commit(@NotNull List<Change> changes,
+  public List<VcsException> commit(@NotNull List<? extends Change> changes,
                                    @NotNull String commitMessage,
                                    @NotNull CommitContext commitContext,
-                                   @NotNull Set<String> feedback) {
+                                   @NotNull Set<? super String> feedback) {
     List<VcsException> exceptions = new LinkedList<>();
     Map<HgRepository, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
     addRepositoriesWithoutChanges(repositoriesMap, commitContext);
@@ -229,7 +229,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files) {
     final List<HgFile> filesWithRoots = new ArrayList<>();
     for (FilePath filePath : files) {
       VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
@@ -248,7 +248,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull final List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(final @NotNull List<? extends VirtualFile> files) {
     new HgAddCommand(myProject).addWithProgress(files);
     return null;
   }
@@ -259,7 +259,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
   }
 
   @NotNull
-  private Map<HgRepository, Set<HgFile>> getFilesByRepository(List<Change> changes) {
+  private Map<HgRepository, Set<HgFile>> getFilesByRepository(List<? extends Change> changes) {
     Map<HgRepository, Set<HgFile>> result = new HashMap<>();
     for (Change change : changes) {
       ContentRevision afterRevision = change.getAfterRevision();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.Facet;
@@ -8,7 +8,8 @@ import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -17,11 +18,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfiguration> {
+@Service
+public final class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfiguration> {
   public static final FacetTypeId<InvalidFacet> TYPE_ID = new FacetTypeId<>("invalid");
 
   public static InvalidFacetType getInstance() {
-    return ServiceManager.getService(InvalidFacetType.class);
+    return ApplicationManager.getApplication().getService(InvalidFacetType.class);
   }
 
   public InvalidFacetType() {

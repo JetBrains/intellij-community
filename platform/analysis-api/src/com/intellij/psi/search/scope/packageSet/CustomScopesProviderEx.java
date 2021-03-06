@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.analysis.AnalysisBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +19,9 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
   }
 
   @Nullable
-  public static NamedScope findPredefinedScope(@NotNull String name, @NotNull List<? extends NamedScope> predefinedScopes) {
+  public static NamedScope findPredefinedScope(@NotNull String scopeId, @NotNull List<? extends NamedScope> predefinedScopes) {
     for (NamedScope scope : predefinedScopes) {
-      if (name.equals(scope.getName())) return scope;
+      if (scopeId.equals(scope.getScopeId())) return scope;
     }
     return null;
   }
@@ -48,9 +50,9 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     @NotNull
     private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     @NotNull
-    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
+    private static final NamedScope ALL = new NamedScope("All", () -> AnalysisBundle.message("all.scope.name"), AllIcons.Ide.LocalScope, new AbstractPackageSet(TEXT, 0) {
       @Override
-      public boolean contains(@NotNull final VirtualFile file, NamedScopesHolder scopesHolder) {
+      public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         return true;
       }
     });

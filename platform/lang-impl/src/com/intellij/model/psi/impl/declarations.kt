@@ -1,18 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Declarations")
 
 package com.intellij.model.psi.impl
 
-import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolDeclarationProvider
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.util.elementsAroundOffsetUp
-import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.TestOnly
 
 /**
  * @return collection of declarations found around the given [offset][offsetInFile] in [file][this]
@@ -25,27 +25,40 @@ fun PsiFile.allDeclarationsAround(offsetInFile: Int): Collection<PsiSymbolDeclar
       return declarations
     }
   }
-
-  // fall back
-  for ((leaf, _) in leavesAroundOffset(offsetInFile)) {
-    val namedElement: PsiElement? = TargetElementUtil.getNamedElement(leaf)
-    if (namedElement != null) {
-      val declaration = PsiElement2Declaration.createFromDeclaredPsiElement(namedElement, leaf)
-      return listOf(declaration)
-    }
-  }
   return emptyList()
 }
 
-private val declarationProviderEP = ExtensionPointName.create<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
+fun hasDeclarationsInElement(element: PsiElement, offsetInElement: Int): Boolean {
+  return declarationsInElement(element, offsetInElement).isNotEmpty()
+}
+
+private val declarationProviderEP = ExtensionPointName<PsiSymbolDeclarationProvider>("com.intellij.psi.declarationProvider")
 
 private fun declarationsInElement(element: PsiElement, offsetInElement: Int): Collection<PsiSymbolDeclaration> {
   val result = SmartList<PsiSymbolDeclaration>()
-  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.extensions) {
+  result.addAll(element.ownDeclarations)
+  for (extension: PsiSymbolDeclarationProvider in declarationProviderEP.iterable) {
     ProgressManager.checkCanceled()
-    extension.getDeclarations(element, offsetInElement).filterTo(result) {
-      element === it.declaringElement && offsetInElement in it.declarationRange
-    }
+    result.addAll(extension.getDeclarations(element, offsetInElement))
   }
-  return result
+  return result.filterTo(SmartList()) {
+    element === it.declaringElement && (offsetInElement < 0 || it.rangeInDeclaringElement.containsOffset(offsetInElement))
+  }
+}
+
+@TestOnly
+fun PsiFile.allDeclarations(): Collection<PsiSymbolDeclaration> {
+  val declarations = ArrayList<PsiSymbolDeclaration>()
+  accept(DeclarationCollectingVisitor(declarations))
+  return declarations
+}
+
+private class DeclarationCollectingVisitor(
+  private val declarations: MutableList<PsiSymbolDeclaration>
+) : PsiRecursiveElementWalkingVisitor(true) {
+
+  override fun visitElement(element: PsiElement) {
+    super.visitElement(element)
+    declarations.addAll(declarationsInElement(element, -1))
+  }
 }

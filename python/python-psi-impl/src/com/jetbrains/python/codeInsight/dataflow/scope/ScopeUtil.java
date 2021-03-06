@@ -37,7 +37,7 @@ import java.util.List;
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
 import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
 
-public class ScopeUtil {
+public final class ScopeUtil {
   private ScopeUtil() {
   }
 
@@ -78,6 +78,10 @@ public class ScopeUtil {
   public static ScopeOwner getScopeOwner(@Nullable final PsiElement element) {
     if (element == null) {
       return null;
+    }
+    if (element instanceof PyExpressionCodeFragment) {
+      final PsiElement context = element.getContext();
+      return context instanceof ScopeOwner ? (ScopeOwner)context : getScopeOwner(context);
     }
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();

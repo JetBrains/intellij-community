@@ -1,18 +1,5 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -32,13 +19,13 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PsiNavigateUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
 class RegistryPropertiesAnnotator : Annotator {
-
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element !is PropertyKeyImpl) return
 
@@ -53,16 +40,18 @@ class RegistryPropertiesAnnotator : Annotator {
     }
 
     val groupName = propertyName.substringBefore('.').toLowerCase()
+    @Suppress("HardCodedStringLiteral")
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
         propertyName.startsWith("editor.config.")) {
-      holder.newAnnotation(HighlightSeverity.ERROR, "Plugin specific keys should be registered via 'com.intellij.registryKey' EP")
+      holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
         .withFix(ShowEPDeclarationIntention(propertyName)).create()
     }
 
     val propertiesFile = file as PropertiesFile
     val descriptionProperty = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)
     if (descriptionProperty == null) {
-      holder.newAnnotation(HighlightSeverity.WARNING, "Key '$propertyName' does not have description key")
+      holder.newAnnotation(HighlightSeverity.WARNING,
+                           DevKitBundle.message("registry.properties.annotator.key.no.description.key", propertyName))
         .withFix(AddDescriptionKeyIntention(propertyName)).create()
     }
   }
@@ -70,17 +59,17 @@ class RegistryPropertiesAnnotator : Annotator {
   private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction {
     override fun startInWriteAction(): Boolean = false
 
-    override fun getFamilyName(): String = "Show EP declaration"
+    override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.show.ep.family.name")
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
 
-    override fun getText(): String = "Show EP declaration for '${propertyName}"
+    override fun getText(): String = DevKitBundle.message("registry.properties.annotator.show.ep.name", propertyName)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
       val propertiesFile = file as PropertiesFile
       val defaultValue = propertiesFile.findPropertyByKey(propertyName)!!.value
       val description = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)?.value
-      var restartRequiredText = ""
+      @NonNls var restartRequiredText = ""
       if (propertiesFile.findPropertyByKey(propertyName + RESTART_REQUIRED_SUFFIX) != null) {
         restartRequiredText = "restartRequired=\"true\""
       }
@@ -89,7 +78,9 @@ class RegistryPropertiesAnnotator : Annotator {
         <registryKey key="${propertyName}" defaultValue="${defaultValue}" ${restartRequiredText}
                      description="${description}"/>
       """.trimIndent()
-      Messages.showMultilineInputDialog(project, "Copy this declaration into your plugin descriptor XML", "EP declaration",
+      Messages.showMultilineInputDialog(project,
+                                        DevKitBundle.message("registry.properties.annotator.show.ep.message"),
+                                        DevKitBundle.message("registry.properties.annotator.show.ep.title"),
                                         epText, null, null)
     }
   }
@@ -97,13 +88,14 @@ class RegistryPropertiesAnnotator : Annotator {
   private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction {
 
     @Nls
-    override fun getText(): String = "Add description key for '$myPropertyName'"
+    override fun getText(): String = DevKitBundle.message("registry.properties.annotator.add.description.text", myPropertyName)
 
     @Nls
-    override fun getFamilyName(): String = "Add description key"
+    override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.add.description.family.name")
 
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = true
 
+    @Suppress("HardCodedStringLiteral")
     @Throws(IncorrectOperationException::class)
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
       val propertiesFile = file as PropertiesFile
@@ -120,6 +112,7 @@ class RegistryPropertiesAnnotator : Annotator {
 
   companion object {
 
+    @NonNls
     private val PLUGIN_GROUP_NAMES = setOf(
       "appcode", "cidr", "clion",
       "cvs", "git", "github", "svn", "hg4idea", "tfs",

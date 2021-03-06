@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -17,8 +17,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
@@ -28,6 +28,7 @@ import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -74,7 +75,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
   }
 
   public void readClasspath(@NotNull ModifiableRootModel model, @NotNull Element classpathElement) throws IOException, ConversionException {
-    Set<String> sink = new THashSet<>();
+    Set<String> sink = new HashSet<>();
     readClasspath(model, sink, sink, sink, null, classpathElement);
   }
 
@@ -91,7 +92,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     }
     int idx = 0;
     EclipseModuleManagerImpl eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
-    Set<String> libs = new THashSet<>();
+    Set<String> libs = new HashSet<>();
     for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, unknownLibraries, unknownJdks, refsToModules, testPattern, o, idx++,
@@ -220,7 +221,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     setOutputUrl(rootModel, path);
   }
 
-  public static void setOutputUrl(@NotNull ModifiableRootModel rootModel, @NotNull String path) {
+  public static void setOutputUrl(@NotNull ModifiableRootModel rootModel, @NotNull @NonNls String path) {
     CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setCompilerOutputPath(pathToUrl(path));
     compilerModuleExtension.inheritCompilerOutputPath(false);
@@ -270,7 +271,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     return lib;
   }
 
-  static String getJunitClsUrl(final boolean version4) {
+  public static String getJunitClsUrl(final boolean version4) {
     String url = version4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
     final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(pathToUrl(url));
     if (localFile != null) {

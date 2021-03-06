@@ -1,20 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -112,7 +113,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public final void addCustomUpdater(@NotNull AnActionButtonUpdater updater) {
     if (myUpdaters == null) {
-      myUpdaters = new SmartHashSet<>();
+      myUpdaters = new HashSet<>();
     }
     myUpdaters.add(updater);
   }
@@ -224,7 +225,24 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  public static class AnActionEventWrapper extends AnActionEvent {
+  @SuppressWarnings("ComponentNotRegistered")
+  public static class GroupPopupWrapper extends AnActionButtonWrapper {
+    public GroupPopupWrapper(@NotNull ActionGroup group) {
+      super(group.getTemplatePresentation(), group);
+      setShortcut(group.getShortcutSet());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      RelativePoint relativePoint = getPreferredPopupPoint();
+      if (relativePoint != null) {
+        JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
+          e.getPlace(), (ActionGroup)getDelegate()).getComponent());
+      }
+    }
+  }
+
+  public static final class AnActionEventWrapper extends AnActionEvent {
     private final AnActionButton myPeer;
 
     private AnActionEventWrapper(AnActionEvent e, AnActionButton peer) {

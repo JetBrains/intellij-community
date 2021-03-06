@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -18,11 +19,18 @@ import java.util.concurrent.ConcurrentMap;
 public class WeakInterner<T> extends Interner<T> {
   private final ConcurrentMap<T, T> myMap;
 
+  /**
+   * @deprecated Use {@link Interner#createWeakInterner()}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public WeakInterner() {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   }
+
   public WeakInterner(@NotNull TObjectHashingStrategy<? super T> strategy) {
-    myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap(strategy);
+    myMap = new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
+                                                    ContainerUtil.createHashingStrategy(strategy));
   }
 
   @Override

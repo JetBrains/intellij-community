@@ -16,10 +16,10 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
     final ScopeChooserConfigurable.ScopeChooserConfigurableState state = new ScopeChooserConfigurable.ScopeChooserConfigurableState();
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet( "java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
     manager.addScope(utilScope);
-    state.myOrder.add(utilScope.getName());
+    state.myOrder.add(utilScope.getScopeId());
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("*..*", PatternPackageSet.SCOPE_ANY, null));
     manager.addScope(xScope);
-    state.myOrder.add(xScope.getName());
+    state.myOrder.add(xScope.getScopeId());
     try {
       ScopeChooserConfigurable configurable = new ScopeChooserConfigurable(getProject());
       MasterDetailsStateService.getInstance(getProject()).setComponentState(ScopeChooserConfigurable.SCOPE_CHOOSER_CONFIGURABLE_UI_KEY, state);
@@ -27,6 +27,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
       assertFalse(configurable.isModified());
       configurable.apply();
       assertFalse(configurable.isModified());
+      configurable.disposeUIResources();
     }
     finally {
       manager.removeAllSets();
@@ -45,6 +46,7 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
         assertFalse("Configurable " + configurable + " is modified immediately after creation", configurable.isModified());
         assertTrue(!configurable.isModified());
         configurable.apply();
+        configurable.disposeUIResources();
       }
     }
     finally {

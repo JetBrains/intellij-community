@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -23,8 +24,10 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 class AppUIExecutorTest : LightPlatformTestCase() {
-  override fun invokeTestRunnable(runnable: Runnable) {
-    SwingUtilities.invokeLater(runnable)
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+    SwingUtilities.invokeLater {
+      testRunnable.run()
+    }
     UIUtil.dispatchAllInvocationEvents()
   }
 
@@ -351,15 +354,16 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       job.join()
       queue.add("end")
 
-      assertOrderedEquals(queue,
-                          "start",
-                          "coroutine start",
-                          "before yield",
-                          "disposing",
-                          "disposable.beforeTreeDispose()",
-                          "coroutine yield caught JobCancellationException",
-                          "disposable.dispose()",
-                          "end")
+      assertOrderedEquals(queue,(
+                          "start\n" +
+                          "coroutine start\n" +
+                          "before yield\n" +
+                          "disposing\n" +
+                          "disposable.beforeTreeDispose()\n" +
+                          "refuse to run already disposed\n" +
+                          "disposable.dispose()\n" +
+                          "coroutine yield caught JobCancellationException\n" +
+                          "end").split("\n"))
     }.joinNonBlocking()
   }
 
@@ -372,7 +376,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.beforeTreeDispose()",
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
-      "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
       "[context: !outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, _ ->
@@ -393,7 +396,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "constraintDisposable.beforeTreeDispose()",
       "constraintDisposable.dispose()",
       "refuse to run already disposed",
-      "[context: !outer + inner] after receive disposed",  // channel.receive() is atomic
       "[context: !outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, constraintDisposable, anotherDisposable ->
@@ -411,7 +413,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       "disposing anotherDisposable",
       "anotherDisposable.beforeTreeDispose()",
       "anotherDisposable.dispose()",
-      "[context: outer + inner] after receive disposed",
       "[context: outer + inner] coroutine yield caught JobCancellationException",
       "[context: !outer + !inner] end")
     ) { queue, _, anotherDisposable ->

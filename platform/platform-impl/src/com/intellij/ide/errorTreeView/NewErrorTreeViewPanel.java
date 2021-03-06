@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -33,6 +34,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MutableErrorTreeView;
@@ -48,15 +50,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
   protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
-  private volatile String myProgressText = "";
+  private volatile @NlsContexts.ProgressText String myProgressText = "";
   private volatile float myFraction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
@@ -142,15 +142,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     add(myMessagePanel, BorderLayout.CENTER);
 
-    myTree.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          navigateToSource(false);
-        }
-      }
-    });
-
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
@@ -159,6 +150,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     });
 
     EditSourceOnDoubleClickHandler.install(myTree);
+    EditSourceOnEnterKeyHandler.install(myTree);
   }
 
   protected ErrorViewStructure createErrorViewStructure(Project project, boolean canHideWarnings) {
@@ -480,13 +472,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  public void setProgress(final String s, float fraction) {
+  public void setProgress(final @NlsContexts.ProgressText String s, float fraction) {
     myProgressText = s;
     myFraction = fraction;
     updateProgress();
   }
 
-  public void setProgressText(String s) {
+  public void setProgressText(@NlsContexts.ProgressText String s) {
     myProgressText = s;
     updateProgress();
   }

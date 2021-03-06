@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +52,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", LibraryUtil.getPresentableName(myLibrary));
+    return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", myLibrary.getPresentableName());
   }
 
   @Override

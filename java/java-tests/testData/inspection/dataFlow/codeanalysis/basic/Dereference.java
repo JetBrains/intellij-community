@@ -1,4 +1,4 @@
-import codeanalysis.experimental.annotations.*;
+import org.jspecify.annotations.*;
 
 class X {
   int f;

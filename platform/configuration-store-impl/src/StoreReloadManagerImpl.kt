@@ -3,7 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -32,9 +33,11 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -43,12 +46,8 @@ import kotlin.collections.LinkedHashSet
 private val CHANGED_FILES_KEY = Key<LinkedHashMap<ComponentStoreImpl, LinkedHashSet<StateStorage>>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key<LinkedHashMap<SchemeChangeApplicator, LinkedHashSet<SchemeChangeEvent>>>("CHANGED_SCHEMES_KEY")
 
-/**
- * This service is temporary allowed to be overridden to support reloading of new project model entities. It should be removed after merging
- * new project model modules to community project.
- */
 @ApiStatus.Internal
-open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
+internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
@@ -58,7 +57,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       return@Runnable
     }
 
-    val projectsToReload = ObjectOpenHashSet<Project>()
+    val projectsToReload = HashSet<Project>()
     processOpenedProjects { project ->
       val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
@@ -67,7 +66,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
         return@processOpenedProjects
       }
 
-      runBatchUpdate(project.messageBus) {
+      runBatchUpdate(project) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
           for ((tracker, files) in changedSchemes) {
@@ -99,10 +98,13 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     }
   }, delay = 300, parentDisposable = this)
 
-  protected open fun reloadAdditionalConfigurations(project: Project) {
+  private fun reloadAdditionalConfigurations(project: Project) {
+    JpsProjectModelSynchronizer.getInstance(project)?.reloadProjectEntities()
   }
 
-  protected open fun mayHaveAdditionalConfigurations(project: Project): Boolean = false
+  private fun mayHaveAdditionalConfigurations(project: Project): Boolean {
+    return JpsProjectModelSynchronizer.getInstance(project)?.needToReloadProjectEntities() ?: false
+  }
 
   internal class MyVirtualFileManagerListener : VirtualFileManagerListener {
     private val manager = StoreReloadManager.getInstance()
@@ -124,7 +126,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override fun saveChangedProjectFile(file: VirtualFile, project: Project) {
     val storageManager = (project.stateStore as ComponentStoreImpl).storageManager as? StateStorageManagerImpl ?: return
-    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.path))).firstOrNull()?.let {
+    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacro(file.path))).firstOrNull()?.let {
       // if empty, so, storage is not yet loaded, so, we don't have to reload
       storageFilesChanged(mapOf(project to listOf(it)))
     }
@@ -159,7 +161,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override suspend fun reloadChangedStorageFiles() {
     val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
-    withContext(storeEdtCoroutineDispatcher) {
+    withContext(AppUIExecutor.onUiThread().expireWith(this).coroutineDispatchingContext()) {
       unfinishedRequest.run()
       // just to be sure
       changedFilesAlarm.getUnfinishedRequest()?.run()
@@ -196,7 +198,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       else {
         val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, linkedMapOf())
         synchronized(changes) {
-          changes.getOrPut(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+          changes.computeIfAbsent(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
         }
       }
 
@@ -217,7 +219,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
     val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, linkedMapOf())
     synchronized(changes) {
-      changes.getOrPut(schemeFileTracker) { LinkedHashSet() }.addAll(events)
+      changes.computeIfAbsent(schemeFileTracker) { LinkedHashSet() }.addAll(events)
     }
 
     scheduleProcessingChangedFiles()
@@ -294,31 +296,48 @@ internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentSto
 
 // used in settings repository plugin
 fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>?, isApp: Boolean): Boolean {
-  val message = StringBuilder()
-  val storeName = if (store is IProjectStore) "Project '${store.projectName}'" else "Application"
-  message.append(storeName).append(' ')
-  message.append("components were changed externally and cannot be reloaded:\n\n")
-  var count = 0
-  for (component in notReloadableComponents) {
-    if (count == 10) {
-      message.append('\n').append("and ").append(notReloadableComponents.size - count).append(" more").append('\n')
-    }
-    else {
-      message.append(component).append('\n')
-      count++
-    }
-  }
-
-  message.append("\nWould you like to ")
-  if (isApp) {
-    message.append(if (ApplicationManager.getApplication().isRestartCapable) "restart" else "shutdown").append(' ')
-    message.append(ApplicationNamesInfo.getInstance().productName).append('?')
+  val firstMessage = if (store is IProjectStore) {
+    ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.projectName)
   }
   else {
-    message.append("reload project?")
+    ConfigurationStoreBundle.message("configuration.application.files.changed.message.start")
   }
 
-  if (Messages.showYesNoDialog(message.toString(), "$storeName Files Changed", Messages.getQuestionIcon()) != Messages.YES) {
+  val nonReloadableComponentsJoined = notReloadableComponents.take(10).joinToString("\n").let {
+    if (notReloadableComponents.size > 10) {
+      ConfigurationStoreBundle.message("configuration.project.components.changed.and.several.more", it, notReloadableComponents.size - 10)
+    }
+    else {
+      it
+    }
+  }
+
+  val question = if (isApp) {
+    val productName = ApplicationNamesInfo.getInstance().productName
+    if (ApplicationManager.getApplication().isRestartCapable) {
+      ConfigurationStoreBundle.message("configuration.project.files.changed.restart.proposal", productName)
+    }
+    else {
+      ConfigurationStoreBundle.message("configuration.project.files.changed.shutdown.proposal", productName)
+    }
+  }
+  else {
+    ConfigurationStoreBundle.message("configuration.project.files.changed.reload.project.proposal")
+  }
+
+  @Suppress("HardCodedStringLiteral")
+  val message = """
+    $firstMessage
+
+    $nonReloadableComponentsJoined
+    $question
+  """.trimIndent()
+
+  val title = if (store is IProjectStore)
+    ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.projectName)
+    else ConfigurationStoreBundle.message("configuration.application.files.changed.restart.prompt.title")
+
+  if (Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) != Messages.YES) {
     return false
   }
 
@@ -359,11 +378,11 @@ private fun doReloadProject(project: Project) {
     }
 
     // must compute here, before project dispose
-    val presentableUrl = project1.presentableUrl
+    val presentableUrl = project1.presentableUrl!!
     if (!ProjectManagerEx.getInstanceEx().closeAndDispose(project1)) {
       return@submit
     }
 
-    ProjectUtil.openProject(Objects.requireNonNull<String>(presentableUrl), null, true)
+    ProjectManagerEx.getInstanceEx().openProject(Paths.get(presentableUrl), OpenProjectTask())
   }
 }

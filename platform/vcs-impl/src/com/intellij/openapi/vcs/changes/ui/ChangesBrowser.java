@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.List;
  * @deprecated Use {@link SimpleChangesBrowser}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
 public class ChangesBrowser extends OldChangesBrowserBase {
 
   public ChangesBrowser(@NotNull Project project,

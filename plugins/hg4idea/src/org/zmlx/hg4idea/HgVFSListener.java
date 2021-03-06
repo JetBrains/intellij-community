@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,11 +31,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.map2List;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.RENAME_FAILED;
 
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
  */
-public class HgVFSListener extends VcsVFSListener {
+public final class HgVFSListener extends VcsVFSListener {
 
   private final VcsDirtyScopeManager dirtyScopeManager;
   private static final Logger LOG = Logger.getInstance(HgVFSListener.class);
@@ -218,7 +218,7 @@ public class HgVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected VcsDeleteType needConfirmDeletion(@NotNull final VirtualFile file) {
-    return ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles().contains(file)
+    return ChangeListManager.getInstance(myProject).isUnversioned(file)
            ? VcsDeleteType.IGNORE
            : VcsDeleteType.CONFIRM;
   }
@@ -278,7 +278,7 @@ public class HgVFSListener extends VcsVFSListener {
     Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots = HgUtil.groupFilePathsByHgRoots(myProject, filePaths);
     return groupFilePathsByHgRoots.entrySet().stream()
       .map(entry -> getIgnoreRepoHolder(entry.getKey()).removeIgnoredFiles(entry.getValue()))
-      .flatMap(List::stream).collect(Collectors.toList());
+      .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   /**
@@ -318,10 +318,10 @@ public class HgVFSListener extends VcsVFSListener {
   @Override
   protected void performMoveRename(@NotNull List<MovedFileInfo> movedFiles) {
     final List<MovedFileInfo> failedToMove = new ArrayList<>();
-    (new VcsBackgroundTask<MovedFileInfo>(myProject,
-                                          HgBundle.message("hg4idea.move.progress"),
-                                          VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
-                                          movedFiles) {
+    (new VcsBackgroundTask<>(myProject,
+                             HgBundle.message("hg4idea.move.progress"),
+                             VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
+                             movedFiles) {
       @Override
       public void onFinished() {
         if (!failedToMove.isEmpty()) {
@@ -332,14 +332,18 @@ public class HgVFSListener extends VcsVFSListener {
       private void handleRenameError() {
         NotificationAction viewFilesAction =
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files"), () -> {
-          DialogWrapper dialog =
-            new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
-          dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
-          dialog.show();
-        });
-        NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
+            DialogWrapper dialog =
+              new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
+            dialog.setTitle(HgBundle.message("hg4idea.rename.error.title"));
+            dialog.show();
+          });
+        NotificationAction retryAction =
+          NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
-          .notifyError(HgBundle.message("hg4idea.rename.error"), HgBundle.message("hg4idea.rename.error.msg"), viewFilesAction, retryAction);
+          .notifyError(RENAME_FAILED,
+                       HgBundle.message("hg4idea.rename.error"),
+                       HgBundle.message("hg4idea.rename.error.msg"),
+                       viewFilesAction, retryAction);
       }
 
       @Override

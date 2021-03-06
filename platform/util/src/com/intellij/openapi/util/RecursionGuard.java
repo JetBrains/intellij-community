@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +39,22 @@ public abstract class RecursionGuard<Key> {
    * @return the result of the computation or {@code null} if we're entering a computation with this key on this thread recursively,
    */
   @Nullable
-  public abstract <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation);
+  public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
+    return computePreventingRecursion(key, memoize, computation::compute);
+  }
+
+  /**
+   * Same as {@link #doPreventingRecursion}, but with an ability to throw a checked exception.
+   */
+  @Nullable
+  public abstract <T, E extends Throwable> T computePreventingRecursion(@NotNull Key key,
+                                                                        boolean memoize,
+                                                                        @NotNull ThrowableComputable<T, E> computation) throws E;
 
   /** @deprecated Use {@link RecursionManager#markStack()} instead */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public StackStamp markStack() {
     return RecursionManager.markStack();
   }

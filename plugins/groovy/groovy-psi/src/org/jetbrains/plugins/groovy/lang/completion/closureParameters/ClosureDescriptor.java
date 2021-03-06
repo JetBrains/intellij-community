@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion.closureParameters;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -24,12 +26,16 @@ public class ClosureDescriptor {
 
   private final List<ClosureParameterInfo> myParams = new ArrayList<>();
   private Map myMethod;
+  @NonNls private static final String KEY_NAME = "name";
+  @NonNls private static final String KEY_PARAMS = "params";
+  @NonNls private static final String KEY_CONSTRUCTOR = "constructor";
+
 
   public List<ClosureParameterInfo> getParameters() {
     return Collections.unmodifiableList(myParams);
   }
 
-  public void addParameter(@Nullable String type, String name) {
+  public void addParameter(@Nullable @NlsSafe String type, @NlsSafe String name) {
     myParams.add(new ClosureParameterInfo(type, name));
   }
 
@@ -38,11 +44,11 @@ public class ClosureDescriptor {
   }
 
   public boolean isMethodApplicable(PsiMethod method, GroovyPsiElement place) {
-    String name = String.valueOf(myMethod.get("name"));
+    String name = String.valueOf(myMethod.get(KEY_NAME));
     if (name == null || !name.equals(method.getName())) return false;
 
     List<PsiType> types = new ArrayList<>();
-    final Object params = myMethod.get("params");
+    final Object params = myMethod.get(KEY_PARAMS);
     if (params instanceof Map) {
       boolean first = true;
       for (Object paramName : ((Map)params).keySet()) {
@@ -59,7 +65,7 @@ public class ClosureDescriptor {
         types.add(convertToPsiType(String.valueOf(param), typeParameterList != null ? typeParameterList : method));
       }
     }
-    final boolean isConstructor = Boolean.TRUE.equals(myMethod.get("constructor"));
+    final boolean isConstructor = Boolean.TRUE.equals(myMethod.get(KEY_CONSTRUCTOR));
     final MethodSignature signature = MethodSignatureUtil
       .createMethodSignature(name, types.toArray(PsiType.createArray(types.size())), method.getTypeParameters(), PsiSubstitutor.EMPTY, isConstructor);
     final GrSignature closureSignature = GrClosureSignatureUtil.createSignature(signature);
@@ -71,7 +77,7 @@ public class ClosureDescriptor {
     return GrClosureSignatureUtil.isSignatureApplicable(Collections.singletonList(closureSignature), typeArray, place);
   }
 
-  private static PsiType convertToPsiType(String type, @NotNull PsiElement place) {
+  private static PsiType convertToPsiType(@NlsSafe String type, @NotNull PsiElement place) {
     return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 }

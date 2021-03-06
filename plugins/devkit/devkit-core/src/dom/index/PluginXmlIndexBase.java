@@ -1,18 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
 
@@ -26,13 +33,13 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
   @NotNull
   @Override
   public DataIndexer<K, V, FileContent> getIndexer() {
-    return new DataIndexer<K, V, FileContent>() {
+    return new DataIndexer<>() {
       @NotNull
       @Override
       public Map<K, V> map(@NotNull FileContent inputData) {
@@ -42,6 +49,14 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
         return performIndexing(plugin);
       }
     };
+  }
+
+  // skip any xi:include
+  protected static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, @NonNls String tagName) {
+    AbstractCollectionChildDescription collectionChildDescription =
+      (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
+    DomInvocationHandler handler = Objects.requireNonNull(DomManagerImpl.getDomInvocationHandler(parent));
+    return handler.getCollectionChildren(collectionChildDescription, false);
   }
 
   @Nullable
@@ -70,7 +85,7 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
         continue;
       }
 
-      return CharArrayUtil.regionMatches(text, idx, "<idea-plugin");
+      return CharArrayUtil.regionMatches(text, idx, "<idea-plugin"); //NON-NLS
     }
   }
 }

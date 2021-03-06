@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -146,13 +145,13 @@ final class TerminalBlock {
     List<PsiPatternVariable> vars = JavaPsiPatternUtil.getExposedPatternVariables(condition);
     if (!vars.isEmpty()) {
       List<PsiPatternVariable> used =
-        ContainerUtil.filter(vars, var -> Stream.of(statements).anyMatch(st -> VariableAccessUtils.variableIsUsed(var, st)));
+        ContainerUtil.filter(vars, var -> ContainerUtil.or(statements, st -> VariableAccessUtils.variableIsUsed(var, st)));
       if (used.size() > 1) return null;
       if (!used.isEmpty()) {
         PsiPatternVariable var = used.get(0);
         String text = JavaPsiPatternUtil.getEffectiveInitializerText(var);
         if (text == null) return null;
-        if (Stream.of(statements).anyMatch(st -> VariableAccessUtils.variableIsUsed(myVariable, st))) return null;
+        if (ContainerUtil.or(statements, st -> VariableAccessUtils.variableIsUsed(myVariable, st))) return null;
         PsiExpression mappingExpression = JavaPsiFacade.getElementFactory(condition.getProject()).createExpressionFromText(text, var);
         result = new TerminalBlock(result, new MapOp(mappingExpression, myVariable, var.getType()), var, statements);
       }
@@ -198,7 +197,7 @@ final class TerminalBlock {
                                      myVariable,
                                      lastStatement instanceof PsiReturnStatement || lastStatement instanceof PsiThrowStatement
                                      ? statements
-                                     : Arrays.copyOfRange(statements, 0, statements.length - 1));
+                                     : Arrays.copyOf(statements, statements.length - 1));
           }
         }
       }
@@ -265,7 +264,7 @@ final class TerminalBlock {
         // to support conditions like if(...) continue; break; or if(...) continue; return ...;
         count--;
       }
-      statements = Arrays.copyOfRange(myStatements, 0, count);
+      statements = Arrays.copyOf(myStatements, count);
       tb = new TerminalBlock(myOperations, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
     PsiStatement sourceStatement = getStreamSourceStatement();

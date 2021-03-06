@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
 import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -17,36 +16,34 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.List;
 
-public class RedundantCastInspection extends GenericsInspectionToolBase {
+public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private final LocalQuickFix myQuickFixAction;
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
-  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
+  public boolean IGNORE_SUSPICIOUS_METHOD_CALLS = true;
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
   }
 
   @Override
-  public ProblemDescriptor @Nullable [] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
-    if (redundantCasts.isEmpty()) return null;
-    List<ProblemDescriptor> descriptions = new ArrayList<>(redundantCasts.size());
-    for (PsiTypeCastExpression redundantCast : redundantCasts) {
-      ProblemDescriptor descriptor = createDescription(redundantCast, manager, isOnTheFly);
-      if (descriptor != null) {
-        descriptions.add(descriptor);
-      }
-    }
-    if (descriptions.isEmpty()) return null;
-    return descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
+  @NotNull
   @Override
-  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return getDescriptions(field, manager, isOnTheFly);
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
+    return RedundantCastUtil.createRedundantCastVisitor(typeCast -> {
+      ProblemDescriptor descriptor = createDescription(typeCast, holder.getManager(), isOnTheFly);
+      if (descriptor != null) {
+        holder.registerProblem(descriptor);
+      }
+      return true;
+    });
   }
 
   @Override

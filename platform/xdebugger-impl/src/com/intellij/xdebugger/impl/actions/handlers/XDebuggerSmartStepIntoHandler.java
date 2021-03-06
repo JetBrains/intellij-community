@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -14,22 +14,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.Hint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.components.JBList;
@@ -210,14 +205,13 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
 
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
     for (SmartStepData.VariantInfo info : data.myVariants) {
       TextRange range = info.myVariant.getHighlightRange();
       if (range != null) {
         List<RangeHighlighter> highlighters = new SmartList<>();
-        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes,
-                                                HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters, null);
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), DebuggerColors.SMART_STEP_INTO_TARGET,
+                                                HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters);
         RangeHighlighter highlighter = highlighters.get(0);
         hyperlinkSupport.createHyperlink(highlighter, project -> data.stepInto(info));
         data.myHighlighters.add(highlighter);
@@ -275,17 +269,31 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     int counter = propertiesComponent.getInt(COUNTER_PROPERTY, 0);
     if (counter < 3) {
-      LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(XDebuggerBundle.message("message.smart.step")));
-      JComponent component = HintManagerImpl.getExternalComponent(editor);
-      Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), data.myCurrentVariant.myStartPoint, component);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                                     HintManager.HIDE_BY_SCROLLING,
-                                                       0, false, HintManager.ABOVE);
+      Hint hint = showHint(editor, XDebuggerBundle.message("message.smart.step"), data.myCurrentVariant);
+      editor.putUserData(SMART_STEP_HINT_DATA, hint);
       propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
     }
   }
 
+  private static <V extends XSmartStepIntoVariant> Hint showHint(Editor editor,
+                                                                 @NlsContexts.HintText String message,
+                                                                 SmartStepData<V>.VariantInfo myCurrentVariant) {
+    LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
+    JComponent component = HintManagerImpl.getExternalComponent(editor);
+    Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), myCurrentVariant.myStartPoint, component);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
+                                                                                   HintManager.HIDE_BY_SCROLLING,
+                                                     0, false, HintManager.ABOVE);
+    return hint;
+  }
+
+  private static boolean shouldShowElementDescription(Editor editor) {
+    Hint hint = editor.getUserData(SMART_STEP_HINT_DATA);
+    return hint == null || !hint.isVisible();
+  }
+
   static final Key<SmartStepData> SMART_STEP_INPLACE_DATA = Key.create("SMART_STEP_INPLACE_DATA");
+  static final Key<Hint> SMART_STEP_HINT_DATA = Key.create("SMART_STEP_HINT_DATA");
 
   static class SmartStepData<V extends XSmartStepIntoVariant> {
     enum Direction {UP, DOWN, LEFT, RIGHT}
@@ -355,13 +363,17 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_TARGET);
       myCurrentVariant = variant;
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
+
+      String description = variant.myVariant.getDescription();
+      if (description != null && shouldShowElementDescription(myEditor)) {
+        showHint(myEditor, description, variant);
+      }
     }
 
-    private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributes) {
+    private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributesKey) {
       int index = myVariants.indexOf(myCurrentVariant);
       if (index != -1) {
-        ((RangeHighlighterEx)myHighlighters.get(index))
-          .setTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributes));
+        myHighlighters.get(index).setTextAttributesKey(attributesKey);
       }
     }
 
@@ -372,6 +384,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
 
     void clear() {
       myEditor.putUserData(SMART_STEP_INPLACE_DATA, null);
+      myEditor.putUserData(SMART_STEP_HINT_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
       highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE);
     }

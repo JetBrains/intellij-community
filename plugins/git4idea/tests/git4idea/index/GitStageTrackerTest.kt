@@ -37,7 +37,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
 
   fun `test unstaged`() {
     val fileName = "file.txt"
-    Executor.touch(fileName, RandomStringUtils.random(200))
+    Executor.touch(fileName, RandomStringUtils.randomAlphanumeric(200))
     git("add .")
     git("commit -m file")
 
@@ -50,12 +50,11 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.random(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
-      assertTrue(state.statuses.isEmpty())
-      assertTrue(state.unsavedWorkTree.contains(file))
-      assertTrue(state.unsavedIndex.isEmpty())
+      TestCase.assertEquals(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)),
+                            state.statuses.getValue(VcsUtil.getFilePath(file)))
     }
 
     runWithTrackerUpdate("saveDocument") {
@@ -64,14 +63,12 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
   }
 
   fun `test staged`() {
     val fileName = "file.txt"
-    Executor.touch(fileName, RandomStringUtils.random(200))
+    Executor.touch(fileName, RandomStringUtils.randomAlphanumeric(200))
     git("add .")
     git("commit -m file")
 
@@ -85,12 +82,11 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!!}
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.random(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
-      assertTrue(state.statuses.isEmpty())
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.contains(indexFile))
+      TestCase.assertEquals(GitFileStatus('M', ' ', VcsUtil.getFilePath(file)),
+                            state.statuses.getValue(VcsUtil.getFilePath(file)))
     }
 
     runWithTrackerUpdate("saveDocument") {
@@ -99,8 +95,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('M', 'M', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
   }
 
@@ -115,13 +109,11 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!!}
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.random(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
     }
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
 
     runWithTrackerUpdate("saveDocument") {
@@ -130,8 +122,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     trackerState().let { state ->
       TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
                             state.statuses.getValue(VcsUtil.getFilePath(file)))
-      assertTrue(state.unsavedWorkTree.isEmpty())
-      assertTrue(state.unsavedIndex.isEmpty())
     }
   }
 

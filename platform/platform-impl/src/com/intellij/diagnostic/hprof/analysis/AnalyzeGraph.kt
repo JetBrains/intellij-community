@@ -15,25 +15,27 @@
  */
 package com.intellij.diagnostic.hprof.analysis
 
+import com.google.common.base.Stopwatch
+import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
-import com.intellij.diagnostic.hprof.util.IntList
-import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
-import com.intellij.diagnostic.hprof.visitors.HistogramVisitor
-import com.google.common.base.Stopwatch
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsCount
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toPaddedShortStringAsSize
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsSize
+import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
+import com.intellij.diagnostic.hprof.visitors.HistogramVisitor
 import com.intellij.openapi.progress.ProgressIndicator
-import gnu.trove.TIntArrayList
-import gnu.trove.TIntHashSet
-import gnu.trove.TIntIntHashMap
-import gnu.trove.TLongArrayList
+import it.unimi.dsi.fastutil.ints.*
+import it.unimi.dsi.fastutil.longs.LongArrayList
 
-class AnalyzeGraph(private val analysisContext: AnalysisContext) {
+fun analyzeGraph(analysisContext: AnalysisContext, progress: ProgressIndicator): String {
+  return AnalyzeGraph(analysisContext).analyze(progress)
+}
+
+open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
 
   private var strongRefHistogram: Histogram? = null
   private var softWeakRefHistogram: Histogram? = null
@@ -48,9 +50,9 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
     return parentList[objectId.toInt()].toLong()
   }
 
-  private val nominatedInstances = HashMap<ClassDefinition, TIntHashSet>()
+  private val nominatedInstances = HashMap<ClassDefinition, IntSet>()
 
-  fun analyze(progress: ProgressIndicator): String {
+  open fun analyze(progress: ProgressIndicator): String {
     val sb = StringBuilder()
 
     val includePerClassSection = analysisContext.config.perClassOptions.classNames.isNotEmpty()
@@ -66,24 +68,24 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
     // Histogram section
     val histogramOptions = analysisContext.config.histogramOptions
     if (histogramOptions.includeByCount || histogramOptions.includeBySize) {
-      sb.appendln(sectionHeader("Histogram"))
+      sb.appendLine(sectionHeader("Histogram"))
       sb.append(prepareHistogramSection())
     }
 
     // Per-class section
     if (includePerClassSection) {
       val perClassProgress = PartialProgressIndicator(progress, 0.5, 0.5)
-      sb.appendln(sectionHeader("Instances of each nominated class"))
+      sb.appendLine(sectionHeader("Instances of each nominated class"))
       sb.append(preparePerClassSection(perClassProgress))
     }
 
     // Disposer sections
     if (config.disposerOptions.includeDisposerTree) {
-      sb.appendln(sectionHeader("Disposer tree"))
+      sb.appendLine(sectionHeader("Disposer tree"))
       sb.append(analyzeDisposer.prepareDisposerTreeSection())
     }
     if (config.disposerOptions.includeDisposedObjectsSummary || config.disposerOptions.includeDisposedObjectsDetails) {
-      sb.appendln(sectionHeader("Disposed objects"))
+      sb.appendLine(sectionHeader("Disposed objects"))
       sb.append(analyzeDisposer.prepareDisposedObjectsSection())
     }
 
@@ -96,14 +98,14 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
     val perClassOptions = analysisContext.config.perClassOptions
 
     if (perClassOptions.includeClassList) {
-      sb.appendln("Nominated classes:")
+      sb.appendLine("Nominated classes:")
       perClassOptions.classNames.forEach { name ->
         val (classDefinition, totalInstances, totalBytes) =
           histogram.entries.find { entry -> entry.classDefinition.name == name } ?: return@forEach
         val prettyName = classDefinition.prettyName
-        sb.appendln(" --> [${toShortStringAsCount(totalInstances)}/${toShortStringAsSize(totalBytes)}] " + prettyName)
+        sb.appendLine(" --> [${toShortStringAsCount(totalInstances)}/${toShortStringAsSize(totalBytes)}] " + prettyName)
       }
-      sb.appendln()
+      sb.appendLine()
     }
 
     val nav = analysisContext.navigator
@@ -114,20 +116,19 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
       val classDefinition = nav.classStore[className]
       val set = nominatedInstances[classDefinition]!!
       progress.fraction = counter.toDouble() / nominatedInstances.size
-      progress.text2 = "Processing: ${set.size()} ${classDefinition.prettyName}"
+      progress.text2 = DiagnosticBundle.message("hprof.analysis.progress", set.size, classDefinition.prettyName)
       stopwatch.reset().start()
-      sb.appendln("CLASS: ${classDefinition.prettyName} (${set.size()} objects)")
+      sb.appendLine("CLASS: ${classDefinition.prettyName} (${set.size} objects)")
       val referenceRegistry = GCRootPathsTree(analysisContext, perClassOptions.treeDisplayOptions, classDefinition)
       set.forEach { objectId ->
         referenceRegistry.registerObject(objectId)
-        true
       }
       set.clear()
       sb.append(referenceRegistry.printTree())
       if (config.metaInfoOptions.include) {
-        sb.appendln("Report for ${classDefinition.prettyName} created in $stopwatch")
+        sb.appendLine("Report for ${classDefinition.prettyName} created in $stopwatch")
       }
-      sb.appendln()
+      sb.appendLine()
       counter++
     }
     progress.fraction = 1.0
@@ -149,8 +150,7 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
 
     val unreachableObjectsCount = histogram.instanceCount - strongRefHistogram.instanceCount - softWeakRefHistogram.instanceCount
     val unreachableObjectsSize = histogram.bytesCount - strongRefHistogram.bytesCount - softWeakRefHistogram.bytesCount
-    result.appendln("Unreachable objects: ${toPaddedShortStringAsCount(
-      unreachableObjectsCount)}  ${toPaddedShortStringAsSize(unreachableObjectsSize)}")
+    result.appendLine("Unreachable objects: ${toPaddedShortStringAsCount(unreachableObjectsCount)}  ${toPaddedShortStringAsSize(unreachableObjectsSize)}")
 
     return result.toString()
   }
@@ -166,7 +166,7 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
 
   private val config = analysisContext.config
 
-  private fun traverseInstanceGraph(progress: ProgressIndicator): String {
+  protected fun traverseInstanceGraph(progress: ProgressIndicator): String {
     val result = StringBuilder()
 
     val nav = analysisContext.navigator
@@ -180,16 +180,16 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
 
     val nominatedClassNames = config.perClassOptions.classNames
     nominatedClassNames.forEach {
-      nominatedInstances[classStore[it]] = TIntHashSet()
+      nominatedInstances.put(classStore.get(it), IntOpenHashSet())
     }
 
-    progress.text2 = "Collect all object roots"
+    progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.collect.roots")
 
-    var toVisit = TIntArrayList()
-    var toVisit2 = TIntArrayList()
+    var toVisit = IntArrayList()
+    var toVisit2 = IntArrayList()
 
-    val rootsSet = TIntHashSet()
-    val frameRootsSet = TIntHashSet()
+    val rootsSet = IntOpenHashSet()
+    val frameRootsSet = IntOpenHashSet()
 
     // Mark all roots to be visited, set them as their own parents
     while (roots.hasNext()) {
@@ -203,35 +203,37 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
       }
     }
 
-    // Mark all class object as to be visited, set them as their own parents
-    classStore.forEachClass { classDefinition ->
-      addIdToSetIfOrphan(rootsSet, classDefinition.id.toInt())
-      classDefinition.staticFields.forEach { staticField ->
-        addIdToSetIfOrphan(rootsSet, staticField.objectId.toInt())
-      }
-      classDefinition.constantFields.forEach { objectId ->
-        addIdToSetIfOrphan(rootsSet, objectId.toInt())
+    if (analysisContext.config.traverseOptions.includeClassesAsRoots) {
+      // Mark all class object as to be visited, set them as their own parents
+      classStore.forEachClass { classDefinition ->
+        addIdToSetIfOrphan(rootsSet, classDefinition.id.toInt())
+        classDefinition.objectStaticFields.forEach { staticField ->
+          addIdToSetIfOrphan(rootsSet, staticField.value.toInt())
+        }
+        classDefinition.constantFields.forEach { objectId ->
+          addIdToSetIfOrphan(rootsSet, objectId.toInt())
+        }
       }
     }
 
-    toVisit.add(rootsSet.toArray())
+    toVisit.addAll(rootsSet)
     rootsSet.clear()
-    rootsSet.compact()
+    rootsSet.trim()
 
     var leafCounter = 0
-    result.appendln("Roots count: ${toVisit.size()}")
-    result.appendln("Classes count: ${classStore.size()}")
+    result.appendLine("Roots count: ${toVisit.size}")
+    result.appendLine("Classes count: ${classStore.size()}")
 
-    progress.text2 = "Traversing instance graph"
+    progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.traversing.instance.graph")
 
     val strongRefHistogramEntries = HashMap<ClassDefinition, HistogramVisitor.InternalHistogramEntry>()
     val reachableNonStrongHistogramEntries = HashMap<ClassDefinition, HistogramVisitor.InternalHistogramEntry>()
-    val softReferenceIdToParentMap = TIntIntHashMap()
-    val weakReferenceIdToParentMap = TIntIntHashMap()
+    val softReferenceIdToParentMap = Int2IntOpenHashMap()
+    val weakReferenceIdToParentMap = Int2IntOpenHashMap()
 
     var visitedInstancesCount = 0
     val stopwatch = Stopwatch.createStarted()
-    val references = TLongArrayList()
+    val references = LongArrayList()
 
     var visitedCount = 0
     var strongRefVisitedCount = 0
@@ -243,14 +245,14 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
 
     var phase = WalkGraphPhase.StrongReferencesNonLocalVariables // initial state
 
-    val cleanerObjects = TIntArrayList()
+    val cleanerObjects = IntArrayList()
     val sunMiscCleanerClass = classStore.getClassIfExists("sun.misc.Cleaner")
     val finalizerClass = classStore.getClassIfExists("java.lang.ref.Finalizer")
     val onlyStrongReferences = config.traverseOptions.onlyStrongReferences
 
     while (!toVisit.isEmpty) {
-      for (i in 0 until toVisit.size()) {
-        val id = toVisit[i]
+      for (i in 0 until toVisit.size) {
+        val id = toVisit.getInt(i)
         nav.goTo(id.toLong(), ObjectNavigator.ReferenceResolution.ALL_REFERENCES)
         val currentObjectClass = nav.getClass()
 
@@ -286,8 +288,8 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
           references[nav.getSoftWeakReferenceIndex()] = 0L
         }
 
-        for (j in 0 until references.size()) {
-          val referenceId = references[j].toInt()
+        for (j in 0 until references.size) {
+          val referenceId = references.getLong(j).toInt()
 
           if (addIdToListAndSetParentIfOrphan(toVisit2, referenceId, id)) {
             if (!currentObjectIsArray && j <= 254) {
@@ -313,15 +315,17 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
         }
         else {
           histogramEntries = reachableNonStrongHistogramEntries
-          if (phase == WalkGraphPhase.CleanerFinalizerReferences) {
-            finalizableBytes += size
-          }
-          else if (phase == WalkGraphPhase.SoftReferences) {
-            softBytes += size
-          }
-          else {
-            assert(phase == WalkGraphPhase.WeakReferences)
-            weakBytes += size
+          when (phase) {
+            WalkGraphPhase.CleanerFinalizerReferences -> {
+              finalizableBytes += size
+            }
+            WalkGraphPhase.SoftReferences -> {
+              softBytes += size
+            }
+            else -> {
+              assert(phase == WalkGraphPhase.WeakReferences)
+              weakBytes += size
+            }
           }
           softWeakVisitedCount++
         }
@@ -330,13 +334,13 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
         }.addInstance(size.toLong())
       }
       progress.fraction = (1.0 * visitedInstancesCount / nav.instanceCount)
-      toVisit.resetQuick()
+      toVisit.clear()
       val tmp = toVisit
       toVisit = toVisit2
       toVisit2 = tmp
 
       // Handle state transitions
-      while (toVisit.size() == 0 && phase != WalkGraphPhase.Finished) {
+      while (toVisit.size == 0 && phase != WalkGraphPhase.Finished) {
         // Next state
         phase = WalkGraphPhase.values()[phase.ordinal + 1]
 
@@ -344,42 +348,38 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
           WalkGraphPhase.StrongReferencesLocalVariables ->
             frameRootsSet.forEach { id ->
               addIdToListAndSetParentIfOrphan(toVisit, id, id)
-              true
             }
           WalkGraphPhase.CleanerFinalizerReferences -> {
-            toVisit.add(cleanerObjects.toNativeArray())
+            toVisit.addAll(cleanerObjects)
             cleanerObjects.clear()
           }
           WalkGraphPhase.SoftReferences -> {
-            softReferenceIdToParentMap.forEachEntry { softId, parentId ->
-              addIdToListAndSetParentIfOrphan(toVisit, softId, parentId)
-
-              true
+            for (entry in softReferenceIdToParentMap.int2IntEntrySet().fastIterator()) {
+              addIdToListAndSetParentIfOrphan(toVisit, entry.intKey, entry.intValue)
             }
             // No need to store the list anymore
             softReferenceIdToParentMap.clear()
-            softReferenceIdToParentMap.compact()
+            softReferenceIdToParentMap.trim()
           }
           WalkGraphPhase.WeakReferences -> {
-            weakReferenceIdToParentMap.forEachEntry { weakId, parentId ->
-              addIdToListAndSetParentIfOrphan(toVisit, weakId, parentId)
-              true
+            for (entry in weakReferenceIdToParentMap.int2IntEntrySet().fastIterator()) {
+              addIdToListAndSetParentIfOrphan(toVisit, entry.intKey, entry.intValue)
             }
             // No need to store the list anymore
             weakReferenceIdToParentMap.clear()
-            weakReferenceIdToParentMap.compact()
+            weakReferenceIdToParentMap.trim()
           }
           else -> Unit // No work for other state transitions
         }
       }
     }
     assert(cleanerObjects.isEmpty)
-    assert(softReferenceIdToParentMap.isEmpty)
-    assert(weakReferenceIdToParentMap.isEmpty)
+    assert(softReferenceIdToParentMap.isEmpty())
+    assert(weakReferenceIdToParentMap.isEmpty())
 
-    result.appendln("Finalizable size: ${toShortStringAsSize(finalizableBytes)}")
-    result.appendln("Soft-reachable size: ${toShortStringAsSize(softBytes)}")
-    result.appendln("Weak-reachable size: ${toShortStringAsSize(weakBytes)}")
+    result.appendLine("Finalizable size: ${toShortStringAsSize(finalizableBytes)}")
+    result.appendLine("Soft-reachable size: ${toShortStringAsSize(softBytes)}")
+    result.appendLine("Weak-reachable size: ${toShortStringAsSize(weakBytes)}")
 
     strongRefHistogram = Histogram(
       strongRefHistogramEntries
@@ -409,9 +409,9 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
     stopwatchUpdateSizes.stop()
 
     if (config.metaInfoOptions.include) {
-      result.appendln("Analysis completed! Visited instances: $visitedInstancesCount, time: $stopwatch")
-      result.appendln("Update sizes time: $stopwatchUpdateSizes")
-      result.appendln("Leaves found: $leafCounter")
+      result.appendLine("Analysis completed! Visited instances: $visitedInstancesCount, time: $stopwatch")
+      result.appendLine("Update sizes time: $stopwatchUpdateSizes")
+      result.appendLine("Leaves found: $leafCounter")
     }
     return result.toString()
   }
@@ -424,7 +424,7 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
    *
    * @return true if object was added to the list.
    */
-  private fun addIdToListAndSetParentIfOrphan(list: TIntArrayList, id: Int, parentId: Int = id): Boolean {
+  private fun addIdToListAndSetParentIfOrphan(list: IntList, id: Int, parentId: Int = id): Boolean {
     if (id != 0 && getParentIdForObjectId(id.toLong()) == 0L) {
       setParentForObjectId(id.toLong(), parentId.toLong())
       list.add(id)
@@ -441,7 +441,7 @@ class AnalyzeGraph(private val analysisContext: AnalysisContext) {
    *
    * @return true if object was added to the set.
    */
-  private fun addIdToSetIfOrphan(set: TIntHashSet, id: Int, parentId: Int = id): Boolean {
+  private fun addIdToSetIfOrphan(set: IntSet, id: Int, parentId: Int = id): Boolean {
     if (id != 0 && getParentIdForObjectId(id.toLong()) == 0L && set.add(id)) {
       setParentForObjectId(id.toLong(), parentId.toLong())
       return true

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -34,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +87,10 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private void notifyAboutSyncedBranches() {
-    Notification notification = STANDARD_NOTIFICATION.createNotification("Branch Operations Are Executed on All Roots", "", NotificationType.INFORMATION, null);
+    Notification notification = STANDARD_NOTIFICATION.createNotification(
+      DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"),
+      NotificationType.INFORMATION,
+      "vcs.branch.operations.are.executed.on.all.roots");
     notification
       .addAction(NotificationAction.createSimple(DvcsBundle.messagePointer("action.NotificationAction.DvcsBranchPopup.text.disable"), () -> {
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());
@@ -145,7 +135,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   private void warnThatBranchesDivergedIfNeeded() {
     if (isBranchesDiverged()) {
-      myPopup.setWarning("Branches have diverged");
+      myPopup.setWarning(DvcsBundle.message("branch.popup.warning.branches.have.diverged"));
     }
   }
 
@@ -159,7 +149,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   protected abstract void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup,
                                                                 @Nullable LightActionGroup actions);
 
-  public static class MyMoreIndex {
+  public static final class MyMoreIndex {
     public static final int MAX_NUM = 8;
     public static final int DEFAULT_NUM = 5;
   }
@@ -168,7 +158,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     private final DvcsSyncSettings myVcsSettings;
 
     TrackReposSynchronouslyAction(@NotNull DvcsSyncSettings vcsSettings) {
-      super(DvcsBundle.message("sync.setting"), DvcsBundle.message("sync.setting.description", "repository"), null);
+      super(DvcsBundle.message("sync.setting"), DvcsBundle.message("sync.setting.description", VcsBundle.message("vcs.generic.name")), null);
       myVcsSettings = vcsSettings;
     }
 

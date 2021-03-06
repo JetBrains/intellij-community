@@ -17,10 +17,9 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -32,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class InheritanceUtil {
+public final class InheritanceUtil {
 
   private InheritanceUtil() {}
 
@@ -50,21 +49,40 @@ public class InheritanceUtil {
       return existsMutualSubclass(class2, class1, avoidExpensiveProcessing);
     }
 
-    final String className = class1.getQualifiedName();
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(class1.getQualifiedName())) {
       return true;
     }
-    final String class2Name = class2.getQualifiedName();
-    if (CommonClassNames.JAVA_LANG_OBJECT.equals(class2Name)) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(class2.getQualifiedName())) {
       return true;
     }
-    if ( class1.isInheritor(class2, true) || class2.isInheritor(class1, true) || Objects.equals(class1, class2)) {
+    if (class1.isInheritor(class2, true) || class2.isInheritor(class1, true) || Objects.equals(class1, class2)) {
       return true;
     }
     final SearchScope scope = GlobalSearchScope.allScope(class1.getProject());
+    String class1Name = class1.getName();
+    String class2Name = class2.getName();
+    if (class1Name == null || class2Name == null) {
+      // One of classes is anonymous? No subclass is possible
+      return false;
+    }
+    if (class1.hasModifierProperty(PsiModifier.FINAL) || class2.hasModifierProperty(PsiModifier.FINAL)) return false;
+    if (LambdaUtil.isFunctionalClass(class1) || class1Name.length() < class2Name.length() ||
+        (isJavaClass(class2) && !isJavaClass(class1))) {
+      // Assume that it could be faster to search inheritors from non-functional interface or from class with a longer simple name
+      // Also prefer searching inheritors from Java class over other JVM languages as Java is usually faster
+      return doSearch(class2, class1, avoidExpensiveProcessing, scope);
+    }
+    return doSearch(class1, class2, avoidExpensiveProcessing, scope);
+  }
+
+  private static boolean isJavaClass(PsiClass class1) {
+    return class1 instanceof PsiClassImpl || class1 instanceof ClsClassImpl;
+  }
+
+  public static boolean doSearch(PsiClass class1, PsiClass class2, boolean avoidExpensiveProcessing, SearchScope scope) {
     final Query<PsiClass> search = ClassInheritorsSearch.search(class1, scope, true);
     final boolean[] result = new boolean[1];
-    search.forEach(new Processor<PsiClass>() {
+    search.forEach(new Processor<>() {
       final AtomicInteger count = new AtomicInteger(0);
 
       @Override

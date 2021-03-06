@@ -32,16 +32,15 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class EndHandler extends EditorActionHandler {
+public class EndHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
 
   public EndHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  protected void doExecute(@NotNull final Editor editor, Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull final Editor editor, @NotNull Caret caret, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
       if (myOriginalHandler != null) {

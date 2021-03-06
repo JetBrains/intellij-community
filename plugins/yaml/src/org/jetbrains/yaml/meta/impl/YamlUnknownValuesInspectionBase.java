@@ -41,7 +41,7 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
         return;
       }
       YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getValueMetaType(value);
-      if (meta != null && meta.getField().isMany()) {
+      if (meta != null && meta.getField().hasRelationSpecificType(Field.Relation.SEQUENCE_ITEM)) {
         meta.getMetaType().validateValue(value, myProblemsHolder);
       }
     }
@@ -57,7 +57,7 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
       }
 
       YAMLValue value = keyValue.getValue();
-      if (value == null) {
+      if (value == null || YamlMetaUtil.isNull(value)) {
         validateEmptyValue(meta.getField(), keyValue);
         return;
       }
@@ -123,12 +123,14 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
 
       if (!feature.isEmptyValueAllowed()) {
         InspectionManager manager = myProblemsHolder.getManager();
+        YAMLValue value = withoutValue.getValue();
+
         ProblemDescriptor eolError = manager.createProblemDescriptor(
-          withoutValue.getKey(),
+          value == null ? withoutValue.getKey() : value,
           YAMLBundle.message("YamlUnknownValuesInspectionBase.error.value.is.required", ArrayUtil.EMPTY_OBJECT_ARRAY),
           LocalQuickFix.EMPTY_ARRAY,
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-          myProblemsHolder.isOnTheFly(), true);
+          myProblemsHolder.isOnTheFly(), value == null);
         myProblemsHolder.registerProblem(eolError);
       }
     }

@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +29,8 @@ public abstract class ExpandableItemsHandlerFactory {
 
   @Nullable
   private static ExpandableItemsHandlerFactory getInstance() {
-    if (!Registry.is("ide.windowSystem.showListItemsPopup") || ApplicationManager.getApplication() == null) return null;
-    return ServiceManager.getService(ExpandableItemsHandlerFactory.class);
+    Application app = ApplicationManager.getApplication();
+    return app == null || !Registry.is("ide.windowSystem.showListItemsPopup") ? null : app.getService(ExpandableItemsHandlerFactory.class);
   }
 
   protected abstract ExpandableItemsHandler<Integer> doInstall(JList list);
@@ -53,7 +39,7 @@ public abstract class ExpandableItemsHandlerFactory {
 
   protected abstract ExpandableItemsHandler<TableCell> doInstall(JTable table);
 
-  private static final ExpandableItemsHandler NULL = new ExpandableItemsHandler<Object>() {
+  private static final ExpandableItemsHandler NULL = new ExpandableItemsHandler<>() {
     @Override
     public void setEnabled(boolean enabled) {
     }

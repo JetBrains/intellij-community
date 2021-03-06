@@ -30,6 +30,7 @@ public final class RunResult<T> extends Result<T> {
     myActionRunnable = action;
   }
 
+  @NotNull
   public RunResult<T> run() {
     try {
       myActionRunnable.run(this);
@@ -39,9 +40,7 @@ public final class RunResult<T> extends Result<T> {
     }
     catch (Throwable t) {
       myThrowable = t;
-      if (!myActionRunnable.isSilentExecution()) {
-        ExceptionUtil.rethrowAllAsUnchecked(t);
-      }
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
     finally {
       myActionRunnable = null;

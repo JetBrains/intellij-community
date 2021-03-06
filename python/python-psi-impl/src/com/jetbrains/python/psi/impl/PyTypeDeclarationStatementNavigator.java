@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyTypeDeclarationStatementNavigator {
+public final class PyTypeDeclarationStatementNavigator {
   private PyTypeDeclarationStatementNavigator() {
   }
 

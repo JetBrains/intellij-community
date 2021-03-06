@@ -1,0 +1,25 @@
+<html>
+<body>
+Reports text blocks indented using both spaces and tabs.
+Such cases produce unexpected results since spaces and tabs are treated equally during text block processing.
+
+<p>In the following example, spaces and tabs are visualized as <code>·</code> and <code>␉</code> respectively, and a tab is equal to 4 spaces in the editor:</p>
+<pre><code>
+String colors = """
+········red
+␉   ␉   green
+········blue""";
+</code></pre>
+
+<p>After printing such string, the result would be:</p>
+<pre><code>
+red
+······green
+blue
+</code></pre>
+<p>After the compiler removes 2 spaces or tabs from the beginning of each line, the lines end up with extra whitespaces at the beginning.</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the configured language level is 15 or higher.</p>
+<p><small>New in 2021.1</small></p>
+</body>
+</html>

@@ -7,12 +7,14 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
 import git4idea.commands.*;
@@ -31,6 +33,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static git4idea.GitNotificationIdsHolder.DELETE_BRANCH_ON_MERGE;
+import static git4idea.GitNotificationIdsHolder.MERGE_ROLLBACK_ERROR;
 import static git4idea.GitUtil.getHead;
 import static git4idea.GitUtil.updateAndRefreshChangedVfs;
 import static git4idea.util.GitUIUtil.bold;
@@ -42,7 +46,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private static final String DELETE_HREF_ATTRIBUTE = "delete";
 
   @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final String myBranchToMerge;
+  @NotNull private final @NlsSafe String myBranchToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.
@@ -147,7 +151,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   @Override
-  protected void notifySuccess(@NotNull String message) {
+  protected void notifySuccess(@NotNull @Nls String message) {
     switch (myDeleteOnMerge) {
       case DELETE:
         super.notifySuccess(message);
@@ -155,8 +159,11 @@ class GitMergeOperation extends GitBranchOperation {
         break;
       case PROPOSE:
         String deleteBranch = GitBundle.message("merge.operation.delete.branch", myBranchToMerge);
-        String description = message + UIUtil.BR + "<a href='" + DELETE_HREF_ATTRIBUTE + "'>" + deleteBranch + "</a>";  //NON-NLS
-        VcsNotifier.getInstance(myProject).notifySuccess("", description, new DeleteMergedLocalBranchNotificationListener());
+        String description = new HtmlBuilder().appendRaw(message).br().appendLink(DELETE_HREF_ATTRIBUTE, deleteBranch).toString();
+        VcsNotifier.getInstance(myProject).notifySuccess(DELETE_BRANCH_ON_MERGE,
+                                                         "",
+                                                         description,
+                                                         new DeleteMergedLocalBranchNotificationListener());
         break;
       case NOTHING:
         super.notifySuccess(message);
@@ -242,6 +249,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @NlsContexts.NotificationTitle
   private String getCommonErrorTitle() {
     return GitBundle.message("merge.operation.could.not.merge.branch", myBranchToMerge);
   }
@@ -278,8 +286,10 @@ class GitMergeOperation extends GitBranchOperation {
     myConflictedRepositories.clear();
 
     if (!result.totalSuccess()) {
-      VcsNotifier.getInstance(myProject)
-        .notifyError(GitBundle.message("merge.operation.error.during.rollback"), result.getErrorOutputWithReposIndication(), true);
+      VcsNotifier.getInstance(myProject).notifyError(MERGE_ROLLBACK_ERROR,
+                                                     GitBundle.message("merge.operation.error.during.rollback"),
+                                                     result.getErrorOutputWithReposIndication(),
+                                                     true);
     }
     LOG.info("rollback finished.");
   }
@@ -327,11 +337,13 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return GitBundle.message("merge.operation.however.merge.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge");
+    return new HtmlBuilder()
+      .append(
+        GitBundle.message("merge.operation.however.merge.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()))
+      .br()
+      .appendRaw(successfulRepositoriesJoined())
+      .br()
+      .append(GitBundle.message("merge.operation.you.may.rollback.not.to.let.branches.diverge")).toString();  
   }
 
   @NotNull

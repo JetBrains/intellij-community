@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.BuildViewTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,6 +9,7 @@ import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +38,9 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
 
   @Test
   public void testProjectImportUsingNonRootProjectPath() throws Exception {
+    // reuse generated wrapper for root project
+    FileUtil.copyDir(file("gradle"), file("../gradle"));
+
     createProjectSubFile("../settings.gradle", "rootProject.name = 'root'\n" +
                                                "include 'project', 'another_project'");
     createProjectSubFile("../build.gradle", "allprojects { apply plugin: 'java' }");
@@ -49,6 +54,7 @@ public class GradleExternalProjectImportingTest extends GradleImportingTestCase 
     assertEquals("root", externalProject.getName());
   }
 
+  @TargetVersions("4.1+")
   @Test
   public void testModelBuilderFailure() throws Exception {
     createProjectSubFile("gradle.properties", "systemProp.idea.internal.failEsModelBuilder=true");

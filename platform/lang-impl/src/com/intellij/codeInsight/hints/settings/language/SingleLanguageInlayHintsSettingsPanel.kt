@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -13,7 +13,6 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -27,9 +26,9 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBSplitter
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -175,8 +174,7 @@ class SingleLanguageInlayHintsSettingsPanel(
         updateHints()
       }
     }
-    val scheme = EditorColorsManager.getInstance().globalScheme
-    editorField.font = scheme.getFont(EditorFontType.PLAIN)
+    editorField.font = EditorFontType.PLAIN.globalFont
     editorField.border = LineBorder(JBColor.border())
     editorField.addSettingsProvider { editor ->
       editor.setVerticalScrollbarVisible(true)
@@ -238,7 +236,7 @@ class SingleLanguageInlayHintsSettingsPanel(
     myWarningContainer.removeAll()
     if (!config.hintsEnabled(myLanguage)) {
       myWarningContainer.add(JLabel(CodeInsightBundle.message("settings.inlay.hints.warning.hints.for.language.disabled", myLanguage.displayName)))
-      myWarningContainer.add(LinkLabel.create(CodeInsightBundle.message("settings.inlay.hints.warning.configure.settings", myLanguage.displayName)) {
+      myWarningContainer.add(ActionLink(CodeInsightBundle.message("settings.inlay.hints.warning.configure.settings", myLanguage.displayName)) {
         val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(this))
         if (settings != null) {
           val mainConfigurable = settings.find(InlayHintsConfigurable::class.java)

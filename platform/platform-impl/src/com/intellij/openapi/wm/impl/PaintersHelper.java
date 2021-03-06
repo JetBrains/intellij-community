@@ -9,82 +9,88 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
-import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 final class PaintersHelper implements Painter.Listener {
   private static final Logger LOG = Logger.getInstance(PaintersHelper.class);
 
-  private final Set<Painter> myPainters = new LinkedHashSet<>();
-  private final Map<Painter, Component> myPainter2Component = new LinkedHashMap<>();
+  private final Set<Painter> painters = new LinkedHashSet<>();
+  private final Map<Painter, Component> painterToComponent = new LinkedHashMap<>();
 
-  private final JComponent myRootComponent;
+  private final JComponent rootComponent;
 
   PaintersHelper(@NotNull JComponent component) {
-    myRootComponent = component;
+    rootComponent = component;
   }
 
   boolean hasPainters() {
-    return !myPainters.isEmpty();
+    return !painters.isEmpty();
   }
 
   public boolean needsRepaint() {
-    for (Painter painter : myPainters) {
+    for (Painter painter : painters) {
       if (painter.needsRepaint()) return true;
     }
     return false;
   }
 
   void addPainter(@NotNull Painter painter, @Nullable Component component) {
-    myPainters.add(painter);
-    myPainter2Component.put(painter, component == null ? myRootComponent : component);
+    painters.add(painter);
+    painterToComponent.put(painter, component == null ? rootComponent : component);
     painter.addListener(this);
   }
 
   void removePainter(@NotNull Painter painter) {
     painter.removeListener(this);
-    myPainters.remove(painter);
-    myPainter2Component.remove(painter);
+    painters.remove(painter);
+    painterToComponent.remove(painter);
   }
 
   public void clear() {
-    for (Painter painter : myPainters) {
+    for (Painter painter : painters) {
       painter.removeListener(this);
     }
-    myPainters.clear();
-    myPainter2Component.clear();
+    painters.clear();
+    painterToComponent.clear();
   }
 
   public void paint(Graphics g) {
-    runAllPainters(g, computeOffsets(g, myRootComponent));
+    runAllPainters(g, computeOffsets(g, rootComponent));
   }
 
   void runAllPainters(Graphics gg, @Nullable Offsets offsets) {
-    if (myPainters.isEmpty() || offsets == null) return;
+    if (painters.isEmpty() || offsets == null) return;
     Graphics2D g = (Graphics2D)gg;
     AffineTransform orig = g.getTransform();
     int i = 0;
-    for (Painter painter : myPainters) {
+    for (Painter painter : painters) {
       if (!painter.needsRepaint()) continue;
-      Component cur = myPainter2Component.get(painter);
+      Component cur = painterToComponent.get(painter);
       // restore transform at the time of computeOffset()
       g.setTransform(offsets.transform);
       g.translate(offsets.offsets[i++], offsets.offsets[i++]);
@@ -94,9 +100,9 @@ final class PaintersHelper implements Painter.Listener {
   }
 
   @Nullable Offsets computeOffsets(Graphics gg, @NotNull JComponent component) {
-    if (myPainters.isEmpty()) return null;
+    if (painters.isEmpty()) return null;
     Offsets offsets = new Offsets();
-    offsets.offsets = new int[myPainters.size() * 2];
+    offsets.offsets = new int[painters.size() * 2];
     // store current graphics transform
     Graphics2D g = (Graphics2D)gg;
     offsets.transform = new AffineTransform(g.getTransform());
@@ -104,10 +110,10 @@ final class PaintersHelper implements Painter.Listener {
     Rectangle r = null;
     Component prev = null;
     int i = 0;
-    for (Painter painter : myPainters) {
+    for (Painter painter : painters) {
       if (!painter.needsRepaint()) continue;
 
-      Component cur = myPainter2Component.get(painter);
+      Component cur = painterToComponent.get(painter);
       if (cur != prev || r == null) {
         Container curParent = cur.getParent();
         if (curParent == null) continue;
@@ -129,104 +135,16 @@ final class PaintersHelper implements Painter.Listener {
   @Override
   public void onNeedsRepaint(@NotNull Painter painter, JComponent dirtyComponent) {
     if (dirtyComponent != null && dirtyComponent.isShowing()) {
-      Rectangle rec = SwingUtilities.convertRectangle(dirtyComponent, dirtyComponent.getBounds(), myRootComponent);
-      myRootComponent.repaint(rec);
+      Rectangle rec = SwingUtilities.convertRectangle(dirtyComponent, dirtyComponent.getBounds(), rootComponent);
+      rootComponent.repaint(rec);
     }
     else {
-      myRootComponent.repaint();
+      rootComponent.repaint();
     }
   }
 
   static void initWallpaperPainter(@NotNull String propertyName, @NotNull PaintersHelper painters) {
-    ImagePainter painter = (ImagePainter)newWallpaperPainter(propertyName, painters.myRootComponent);
-    painters.addPainter(painter, null);
-  }
-
-  private static AbstractPainter newWallpaperPainter(@NotNull String propertyName,
-                                                     @NotNull JComponent rootComponent) {
-    return new ImagePainter() {
-      Image image;
-      float alpha;
-      Insets insets;
-      IdeBackgroundUtil.Fill fillType;
-      IdeBackgroundUtil.Anchor anchor;
-
-      String current;
-
-      @Override
-      public boolean needsRepaint() {
-        return ensureImageLoaded();
-      }
-
-      @Override
-      public void executePaint(Component component, Graphics2D g) {
-        if (image == null) return; // covered by needsRepaint()
-        executePaint(g, component, image, fillType, anchor, alpha, insets);
-      }
-
-      boolean ensureImageLoaded() {
-        IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, rootComponent);
-        Project project = frame == null ? null : frame.getProject();
-        String value = IdeBackgroundUtil.getBackgroundSpec(project, propertyName);
-        if (!Objects.equals(value, current)) {
-          current = value;
-          loadImageAsync(value);
-          // keep the current image for a while
-        }
-        return image != null;
-      }
-
-      private void resetImage(String value, Image newImage, float newAlpha, IdeBackgroundUtil.Fill newFill, IdeBackgroundUtil.Anchor newAnchor) {
-        if (!Objects.equals(current, value)) return;
-        boolean prevOk = image != null;
-        clearImages(-1);
-        image = newImage;
-        insets = JBUI.emptyInsets();
-        alpha = newAlpha;
-        fillType = newFill;
-        anchor = newAnchor;
-        boolean newOk = newImage != null;
-        if (prevOk || newOk) {
-          ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-          if (modalityState.dominates(ModalityState.NON_MODAL)) {
-            ComponentUtil.getActiveWindow().repaint();
-          }
-          else {
-            IdeBackgroundUtil.repaintAllWindows();
-          }
-        }
-      }
-
-      private void loadImageAsync(@Nullable String propertyValue) {
-        String[] parts = (propertyValue != null ? propertyValue : propertyName + ".png").split(",");
-        float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
-        IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? StringUtil.toUpperCase(parts[2]) : "", IdeBackgroundUtil.Fill.SCALE, IdeBackgroundUtil.Fill.class);
-        IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? StringUtil.toUpperCase(parts[3]) : "", IdeBackgroundUtil.Anchor.CENTER, IdeBackgroundUtil.Anchor.class);
-        String flip = parts.length > 4 ? parts[4] : "none";
-        String filePath = parts[0];
-        if (StringUtil.isEmpty(filePath)) {
-          resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
-          return;
-        }
-        try {
-          URL url = filePath.contains("://") ? new URL(filePath) :
-                    (FileUtil.isAbsolutePlatformIndependent(filePath)
-                     ? new File(filePath)
-                     : new File(PathManager.getConfigPath(), filePath)).toURI().toURL();
-          ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-          boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
-          boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-            Image m = ImageLoader.loadFromUrl(url, true, true, new ImageFilter[]{flipFilter}, ScaleContext.create());
-            ApplicationManager.getApplication().invokeLater(() -> resetImage(propertyValue, m, newAlpha, newFillType, newAnchor), modalityState);
-          });
-        }
-        catch (Exception e) {
-          resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
-        }
-      }
-    };
+    painters.addPainter(new MyImagePainter(painters.rootComponent, propertyName), null);
   }
 
   static AbstractPainter newImagePainter(@NotNull Image image,
@@ -247,7 +165,7 @@ final class PaintersHelper implements Painter.Listener {
     };
   }
 
-  private static class Cached {
+  private static final class Cached {
     final VolatileImage image;
     final Rectangle src;
     final Rectangle dst;
@@ -470,6 +388,138 @@ final class PaintersHelper implements Painter.Listener {
 
         @Override
         public RenderingHints getRenderingHints() { return null;}
+      });
+    }
+  }
+
+  private static final class MyImagePainter extends ImagePainter {
+    private final JComponent rootComponent;
+    private final String propertyName;
+
+    private Image image;
+    private float alpha;
+    private Insets insets;
+    private IdeBackgroundUtil.Fill fillType;
+    private IdeBackgroundUtil.Anchor anchor;
+
+    private String current;
+
+    private MyImagePainter(@NotNull JComponent rootComponent, @NotNull String propertyName) {
+      this.rootComponent = rootComponent;
+      this.propertyName = propertyName;
+    }
+
+    @Override
+    public boolean needsRepaint() {
+      return ensureImageLoaded();
+    }
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+      if (image == null) {
+        // covered by needsRepaint()
+        return;
+      }
+      executePaint(g, component, image, fillType, anchor, alpha, insets);
+    }
+
+    boolean ensureImageLoaded() {
+      IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, rootComponent);
+      Project project = frame == null ? null : frame.getProject();
+      String value = IdeBackgroundUtil.getBackgroundSpec(project, propertyName);
+      if (!Objects.equals(value, current)) {
+        current = value;
+        loadImageAsync(value);
+        // keep the current image for a while
+      }
+      return image != null;
+    }
+
+    private void resetImage(String value, Image newImage, float newAlpha, IdeBackgroundUtil.Fill newFill, IdeBackgroundUtil.Anchor newAnchor) {
+      if (!Objects.equals(current, value)) {
+        return;
+      }
+
+      boolean prevOk = image != null;
+      clearImages(-1);
+      image = newImage;
+      insets = JBUI.emptyInsets();
+      alpha = newAlpha;
+      fillType = newFill;
+      anchor = newAnchor;
+      boolean newOk = newImage != null;
+      if (prevOk || newOk) {
+        ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
+        if (modalityState.dominates(ModalityState.NON_MODAL)) {
+          ComponentUtil.getActiveWindow().repaint();
+        }
+        else {
+          IdeBackgroundUtil.repaintAllWindows();
+        }
+      }
+    }
+
+    private void loadImageAsync(@Nullable String propertyValue) {
+      String[] parts = (propertyValue == null ? propertyName + ".png" : propertyValue).split(",");
+      float newAlpha = Math.abs(Math.min(StringUtil.parseInt(parts.length > 1 ? parts[1] : "", 10) / 100f, 1f));
+      IdeBackgroundUtil.Fill newFillType = StringUtil.parseEnum(parts.length > 2 ? Strings.toUpperCase(parts[2]) : "", IdeBackgroundUtil.Fill.SCALE, IdeBackgroundUtil.Fill.class);
+      IdeBackgroundUtil.Anchor newAnchor = StringUtil.parseEnum(parts.length > 3 ? Strings.toUpperCase(parts[3]) : "", IdeBackgroundUtil.Anchor.CENTER, IdeBackgroundUtil.Anchor.class);
+      String flip = parts.length > 4 ? parts[4] : "none";
+      String filePath = parts[0];
+
+      if (Strings.isEmpty(filePath)) {
+        resetImage(propertyValue, null, newAlpha, newFillType, newAnchor);
+        return;
+      }
+
+      ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
+      boolean flipH = "flipHV".equals(flip) || "flipH".equals(flip);
+      boolean flipV = "flipHV".equals(flip) || "flipV".equals(flip);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Image image = null;
+        try {
+          InputStream stream;
+          boolean isSvg = filePath.endsWith(".svg");
+          if (filePath.contains("://") && !filePath.startsWith("http")) {
+            stream = new URL(filePath).openStream();
+          }
+          else {
+            Path path = Paths.get(filePath);
+            if (!path.isAbsolute()) {
+              path = PathManager.getConfigDir().resolve(path);
+            }
+            path.normalize();
+            stream = Files.newInputStream(path.normalize());
+          }
+
+          try (stream) {
+            if (isSvg) {
+              image = SVGLoader.load(stream, 1);
+            }
+            else {
+              image = ImageIO.read(new MemoryCacheImageInputStream(stream));
+            }
+          }
+
+          BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
+          image = ImageLoader.convertImage(
+            image,
+            flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
+            ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
+            true,
+            !isSvg, 1,
+            isSvg,
+            new ImageLoader.Dimension2DDouble(image.getWidth(null), image.getHeight(null)));
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+        finally {
+          Image finalImage = image;
+          ApplicationManager.getApplication().invokeLater(() -> {
+            resetImage(propertyValue, finalImage, newAlpha, newFillType, newAnchor);
+          }, modalityState);
+        }
       });
     }
   }

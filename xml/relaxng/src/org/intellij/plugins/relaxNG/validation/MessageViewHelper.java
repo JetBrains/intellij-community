@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG.validation;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.MessageCategory;
-import gnu.trove.THashSet;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
@@ -38,23 +38,24 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class MessageViewHelper {
+public final class MessageViewHelper {
   private static final Logger LOG = Logger.getInstance(MessageViewHelper.class);
 
   private final Project myProject;
 
-  private final Set<String> myErrors = new THashSet<>();
+  private final Set<String> myErrors = new HashSet<>();
 
-  private final String myContentName;
+  private final @TabTitle String myContentName;
   private final Key<NewErrorTreeViewPanel> myKey;
 
   private NewErrorTreeViewPanel myErrorsView;
   private NewErrorTreeViewPanel.ProcessController myProcessController = MyProcessController.INSTANCE;
 
-  public MessageViewHelper(Project project, String contentName, Key<NewErrorTreeViewPanel> key) {
+  public MessageViewHelper(Project project, @TabTitle String contentName, Key<NewErrorTreeViewPanel> key) {
     myProject = project;
     myContentName = contentName;
     myKey = key;
@@ -122,7 +123,7 @@ public class MessageViewHelper {
       messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
       ContentManagerUtil.cleanupContents(content, myProject, myContentName);
       messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
-    }, RelaxngBundle.message("open.message.view"), null);
+    }, ExecutionBundle.message("open.message.view"), null);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
   }
@@ -168,16 +169,11 @@ public class MessageViewHelper {
 
     @Override
     public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
-      if (event.getContent() == myContent) {
-        if (myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
-          int result = Messages.showYesNoDialog(
-            RelaxngBundle.message("0.running", myContentName),
-            RelaxngBundle.message("0.is.still.running.close.anyway", myContentName),
-              Messages.getQuestionIcon()
-          );
-          if (result != Messages.YES) {
-            event.consume();
-          }
+      if (event.getContent() == myContent && myErrorsView != null && myErrorsView.canControlProcess() && !myErrorsView.isProcessStopped()) {
+        if (!MessageDialogBuilder.yesNo(RelaxngBundle.message("relaxng.message-viewer.warning.message", myContentName),
+                                       RelaxngBundle.message("relaxng.message-viewer.warning.title", myContentName))
+              .ask(myErrorsView)) {
+          event.consume();
         }
       }
     }

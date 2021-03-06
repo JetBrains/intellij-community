@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.editor.Editor
@@ -14,10 +14,10 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
   private lateinit var editor: Editor
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { if (::editor.isInitialized) EditorFactory.getInstance().releaseEditor(editor) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   fun testCreateFromFile() {

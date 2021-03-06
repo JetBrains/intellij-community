@@ -28,7 +28,10 @@
             <children>
               <component id="d806c" class="com.intellij.ui.table.JBTable" binding="myIndicesTable" default-binding="true">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <showHorizontalLines value="false"/>
+                  <showVerticalLines value="false"/>
+                </properties>
               </component>
             </children>
           </scrollpane>

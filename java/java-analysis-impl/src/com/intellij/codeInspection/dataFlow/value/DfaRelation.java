@@ -57,9 +57,9 @@ public final class DfaRelation extends DfaCondition {
         dfaRight instanceof DfaTypeValue && !(dfaLeft instanceof DfaTypeValue)) {
       return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
-    if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue
-        || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaBinOpValue) {
-      if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue) ||
+    if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaWrappedValue || dfaLeft instanceof DfaBinOpValue
+        || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaWrappedValue || dfaRight instanceof DfaBinOpValue) {
+      if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaWrappedValue || dfaLeft instanceof DfaBinOpValue) ||
           (dfaRight instanceof DfaBinOpValue && !(dfaLeft instanceof DfaBinOpValue))) {
         RelationType flipped = relationType.getFlipped();
         return flipped == null ? null : new DfaRelation(dfaRight, dfaLeft, flipped);
@@ -71,12 +71,6 @@ public final class DfaRelation extends DfaCondition {
     }
     else if (dfaRight instanceof DfaTypeValue && dfaLeft.getDfType() instanceof DfConstantType) {
       return createConstBasedRelation((DfaTypeValue)dfaRight, relationType, dfaLeft);
-    }
-    if (dfaLeft instanceof DfaInstanceofValue && dfaRight.getDfType() instanceof DfConstantType) {
-      return new DfaRelation(dfaLeft, dfaRight, relationType);
-    }
-    if (dfaLeft.getDfType() instanceof DfConstantType && dfaRight instanceof DfaInstanceofValue) {
-      return new DfaRelation(dfaRight, dfaLeft, relationType);
     }
     return null;
   }

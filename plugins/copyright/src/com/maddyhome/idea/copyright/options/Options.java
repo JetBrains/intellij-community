@@ -118,9 +118,9 @@ public class Options implements Cloneable {
         // NOTE: If any change is made here you need to update ConfigTabFactory and UpdateCopyrightFactory too.
         LanguageOptions opts = new LanguageOptions();
         opts.setFileTypeOverride(LanguageOptions.USE_TEMPLATE);
-        for (Object option : root.getChildren("option")) {
-          String name = ((Element)option).getAttributeValue("name");
-          String val = ((Element)option).getAttributeValue("value");
+        for (Element option : root.getChildren("option")) {
+          String name = option.getAttributeValue("name");
+          String val = option.getAttributeValue("value");
           if ("body".equals(name)) {
             //todo opts.setNotice(val);
           }

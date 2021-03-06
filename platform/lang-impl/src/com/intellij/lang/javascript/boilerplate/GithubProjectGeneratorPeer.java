@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.javascript.boilerplate;
 
-import com.google.common.collect.Sets;
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Sergey Simonchik
@@ -34,7 +31,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
   private void createUIComponents() {
-    myReloadableComboBoxPanel = new ReloadableComboBoxPanel<GithubTagInfo>() {
+    myReloadableComboBoxPanel = new ReloadableComboBoxPanel<>() {
 
       @Override
       protected void doUpdateValues(@NotNull Set<GithubTagInfo> tags) {
@@ -71,7 +68,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
           return true;
         }
         int count = myComboBox.getItemCount();
-        Set<GithubTagInfo> oldTags = Sets.newHashSet();
+        Set<GithubTagInfo> oldTags = new HashSet<>();
         for (int i = 1; i < count; i++) {
           GithubTagInfo item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
           if (item != null) {
@@ -120,7 +117,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
     myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
 
-    myReloadableComboBoxPanel.setDataProvider(new ReloadableComboBoxPanel.DataProvider<GithubTagInfo>() {
+    myReloadableComboBoxPanel.setDataProvider(new ReloadableComboBoxPanel.DataProvider<>() {
       @Override
       public Set<GithubTagInfo> getCachedValues() {
         return myTagListProvider.getCachedTags();
@@ -139,7 +136,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myReloadableComboBoxPanel.onUpdateValues(tags);
   }
 
-  void onTagsUpdateError(@NotNull final String errorMessage) {
+  void onTagsUpdateError(@NotNull final @NlsContexts.DialogMessage String errorMessage) {
     myReloadableComboBoxPanel.onValuesUpdateError(errorMessage);
   }
 

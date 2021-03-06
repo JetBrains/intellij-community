@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * Contains some extended utility functions for dealing with annotations.
  */
-public class AnnotationUtilEx {
+public final class AnnotationUtilEx {
   private static final PsiConstantEvaluationHelperImpl CONSTANT_EVALUATION_HELPER = new PsiConstantEvaluationHelperImpl();
 
   private AnnotationUtilEx() {
@@ -205,7 +205,7 @@ public class AnnotationUtilEx {
       if (annotations.length == 0 || !PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
       return annotations;
     }
-    
+
     if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
     return getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);
@@ -293,7 +293,7 @@ public class AnnotationUtilEx {
   }
 
   private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {
-    final Set<PsiAnnotation> all = new HashSet<PsiAnnotation>() {
+    final Set<PsiAnnotation> all = new HashSet<>() {
       @Override
       public boolean add(PsiAnnotation o) {
         // don't overwrite "higher level" annotations

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -15,6 +15,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -26,7 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFailedLineManager;
-import org.jetbrains.ide.PooledThreadExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 
 import java.util.Date;
 import java.util.List;
@@ -79,8 +80,9 @@ public class FailedLineTest extends LightJavaCodeInsightFixtureTestCase {
       form.getTestsRootNode().addChild(test);
       test.setTestFailed("oops", "stacktrace", true);
 
+      ApplicationManager.getApplication().invokeLater(() -> DumbServiceImpl.getInstance(getProject()).setDumb(false));
       form.onTestingFinished(form.getTestsRootNode());
-      PooledThreadExecutor.INSTANCE.awaitTermination(1, TimeUnit.SECONDS);
+      AppExecutorUtil.getAppExecutorService().awaitTermination(1, TimeUnit.SECONDS);
     }
     finally {
       Disposer.dispose(view);

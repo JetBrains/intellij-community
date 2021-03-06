@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -22,20 +22,22 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
+
 @ApiStatus.Experimental
 public abstract class XmlAttributeDelegate {
-
   @NotNull
   private final XmlAttribute myAttribute;
 
@@ -58,19 +60,15 @@ public abstract class XmlAttributeDelegate {
 
   @Nullable
   private static XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
-    XmlAttributeDescriptor result = null;
     final XmlTag tag = attribute.getParent();
     // e.g. XmlDecl or PI
     if (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
       if (descr != null) {
-        final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(attribute);
-        result = attributeDescr == null
-                 ? descr.getAttributeDescriptor(attribute.getName(), tag)
-                 : attributeDescr;
+        return descr.getAttributeDescriptor(attribute);
       }
     }
-    return result;
+    return null;
   }
 
   @NotNull
@@ -80,9 +78,16 @@ public abstract class XmlAttributeDelegate {
     return () -> manager.getModificationCount(project);
   }
 
+  private @Nullable Character getPreferredQuoteStyle() {
+    final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
+    String currentValue = notNull(doIfNotNull(value, ASTNode::getText), "");
+    return currentValue.startsWith("'") ? Character.valueOf('\'') : currentValue.startsWith("\"") ? Character.valueOf('"') : null;
+  }
+
   void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
-    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText);
+    final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText,
+                                                   getPreferredQuoteStyle());
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(attribute.getNode());
     final ASTNode att = myAttribute.getNode();
     if (value != null) {
@@ -101,8 +106,8 @@ public abstract class XmlAttributeDelegate {
     }
   }
 
-  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
-    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, myAttribute);
+  protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value, @Nullable Character quoteStyle) {
+    return XmlElementFactory.getInstance(myAttribute.getProject()).createAttribute(qname, value, quoteStyle, myAttribute);
   }
 
   @NotNull
@@ -157,8 +162,8 @@ public abstract class XmlAttributeDelegate {
       valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
       child = child.getTreeNext();
     }
-    final TIntArrayList gapsStarts = new TIntArrayList();
-    final TIntArrayList gapsShifts = new TIntArrayList();
+    final IntList gapsStarts = new IntArrayList();
+    final IntList gapsShifts = new IntArrayList();
     StringBuilder buffer = new StringBuilder(myAttribute.getTextLength());
     while (child != null) {
       final int start = buffer.length();
@@ -190,8 +195,8 @@ public abstract class XmlAttributeDelegate {
     int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
     int currentGapsSum = 0;
     for (int i = 0; i < gapDisplayStarts.length; i++) {
-      currentGapsSum += gapsShifts.get(i);
-      gapDisplayStarts[i] = gapsStarts.get(i);
+      currentGapsSum += gapsShifts.getInt(i);
+      gapDisplayStarts[i] = gapsStarts.getInt(i);
       gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
     }
     final XmlAttributeDelegate.VolatileState
@@ -220,7 +225,7 @@ public abstract class XmlAttributeDelegate {
       }
     }
 
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(myAttribute);
+    PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(myAttribute, hints);
     PsiReference[] refs;
     if (myAttribute.isNamespaceDeclaration()) {
       refs = new PsiReference[referencesFromProviders.length + 1];
@@ -275,8 +280,8 @@ public abstract class XmlAttributeDelegate {
   @NotNull
   PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(myAttribute.getNode());
-    final String oldValue = ObjectUtils.notNull(myAttribute.getValue(), "");
-    final XmlAttribute newAttribute = createAttribute(nameText, oldValue);
+    final String oldValue = notNull(myAttribute.getValue(), "");
+    final XmlAttribute newAttribute = createAttribute(nameText, oldValue, getPreferredQuoteStyle());
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(newAttribute.getNode());
     if (!oldValue.isEmpty() && myAttribute.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
       CodeEditUtil.replaceChild(myAttribute.getNode().getTreeParent(), myAttribute.getNode(), newAttribute.getNode());

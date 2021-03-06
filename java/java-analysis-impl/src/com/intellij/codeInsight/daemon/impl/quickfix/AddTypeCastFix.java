@@ -4,10 +4,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -15,10 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -26,10 +25,11 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.List;
 import java.util.Objects;
 
-public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
+  implements HighPriorityAction, IntentionActionWithFixAllOption {
   @SafeFieldForPreview
   private final PsiType myType;
-  private final String myName;
+  private final @IntentionName String myName;
 
   public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {
     this(type, expression, "add.typecast.text");
@@ -85,9 +85,15 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     if (expression == null) return null;
 
     if (type.equals(PsiType.NULL)) return null;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(original.getProject());
+    if (expression instanceof PsiLiteralExpression) {
+      String newLiteral = PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)expression, type);
+      if (newLiteral != null) {
+        return factory.createExpressionFromText(newLiteral, null);
+      }
+    }
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(original.getProject());
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText(text, original);
     typeCast = (PsiTypeCastExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeCast);
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);

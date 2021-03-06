@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearcher {
 
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement token, int offsetInElement, Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement token, int offsetInElement, @NotNull Consumer<PomTarget> consumer) {
     if (!(token instanceof XmlToken)) return;
     final PsiElement element = token.getParent();
     if (element == null) return;

@@ -16,14 +16,20 @@
 package com.jetbrains.python.findUsages;
 
 import com.intellij.find.findUsages.*;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author traff
@@ -40,10 +46,12 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
       return (FindUsagesHandler)base;
     }
     else if (base instanceof PyFindUsagesHandler) {
+      // Important note: override methods that are overridden in PyFindUsagesHandler inheritors.
+
       return new FindUsagesHandler(base.getPsiElement()) {
         @Override
-        public @NotNull FindUsagesOptions getFindUsagesOptions() {
-          return base.getFindUsagesOptions();
+        public @NotNull FindUsagesOptions getFindUsagesOptions(@Nullable DataContext dataContext) {
+          return base.getFindUsagesOptions(dataContext);
         }
 
         @Override
@@ -54,6 +62,25 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
         @Override
         public PsiElement @NotNull [] getPrimaryElements() {
           return base.getPrimaryElements();
+        }
+
+        @Override
+        public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target,
+                                                                           @NotNull SearchScope searchScope) {
+          return base.findReferencesToHighlight(target, searchScope);
+        }
+
+        @Override
+        public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile,
+                                                                     boolean toShowInNewTab,
+                                                                     boolean mustOpenInNewTab) {
+
+          if (base instanceof FindUsagesHandlerUi) {
+            return ((FindUsagesHandlerUi)base).getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
+          }
+          else {
+            return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
+          }
         }
       };
     }
@@ -73,6 +100,9 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
     return new PyModuleFindUsagesHandlerUi(element);
   }
 
+  /**
+   * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
+   */
   static class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
     protected PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
       super(file);
@@ -90,7 +120,10 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
                                         this) {
         @Override
         public void configureLabelComponent(@NonNls @NotNull final SimpleColoredComponent coloredComponent) {
-          coloredComponent.append(myElement instanceof PsiDirectory ? "Package " : "Module ");
+          coloredComponent.append(myElement instanceof PsiDirectory
+                                  ? PyBundle.message("python.find.module.usages.dialog.label.prefix.package")
+                                  : PyBundle.message("python.find.module.usages.dialog.label.prefix.module"));
+          coloredComponent.append(" ");
           coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       };

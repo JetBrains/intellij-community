@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -93,7 +93,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     };
   }
 
-  public static class ReplacePseudoLambdaWithLambda implements LocalQuickFix {
+  public static final class ReplacePseudoLambdaWithLambda implements LocalQuickFix {
     private final StaticPseudoFunctionalStyleMethodOptions.PipelineElement myHandler;
 
     private ReplacePseudoLambdaWithLambda(StaticPseudoFunctionalStyleMethodOptions.PipelineElement handler) {

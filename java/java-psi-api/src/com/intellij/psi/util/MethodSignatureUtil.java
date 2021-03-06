@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,40 +14,39 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
-public class MethodSignatureUtil {
+public final class MethodSignatureUtil {
   private MethodSignatureUtil() { }
 
-  public static final TObjectHashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
-    new TObjectHashingStrategy<MethodSignatureBackedByPsiMethod>() {
+  public static final Hash.Strategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
+    new Hash.Strategy<MethodSignatureBackedByPsiMethod>() {
       @Override
-      public int computeHashCode(final MethodSignatureBackedByPsiMethod signature) {
-        return signature.getMethod().hashCode();
+      public int hashCode(@Nullable MethodSignatureBackedByPsiMethod signature) {
+        return signature == null ? 0 : signature.getMethod().hashCode();
       }
 
       @Override
-      public boolean equals(final MethodSignatureBackedByPsiMethod s1, final MethodSignatureBackedByPsiMethod s2) {
-        return s1.getMethod().equals(s2.getMethod());
+      public boolean equals(@Nullable MethodSignatureBackedByPsiMethod s1, @Nullable MethodSignatureBackedByPsiMethod s2) {
+        return s1 == s2 || (s1 != null && s2 != null && s1.getMethod().equals(s2.getMethod()));
       }
     };
 
-  public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
-    new TObjectHashingStrategy<MethodSignature>() {
+  public static final Hash.Strategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY =
+    new Hash.Strategy<MethodSignature>() {
       @Override
-      public int computeHashCode(final MethodSignature signature) {
-        return signature.hashCode();
+      public int hashCode(final MethodSignature signature) {
+        return signature == null ? 0 : signature.hashCode();
       }
 
       @Override
-      public boolean equals(MethodSignature method1, MethodSignature method2) {
-        return areSignaturesEqualLightweight(method1, method2) && areErasedParametersEqual(method1, method2);
+      public boolean equals(@Nullable MethodSignature method1, @Nullable MethodSignature method2) {
+        return method1 == method2 || (method1 != null && method2 != null && areSignaturesEqualLightweight(method1, method2) && areErasedParametersEqual(method1, method2));
       }
     };
 
   /**
    * def: (8.4.2 Method Signature) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of m2 or m2 is a subsignature of m1.
    *
-   * erasure (erasure) = erasure, so we would check if erasures are equal and then check if the number of type parameters agree: 
+   * erasure (erasure) = erasure, so we would check if erasures are equal and then check if the number of type parameters agree:
    *      if signature(m1)=signature(m2), then m1.typeParams=m2.typeParams
    *      if (erasure(signature(m1))=signature(m2), then m2.typeParams.length=0 and vise versa
    */
@@ -71,7 +56,7 @@ public class MethodSignatureUtil {
     return (typeParamsLength1 == typeParamsLength2 || typeParamsLength1 == 0 || typeParamsLength2 == 0) &&
            areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
   }
-  
+
   public static boolean areErasedParametersEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
     PsiType[] erased1 = method1 instanceof MethodSignatureBase
                         ? ((MethodSignatureBase)method1).getErasedParameterTypes() : calcErasedParameterTypes(method1);
@@ -302,7 +287,7 @@ public class MethodSignatureUtil {
    * * M and N have same number of type parameters (possibly zero).
    * * Where A1, ..., An are the type parameters of M and B1, ..., Bn are the type parameters of N, let theta=[B1:=A1, ..., Bn:=An].
    *   Then, for all i (1 <= i <= n), the bound of Ai is the same type as theta applied to the bound of Bi.
-   * 
+   *
    * @param methodSignature method signature
    * @param superMethodSignature super method signature
    * @return null if signatures do not match

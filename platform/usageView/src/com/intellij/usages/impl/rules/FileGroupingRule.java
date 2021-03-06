@@ -3,13 +3,12 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+public class FileGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   private final Project myProject;
 
   public FileGroupingRule(Project project) {
@@ -41,10 +41,20 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     return null;
   }
 
-  public static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
+  @Override
+  public @Nullable String getGroupingActionId() {
+    return "UsageGrouping.FileStructure";
+  }
+
+  @Override
+  public boolean isGroupingActionInverted() {
+    return true;
+  }
+
+  public static class FileUsageGroup implements UsageGroup, DataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
-    private String myPresentableName;
+    private @NlsSafe String myPresentableName;
     private Icon myIcon;
 
     public FileUsageGroup(@NotNull Project project, @NotNull VirtualFile file) {
@@ -125,15 +135,17 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return 0;
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (!isValid()) return;
-      if (key == CommonDataKeys.VIRTUAL_FILE) {
-        sink.put(CommonDataKeys.VIRTUAL_FILE, myFile);
+    public Object getData(@NotNull String dataId) {
+      if (!isValid()) return null;
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return myFile;
       }
-      if (key == CommonDataKeys.PSI_ELEMENT) {
-        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiFile());
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getPsiFile();
       }
+      return null;
     }
 
     @Nullable

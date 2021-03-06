@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,8 @@ import java.util.List;
  * You don't have to implement {@code PsiLanguageInjectionHost} by yourself, unless you want to inject something into your own custom PSI.
  * For all returned injected PSI elements, {@link InjectedLanguageManager#getInjectionHost(PsiElement)} returns {@code PsiLanguageInjectionHost} they were injected into.
  */
-public interface PsiLanguageInjectionHost extends PsiElement {
+public interface PsiLanguageInjectionHost extends PsiExternalReferenceHost {
+
   /**
    * @return {@code true} if this instance can accept injections, {@code false} otherwise
    */

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 /**
  * @author Hani Suleiman
  */
-public class TestNGUtil {
+public final class TestNGUtil {
   public static final String TESTNG_GROUP_NAME = "TestNG";
 
   @SuppressWarnings("StaticNonFinalField") public static boolean hasDocTagsSupport = hasDocTagsSupport();
@@ -58,9 +58,10 @@ public class TestNGUtil {
   }
 
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
+  public static final String TESTNG_PACKAGE = "org.testng";
   public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
   @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN = {
-      Configuration.class.getName(),
+      "org.testng.annotations.Configuration",
       Factory.class.getName(),
       ObjectFactory.class.getName(),
       DataProvider.class.getName(),
@@ -77,7 +78,7 @@ public class TestNGUtil {
   };
 
   @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
-      Configuration.class.getName(),
+      "org.testng.annotations.Configuration",
       Factory.class.getName(),
       ObjectFactory.class.getName(),
       BeforeClass.class.getName(),
@@ -160,7 +161,6 @@ public class TestNGUtil {
       for (String qn : CONFIG_ANNOTATIONS_FQN) {
         if (qName.equals(qn)) return true;
       }
-      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
       for (String qn : CONFIG_ANNOTATIONS_FQN) {
         if (qName.equals(qn)) return true;
       }

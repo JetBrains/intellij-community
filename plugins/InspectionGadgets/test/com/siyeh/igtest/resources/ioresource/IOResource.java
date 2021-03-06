@@ -78,7 +78,7 @@ public class IOResource {
         InputStreamReader str2 = null;
         try {
             str = new FileInputStream("bar");
-            str2 = new <warning descr="'InputStreamReader' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">InputStreamReader</warning>(str);
+            str2 = new InputStreamReader(str);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -102,7 +102,7 @@ public class IOResource {
         }
     }
     public void interrupting() throws IOException {
-        FileInputStream str = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("xxxx");
+        FileInputStream str = new FileInputStream("xxxx");
         str.read();
         try {
             str.read();
@@ -160,7 +160,7 @@ public class IOResource {
     }
 
   public static void c() throws IOException {
-    InputStream in = new <warning descr="'FileInputStream' should be opened in front of a 'try' block and closed in the corresponding 'finally' block">FileInputStream</warning>("");
+    InputStream in = new FileInputStream("");
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("asd"));
     try {
       writer.write(0);

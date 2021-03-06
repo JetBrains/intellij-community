@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentEntry;
@@ -14,7 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
@@ -24,8 +25,8 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  *  @author dsl
  */
 @ApiStatus.Internal
-public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
-  private final JpsModuleSourceRoot myJpsElement;
+public final class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
+  private JpsModuleSourceRoot myJpsElement;
   @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG;
   @NonNls public static final String TEST_SOURCE_ATTR = JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE;
   static final String DEFAULT_PACKAGE_PREFIX = "";
@@ -110,6 +111,11 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   @NotNull
   public JpsModuleSourceRoot getJpsElement() {
     return myJpsElement;
+  }
+
+  @Override
+  public <P extends JpsElement> void changeType(JpsModuleSourceRootType<P> newType, P properties) {
+    myJpsElement = JpsElementFactory.getInstance().createModuleSourceRoot(myJpsElement.getUrl(), newType, properties);
   }
 
   private boolean isForGeneratedSources() {

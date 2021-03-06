@@ -148,13 +148,13 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   protected void doCustomHighlighting(boolean checkWeakWarnings, Boolean includeExternalToolPass) {
     final PsiFile file = myTestFixture.getFile();
     final Document doc = myTestFixture.getEditor().getDocument();
-    ExpectedHighlightingData data = new ExpectedHighlightingData(doc, true, checkWeakWarnings, false, file);
+    ExpectedHighlightingData data = new ExpectedHighlightingData(doc, true, checkWeakWarnings, false);
     data.init();
     PsiDocumentManager.getInstance(myTestFixture.getProject()).commitAllDocuments();
 
     Collection<HighlightInfo> highlights1 = doHighlighting(includeExternalToolPass);
 
-    data.checkResult(highlights1, doc.getText());
+    data.checkResult(file, highlights1, doc.getText());
   }
 
   @NotNull
@@ -189,7 +189,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.testRename(name + "." + ext, name + "_after." + ext, newName);
   }
 
-  @SuppressWarnings({ "deprecation"})
+  @SuppressWarnings("deprecation")
   protected void doTestQuickFix(String file, String ext) {
     final PsiReference psiReference = myTestFixture.getReferenceAtCaretPositionWithAssertion(file + "." + ext);
     assertNull("Reference", psiReference.resolve());
@@ -201,7 +201,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
     final Project project = myTestFixture.getProject();
     final ProblemDescriptor problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(psiReference.getElement(),
-                                                                                                               "foo",
+                                                                                                               "Foo",
                                                                                                                fixes,
                                                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                                                                true);

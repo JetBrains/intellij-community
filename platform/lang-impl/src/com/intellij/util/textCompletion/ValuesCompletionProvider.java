@@ -111,7 +111,7 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   protected LookupElement installInsertHandler(@NotNull LookupElementBuilder builder) {
     InsertHandler<LookupElement> handler = builder.getInsertHandler();
     if (handler == null) return builder.withInsertHandler(myInsertHandler);
-    return builder.withInsertHandler(new InsertHandler<LookupElement>() {
+    return builder.withInsertHandler(new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         myInsertHandler.handleInsert(context, item);

@@ -20,8 +20,8 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   protected File myOlderDir;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     myOlderDir = getTempFile("oldDir");
     myNewerDir = getTempFile("newDir");
@@ -52,7 +52,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     return createPatch(Function.identity());
   }
 
-  protected Patch createPatch(Function<PatchSpec, PatchSpec> tuner) throws IOException {
+  protected Patch createPatch(Function<? super PatchSpec, ? extends PatchSpec> tuner) throws IOException {
     PatchSpec spec = tuner.apply(new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath()));
@@ -65,7 +65,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   }
 
   protected static Map<String, Long> digest(Patch patch, File dir) throws IOException {
-    return new TreeMap<>(patch.digestFiles(dir, Collections.emptyList(), false));
+    return new TreeMap<>(patch.digestFiles(dir, Collections.emptySet(), false));
   }
 
   protected static List<PatchAction> sortActions(List<PatchAction> actions) {
@@ -76,7 +76,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     return sort(results, r -> r.action, Comparator.comparing(r -> r.path));
   }
 
-  private static <T> List<T> sort(List<T> list, Function<T, ?> classifier, Comparator<T> sorter) {
+  private static <T> List<T> sort(List<T> list, Function<? super T, ?> classifier, Comparator<? super T> sorter) {
     // splits the list into groups
     Collection<List<T>> groups = list.stream().collect(groupingBy(classifier, LinkedHashMap::new, toList())).values();
     // verifies the list is monotonic

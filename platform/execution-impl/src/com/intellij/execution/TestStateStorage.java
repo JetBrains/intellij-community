@@ -6,10 +6,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.FlushingDaemon;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -35,7 +36,7 @@ public class TestStateStorage implements Disposable {
 
   private final File myFile;
 
-  public static File getTestHistoryRoot(Project project) {
+  public static File getTestHistoryRoot(@NotNull Project project) {
     return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
 
@@ -45,7 +46,7 @@ public class TestStateStorage implements Disposable {
     public final Date date;
     public int failedLine;
     public final String failedMethod;
-    public final String errorMessage;
+    public final @NlsSafe String errorMessage;
     public final String topStacktraceLine;
 
     public Record(int magnitude, Date date, long configurationHash, int failLine, String method, String errorMessage, String topStacktraceLine) {

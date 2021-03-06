@@ -25,8 +25,8 @@
       {
         "id": "mdx",
         "aliases": [
-          "Markdown React",
           "MDX",
+          "Markdown React",
           "mdx"
         ],
         "extensions": [

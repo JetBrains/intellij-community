@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
@@ -32,17 +33,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.PrintStream;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener, EditorColorsListener {
   private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
-  private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
   private final Disposable myDisposable = Disposer.newDisposable("livePreview");
   private boolean mySuppressedUpdate = false;
@@ -71,8 +72,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   public interface Delegate {
-    @Nullable
-    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult)
+    @NlsSafe @Nullable String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult)
       throws FindManager.MalformedReplacementStringException;
   }
 
@@ -151,7 +151,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
 
     for (RangeHighlighter highlighter : highlighters) {
-      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes());
+      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes(editor.getColorsScheme()));
     }
     dumpStream.println("------------");
   }
@@ -296,7 +296,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     markupModel.processRangeHighlightersOverlappingWith(startOffset, startOffset, highlighter -> {
       if (highlighter.getUserData(SEARCH_MARKER) != null &&
           highlighter.getStartOffset() == startOffset && highlighter.getEndOffset() == endOffset &&
-          Objects.equals(highlighter.getTextAttributes(), attributes)) {
+          Objects.equals(highlighter.getTextAttributes(mySearchResults.getEditor().getColorsScheme()), attributes)) {
         existing[0] = highlighter;
         return false;
       }
@@ -357,7 +357,9 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
         return;//malformed replacement string
       }
       if (Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
-        showBalloon(editor, replacementPreviewText.isEmpty() ? EMPTY_STRING_DISPLAY_TEXT : replacementPreviewText);
+        showBalloon(editor, replacementPreviewText.isEmpty()
+                            ? "<" + FindBundle.message("live.preview.empty.string") + ">"
+                            : replacementPreviewText);
       }
       else if (!replacementPreviewText.equals(findModel.getStringToReplace())) {
         showBalloon(editor, replacementPreviewText);
@@ -365,7 +367,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
   }
 
-  private void showBalloon(Editor editor, String replacementPreviewText) {
+  private void showBalloon(Editor editor, @Nls String replacementPreviewText) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myReplacementPreviewText = replacementPreviewText;
       return;
@@ -433,7 +435,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
 
     @Override
-    public RelativePoint recalculateLocation(final Balloon object) {
+    public RelativePoint recalculateLocation(final @NotNull Balloon object) {
       FindResult cursor = mySearchResults.getCursor();
       if (cursor == null) return null;
       final TextRange cur = cursor;

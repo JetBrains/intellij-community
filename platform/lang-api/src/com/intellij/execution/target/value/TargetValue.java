@@ -22,12 +22,16 @@ public interface TargetValue<T> {
     return new FixedTargetValue<>(value);
   }
 
-  static <T, V> TargetValue<V> map(@NotNull TargetValue<? extends T> originalValue, @NotNull Function<T, ? extends V> mapper) {
+  static <T, V> TargetValue<V> map(@NotNull TargetValue<? extends T> originalValue, @NotNull Function<? super T, ? extends V> mapper) {
     return new MapTargetValue<>(originalValue, mapper);
   }
 
-  static <T, V> TargetValue<V> composite(@NotNull Collection<TargetValue<T>> values, @NotNull Function<Collection<T>, ? extends V> joiner) {
+  static <T, V> TargetValue<V> composite(@NotNull Collection<TargetValue<T>> values, @NotNull Function<? super Collection<T>, ? extends V> joiner) {
     return new CompositeTargetValue<>(values, joiner);
+  }
+
+  static <V> TargetValue<V> create(@NotNull V localValue, @NotNull Promise<V> targetValue){
+    return new PromiseBasedTargetValue<>(localValue, targetValue);
   }
 
   @SuppressWarnings("rawtypes")

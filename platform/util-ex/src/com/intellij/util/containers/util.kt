@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import gnu.trove.THashSet
 import java.util.*
 import java.util.stream.Stream
 
@@ -27,9 +26,39 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
-val <T> List<T>.tail: List<T> get() = this.subList(1, this.size)
+/**
+ * @return all the elements of a non-empty list except the first one
+ */
+fun <T> List<T>.tail(): List<T> {
+  require(isNotEmpty())
+  return subList(1, size)
+}
 
-fun <T> List<T>.toHeadAndTail(): Pair<T, List<T>>? = if (this.isEmpty()) null else this.first() to this.tail
+/**
+ * @return all the elements of a non-empty list except the first one or empty list
+ */
+fun <T> List<T>.tailOrEmpty(): List<T> {
+  if (isEmpty()) return emptyList()
+  return subList(1, size)
+}
+
+/**
+ * @return pair of the first element and the rest of a non-empty list
+ */
+fun <T> List<T>.headTail(): Pair<T, List<T>> = Pair(first(), tail())
+
+/**
+ * @return pair of the first element and the rest of a non-empty list, or `null` if a list is empty
+ */
+fun <T> List<T>.headTailOrNull(): Pair<T, List<T>>? = if (isEmpty()) null else headTail()
+
+/**
+ * @return all the elements of a non-empty list except the last one
+ */
+fun <T> List<T>.init(): List<T> {
+  require(isNotEmpty())
+  return subList(0, size - 1)
+}
 
 fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
 
@@ -94,7 +123,7 @@ fun <T> Stream<T>?.getIfSingle(): T? =
   this?.limit(2)
     ?.map { Optional.ofNullable(it) }
     ?.reduce(Optional.empty()) { a, b -> if (a.isPresent xor b.isPresent) b else Optional.empty() }
-    ?.orElse(null)
+    ?.orNull()
 
 /**
  * There probably could be some performance issues if there is lots of streams to concat. See
@@ -115,6 +144,10 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 
 fun <T> MutableList<T>.addIfNotNull(e: T?) {
   e?.let { add(it) }
+}
+
+fun <T> MutableList<T>.addAllIfNotNull(vararg elements: T?) {
+  elements.forEach { e -> e?.let { add(it) } }
 }
 
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
@@ -146,12 +179,10 @@ inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
 inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
   return when (val size = size) {
     1 -> {
-      val result = SmartHashSet<R>()
-      result.add(transform(first()))
-      result
+      Collections.singleton(transform(first()))
     }
     0 -> emptySet()
-    else -> mapTo(THashSet(size), transform)
+    else -> mapTo(HashSet(size), transform)
   }
 }
 
@@ -241,3 +272,9 @@ inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Ite
     }
   }
 }
+
+fun <T> Optional<T>.orNull(): T? = orElse(null)
+
+fun <T> Iterable<T>?.asJBIterable(): JBIterable<T> = JBIterable.from(this)
+
+fun <T> Array<T>?.asJBIterable(): JBIterable<T> = if (this == null) JBIterable.empty() else JBIterable.of(*this)

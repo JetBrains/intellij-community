@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaCodeFragment;
@@ -35,7 +35,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     if(containingFile instanceof PsiExpressionCodeFragment) {
       myText = text;
       myImports = ((JavaCodeFragment)containingFile).importsToString();
-      myFileType = StdFileTypes.JAVA;
+      myFileType = JavaFileType.INSTANCE;
     }
     else {
       Trinity<String, String, FileType> trinity = parseExternalForm(text);

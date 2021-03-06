@@ -1,34 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.psi.xml.XmlAttribute;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
 public class XmlPatterns extends PlatformPatterns {
-
   public static XmlFilePattern.Capture xmlFile() {
     return new XmlFilePattern.Capture();
   }
 
   public static <T extends XmlAttribute> XmlAttributeValuePattern xmlAttributeValue(ElementPattern<T> attributePattern) {
-    for (final PatternCondition<? super T> condition : attributePattern.getCondition().getConditions()) {
+    for (PatternCondition<? super T> condition : attributePattern.getCondition().getConditions()) {
       if (condition instanceof PsiNamePatternCondition && "withLocalName".equals(condition.getDebugMethodName())) {
         return xmlAttributeValue().withLocalName(((PsiNamePatternCondition<?>)condition).getNamePattern()).withParent(attributePattern);
       }
@@ -45,7 +29,7 @@ public class XmlPatterns extends PlatformPatterns {
     return XmlAttributeValuePattern.XML_ATTRIBUTE_VALUE_PATTERN;
   }
 
-  public static XmlNamedElementPattern.XmlAttributePattern xmlAttribute(@NonNls String localName) {
+  public static XmlNamedElementPattern.XmlAttributePattern xmlAttribute(String localName) {
     return xmlAttribute().withLocalName(localName);
   }
 

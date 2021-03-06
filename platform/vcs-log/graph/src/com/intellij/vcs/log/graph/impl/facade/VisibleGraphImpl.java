@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -173,7 +173,8 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       boolean selectionChanged;
       if (answer.getSelectedNodeIds() != null) {
         selectionChanged = myPrintElementManager.setSelectedElements(answer.getSelectedNodeIds());
-      } else {
+      }
+      else {
         selectionChanged = myPrintElementManager.setSelectedElements(Collections.emptySet());
       }
 
@@ -199,8 +200,10 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       if (affectedElement != null) {
         if (affectedElement instanceof PrintElementWithGraphElement) {
           printElement = (PrintElementWithGraphElement)affectedElement;
-        } else {
-          printElement = ContainerUtil.find(myPrintElementGenerator.getPrintElements(affectedElement.getRowIndex()), it -> it.equals(affectedElement));
+        }
+        else {
+          printElement = ContainerUtil.find(myPrintElementGenerator.getPrintElements(affectedElement.getRowIndex()),
+                                            it -> it.equals(affectedElement));
           if (printElement == null) {
             throw new IllegalStateException("Not found graphElement for this printElement: " + affectedElement);
           }
@@ -211,14 +214,23 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
     private GraphAnswer<CommitId> convert(@NotNull LinearGraphController.LinearGraphAnswer answer, boolean selectionChanged) {
       final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : (Runnable)() -> {
+      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : () -> {
         graphUpdater.run();
         updatePrintElementGenerator();
       }, false, selectionChanged);
     }
+
+    @Override
+    public boolean isActionSupported(@NotNull GraphAction action) {
+      if (action.getType() == GraphAction.Type.BUTTON_COLLAPSE || action.getType() == GraphAction.Type.BUTTON_EXPAND) {
+        return !(myGraphController instanceof FilteredController);
+      }
+
+      return ActionController.super.isActionSupported(action);
+    }
   }
 
-  private static class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
+  private static final class GraphAnswerImpl<CommitId> implements GraphAnswer<CommitId> {
     @Nullable private final Cursor myCursor;
     @Nullable private final CommitId myCommitToJump;
     @Nullable private final Runnable myUpdater;

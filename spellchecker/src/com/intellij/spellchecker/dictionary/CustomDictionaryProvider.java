@@ -2,18 +2,21 @@
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface CustomDictionaryProvider {
-  ExtensionPointName<CustomDictionaryProvider> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.dictionary.customDictionaryProvider");
-  
+  ExtensionPointName<CustomDictionaryProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.spellchecker.dictionary.customDictionaryProvider");
+
   @Nullable
   Dictionary get(@NotNull String path);
 
   boolean isApplicable(@NotNull String path);
-  
+
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   default String getDictionaryType() {
     return "";
   }

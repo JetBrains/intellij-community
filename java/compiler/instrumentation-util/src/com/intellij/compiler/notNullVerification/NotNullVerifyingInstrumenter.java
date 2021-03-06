@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -12,7 +12,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
+public final class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
 
@@ -36,7 +36,15 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     myAuxGenerator = new AuxiliaryMethodGenerator(reader);
   }
 
+  /**
+   * @deprecated use {@link NotNullVerifyingInstrumenter#processClassFile(ClassReader, ClassVisitor, String[])} instead
+   */
+  @Deprecated
   public static boolean processClassFile(FailSafeClassReader reader, ClassVisitor writer, String[] notNullAnnotations) {
+    return processClassFile((ClassReader)reader, writer, notNullAnnotations);
+  }
+
+  public static boolean processClassFile(ClassReader reader, ClassVisitor writer, String[] notNullAnnotations) {
     NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader, notNullAnnotations);
     reader.accept(instrumenter, 0);
     return instrumenter.myIsModification;

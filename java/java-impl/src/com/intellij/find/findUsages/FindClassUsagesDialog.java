@@ -72,7 +72,7 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
     options.isCheckDeepInheritance = true;
     options.isIncludeInherited = false;
 
-    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.class.started", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(myPsiElement.getProject(), EVENT_LOG_GROUP, "find.class.started", createFeatureUsageData(options));
   }
 
   @Override

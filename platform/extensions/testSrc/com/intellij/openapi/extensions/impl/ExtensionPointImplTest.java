@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
@@ -11,16 +12,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Test;
 import org.picocontainer.PicoContainer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -142,16 +141,13 @@ public class ExtensionPointImplTest {
 
   @Test
   public void testIncompatibleAdapter() {
+    DefaultLogger.disableStderrDumping(disposable);
+
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-
     extensionPoint.addExtensionAdapter(newStringAdapter());
-
-    try {
-      assertThat(extensionPoint.getExtensionList()).isEmpty();
-      fail("must throw");
-    }
-    catch (AssertionError ignored) {
-    }
+    assertThatThrownBy(() -> {
+      extensionPoint.getExtensionList();
+    }).hasMessageContaining("Extension java.lang.String does not implement class java.lang.Integer");
   }
 
   @Test
@@ -290,14 +286,17 @@ public class ExtensionPointImplTest {
 
     assertThat(extensionPoint.getExtensionList()).containsExactly(4, 2);
 
-    assertThat(ExtensionProcessingHelper.getByGroupingKey(extensionPoint, "foo", it -> "foo")).isEqualTo(extensionPoint.getExtensionList());
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, Function.identity(), Function.identity())).isEqualTo(2);
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, Function.identity(), (Integer it) -> it * 2)).isEqualTo(4);
+    Function<Integer, String> f = it -> "foo";
+    assertThat(ExtensionProcessingHelper.getByGroupingKey(extensionPoint, f.getClass(), "foo", f)).isEqualTo(extensionPoint.getExtensionList());
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, ExtensionPointImplTest.class, Function.identity(), Function.identity())).isEqualTo(2);
+    Function<Integer, Integer> f2 = (Integer it) -> it * 2;
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, f2.getClass(), Function.identity(), f2)).isEqualTo(4);
 
-    Function<@NotNull Integer, @Nullable Integer> filteringKeyMapper = it -> it < 3 ? it : null;
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, filteringKeyMapper, Function.identity())).isEqualTo(2);
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, filteringKeyMapper, Function.identity())).isNull();
-    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, Function.identity(), (Integer it) -> (Integer)null)).isNull();
+    Function<Integer, Integer> filteringKeyMapper = it -> it < 3 ? it : null;
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 2, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isEqualTo(2);
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, filteringKeyMapper.getClass(), filteringKeyMapper, Function.identity())).isNull();
+    Function<@NotNull Integer, @Nullable Integer> f3 = (Integer it) -> (Integer)null;
+    assertThat(ExtensionProcessingHelper.getByKey(extensionPoint, 4, f3.getClass(), Function.identity(), f3)).isNull();
   }
 
   @Test
@@ -324,7 +323,8 @@ public class ExtensionPointImplTest {
   }
 
   private static @NotNull <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPluginDescriptor("test"));
+    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(),
+                                                                     new DefaultPluginDescriptor("test"), aClass, false);
     point.setComponentManager(new MyComponentManager());
     return point;
   }
@@ -337,7 +337,7 @@ public class ExtensionPointImplTest {
     private Runnable myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
+      super(implementationClass, new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null, InterfaceExtensionImplementationClassResolver.INSTANCE);
     }
 
     public synchronized void setFire(@Nullable Runnable fire) {
@@ -382,6 +382,12 @@ public class ExtensionPointImplTest {
     }
 
     @Override
+    public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
+      //noinspection unchecked
+      return (Class<T>)Class.forName(className);
+    }
+
+    @Override
     public void dispose() {
     }
 
@@ -392,6 +398,23 @@ public class ExtensionPointImplTest {
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
+      return new RuntimeException(message);
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                                 @NotNull PluginId pluginId,
+                                                 @Nullable Map<String, String> attachments) {
+      return new RuntimeException(message);
+    }
+
+    @Override
+    public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+      return new RuntimeException(error);
     }
   }
 }

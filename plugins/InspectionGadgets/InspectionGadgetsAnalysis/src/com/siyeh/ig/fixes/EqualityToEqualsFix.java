@@ -15,17 +15,22 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +55,9 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
 
   @Nullable
   public static EqualityToEqualsFix buildFix(PsiBinaryExpression expression) {
-    final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+    final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
+    if (nullability == Nullability.NULLABLE) return null;
     if (lhs instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
@@ -79,7 +86,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   }
 
   @NotNull
-  public static String getFixName(boolean negated) {
+  public static @IntentionFamilyName String getFixName(boolean negated) {
     return negated
            ? CommonQuickFixBundle.message("fix.replace.x.with.y", "!=", "!equals()")
            : CommonQuickFixBundle.message("fix.replace.x.with.y", "==", "equals()");
@@ -99,13 +106,13 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
       return;
     }
     final PsiBinaryExpression expression = (PsiBinaryExpression)parent;
-    final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
-    final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
+    final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     if (lhs == null || rhs == null) {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    final StringBuilder newExpression = new StringBuilder();
+    @NonNls final StringBuilder newExpression = new StringBuilder();
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +17,7 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
-public class MacKeymapUtil {
+public final class MacKeymapUtil {
   public static final String ESCAPE	 = "\u238B";
   public static final String TAB	 = "\u21E5";
   public static final String TAB_BACK	 = "\u21E4";
@@ -74,41 +61,43 @@ public class MacKeymapUtil {
 
   @NotNull
   public static String getKeyText(int code) {
-    switch (code) {
-      case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
-      case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
-      case KeyEvent.VK_CAPS_LOCK:      return get(CAPS_LOCK, "Caps Lock");
-      case KeyEvent.VK_TAB:            return get(TAB, "Tab");
-      case KeyEvent.VK_SPACE:          return "Space";
-      case KeyEvent.VK_DELETE:         return get(DELETE, "Delete");
-      case KeyEvent.VK_HOME:           return get(HOME, "Home");
-      case KeyEvent.VK_END:            return get(END, "End");
-      case KeyEvent.VK_PAGE_UP:        return get(PAGE_UP, "Page Up");
-      case KeyEvent.VK_PAGE_DOWN:      return get(PAGE_DOWN, "Page Down");
-      case KeyEvent.VK_UP:             return get(UP, "Up Arrow");
-      case KeyEvent.VK_DOWN:           return get(DOWN, "Down Arrow");
-      case KeyEvent.VK_LEFT:           return get(LEFT, "Left Arrow");
-      case KeyEvent.VK_RIGHT:          return get(RIGHT, "Right Arrow");
-      case KeyEvent.VK_NUM_LOCK:       return get(NUMBER_LOCK, "Num Lock");
-      case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
-      case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
-      case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
-      case KeyEvent.VK_SUBTRACT:       return "-";
-      case KeyEvent.VK_ADD:            return "+";
-      case KeyEvent.VK_MINUS:          return "-";
-      case KeyEvent.VK_PLUS:           return "+";
-      case KeyEvent.VK_DIVIDE:         return get(NUM_PAD, "NumPad") + "/";
-      case KeyEvent.VK_NUMPAD0:        return get(NUM_PAD, "NumPad") + "0";
-      case KeyEvent.VK_NUMPAD1:        return get(NUM_PAD, "NumPad") + "1";
-      case KeyEvent.VK_NUMPAD2:        return get(NUM_PAD, "NumPad") + "2";
-      case KeyEvent.VK_NUMPAD3:        return get(NUM_PAD, "NumPad") + "3";
-      case KeyEvent.VK_NUMPAD4:        return get(NUM_PAD, "NumPad") + "4";
-      case KeyEvent.VK_NUMPAD5:        return get(NUM_PAD, "NumPad") + "5";
-      case KeyEvent.VK_NUMPAD6:        return get(NUM_PAD, "NumPad") + "6";
-      case KeyEvent.VK_NUMPAD7:        return get(NUM_PAD, "NumPad") + "7";
-      case KeyEvent.VK_NUMPAD8:        return get(NUM_PAD, "NumPad") + "8";
-      case KeyEvent.VK_NUMPAD9:        return get(NUM_PAD, "NumPad") + "9";
-      case 0:                          return "fn";
+    if (!Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+      switch (code) {
+        case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
+        case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
+        case KeyEvent.VK_CAPS_LOCK:      return get(CAPS_LOCK, "Caps Lock");
+        case KeyEvent.VK_TAB:            return get(TAB, "Tab");
+        case KeyEvent.VK_SPACE:          return "Space";
+        case KeyEvent.VK_DELETE:         return get(DELETE, "Delete");
+        case KeyEvent.VK_HOME:           return get(HOME, "Home");
+        case KeyEvent.VK_END:            return get(END, "End");
+        case KeyEvent.VK_PAGE_UP:        return get(PAGE_UP, "Page Up");
+        case KeyEvent.VK_PAGE_DOWN:      return get(PAGE_DOWN, "Page Down");
+        case KeyEvent.VK_UP:             return get(UP, "Up Arrow");
+        case KeyEvent.VK_DOWN:           return get(DOWN, "Down Arrow");
+        case KeyEvent.VK_LEFT:           return get(LEFT, "Left Arrow");
+        case KeyEvent.VK_RIGHT:          return get(RIGHT, "Right Arrow");
+        case KeyEvent.VK_NUM_LOCK:       return get(NUMBER_LOCK, "Num Lock");
+        case KeyEvent.VK_ENTER:          return get(RETURN, "Return");
+        case KeyEvent.VK_NUMBER_SIGN:    return get(NUM_PAD, "NumPad");
+        case KeyEvent.VK_MULTIPLY:       return get(NUM_PAD, "NumPad") + " *";
+        case KeyEvent.VK_SUBTRACT:       return "-";
+        case KeyEvent.VK_ADD:            return "+";
+        case KeyEvent.VK_MINUS:          return "-";
+        case KeyEvent.VK_PLUS:           return "+";
+        case KeyEvent.VK_DIVIDE:         return get(NUM_PAD, "NumPad") + "/";
+        case KeyEvent.VK_NUMPAD0:        return get(NUM_PAD, "NumPad") + "0";
+        case KeyEvent.VK_NUMPAD1:        return get(NUM_PAD, "NumPad") + "1";
+        case KeyEvent.VK_NUMPAD2:        return get(NUM_PAD, "NumPad") + "2";
+        case KeyEvent.VK_NUMPAD3:        return get(NUM_PAD, "NumPad") + "3";
+        case KeyEvent.VK_NUMPAD4:        return get(NUM_PAD, "NumPad") + "4";
+        case KeyEvent.VK_NUMPAD5:        return get(NUM_PAD, "NumPad") + "5";
+        case KeyEvent.VK_NUMPAD6:        return get(NUM_PAD, "NumPad") + "6";
+        case KeyEvent.VK_NUMPAD7:        return get(NUM_PAD, "NumPad") + "7";
+        case KeyEvent.VK_NUMPAD8:        return get(NUM_PAD, "NumPad") + "8";
+        case KeyEvent.VK_NUMPAD9:        return get(NUM_PAD, "NumPad") + "9";
+        case 0:                          return "fn";
+      }
     }
     return KeyEvent.getKeyText(code);
   }
@@ -122,6 +111,9 @@ public class MacKeymapUtil {
 
   @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
+    if (Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+      return replacement;
+    }
     Font font = UIUtil.getLabelFont();
     return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
   }

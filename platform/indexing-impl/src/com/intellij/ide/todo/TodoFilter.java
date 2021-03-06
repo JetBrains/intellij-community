@@ -1,27 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.SmartHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -29,24 +16,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class TodoFilter implements Cloneable {
+public final class TodoFilter implements Cloneable {
   private static final Logger LOG = Logger.getInstance(TodoFilter.class);
 
-  private static final String ATTRIBUTE_NAME = "name";
-  private static final String ELEMENT_PATTERN = "pattern";
-  private static final String ATTRIBUTE_INDEX = "index";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_PATTERN = "pattern";
+  private static final @NonNls String ATTRIBUTE_INDEX = "index";
 
-  private String myName;
+  private @NlsSafe String myName;
   private Set<TodoPattern> myTodoPatterns;
 
   public TodoFilter() {
     setName("");
-    myTodoPatterns = new SmartHashSet<>();
+    myTodoPatterns = new HashSet<>();
   }
 
-  public TodoFilter(@NotNull Element element, @NotNull List<? extends TodoPattern> patterns) {
+  public TodoFilter(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
     setName("");
-    myTodoPatterns = new SmartHashSet<>();
+    myTodoPatterns = new HashSet<>();
     readExternal(element, patterns);
   }
 
@@ -67,11 +54,13 @@ public class TodoFilter implements Cloneable {
   /**
    * @return filter's name. That is not {@code null} string.
    */
+  @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }
 
-  public void setName(@NotNull String name) {
+  public void setName(@NotNull @NlsSafe String name) {
     myName = name;
   }
 
@@ -112,7 +101,7 @@ public class TodoFilter implements Cloneable {
     return myTodoPatterns.isEmpty();
   }
 
-  private void readExternal(@NotNull Element element, @NotNull List<? extends TodoPattern> patterns) {
+  private void readExternal(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
     myName = element.getAttributeValue(ATTRIBUTE_NAME);
     if (myName == null) {
       throw new IllegalArgumentException();

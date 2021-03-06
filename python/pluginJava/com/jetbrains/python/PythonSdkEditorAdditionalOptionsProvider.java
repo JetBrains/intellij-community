@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
@@ -27,7 +28,7 @@ public class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditiona
     return new PythonSdkOptionsAdditionalDataConfigurable(project);
   }
 
-  private static class PythonSdkOptionsAdditionalDataConfigurable implements AdditionalDataConfigurable {
+  private static final class PythonSdkOptionsAdditionalDataConfigurable implements AdditionalDataConfigurable {
     private final Project myProject;
 
     private Sdk mySdk;
@@ -58,8 +59,8 @@ public class PythonSdkEditorAdditionalOptionsProvider extends SdkEditorAdditiona
     }
 
     @Override
-    public String getTabName() {
-      return "Packages";
+    public @NlsContexts.TabTitle String getTabName() {
+      return PySdkBundle.message("sdk.options.additional.data.tab.title");
     }
 
     @Override

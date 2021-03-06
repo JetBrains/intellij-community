@@ -1,35 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.ListModelEditor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.List;
 
-class QuickListsUi implements ConfigurableUi<List<QuickList>> {
+final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
   public static final String EMPTY = "empty";
   public static final String PANEL = "panel";
+
   private final KeymapListener keymapListener;
 
-  private final ListItemEditor<QuickList> itemEditor = new ListItemEditor<QuickList>() {
-    @NotNull
+  private final ListItemEditor<QuickList> itemEditor = new ListItemEditor<>() {
     @Override
-    public Class<QuickList> getItemClass() {
+    public @NotNull Class<QuickList> getItemClass() {
       return QuickList.class;
     }
 
@@ -43,10 +44,9 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
       return item.getName().isEmpty() && item.getDescription() == null && item.getActionIds().length == 0;
     }
 
-    @NotNull
     @Override
-    public String getName(@NotNull QuickList item) {
-      return item.getName();
+    public @NotNull String getName(@NotNull QuickList item) {
+      return item.getDisplayName();
     }
 
     @Override
@@ -68,6 +68,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     // doesn't make any sense (and in any case scheme manager cannot preserve order)
     editor.disableUpDownActions();
+    editor.getList().setEmptyText(KeyMapBundle.message("no.quick.lists"));
     editor.getList().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -102,7 +103,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     itemPanelWrapper = new JPanel(cardLayout);
 
     JLabel descLabel = new JLabel(IdeBundle.message("quick.lists.description"));
-    descLabel.setBorder(new EmptyBorder(0, 25, 0, 25));
+    descLabel.setBorder(JBUI.Borders.empty(0, 25));
 
     itemPanelWrapper.add(descLabel, EMPTY);
     itemPanelWrapper.add(itemPanel.getPanel(), PANEL);
@@ -143,9 +144,8 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return component;
   }
 }

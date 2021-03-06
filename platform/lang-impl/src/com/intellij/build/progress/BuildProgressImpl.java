@@ -4,12 +4,11 @@ package com.intellij.build.progress;
 import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.FilePosition;
-import com.intellij.build.events.EventResult;
-import com.intellij.build.events.FinishEvent;
-import com.intellij.build.events.MessageEvent;
-import com.intellij.build.events.StartEvent;
+import com.intellij.build.events.*;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,7 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
         fileLink.append(":").append(filePosition.getStartColumn() + 1);
       }
     }
-    String detailedMessage = fileLink.toString() + '\n' + message;
+    @NlsSafe String detailedMessage = fileLink.toString() + '\n' + message;
     FileMessageEventImpl event = new FileMessageEventImpl(getId(), kind, null, title, detailedMessage, filePosition);
     myListener.onEvent(getBuildId(), event);
     return this;
@@ -187,6 +186,13 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
     FinishEventImpl event = new FinishEventImpl(getId(), myParentProgress.getId(), timeStamp, message, new SkippedResultImpl());
     myListener.onEvent(getBuildId(), event);
     return myParentProgress;
+  }
+
+  @Override
+  @NotNull
+  public  BuildProgress<BuildProgressDescriptor> buildIssue(@NotNull BuildIssue issue, @NotNull MessageEvent.Kind kind) {
+    myListener.onEvent(getBuildId(), new BuildIssueEventImpl(getId(), issue, kind));
+    return this;
   }
 
   protected void assertStarted() {

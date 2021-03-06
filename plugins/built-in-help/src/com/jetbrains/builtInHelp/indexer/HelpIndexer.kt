@@ -14,7 +14,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
 
 class HelpIndexer
 @Throws(IOException::class)
@@ -40,9 +39,10 @@ internal constructor(indexDir: String) {
         val parsedDocument = Jsoup.parse(f, "UTF-8")
 
         val content = StringBuilder()
+        val lineSeparator = System.lineSeparator()
         parsedDocument.body().getElementsByClass("article")[0].children()
           .filterNot { it.hasAttr("data-swiftype-index") }
-          .forEach { content.append(it.text()).append(System.getProperty("line.separator")) }
+          .forEach { content.append(it.text()).append(lineSeparator) }
 
         doc.add(TextField("contents", content.toString(), Field.Store.YES))
         doc.add(StringField("filename", f.name, Field.Store.YES))

@@ -107,17 +107,17 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     taskActivator.addTask(new ExternalSystemTaskActivator.TaskActivationEntry(TEST_EXTERNAL_SYSTEM_ID, phase, projectPath, taskName));
   }
 
-  private void build(@NotNull Module module) {
+  private static void build(@NotNull Module module) {
     Promise<ProjectTaskManager.Result> promise = ProjectTaskManager.getInstance(module.getProject()).build(module);
     edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
-  private void rebuild(@NotNull Module module) {
+  private static void rebuild(@NotNull Module module) {
     Promise<ProjectTaskManager.Result> promise = ProjectTaskManager.getInstance(module.getProject()).rebuild(module);
     edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
-  private static class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
+  private static final class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {
     private TestTaskConfigurationType() {super(TEST_EXTERNAL_SYSTEM_ID);}
 
     @Override
@@ -126,7 +126,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     }
   }
 
-  private class MyTestExternalSystemManager extends TestExternalSystemManager {
+  private final class MyTestExternalSystemManager extends TestExternalSystemManager {
     private MyTestExternalSystemManager() {super(ExternalSystemTaskActivatorTest.this.myProject);}
 
     @NotNull

@@ -32,9 +32,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -124,9 +128,30 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       }
       final PsiModifierList modifierList = (PsiModifierList)element;
       @NonNls final String text = String.join(" ", getSortedModifiers(modifierList));
-      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text + " void x() {}", modifierList);
-      final PsiModifierList newModifierList = method.getModifierList();
-      new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
+      PsiModifierList newModifierList = createNewModifierList(modifierList, text);
+      if (newModifierList != null) {
+        new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
+      }
+    }
+
+    @Nullable
+    private PsiModifierList createNewModifierList(@NotNull PsiModifierList oldModifierList, @NotNull String newModifiersText) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(oldModifierList.getProject());
+      PsiElement parent = oldModifierList.getParent();
+      if (parent instanceof PsiRequiresStatement) {
+        String text = "requires " + newModifiersText + " x;";
+        PsiRequiresStatement statement = (PsiRequiresStatement) factory.createModuleStatementFromText(text, oldModifierList);
+        return statement.getModifierList();
+      }
+      else if (parent instanceof PsiClass) {
+        PsiDeclarationStatement declarationStatement =
+          (PsiDeclarationStatement)factory.createStatementFromText(newModifiersText + " class X {}", oldModifierList);
+        return ((PsiClass)declarationStatement.getDeclaredElements()[0]).getModifierList();
+      }
+      else {
+        PsiMethod method = factory.createMethodFromText(newModifiersText + " void x() {}", oldModifierList);
+        return method.getModifierList();
+      }
     }
   }
 
@@ -207,6 +232,12 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       checkForMissortedModifiers(field);
     }
 
+    @Override
+    public void visitRequiresStatement(PsiRequiresStatement statement) {
+      super.visitRequiresStatement(statement);
+      checkForMissortedModifiers(statement);
+    }
+
     private void checkForMissortedModifiers(PsiModifierListOwner listOwner) {
       final PsiModifierList modifierList = listOwner.getModifierList();
       if (modifierList == null) {
@@ -274,28 +305,38 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
   private static class ModifierComparator implements Comparator<String> {
 
-    @NonNls private static final Map<String, Integer> s_modifierOrder = new HashMap<>(12);
-
-    static {
-      s_modifierOrder.put(PsiModifier.PUBLIC, Integer.valueOf(0));
-      s_modifierOrder.put(PsiModifier.PROTECTED, Integer.valueOf(1));
-      s_modifierOrder.put(PsiModifier.PRIVATE, Integer.valueOf(2));
-      s_modifierOrder.put(PsiModifier.ABSTRACT, Integer.valueOf(3));
-      s_modifierOrder.put(PsiModifier.DEFAULT, Integer.valueOf(4));
-      s_modifierOrder.put(PsiModifier.STATIC, Integer.valueOf(5));
-      s_modifierOrder.put(PsiModifier.FINAL, Integer.valueOf(6));
-      s_modifierOrder.put(PsiModifier.TRANSIENT, Integer.valueOf(7));
-      s_modifierOrder.put(PsiModifier.VOLATILE, Integer.valueOf(8));
-      s_modifierOrder.put(PsiModifier.SYNCHRONIZED, Integer.valueOf(9));
-      s_modifierOrder.put(PsiModifier.NATIVE, Integer.valueOf(10));
-      s_modifierOrder.put(PsiModifier.STRICTFP, Integer.valueOf(11));
-    }
+    @NonNls private static final String[] s_modifierOrder =
+      {
+        PsiModifier.PUBLIC,
+        PsiModifier.PROTECTED,
+        PsiModifier.PRIVATE,
+        PsiModifier.ABSTRACT,
+        PsiModifier.DEFAULT,
+        PsiModifier.STATIC,
+        PsiModifier.FINAL,
+        PsiModifier.TRANSIENT,
+        PsiModifier.VOLATILE,
+        PsiModifier.SYNCHRONIZED,
+        PsiModifier.NATIVE,
+        PsiModifier.STRICTFP,
+        PsiModifier.TRANSITIVE,
+        PsiModifier.SEALED,
+        PsiModifier.NON_SEALED
+      };
+    
 
     @Override
     public int compare(String modifier1, String modifier2) {
-      final Integer ordinal1 = s_modifierOrder.get(modifier1);
-      final Integer ordinal2 = s_modifierOrder.get(modifier2);
-      return (ordinal1 == null || ordinal2 == null) ? 0 : ordinal1.intValue() - ordinal2.intValue();
+      if (modifier1.equals(modifier2)) return 0;
+      for (String modifier : s_modifierOrder) {
+        if (modifier.equals(modifier1)) {
+          return -1;
+        }
+        else if (modifier.equals(modifier2)) {
+          return 1;
+        }
+      }
+      return modifier1.compareTo(modifier2);
     }
   }
 }

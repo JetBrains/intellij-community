@@ -1,0 +1,44 @@
+<html>
+<body>
+Suggests replacing classes with records.
+The inspection could be useful if you need to focus on modeling immutable data rather than extensible behavior.
+Automatic implementation of data-driven methods such as equals and accessors helps to get rid of boilerplate.
+<p>
+  Note that not every class can be a record. Here are some of the restrictions:
+</p>
+<ul>
+  <li>Class must contain no inheritors and must be a top level class.</li>
+  <li>All the non-static fields in class must be final.</li>
+  <li>Class must contain no instance initializers, generic constructor and native methods.</li>
+</ul>
+To get a full list of the restrictions refer to https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html.
+<!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  class Point {
+    private final double x;
+    private final double y;
+
+    Point(double x, double y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    double getX() {
+      return x;
+    }
+
+    double getY() {
+      return y;
+    }
+  }
+</pre>
+This record will be converted to:
+<pre>
+  record Point(int x, int y) {
+  }
+</pre>
+<p>This inspection only applies to language level 14 preview and higher.</p>
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

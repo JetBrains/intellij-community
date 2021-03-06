@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -6,10 +6,12 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,7 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 /**
  * @author peter
  */
-public class HardcodedContracts {
+public final class HardcodedContracts {
   private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
                             fail()),
@@ -41,6 +43,30 @@ public class HardcodedContracts {
     instanceCall(JAVA_UTIL_QUEUE, "poll").parameterCount(0),
     instanceCall("java.util.Deque", "pollFirst", "pollLast").parameterCount(0)
     );
+  private static final Set<String> PURE_ARRAY_METHODS = Set.of("binarySearch", "spliterator", "stream", "equals", "deepEquals");
+  private static final CallMatcher NO_PARAMETER_LEAK_METHODS =
+    anyOf(
+      instanceCall(JAVA_UTIL_COLLECTION, "addAll", "removeAll", "retainAll").parameterTypes(JAVA_UTIL_COLLECTION),
+      instanceCall(JAVA_UTIL_LIST, "addAll").parameterTypes("int", JAVA_UTIL_COLLECTION),
+      instanceCall(JAVA_UTIL_MAP, "putAll").parameterTypes(JAVA_UTIL_MAP));
+
+  /**
+   * @param method method to test
+   * @return true if given method doesn't spoil the arguments' locality
+   */
+  static boolean isKnownNoParameterLeak(@Nullable PsiMethod method) {
+    if (method == null) return false;
+    if (ConstructionUtils.isCollectionConstructor(method)) {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        String name = aClass.getQualifiedName();
+        return name != null && name.startsWith("java.util.") &&
+               (InheritanceUtil.isInheritor(aClass, JAVA_UTIL_COLLECTION) ||
+                InheritanceUtil.isInheritor(aClass, JAVA_UTIL_MAP));
+      }
+    }
+    return NO_PARAMETER_LEAK_METHODS.methodMatches(method);
+  }
 
   @FunctionalInterface
   interface ContractProvider {
@@ -133,6 +159,7 @@ public class HardcodedContracts {
               (call, paramCount) -> equalsContracts(call))
     .register(anyOf(
       staticCall(JAVA_UTIL_OBJECTS, "equals").parameterCount(2),
+      staticCall(JAVA_UTIL_ARRAYS, "equals", "deepEquals").parameterCount(2),
       staticCall("com.google.common.base.Objects", "equal").parameterCount(2)),
               ContractProvider.of(
                 singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.argument(1),
@@ -415,6 +442,10 @@ public class HardcodedContracts {
           .skip(1)
           .takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember))
           .filter(PsiMethodCallExpression.class)
+          .takeWhile(c -> {
+            String name = c.getMethodExpression().getReferenceName();
+            return name != null && (name.startsWith("is") || name.equals("describedAs") || name.equals("as"));
+          })
           .filterMap(c -> constraintFromAssertJMatcher(type, c))
           .toList();
       }
@@ -438,9 +469,15 @@ public class HardcodedContracts {
       case "isEmpty":
         return emptyCheck(type, true);
       case "isTrue":
-        return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
+        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+          return new StandardMethodContract(new ValueConstraint[]{FALSE_VALUE}, fail());
+        }
+        return null;
       case "isFalse":
-        return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
+        if (PsiType.BOOLEAN.equals(type) || TypeUtils.typeEquals(JAVA_LANG_BOOLEAN, type)) {
+          return new StandardMethodContract(new ValueConstraint[]{TRUE_VALUE}, fail());
+        }
+        return null;
     }
     return null;
   }
@@ -462,34 +499,43 @@ public class HardcodedContracts {
     return Collections.singletonList(failContract);
   }
 
-  public static boolean isHardcodedPure(PsiMethod method) {
+  /**
+   * Returns the mutation signature for the methods that have hardcoded contracts
+   *
+   * @param method method that has hardcoded contracts (that is, {@link #getHardcodedContracts(PsiMethod, PsiMethodCallExpression)}
+   *               returned non-empty list for this method)
+   * @return a mutation signature for the given method. Result is unspecified if method has no hardcoded contract.
+   */
+  public static MutationSignature getHardcodedMutation(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return false;
+    if (aClass == null) return MutationSignature.unknown();
     String className = aClass.getQualifiedName();
-    if (className == null) return false;
+    if (className == null) return MutationSignature.unknown();
     String name = method.getName();
 
     if ("java.util.Objects".equals(className) && "requireNonNull".equals(name)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
-        return false;
+        return MutationSignature.unknown();
       }
     }
 
     if ("remove".equals(name)) {
-      return false;
+      return MutationSignature.pure().alsoMutatesThis();
     }
 
     if ("java.lang.System".equals(className)) {
-      return false;
+      return MutationSignature.unknown();
     }
     if (JAVA_UTIL_ARRAYS.equals(className)) {
-      return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream");
+      return PURE_ARRAY_METHODS.contains(name) ? MutationSignature.pure() :
+             // else: fill, parallelPrefix, parallelSort, sort
+             MutationSignature.pure().alsoMutatesArg(0);
     }
     if (QUEUE_POLL.methodMatches(method)) {
-      return false;
+      return MutationSignature.pure().alsoMutatesThis();
     }
-    return true;
+    return MutationSignature.pure();
   }
 
   public static boolean hasHardcodedContracts(@Nullable PsiElement element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myArgFile;
   private boolean myClasspathFile = true;
   private String myJarPath;
+
+  private final JavaTargetDependentParameters myTargetDependentParameters = new JavaTargetDependentParameters();
 
   @Nullable
   public Sdk getJdk() {
@@ -86,6 +89,15 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   public boolean isDynamicClasspath() {
     return myUseDynamicClasspath;
+  }
+
+  /**
+   * Enables command line shortening considering current {@link #getJdk JDK}
+   * and ignoring whether dynamic classpath is {@linkplain JdkUtil#useDynamicClasspath enabled on project or application level}.
+   */
+  public void useDynamicClasspathDefinedByJdkLevel() {
+    Sdk jdk = getJdk();
+    setShortenCommandLine(ShortenCommandLine.getDefaultMethodForJdkLevel(jdk != null ? jdk.getHomePath() : null));
   }
 
   public void setUseDynamicClasspath(boolean useDynamicClasspath) {
@@ -154,6 +166,10 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
       Sdk jdk = getJdk();
       mode = ShortenCommandLine.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
     }
+    setShortenCommandLine(mode);
+  }
+
+  public void setShortenCommandLine(@NotNull ShortenCommandLine mode) {
     myUseDynamicClasspath = mode != ShortenCommandLine.NONE;
     myUseClasspathJar = mode == ShortenCommandLine.MANIFEST;
     setClasspathFile(mode == ShortenCommandLine.CLASSPATH_FILE);
@@ -166,6 +182,11 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   public void setJarPath(String jarPath) {
     myJarPath = jarPath;
+  }
+
+  @ApiStatus.Experimental
+  public JavaTargetDependentParameters getTargetDependentParameters() {
+    return myTargetDependentParameters;
   }
 
   /**

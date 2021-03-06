@@ -48,6 +48,7 @@
   </action>
   <action id="EditorPreviousWord">
     <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt B"/>
   </action>
   <action id="QuickJavaDoc">
     <keyboard-shortcut first-keystroke="F1"/>
@@ -80,10 +81,10 @@
     <keyboard-shortcut first-keystroke="control shift Q"/>
   </action>
   <action id="MethodDown">
-    <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt shift B"/>
   </action>
   <action id="RunClass"/>
 
@@ -152,7 +153,7 @@
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ShowContent">
-    <keyboard-shortcut first-keystroke="control DOWN"/>
+    <keyboard-shortcut first-keystroke="control shift DOWN"/>
   </action>
   <action id="NextEditorTab">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
@@ -160,9 +161,11 @@
   <action id="TogglePopupHints"/>
   <action id="EditorNextWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt shift F"/>
   </action>
   <action id="EditorNextWord">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
   <action id="EditorLineStart">
     <keyboard-shortcut first-keystroke="HOME"/>
@@ -180,9 +183,6 @@
   </action>
   <action id="ContextHelp">
     <keyboard-shortcut first-keystroke="meta shift F1"/>
-  </action>
-  <action id="ActivateMessagesToolWindow">
-    <keyboard-shortcut first-keystroke="meta 0"/>
   </action>
   <action id="NewElement">
     <keyboard-shortcut first-keystroke="meta N"/>
@@ -206,7 +206,7 @@
   <action id="ActivateDebugToolWindow">
     <keyboard-shortcut first-keystroke="meta 5"/>
   </action>
-  <action id="ActivateTODOToolWindow">
+  <action id="ActivateProblemsViewToolWindow">
     <keyboard-shortcut first-keystroke="meta 6"/>
   </action>
   <action id="ActivateStructureToolWindow">
@@ -218,6 +218,9 @@
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="meta 9"/>
+  </action>
+  <action id="ActivateCommitToolWindow">
+    <keyboard-shortcut first-keystroke="meta 0"/>
   </action>
   <action id="NextWindow">
     <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
@@ -344,10 +347,8 @@
   </action>
 
   <action id="EditorLookupUp">
-    <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="EditorLookupDown">
-    <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
 
   <action id="EditorDeleteToWordStart">
@@ -524,11 +525,9 @@
   </action>
   <action id="Diff.PrevChange">
     <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control LEFT"/>
   </action>
   <action id="Diff.NextChange">
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
   <action id="Diff.ApplyLeftSide">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
@@ -707,5 +706,49 @@
   </action>
   <action id="ToggleFindInSelection">
     <keyboard-shortcut first-keystroke="control alt E"/>
+  </action>
+
+  <action id="UsageGrouping.Module">
+    <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+  <action  id="UsageGrouping.Directory">
+    <keyboard-shortcut first-keystroke="control P"/>
+  </action>
+  <action id="UsageGrouping.UsageType">
+    <keyboard-shortcut first-keystroke="control T"/>
+  </action>
+  <action id="UsageGrouping.FlattenModules">
+    <keyboard-shortcut first-keystroke="control O"/>
+  </action>
+  <action id="UsageGrouping.FileStructure">
+    <keyboard-shortcut first-keystroke="control S"/>
+  </action>
+  <action id="UsageGrouping.DirectoryStructure">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
+
+  <action id="List-selectFirstRow">
+    <keyboard-shortcut first-keystroke="alt up"/>
+  </action>
+  <action id="List-selectLastRow">
+    <keyboard-shortcut first-keystroke="alt down"/>
+  </action>
+  <action id="List-selectFirstRowExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift up"/>
+  </action>
+  <action id="List-selectLastRowExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift down"/>
+  </action>
+  <action id="EditorScrollToCenter">
+    <keyboard-shortcut first-keystroke="control L"/>
+  </action>
+  <action id="ActivateUnitTestsToolWindow">
+    <keyboard-shortcut first-keystroke="meta alt 8"/>
+  </action>
+  <action id="ActivateNuGetToolWindow">
+    <keyboard-shortcut first-keystroke="meta alt 7"/>
+  </action>
+  <action id="UiInspector">
+    <mouse-shortcut keystroke="control alt button1"/>
   </action>
 </keymap>

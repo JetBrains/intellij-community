@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -15,15 +13,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class UpdatingScopeOnProjectStructureChangeListener implements ProjectComponent, ModuleListener {
-  public UpdatingScopeOnProjectStructureChangeListener(MessageBus messageBus) {
-    messageBus.connect().subscribe(ProjectTopics.MODULES, this);
+final class UpdatingScopeOnProjectStructureChangeListener implements ModuleListener {
+  UpdatingScopeOnProjectStructureChangeListener(@NotNull Project project) {
+    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, this);
   }
 
   @Override
   public void modulesRenamed(@NotNull Project project,
-                             @NotNull List<Module> modules,
-                             @NotNull Function<Module, String> oldNameProvider) {
+                             @NotNull List<? extends Module> modules,
+                             @NotNull Function<? super Module, String> oldNameProvider) {
     Map<String, String> moduleMap = modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName));
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       NamedScope[] oldScopes = holder.getEditableScopes();
@@ -52,7 +50,8 @@ public class UpdatingScopeOnProjectStructureChangeListener implements ProjectCom
       return packageSet;
     });
     if (newSet != oldSet) {
-      return new NamedScope(scope.getName(), scope.getIcon(), newSet);
+      String presentableName = scope.getPresentableName();
+      return new NamedScope(scope.getScopeId(), () -> presentableName, scope.getIcon(), newSet);
     }
     return scope;
   }

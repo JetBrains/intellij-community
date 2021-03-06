@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
@@ -59,16 +47,6 @@ public class CellRendererPanel extends JPanel {
   public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
   }
 
-  // isOpaque() optimization ----------------
-  @Override
-  public final boolean isOpaque() {
-    return false;
-  }
-
-  @Override
-  public final void setOpaque(boolean isOpaque) {
-  }
-
   @Override
   protected void paintComponent(Graphics g) {
     if (mySelected) {
@@ -111,6 +89,30 @@ public class CellRendererPanel extends JPanel {
 
   protected final Dimension super_getPreferredSize() {
     return super.getPreferredSize();
+  }
+
+  /**
+   * Calculate preferred size via layout manager every time.
+   *
+   * <p>
+   *   When running {@link Container#validateTree()} the flag {@link Component#valid}
+   * can change its value to {@code true}. But {@link CellRendererPanel#invalidate()} has empty body and never rewrites the flag value.
+   * Therefore {@link Component#preferredSize()} uses a cached value for preferred size and never changes it after.
+   * </p>
+   *
+   * <p>
+   *   To avoid that CellRendererPanel overrides default implementation to calculate preferred size via layout manager every time.
+   * </p>
+   *
+   * @deprecated do not this method directly, use {@link #getPreferredSize()} instead
+   */
+  @Deprecated
+  @Override
+  public final Dimension preferredSize() {
+    LayoutManager layoutMgr = getLayout();
+    return (layoutMgr != null) ?
+           layoutMgr.preferredLayoutSize(this) :
+           super.preferredSize();
   }
 
   @Override

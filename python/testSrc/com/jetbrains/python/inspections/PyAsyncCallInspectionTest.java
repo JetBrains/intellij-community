@@ -73,6 +73,6 @@ public class PyAsyncCallInspectionTest extends PyInspectionTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 }

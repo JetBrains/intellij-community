@@ -18,7 +18,7 @@ public class ThemeJsonPsiReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(JsonStringLiteral.class)
-        .inVirtualFile(PlatformPatterns.virtualFile().with(new PatternCondition<VirtualFile>("theme.json") {
+        .inVirtualFile(PlatformPatterns.virtualFile().with(new PatternCondition<>("theme.json") {
           @Override
           public boolean accepts(@NotNull VirtualFile file, ProcessingContext context) {
             return ThemeJsonUtil.isThemeFilename(file.getName());

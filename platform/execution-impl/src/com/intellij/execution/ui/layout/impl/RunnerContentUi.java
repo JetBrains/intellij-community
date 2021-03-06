@@ -21,20 +21,23 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.ActiveRunnable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
+import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.TwoSideComponent;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -44,15 +47,17 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabPainterAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -68,7 +73,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -94,7 +99,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private final RunnerLayout myLayoutSettings;
 
   private final @NotNull ActionManager myActionManager;
-  private final String mySessionName;
+  private final @NlsSafe String mySessionName;
   private final String myRunnerId;
   private NonOpaquePanel myComponent;
 
@@ -112,6 +117,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private final Project myProject;
 
   private ActionGroup myTopLeftActions = new DefaultActionGroup();
+  private ActionGroup myTopMiddleActions = new DefaultActionGroup();
   private ActionGroup myTopRightActions = new DefaultActionGroup();
 
   private final DefaultActionGroup myViewActions = new DefaultActionGroup();
@@ -124,6 +130,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private final Set<Object> myRestoreStateRequestors = new HashSet<>();
   private String myTopLeftActionsPlace = ActionPlaces.UNKNOWN;
+  private String myTopMiddleActionsPlace = ActionPlaces.UNKNOWN;
   private String myTopRightActionsPlace = ActionPlaces.UNKNOWN;
   private final IdeFocusManager myFocusManager;
 
@@ -187,6 +194,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     rebuildCommonActions();
   }
 
+  void setTopMiddleActions(final @NotNull ActionGroup topActions, @NotNull String place) {
+    myTopMiddleActions = topActions;
+    myTopMiddleActionsPlace = place;
+
+    rebuildCommonActions();
+  }
+
   void setTopRightActions(final @NotNull ActionGroup topActions, @NotNull String place) {
     myTopRightActions = topActions;
     myTopRightActionsPlace = place;
@@ -237,7 +251,15 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void initUi() {
     if (myTabs != null) return;
 
-    myTabs = JBRunnerTabs.create(myProject, this);
+    myTabs = new JBRunnerTabs(myProject, this) {
+      @Override
+      protected TabPainterAdapter createTabPainterAdapter() {
+        return Registry.is("debugger.new.tool.window.layout")
+               ? new DefaultTabPainterAdapter(JBTabPainter.getTOOL_WINDOW())
+               : super.createTabPainterAdapter();
+      }
+    };
+    myTabs.getComponent().setOpaque(false);
     myTabs.setDataProvider(dataId -> {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
         TabInfo info = myTabs.getTargetInfo();
@@ -257,7 +279,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     myTabs.getPresentation().setPaintFocus(false).setRequestFocusOnLastFocusedComponent(true);
 
-    NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
+    NonOpaquePanel wrapper = new MyComponent();
     wrapper.add(myToolbar, BorderLayout.WEST);
     wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
     wrapper.setBorder(JBUI.Borders.emptyTop(-1));
@@ -324,6 +346,74 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       if (dockManager != null) {
         dockManager.register(this, this);
       }
+    }
+    if (Registry.is("debugger.new.tool.window.layout")) {
+      MouseAdapter adapter = new MouseAdapter() {
+        private Point myPressPoint = null;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent),
+                                       decorator -> decorator.activate(ToolWindowEventSource.ToolWindowHeader));
+          myPressPoint = e.getPoint();
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
+            ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent),
+                                         decorator -> {
+                                           if (decorator.isHeaderVisible()) return;
+                                           String id = decorator.getToolWindowId();
+                                           ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
+                                           ToolWindow window = manager.getToolWindow(id);
+                                           ObjectUtils.consumeIfNotNull(window, w -> manager.setMaximized(w, !manager.isMaximized(w)));
+                                         });
+          }
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+          InternalDecoratorImpl decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent);
+          if (decorator == null || decorator.isHeaderVisible()) return;
+          ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(decorator.getToolWindowId());
+          ToolWindowAnchor anchor = window != null ? window.getAnchor() : null;
+          if (anchor == ToolWindowAnchor.BOTTOM && SwingUtilities.isLeftMouseButton(e) && myPressPoint != null) {
+            ThreeComponentsSplitter splitter = ComponentUtil.getParentOfType(ThreeComponentsSplitter.class, myComponent);
+            if (splitter != null &&
+                splitter.getOrientation() &&
+                SwingUtilities.isDescendingFrom(getComponent(), splitter.getLastComponent())) {
+              int size = splitter.getLastSize();
+              int yDiff = myPressPoint.y - e.getPoint().y;
+              splitter.setLastSize(size + yDiff);
+            }
+          }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          myPressPoint = null;
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          InternalDecoratorImpl decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent);
+          if (decorator == null || decorator.isHeaderVisible()) {
+            e.getComponent().setCursor(Cursor.getDefaultCursor());
+            return;
+          }
+          e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          e.getComponent().setCursor(Cursor.getDefaultCursor());
+        }
+      };
+      wrapper.addMouseListener(adapter);
+      myTabs.getComponent().addMouseListener(adapter);
+      wrapper.addMouseMotionListener(adapter);
+      myTabs.getComponent().addMouseMotionListener(adapter);
     }
     updateRestoreLayoutActionVisibility();
   }
@@ -405,8 +495,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     else if (Content.PROP_DISPLAY_NAME.equals(property)
              || Content.PROP_ICON.equals(property)
+             || Content.PROP_PINNED.equals(property)
              || Content.PROP_ACTIONS.equals(property)
-             || Content.PROP_DESCRIPTION.equals(property)) {
+             || Content.PROP_DESCRIPTION.equals(property)
+             || Content.PROP_TAB_COLOR.equals(property)) {
       cell.updateTabPresentation(content);
       updateTabsUI(false);
     }
@@ -726,7 +818,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         }
 
         if (myManager.getComponent().isShowing() && !isStateBeingRestored()) {
-          grid.restoreLastUiState();
+          setStateIsBeingRestored(true, RunnerContentUi.this);
+          try {
+            grid.restoreLastUiState();
+          } finally {
+            setStateIsBeingRestored(false, RunnerContentUi.this);
+          }
         }
 
         updateTabsUI(false);
@@ -781,10 +878,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       }
 
       @Override
-      public void contentRemoveQuery(final @NotNull ContentManagerEvent event) {
-      }
-
-      @Override
       public void selectionChanged(final @NotNull ContentManagerEvent event) {
         if (isStateBeingRestored()) return;
 
@@ -835,11 +928,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       content.putUserData(RunnerLayout.DEFAULT_INDEX, null);
     }
 
-    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
+    TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText(ExecutionBundle.message("runner.context.tab"));
 
     Wrapper leftWrapper = new Wrapper();
+    Wrapper middleWrapper = new Wrapper();
     Wrapper rightWrapper = new Wrapper();
-    myCommonActionsPlaceholder.put(grid, new TopToolbarWrappers(leftWrapper, rightWrapper));
+    myCommonActionsPlaceholder.put(grid, new TopToolbarWrappers(leftWrapper, middleWrapper, rightWrapper));
 
     Wrapper minimizedToolbar = new Wrapper();
     myMinimizedButtonsPlaceholder.put(grid, minimizedToolbar);
@@ -853,7 +947,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     TwoSideComponent right = new TwoSideComponent(searchComponent, minimizedToolbar);
 
 
-    NonOpaquePanel sideComponent = new TwoSideComponent(leftWrapper, new TwoSideComponent(right, rightWrapper));
+    NonOpaquePanel sideComponent = new TwoSideComponent(leftWrapper, new TwoSideComponent(middleWrapper, new TwoSideComponent(right, rightWrapper)));
 
     tab.setSideComponent(sideComponent);
 
@@ -933,6 +1027,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     boolean hasToolbarContent = false;
     for (Map.Entry<GridImpl, TopToolbarWrappers> entry : myCommonActionsPlaceholder.entrySet()) {
       Wrapper leftPlaceHolder = entry.getValue().left;
+      Wrapper middlePlaceHolder = entry.getValue().middle;
       Wrapper rightPlaceHolder = entry.getValue().right;
 
       TopToolbarContextActions topToolbarContextActions = myContextActions.get(entry.getKey());
@@ -945,6 +1040,14 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         setActions(leftPlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
       }
 
+      DefaultActionGroup middleGroupToBuild = new DefaultActionGroup();
+      middleGroupToBuild.addAll(myTopMiddleActions);
+      final AnAction[] middleActions = middleGroupToBuild.getChildren(null);
+
+      if (topToolbarContextActions == null || !Arrays.equals(middleActions, topToolbarContextActions.middle)) {
+        setActions(middlePlaceHolder, myTopMiddleActionsPlace, middleGroupToBuild);
+      }
+
       DefaultActionGroup rightGroupToBuild = new DefaultActionGroup();
       rightGroupToBuild.addAll(myTopRightActions);
       final AnAction[] rightActions = rightGroupToBuild.getChildren(null);
@@ -953,7 +1056,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         setActions(rightPlaceHolder, myTopRightActionsPlace, rightGroupToBuild);
       }
 
-      myContextActions.put(entry.getKey(), new TopToolbarContextActions(leftActions, rightActions));
+      myContextActions.put(entry.getKey(), new TopToolbarContextActions(leftActions, middleActions, rightActions));
 
       if (leftGroupToBuild.getChildrenCount() > 0 || rightGroupToBuild.getChildrenCount() > 0) {
         hasToolbarContent = true;
@@ -966,7 +1069,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
     String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
     ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+    tb.setReservePlaceAutoPopupIcon(false);
+    tb.setTargetComponent(myComponent);
     tb.getComponent().setBorder(null);
+    tb.getComponent().setOpaque(false);
 
     placeHolder.setContent(tb.getComponent());
   }
@@ -975,9 +1081,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     for (Map.Entry<GridImpl, Wrapper> entry : myMinimizedButtonsPlaceholder.entrySet()) {
       Wrapper eachPlaceholder = entry.getValue();
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.RUNNER_LAYOUT_BUTTON_TOOLBAR, myViewActions, true);
-      tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout);
-      tb.setSecondaryActionsTooltip("Layout Settings");
+      tb.setSecondaryActionsIcon(AllIcons.Debugger.RestoreLayout, Registry.is("debugger.new.tool.window.layout"));
+      tb.setSecondaryActionsTooltip(ExecutionBundle.message("runner.content.tooltip.layout.settings"));
       tb.setTargetComponent(myComponent);
+      tb.getComponent().setOpaque(false);
       tb.getComponent().setBorder(null);
       tb.setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
@@ -1026,7 +1133,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         title = name;
       }
       else {
-        title = StringUtil.join(contents, (NotNullFunction<Content, String>)Content::getTabName, " | ");
+        title = StringUtil.join(contents, Content::getTabName, " | ");
       }
     }
     usedNames.add(title);
@@ -1379,7 +1486,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private static class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = ColorUtil.mix(JBColor.BLUE, JBColor.WHITE, .3);
 
     @Override
     public boolean needsRepaint() {
@@ -1390,10 +1496,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.toAlpha(myColor, 200));
-      g.setStroke(new BasicStroke(2));
-      g.draw(myBoundingBox);
-      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.setColor(JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57));
       g.fill(myBoundingBox);
     }
 
@@ -1451,18 +1554,29 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         r = new RelativeRectangle(cellWrapper).getRectangleOn(component);
         break;
       }
-      myBoundingBox = new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, 16, 16);
+      myBoundingBox = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
   }
 
   private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
-    MyComponent(LayoutManager layout) {
-      super(layout);
+    MyComponent() {
+      super(new BorderLayout());
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
       setBorder(new ToolWindowEx.Border(false, false, false, false));
+
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      if (!Registry.is("debugger.new.tool.window.layout")) return;
+      InternalDecoratorImpl decorator = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myComponent);
+      if (decorator != null && myTabs.getTabCount() > 0 && !decorator.isHeaderVisible()) {
+        UIUtil.drawHeader(g, 0, getWidth(), decorator.getHeaderHeight(), decorator.isActive(), true, false, false);
+      }
     }
 
     @Override
@@ -1701,85 +1815,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     });
   }
 
-  private static class TwoSideComponent extends NonOpaquePanel {
-    private TwoSideComponent(JComponent left, JComponent right) {
-      setLayout(new CommonToolbarLayout(left, right));
-      add(left);
-      add(right);
-    }
-  }
-
-  private static class CommonToolbarLayout extends AbstractLayoutManager {
-    private final JComponent myLeft;
-    private final JComponent myRight;
-
-    CommonToolbarLayout(final JComponent left, final JComponent right) {
-      myLeft = left;
-      myRight = right;
-    }
-
-    @Override
-    public Dimension preferredLayoutSize(final @NotNull Container parent) {
-
-      Dimension size = new Dimension();
-      Dimension leftSize = myLeft.getPreferredSize();
-      Dimension rightSize = myRight.getPreferredSize();
-
-      size.width = leftSize.width + rightSize.width;
-      size.height = Math.max(leftSize.height, rightSize.height);
-
-      return size;
-    }
-
-    @Override
-    public void layoutContainer(final @NotNull Container parent) {
-      Dimension size = parent.getSize();
-      Dimension prefSize = parent.getPreferredSize();
-      if (prefSize.width <= size.width) {
-        myLeft.setBounds(0, 0, myLeft.getPreferredSize().width, parent.getHeight());
-        Dimension rightSize = myRight.getPreferredSize();
-        myRight.setBounds(parent.getWidth() - rightSize.width, 0, rightSize.width, parent.getHeight());
-      }
-      else {
-        Dimension leftMinSize = myLeft.getMinimumSize();
-        Dimension rightMinSize = myRight.getMinimumSize();
-
-        // see IDEA-140557, always shrink left component last
-        int delta = 0;
-        //int delta = (prefSize.width - size.width) / 2;
-
-        myLeft.setBounds(0, 0, myLeft.getPreferredSize().width - delta, parent.getHeight());
-        int rightX = (int)myLeft.getBounds().getMaxX();
-        int rightWidth = size.width - rightX;
-        if (rightWidth < rightMinSize.width) {
-          Dimension leftSize = myLeft.getSize();
-          int diffToRightMin = rightMinSize.width - rightWidth;
-          if (leftSize.width - diffToRightMin >= leftMinSize.width) {
-            leftSize.width -= diffToRightMin;
-            myLeft.setSize(leftSize);
-          }
-        }
-
-        myRight.setBounds((int)myLeft.getBounds().getMaxX(), 0, parent.getWidth() - myLeft.getWidth(), parent.getHeight());
-      }
-
-      toMakeVerticallyInCenter(myLeft, parent);
-      toMakeVerticallyInCenter(myRight, parent);
-    }
-
-    private static void toMakeVerticallyInCenter(JComponent comp, Container parent) {
-      final Rectangle compBounds = comp.getBounds();
-      int compHeight = comp.getPreferredSize().height;
-      final int parentHeight = parent.getHeight();
-      if (compHeight > parentHeight) {
-        compHeight = parentHeight;
-      }
-
-      int y = (int)Math.floor(parentHeight / 2.0 - compHeight / 2.0);
-      comp.setBounds(compBounds.x, y, compBounds.width, compHeight);
-    }
-  }
-
   @Override
   public IdeFocusManager getFocusManager() {
     return myFocusManager;
@@ -1966,22 +2001,26 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private static class TopToolbarContextActions {
+  private static final class TopToolbarContextActions {
     public final AnAction[] left;
+    public final AnAction[] middle;
     public final AnAction[] right;
 
-    private TopToolbarContextActions(AnAction[] left, AnAction[] right) {
+    private TopToolbarContextActions(AnAction[] left, AnAction[] middle, AnAction[] right) {
       this.left = left;
+      this.middle = middle;
       this.right = right;
     }
   }
 
-  private static class TopToolbarWrappers {
+  private static final class TopToolbarWrappers {
     public final Wrapper left;
+    public final Wrapper middle;
     public final Wrapper right;
 
-    private TopToolbarWrappers(Wrapper left, Wrapper right) {
+    private TopToolbarWrappers(Wrapper left, Wrapper middle, Wrapper right) {
       this.left = left;
+      this.middle = middle;
       this.right = right;
     }
   }

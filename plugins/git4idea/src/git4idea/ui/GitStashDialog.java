@@ -4,9 +4,9 @@ package git4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
@@ -33,23 +33,14 @@ public class GitStashDialog extends DialogWrapper {
   public GitStashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     myProject = project;
-    setTitle(GitBundle.getString("stash.title"));
-    setOKButtonText(GitBundle.getString("stash.button"));
+    setTitle(GitBundle.message("stash.title"));
+    setOKButtonText(GitBundle.message("stash.button"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     init();
   }
 
   public GitLineHandler handler() {
-    GitLineHandler handler = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
-    handler.addParameters("save");
-    if (myKeepIndexCheckBox.isSelected()) {
-      handler.addParameters("--keep-index");
-    }
-    final String msg = myMessageTextField.getText().trim();
-    if (msg.length() != 0) {
-      handler.addParameters(msg);
-    }
-    return handler;
+    return GitStashUtils.createStashHandler(myProject, getGitRoot(), myKeepIndexCheckBox.isSelected(), myMessageTextField.getText());
   }
 
   /**

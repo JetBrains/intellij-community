@@ -1,4 +1,6 @@
 <idea-plugin>
+  <resource-bundle>MyBundle</resource-bundle>
+
   <actions>
     <group id="myGroup">
       <group id="myRecursiveGroup"/>
@@ -45,6 +47,14 @@
       <add-to-group group-id="myGroup" relative-to-action="myAction" anchor="<error descr="Must use 'after'|'before' with 'relative-to-action'">first</error>"/>
     </action>
 
+    <action id="testSynonymAttributes" class="foo.bar.BarAction">
+      <synonym text="Syn Text"/>
+      <synonym key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+
+      <<error descr="<synonym> must specify either 'key' or 'text' attribute">synonym</error>/>
+      <<error descr="<synonym> must not specify both 'key' or 'text' attributes">synonym</error> text="Syn Text" key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+    </action>
+
     <reference id="myGroup"/>
     <reference id="myAction"/>
     <reference id="myRecursiveGroup"/>
@@ -59,4 +69,39 @@
 
     <action id="WithDefaultConstructor" class="foo.ActionWithDefaultConstructor"/>
   </actions>
+
+
+  <!-- separator/synonym I18N -->
+  <actions>
+    <group id="separatorGroup">
+      <separator key="my.key"/>
+      <separator key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+    </group>
+    <group id="synonymGroup">
+      <action class="foo.bar.BarAction">
+        <synonym key="my.key"/>
+        <synonym key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+      </action>
+      <reference ref="myGroup">
+        <synonym key="my.key"/>
+        <synonym key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+      </reference>
+    </group>
+  </actions>
+  <actions resource-bundle="AnotherBundle">
+    <group id="separatorGroupWithCustomResourceBundle">
+      <separator key="another.key"/>
+      <separator key="<error descr="Cannot resolve property key">my.key</error>"/>
+    </group>
+
+    <group id="synonymGroupWithCustomResourceBundle">
+      <action class="foo.bar.BarAction">
+        <synonym key="another.key"/>
+        <synonym key="<error descr="Cannot resolve property key">my.key</error>"/>
+      </action>
+    </group>
+  </actions>
+
+  <actions resource-bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
 </idea-plugin>

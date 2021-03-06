@@ -46,7 +46,7 @@ public abstract class CascadeController implements LinearGraphController {
   }
 
   @Nullable
-  GraphChanges<Integer> performAction(@NotNull Function<CascadeController, GraphChanges<Integer>> action) {
+  GraphChanges<Integer> performAction(@NotNull Function<? super CascadeController, ? extends GraphChanges<Integer>> action) {
     GraphChanges<Integer> graphChanges = action.fun(this);
     if (graphChanges != null) return graphChanges;
 

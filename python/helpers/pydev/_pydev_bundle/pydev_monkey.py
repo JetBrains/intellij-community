@@ -166,7 +166,7 @@ def get_c_option_index(args):
 
 def patch_args(args):
     try:
-        log_debug("Patching args: %s"% str(args))
+        log_debug("Patching args: %s" % str(args))
 
         if _is_py3_and_has_bytes_args(args):
             warn_bytes_args()
@@ -199,7 +199,9 @@ def patch_args(args):
                 if port is not None:
                     new_args.extend(args)
                     new_args[ind_c + 1] = _get_python_c_args(host, port, ind_c, args, SetupHolder.setup)
-                    return quote_args(new_args)
+                    new_args = quote_args(new_args)
+                    log_debug("Patched args: %s" % str(new_args))
+                    return new_args
             else:
                 # Check for Python ZIP Applications and don't patch the args for them.
                 # Assumes the first non `-<flag>` argument is what we need to check.
@@ -253,6 +255,7 @@ def patch_args(args):
         # in practice it'd raise an exception here and would return original args, which is not what we want... providing
         # a proper fix for https://youtrack.jetbrains.com/issue/PY-9767 elsewhere.
         if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
+            log_debug("Patched args: %s" % str(args))
             return args
 
         for x in original:
@@ -264,7 +267,9 @@ def patch_args(args):
             new_args.append(args[i])
             i += 1
 
-        return quote_args(new_args)
+        new_args = quote_args(new_args)
+        log_debug("Patched args: %s" % str(new_args))
+        return new_args
     except:
         traceback.print_exc()
         return args
@@ -382,9 +387,12 @@ def patch_fork_exec_executable_list(args, other_args):
     return other_args
 
 
+_ORIGINAL_PREFIX = 'original_'
+
+
 def monkey_patch_module(module, funcname, create_func):
     if hasattr(module, funcname):
-        original_name = 'original_' + funcname
+        original_name = _ORIGINAL_PREFIX + funcname
         if not hasattr(module, original_name):
             setattr(module, original_name, getattr(module, funcname))
             setattr(module, funcname, create_func(original_name))
@@ -412,7 +420,20 @@ def create_warn_multiproc(original_name):
 
         warn_multiproc()
 
-        return getattr(os, original_name)(*args)
+        result = getattr(os, original_name)(*args)
+
+        if original_name == _ORIGINAL_PREFIX + 'fork':
+            pid = result
+            # If automatic attaching to new processes is disabled, it is important to stop tracing in the child process. The reason is the
+            # "forked" instance of the debugger can potentially hit a breakpoint, which results in the process hanging.
+            if pid == 0:
+                debugger = get_global_debugger()
+                if debugger:
+                    debugger.stoptrace()
+            return pid
+        else:
+            return result
+
     return new_warn_multiproc
 
 
@@ -613,6 +634,7 @@ def create_fork(original_name):
         child_process = getattr(os, original_name)()  # fork
         if not child_process:
             if is_new_python_process:
+                log_debug("A new child process with PID %d has been forked" % os.getpid())
                 _on_forked_process()
         else:
             if is_new_python_process:

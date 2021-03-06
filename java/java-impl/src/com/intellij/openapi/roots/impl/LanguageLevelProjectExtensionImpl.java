@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.project.Project;
@@ -58,7 +44,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       myLanguageLevel = readLanguageLevel(level);
     }
     String aDefault = element.getAttributeValue(DEFAULT_ATTRIBUTE);
-    setDefault(aDefault == null ? null : Boolean.parseBoolean(aDefault));
+    if (aDefault != null) {
+      setDefault(Boolean.parseBoolean(aDefault));
+    }
   }
 
   private static LanguageLevel readLanguageLevel(String level) {
@@ -75,11 +63,9 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       element.setAttribute(LANGUAGE_LEVEL, myLanguageLevel.name());
     }
 
-    if (!myProject.isDefault()) {
-      Boolean aBoolean = getDefault();
-      if (aBoolean != null) {
-        element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
-      }
+    Boolean aBoolean = getDefault();
+    if (aBoolean != null && aBoolean != myProject.isDefault()) { // do not write default 'true' for default project
+      element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
   }
 
@@ -99,6 +85,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     // we don't use here getLanguageLevelOrDefault() - if null, just set to provided value, because our default (LanguageLevel.HIGHEST) is changed every java release
     if (myLanguageLevel != languageLevel) {
       myLanguageLevel = languageLevel;
+      setDefault(false);
       languageLevelsChanged();
     }
   }
@@ -106,6 +93,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   @Override
   public void languageLevelsChanged() {
     if (!myProject.isDefault()) {
+      myProject.getMessageBus().syncPublisher(LANGUAGE_LEVEL_CHANGED_TOPIC).onLanguageLevelsChanged();
       ProjectRootManager.getInstance(myProject).incModificationCount();
       JavaLanguageLevelPusher.pushLanguageLevel(myProject);
     }
@@ -116,6 +104,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
       JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
       if (version != null) {
         setLanguageLevel(version.getMaxLanguageLevel());
+        setDefault(true);
       }
     }
   }
@@ -134,10 +123,10 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     setDefault(null);
   }
 
-  public static class MyProjectExtension extends ProjectExtension {
+  static final class MyProjectExtension extends ProjectExtension {
     private final LanguageLevelProjectExtensionImpl myInstance;
 
-    public MyProjectExtension(final Project project) {
+    MyProjectExtension(@NotNull Project project) {
       myInstance = ((LanguageLevelProjectExtensionImpl)getInstance(project));
     }
 

@@ -1,4 +1,5 @@
 class GroovyStuff {
+  // https://issues.apache.org/jira/browse/GROOVY-8360
   private enum Enum {
     Value("", "");
     private Enum(String s1, @Deprecated String s2) { }

@@ -18,9 +18,6 @@ data class ExtractOptions(
   val visibility: String? = PsiModifier.PRIVATE,
   val exposedLocalVariables: List<PsiVariable> = emptyList(),
   val disabledParameters: List<InputParameter> = emptyList(),
-  val isConstructor: Boolean = false
-) {
-  val project: Project
-    get() = elements.first().project
-}
-
+  val isConstructor: Boolean = false,
+  val project: Project = anchor.project
+)

@@ -16,17 +16,18 @@
 package com.intellij.diff.chains;
 
 import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface DiffRequestChain extends UserDataHolder {
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   List<? extends DiffRequestProducer> getRequests();
 
-  @CalledInAwt
+  @RequiresEdt
   int getIndex();
 
   /**
@@ -34,6 +35,7 @@ public interface DiffRequestChain extends UserDataHolder {
    * @deprecated This method will not change selected position if chain was already shown.
    */
   @Deprecated
-  @CalledInAwt
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @RequiresEdt
   void setIndex(int index);
 }

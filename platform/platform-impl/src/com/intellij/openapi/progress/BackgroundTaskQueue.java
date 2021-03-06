@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
@@ -34,7 +35,7 @@ public class BackgroundTaskQueue {
   @NotNull private final Object TEST_TASK_LOCK = new Object();
   private volatile boolean myForceAsyncInTests;
 
-  public BackgroundTaskQueue(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+  public BackgroundTaskQueue(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title) {
     myTitle = title;
 
     Condition<?> disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
@@ -134,7 +135,7 @@ public class BackgroundTaskQueue {
         task.setTitle(myTitle);
       }
 
-      boolean synchronous = task.isHeadless() && !CoreProgressManager.shouldRunHeadlessTasksSynchronously() && !myForceAsyncInTests ||
+      boolean synchronous = task.isHeadless() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode() && !myForceAsyncInTests ||
                             task.isConditionalModal() && !task.shouldStartInBackground();
 
       ProgressManagerImpl pm = (ProgressManagerImpl)ProgressManager.getInstance();

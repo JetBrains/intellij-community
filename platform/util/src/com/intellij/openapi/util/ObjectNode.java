@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -11,19 +10,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 final class ObjectNode {
-  private static final ObjectNode[] EMPTY_ARRAY = new ObjectNode[0];
-
-  private static final Logger LOG = Logger.getInstance(ObjectNode.class);
-
   private final ObjectTree myTree;
 
-  private ObjectNode myParent; // guarded by myTree.treeLock
+  ObjectNode myParent; // guarded by myTree.treeLock
   private final Disposable myObject;
 
   private List<ObjectNode> myChildren; // guarded by myTree.treeLock
-  private Throwable myTrace;
+  private Throwable myTrace; // guarded by myTree.treeLock
 
   ObjectNode(@NotNull ObjectTree tree,
              @Nullable ObjectNode parentNode,
@@ -62,67 +58,30 @@ final class ObjectNode {
   }
 
   ObjectNode getParent() {
-    synchronized (myTree.treeLock) {
-      return myParent;
+    return myParent;
+  }
+
+  void getAndRemoveRecursively(@NotNull List<? super Disposable> result) {
+    getAndRemoveChildrenRecursively(result, null);
+    myTree.removeObjectFromTree(this);
+    // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
+    if (myTree.rememberDisposedTrace(myObject) == null) {
+      result.add(myObject);
     }
+    myChildren = null;
+    myParent = null;
   }
 
-  void execute(@NotNull List<? super Throwable> exceptions, boolean onlyChildren) {
-    ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), each -> {
-      if (myTree.getDisposalInfo(myObject) != null) {
-        return; // already disposed. may happen when someone does `register(obj, ()->Disposer.dispose(t));` abomination
-      }
-
-      if (!onlyChildren && myObject instanceof Disposable.Parent) {
-        try {
-          ((Disposable.Parent)myObject).beforeTreeDispose();
+  /**
+   * {@code predicate} is used only for direct children.
+   */
+  void getAndRemoveChildrenRecursively(@NotNull List<? super Disposable> result, @Nullable Predicate<? super Disposable> predicate) {
+    if (myChildren != null) {
+      for (int i = myChildren.size() - 1; i >= 0; i--) {
+        ObjectNode childNode = myChildren.get(i);
+        if (predicate == null || predicate.test(childNode.getObject())) {
+          childNode.getAndRemoveRecursively(result);
         }
-        catch (Throwable t) {
-          LOG.error(t);
-        }
-      }
-
-      ObjectNode[] childrenArray;
-      synchronized (myTree.treeLock) {
-        List<ObjectNode> children = myChildren;
-        childrenArray = children == null || children.isEmpty() ? EMPTY_ARRAY : children.toArray(EMPTY_ARRAY);
-        myChildren = null;
-      }
-
-      for (int i = childrenArray.length - 1; i >= 0; i--) {
-        try {
-          ObjectNode childNode = childrenArray[i];
-          childNode.execute(exceptions, false);
-          synchronized (myTree.treeLock) {
-            childNode.myParent = null;
-          }
-        }
-        catch (Throwable e) {
-          exceptions.add(e);
-        }
-      }
-
-      if (onlyChildren) {
-        return;
-      }
-
-      try {
-        //noinspection SSBasedInspection
-        myObject.dispose();
-        myTree.rememberDisposedTrace(myObject);
-      }
-      catch (Throwable e) {
-        exceptions.add(e);
-      }
-      removeFromObjectTree();
-    });
-  }
-
-  private void removeFromObjectTree() {
-    synchronized (myTree.treeLock) {
-      myTree.putNode(myObject, null);
-      if (myParent == null) {
-        myTree.removeRootObject(myObject);
       }
     }
   }

@@ -2,17 +2,18 @@
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class FileCollectionDependencyNodeImpl extends AbstractDependencyNode implements FileCollectionDependencyNode {
 
-  private final String displayName;
+  private final @Nls String displayName;
   private final String path;
 
-  @PropertyMapping({"id", "displayName", "path"}) //NON-NLS
+  @PropertyMapping({"id", "displayName", "path"})
   public FileCollectionDependencyNodeImpl(long id, @NotNull String displayName, @NotNull String path) {
     super(id);
-    this.displayName = displayName;
+    this.displayName = displayName; //NON-NLS
     this.path = path;
   }
 
@@ -29,12 +30,9 @@ public class FileCollectionDependencyNodeImpl extends AbstractDependencyNode imp
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    FileCollectionDependencyNodeImpl node = (FileCollectionDependencyNodeImpl)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    FileCollectionDependencyNodeImpl node = (FileCollectionDependencyNodeImpl)dependencyNode;
     if (!displayName.equals(node.displayName)) return false;
     if (!path.equals(node.path)) return false;
     return true;

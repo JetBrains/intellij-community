@@ -3,12 +3,13 @@ package com.intellij.ide.util.projectWizard.importSources.util;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.text.StringFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -42,7 +43,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
         int index1 = packageName.lastIndexOf('.', index - 1);
         String token = packageName.substring(index1 + 1, index);
         String dirName = getName(root);
-        final boolean equalsToToken = SystemInfo.isFileSystemCaseSensitive ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
+        final boolean equalsToToken = isCaseSensitive(root) ? dirName.equals(token) : dirName.equalsIgnoreCase(token);
         if (!equalsToToken || root.equals(topmostPossibleRoot)) {
           String packagePrefix = packageName.substring(0, index);
           if (!packagePrefixSupported && packagePrefix.length() > 0) {
@@ -63,6 +64,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
   }
 
   protected abstract String getName(final F file);
+  protected abstract boolean isCaseSensitive(@NotNull F file);
 
   @Nullable
   protected abstract F getParentFile(final F file);
@@ -71,11 +73,21 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
   protected abstract boolean isFile(final F file);
 
-  public static final CommonSourceRootDetectionUtil<File> IO_FILE = new CommonSourceRootDetectionUtil<File>() {
+  public static final CommonSourceRootDetectionUtil<File> IO_FILE = new CommonSourceRootDetectionUtil<>() {
 
     @Override
     protected String getName(final File file) {
       return file.getName();
+    }
+
+    @Override
+    protected boolean isCaseSensitive(@NotNull File file) {
+      try {
+        return FileUtil.isFileSystemCaseSensitive(file.getPath());
+      }
+      catch (FileNotFoundException e) {
+        return SystemInfo.isFileSystemCaseSensitive;
+      }
     }
 
     @Override
@@ -85,7 +97,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
     @Override
     protected CharSequence loadText(final File file) throws IOException {
-      return StringFactory.createShared(loadFileTextSkippingBom(file));
+      return loadFileTextSkippingBom(file);
     }
 
     @Override
@@ -94,18 +106,24 @@ public abstract class CommonSourceRootDetectionUtil<F> {
     }
   };
 
-  private static char[] loadFileTextSkippingBom(File file) throws IOException {
+  @NotNull
+  private static String loadFileTextSkippingBom(File file) throws IOException {
     try (InputStream stream = CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(file)));
          Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      return FileUtilRt.loadText(reader, (int)file.length());
+      return new String(FileUtilRt.loadText(reader, (int)file.length()));
     }
   }
 
-  public static final CommonSourceRootDetectionUtil<VirtualFile> VIRTUAL_FILE = new CommonSourceRootDetectionUtil<VirtualFile>() {
+  public static final CommonSourceRootDetectionUtil<VirtualFile> VIRTUAL_FILE = new CommonSourceRootDetectionUtil<>() {
 
     @Override
     protected String getName(VirtualFile file) {
       return file.getName();
+    }
+
+    @Override
+    protected boolean isCaseSensitive(@NotNull VirtualFile file) {
+      return file.isCaseSensitive();
     }
 
     @Override

@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -26,7 +25,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -109,24 +107,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     final List<RatedResolveResult> targets = resolveInner();
     if (targets.isEmpty()) return ResolveResult.EMPTY_ARRAY;
-
-    // change class results to constructor results if there are any
-    if (myElement.getParent() instanceof PyCallExpression) { // we're a call
-      final ListIterator<RatedResolveResult> iterator = targets.listIterator();
-      while (iterator.hasNext()) {
-        final RatedResolveResult rrr = iterator.next();
-        final PsiElement element = rrr.getElement();
-        if (element instanceof PyClass) {
-          final PyClass cls = (PyClass)element;
-          final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myElement.getProject());
-          final Collection<? extends PsiElement> constructors = PyCallExpressionHelper.resolveConstructors(cls, myElement, context, false);
-          if (!constructors.isEmpty()) {
-            iterator.remove();
-            constructors.forEach(c -> iterator.add(rrr.replace(c)));
-          }
-        }
-      }
-    }
 
     return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
   }
@@ -234,12 +214,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       return ResolveResultList.to(myElement);
     }
 
+    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
+    final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
+
+    if (!myContext.getTypeEvalContext().maySwitchToAST(realContext) && realContext instanceof PyFile) {
+      return ((PyFile)realContext).multiResolveName(referencedName);
+    }
+
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
-
-    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
-    final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
 
     final PsiElement roof = findResolveRoof(referencedName, realContext);
     PyResolveUtil.scopeCrawlUp(processor, myElement, referencedName, roof);
@@ -269,6 +253,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             return StreamEx
               .of(resolvedElements)
               .nonNull()
+              .filter(element -> PyUtil.inSameFile(element, realContext))
               .filter(element -> PyiUtil.isOverload(element, typeEvalContext))
               .map(element -> new RatedResolveResult(getRate(element, typeEvalContext), element))
               .prepend(latestDefs)
@@ -563,7 +548,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final PsiElement ourContainer = findContainer(getElement());
     final PsiElement theirContainer = findContainer(element);
     if (ourContainer != null) {
-      if (ourContainer == theirContainer) {
+      if (ourContainer == theirContainer && ourScopeOwner == theirScopeOwner) {
         return true;
       }
       if (PsiTreeUtil.isAncestor(theirContainer, ourContainer, true)) {
@@ -613,8 +598,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  private boolean resolvesToSameGlobal(PsiElement element, String elementName, ScopeOwner ourScopeOwner, ScopeOwner theirScopeOwner,
-                                       PsiElement resolveResult) {
+  private boolean resolvesToSameGlobal(@NotNull PsiElement element,
+                                       @Nullable String elementName,
+                                       @NotNull ScopeOwner ourScopeOwner,
+                                       @NotNull ScopeOwner theirScopeOwner,
+                                       @Nullable PsiElement resolveResult) {
     // Handle situations when there is no top-level declaration for globals and transitive resolve doesn't help
     final PsiFile ourFile = getElement().getContainingFile();
     final PsiFile theirFile = element.getContainingFile();
@@ -625,7 +613,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         return true;
       }
     }
-    if (ScopeUtil.getScopeOwner(resolveResult) == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
+
+    final var resolvedScopeOwner = ScopeUtil.getScopeOwner(resolveResult);
+    if (resolvedScopeOwner != null && resolveResult.getContainingFile() == theirFile) {
+      if (ControlFlowCache.getScope(resolvedScopeOwner).isGlobal(elementName) &&
+          ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
+        return true;
+      }
+    }
+
+    if (resolvedScopeOwner == ourFile && ControlFlowCache.getScope(theirScopeOwner).isGlobal(elementName)) {
       return true;
     }
     return false;
@@ -662,7 +659,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
     final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
-    final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
     final LanguageLevel languageLevel = LanguageLevel.forElement(myElement);
@@ -688,10 +684,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
       return true;
     }, null);
-    final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
-    if (owner != null) {
-      PyResolveUtil.scopeCrawlUp(processor, owner, null, null);
-    }
+
+    PyResolveUtil.scopeCrawlUp(processor, element, null, null);
 
     // This method is probably called for completion, so use appropriate context here
     // in a call, include function's arg names
@@ -705,7 +699,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     if (PyUtil.getInitialUnderscores(element.getName()) >= 2) {
       // if we're a normal module, add module's attrs
-      if (realContext.getContainingFile() instanceof PyFile) {
+      if (PyPsiUtils.getRealContext(element).getContainingFile() instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
           ret.add(LookupElementBuilder.create(name).withIcon(PlatformIcons.FIELD_ICON));
         }
@@ -800,11 +794,5 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public int hashCode() {
     return myElement.hashCode();
-  }
-
-  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
-    ProcessingContext context = new ProcessingContext();
-    context.put(PyType.CTX_NAMES, new HashSet<>());
-    return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);
   }
 }

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lexer.Lexer;
@@ -18,10 +17,10 @@ import org.jetbrains.annotations.Nullable;
 public interface IndexPatternBuilder {
   ExtensionPointName<IndexPatternBuilder> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternBuilder");
 
-  @Nullable
-  Lexer getIndexingLexer(@NotNull PsiFile file);
-  @Nullable
-  TokenSet getCommentTokenSet(@NotNull PsiFile file);
+  @Nullable Lexer getIndexingLexer(@NotNull PsiFile file);
+
+  @Nullable TokenSet getCommentTokenSet(@NotNull PsiFile file);
+
   int getCommentStartDelta(IElementType tokenType);
   int getCommentEndDelta(IElementType tokenType);
 
@@ -29,8 +28,7 @@ public interface IndexPatternBuilder {
    * Characters (in addition to whitespace) which can be present in the indent section of pattern occurrence's continuation
    * on subsequent line
    */
-  @NotNull
-  default String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
+  default @NotNull String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
     return "";
   }
 

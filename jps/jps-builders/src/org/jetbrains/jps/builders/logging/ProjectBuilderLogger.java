@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.builders.logging;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -24,7 +26,7 @@ public interface ProjectBuilderLogger {
 
   void logDeletedFiles(Collection<String> paths);
 
-  void logCompiledFiles(Collection<File> files, String builderName, String description) throws IOException;
+  void logCompiledFiles(Collection<File> files, @NonNls String builderId, @NonNls String description) throws IOException;
 
-  void logCompiledPaths(Collection<String> paths, String builderName, String description) throws IOException;
+  void logCompiledPaths(Collection<String> paths, @NonNls String builderId, @NonNls String description) throws IOException;
 }

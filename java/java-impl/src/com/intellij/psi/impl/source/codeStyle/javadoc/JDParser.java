@@ -52,11 +52,9 @@ public class JDParser {
     if (info == null || !isJavadoc(info)) return;
 
     JDComment comment = parse(info, formatter);
-    if (comment != null) {
-      String indent = formatter.getIndent(info.commentOwner);
-      String commentText = comment.generate(indent);
-      formatter.replaceCommentText(commentText, info.docComment);
-    }
+    String indent = formatter.getIndent(info.commentOwner);
+    String commentText = comment.generate(indent);
+    formatter.replaceCommentText(commentText, info.docComment);
   }
 
   private static boolean isJavadoc(CommentInfo info) {
@@ -130,7 +128,7 @@ public class JDParser {
     return new CommentInfo(docComment, owner, commentHeader, sb.toString(), commentFooter);
   }
 
-  private JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
+  private @NotNull JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
     JDComment comment = createComment(info.commentOwner, formatter);
     parse(info.comment, comment);
     if (info.commentHeader != null) {
@@ -274,7 +272,6 @@ public class JDParser {
     int preCount = 0;
     int curPos = 0;
     int firstLineToKeepIndents = -1;
-    int currLine = 0;
     int minIndentWhitespaces = Integer.MAX_VALUE;
 
     while (st.hasMoreTokens()) {
@@ -282,7 +279,7 @@ public class JDParser {
       curPos += token.length();
 
       if (containsTagToKeepIndentsAfter(getLineWithoutAsterisk(token)) && firstLineToKeepIndents < 0) {
-        firstLineToKeepIndents = currLine;
+        firstLineToKeepIndents = list.size();
       }
 
       if (firstLineToKeepIndents >= 0) {
@@ -308,7 +305,6 @@ public class JDParser {
         if (preCount == 0 && firstLineToKeepIndents < 0) token = token.trim();
 
         list.add(token);
-        currLine ++;
 
         if (markers != null) {
           if (lineHasUnclosedPreTag(token)) preCount++;
@@ -458,7 +454,7 @@ public class JDParser {
 
           // wrap now
           if (wrapPos >= seq.length() - 1 || wrapPos < 0) {
-            seq = isMarked ? seq : seq.trim();
+            seq = seq.trim();
             list.add(seq);
             break;
           }
@@ -578,7 +574,7 @@ public class JDParser {
     (tag, line, c) -> {
       boolean isMyTag = c instanceof JDMethodComment && JDTag.RETURN.tagEqual(tag);
       if (isMyTag) {
-        ((JDMethodComment)c).setReturnTag(line);
+        ((JDMethodComment)c).addReturnTag(line);
       }
       return isMyTag;
     },

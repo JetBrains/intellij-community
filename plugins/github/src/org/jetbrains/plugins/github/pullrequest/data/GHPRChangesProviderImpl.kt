@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.google.common.graph.Graph
+import com.google.common.graph.Traverser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
-import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
@@ -11,48 +12,74 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import git4idea.repo.GitRepository
-import gnu.trove.THashMap
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.*
-import kotlin.collections.LinkedHashMap
 
 class GHPRChangesProviderImpl(private val repository: GitRepository,
-                              mergeBaseRef: String,
-                              commitsWithDiffs: List<Triple<GHCommit, String, String>>)
+                              private val mergeBaseRef: String,
+                              commitsGraph: Graph<GHCommit>,
+                              private val lastCommit: GHCommit,
+                              patchesByCommits: Map<GHCommit, Pair<List<FilePatch>, List<FilePatch>>>)
   : GHPRChangesProvider {
 
-  override val changes: List<Change>
-  override val changesByCommits: Map<GHCommit, List<Change>>
+  override val changes = mutableListOf<Change>()
+  override val changesByCommits = mutableMapOf<String, List<Change>>()
+  override val linearHistory: Boolean
 
-  private val diffDataByChange: Map<Change, GHPRChangeDiffData>
+  private val diffDataByChange = Object2ObjectOpenCustomHashMap<Change, GHPRChangeDiffData>(object : Hash.Strategy<Change> {
+    override fun equals(o1: Change?, o2: Change?): Boolean {
+      return o1 == o2 &&
+             o1?.beforeRevision == o2?.beforeRevision &&
+             o1?.afterRevision == o2?.afterRevision
+    }
+
+    override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
+  })
+
+  override fun findChangeDiffData(change: Change) = diffDataByChange[change]
+
+  override fun findCumulativeChange(commitSha: String, filePath: String): Change? {
+    return diffDataByChange.entries.find {
+      it.value is GHPRChangeDiffData.Cumulative && it.value.contains(commitSha, filePath)
+    }?.key
+  }
 
   init {
-    changesByCommits = LinkedHashMap()
-    diffDataByChange = THashMap(object : TObjectHashingStrategy<Change> {
-      override fun equals(o1: Change?, o2: Change?) = o1 == o2 &&
-                                                      o1?.beforeRevision == o2?.beforeRevision &&
-                                                      o1?.afterRevision == o2?.afterRevision
+    val commitsBySha = LinkedHashMap<String, GHCommitWithPatches>()
+    Traverser.forGraph(commitsGraph).depthFirstPostOrder(lastCommit).forEach {
+      val (commitPatches, cumulativePatches) = patchesByCommits.getValue(it)
+      commitsBySha[it.oid] = GHCommitWithPatches(it, commitPatches, cumulativePatches)
+    }
 
-      override fun computeHashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
-    })
+    // One or more merge commit for changes that are included into PR (master merges are ignored)
+    linearHistory = commitsBySha.values.all { commit ->
+      commit.parents.count { commitsBySha.contains(it) } <= 1
+    }
 
-    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRChangeDiffData.FileHistory>()
+    if (linearHistory) {
+      initForLinearHistory(commitsBySha)
+    }
+    else {
+      initForHistoryWithMerges(commitsBySha)
+    }
+  }
 
-    var lastCommitSha = mergeBaseRef
-    var lastCumulativePatches: List<FilePatch>? = null
+  private fun initForLinearHistory(commitsBySha: Map<String, GHCommitWithPatches>) {
+    val commitsWithPatches = commitsBySha.values
+    val fileHistoriesByLastKnownFilePath = mutableMapOf<String, GHPRMutableLinearFileHistory>()
 
-    val commitsHashes = commitsWithDiffs.map { it.first.oid }
-    for ((commit, commitDiff, diffFromMergeBase) in commitsWithDiffs) {
+    var previousCommitSha = mergeBaseRef
 
-      val commitSha = commit.oid
+    val commitsHashes = commitsWithPatches.map { it.sha }
+    for (commitWithPatches in commitsWithPatches) {
+
+      val commitSha = commitWithPatches.sha
       val commitChanges = mutableListOf<Change>()
-      val commitPatches = readAllPatches(commitDiff)
 
-      val cumulativePatches = readAllPatches(diffFromMergeBase)
-
-      for (patch in commitPatches) {
-        val change = createChangeFromPatch(lastCommitSha, commitSha, patch)
+      for (patch in commitWithPatches.commitPatches) {
+        val change = createChangeFromPatch(previousCommitSha, commitSha, patch)
         commitChanges.add(change)
 
         if (patch is TextFilePatch) {
@@ -60,50 +87,63 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           val afterPath = patch.afterName
 
           val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
-          val fileHistory = (historyBefore ?: GHPRChangeDiffData.FileHistory(commitsHashes)).apply {
+          val fileHistory = (historyBefore ?: GHPRMutableLinearFileHistory(commitsHashes)).apply {
             append(commitSha, patch)
           }
-          fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
-          val initialPath = fileHistory.initialFilePath
+          if (afterPath != null) {
+            fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
+          }
+          val firstKnownPath = fileHistory.firstKnownFilePath
 
-          val cumulativePatch = findPatchByFilePaths(cumulativePatches, initialPath, afterPath) as? TextFilePatch
+          val cumulativePatch = findPatchByFilePaths(commitWithPatches.cumulativePatches, firstKnownPath, afterPath) as? TextFilePatch
           if (cumulativePatch == null) {
             LOG.debug("Unable to find cumulative patch for commit patch")
             continue
           }
 
-          diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath,
-                                                               patch, cumulativePatch,
-                                                               fileHistory)
+          diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath, patch, cumulativePatch, fileHistory)
         }
       }
-      changesByCommits[commit] = commitChanges
-      lastCommitSha = commitSha
-      lastCumulativePatches = cumulativePatches
+      changesByCommits[commitWithPatches.commit.oid] = commitChanges
+      previousCommitSha = commitSha
     }
-
-    changes = mutableListOf()
 
     val fileHistoriesBySummaryFilePath = fileHistoriesByLastKnownFilePath.mapKeys {
-      it.value.filePath
+      it.value.lastKnownFilePath
     }
 
-    lastCumulativePatches?.let {
-      for (patch in it) {
-        val change = createChangeFromPatch(mergeBaseRef, lastCommitSha, patch)
-        changes.add(change)
+    for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {
+      val change = createChangeFromPatch(mergeBaseRef, lastCommit.oid, patch)
+      changes.add(change)
 
-        if (patch is TextFilePatch) {
-          val filePath = patch.filePath
-          val fileHistory = fileHistoriesBySummaryFilePath[filePath]
-          if (fileHistory == null) {
-            LOG.debug("Unable to find file history for cumulative patch for $filePath")
-            continue
-          }
-
-          diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommitSha, filePath,
-                                                                   patch, fileHistory)
+      if (patch is TextFilePatch) {
+        val filePath = patch.filePath
+        val fileHistory = fileHistoriesBySummaryFilePath[filePath]
+        if (fileHistory == null) {
+          LOG.debug("Unable to find file history for cumulative patch for $filePath")
+          continue
         }
+
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, filePath, patch, fileHistory)
+      }
+    }
+  }
+
+  private fun initForHistoryWithMerges(commitsBySha: Map<String, GHCommitWithPatches>) {
+    for (commitWithPatches in commitsBySha.values) {
+      val previousCommitSha = commitWithPatches.parents.find { commitsBySha.contains(it) } ?: mergeBaseRef
+      val commitSha = commitWithPatches.sha
+      val commitChanges = commitWithPatches.commitPatches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
+      changesByCommits[commitWithPatches.commit.oid] = commitChanges
+    }
+
+    for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {
+      val change = createChangeFromPatch(mergeBaseRef, lastCommit.oid, patch)
+      changes.add(change)
+
+      if (patch is TextFilePatch) {
+        diffDataByChange[change] = GHPRChangeDiffData.Cumulative(lastCommit.oid, patch.filePath, patch,
+                                                                 GHPRGraphFileHistory(commitsBySha, lastCommit, patch.filePath))
       }
     }
   }
@@ -127,18 +167,10 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   private fun findPatchByFilePaths(patches: Collection<FilePatch>, beforePath: String?, afterPath: String?): FilePatch? =
     patches.find { (afterPath != null && it.afterName == afterPath) || (afterPath == null && it.beforeName == beforePath) }
 
-  override fun findChangeDiffData(change: Change) = diffDataByChange[change]
-
   companion object {
     private val LOG = logger<GHPRChangesProvider>()
 
-    private val TextFilePatch.filePath
+    private val FilePatch.filePath
       get() = (afterName ?: beforeName)!!
-
-    private fun readAllPatches(diffFile: String): List<FilePatch> {
-      val reader = PatchReader(diffFile, true)
-      reader.parseAllPatches()
-      return reader.allPatches
-    }
   }
 }

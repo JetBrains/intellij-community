@@ -1,24 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -65,8 +64,8 @@ public class TerminalSettingsPanel {
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
-    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.project.settings")));
-    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.application.settings")));
+    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
+    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
 
     configureShellPathField();
     configureStartDirectoryField();
@@ -102,7 +101,7 @@ public class TerminalSettingsPanel {
   private void configureStartDirectoryField() {
     myStartDirectoryField.addBrowseFolderListener(
       "",
-      "Starting directory",
+      TerminalBundle.message("settings.start.directory.browseFolder.description"),
       null,
       FileChooserDescriptorFactory.createSingleFolderDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
@@ -113,15 +112,15 @@ public class TerminalSettingsPanel {
   private void configureShellPathField() {
     myShellPathField.addBrowseFolderListener(
       "",
-      IdeBundle.message("settings.terminal.shell.executable.path"),
+      TerminalBundle.message("settings.terminal.shell.executable.path.browseFolder.description"),
       null,
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
     );
-    setupTextFieldDefaultValue(myShellPathField.getTextField(), () -> myOptionsProvider.defaultShellPath());
+    setupTextFieldDefaultValue(myShellPathField.getTextField(), () -> myProjectOptionsProvider.defaultShellPath());
   }
 
-  private void setupTextFieldDefaultValue(@NotNull JTextField textField, @NotNull Supplier<String> defaultValueSupplier) {
+  private void setupTextFieldDefaultValue(@NotNull JTextField textField, @NotNull Supplier<@NlsSafe String> defaultValueSupplier) {
     String defaultShellPath = defaultValueSupplier.get();
     if (StringUtil.isEmptyOrSpaces(defaultShellPath)) return;
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -136,8 +135,7 @@ public class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return !Objects
-      .equals(TerminalOptionsProvider.getInstance().getEffectiveShellPath(myShellPathField.getText()), myOptionsProvider.getShellPath())
+    return !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
@@ -154,7 +152,7 @@ public class TerminalSettingsPanel {
 
   public void apply() {
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
-    myOptionsProvider.setShellPath(myShellPathField.getText());
+    myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
     myOptionsProvider.setCloseSessionOnLogout(myCloseSessionCheckBox.isSelected());
     myOptionsProvider.setReportMouse(myMouseReportCheckBox.isSelected());
@@ -176,7 +174,7 @@ public class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myShellPathField.setText(myOptionsProvider.getShellPath());
+    myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
     myCloseSessionCheckBox.setSelected(myOptionsProvider.closeSessionOnLogout());
@@ -196,10 +194,8 @@ public class TerminalSettingsPanel {
   }
 
   private void createUIComponents() {
-    myConfigureTerminalKeybindingsActionLink = new ActionLink(null, new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        Settings settings = e.getData(Settings.KEY);
+    myConfigureTerminalKeybindingsActionLink = new ActionLink("", e -> {
+        Settings settings = DataManager.getInstance().getDataContext((ActionLink)e.getSource()).getData(Settings.KEY);
         if (settings != null) {
           Configurable configurable = settings.find("preferences.keymap");
           settings.select(configurable, "Terminal").doWhenDone(() -> {
@@ -209,7 +205,6 @@ public class TerminalSettingsPanel {
             }, 100, TimeUnit.MILLISECONDS);
           });
         }
-      }
     });
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
   }

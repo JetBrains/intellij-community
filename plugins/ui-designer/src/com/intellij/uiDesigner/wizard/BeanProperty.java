@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.wizard;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ final class BeanProperty implements Comparable<BeanProperty>{
   /**
    * Property name.
    */
-  @NotNull public final String myName;
+  @NotNull public final @NlsSafe String myName;
   /**
    * Property type.
    * There are two possible types:
@@ -21,7 +22,7 @@ final class BeanProperty implements Comparable<BeanProperty>{
    *  <li>boolean</li>
    * </ul>
    */
-  @NotNull public final String myType;
+  @NotNull public final @NlsSafe String myType;
 
   BeanProperty(@NotNull final String name, @NonNls @NotNull final String type) {
     if(!"java.lang.String".equals(type) && !"boolean".equals(type)){

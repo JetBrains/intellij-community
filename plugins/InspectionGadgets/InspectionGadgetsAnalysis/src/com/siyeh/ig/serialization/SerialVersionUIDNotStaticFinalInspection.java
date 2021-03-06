@@ -25,6 +25,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.PsiModifier.*;
 
 public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
@@ -43,14 +46,11 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (((Boolean)infos[0]).booleanValue()) {
-      return null;
-    }
-    return new SerialVersionUIDNotStaticFinalFix();
+    boolean needToFix = ((Boolean)infos[0]).booleanValue();
+    return needToFix ? new SerialVersionUIDNotStaticFinalFix() : null;
   }
 
-  private static class SerialVersionUIDNotStaticFinalFix
-    extends InspectionGadgetsFix {
+  private static class SerialVersionUIDNotStaticFinalFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -71,45 +71,40 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
       if (modifierList == null) {
         return;
       }
-      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-      modifierList.setModifierProperty(PsiModifier.STATIC, true);
-      modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      modifierList.setModifierProperty(PRIVATE, true);
+      modifierList.setModifierProperty(STATIC, true);
+      modifierList.setModifierProperty(FINAL, true);
     }
   }
-
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SerialVersionUIDNotStaticFinalVisitor();
   }
 
-  private static class SerialVersionUIDNotStaticFinalVisitor
-    extends BaseInspectionVisitor {
+  private static class SerialVersionUIDNotStaticFinalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      final PsiField field =
-        aClass.findFieldByName(
-          HardcodedMethodConstants.SERIAL_VERSION_UID, false);
-      if (field == null) {
-        return;
-      }
-      final PsiType type = field.getType();
-      final boolean wrongType = !PsiType.LONG.equals(type);
-      if (field.hasModifierProperty(PsiModifier.STATIC) &&
-          field.hasModifierProperty(PsiModifier.PRIVATE) &&
-          field.hasModifierProperty(PsiModifier.FINAL) &&
-          !wrongType) {
-        return;
-      }
-      if (!SerializationUtils.isSerializable(aClass)) {
-        return;
-      }
-      registerFieldError(field, Boolean.valueOf(wrongType));
+    public void visitField(PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || containingClass.isInterface() || containingClass.isAnnotationType()) return;
+      visitVariable(field, containingClass);
+    }
+
+    @Override
+    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+      visitVariable(recordComponent, recordComponent.getContainingClass());
+    }
+
+    private void visitVariable(@NotNull PsiVariable field, @Nullable PsiClass containingClass) {
+      if (!SerializationUtils.isSerializable(containingClass)) return;
+      if (!HardcodedMethodConstants.SERIAL_VERSION_UID.equals(field.getName())) return;
+      final boolean rightReturnType = PsiType.LONG.equals(field.getType());
+      boolean isStaticField = field.hasModifierProperty(STATIC);
+      if (rightReturnType && isStaticField && field.hasModifierProperty(PRIVATE) && field.hasModifierProperty(FINAL)) return;
+      PsiIdentifier identifier = field.getNameIdentifier();
+      assert identifier != null;
+      registerError(identifier, Boolean.valueOf(rightReturnType && (!containingClass.isRecord() || isStaticField)));
     }
   }
 }

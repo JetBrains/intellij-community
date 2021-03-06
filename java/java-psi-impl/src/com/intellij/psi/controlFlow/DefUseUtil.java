@@ -8,11 +8,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.Stack;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +87,9 @@ public final class DefUseUtil {
     }
 
     private void touch() {
-      if (myUsed == null) myUsed = new THashSet<>();
+      if (myUsed == null) {
+        myUsed = new HashSet<>();
+      }
     }
 
     void addUsedFrom(InstructionState state) {
@@ -129,7 +129,7 @@ public final class DefUseUtil {
 
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy, false);
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.create(true, false, false));
     }
     catch (AnalysisCanceledException e) {
       return null;
@@ -139,8 +139,8 @@ public final class DefUseUtil {
       LOG.debug(flow.toString());
     }
 
-    Set<PsiVariable> assignedVariables = new THashSet<>();
-    Set<PsiVariable> readVariables = new THashSet<>();
+    Set<PsiVariable> assignedVariables = new HashSet<>();
+    Set<PsiVariable> readVariables = new HashSet<>();
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
       ProgressManager.checkCanceled();
@@ -172,7 +172,7 @@ public final class DefUseUtil {
 
     BitSet usefulWrites = new BitSet(instructions.size());
 
-    Queue<InstructionState> queue = new Queue<>(8);
+    Deque<InstructionState> queue = new ArrayDeque<>(8);
 
     for (int i = states.length - 1; i >= 0; i--) {
       final InstructionState outerState = states[i];
@@ -188,7 +188,7 @@ public final class DefUseUtil {
 
       while (!queue.isEmpty()) {
         ProgressManager.checkCanceled();
-        InstructionState state = queue.pullFirst();
+        InstructionState state = queue.removeFirst();
         state.markVisited();
 
         InstructionKey key = state.getInstructionKey();
@@ -259,7 +259,8 @@ public final class DefUseUtil {
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
-        private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
+        final PsiManager psiManager = def.getManager();
+        private final IntList[] myBackwardTraces = getBackwardTraces(instructions);
 
         @Override
         protected int nNext(int index) {
@@ -280,8 +281,7 @@ public final class DefUseUtil {
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-            if (instructionW.variable == def) {
-
+            if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
@@ -295,7 +295,7 @@ public final class DefUseUtil {
 
                 @Override
                 public void visitVariable(PsiVariable var) {
-                  if (var == def && (var instanceof PsiParameter || var.hasInitializer())) {
+                  if (psiManager.areElementsEquivalent(var, def) && (var instanceof PsiParameter || var.hasInitializer())) {
                     res.add(var);
                   }
                 }
@@ -321,6 +321,7 @@ public final class DefUseUtil {
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
+        final PsiManager psiManager = def.getManager();
         @Override
         protected int nNext(int index) {
           return instructions.get(index).nNext();
@@ -340,13 +341,13 @@ public final class DefUseUtil {
         protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
-            if (instructionR.variable == def) {
+            if (psiManager.areElementsEquivalent(instructionR.variable, def)) {
 
               final PsiElement element = flow.getElement(index);
               element.accept(new JavaRecursiveElementWalkingVisitor() {
                 @Override
                 public void visitReferenceExpression(PsiReferenceExpression ref) {
-                  if (ref.resolve() == def) {
+                  if (ref.isReferenceTo(def)) {
                     res.add(ref);
                   }
                 }
@@ -377,7 +378,7 @@ public final class DefUseUtil {
 
     RefsDefs(@NotNull PsiCodeBlock body) throws AnalysisCanceledException {
       this.body = body;
-      flow = ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, ourPolicy, false, false);
+      flow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.NO_CONST_EVALUATE);
       instructions = flow.getInstructions();
     }
 
@@ -406,12 +407,13 @@ public final class DefUseUtil {
           elem += 1;
         }
 
-        final Set<@NotNull PsiElement> res = new THashSet<>();
+        Set<@NotNull PsiElement> res = new HashSet<>();
         // hack: ControlFlow doesn't contains parameters initialization
         int startIndex = elem;
 
-        IntArrayList workQueue = new IntArrayList();
+        IntList workQueue = new IntArrayList();
         workQueue.add(startIndex);
+        PsiManager psiManager = body.getManager();
 
         while (!workQueue.isEmpty()) {
           int index = workQueue.removeInt(workQueue.size() - 1);
@@ -425,7 +427,7 @@ public final class DefUseUtil {
             processInstruction(res, instruction, index);
             if (instruction instanceof WriteVariableInstruction) {
               WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-              if (instructionW.variable == def) {
+              if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
                 continue;
               }
             }
@@ -447,7 +449,7 @@ public final class DefUseUtil {
                 final Instruction instruction = instructions.get(prev);
                 if (instruction instanceof WriteVariableInstruction) {
                   WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
-                  if (instructionW.variable == def) {
+                  if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
                     continue;
                   }
                 }
@@ -466,8 +468,8 @@ public final class DefUseUtil {
   }
 
 
-  private static IntArrayList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
-    final IntArrayList[] states = new IntArrayList[instructions.size()];
+  private static IntList @NotNull [] getBackwardTraces(@NotNull List<? extends Instruction> instructions) {
+    final IntList[] states = new IntList[instructions.size()];
     for (int i = 0; i < states.length; i++) {
       states[i] = new IntArrayList();
     }
@@ -531,7 +533,7 @@ public final class DefUseUtil {
     private final List<? extends Instruction> myInstructions;
 
     private InstructionStateWalker(@NotNull List<? extends Instruction> instructions) {
-      myStates = new THashMap<>(instructions.size());
+      myStates = new HashMap<>(instructions.size());
       myWalkThroughStack = new WalkThroughStack(instructions.size() / 2);
       myInstructions = instructions;
     }

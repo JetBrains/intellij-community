@@ -4,16 +4,11 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ExternalSystemProjectTracker {
-
-  /**
-   * Enables/disables auto reload external changes for all projects
-   */
-  @Deprecated("Use ExternalSystemProjectTrackerSettings.autoReloadType instead")
-  var isAutoReloadExternalChanges: Boolean
 
   /**
    * Starts tracking of project settings that will be defined by [projectAware]
@@ -21,7 +16,16 @@ interface ExternalSystemProjectTracker {
    * Auto reloads will be activated after first project refresh
    * @see [ExternalSystemProjectTracker.activate] for details
    */
-  fun register(projectAware: ExternalSystemProjectAware, parentDisposable: Disposable)
+  fun register(projectAware: ExternalSystemProjectAware)
+
+  /**
+   * @see [ExternalSystemProjectTracker.register]
+   * @param [parentDisposable] allows to remove [projectAware] when it will be disposed
+   */
+  fun register(projectAware: ExternalSystemProjectAware, parentDisposable: Disposable) {
+    register(projectAware)
+    Disposer.register(parentDisposable, Disposable { remove(projectAware.projectId) })
+  }
 
   /**
    * Activates auto reload for project with [id]

@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +19,9 @@ import javax.swing.*;
 
 @ApiStatus.Experimental
 public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
-  private   final String myTitle;
-  private   final String myDescription;
-  protected final TextComponentAccessor<? super T> myAccessor;
+  private   final @NlsContexts.DialogTitle String myTitle;
+  private   final @NlsContexts.Label String myDescription;
+  protected final @NotNull TextComponentAccessor<? super T> myAccessor;
   protected final FileChooserDescriptor myFileChooserDescriptor;
 
   protected  T myTextComponent;
@@ -30,7 +32,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
                               @Nullable Project project,
                               FileChooserDescriptor fileChooserDescriptor,
                               @Nullable T component,
-                              TextComponentAccessor<? super T> accessor) {
+                              @NotNull TextComponentAccessor<? super T> accessor) {
     if (fileChooserDescriptor != null && fileChooserDescriptor.isChooseMultiple()) {
       //LOG.error("multiple selection not supported");
       fileChooserDescriptor = new FileChooserDescriptor(fileChooserDescriptor) {
@@ -76,7 +78,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
 
   @Nullable
   protected VirtualFile getInitialFile() {
-    String directoryName = myAccessor.getText(myTextComponent).trim();
+    @NonNls String directoryName = myAccessor.getText(myTextComponent).trim();
     if (StringUtil.isEmptyOrSpaces(directoryName)) {
       return null;
     }
@@ -93,12 +95,13 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   @NotNull
-  protected String expandPath(@NotNull String path) {
+  @NonNls
+  protected String expandPath(@NotNull @NonNls String path) {
     return path;
   }
 
   @NotNull
-  protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+  protected @NlsSafe String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
     return chosenFile.getPresentableUrl();
   }
 

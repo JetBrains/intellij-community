@@ -29,22 +29,23 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   private final boolean myRelaxed;
   private final boolean myCaseSensitive;
 
-  private static final SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl> myCachedDeclsCache = new SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl>() {
-    @Override
-    protected Map<String, HtmlElementDescriptorImpl> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
-      return htmlNSDescriptor.doBuildCachedMap();
-    }
+  private static final SimpleFieldCache<Map<String, HtmlElementDescriptorImpl>, HtmlNSDescriptorImpl> myCachedDeclsCache =
+    new SimpleFieldCache<>() {
+      @Override
+      protected Map<String, HtmlElementDescriptorImpl> compute(final HtmlNSDescriptorImpl htmlNSDescriptor) {
+        return htmlNSDescriptor.doBuildCachedMap();
+      }
 
-    @Override
-    protected Map<String, HtmlElementDescriptorImpl> getValue(final HtmlNSDescriptorImpl htmlNSDescriptor) {
-      return htmlNSDescriptor.myCachedDecls;
-    }
+      @Override
+      protected Map<String, HtmlElementDescriptorImpl> getValue(final HtmlNSDescriptorImpl htmlNSDescriptor) {
+        return htmlNSDescriptor.myCachedDecls;
+      }
 
-    @Override
-    protected void putValue(final Map<String, HtmlElementDescriptorImpl> map, final HtmlNSDescriptorImpl htmlNSDescriptor) {
-      htmlNSDescriptor.myCachedDecls = map;
-    }
-  };
+      @Override
+      protected void putValue(final Map<String, HtmlElementDescriptorImpl> map, final HtmlNSDescriptorImpl htmlNSDescriptor) {
+        htmlNSDescriptor.myCachedDecls = map;
+      }
+    };
 
   private volatile Map<String, HtmlElementDescriptorImpl> myCachedDecls;
 
@@ -164,7 +165,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  public TypeDescriptor getTypeDescriptor(String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     return myDelegate instanceof XmlNSTypeDescriptorProvider ?
            ((XmlNSTypeDescriptorProvider)myDelegate).getTypeDescriptor(name, context) : null;
   }

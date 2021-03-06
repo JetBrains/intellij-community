@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,6 +17,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +32,8 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   public CompletionServiceImpl() {
     super();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
@@ -40,6 +44,12 @@ public final class CompletionServiceImpl extends BaseCompletionService {
         else if (indicator == null) {
           setCompletionPhase(CompletionPhase.NoCompletion);
         }
+      }
+    });
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        setCompletionPhase(CompletionPhase.NoCompletion);
       }
     });
   }
@@ -183,7 +193,6 @@ public final class CompletionServiceImpl extends BaseCompletionService {
            !(phase instanceof CompletionPhase.ItemsCalculated);
   }
 
-
   public static CompletionPhase getCompletionPhase() {
     return ourPhase;
   }
@@ -201,7 +210,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
                                                      @NotNull Weigher weigher,
                                                      @NotNull CompletionLocation location) {
     CompletionSorterImpl processedSorter = super.processStatsWeigher(sorter, weigher, location);
-    return processedSorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
+    return processedSorter.withClassifier(new ClassifierFactory<>("stats") {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
         return new StatisticsWeigher.LookupStatisticsWeigher(location, next);

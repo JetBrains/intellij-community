@@ -190,8 +190,8 @@ public final class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object[] childElements = getStructure().getChildElements(nodeDescriptor);
-    return childElements != null && childElements.length > 0;
+    Object[] childElements = getStructure().getChildElements(nodeDescriptor);
+    return childElements.length > 0;
   }
 
   @Override

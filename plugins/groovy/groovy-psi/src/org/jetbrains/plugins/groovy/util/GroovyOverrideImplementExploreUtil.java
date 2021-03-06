@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -11,13 +11,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
 import java.util.*;
 
-public class GroovyOverrideImplementExploreUtil {
+public final class GroovyOverrideImplementExploreUtil {
 
   @NotNull
   public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull GrTypeDefinition aClass) {
@@ -51,16 +52,15 @@ public class GroovyOverrideImplementExploreUtil {
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();
 
     PsiUtilCore.ensureValid(aClass);
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature signature : allMethodSignatures) {
       PsiMethod method = signature.getMethod();
       if (method instanceof GrTraitMethod) {
         for (HierarchicalMethodSignature superSignature : signature.getSuperSignatures()) {
-          processMethod(aClass, skipImplemented, abstracts, finals, concretes, resolveHelper, superSignature, superSignature.getMethod());
+          processMethod(aClass, skipImplemented, abstracts, finals, concretes, superSignature, superSignature.getMethod());
         }
       }
       else {
-        processMethod(aClass, skipImplemented, abstracts, finals, concretes, resolveHelper, signature, method);
+        processMethod(aClass, skipImplemented, abstracts, finals, concretes, signature, method);
       }
     }
 
@@ -92,10 +92,10 @@ public class GroovyOverrideImplementExploreUtil {
                                    Map<MethodSignature, PsiMethod> abstracts,
                                    Map<MethodSignature, PsiMethod> finals,
                                    Map<MethodSignature, PsiMethod> concretes,
-                                   PsiResolveHelper resolveHelper, HierarchicalMethodSignature signature, PsiMethod method) {
+                                   HierarchicalMethodSignature signature, PsiMethod method) {
     PsiUtilCore.ensureValid(method);
 
-    if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) return;
+    if (GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC) || GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.FINAL) || GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.PRIVATE)) return;
     PsiClass hisClass = method.getContainingClass();
     if (hisClass == null) return;
     // filter non-immediate super constructors

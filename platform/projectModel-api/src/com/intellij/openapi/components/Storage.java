@@ -14,17 +14,11 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
-  
-  /**
-   * @deprecated use {@link StoragePathMacros#NON_ROAMABLE_FILE}
-   */
-  @Deprecated
-  String NOT_ROAMABLE_FILE = StoragePathMacros.NON_ROAMABLE_FILE;
-
   /**
    * @deprecated Use {@link #value()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String file() default "";
 
   /**

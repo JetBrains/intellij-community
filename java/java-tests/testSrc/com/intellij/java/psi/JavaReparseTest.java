@@ -15,11 +15,11 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.MockLanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -43,7 +43,7 @@ import java.util.List;
 public class JavaReparseTest extends AbstractReparseTestCase {
 
   public void testInsertLBrace() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     final String text2 = "}}}";
     final String text1 = "class Foo{ void method(){{";
     prepareFile(text1, text2);
@@ -51,7 +51,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testJavaDoc() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     String text2 = "void method() {}}";
     final String text1 = "class Foo { /** ";
     prepareFile(text1, text2);
@@ -59,7 +59,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testSCR5665() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     final String text2 = " \"and then insert it again\"}\n" +
                          "  };\n" +
                          "}";
@@ -85,7 +85,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testCodeFragment() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     prepareFile("a", "a");
     insert("xxx xxx xxx xxx xxx xxx xxx");
   }
@@ -227,7 +227,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
   }
 
   public void testOverlappingCommonPrefixAndSuffix() {
-    setFileType(StdFileTypes.JAVA);
+    setFileType(JavaFileType.INSTANCE);
     String toRemove = "} {foobar";
     prepareFile("class Foo { {goo} {foobar" + toRemove, " foobar} }");
     remove(toRemove.length());

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -65,29 +63,6 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
   @Override
   public Class<GrAnnotationArgumentList> getArgumentListClass() {
     return GrAnnotationArgumentList.class;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
-  @Override
-  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    if (item == null || context == null) return null;
-    Object o = item.getObject();
-
-    if (o instanceof GroovyResolveResult) {
-      o = ((GroovyResolveResult)o).getElement();
-    }
-
-
-    if (o instanceof PsiClass && ((PsiClass)o).isAnnotationType()) {
-      return extractAnnotationMethodsFromClass((PsiClass)o);
-    }
-    else {
-      return GrAnnotationNameValuePair.EMPTY_ARRAY;
-    }
   }
 
   private static PsiAnnotationMethod @NotNull [] extractAnnotationMethodsFromClass(@NotNull PsiClass o) {

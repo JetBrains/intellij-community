@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
@@ -45,13 +46,13 @@ public class ManageRepoDialog extends DialogWrapper {
     myList = new JBList<>();
     myList.setPaintBusy(true);
     final DefaultListModel<String> repoModel = new DefaultListModel<>();
-    controller.fetchAllRepositories(new CatchingConsumer<List<String>, Exception>() {
+    controller.fetchAllRepositories(new CatchingConsumer<>() {
       @Override
-      public void consume(List<String> repoUrls) {
+      public void consume(List<@NlsSafe String> repoUrls) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (isDisposed()) return;
           myList.setPaintBusy(false);
-          for (String repoUrl: repoUrls) {
+          for (@NlsSafe String repoUrl : repoUrls) {
             repoModel.addElement(repoUrl);
           }
         }, ModalityState.any());

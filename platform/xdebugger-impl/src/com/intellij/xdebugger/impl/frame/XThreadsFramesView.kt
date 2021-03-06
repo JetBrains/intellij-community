@@ -8,7 +8,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.*
+import com.intellij.ui.ListSpeedSearch
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil
@@ -16,6 +19,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import java.awt.BorderLayout
 import java.awt.Component
@@ -41,6 +45,11 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   private var myFramesManager: FramesManager
   private var myThreadsContainer: ThreadsContainer
 
+  val threads: XDebuggerThreadsList get() = myThreadsList
+  val frames: XDebuggerFramesList get() = myFramesList
+
+  private var myAlreadyPaused = false
+
   private val myFramesPresentationCache = mutableMapOf<Any, String>()
 
   val mainPanel = JPanel(BorderLayout())
@@ -50,10 +59,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private const val splitterProportionKey = "XThreadsFramesViewSplitterKey"
     private const val splitterProportionDefaultValue = 0.5f
 
-    private val Disposable.isDisposed get() = Disposer.isDisposed(this)
-    private val Disposable.isDisposing get() = Disposer.isDisposing(this)
-
-    private val Disposable.isAlive get() = !isDisposed && !isDisposing
+    private val Disposable.isAlive get() = !Disposer.isDisposed(this)
     private val Disposable.isNotAlive get() = !isAlive
 
     private fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)
@@ -200,12 +206,14 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     }
     val suspendContext = session.suspendContext
     if (suspendContext == null) {
+      UIUtil.invokeLaterIfNeeded { myAlreadyPaused = false }
       requestClear()
       return
     }
 
     UIUtil.invokeLaterIfNeeded {
-      if (event == SessionEvent.PAUSED) {
+      if (!myAlreadyPaused && event == SessionEvent.PAUSED) {
+        myAlreadyPaused = true
         // clear immediately
         cancelClear()
         clear()
@@ -215,7 +223,25 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       }
 
       if (event == SessionEvent.FRAME_CHANGED) {
-        // todo
+        val currentExecutionStack = (session as XDebugSessionImpl).currentExecutionStack
+        val currentStackFrame = session.getCurrentStackFrame()
+
+        var selectedStack = threads.selectedValue?.stack
+        if (selectedStack != currentExecutionStack) {
+          val newSelectedItemIndex = threads.model.items.indexOfFirst { it.stack == currentExecutionStack }
+          if (newSelectedItemIndex != -1) {
+            threads.selectedIndex = newSelectedItemIndex;
+            myFramesManager.refresh();
+            selectedStack = threads.selectedValue?.stack;
+          }
+        }
+        if (selectedStack != currentExecutionStack)
+          return@invokeLaterIfNeeded;
+
+        val selectedFrame = frames.selectedValue
+        if (selectedFrame != currentStackFrame) {
+          frames.setSelectedValue(currentStackFrame, true);
+        }
       }
 
       if (event == SessionEvent.SETTINGS_CHANGED) {

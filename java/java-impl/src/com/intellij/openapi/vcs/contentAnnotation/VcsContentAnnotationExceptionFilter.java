@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.contentAnnotation;
 
 import com.intellij.execution.filters.ExceptionInfoCache;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
@@ -34,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -60,7 +48,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     myCache = new ExceptionInfoCache(scope);
   }
 
-  private static class MyAdditionalHighlight extends AdditionalHighlight {
+  private static final class MyAdditionalHighlight extends AdditionalHighlight {
     private MyAdditionalHighlight(int start, int end) {
       super(start, end);
     }
@@ -165,10 +153,10 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   @NotNull
   @Override
   public String getUpdateMessage() {
-    return "Checking recent changes...";
+    return VcsBundle.message("checking.recent.changes");
   }
 
-  private static class LocalChangesCorrector {
+  private static final class LocalChangesCorrector {
     private final Map<VirtualFile, UpToDateLineNumberProvider> myRecentlyChanged;
     private final Project myProject;
 
@@ -180,12 +168,12 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     boolean isFileAlreadyIdentifiedAsChanged(final VirtualFile vf) {
       return myRecentlyChanged.containsKey(vf);
     }
-    
+
     boolean isRangeChangedLocally(@NotNull VirtualFile vf, @NotNull Document document, @NotNull TextRange range) {
       final UpToDateLineNumberProvider provider = getProvider(vf, document);
       return ReadAction.compute(() -> provider.isRangeChanged(range.getStartOffset(), range.getEndOffset()));
     }
-    
+
     TextRange getCorrectedRange(@NotNull VirtualFile vf, @NotNull Document document, @NotNull TextRange range) {
       final UpToDateLineNumberProvider provider = getProvider(vf, document);
       return ReadAction.compute(() -> new TextRange(provider.getLineNumber(range.getStartOffset()), provider.getLineNumber(range.getEndOffset())));

@@ -12,11 +12,13 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -27,6 +29,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,7 +38,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   /**
    * @deprecated Use {@link #getRefactoringName()} instead
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final String REFACTORING_NAME = "Pull Members Up";
 
   private PsiClass mySubclass;
@@ -43,7 +46,11 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !getElements(editor, file, true).isEmpty();
+    List<PsiElement> elements = getElements(editor, file, true);
+    if (elements.isEmpty()) return false;
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
+    if (psiClass == null) return false;
+    return psiClass instanceof PsiAnonymousClass || RefactoringActionContextUtil.isClassWithExtendsOrImplements(psiClass);
   }
 
   @Override
@@ -166,7 +173,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("pull.members.up.title");
   }
 }

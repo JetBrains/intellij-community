@@ -2,6 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -12,14 +13,12 @@ import java.util.Objects;
 
 /**
  * Base interface to export a scheme.
- *
- * @author Rustam Vishnyakov
  */
 public abstract class SchemeExporter<T extends Scheme> {
   /**
    * @deprecated use {@link #exportScheme(Project, Scheme, OutputStream)}.
    */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused", "RedundantThrows"})
+  @SuppressWarnings({"unused", "RedundantThrows"})
   @Deprecated
   public void exportScheme(@NotNull T scheme, @NotNull OutputStream outputStream) throws Exception {
   }
@@ -46,7 +45,7 @@ public abstract class SchemeExporter<T extends Scheme> {
    * @return The default file name to be used.
    */
   public String getDefaultFileName(@NotNull String schemeName) {
-    return schemeName;
+    return FileUtil.sanitizeFileName(schemeName);
   }
 
   /**

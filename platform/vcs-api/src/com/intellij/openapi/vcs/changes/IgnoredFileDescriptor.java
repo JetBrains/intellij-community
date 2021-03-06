@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +14,7 @@ public interface IgnoredFileDescriptor {
    * @return full path to file or directory. null in case if {@link IgnoreSettingsType} is {@link IgnoreSettingsType#MASK}
    */
   @Nullable
+  @NlsSafe
   String getPath();
 
   /**
@@ -22,6 +25,7 @@ public interface IgnoredFileDescriptor {
    * @return ignored mask. null in case if {@link IgnoreSettingsType} is not {@link IgnoreSettingsType#MASK}
    */
   @Nullable
+  @NlsSafe
   String getMask();
 
   @NotNull
@@ -31,6 +35,7 @@ public interface IgnoredFileDescriptor {
    * @deprecated use {@link #matchesFile(FilePath)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   boolean matchesFile(@NotNull VirtualFile file);
 
   boolean matchesFile(@NotNull FilePath filePath);

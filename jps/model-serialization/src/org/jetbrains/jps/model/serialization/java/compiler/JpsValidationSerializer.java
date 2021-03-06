@@ -33,10 +33,6 @@ public class JpsValidationSerializer extends JpsProjectExtensionSerializer {
     configuration.setValidationConfiguration(state.VALIDATE_ON_BUILD, disabledValidators);
   }
 
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-  }
-
   public static class ValidationConfigurationState {
     public boolean VALIDATE_ON_BUILD = false;
     public Map<String, Boolean> VALIDATORS = new HashMap<>();

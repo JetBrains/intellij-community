@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
@@ -15,9 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.FieldPanel
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
+import com.intellij.util.containers.CollectionFactory
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.io.File
@@ -38,81 +37,64 @@ private val markedElementNames: Set<String>
       emptySet()
     }
     else {
-      ObjectOpenHashSet(value.trim { it <= ' ' }.split("|"))
+      CollectionFactory.createSmallMemoryFootprintSet(value.trim { it <= ' ' }.split("|"))
     }
   }
 
 private fun addToExistingListElement(item: ExportableItem,
                                      itemToContainingListElement: MutableMap<ExportableItem, ComponentElementProperties>,
-                                     fileToItem: Map<Path, List<ExportableItem>>): Boolean {
-  val list = fileToItem[item.file]
+                                     fileToItem: Map<FileSpec, List<ExportableItem>>): Boolean {
+  val list = fileToItem[item.fileSpec]
   if (list == null || list.isEmpty()) {
     return false
   }
 
-  var file: Path? = null
+  var file: FileSpec? = null
   for (tiedItem in list) {
     if (tiedItem === item) {
       continue
     }
 
     val elementProperties = itemToContainingListElement[tiedItem]
-    if (elementProperties != null && item.file !== file) {
-      LOG.assertTrue(file == null, "Component $item serialize itself into $file and ${item.file}")
+    if (elementProperties != null && item.fileSpec !== file) {
+      LOG.assertTrue(file == null, "Component $item serialize itself into $file and ${item.fileSpec}")
       // found
       elementProperties.items.add(item)
       itemToContainingListElement[item] = elementProperties
-      file = item.file
+      file = item.fileSpec
     }
   }
   return file != null
 }
 
-fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String): Promise<VirtualFile> {
-  val chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-  chooserDescriptor.description = description
-  chooserDescriptor.isHideIgnored = false
-  chooserDescriptor.title = title
-  chooserDescriptor.withFileFilter {
-    ConfigImportHelper.isSettingsFile(it) ||
-    it.fileSystem.getNioPath(it)?.let { p -> ConfigImportHelper.isConfigDirectory(p) } == true
-  }
-
-  var initialDir: VirtualFile?
-  if (oldPath != null) {
-    val oldFile = File(oldPath)
-    initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
-    if (initialDir == null && oldFile.parentFile != null) {
-      initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile.parentFile)
-    }
-  }
-  else {
-    initialDir = null
-  }
-  val result = AsyncPromise<VirtualFile>()
-  FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, object : FileChooser.FileChooserConsumer {
-    override fun consume(files: List<VirtualFile>) {
-      val file = files[0]
-      result.setResult(file)
-    }
-
-    override fun cancelled() {
-      result.setError("")
-    }
-  })
-  return result
+internal fun chooseSettingsFile(descriptor: FileChooserDescriptor,
+                                initialPath: String?,
+                                parent: Component?,
+                                onFileChosen: (VirtualFile) -> Unit) {
+  FileChooser.chooseFile(descriptor, null, parent, getFileOrParent(initialPath), onFileChosen)
 }
 
-internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<ExportableItem>>,
+private fun getFileOrParent(path: String?): VirtualFile? {
+  if (path != null) {
+    val oldFile = File(path)
+    val initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
+    return initialDir ?: oldFile.parentFile?.let {
+      LocalFileSystem.getInstance().findFileByIoFile(it)
+    }
+  }
+  return null
+}
+
+internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
                                               private val isShowFilePath: Boolean,
-                                              title: @NlsContexts.DialogTitle String,
-                                              private val description: String) : DialogWrapper(false) {
+                                              @NlsContexts.DialogTitle title: String,
+                                              @NlsContexts.Label private val description: String) : DialogWrapper(false) {
   private val chooser: ElementsChooser<ComponentElementProperties>
   private val pathPanel = FieldPanel(ConfigurationStoreBundle.message("editbox.export.settings.to"), null, { browse() }, null)
 
   internal val exportableComponents: Set<ExportableItem>
     get() {
-      val components = ObjectOpenHashSet<ExportableItem>()
+      val components = CollectionFactory.createSmallMemoryFootprintSet<ExportableItem>()
       for (elementProperties in chooser.markedElements) {
         components.addAll(elementProperties.items)
       }
@@ -151,12 +133,16 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
   }
 
   private fun browse() {
-    chooseSettingsFile(pathPanel.text, window, ConfigurationStoreBundle.message("title.export.file.location"),
-                       ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path"))
-      .onSuccess { file ->
-        val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
-        pathPanel.text = FileUtil.toSystemDependentName(path)
-      }
+    val descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().apply {
+      title = ConfigurationStoreBundle.message("title.export.file.location")
+      description = ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path")
+      isHideIgnored = false
+      withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+    }
+    chooseSettingsFile(descriptor, pathPanel.text, window) { file ->
+      val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
+      pathPanel.text = FileUtil.toSystemDependentName(path)
+    }
   }
 
   private fun updateControls() {
@@ -164,17 +150,17 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
   }
 
   override fun createLeftSideActions(): Array<Action> {
-    val selectAll = object : AbstractAction("Select &All") {
+    val selectAll = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.select.all")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.setAllElementsMarked(true)
       }
     }
-    val selectNone = object : AbstractAction("Select &None") {
+    val selectNone = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.select.none")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.setAllElementsMarked(false)
       }
     }
-    val invert = object : AbstractAction("&Invert") {
+    val invert = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.invert.selection")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.invertSelection()
       }
@@ -219,10 +205,10 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<E
 }
 
 private class ComponentElementProperties : MultiStateElementsChooser.ElementProperties {
-  val items = ObjectOpenHashSet<ExportableItem>()
+  val items = CollectionFactory.createSmallMemoryFootprintSet<ExportableItem>()
 
   val fileName: String
-    get() = items.first().file.fileName.toString()
+    get() = items.first().fileSpec.relativePath
 
   override fun toString(): String {
     val names = LinkedHashSet<String>()

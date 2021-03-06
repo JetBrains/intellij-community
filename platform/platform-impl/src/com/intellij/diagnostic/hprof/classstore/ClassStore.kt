@@ -15,14 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.classstore
 
-import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.parser.Type
-import com.intellij.diagnostic.hprof.visitors.CollectStringValuesVisitor
-import com.intellij.diagnostic.hprof.visitors.CreateClassStoreVisitor
-import gnu.trove.TLongObjectHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import java.util.function.LongUnaryOperator
 
-class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
+class ClassStore(private val classes: Long2ObjectMap<ClassDefinition>) {
   private val stringToClassDefinition = HashMap<String, ClassDefinition>()
   private val classDefinitionToShortPrettyName = HashSet<ClassDefinition>()
 
@@ -34,16 +32,17 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
   private val primitiveArrayToClassDefinition = HashMap<Type, ClassDefinition>()
 
   init {
-    fun getClashedNameWithIndex(classDefinition: ClassDefinition,
-                                index: Int): String {
-      if (classDefinition.name.endsWith(';'))
+    fun getClashedNameWithIndex(classDefinition: ClassDefinition, index: Int): String {
+      if (classDefinition.name.endsWith(';')) {
         return "${classDefinition.name.removeSuffix(";")}!$index;"
-      else
+      }
+      else {
         return "${classDefinition.name}!$index"
+      }
     }
 
-    val clashedClassNames = mutableSetOf<String>()
-    classes.forEachValue { classDefinition ->
+    val clashedClassNames = HashSet<String>()
+    for (classDefinition in classes.values) {
       val className = classDefinition.name
       var clashed = false
       if (clashedClassNames.contains(className)) {
@@ -76,7 +75,6 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
       else {
         stringToClassDefinition[classDefinition.name] = classDefinition
       }
-      true
     }
     clashedClassNames.forEach { assert(!stringToClassDefinition.contains(it)) }
 
@@ -95,9 +93,12 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
     }
 
     val shortNameToClassDefinition = HashMap<String, ClassDefinition?>()
-    classes.forEachValue {
-      if (it.name.contains('$')) return@forEachValue true
-      val prettyName = it.prettyName
+    for (classDefinition in classes.values) {
+      if (classDefinition.name.contains('$')) {
+        continue
+      }
+
+      val prettyName = classDefinition.prettyName
       val shortPrettyName = prettyName.substringAfterLast('.')
       if (shortNameToClassDefinition.containsKey(shortPrettyName)) {
         val prevClassDefinition = shortNameToClassDefinition[shortPrettyName]
@@ -106,9 +107,8 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
         }
       }
       else {
-        shortNameToClassDefinition[shortPrettyName] = it
+        shortNameToClassDefinition[shortPrettyName] = classDefinition
       }
-      true
     }
     shortNameToClassDefinition.forEach { (_, classDef) ->
       if (classDef == null) return@forEach
@@ -116,47 +116,34 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
     }
   }
 
-  operator fun get(id: Int): ClassDefinition {
-    return classes[id.toLong()]!!
-  }
+  operator fun get(id: Int): ClassDefinition = classes.get(id.toLong())!!
 
-  operator fun get(id: Long): ClassDefinition {
-    return classes[id]!!
-  }
+  operator fun get(id: Long): ClassDefinition = classes.get(id)!!
 
-  operator fun get(name: String): ClassDefinition {
-    return stringToClassDefinition[name]!!
-  }
+  operator fun get(name: String): ClassDefinition = stringToClassDefinition.get(name)!!
 
-  fun getClassIfExists(name: String): ClassDefinition? {
-    return stringToClassDefinition[name]
-  }
+  fun getClassIfExists(name: String): ClassDefinition? = stringToClassDefinition[name]
 
   fun containsClass(name: String) = stringToClassDefinition.containsKey(name)
 
-  fun getClassForPrimitiveArray(t: Type): ClassDefinition? {
-    return primitiveArrayToClassDefinition[t]
-  }
+  fun getClassForPrimitiveArray(t: Type): ClassDefinition? = primitiveArrayToClassDefinition[t]
 
-  fun size() = classes.size()
+  fun size() = classes.size
 
   fun isSoftOrWeakReferenceClass(classDefinition: ClassDefinition): Boolean {
     return classDefinition == softReferenceClass || classDefinition == weakReferenceClass
   }
 
   fun forEachClass(func: (ClassDefinition) -> Unit) {
-    classes.forEachValue {
-      func(it)
-      true
+    for (classDefinition in classes.values) {
+      func(classDefinition)
     }
   }
 
   fun createStoreWithRemappedIDs(remappingFunction: LongUnaryOperator): ClassStore {
-    fun map(id: Long): Long = remappingFunction.applyAsLong(id)
-    val newClasses = TLongObjectHashMap<ClassDefinition>()
-    classes.forEachValue {
-      newClasses.put(map(it.id), it.copyWithRemappedIDs(remappingFunction))
-      true
+    val newClasses = Long2ObjectOpenHashMap<ClassDefinition>()
+    for (classDefinition in classes.values) {
+      newClasses.put(remappingFunction.applyAsLong(classDefinition.id), classDefinition.copyWithRemappedIDs(remappingFunction))
     }
     return ClassStore(newClasses)
   }

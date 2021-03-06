@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,8 +118,7 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
 
           File skinnyManifestTargetFile = null;
           FileUtil.createParentDirs(skinnyManifest);
-          FileOutputStream outputStream = new FileOutputStream(skinnyManifest);
-          try {
+          try (FileOutputStream outputStream = new FileOutputStream(skinnyManifest)) {
             warManifest.write(outputStream);
 
             if (fileCopyPackagingElement instanceof JpsElementBase) {
@@ -143,9 +141,6 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
                 parent = parent.getParent();
               }
             }
-          }
-          finally {
-            StreamUtil.closeStream(outputStream);
           }
 
           if (skinnyManifestTargetFile != null) {

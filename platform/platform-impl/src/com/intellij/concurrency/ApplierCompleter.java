@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +30,7 @@ import java.util.concurrent.CountedCompleter;
  * reaches the top, in which case it invokes {@link java.util.concurrent.ForkJoinTask#quietlyComplete()} which causes the top level task to wake up and join successfully.
  * The exceptions from the sub tasks bubble up to the top and saved in {@link #throwable}.
  */
-class ApplierCompleter<T> extends CountedCompleter<Void> {
+final class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
@@ -249,6 +236,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "("+lo+"-"+hi+")"+(getCompleter() == null ? "" : " parent: "+getCompleter());
   }

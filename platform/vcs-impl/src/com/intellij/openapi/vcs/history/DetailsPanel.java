@@ -29,6 +29,7 @@ import com.intellij.util.ui.HtmlPanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,17 +79,17 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     }
 
     boolean addRevisionInfo = mySelection.size() > 1;
-    StringBuilder html = new StringBuilder();
+    @Nls StringBuilder html = new StringBuilder();
     for (TreeNodeOnVcsRevision revision : mySelection) {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
       if (html.length() > 0) {
-        html.append("<br/><br/>");
+        html.append("<br/><br/>"); //NON-NLS
       }
       if (addRevisionInfo) {
         String revisionInfo = FileHistoryPanelImpl.getPresentableText(revision.getRevision(), false);
-        html.append("<font color=\"").append(ColorUtil.toHtmlColor(JBColor.gray).substring(2)).append("\">")
-            .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
+        html.append("<font color=\"").append(ColorUtil.toHtmlColor(JBColor.gray).substring(2)).append("\">") //NON-NLS
+            .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>"); //NON-NLS
       }
       html.append(getHtmlWithFonts(formatTextWithLinks(myProject, message)));
     }

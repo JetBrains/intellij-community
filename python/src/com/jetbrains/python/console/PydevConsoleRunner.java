@@ -32,8 +32,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
-import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
@@ -42,6 +42,7 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -239,4 +240,7 @@ public interface PydevConsoleRunner {
   PyConsoleProcessHandler getProcessHandler();
 
   PythonConsoleView getConsoleView();
+
+  @TestOnly
+  void setSdk(Sdk sdk);
 }

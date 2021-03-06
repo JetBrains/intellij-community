@@ -19,7 +19,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -36,7 +38,11 @@ public class JavaCharFilter extends CharFilter {
 
   @Override
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
-    if (!lookup.getPsiFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    PsiFile file = lookup.getPsiFile();
+    if (file == null) return null;
+    boolean isJava = file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+    boolean isJsp = file.getFileType() == StdFileTypes.JSP;
+    if (!isJava && !isJsp) {
       return null;
     }
 
@@ -45,13 +51,12 @@ public class JavaCharFilter extends CharFilter {
 
     final Object o = item.getObject();
     if (c == '!') {
-      if (o instanceof PsiVariable) {
-        if (PsiType.BOOLEAN.isAssignableFrom(((PsiVariable)o).getType())) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
-      if (o instanceof PsiMethod) {
-        final PsiType type = ((PsiMethod)o).getReturnType();
-        if (type != null && PsiType.BOOLEAN.isAssignableFrom(type)) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
+      VariableLookupItem varItem = item.as(VariableLookupItem.class);
+      if (varItem != null && varItem.isNegatable()) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+
+      JavaMethodCallElement methodItem = item.as(JavaMethodCallElement.class);
+      if (methodItem != null && methodItem.isNegatable()) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+
       if (o instanceof PsiKeyword && ((PsiKeyword)o).textMatches(PsiKeyword.INSTANCEOF)) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
@@ -61,7 +66,6 @@ public class JavaCharFilter extends CharFilter {
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
 
     if (c == ':') {
-      PsiFile file = lookup.getPsiFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
       PsiElement leaf = file.findElementAt(lookup.getEditor().getCaretModel().getOffset() - 1);
       if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_8)) {

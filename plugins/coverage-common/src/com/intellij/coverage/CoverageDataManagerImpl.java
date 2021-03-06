@@ -24,7 +24,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -36,13 +35,16 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -54,16 +56,21 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import java.io.File;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * @author ven
@@ -105,7 +112,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private final Object ANNOTATORS_LOCK = new Object();
-  private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<>();
+  private final Map<Editor, CoverageEditorAnnotator> myAnnotators = new HashMap<>();
 
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -116,37 +123,18 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         chooseSuitesBundle(myCurrentSuitesBundle);
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (project == myProject) {
-          EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), CoverageDataManagerImpl.this);
-        }
-      }
-
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        if (project != myProject) {
-          return;
-        }
-
-        synchronized (myLock) {
-          myIsProjectClosing = true;
-        }
-      }
-    });
 
     final CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
       addSuiteListener(coverageViewListener, this);
     }
 
-    CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageRunner>() {
+    CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull CoverageRunner coverageRunner, @NotNull PluginDescriptor pluginDescriptor) {
         CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
         if (suitesBundle != null &&
-            Arrays.stream(suitesBundle.getSuites()).anyMatch(suite -> coverageRunner == suite.getRunner())) {
+            ContainerUtil.exists(suitesBundle.getSuites(), suite -> coverageRunner == suite.getRunner())) {
           chooseSuitesBundle(null);
         }
 
@@ -179,7 +167,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
     }, this);
 
-    CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageEngine>() {
+    CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull CoverageEngine coverageEngine, @NotNull PluginDescriptor pluginDescriptor) {
         CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
@@ -274,7 +262,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public CoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
-    final String name = config.getName() + " Coverage Results";
+    final String name = CoverageBundle.message("coverage.results.suite.name", config.getName());
     final String covFilePath = config.getCoverageFilePath();
     assert covFilePath != null; // Shouldn't be null here!
 
@@ -434,6 +422,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
+        handler.removeProcessListener(this);
       }
     });
   }
@@ -497,7 +486,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          SrcFileAnnotator annotator;
+          CoverageEditorAnnotator annotator;
           synchronized (ANNOTATORS_LOCK) {
             annotator = myAnnotators.remove(textEditor);
           }
@@ -511,16 +500,16 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          SrcFileAnnotator annotator = getAnnotator(textEditor);
+          CoverageEditorAnnotator annotator = getAnnotator(textEditor);
           if (annotator == null) {
-            annotator = new SrcFileAnnotator(psiFile, textEditor);
+            annotator = engine.createSrcFileAnnotator(psiFile, textEditor);
             synchronized (ANNOTATORS_LOCK) {
               myAnnotators.put(textEditor, annotator);
             }
           }
 
           if (myCurrentSuitesBundle != null && engine.acceptedByFilters(psiFile, myCurrentSuitesBundle)) {
-            annotator.showCoverageInformation(myCurrentSuitesBundle);
+            annotator.showCoverage(myCurrentSuitesBundle);
           }
         }
       }
@@ -621,7 +610,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Nullable
-  public SrcFileAnnotator getAnnotator(Editor editor) {
+  public CoverageEditorAnnotator getAnnotator(Editor editor) {
     synchronized (ANNOTATORS_LOCK) {
       return myAnnotators.get(editor);
     }
@@ -629,7 +618,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   public void disposeAnnotators() {
     synchronized (ANNOTATORS_LOCK) {
-      for (SrcFileAnnotator annotator : myAnnotators.values()) {
+      for (CoverageEditorAnnotator annotator : myAnnotators.values()) {
         if (annotator != null) {
           Disposer.dispose(annotator);
         }
@@ -681,63 +670,66 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     return suite;
   }
 
-  private class CoverageEditorFactoryListener implements EditorFactoryListener {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, CoverageDataManagerImpl.this);
+  private Alarm myRequestsAlarm = null;
+  public static class CoverageEditorFactoryListener implements EditorFactoryListener {
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
     @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
-      synchronized (myLock) {
-        if (myIsProjectClosing) return;
-      }
-
       final Editor editor = event.getEditor();
-      if (editor.getProject() != myProject) return;
-      final PsiFile psiFile = ReadAction.compute(() -> {
-        if (myProject.isDisposed()) return null;
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-        final Document document = editor.getDocument();
-        return documentManager.getPsiFile(document);
-      });
+      Project project = editor.getProject();
+      if (project == null) return;
 
-      if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
-        final CoverageEngine engine = myCurrentSuitesBundle.getCoverageEngine();
-        if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
-          return;
-        }
-
-        SrcFileAnnotator annotator = getAnnotator(editor);
-        if (annotator == null) {
-          annotator = new SrcFileAnnotator(psiFile, editor);
-        }
-
-        final SrcFileAnnotator finalAnnotator = annotator;
-
-        synchronized (ANNOTATORS_LOCK) {
-          myAnnotators.put(editor, finalAnnotator);
-        }
-
-        final Runnable request = () -> {
-          if (myProject.isDisposed()) return;
-          if (myCurrentSuitesBundle != null) {
-            if (engine.acceptedByFilters(psiFile, myCurrentSuitesBundle)) {
-              finalAnnotator.showCoverageInformation(myCurrentSuitesBundle);
-            }
+      CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);
+      if (manager.myCurrentSuitesBundle != null) {
+        final PsiFile psiFile = ReadAction.compute(() -> {
+          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+          final Document document = editor.getDocument();
+          return documentManager.getPsiFile(document);
+        });
+        if (psiFile != null && psiFile.isPhysical()) {
+          final CoverageEngine engine = manager.myCurrentSuitesBundle.getCoverageEngine();
+          if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
+            return;
           }
-        };
-        myCurrentEditors.put(editor, request);
-        myAlarm.addRequest(request, 100);
+
+          CoverageEditorAnnotator annotator = manager.getAnnotator(editor);
+          if (annotator == null) {
+            annotator = engine.createSrcFileAnnotator(psiFile, editor);
+          }
+
+          final CoverageEditorAnnotator finalAnnotator = annotator;
+
+          synchronized (manager.ANNOTATORS_LOCK) {
+            manager.myAnnotators.put(editor, finalAnnotator);
+          }
+
+          final Runnable request = () -> {
+            if (project.isDisposed()) return;
+            CoverageSuitesBundle suitesBundle = manager.myCurrentSuitesBundle;
+            if (suitesBundle != null) {
+              if (engine.acceptedByFilters(psiFile, suitesBundle)) {
+                finalAnnotator.showCoverage(suitesBundle);
+              }
+            }
+          };
+          myCurrentEditors.put(editor, request);
+          getRequestsAlarm(manager).addRequest(request, 100);
+        }
       }
     }
 
     @Override
     public void editorReleased(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
-      if (editor.getProject() != myProject) return;
+      Project project = editor.getProject();
+      if (project == null) return;
+      CoverageDataManagerImpl manager = project.getServiceIfCreated(CoverageDataManagerImpl.class);
       try {
-        final SrcFileAnnotator fileAnnotator;
-        synchronized (ANNOTATORS_LOCK) {
-          fileAnnotator = myAnnotators.remove(editor);
+        if (manager == null) return;
+        final CoverageEditorAnnotator fileAnnotator;
+        synchronized (manager.ANNOTATORS_LOCK) {
+          fileAnnotator = manager.myAnnotators.remove(editor);
         }
         if (fileAnnotator != null) {
           Disposer.dispose(fileAnnotator);
@@ -745,9 +737,28 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
       finally {
         final Runnable request = myCurrentEditors.remove(editor);
-        if (request != null) {
-          myAlarm.cancelRequest(request);
+        if (request != null && manager != null) {
+          getRequestsAlarm(manager).cancelRequest(request);
         }
+      }
+    }
+
+    @RequiresEdt
+    private static Alarm getRequestsAlarm(@NotNull CoverageDataManagerImpl manager) {
+      Alarm alarm = manager.myRequestsAlarm;
+      if (alarm == null) {
+        manager.myRequestsAlarm = alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, manager);
+      }
+      return alarm;
+    }
+  }
+  
+  public static class CoverageProjectManagerListener implements ProjectManagerListener {
+    @Override
+    public void projectClosing(@NotNull Project project) {
+      CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);
+      synchronized (manager.myLock) {
+        manager.myIsProjectClosing = true;
       }
     }
   }

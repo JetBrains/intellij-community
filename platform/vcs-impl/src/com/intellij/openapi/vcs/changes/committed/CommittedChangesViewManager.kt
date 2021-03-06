@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.Disposable
@@ -29,25 +29,25 @@ private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *
       }
     }
 
-class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
+internal class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
   private var panel: ProjectCommittedChangesPanel? = null
 
-  override fun initTabContent(content: Content) =
+  override fun initTabContent(content: Content) {
     createCommittedChangesPanel().let {
       panel = it
       content.component = it
       content.setDisposer(Disposable { panel = null })
 
-      with(project.messageBus.connect(it)) {
-        subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
-        subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
-        subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
-          runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
-        })
-      }
+      val busConnection = project.messageBus.connect(it)
+      busConnection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
+      busConnection.subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
+      busConnection.subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
+        runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
+      })
 
       it.refreshChanges()
     }
+  }
 
   private fun createCommittedChangesPanel(): ProjectCommittedChangesPanel =
     ProjectCommittedChangesPanel(project, project.getCommittedChangesProvider()!!)
@@ -86,7 +86,7 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
   }
 
   class DisplayNameSupplier : Supplier<String> {
-    override fun get(): String = VcsBundle.getString("committed.changes.tab")
+    override fun get(): String = VcsBundle.message("committed.changes.tab")
   }
 
   companion object {

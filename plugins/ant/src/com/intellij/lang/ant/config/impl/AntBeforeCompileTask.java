@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
+import static com.intellij.ide.macro.CompilerContextMakeMacro.COMPILER_CONTEXT_MAKE_KEY;
 
 class AntBeforeCompileTask implements CompileTask {
   @Override
@@ -27,10 +27,10 @@ class AntBeforeCompileTask implements CompileTask {
   static boolean initializeAndRun(CompileContext context, Processor<? super AntConfigurationBase> action) {
     context.getProgressIndicator().pushState();
     try {
-      context.getProgressIndicator().setText(AntBundle.message("loading.ant.config.progress"));
+      context.getProgressIndicator().setText(AntBundle.message("progress.text.loading.ant.config"));
       AntConfigurationBase config = AntConfigurationBase.getInstance(context.getProject());
       config.ensureInitialized();
-      context.getProgressIndicator().setText("Running Ant Tasks...");
+      context.getProgressIndicator().setText(AntBundle.message("progress.text.running.ant.tasks"));
       return action.process(config);
     }
     finally {
@@ -40,17 +40,15 @@ class AntBeforeCompileTask implements CompileTask {
 
   @NotNull
   static DataContext createDataContext(CompileContext context) {
-    final HashMap<String, Object> dataMap = new HashMap<>();
-    final Project project = context.getProject();
-    dataMap.put(CommonDataKeys.PROJECT.getName(), project);
-    final CompileScope scope = context.getCompileScope();
-    final Module[] modules = scope.getAffectedModules();
-    if (modules.length == 1) {
-      dataMap.put(LangDataKeys.MODULE.getName(), modules[0]);
-    }
-    dataMap.put(LangDataKeys.MODULE_CONTEXT_ARRAY.getName(), modules);
-    dataMap.put("COMPILER_CONTEXT_MAKE", context.isMake());
-    return SimpleDataContext.getSimpleContext(dataMap, null);
+    Project project = context.getProject();
+    CompileScope scope = context.getCompileScope();
+    Module[] modules = scope.getAffectedModules();
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(LangDataKeys.MODULE, modules.length == 1 ? modules[0] : null)
+      .add(LangDataKeys.MODULE_CONTEXT_ARRAY, modules)
+      .add(COMPILER_CONTEXT_MAKE_KEY, context.isMake())
+      .build();
   }
 
 }

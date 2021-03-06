@@ -2,8 +2,7 @@
 package com.intellij.model.presentation;
 
 import com.intellij.model.Symbol;
-import com.intellij.navigation.TargetPopupPresentation;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +18,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 public interface SymbolPresentationService {
 
   static @NotNull SymbolPresentationService getInstance() {
-    return ServiceManager.getService(SymbolPresentationService.class);
+    return ApplicationManager.getApplication().getService(SymbolPresentationService.class);
   }
 
   static @Nls(capitalization = Sentence) @NotNull String getLongDescription(@NotNull Symbol symbol) {
@@ -27,6 +26,4 @@ public interface SymbolPresentationService {
   }
 
   @NotNull SymbolPresentation getSymbolPresentation(@NotNull Symbol symbol);
-
-  @NotNull TargetPopupPresentation getPopupPresentation(@NotNull Symbol symbol);
 }

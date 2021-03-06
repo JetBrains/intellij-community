@@ -73,8 +73,8 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
                                       Editor editor,
                                       RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented,
-                                      List<TextBlockTransferableData> values) {
+                                      Ref<? super Boolean> indented,
+                                      List<? extends TextBlockTransferableData> values) {
     fixCommasOnPaste(project, editor, bounds);
   }
 
@@ -165,5 +165,10 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
       element = element.getNextSibling();
     }
     return element;
+  }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
   }
 }

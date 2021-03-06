@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,7 +29,6 @@ import java.util.Arrays;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
-  private static final String NO_IMPORTS_OPTIMIZED = "No unused imports found";
   private static boolean myProcessVcsChangedFilesInTests;
 
   public OptimizeImportsAction() {
@@ -54,7 +53,7 @@ public class OptimizeImportsAction extends AnAction {
     PsiFile file = null;
     PsiDirectory dir;
 
-    if (editor != null){
+    if (editor != null) {
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
       dir = file.getContainingDirectory();
@@ -67,7 +66,7 @@ public class OptimizeImportsAction extends AnAction {
       }
       return;
     }
-    else{
+    else {
       Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
@@ -105,7 +104,7 @@ public class OptimizeImportsAction extends AnAction {
       else if (element instanceof PsiDirectory) {
         dir = (PsiDirectory)element;
       }
-      else{
+      else {
         file = element.getContainingFile();
         if (file == null) return;
         dir = file.getContainingDirectory();
@@ -125,10 +124,10 @@ public class OptimizeImportsAction extends AnAction {
       processOnlyVcsChangedFiles = dialog.isProcessOnlyVcsChangedFiles();
     }
 
-    if (processDirectory){
+    if (processDirectory) {
       new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
-    else{
+    else {
       OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
       if (editor != null && EditorSettingsExternalizable.getInstance().isShowNotificationAfterOptimizeImports()) {
         optimizer.setCollectInfo(true);
@@ -137,8 +136,8 @@ public class OptimizeImportsAction extends AnAction {
           if (collector != null) {
             String info = collector.getOptimizeImportsNotification();
             if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
-              String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
-              FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
+              String message = info != null ? info : CodeInsightBundle.message("hint.text.no.unused.imports.found");
+              FileInEditorProcessor.showHint(editor, message, null);
             }
           }
         });
@@ -167,16 +166,16 @@ public class OptimizeImportsAction extends AnAction {
   private static boolean isActionAvailable(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null){
+    if (project == null) {
       return false;
     }
 
     final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, CommonDataKeys.EDITOR.getData(dataContext), false);
-    if (editor != null){
+    if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !isOptimizeImportsAvailable(file)){
+      if (file == null || !isOptimizeImportsAvailable(file)) {
         return false;
       }
     }
@@ -202,13 +201,13 @@ public class OptimizeImportsAction extends AnAction {
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      if (element == null){
+      if (element == null) {
         return false;
       }
 
-      if (!(element instanceof PsiDirectory)){
+      if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
-        if (file == null || !isOptimizeImportsAvailable(file)){
+        if (file == null || !isOptimizeImportsAvailable(file)) {
           return false;
         }
       }
@@ -221,7 +220,7 @@ public class OptimizeImportsAction extends AnAction {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
-  private static Boolean isProcessVcsChangedText(Project project, String text, boolean hasChanges) {
+  private static Boolean isProcessVcsChangedText(Project project, @NlsContexts.Label String text, boolean hasChanges) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myProcessVcsChangedFilesInTests;
     }
@@ -242,11 +241,11 @@ public class OptimizeImportsAction extends AnAction {
   private static class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;
 
-    private final String myText;
+    private final @NlsContexts.Label String myText;
     private JCheckBox myOnlyVcsCheckBox;
     private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 
-    OptimizeImportsDialog(Project project, String text, boolean hasChanges) {
+    OptimizeImportsDialog(Project project, @NlsContexts.Label String text, boolean hasChanges) {
       super(project, false);
       myText = text;
       myContextHasChanges = hasChanges;

@@ -2,22 +2,33 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 /**
  * Utility methods to support Java records
  */
-public class JavaPsiRecordUtil {
+public final class JavaPsiRecordUtil {
   /**
-   * @param accessor accessor method for record component 
+   * @param accessor accessor method for record component
    * @return a corresponding record component, or null if the supplied method is not an accessor for the record component.
    * Note that if accessor is not well-formed (e.g. has wrong return type), the corresponding record component will still be returned.
    */
   @Nullable
   public static PsiRecordComponent getRecordComponentForAccessor(@NotNull PsiMethod accessor) {
     PsiClass aClass = accessor.getContainingClass();
+    if (aClass == null) {
+      PsiElement parent = accessor.getParent();
+      if (parent instanceof DummyHolder) {
+        aClass = ObjectUtils.tryCast(parent.getContext(), PsiClass.class);
+      }
+    }
     if (aClass == null || !aClass.isRecord()) return null;
     if (!accessor.getParameterList().isEmpty()) return null;
     String name = accessor.getName();
@@ -31,7 +42,7 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param component record component
-   * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class) 
+   * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class)
    */
   @Nullable
   public static PsiField getFieldForComponent(@NotNull PsiRecordComponent component) {
@@ -44,6 +55,21 @@ public class JavaPsiRecordUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * @param parameter of canonical constructor of the record
+   * @return record component that corresponds to the parameter
+   */
+  @Nullable
+  public static PsiRecordComponent getComponentForCanonicalConstructorParameter(@NotNull PsiParameter parameter) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
+    if (aClass == null) return null;
+    String parameterName = parameter.getName();
+    return Stream.of(aClass.getRecordComponents())
+      .filter(component -> parameterName.equals(component.getName()))
+      .findFirst()
+      .orElse(null);
   }
 
   /**
@@ -76,6 +102,18 @@ public class JavaPsiRecordUtil {
     return hasCanonicalSignature(method, aClass.getRecordComponents());
   }
 
+  /**
+   * @param method method to check
+   * @return true if given method is a canonical constructor for a record class (either compact, or non-compact, or implicit constructor)
+   */
+  public static boolean isCanonicalConstructor(@NotNull PsiMethod method) {
+    if (method instanceof LightRecordCanonicalConstructor) return true;
+    if (!method.isConstructor()) return false;
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null || !aClass.isRecord()) return false;
+    return method.getParameterList().getText() == null || hasCanonicalSignature(method, aClass.getRecordComponents());
+  }
+
   private static boolean hasCanonicalSignature(@NotNull PsiMethod method, PsiRecordComponent[] components) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (components.length != parameters.length) return false;
@@ -95,7 +133,7 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param recordClass record class
-   * @return first explicitly declared canonical or compact constructor; 
+   * @return first explicitly declared canonical or compact constructor;
    * null if the supplied class is not a record. Returns a synthetic constructor if it's not explicitly defined.
    */
   @Nullable

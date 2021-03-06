@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.options;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.util.Collection;
 
 public interface CompositeSettingsBuilder<Settings> {
+  @NotNull
   Collection<SettingsEditor<Settings>> getEditors();
+  @NotNull
   JComponent createCompoundEditor();
 }

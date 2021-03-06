@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +33,7 @@ import java.util.function.Predicate;
 /**
  * @author vlan
  */
-public class PyCallableParameterImpl implements PyCallableParameter {
+public final class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final String myName;
   @Nullable private final Ref<PyType> myType;
   @Nullable private final PyExpression myDefaultValue;
@@ -169,34 +172,20 @@ public class PyCallableParameterImpl implements PyCallableParameter {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 
-      if (isPositionalContainer()) sb.append("*");
-      else if (isKeywordContainer()) sb.append("**");
+      sb.append(ParamHelper.getNameInSignature(this));
 
-      final String name = getName();
-      sb.append(name != null ? name : "...");
-
+      boolean renderedAsTyped = false;
       if (context != null) {
         final PyType argumentType = getArgumentType(context);
         if (!typeFilter.test(argumentType)) {
           sb.append(": ");
           sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+          renderedAsTyped = true;
         }
       }
 
-      final String defaultValue = getDefaultValueText();
-      if (includeDefaultValue && defaultValue != null) {
-        final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue);
-
-        sb.append("=");
-        if (quotes != null) {
-          final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
-          sb.append(quotes.getFirst());
-          StringUtil.escapeStringCharacters(value.length(), value, sb);
-          sb.append(quotes.getSecond());
-        }
-        else {
-          sb.append(defaultValue);
-        }
+      if (includeDefaultValue) {
+        sb.append(ObjectUtils.notNull(ParamHelper.getDefaultValuePartInSignature(getDefaultValueText(), renderedAsTyped), ""));
       }
 
       return sb.toString();

@@ -5,7 +5,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,7 @@ public final class ChangelistConflictNotificationProvider extends EditorNotifica
 
   @Override
   public ChangelistConflictNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    ChangelistConflictTracker conflictTracker = ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker();
-    return conflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(conflictTracker, file) : null;
+    ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(project);
+    return conflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(conflictTracker, file, fileEditor) : null;
   }
 }

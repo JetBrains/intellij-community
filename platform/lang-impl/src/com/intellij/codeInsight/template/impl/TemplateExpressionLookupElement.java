@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -67,13 +67,11 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
     LookupElement item = getDelegate();
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
 
+    super.handleInsert(context);
     TextRange range = myState.getCurrentVariableRange();
     final TemplateLookupSelectionHandler handler = item.getUserData(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM);
     if (handler != null && range != null) {
       handler.itemSelected(item, context.getFile(), context.getDocument(), range.getStartOffset(), range.getEndOffset());
-    }
-    else {
-      super.handleInsert(context);
     }
   }
 

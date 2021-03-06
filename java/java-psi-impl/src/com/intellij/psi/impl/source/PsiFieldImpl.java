@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -113,10 +112,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
       if (type == null) {
-        String typeText = TypeInfo.createTypeText(stub.getType(false));
-        assert typeText != null : stub;
-        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
+        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
         myCachedType = new SoftReference<>(type);
       }
       return type;
@@ -211,9 +207,17 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return (PsiExpression)getNode().findChildByRoleAsPsiElement(ChildRole.INITIALIZER);
   }
 
-  // avoids stub-to-AST switch if possible,
-  // returns the light generated initializer literal expression if stored in stubs, the regular initializer if wasn't
-  public PsiExpression getDetachedInitializer() {
+  /**
+   * Avoids stub-to-AST switch if possible.
+   * @return Light generated initializer literal expression if it was stored in stubs, the regular initializer otherwise
+   */
+  @Nullable
+  public static PsiExpression getDetachedInitializer(@NotNull PsiVariable variable) {
+    return variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
+  }
+
+  @Nullable
+  private PsiExpression getDetachedInitializer() {
     final PsiFieldStub stub = getGreenStub();
     PsiExpression initializer;
     if (stub == null) {
@@ -221,9 +225,11 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
     else {
       String initializerText = stub.getInitializerText();
+      if (StringUtil.isEmpty(initializerText)) {
+        return null;
+      }
 
-      if (StringUtil.isEmpty(initializerText) ||
-          PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
+      if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText) ||
           PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
         initializer = getInitializer();
       }
@@ -395,7 +401,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     info.put("fieldName", getName());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -11,23 +11,27 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElementImpl;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
+final class ShRunLineMarkerContributor extends RunLineMarkerContributor implements DumbAware {
   @Nullable
   @Override
   public Info getInfo(@NotNull PsiElement element) {
-    if (!(element instanceof LeafElement) || element.getTextRange().getStartOffset() != 0) return null;
+    if (element instanceof OuterLanguageElementImpl || !(element instanceof LeafElement ) || element.getTextRange().getStartOffset() != 0)
+      return null;
     PsiFile psiFile = element.getContainingFile();
-    if (!(psiFile instanceof ShFile)) return null;
+    if (!(psiFile instanceof ShFile) && !element.getText().startsWith("#!")) return null;
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(psiFile)) return null;
 
     AnAction[] actions = {ActionManager.getInstance().getAction(ShRunFileAction.ID)};
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions,
-        psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> "Run " + psiElement.getContainingFile().getName()), "\n"));
+        psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> ShBundle
+          .message("line.marker.run.0", psiElement.getContainingFile().getName())), "\n"));
   }
 }

@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
-import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractFileViewProvider;
@@ -15,7 +13,6 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +22,8 @@ import java.util.Objects;
  * @author peter
  */
 public abstract class Identikit {
-  private static final Logger LOG = Logger.getInstance(Identikit.class);
-  private static final Interner<ByType> ourPlainInterner = new WeakInterner<>();
-  private static final Interner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
+  private static final Interner<ByType> ourPlainInterner = Interner.createWeakInterner();
+  private static final Interner<ByAnchor> ourAnchorInterner = Interner.createWeakInterner();
 
   @Nullable
   public abstract PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset);
@@ -61,7 +57,7 @@ public abstract class Identikit {
     return ourPlainInterner.intern(new ByType(elementClass, elementType, fileLanguage));
   }
 
-  public static class ByType extends Identikit {
+  public static final class ByType extends Identikit {
     private final String myElementClassName;
     private final short myElementTypeId;
     private final String myFileLanguageId;
@@ -147,11 +143,11 @@ public abstract class Identikit {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-        .add("class", myElementClassName)
-        .add("elementType", myElementTypeId)
-        .add("fileLanguage", myFileLanguageId)
-        .toString();
+      return "Identikit(" +
+             "class='" + myElementClassName + '\'' +
+             ", elementType=" + myElementTypeId +
+             ", fileLanguage='" + myFileLanguageId + '\'' +
+             ')';
     }
 
     @Override
@@ -175,7 +171,7 @@ public abstract class Identikit {
     }
   }
 
-  static class ByAnchor extends Identikit {
+  static final class ByAnchor extends Identikit {
     private final ByType myElementInfo;
     private final ByType myAnchorInfo;
     private final SmartPointerAnchorProvider myAnchorProvider;
@@ -224,5 +220,4 @@ public abstract class Identikit {
       return myAnchorInfo.isForPsiFile();
     }
   }
-
 }

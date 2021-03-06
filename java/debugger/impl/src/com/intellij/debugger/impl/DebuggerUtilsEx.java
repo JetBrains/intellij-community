@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -25,13 +25,13 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -63,6 +63,7 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -346,7 +347,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
-    String id = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    String id = JavaDebuggerBundle.message("thread.dump.name", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
@@ -365,6 +366,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * @deprecated use {@link EvaluationContext#keep(Value)} directly
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void keep(Value value, EvaluationContext context) {
     context.keep(value);
   }
@@ -522,6 +524,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static String methodName(final Method m) {
     return methodName(signatureToName(m.declaringType().signature()), m.name(), m.signature());
+  }
+
+  public static boolean methodMatches(@NotNull Method m, @NotNull String name, @NotNull String signature) {
+    return name.equals(m.name()) && signature.equals(m.signature());
   }
 
   public static String methodName(final String className, final String methodName, final String signature) {
@@ -751,7 +757,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String prepareValueText(String text, Project project) {
     text = StringUtil.unquoteString(text);
     text = StringUtil.unescapeStringCharacters(text);
-    int tabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    int tabSize = CodeStyle.getSettings(project).getTabSize(JavaFileType.INSTANCE);
     if (tabSize < 0) {
       tabSize = 0;
     }
@@ -930,19 +936,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (document == null || line >= document.getLineCount()) {
       return Collections.emptyList();
     }
-    PsiElement element = position.getElementAt();
+    TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+    // always start from the beginning of the line for consistency
+    PsiElement element = file.findElementAt(lineRange.getStartOffset());
     if (element == null) {
       return Collections.emptyList();
     }
-    final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
-    do {
-      PsiElement parent = element.getParent();
-      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
-        break;
-      }
-      element = parent;
-    }
-    while (true);
 
     final List<PsiLambdaExpression> lambdas = new SmartList<>();
     final PsiElementVisitor lambdaCollector = new JavaRecursiveElementVisitor() {

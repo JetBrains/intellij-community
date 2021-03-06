@@ -22,10 +22,10 @@ import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.diff.tools.util.TransferableFileEditorStateSupport;
 import com.intellij.diff.tools.util.side.ThreesideDiffViewer;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.EmptyRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +60,9 @@ public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorH
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
-    DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> DiffBundle.message("group.compare.contents.text"));
+    DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.message("group.compare.contents.text"));
     diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
-    diffGroup.add(Separator.create(DiffBundle.message("group.compare.contents.text")));
+    diffGroup.add(Separator.create(ActionsBundle.message("group.compare.contents.text")));
     diffGroup.add(new ShowPartialDiffAction(PartialDiffMode.MIDDLE_LEFT, false));
     diffGroup.add(new ShowPartialDiffAction(PartialDiffMode.MIDDLE_RIGHT, false));
     diffGroup.add(new ShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, false));

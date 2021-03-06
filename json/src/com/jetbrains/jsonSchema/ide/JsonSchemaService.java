@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.ide;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -10,6 +10,7 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import java.util.Collection;
 import java.util.List;
 
 public interface JsonSchemaService {
-  class Impl {
+  final class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
       return ServiceManager.getService(project, JsonSchemaService.class);
     }
@@ -77,4 +78,6 @@ public interface JsonSchemaService {
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
 
   boolean isApplicableToFile(@Nullable VirtualFile file);
+
+  @NotNull JsonSchemaCatalogManager getCatalogManager();
 }

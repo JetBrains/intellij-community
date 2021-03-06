@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -43,7 +44,8 @@ public class ReplaceStaticImportUsageInfo extends FixableUsageInfo {
   @Override
   public String getConflictMessage() {
     if (myTargetClasses.length != 1) {
-      return "Static import can be replaced with any of " + StringUtil.join(myTargetClasses, psiClass -> psiClass.getQualifiedName(), ", ");
+      return JavaRefactoringBundle.message("inline.super.static.import.can.be.replaced",
+                                           StringUtil.join(myTargetClasses, psiClass -> psiClass.getQualifiedName(), ", "));
     }
     return super.getConflictMessage();
   }

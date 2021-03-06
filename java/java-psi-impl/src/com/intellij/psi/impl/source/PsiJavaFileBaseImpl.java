@@ -1,20 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -24,22 +25,26 @@ import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor;
 import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWithContext;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.*;
+import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance(PsiJavaFileBaseImpl.class);
@@ -102,7 +107,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (packageStatement != null) {
       if (!packageName.isEmpty()) {
         final PsiJavaCodeReferenceElement reference = packageStatement.getPackageReference();
-        reference.replace(factory.createReferenceFromText(packageName, packageStatement));
+        reference.replace(factory.createPackageStatement(packageName).getPackageReference());
       }
       else {
         packageStatement.delete();
@@ -241,13 +246,26 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     @Override
     public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
       if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
+        PsiScopeProcessor delegate = getDelegate();
         if (element instanceof PsiNamedElement) {
           final String name = ((PsiNamedElement)element).getName();
           Iterable<ResultWithContext> shadowing = myExplicitlyEnumerated.get(name);
           if (shadowing != null && ContainerUtil.exists(shadowing, rwc -> hasSameDeclarationKind(element, rwc.getElement()))) return true;
+
+          if (delegate instanceof MethodsProcessor && element instanceof PsiMethod) {
+            PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+            if (containingClass != null && containingClass.isInterface()) {
+              PsiElement currentFileContext = ((MethodsProcessor)delegate).getCurrentFileContext();
+              if (currentFileContext instanceof PsiImportStaticStatement &&
+                  ((PsiImportStaticStatement)currentFileContext).isOnDemand() &&
+                  !containingClass.isEquivalentTo(((PsiImportStaticStatement)currentFileContext).resolveTargetClass())) {
+                return true;
+              }
+            }
+          }
         }
         if (myCollectedElements.add(element)) {
-          return getDelegate().execute(element, state);
+          return delegate.execute(element, state);
         }
       }
       return true;
@@ -273,7 +291,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (iterable != null && !ContainerUtil.process(iterable, new MyResolveCacheProcessor(processor, state))) return false;
 
     if (processor instanceof ClassResolverProcessor &&
-        isPhysical() &&
         (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
         !PsiUtil.isInsideJavadocComment(place)) {
       MostlySingularMultiMap<String, ResultWithContext> cache = myResolveCache.getValue();
@@ -313,8 +330,9 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
       Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
       for (String name : ContainerUtil.newLinkedHashSet(ContainerUtil.concat(ownClasses.keySet(), typeImports.keySet(), staticImports.keySet()))) {
-        VolatileNotNullLazyValue<Iterable<ResultWithContext>> lazy = VolatileNotNullLazyValue.createValue(
-          () -> findExplicitDeclarations(name, ownClasses, typeImports, staticImports));
+        NotNullLazyValue<Iterable<ResultWithContext>> lazy = NotNullLazyValue.volatileLazy(() -> {
+          return findExplicitDeclarations(name, ownClasses, typeImports, staticImports);
+        });
         result.put(name, () -> lazy.getValue().iterator());
       }
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
@@ -350,15 +368,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processOnDemandPackages(PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
-    boolean shouldProcessClasses = shouldProcess(processor, CLASS);
-    if (shouldProcessClasses) {
-      if (!processCurrentPackage(processor, state, place)) return false;
-      if (!processOnDemandTypeImports(processor, state, place)) return false;
-    }
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS);
+    if (shouldProcessClasses && !processCurrentPackage(processor, state, place)) return false;
 
     if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(processor, getExplicitlyEnumeratedDeclarations()))) {
       return false;
     }
+
+    if (shouldProcessClasses && !processOnDemandTypeImports(processor, state, place)) return false;
 
     return !shouldProcessClasses || processImplicitImports(processor, state, place);
   }
@@ -369,11 +387,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private PsiImportStatement[] getImportStatements() {
     return getImportList() != null ? getImportList().getImportStatements() : PsiImportStatement.EMPTY_ARRAY;
-  }
-
-  private static boolean shouldProcess(PsiScopeProcessor processor, ElementClassHint.DeclarationKind kind) {
-    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    return classHint == null || classHint.shouldProcess(kind);
   }
 
   private boolean processCurrentPackage(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
@@ -401,18 +414,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       final PsiClass targetElement = importStaticStatement.resolveTargetClass();
       if (targetElement != null) {
         processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-        if (shouldProcess(processor, METHOD) && !processMembers(state, processor, targetElement.getAllMethods())) return false;
-        if (shouldProcess(processor, FIELD) && !processMembers(state, processor, targetElement.getAllFields())) return false;
-        if (shouldProcess(processor, CLASS) && !processMembers(state, processor, targetElement.getAllInnerClasses())) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean processMembers(ResolveState state, PsiScopeProcessor processor, PsiMember[] members) {
-    for (PsiMember member : members) {
-      if (!processor.execute(member, state)) {
-        return false;
+        if (!PsiClassImplUtil.processAllMembersWithoutSubstitutors(targetElement, processor, state)) return false;
       }
     }
     return true;
@@ -440,7 +442,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         public <T> T getHint(@NotNull Key<T> hintKey) {
           if (hintKey == ElementClassHint.KEY) {
             //noinspection unchecked
-            return (T)(ElementClassHint)kind -> kind == CLASS;
+            return (T)(ElementClassHint)kind -> kind == ElementClassHint.DeclarationKind.CLASS;
           }
           return super.getHint(hintKey);
         }
@@ -524,6 +526,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
+  private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");
+
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
@@ -532,19 +536,35 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     LanguageLevel forcedLanguageLevel = getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY);
     if (forcedLanguageLevel != null) return forcedLanguageLevel;
 
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null) virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
+    if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
 
-    final Project project = getProject();
-    if (virtualFile == null) {
-      final PsiFile originalFile = getOriginalFile();
-      if (originalFile instanceof PsiJavaFile && originalFile != this) {
-        return ((PsiJavaFile)originalFile).getLanguageLevel();
+    String sourceLevel = null;
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream(), StandardCharsets.UTF_8))) {
+      String line = reader.readLine();
+      if (line != null && line.startsWith("#!")) {
+        List<String> params = ParametersListUtil.parse(line);
+        int srcIdx = params.indexOf("--source");
+        if (srcIdx > 0 && srcIdx + 1 < params.size()) {
+          sourceLevel = params.get(srcIdx + 1);
+          LanguageLevel sheBangLevel = LanguageLevel.parse(sourceLevel);
+          if (sheBangLevel != null) {
+            return sheBangLevel;
+          }
+        }
       }
-      return LanguageLevel.HIGHEST;
+    }
+    catch (Throwable ignored) { }
+    finally {
+      if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL))) {
+        virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
+        VirtualFile file = virtualFile;
+        ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file),
+                                                        ApplicationManager.getApplication().getDisposed());
+      }
     }
 
-    return JavaPsiImplementationHelper.getInstance(project).getEffectiveLanguageLevel(virtualFile);
+    return JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(virtualFile);
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, ResultWithContext>> {

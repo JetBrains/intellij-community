@@ -10,7 +10,6 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
-import com.jetbrains.builtInHelp.settings.SettingsPage.DEFAULT_BROWSER
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.awt.Desktop
 import java.io.IOException
@@ -18,6 +17,7 @@ import java.net.InetAddress
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
  * Created by Egor.Malyshev on 7/18/2017.
@@ -29,7 +29,7 @@ class BuiltInHelpManager : HelpManager() {
 
     try {
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${if (helpId != null) URLEncoder.encode(
-        helpId, "UTF-8")
+        helpId, StandardCharsets.UTF_8)
       else "top"}"
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
@@ -77,8 +77,8 @@ class BuiltInHelpManager : HelpManager() {
       }
 
       val browserName = java.lang.String.valueOf(
-        Utils.getStoredValue(SettingsPage.USE_BROWSER, DEFAULT_BROWSER))
-      if (browserName == DEFAULT_BROWSER) {
+        Utils.getStoredValue(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
+      if (browserName == BuiltInHelpBundle.message("use.default.browser")) {
         if (Desktop.isDesktopSupported()) {
           Desktop.getDesktop().browse(URI(url))
         }

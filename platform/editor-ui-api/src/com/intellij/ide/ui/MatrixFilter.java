@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 
@@ -51,6 +53,7 @@ final class MatrixFilter extends RGBImageFilter {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return myName;
   }

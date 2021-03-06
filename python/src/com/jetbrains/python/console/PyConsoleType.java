@@ -2,14 +2,15 @@
 package com.jetbrains.python.console;
 
 import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.Nls;
 
 public class PyConsoleType {
   public static final PyConsoleType PYTHON = new PyConsoleType("py", PyBundle.message("python.console"));
 
   private final String myTypeId;
-  private final String myTitle;
+  private final @Nls String myTitle;
 
-  public PyConsoleType(String typeId, String title) {
+  public PyConsoleType(String typeId, @Nls String title) {
     myTypeId = typeId;
     myTitle = title;
   }
@@ -18,7 +19,7 @@ public class PyConsoleType {
     return myTypeId;
   }
 
-  public String getTitle() {
+  public @Nls String getTitle() {
     return myTitle;
   }
 }

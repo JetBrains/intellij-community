@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -18,11 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
-  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION =
-    a -> a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
+  private final static Condition<? super AnAction> DEFAULT_PRESELECT_ACTION = a -> {
+    return a.getTemplatePresentation().getIcon() != AllIcons.Actions.Forward;
+  };
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
 
   protected static final Icon ourNotCurrentAction = IconLoader.createLazy(() -> {

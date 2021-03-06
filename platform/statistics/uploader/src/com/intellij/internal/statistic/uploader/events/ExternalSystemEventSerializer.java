@@ -1,27 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.uploader.events;
 
-import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 import static com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escape;
 
-public class ExternalSystemEventSerializer {
+public final class ExternalSystemEventSerializer {
 
   @NotNull
   public static String serialize(@NotNull ExternalSystemEvent event) {
     String prefix = event.getTimestamp() + " " + event.getEventType().name();
     if (event instanceof ExternalUploadFinishedEvent) {
       ExternalUploadFinishedEvent failed = (ExternalUploadFinishedEvent)event;
-      if (StatisticsEventLogUtil.isNotEmpty(failed.getError())) {
+      if (isNotEmpty(failed.getError())) {
         return prefix + " " + escape(failed.getError());
       }
       return prefix;
     }
     else if (event instanceof ExternalUploadSendEvent) {
       ExternalUploadSendEvent finished = (ExternalUploadSendEvent)event;
-      return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal();
+      String hashedFiles = filesToString(finished.getSuccessfullySentFiles());
+      String errors = errorsToString(finished.getErrors());
+      return prefix + " " + finished.getSucceed() + " " + finished.getFailed() + " " + finished.getTotal() +
+             " " + hashedFiles + " " + errors;
     }
     else if (event instanceof ExternalSystemErrorEvent) {
       ExternalSystemErrorEvent error = (ExternalSystemErrorEvent)event;
@@ -44,11 +55,13 @@ public class ExternalSystemEventSerializer {
       String error = parts.length >= 3 ? parts[2].trim() : null;
       return new ExternalUploadFinishedEvent(timestamp, error);
     }
-    else if (type == ExternalSystemEventType.SEND && length == 5) {
+    else if (type == ExternalSystemEventType.SEND && length >= 5 && length <= 7) {
       int succeed = parseInt(parts[2]);
       int failed = parseInt(parts[3]);
       int total = parseInt(parts[4]);
-      return new ExternalUploadSendEvent(timestamp, succeed, failed, total);
+      List<String> sentFiles = length >= 6 ? parseSentFiles(parts[5]) : Collections.emptyList();
+      List<Integer> errors = length >= 7 ? parseErrors(parts[6]) : Collections.emptyList();
+      return new ExternalUploadSendEvent(timestamp, succeed, failed, total, sentFiles, errors);
     }
     else if (type == ExternalSystemEventType.STARTED && length == 2) {
       return new ExternalUploadStartedEvent(timestamp);
@@ -59,6 +72,48 @@ public class ExternalSystemEventSerializer {
       return new ExternalSystemErrorEvent(timestamp, event, errorClass);
     }
     return null;
+  }
+
+  @NotNull
+  private static List<String> parseSentFiles(@NotNull String part) {
+    return parseValues(part, value -> new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8));
+  }
+
+  @NotNull
+  private static List<Integer> parseErrors(@NotNull String part) {
+    return parseValues(part, value -> parseInt(value));
+  }
+
+  @NotNull
+  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<String, V> processor) {
+    try {
+      if (part.startsWith("[") && part.endsWith("]")) {
+        String unwrappedPart = part.substring(1, part.length() - 1);
+        String[] values = unwrappedPart.split(",");
+        return Arrays.stream(values)
+          .filter(value -> !value.isEmpty())
+          .map(processor)
+          .collect(Collectors.toList());
+      }
+      return Collections.emptyList();
+    }
+    catch (IllegalArgumentException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  private static String filesToString(@NotNull List<String> files) {
+    return valuesToString(files, path -> Base64.getEncoder().encodeToString(path.getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @NotNull
+  private static String errorsToString(@NotNull List<Integer> errors) {
+    return valuesToString(errors, error -> String.valueOf(error));
+  }
+
+  private static <V> String valuesToString(@NotNull List<V> values, @NotNull Function<V, String> processor) {
+    return values.stream().map(processor).collect(Collectors.joining(",", "[", "]"));
   }
 
   private static int parseInt(String value) {

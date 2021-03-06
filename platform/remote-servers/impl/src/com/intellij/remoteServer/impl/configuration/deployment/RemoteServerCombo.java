@@ -3,6 +3,7 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.CloudBundle;
@@ -11,26 +12,18 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import javax.swing.JList;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.util.*;
 
 public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWithBrowseButton implements UserActivityProviderComponent {
   private static final Comparator<RemoteServer<?>> SERVERS_COMPARATOR =
@@ -265,6 +258,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
 
     @Override
     public void onItemChosen() {
+      getChildComponent().hidePopup();
       createAndEditNewServer();
     }
 
@@ -281,13 +275,14 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
   }
 
   public class ServerItemImpl implements ServerItem {
-    private final String myServerName;
+    private final @NlsSafe String myServerName;
 
-    public ServerItemImpl(String serverName) {
+    public ServerItemImpl(@NlsSafe String serverName) {
       myServerName = serverName;
     }
 
     @Override
+    @NlsSafe
     public String getServerName() {
       return myServerName;
     }
@@ -325,6 +320,7 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
 
     @Override
     @NotNull
+    @NlsSafe
     public String getServerName() {
       String result = super.getServerName();
       assert result != null;

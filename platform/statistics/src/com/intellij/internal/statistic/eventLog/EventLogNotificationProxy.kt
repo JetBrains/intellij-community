@@ -1,8 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.util.containers.ConcurrentMultiMap
+import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
                                 private val recorderId: String) : StatisticsEventLogWriter {
   override fun log(logEvent: LogEvent) {
@@ -17,10 +21,13 @@ class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
   override fun cleanup() = writer.cleanup()
 
   override fun rollOver() = writer.rollOver()
+
+  override fun dispose() = Disposer.dispose(writer)
 }
 
+@ApiStatus.Internal
 object EventLogNotificationService {
-  private val subscribers = ConcurrentMultiMap<String, (LogEvent) -> Unit>()
+  private val subscribers = MultiMap.createConcurrent<String, (LogEvent) -> Unit>()
 
   fun notifySubscribers(logEvent: LogEvent, recorderId: String) {
     val copyOnWriteArraySet = subscribers[recorderId]
@@ -30,6 +37,9 @@ object EventLogNotificationService {
   }
 
   fun subscribe(subscriber: (LogEvent) -> Unit, recorderId: String) {
+    if (!getPluginInfo(subscriber.javaClass).isDevelopedByJetBrains()) {
+      return
+    }
     subscribers.putValue(recorderId, subscriber)
   }
 

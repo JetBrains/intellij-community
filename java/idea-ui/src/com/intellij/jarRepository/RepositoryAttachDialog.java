@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
@@ -14,9 +14,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -25,7 +27,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashMap;
 import org.eclipse.aether.version.InvalidVersionSpecificationException;
 import org.eclipse.aether.version.Version;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +55,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.*;
 
-public class RepositoryAttachDialog extends DialogWrapper {
+public final class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
@@ -82,9 +83,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private final JComboBox myCombobox;
 
-  private final Map<String, RepositoryArtifactDescription> myCoordinates = new THashMap<>();
+  private final Map<String, RepositoryArtifactDescription> myCoordinates = new HashMap<>();
   private final List<String> myShownItems = new ArrayList<>();
-  private final String myDefaultDownloadFolder;
+  private final @NlsSafe String myDefaultDownloadFolder;
 
   private String myFilterString;
   private boolean myInUpdate;
@@ -96,10 +97,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                    : JavaUiBundle.message("dialog.title.search.library.in.maven.repositories"));
     myProject = project;
     myProgressIcon.suspend();
-    myCaptionLabel.setText(
-      XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities("keyword or class name to search by or exact Maven coordinates, " +
-                                                            "i.e. 'spring', 'Logger' or 'ant:ant-junit:1.6.5'")
-      ));
+    final String text = JavaUiBundle.message("repository.attach.dialog.caption.label");
+    myCaptionLabel.setText(XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities(text)));
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 
@@ -153,7 +152,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
     PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
     myDownloadToCheckBox.setSelected(storage.isTrueValue(PROPERTY_DOWNLOAD_TO_PATH_ENABLED));
-    myDirectoryField.setText(StringUtil.notNullize(StringUtil.nullize(storage.getValue(PROPERTY_DOWNLOAD_TO_PATH)), myDefaultDownloadFolder));
+    myDirectoryField.setText(getDownloadPath(storage));
     myDirectoryField.setEnabled(myDownloadToCheckBox.isSelected());
     myDownloadToCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -174,6 +173,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
     mySearchOptionsPanel.setVisible(mode == Mode.SEARCH);
     init();
+  }
+
+  private @NlsSafe String getDownloadPath(@NotNull final PropertiesComponent storage) {
+    final String value = storage.getValue(PROPERTY_DOWNLOAD_TO_PATH);
+    if (Strings.isNotEmpty(value)) return value;
+    return myDefaultDownloadFolder;
   }
 
   private static void handleMavenDependencyInsertion(DocumentEvent e, JTextField textField) {

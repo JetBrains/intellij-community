@@ -27,14 +27,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.intellij.plugins.xpathView.Config;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HighlighterUtil {
+public final class HighlighterUtil {
     private static final Key<List<RangeHighlighter>> HIGHLIGHTERS_KEY = Key.create("XPATH_HIGHLIGHTERS");
 
     private HighlighterUtil() {
@@ -93,7 +93,7 @@ public class HighlighterUtil {
     }
 
     private static boolean purgeInvalidHighlighters(Editor editor, List<RangeHighlighter> hl) {
-        final Set<RangeHighlighter> set = ContainerUtil.newIdentityTroveSet(Arrays.asList(editor.getMarkupModel().getAllHighlighters()));
+        final Set<RangeHighlighter> set = new ReferenceOpenHashSet<>(editor.getMarkupModel().getAllHighlighters());
         boolean hasHighlighter = false;
         for (Iterator<RangeHighlighter> iterator = hl.iterator(); iterator.hasNext();) {
             final RangeHighlighter h = iterator.next();

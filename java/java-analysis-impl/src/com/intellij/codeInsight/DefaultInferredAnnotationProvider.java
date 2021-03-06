@@ -2,10 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
-import com.intellij.codeInspection.dataFlow.HardcodedContracts;
-import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +78,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
       if (listOwner instanceof PsiParameter) {
         anno = getInferredNullabilityAnnotation((PsiParameter)listOwner);
       }
-      return anno == null ? null : annotationFQN.equals(anno.getQualifiedName()) ? anno : null;
+      return anno == null ? null : anno.hasQualifiedName(annotationFQN) ? anno : null;
     }
 
     if (Mutability.UNMODIFIABLE_ANNOTATION.equals(annotationFQN) || Mutability.UNMODIFIABLE_VIEW_ANNOTATION.equals(annotationFQN)) {
@@ -102,10 +100,10 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   private PsiAnnotation getHardcodedContractAnnotation(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass != null && aClass.getQualifiedName() != null && aClass.getQualifiedName().startsWith("org.assertj.core.api.")) {
-      return createContractAnnotation(Collections.emptyList(), true);
+      return createContractAnnotation(Collections.emptyList(), MutationSignature.pure());
     }
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, null);
-    return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.isHardcodedPure(method));
+    return contracts.isEmpty() ? null : createContractAnnotation(contracts, HardcodedContracts.getHardcodedMutation(method));
   }
 
   /**
@@ -119,7 +117,9 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   private boolean ignoreInference(@NotNull PsiModifierListOwner owner, @Nullable String annotationFQN) {
     if (annotationFQN == null) return true;
     if (owner instanceof PsiMethod && PsiUtil.canBeOverridden((PsiMethod)owner)) {
-      return true;
+      if (!(owner instanceof PsiMethodImpl) || !JavaSourceInference.canInferFromSource((PsiMethodImpl)owner)) {
+        return true;
+      }
     }
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;
@@ -157,7 +157,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
       return null;
     }
 
-    return createContractAnnotation(JavaSourceInference.inferContracts(method), JavaSourceInference.inferPurity(method));
+    return createContractAnnotation(JavaSourceInference.inferContracts(method), JavaSourceInference.inferMutationSignature(method));
   }
 
   @Nullable
@@ -207,13 +207,15 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   }
 
   @Nullable
-  private PsiAnnotation createContractAnnotation(List<? extends MethodContract> contracts, boolean pure) {
-    return createContractAnnotation(myProject, pure, StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "), "");
+  private PsiAnnotation createContractAnnotation(List<? extends MethodContract> contracts, MutationSignature signature) {
+    return createContractAnnotation(myProject, signature.isPure(), 
+                                    StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "), 
+                                    signature.isPure() || signature == MutationSignature.unknown() ? "" : signature.toString());
   }
 
   @Nullable
   public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
-    Map<String, String> attrMap = new LinkedHashMap<>();
+    @NonNls Map<String, String> attrMap = new LinkedHashMap<>();
     if (!contracts.isEmpty()) {
       attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
     }

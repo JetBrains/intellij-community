@@ -8,8 +8,6 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import junit.framework.TestCase
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 class AbstractExternalSystemTaskConfigurationTypeTest : UsefulTestCase() {
@@ -17,7 +15,6 @@ class AbstractExternalSystemTaskConfigurationTypeTest : UsefulTestCase() {
   private lateinit var myTestFixture: IdeaProjectTestFixture
   private lateinit var myProject: Project
 
-  @Before
   override fun setUp() {
     super.setUp()
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
@@ -25,7 +22,6 @@ class AbstractExternalSystemTaskConfigurationTypeTest : UsefulTestCase() {
     myProject = myTestFixture.project
   }
 
-  @After
   override fun tearDown() {
     try {
       myTestFixture.tearDown()

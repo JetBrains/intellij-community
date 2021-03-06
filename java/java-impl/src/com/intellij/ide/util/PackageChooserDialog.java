@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -12,7 +13,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.TextFieldAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorTextField;
@@ -54,13 +55,13 @@ public class PackageChooserDialog extends PackageChooser {
   private Tree myTree;
   private DefaultTreeModel myModel;
   private final Project myProject;
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
   private Module myModule;
   private EditorTextField myPathEditor;
 
   private final Alarm myAlarm = new Alarm(getDisposable());
 
-  public PackageChooserDialog(String title, @NotNull Module module) {
+  public PackageChooserDialog(@NlsContexts.DialogTitle String title, @NotNull Module module) {
     super(module.getProject(), true);
     setTitle(title);
     myTitle = title;
@@ -69,7 +70,7 @@ public class PackageChooserDialog extends PackageChooser {
     init();
   }
 
-  public PackageChooserDialog(String title, Project project) {
+  public PackageChooserDialog(@NlsContexts.DialogTitle String title, Project project) {
     super(project, true);
     setTitle(title);
     myTitle = title;
@@ -134,7 +135,7 @@ public class PackageChooserDialog extends PackageChooser {
         PsiPackage selection = getTreeSelection();
         if (selection != null) {
           String name = selection.getQualifiedName();
-          setTitle(myTitle + " - " + ("".equals(name) ? IdeBundle.message("node.default.package") : name));
+          setTitle(myTitle + " - " + (name.isEmpty() ? IdeBundle.message("node.default.package") : name));
         }
         else {
           setTitle(myTitle);
@@ -161,7 +162,7 @@ public class PackageChooserDialog extends PackageChooser {
         toggleShowPathComponent(northPanel, this);
       }
     }, BorderLayout.EAST);
-    myPathEditor = new EditorTextField(JavaReferenceEditorUtil.createDocument("", myProject, false), myProject, StdFileTypes.JAVA);
+    myPathEditor = new EditorTextField(JavaReferenceEditorUtil.createDocument("", myProject, false), myProject, JavaFileType.INSTANCE);
     myPathEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {

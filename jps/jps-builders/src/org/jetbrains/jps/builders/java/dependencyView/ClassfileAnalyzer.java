@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,7 @@ class ClassfileAnalyzer {
   }
 
   private class ClassCrawler extends ClassVisitor {
-    private class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
+    private final class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
       private AnnotationRetentionPolicyCrawler() {
         super(ASM_API_VERSION);
       }
@@ -58,7 +58,7 @@ class ClassfileAnalyzer {
       public void visitEnd() { }
     }
 
-    private class AnnotationTargetCrawler extends AnnotationVisitor {
+    private final class AnnotationTargetCrawler extends AnnotationVisitor {
       private AnnotationTargetCrawler() {
         super(ASM_API_VERSION);
       }
@@ -85,7 +85,7 @@ class ClassfileAnalyzer {
       public void visitEnd() { }
     }
 
-    private class AnnotationCrawler extends AnnotationVisitor {
+    private final class AnnotationCrawler extends AnnotationVisitor {
       private final TypeRepr.ClassType myType;
       private final ElemType myTarget;
 
@@ -309,6 +309,7 @@ class ClassfileAnalyzer {
     private boolean myTakeIntoAccount = false;
     private boolean myIsModule = false;
     private final int myFileName;
+    private final boolean myIsGenerated;
     private int myAccess;
     private int myName;
     private int myVersion; // for class contains a class bytecode version, for module contains a module version
@@ -334,9 +335,10 @@ class ClassfileAnalyzer {
     private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
     private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
 
-    ClassCrawler(final int fn) {
+    ClassCrawler(final int fn, boolean isGenerated) {
       super(ASM_API_VERSION);
       myFileName = fn;
+      myIsGenerated = isGenerated;
     }
 
     private boolean notPrivate(final int access) {
@@ -353,7 +355,7 @@ class ClassfileAnalyzer {
       return new ClassRepr(
         myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
         myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myContext.get(myOuterClassName.get()), myLocalClassFlag.get(),
-        myAnonymousClassFlag.get(), myUsages
+        myAnonymousClassFlag.get(), myUsages, myIsGenerated
       );
     }
 
@@ -646,6 +648,8 @@ class ClassfileAnalyzer {
                 final Type samMethodType = (Type)bsmArgs[0];
                 if (samMethodType.getSort() == Type.METHOD) {
                   registerMethodUsage(returnType.getInternalName(), methodName, samMethodType.getDescriptor());
+                  // reflect dynamic proxy instantiation with NewClassUsage
+                  myUsages.add(UsageRepr.createClassNewUsage(myContext, myContext.get(returnType.getInternalName())));
                 }
               }
             }
@@ -826,8 +830,8 @@ class ClassfileAnalyzer {
     }
   }
 
-  public ClassFileRepr analyze(int fileName, ClassReader cr) {
-    ClassCrawler visitor = new ClassCrawler(fileName);
+  public ClassFileRepr analyze(int fileName, ClassReader cr, boolean isGenerated) {
+    ClassCrawler visitor = new ClassCrawler(fileName, isGenerated);
 
     try {
       cr.accept(visitor, 0);

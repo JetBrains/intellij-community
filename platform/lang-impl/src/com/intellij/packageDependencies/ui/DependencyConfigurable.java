@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
@@ -16,6 +17,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -84,7 +86,7 @@ public class DependencyConfigurable implements Configurable {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myDenyTable;
   }
 
@@ -165,13 +167,13 @@ public class DependencyConfigurable implements Configurable {
                                                      int row,
                                                      int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(value == null ? "" : ((NamedScope)value).getName());
+        setText(value == null ? "" : ((NamedScope)value).getPresentableName());
         return this;
       }
     };
 
   public abstract class MyColumnInfo extends ColumnInfo<DependencyRule, NamedScope> {
-    protected MyColumnInfo(String name) {
+    protected MyColumnInfo(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -197,7 +199,7 @@ public class DependencyConfigurable implements Configurable {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
+          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getScopeId());
           return new CellEditorComponentWithBrowseButton<>(myCombo, this);
         }
       };
@@ -209,7 +211,7 @@ public class DependencyConfigurable implements Configurable {
 
 
   private class RightColumn extends MyColumnInfo {
-    RightColumn(final String name) {
+    RightColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -225,7 +227,7 @@ public class DependencyConfigurable implements Configurable {
   }
 
   private class LeftColumn extends MyColumnInfo {
-    LeftColumn(final String name) {
+    LeftColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 

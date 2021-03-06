@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -19,7 +19,8 @@ import com.intellij.psi.impl.source.codeStyle.ShiftIndentInsideHelper;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
-import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
+import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -174,7 +175,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 @NotNull AlignmentStrategy alignmentStrategy,
                                 int startOffset,
                                 @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, getJavaIndentOptions(settings)) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -240,7 +241,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                    @NotNull CommonCodeStyleSettings settings,
                                    @NotNull JavaCodeStyleSettings javaSettings,
                                    @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, getJavaIndentOptions(settings));
+    final Indent indent = getDefaultSubtreeIndent(child, settings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -270,7 +271,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static boolean isLikeExtendsList(final IElementType elementType) {
     return elementType == JavaElementType.EXTENDS_LIST
            || elementType == JavaElementType.IMPLEMENTS_LIST
-           || elementType == JavaElementType.THROWS_LIST;
+           || elementType == JavaElementType.THROWS_LIST
+           || elementType == JavaElementType.PERMITS_LIST;
   }
 
   private static boolean isBlockType(final IElementType elementType) {
@@ -291,7 +293,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
 
   @Nullable
-  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+  private static Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
+    CommonCodeStyleSettings.IndentOptions indentOptions= getJavaIndentOptions(settings);
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
     if (childNodeType == JavaElementType.ANNOTATION) {
@@ -301,23 +304,37 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Indent.getNoneIndent();
     }
 
-    final ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+    final ASTNode prevElement = skipCommentsAndWhitespacesBackwards(child);
     if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST && !isMethodParameterAnnotation(prevElement)) {
       return Indent.getNoneIndent();
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+     if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
       if (defaultChildIndent != null) return defaultChildIndent;
       if (parent.getPsi() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
+        if (settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ||
+            settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2) {
+          return Indent.getNormalIndent();
+        }
         return Indent.getNoneIndent();
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static ASTNode skipCommentsAndWhitespacesBackwards(@NotNull ASTNode node) {
+    ASTNode currNode = node.getTreePrev();
+    while (currNode != null &&
+           (currNode.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || FormatterUtil.isWhitespaceOrEmpty(currNode))) {
+      currNode = currNode.getTreePrev();
+    }
+    return currNode;
   }
 
   private static boolean isMethodParameterAnnotation(@NotNull ASTNode element) {
@@ -333,8 +350,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private static Indent getChildIndent(@NotNull ASTNode parent, @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     final IElementType parentType = parent.getElementType();
     if (parentType == JavaElementType.MODIFIER_LIST) return Indent.getNoneIndent();
-    if (parentType == JspElementType.JSP_CODE_BLOCK) return Indent.getNormalIndent();
-    if (parentType == JspElementType.JSP_CLASS_LEVEL_DECLARATION_STATEMENT) return Indent.getNormalIndent();
+    if (parentType instanceof JspCodeBlockType) return Indent.getNormalIndent();
+    if (parentType instanceof JspClassLevelDeclarationStatementType) return Indent.getNormalIndent();
     if (parentType == TokenType.DUMMY_HOLDER) return Indent.getNoneIndent();
     if (parentType == JavaElementType.CLASS) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IF_STATEMENT) return Indent.getNoneIndent();
@@ -420,7 +437,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (nodeType == JavaElementType.FOR_STATEMENT) {
       return createAlignment(mySettings.ALIGN_MULTILINE_FOR, null);
     }
-    if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
+    if (nodeType == JavaElementType.EXTENDS_LIST ||
+        nodeType == JavaElementType.IMPLEMENTS_LIST ||
+        nodeType == JavaElementType.PERMITS_LIST) {
       return createAlignment(mySettings.ALIGN_MULTILINE_EXTENDS_LIST, null);
     }
     if (nodeType == JavaElementType.THROWS_LIST) {
@@ -796,6 +815,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (nodeType == JavaElementType.EXTENDS_LIST ||
              nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.PERMITS_LIST ||
              nodeType == JavaElementType.THROWS_LIST) {
       return role == ChildRole.REFERENCE_IN_LIST;
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention;
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
@@ -26,7 +26,6 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
-  private static final String actionName = JavaFxFieldToPropertyIntention.FAMILY_NAME;
 
   @Override
   protected void setUpModule() {
@@ -66,7 +65,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     final String secondFileName = testName + "SecondFile.java";
     doTest(testName + ".java", secondFileName);
 
-    final String expected = StringUtil.convertLineSeparators(VfsUtilCore.loadText(getVirtualFile(testName + "SecondFile_after.java")));
+    final String expected = StringUtil.convertLineSeparators(VfsUtilCore.loadText(findVirtualFile(testName + "SecondFile_after.java")));
     final PsiClass secondFileClass = JavaPsiFacade.getInstance(myProject).findClass("DoubleDemo2", GlobalSearchScope.allScope(myProject));
     final String actual = secondFileClass.getContainingFile().getText();
     assertEquals("Text mismatch[" + secondFileName + "]", expected, actual);
@@ -94,7 +93,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     final List<HighlightInfo> infos = doHighlighting();
     final Editor editor = getEditor();
     final PsiFile file = getFile();
-    return findIntentionAction(infos, actionName, editor, file);
+    return findIntentionAction(infos, JavaFXBundle.message("intention.family.name.convert.to.javafx.property"), editor, file);
   }
 
   protected boolean isArtifactNeeded() {

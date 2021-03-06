@@ -27,7 +27,7 @@ IF NOT EXIST "%JAVA_HOME%\bin\java.exe" (
 
 ECHO Updating "%WORK_IDEA_HOME%" from compiled classes at "%DEV_IDEA_HOME%"
 
-CD "%DEV_IDEA_HOME%"
+CD /D "%DEV_IDEA_HOME%"
 
 SET ANT_HOME=%DEV_IDEA_HOME%\lib\ant
 SET EXEC_ANT="%JAVA_HOME%\bin\java.exe" -Xmx512m -Dant.home="%ANT_HOME%" -classpath "%ANT_HOME%\lib\ant-launcher.jar" org.apache.tools.ant.launch.Launcher

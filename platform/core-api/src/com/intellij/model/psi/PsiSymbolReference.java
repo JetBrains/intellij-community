@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Reference from a {@link PsiElement} to a {@link Symbol} or possibly several Symbols.
+ *
+ * @see PsiCompletableReference
  */
 public interface PsiSymbolReference extends SymbolReference {
 
@@ -33,5 +35,12 @@ public interface PsiSymbolReference extends SymbolReference {
   @NotNull
   default TextRange getAbsoluteRange() {
     return getRangeInElement().shiftRight(getElement().getTextRange().getStartOffset());
+  }
+
+  /**
+   * @return text covered by the reference
+   */
+  static @NotNull String getReferenceText(@NotNull PsiSymbolReference reference) {
+    return reference.getRangeInElement().substring(reference.getElement().getText());
   }
 }

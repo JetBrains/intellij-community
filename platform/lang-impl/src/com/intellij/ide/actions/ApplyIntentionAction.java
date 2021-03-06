@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,11 +24,11 @@ public class ApplyIntentionAction extends AnAction {
   private final Editor myEditor;
   private final PsiFile myFile;
 
-  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, String text, Editor editor, PsiFile file) {
+  public ApplyIntentionAction(final HighlightInfo.IntentionActionDescriptor descriptor, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
     this(descriptor.getAction(), text, editor, file);
   }
 
-  public ApplyIntentionAction(final IntentionAction action, String text, Editor editor, PsiFile file) {
+  public ApplyIntentionAction(final IntentionAction action, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
     super(text);
     getTemplatePresentation().setText(text, false);
     myAction = action;

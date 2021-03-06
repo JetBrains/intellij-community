@@ -1,17 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class IntentionSettingsConfigurable implements SearchableConfigurable, MasterDetails, IntentionsConfigurable {
+public final class IntentionSettingsConfigurable implements SearchableConfigurable, MasterDetails, IntentionsConfigurable {
   private IntentionSettingsPanel myPanel;
   @NonNls public static final String HELP_ID = "preferences.intentionPowerPack";
 
@@ -50,7 +52,7 @@ public class IntentionSettingsConfigurable implements SearchableConfigurable, Ma
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPanel == null ? null : myPanel.getIntentionTree();
   }
 
@@ -105,7 +107,7 @@ public class IntentionSettingsConfigurable implements SearchableConfigurable, Ma
     }
   }
 
-  public static String getDisplayNameText() {
+  public static @NlsContexts.ConfigurableName String getDisplayNameText() {
     return CodeInsightBundle.message("intention.settings");
   }
 }

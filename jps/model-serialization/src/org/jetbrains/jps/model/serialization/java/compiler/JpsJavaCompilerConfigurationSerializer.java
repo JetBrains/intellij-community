@@ -115,8 +115,4 @@ public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionS
       }
     }
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn.actions;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -24,9 +25,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.util.text.StringUtil.trimEnd;
+import static com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix;
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static com.intellij.util.ui.SwingHelper.ELLIPSIS;
 import static com.intellij.util.ui.UIUtil.removeMnemonic;
 
 public abstract class BasicAction extends AnAction implements DumbAware {
@@ -42,7 +42,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
 
     project.save();
 
-    String actionName = removeMnemonic(trimEnd(getActionName(), ELLIPSIS));
+    String actionName = removeMnemonic(removeEllipsisSuffix(getActionName()));
     LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
 
@@ -113,7 +113,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  protected abstract String getActionName();
+  protected abstract @Nls String getActionName();
 
   protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     Stream<VirtualFile> fileStream = Stream.of(files);

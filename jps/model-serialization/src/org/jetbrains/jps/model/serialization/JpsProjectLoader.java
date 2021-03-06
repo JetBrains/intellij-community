@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,8 +8,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,15 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class JpsProjectLoader extends JpsLoaderBase {
+import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL;
+
+public final class JpsProjectLoader extends JpsLoaderBase {
+  public static final String MODULE_MANAGER_COMPONENT = "ProjectModuleManager";
+  public static final String MODULES_TAG = "modules";
+  public static final String MODULE_TAG = "module";
+  public static final String FILE_PATH_ATTRIBUTE = "filepath";
+  public static final String FILE_URL_ATTRIBUTE = "fileurl";
+  public static final String GROUP_ATTRIBUTE = "group";
   public static final String CLASSPATH_ATTRIBUTE = "classpath";
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
 
@@ -55,12 +63,18 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
+  private final JpsPathMapper myPathMapper;
   private final boolean myLoadUnloadedModules;
 
-  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, Path baseDir, boolean loadUnloadedModules) {
+  private JpsProjectLoader(JpsProject project,
+                           Map<String, String> pathVariables,
+                           @NotNull JpsPathMapper pathMapper,
+                           Path baseDir,
+                           boolean loadUnloadedModules) {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
+    myPathMapper = pathMapper;
     myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
     myLoadUnloadedModules = loadUnloadedModules;
   }
@@ -72,13 +86,13 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
-    loadProject(project, pathVariables, projectPath, false);
+    loadProject(project, pathVariables, JpsPathMapper.IDENTITY, projectPath, false);
   }
 
-  public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath, boolean loadUnloadedModules) throws IOException {
+  public static void loadProject(JpsProject project, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper, String projectPath, boolean loadUnloadedModules) throws IOException {
     Path file = Paths.get(FileUtil.toCanonicalPath(projectPath));
     if (Files.isRegularFile(file) && projectPath.endsWith(".ipr")) {
-      new JpsProjectLoader(project, pathVariables, file.getParent(), loadUnloadedModules).loadFromIpr(file);
+      new JpsProjectLoader(project, pathVariables, pathMapper, file.getParent(), loadUnloadedModules).loadFromIpr(file);
     }
     else {
       Path dotIdea = file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
@@ -92,7 +106,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       else {
         throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
-      new JpsProjectLoader(project, pathVariables, directory.getParent(), loadUnloadedModules).loadFromDirectory(directory);
+      new JpsProjectLoader(project, pathVariables, pathMapper, directory.getParent(), loadUnloadedModules).loadFromDirectory(directory);
     }
   }
 
@@ -122,12 +136,14 @@ public class JpsProjectLoader extends JpsLoaderBase {
         break;
       }
     }
-    if (data == null) {
-      return externalData;
-    }
-    else if (externalData != null) {
-      return JDOMUtil.deepMerge(data, externalData);
-    }
+    return deepMergeCompilerConfigurations(data, externalData);
+  }
+
+  private static @Nullable Element deepMergeCompilerConfigurations(@Nullable Element data, @Nullable Element externalData) {
+    if (data == null) return externalData;
+    if (externalData == null) return data;
+    JDOMUtil.deepMerge(data, externalData);
+    JDOMUtil.reduceChildren(BYTECODE_TARGET_LEVEL, data);
     return data;
   }
 
@@ -146,7 +162,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       LOG.info("External project config dir is used: " + externalConfigDir);
     }
 
-    Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), "ProjectModuleManager");
+    Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), MODULE_MANAGER_COMPONENT);
     Element externalModuleData;
     if (externalConfigDir == null) {
       externalModuleData = null;
@@ -283,7 +299,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadProjectLibraries(@Nullable Element libraryTableElement) {
-    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
+    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myPathMapper, myProject.getLibraryCollection());
   }
 
   private void loadModules(@Nullable Element componentElement, final @Nullable JpsSdkType<?> projectSdkType, @NotNull Path workspaceFile) {
@@ -300,10 +316,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
       }
     }
 
-    final Set<Path> foundFiles = new THashSet<>();
+    final Set<Path> foundFiles = CollectionFactory.createSmallMemoryFootprintSet();
     final List<Path> moduleFiles = new ArrayList<>();
-    for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild("modules"), "module")) {
-      final String path = moduleElement.getAttributeValue("filepath");
+    for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild(MODULES_TAG), MODULE_TAG)) {
+      final String path = moduleElement.getAttributeValue(FILE_PATH_ATTRIBUTE);
       if (path != null) {
         final Path file = Paths.get(path);
         if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {
@@ -312,7 +328,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       }
     }
 
-    List<JpsModule> modules = loadModules(moduleFiles, projectSdkType, myPathVariables);
+    List<JpsModule> modules = loadModules(moduleFiles, projectSdkType, myPathVariables, myPathMapper);
     for (JpsModule module : modules) {
       myProject.addModule(module);
     }
@@ -328,7 +344,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
   @NotNull
   public static List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
                                             @Nullable JpsSdkType<?> projectSdkType,
-                                            @NotNull Map<String, String> pathVariables) {
+                                            @NotNull Map<String, String> pathVariables,
+                                            @NotNull JpsPathMapper pathMapper) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
     Path externalModuleDir = resolveExternalProjectConfig("modules");
@@ -379,7 +396,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         final Pair<Path, Element> moduleFile = futureModuleFile.get();
         if (moduleFile.getSecond() != null) {
           futures.add(ourThreadPool.submit(
-            () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
+            () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables, pathMapper)));
         }
       }
       for (Future<JpsModule> future : futures) {
@@ -397,7 +414,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   @NotNull
   private static JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
-                                      @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables) {
+                                      @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper) {
     String name = getModuleName(file);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
@@ -414,7 +431,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (classpath == null) {
       try {
         JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
-                                                   projectSdkType);
+                                                   projectSdkType, pathMapper);
       }
       catch (JpsSerializationFormatException e) {
         LOG.warn("Failed to load module configuration from " + file.toString() + ": " + e.getMessage(), e);
@@ -479,9 +496,6 @@ public class JpsProjectLoader extends JpsLoaderBase {
       public JpsDummyElement loadProperties(@Nullable Element componentElement) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
-
-      @Override
-      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element componentElement) { }
     };
   }
 }

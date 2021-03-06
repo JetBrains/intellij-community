@@ -457,7 +457,7 @@ public class GenericPatchApplier {
     return myAppliedInfo;
   }
 
-  private static class FragmentResult {
+  private static final class FragmentResult {
     private int myStart;
     private int myEnd;
     private boolean myContainAlreadyApplied;
@@ -991,9 +991,10 @@ public class GenericPatchApplier {
       myOffsetIdxInHunk = startInHunk;
       myBeforeSide = beforeSide;
       if (myBeforeSide) {
-        assert myBeforeAfter.getBefore().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getBefore().isEmpty());
-      } else {
-        assert myBeforeAfter.getAfter().size() > myOffsetIdxInHunk || (myOffsetIdxInHunk == 0 && myBeforeAfter.getAfter().isEmpty());
+        assert myBeforeAfter.getBefore().size() > myOffsetIdxInHunk || myOffsetIdxInHunk == 0;
+      }
+      else {
+        assert myBeforeAfter.getAfter().size() > myOffsetIdxInHunk || myOffsetIdxInHunk == 0;
       }
     }
 

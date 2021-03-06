@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
@@ -32,8 +18,6 @@ import javax.swing.*;
  */
 public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
-  private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
-  private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 
   @NotNull
   @Override
@@ -78,17 +62,22 @@ public class DefaultDebugExecutor extends Executor {
   @Override
   @NotNull
   public String getStartActionText() {
-    return myStartActionText;
+    return XDebuggerBundle.message("debugger.runner.start.action.text");
   }
 
   @Override
   public String getDescription() {
-    return myDescription;
+    return XDebuggerBundle.message("string.debugger.runner.description");
   }
 
   @Override
   public String getHelpId() {
     return "debugging.DebugWindow";
+  }
+
+  @Override
+  public boolean isSupportedOnTarget() {
+    return EXECUTOR_ID.equalsIgnoreCase(getId());
   }
 
   public static Executor getDebugExecutorInstance() {

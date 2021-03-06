@@ -18,9 +18,10 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -68,9 +69,9 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     return infos.length == 0 ? new UnnecessaryBoxingFix() : new UnnecessaryBoxingFix((PsiType)infos[0]);
   }
 
-  private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryBoxingFix extends InspectionGadgetsFix {
 
-    private final String name;
+    private final @IntentionFamilyName String name;
 
     private UnnecessaryBoxingFix() {
       this.name = InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
@@ -157,17 +158,9 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         }
       }
       if (unboxedExpression instanceof PsiLiteralExpression) {
-        if (unboxedType.equals(PsiType.LONG) && expressionType.equals(PsiType.INT)) {
-          return text + 'L';
-        }
-        else if (!text.startsWith("0")) { // no octal & hex
-          if (unboxedType.equals(PsiType.FLOAT) &&
-              (expressionType.equals(PsiType.INT) || expressionType.equals(PsiType.DOUBLE) && !StringUtil.endsWithIgnoreCase(text, "d"))) {
-            return text + 'f';
-          }
-          else if (unboxedType.equals(PsiType.DOUBLE) && expressionType.equals(PsiType.INT)) {
-            return text + 'd';
-          }
+        String newLiteral = PsiLiteralUtil.tryConvertNumericLiteral((PsiLiteralExpression)unboxedExpression, unboxedType);
+        if (newLiteral != null) {
+          return newLiteral;
         }
       }
       if (ParenthesesUtils.getPrecedence(unboxedExpression) > ParenthesesUtils.TYPE_CAST_PRECEDENCE) {

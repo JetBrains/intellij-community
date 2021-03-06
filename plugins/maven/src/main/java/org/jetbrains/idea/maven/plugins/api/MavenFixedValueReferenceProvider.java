@@ -38,7 +38,7 @@ public class MavenFixedValueReferenceProvider implements MavenParamReferenceProv
     }
 
     return new PsiReference[] {
-      new PsiReferenceBase<PsiElement>(element, mySoft) {
+      new PsiReferenceBase<>(element, mySoft) {
         @Nullable
         @Override
         public PsiElement resolve() {

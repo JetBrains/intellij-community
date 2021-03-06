@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class CaretState {
@@ -64,6 +65,7 @@ public class CaretState {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "CaretState{" +
            "caretPosition=" + caretPosition +

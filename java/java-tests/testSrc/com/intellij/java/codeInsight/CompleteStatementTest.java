@@ -37,7 +37,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
+    return LanguageLevel.JDK_15_PREVIEW;
   }
 
   public void testAddMissingSemicolon() { doTest(); }
@@ -181,6 +181,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testRecord() { doTest(); }
   public void testRecordWithComponent() { doTest(); }
   public void testRecordWithComponentNoBody() { doTest(); }
+  public void testVarargMethod() { doTest(); }
+  public void testSemicolonAfterSwitchExpression() { doTest(); }
 
   private void doTestBracesNextLineStyle() {
     myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,12 +23,10 @@ public interface PsiResolveHelper {
   RecursionGuard<PsiElement> ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
 
   final class SERVICE {
-    private static final NotNullLazyKey<PsiResolveHelper, Project> PSI_RESOLVER_KEY = ServiceManager.createLazyKey(PsiResolveHelper.class);
-
     private SERVICE() { }
 
     public static PsiResolveHelper getInstance(Project project) {
-      return PSI_RESOLVER_KEY.getValue(project);
+      return project.getService(PsiResolveHelper.class);
     }
   }
 
@@ -81,8 +77,8 @@ public interface PsiResolveHelper {
   CandidateInfo @NotNull [] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor, boolean checkVarargs);
 
   /**
-   * Checks if there are method (or constructor) overloads. 
-   * 
+   * Checks if there are method (or constructor) overloads.
+   *
    * E.g. when no overloads exist, it's possible to cache types during inference even when they depend on top method call.
    */
   @ApiStatus.Experimental

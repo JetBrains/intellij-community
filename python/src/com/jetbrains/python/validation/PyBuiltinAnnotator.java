@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyBuiltinAnnotator extends PyAnnotator {
   @Override
-  public void visitPyReferenceExpression(PyReferenceExpression node) {
+  public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
     final String name = node.getName();
     if (name == null) return;
     final boolean highlightedAsAttribute = highlightAsAttribute(node, name);
@@ -44,7 +44,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyTargetExpression(PyTargetExpression node) {
+  public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
     final String name = node.getName();
     if (name != null) {
       highlightAsAttribute(node, name);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -44,7 +30,6 @@ import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,11 +42,11 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class ChunkExtractor {
+public final class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance(ChunkExtractor.class);
   static final int MAX_LINE_LENGTH_TO_SHOW = 200;
-  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
-  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
+  static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 40;
+  static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 100;
 
   private final EditorColorsScheme myColorsScheme;
 
@@ -300,7 +285,7 @@ public class ChunkExtractor {
     TextAttributes attrs = bold
                            ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
                            : originalAttrs;
-    result.add(new TextChunk(attrs, StringFactory.createShared(CharArrayUtil.fromSequence(chars, start, end)), usageType));
+    result.add(new TextChunk(attrs, new String(CharArrayUtil.fromSequence(chars, start, end)), usageType));
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {
@@ -324,7 +309,7 @@ public class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(@NotNull List<? super TextChunk> result, int lineNumber) {
-    result.add(new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), String.valueOf(lineNumber + 1)));
+  private static void appendPrefix(@NotNull List<? super TextChunk> result, int lineNumber) {
+    result.add(new TextChunk(UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(), String.valueOf(lineNumber + 1)));
   }
 }

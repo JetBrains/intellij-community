@@ -2,29 +2,34 @@
 package org.jetbrains.yaml.psi.impl
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.AbstractElementManipulator
 import org.jetbrains.yaml.YAMLElementGenerator
+import org.jetbrains.yaml.YAMLUtil
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLMapping
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.yaml.psi.YAMLValue
 
 /**
  * Handles only key manipulation
  */
-@ApiStatus.Experimental
 class YAMLKeyValueKeyManipulator : AbstractElementManipulator<YAMLKeyValue>() {
   override fun handleContentChange(element: YAMLKeyValue, range: TextRange, newContent: String?): YAMLKeyValue? {
     val originalContent = element.getRawKeyText() ?: return element
-
     if (newContent == null) return element
     val updatedKey = originalContent.replaceRange(range.startOffset, range.endOffset, newContent)
 
     val generator = YAMLElementGenerator.getInstance(element.project)
     val valueText = when (val value = element.value) {
-      is YAMLMapping -> value.text
+      is YAMLMapping -> "${preserveIndent(value)}${value.text}"
       else -> element.valueText
     }
     return generator.createYamlKeyValue(updatedKey, valueText).also { element.replace(it) }
+  }
+
+  private fun preserveIndent(value: YAMLValue): String {
+    val indent = YAMLUtil.getIndentInThisLine(value).takeIf { it > 0 } ?: return ""
+    return StringUtil.repeat(" ", indent)
   }
 
   /**

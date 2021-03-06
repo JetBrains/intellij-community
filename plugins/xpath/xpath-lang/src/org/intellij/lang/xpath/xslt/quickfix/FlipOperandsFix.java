@@ -27,6 +27,7 @@ import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathToken;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipOperandsFix extends AbstractFix {
@@ -41,7 +42,12 @@ public class FlipOperandsFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        return "Flip '" + myToken.getText() + "' to '" + myToken.getText().replace('<', '>') + "'";
+        return XPathBundle.message("intention.name.flip.binary.expression.to", myToken.getText(), myToken.getText().replace('<', '>'));
+    }
+
+    @Override
+    public String getFamilyName() {
+        return XPathBundle.message("intention.family.name.flip.binary.expression");
     }
 
     @Override

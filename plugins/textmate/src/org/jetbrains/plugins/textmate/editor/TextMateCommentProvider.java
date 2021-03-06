@@ -76,7 +76,7 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
     return null;
   }
 
-  private static class MyCommenter implements Commenter {
+  private static final class MyCommenter implements Commenter {
     @Nullable
     private final TextMateCommentPair myLineCommentPair;
     @Nullable

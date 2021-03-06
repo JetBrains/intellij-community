@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,11 +33,11 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
   private volatile Disposable eventDisposable;
 
   private final ExternalProjectsManagerImpl myManager;
-  private final ConcurrentIntObjectMap<Pair<String, RunnerAndConfigurationSettings>> myMap;
+  private final ConcurrentIntObjectMap<Pair<String, RunnerAndConfigurationSettings>> myMap =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
     myManager = (ExternalProjectsManagerImpl)manager;
-    myMap = ContainerUtil.createConcurrentIntObjectMap();
   }
 
   @Override

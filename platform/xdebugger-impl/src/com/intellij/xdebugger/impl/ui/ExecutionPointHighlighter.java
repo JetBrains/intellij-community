@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AppUIExecutor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl;
 import com.intellij.openapi.editor.markup.*;
@@ -181,23 +183,21 @@ public class ExecutionPointHighlighter {
 
     if (myRangeHighlighter != null) return;
 
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes attributes = myNotTopFrame ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
-                                              : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
+    TextAttributesKey attributesKey = myNotTopFrame ? DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES : DebuggerColors.EXECUTIONPOINT_ATTRIBUTES;
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     if (mySourcePosition instanceof HighlighterProvider) {
       TextRange range = ((HighlighterProvider)mySourcePosition).getHighlightRange();
       if (range != null) {
         TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
         if (!range.equals(lineRange)) {
-          myRangeHighlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                               DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes,
-                                                               HighlighterTargetArea.EXACT_RANGE);
+          myRangeHighlighter = markupModel
+            .addRangeHighlighter(attributesKey, range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+                                 HighlighterTargetArea.EXACT_RANGE);
         }
       }
     }
     if (myRangeHighlighter == null) {
-      myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
+      myRangeHighlighter = markupModel.addLineHighlighter(attributesKey, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, !myNotTopFrame);
     myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());

@@ -52,7 +52,7 @@ class JdkUtils {
     return jdkDir
   }
 
-  private static String getCurrentJdk() {
+  static String getCurrentJdk() {
     def javaHome = SystemProperties.javaHome
     if (new File(javaHome).name == "jre") {
       return new File(javaHome).getParent()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -9,10 +9,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.exception.FrequentErrorLogger;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -63,7 +64,7 @@ import java.util.function.Supplier;
  * <p/>
  * Note that tree access won't result in an exception when the tree was already loaded.
  */
-public class AstLoadingFilter {
+public final class AstLoadingFilter {
 
   private static final Logger LOG = Logger.getInstance(AstLoadingFilter.class);
   private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
@@ -73,7 +74,7 @@ public class AstLoadingFilter {
    */
   private static final ThreadLocal<Supplier<String>> myDisallowedInfo = new ThreadLocal<>();
   @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Set<VirtualFile>> myForcedAllowedFiles = ThreadLocal.withInitial(() -> new THashSet<>());
+  private static final ThreadLocal<Set<VirtualFile>> myForcedAllowedFiles = ThreadLocal.withInitial(() -> new HashSet<>());
 
   private AstLoadingFilter() {}
 
@@ -96,7 +97,7 @@ public class AstLoadingFilter {
 
   @NotNull
   private static String buildDebugInfo(@NotNull VirtualFile file, @NotNull Supplier<String> disabledInfo) {
-    StringBuilder debugInfo = new StringBuilder();
+    @NonNls StringBuilder debugInfo = new StringBuilder();
     debugInfo.append("Accessed file path: ").append(file.getPath());
     String additionalInfo = disabledInfo.get();
     if (additionalInfo != null) {
@@ -108,6 +109,11 @@ public class AstLoadingFilter {
   public static <E extends Throwable>
   void disallowTreeLoading(@NotNull ThrowableRunnable<E> runnable) throws E {
     disallowTreeLoading(toComputable(runnable));
+  }
+
+  public static <E extends Throwable>
+  void disallowTreeLoading(@NotNull ThrowableRunnable<E> runnable, @NotNull Supplier<String> debugInfo) throws E {
+    disallowTreeLoading(toComputable(runnable), debugInfo);
   }
 
   public static <T, E extends Throwable>

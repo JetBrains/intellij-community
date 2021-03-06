@@ -1452,4 +1452,94 @@ public class Test {
       """.trimIndent()
     )
   }
+
+  fun testIdea219194() {
+    doTextTest(
+      """
+      public class Test {
+          /**
+           * @implNote Some leading implNote sentence.
+           *
+           *     <p>That means that the the thing is like this.
+           *
+           *     <ol></ol>
+           */
+          void foo() {
+          }
+      }
+      """.trimIndent(),
+
+      """
+      public class Test {
+          /**
+           * @implNote Some leading implNote sentence.
+           *
+           * <p>That means that the the thing is like this.
+           *
+           * <ol></ol>
+           */
+          void foo() {
+          }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea186041() {
+    doTextTest(
+      """
+      import java.util.function.Function;
+
+      public class Test {
+          /**
+           * @param node the node to get the path for
+           * @param getParent a function to get a parent node for the given one
+           * @param converter  a function to convert path components
+           * @return a tree path with the converted path components or {@code null}
+           * if the specified collection is empty
+           * or a path component is {@code null}
+           * or a path component is converted to {@code null}
+           * Returns the path from the root, to get to this node.  The last
+           * element in the path is this node.
+           *
+           * @return an array of TreeNode objects giving the path, where the
+           *         first element in the path is the root and the last
+           *         element is this node.
+           */
+          public TreeNode[] foo(String node, Function<TreeNode,TreeNode> getParent, Function<String,String> converter) {
+              return new TreeNode[0];
+          }
+
+          private static class TreeNode {}
+      }
+      """.trimIndent(),
+
+      """
+      import java.util.function.Function;
+
+      public class Test {
+          /**
+           * @param node      the node to get the path for
+           * @param getParent a function to get a parent node for the given one
+           * @param converter a function to convert path components
+           * @return a tree path with the converted path components or {@code null}
+           * if the specified collection is empty
+           * or a path component is {@code null}
+           * or a path component is converted to {@code null}
+           * Returns the path from the root, to get to this node.  The last
+           * element in the path is this node.
+           * @return an array of TreeNode objects giving the path, where the
+           * first element in the path is the root and the last
+           * element is this node.
+           */
+          public TreeNode[] foo(String node, Function<TreeNode, TreeNode> getParent, Function<String, String> converter) {
+              return new TreeNode[0];
+          }
+      
+          private static class TreeNode {
+          }
+      }
+      """.trimIndent()
+    )
+  }
 }

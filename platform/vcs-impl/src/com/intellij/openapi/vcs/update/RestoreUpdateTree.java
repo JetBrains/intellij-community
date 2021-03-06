@@ -11,10 +11,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "RestoreUpdateTree", storages = {
-  @Storage(StoragePathMacros.CACHE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
-})
+@State(name = "RestoreUpdateTree", storages = @Storage(StoragePathMacros.CACHE_FILE))
 @Service
 public final class RestoreUpdateTree implements PersistentStateComponent<Element> {
   private UpdateInfo myUpdateInfo;

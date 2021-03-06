@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
-public class InstanceOfUtils {
+public final class InstanceOfUtils {
 
   private InstanceOfUtils() {}
 
@@ -91,9 +91,23 @@ public class InstanceOfUtils {
     checker.negate = false;
     PsiElement parent = findInterestingParent(context);
     while (parent != null) {
-      parent.accept(checker);
-      if (checker.hasAgreeingInstanceof()) {
-        return null;
+      IElementType tokenType = parent instanceof PsiPolyadicExpression ? ((PsiPolyadicExpression)parent).getOperationTokenType() : null;
+      if (JavaTokenType.ANDAND.equals(tokenType) || JavaTokenType.OROR.equals(tokenType)) {
+        checker.negate = tokenType.equals(JavaTokenType.OROR);
+        for (PsiExpression expression : ((PsiPolyadicExpression)parent).getOperands()) {
+          if (PsiTreeUtil.isAncestor(expression, context, false)) break;
+          expression.accept(checker);
+          if (checker.hasAgreeingInstanceof()) {
+            return null;
+          }
+        }
+        checker.negate = false;
+      }
+      else {
+        parent.accept(checker);
+        if (checker.hasAgreeingInstanceof()) {
+          return null;
+        }
       }
       parent = findInterestingParent(parent);
     }
@@ -105,9 +119,24 @@ public class InstanceOfUtils {
 
   @Nullable
   private static PsiElement findInterestingParent(PsiElement context) {
-    return PsiTreeUtil.getParentOfType(
-      context, PsiIfStatement.class, PsiConditionalExpression.class, PsiPolyadicExpression.class,
-      PsiConditionalLoopStatement.class);
+    while (true) {
+      PsiElement parent = context.getParent();
+      if (parent == null) return null;
+      if (parent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) return parent;
+      }
+      if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() != context) {
+        return parent;
+      }
+      if (parent instanceof PsiConditionalLoopStatement && ((PsiConditionalLoopStatement)parent).getCondition() != context) {
+        return parent;
+      }
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != context) {
+        return parent;
+      }
+      context = parent;
+    }
   }
 
   private static boolean isInstanceOfAssertionCall(InstanceofChecker checker, PsiMethodCallExpression call) {
@@ -120,11 +149,11 @@ public class InstanceOfUtils {
     if (condition == null) return false;
     checker.negate = true;
     OptionalInt argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(true), true);
-    if (!argNum.isPresent()) {
+    if (argNum.isEmpty()) {
       checker.negate = false;
       argNum = condition.getArgumentComparedTo(ContractValue.booleanValue(false), true);
     }
-    if (!argNum.isPresent()) return false;
+    if (argNum.isEmpty()) return false;
     int index = argNum.getAsInt();
     PsiExpression[] args = call.getArgumentList().getExpressions();
     if (index >= args.length) return false;
@@ -146,7 +175,7 @@ public class InstanceOfUtils {
     }
     return false;
   }
-  
+
   /**
    * @param cast a cast expression to find parent instanceof for
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
@@ -162,8 +191,8 @@ public class InstanceOfUtils {
       while (true) {
         if (context instanceof PsiPolyadicExpression) {
           IElementType tokenType = ((PsiPolyadicExpression)context).getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.ANDAND)) {
-            PsiInstanceOfExpression instanceOf = findInstanceOf((PsiExpression)context, cast, true);
+          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+            PsiInstanceOfExpression instanceOf = findInstanceOf((PsiExpression)context, cast, tokenType.equals(JavaTokenType.ANDAND));
             if (instanceOf != null) {
               return instanceOf;
             }
@@ -268,8 +297,8 @@ public class InstanceOfUtils {
     if (statement == null) return true;
     ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(statement.getProject()).getControlFlow(
-        parent, new LocalsControlFlowPolicy(parent), false, false);
+      flow = ControlFlowFactory.getControlFlow(parent, new LocalsControlFlowPolicy(parent), 
+                                               ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return true;
@@ -280,8 +309,8 @@ public class InstanceOfUtils {
   }
 
   @Contract("null, _, _ -> null")
-  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition, 
-                                                        @NotNull PsiTypeCastExpression cast, 
+  private static PsiInstanceOfExpression findInstanceOf(@Nullable PsiExpression condition,
+                                                        @NotNull PsiTypeCastExpression cast,
                                                         boolean whenTrue) {
     if (condition == null) return null;
     if (condition instanceof PsiParenthesizedExpression) {
@@ -361,7 +390,7 @@ public class InstanceOfUtils {
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType == JavaTokenType.ANDAND) {
+      if (tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR) {
         for (PsiExpression operand : expression.getOperands()) {
           checkExpression(operand);
           if (agreeingInstanceof) {
@@ -369,21 +398,6 @@ public class InstanceOfUtils {
           }
         }
         if (!negate && conflictingInstanceof != null) {
-          agreeingInstanceof = false;
-        }
-      }
-      else if (tokenType == JavaTokenType.OROR) {
-        for (PsiExpression operand : expression.getOperands()) {
-          operand = PsiUtil.deparenthesizeExpression(operand);
-          if (operand instanceof PsiPrefixExpression && ((PsiPrefixExpression)operand).getOperationTokenType() == JavaTokenType.EXCL) {
-            negate = true;
-          }
-          checkExpression(operand);
-          if (agreeingInstanceof) {
-            return;
-          }
-        }
-        if (negate && conflictingInstanceof != null) {
           agreeingInstanceof = false;
         }
       }
@@ -430,35 +444,40 @@ public class InstanceOfUtils {
       checkExpression(expression.getCondition());
     }
 
-    private void checkExpression(PsiExpression expression) {
-      expression = PsiUtil.deparenthesizeExpression(expression);
-      if (negate) {
-        if (expression instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-          final IElementType tokenType = prefixExpression.getOperationTokenType();
-          if (tokenType != JavaTokenType.EXCL) return;
-          expression = PsiUtil.deparenthesizeExpression(prefixExpression.getOperand());
-          checkInstanceOfExpression(expression);
-        }
-      }
-      else {
-        checkInstanceOfExpression(expression);
-      }
-      if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
-        visitPolyadicExpression(binaryExpression);
-      }
-    }
-
-    private void checkInstanceOfExpression(PsiExpression expression) {
-      if (!(expression instanceof PsiInstanceOfExpression)) return;
-      final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
-      if (isAgreeing(instanceOfExpression)) {
+    @Override
+    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+      if (negate) return;
+      if (isAgreeing(expression)) {
         agreeingInstanceof = true;
         conflictingInstanceof = null;
       }
-      else if (isConflicting(instanceOfExpression) && conflictingInstanceof == null) {
-        conflictingInstanceof = instanceOfExpression;
+      else if (isConflicting(expression) && conflictingInstanceof == null) {
+        conflictingInstanceof = expression;
+      }
+    }
+
+    @Override
+    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+      PsiExpression operand = expression.getExpression();
+      if (operand != null) {
+        operand.accept(this);
+      }
+    }
+
+    @Override
+    public void visitPrefixExpression(PsiPrefixExpression expression) {
+      super.visitPrefixExpression(expression);
+      PsiExpression operand = expression.getOperand();
+      if (operand != null && expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
+        negate = !negate;
+        operand.accept(this);
+        negate = !negate;
+      }
+    }
+
+    private void checkExpression(PsiExpression expression) {
+      if (expression != null) {
+        expression.accept(this);
       }
     }
 

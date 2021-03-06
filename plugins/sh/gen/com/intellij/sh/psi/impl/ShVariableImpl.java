@@ -17,10 +17,12 @@ public class ShVariableImpl extends ShLiteralImpl implements ShVariable {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitVariable(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
@@ -33,7 +35,7 @@ public class ShVariableImpl extends ShLiteralImpl implements ShVariable {
   }
 
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ShPsiImplUtil.getReferences(this);
   }
 

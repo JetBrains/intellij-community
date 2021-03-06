@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.configurations.coverage;
 
@@ -9,23 +9,16 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiPackage;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -38,8 +31,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Base {@link com.intellij.openapi.options.Configurable} for configuring code coverage
@@ -56,8 +47,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
   Project myProject;
-  private MyClassFilterEditor myClassFilterEditor;
-  private MyClassFilterEditor myExcludeClassFilterEditor;
+  private CoverageClassFilterEditor myClassFilterEditor;
+  private CoverageClassFilterEditor myExcludeClassFilterEditor;
   private JLabel myCoverageNotSupportedLabel;
   private JComboBox<CoverageRunnerItem> myCoverageRunnerCb;
   private JPanel myRunnerPanel;
@@ -67,49 +58,6 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
   private JRadioButton myTracingRb;
   private JRadioButton mySamplingRb;
   private final RunConfigurationBase myConfig;
-
-  private static class MyClassFilterEditor extends ClassFilterEditor {
-    MyClassFilterEditor(Project project) {
-      super(project, new com.intellij.ide.util.ClassFilter() {
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          if (aClass.getContainingClass() != null) return false;
-          return true;
-        }
-      }, null);
-      myTable.setVisibleRowCount(4);
-    }
-
-    @Override
-    protected void addPatternFilter() {
-      PackageChooser chooser =
-        new PackageChooserDialog(JavaCoverageBundle.message("coverage.pattern.filter.editor.choose.package.title"), myProject);
-      if (chooser.showAndGet()) {
-        List<PsiPackage> packages = chooser.getSelectedPackages();
-        if (!packages.isEmpty()) {
-          for (final PsiPackage aPackage : packages) {
-            final String fqName = aPackage.getQualifiedName();
-            final String pattern = fqName.length() > 0 ? fqName + ".*" : "*";
-            myTableModel.addRow(createFilter(pattern));
-          }
-          int row = myTableModel.getRowCount() - 1;
-          myTable.getSelectionModel().setSelectionInterval(row, row);
-          myTable.scrollRectToVisible(myTable.getCellRect(row, 0, true));
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTable, true));
-        }
-      }
-    }
-
-    @Override
-    protected String getAddPatternButtonText() {
-      return JavaCoverageBundle.message("coverage.button.add.package");
-    }
-
-    @Override
-    protected Icon getAddPatternButtonIcon() {
-      return IconUtil.getAddPackageIcon();
-    }
-  }
 
   public CoverageConfigurable(RunConfigurationBase config) {
     myConfig = config;
@@ -150,8 +98,8 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     UIUtil.setEnabled(myRunnerPanel, isJre50, true);
 
 
-    myClassFilterEditor.setFilters(getCoveragePatternStream(configuration).filter(classFilter -> classFilter.INCLUDE).toArray(ClassFilter[]::new));
-    myExcludeClassFilterEditor.setFilters(getCoveragePatternStream(configuration).filter(classFilter -> !classFilter.INCLUDE).toArray(ClassFilter[]::new));
+    myClassFilterEditor.setFilters(getCoveragePatterns(configuration, true));
+    myExcludeClassFilterEditor.setFilters(getCoveragePatterns(configuration, false));
     final boolean isCoverageByTestApplicable = runner != null && runner.isCoverageByTestApplicable();
     myTracingRb.setEnabled(myTracingRb.isEnabled() && isCoverageByTestApplicable);
     mySamplingRb.setSelected(configuration.isSampling() || !isCoverageByTestApplicable);
@@ -163,9 +111,9 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     myTrackTestSourcesCb.setSelected(configuration.isTrackTestFolders());
   }
 
-  @NotNull
-  private static Stream<ClassFilter> getCoveragePatternStream(@NotNull JavaCoverageEnabledConfiguration configuration) {
-    return Arrays.stream(ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY));
+  static ClassFilter[] getCoveragePatterns(@NotNull JavaCoverageEnabledConfiguration configuration, boolean include) {
+    return Arrays.stream(ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY))
+      .filter(classFilter -> classFilter.INCLUDE == include).toArray(ClassFilter[]::new);
   }
 
   protected boolean canHavePerTestCoverage() {
@@ -255,11 +203,11 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                              JBUI.emptyInsets(), 0, 0);
     panel.add(new TitledSeparator(JavaCoverageBundle.message("record.coverage.filters.title")), bagConstraints);
-    myClassFilterEditor = new MyClassFilterEditor(myProject);
+    myClassFilterEditor = new CoverageClassFilterEditor(myProject);
     panel.add(myClassFilterEditor, bagConstraints);
 
     panel.add(new TitledSeparator(JavaCoverageBundle.message("exclude.coverage.filters.title")), bagConstraints);
-    myExcludeClassFilterEditor = new MyClassFilterEditor(myProject) {
+    myExcludeClassFilterEditor = new CoverageClassFilterEditor(myProject) {
       @NotNull
       @Override
       protected ClassFilter createFilter(String pattern) {
@@ -300,7 +248,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
     }
   }
 
-  private static class CoverageRunnerItem {
+  private static final class CoverageRunnerItem {
     private CoverageRunner myRunner;
     private @NotNull final String myRunnerId;
 

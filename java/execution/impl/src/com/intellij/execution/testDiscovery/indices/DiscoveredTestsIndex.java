@@ -13,13 +13,13 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.IntCollectionDataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntArrayList, UsedSources> {
+public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntList, UsedSources> {
   DiscoveredTestsIndex(@NotNull Path file) throws IOException {
     super(INDEX_EXTENSION,
           new MyIndexStorage(file),
@@ -41,7 +41,7 @@ public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntArray
     return getForwardIndex().get(testId) != null;
   }
 
-  private static class MyIndexStorage extends MapIndexStorage<Integer, IntArrayList> {
+  private static class MyIndexStorage extends MapIndexStorage<Integer, IntList> {
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, IntArrayExternalizer.INSTANCE, 4 * 1024, false);
     }
@@ -52,16 +52,16 @@ public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntArray
     }
   }
 
-  private static final IndexExtension<Integer, IntArrayList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, IntArrayList, UsedSources>() {
+  private static final IndexExtension<Integer, IntList, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
     @NotNull
     @Override
-    public IndexId<Integer, IntArrayList> getName() {
+    public IndexId<Integer, IntList> getName() {
       return IndexId.create("jvm.discovered.tests");
     }
 
     @NotNull
     @Override
-    public DataIndexer<Integer, IntArrayList, UsedSources> getIndexer() {
+    public DataIndexer<Integer, IntList, UsedSources> getIndexer() {
       return inputData -> inputData.myUsedMethods;
     }
 
@@ -73,7 +73,7 @@ public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntArray
 
     @NotNull
     @Override
-    public DataExternalizer<IntArrayList> getValueExternalizer() {
+    public DataExternalizer<IntList> getValueExternalizer() {
       return IntArrayExternalizer.INSTANCE;
     }
 

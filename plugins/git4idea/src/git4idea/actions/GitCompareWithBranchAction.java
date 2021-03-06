@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsCompareWithBranchAction;
@@ -67,12 +67,12 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
   @Override
   @NotNull
   protected Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
-                                              @NotNull String branchToCompare) throws VcsException {
+                                              @NotNull String branchName) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
-    final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
-    if (gitRepository == null) {
-      throw new VcsException("Couldn't find Git Repository for " + file.getName());
-    }
+    final GitRepository gitRepository = GitUtil.getRepositoryForFile(project, file);
+    GitBranch branch = gitRepository.getBranches().findBranchByName(branchName);
+    String branchToCompare = branch != null ? branch.getFullName() : branchName;
+
     final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
     Collection<Change> changes =

@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -18,10 +19,16 @@ public interface MarkupModelListener extends EventListener {
   default void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
   }
 
+  default void attributesChanged(@NotNull RangeHighlighterEx highlighter,
+                                 boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+    attributesChanged(highlighter, renderersChanged, fontStyleChanged || foregroundColorChanged);
+  }
+
   /**
    * @deprecated Use {@link MarkupModelListener} directly.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   abstract class Adapter implements MarkupModelListener {
   }
 }

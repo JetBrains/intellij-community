@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.impl.elements.ExtractedDirectoryPackagingElement;
@@ -53,7 +54,7 @@ public class ExtractedDirectoryPresentation extends PackagingElementPresentation
         commentAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       }
     }
-    presentationData.addText("Extracted '" + PathUtil.getFileName(myJarPath) + myPathInJar + "'", mainAttributes);
+    presentationData.addText(JavaCompilerBundle.message("label.extracted.dir.presentation", getPresentableName()), mainAttributes);
     presentationData.addText(" (" + parentPath + ")", commentAttributes);
   }
 

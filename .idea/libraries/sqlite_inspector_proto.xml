@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="sqlite-inspector-proto" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:sqlite_inspector_proto:27.1.1.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/sqlite_inspector_proto/27.1.1.0/sqlite_inspector_proto-27.1.1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

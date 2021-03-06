@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QNEW_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.QREFRESH_ERROR;
+
 public class HgQNewCommand extends HgCommitTypeCommand {
 
 
@@ -58,7 +61,10 @@ public class HgQNewCommand extends HgCommitTypeCommand {
     HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(myRepository.getRoot(), "qrefresh", args);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(myProject)
-        .notifyError(result, HgBundle.message("action.hg4idea.QRefresh.error"), HgBundle.message("action.hg4idea.QRefresh.error.msg"));
+        .notifyError(QREFRESH_ERROR,
+                     result,
+                     HgBundle.message("action.hg4idea.QRefresh.error"),
+                     HgBundle.message("action.hg4idea.QRefresh.error.msg"));
     }
   }
 
@@ -74,7 +80,10 @@ public class HgQNewCommand extends HgCommitTypeCommand {
     HgCommandResult result = executor.executeInCurrentThread(myRepository.getRoot(), "qnew", args);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(myProject)
-        .notifyError(result, HgBundle.message("action.hg4idea.QNew.error"), HgBundle.message("action.hg4idea.QNew.error.msg"));
+        .notifyError(QNEW_ERROR,
+                     result,
+                     HgBundle.message("action.hg4idea.QNew.error"),
+                     HgBundle.message("action.hg4idea.QNew.error.msg"));
     }
   }
 }

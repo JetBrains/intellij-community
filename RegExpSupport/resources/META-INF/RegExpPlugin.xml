@@ -39,41 +39,44 @@
       <category>RegExp</category>
     </intentionAction>
 
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRepeatedSpace" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.consecutive.spaces"
+    <localInspection language="RegExp" shortName="RegExpRepeatedSpace" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.consecutive.spaces"
                      implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpSingleCharAlternation" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.single.character.alternation"
+    <localInspection language="RegExp" shortName="RegExpSingleCharAlternation" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.single.character.alternation"
                      implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpOctalEscape" enabledByDefault="true" level="INFORMATION"
-                     bundle="messages.RegExpBundle" key="inspection.name.octal.escape"
+    <localInspection language="RegExp" shortName="RegExpOctalEscape" enabledByDefault="true" level="INFORMATION"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.octal.escape"
                      implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
     <!--<localInspection groupName="RegExp" language="RegExp" shortName="ReDoS" displayName="Exponential backtracking" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.ReDoSInspection"/>-->
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpDuplicateAlternationBranch" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.duplicate.branch.in.alternation"
+    <localInspection language="RegExp" shortName="RegExpDuplicateAlternationBranch" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.duplicate.branch.in.alternation"
                      implementationClass="org.intellij.lang.regexp.inspection.DuplicateAlternationBranchInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpEscapedMetaCharacter" enabledByDefault="true" level="INFORMATION"
-                     bundle="messages.RegExpBundle" key="inspection.name.escaped.meta.character"
+    <localInspection language="RegExp" shortName="RegExpEscapedMetaCharacter" enabledByDefault="true" level="INFORMATION"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.escaped.meta.character"
                      implementationClass="org.intellij.lang.regexp.inspection.EscapedMetaCharacterInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpEmptyAlternationBranch" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.empty.branch.in.alternation"
+    <localInspection language="RegExp" shortName="RegExpEmptyAlternationBranch" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.empty.branch.in.alternation"
                      implementationClass="org.intellij.lang.regexp.inspection.EmptyAlternationBranchInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpAnonymousGroup" enabledByDefault="false" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.warning.anonymous.capturing.group"
+    <localInspection language="RegExp" shortName="RegExpAnonymousGroup" enabledByDefault="false" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.anonymous.group.or.numeric.back.reference"
                      implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRedundantEscape" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.redundant.character.escape"
+    <localInspection language="RegExp" shortName="RegExpRedundantEscape" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.character.escape"
                      implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpUnexpectedAnchor" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.begin.or.end.anchor.in.unexpected.position"
+    <localInspection language="RegExp" shortName="RegExpUnexpectedAnchor" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.begin.or.end.anchor.in.unexpected.position"
                      implementationClass="org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpDuplicateCharacterInClass" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.duplicate.character.in.class"
+    <localInspection language="RegExp" shortName="RegExpDuplicateCharacterInClass" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.duplicate.character.in.class"
                      implementationClass="org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection"/>
-    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRedundantNestedCharacterClass" enabledByDefault="true" level="WARNING"
-                     bundle="messages.RegExpBundle" key="inspection.name.redundant.nested.character.class"
+    <localInspection language="RegExp" shortName="RegExpRedundantNestedCharacterClass" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.nested.character.class"
                      implementationClass="org.intellij.lang.regexp.inspection.RedundantNestedCharacterClassInspection"/>
+    <localInspection language="RegExp" shortName="RegExpUnnecessaryNonCapturingGroup" enabledByDefault="true" level="WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.unnecessary.non.capturing.group"
+                     implementationClass="org.intellij.lang.regexp.inspection.UnnecessaryNonCapturingGroupInspection"/>
 
   </extensions>
 </idea-plugin>

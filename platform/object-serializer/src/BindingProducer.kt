@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.intellij.util.SystemProperties
-import gnu.trove.THashMap
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -13,25 +13,25 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 internal abstract class BindingProducer : BindingInitializationContext {
-  private val cache: MutableMap<Type, Binding> = THashMap(object : TObjectHashingStrategy<Type> {
-    override fun equals(o1: Type, o2: Type): Boolean {
+  private val cache: MutableMap<Type, Binding> = Object2ObjectOpenCustomHashMap(object : Hash.Strategy<Type> {
+    override fun equals(o1: Type?, o2: Type?): Boolean {
       if (o1 is ParameterizedType && o2 is ParameterizedType) {
         return o1 === o2 || (Arrays.equals(o1.actualTypeArguments, o2.actualTypeArguments) && o1.rawType == o2.rawType)
       }
       return o1 == o2
     }
 
-    override fun computeHashCode(o: Type): Int {
+    override fun hashCode(o: Type?): Int {
       // ours ParameterizedTypeImpl hash code differs from java impl
       return when (o) {
         is ParameterizedType -> 31 * o.rawType.hashCode() + Arrays.hashCode(o.actualTypeArguments)
+        null -> 0
         else -> o.hashCode()
       }
     }
   })
 
   private val cacheLock = ReentrantReadWriteLock()
-
   @get:TestOnly
   internal val bindingCount: Int
     get() = cacheLock.read { cache.size }

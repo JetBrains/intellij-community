@@ -28,7 +28,7 @@ import java.util.List;
  * @author pegov
  * @author Konstantin Bulenkov
  */
-public class PopupPositionManager {
+public final class PopupPositionManager {
   private static final Position[] DEFAULT_POSITION_ORDER = {Position.RIGHT, Position.LEFT, Position.TOP, Position.BOTTOM};
 
   private PopupPositionManager() {
@@ -116,7 +116,7 @@ public class PopupPositionManager {
     return null;
   }
 
-  private static class PositionAdjuster2 extends PositionAdjuster {
+  private static final class PositionAdjuster2 extends PositionAdjuster {
 
     private final Component myTopComponent;
 

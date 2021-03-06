@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -43,8 +43,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -62,9 +63,9 @@ import java.util.regex.Pattern;
  */
 public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
-  private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
+  private static final @NonNls String PROJECT_TEMPLATE_XML = "project-template.xml";
 
-  static final String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
+  static final @NonNls String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -188,18 +189,28 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     if (PlatformUtils.isIntelliJ()) {
       return FileTemplateBase.getQualifiedName(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME, "java");
     }
-    else if (PlatformUtils.isPhpStorm()) {
+    if (PlatformUtils.isPhpStorm()) {
       return FileTemplateBase.getQualifiedName("PHP File Header", "php");
-    } else if (PlatformUtils.isWebStorm()) {
-      return FileTemplateBase.getQualifiedName("JavaScript File", "js");
-    } else {
-      throw new IllegalStateException("Provide file header template for your IDE");
     }
+    if (PlatformUtils.isWebStorm()) {
+      return FileTemplateBase.getQualifiedName("JavaScript File", "js");
+    }
+    if (PlatformUtils.isGoIde()) {
+      return FileTemplateBase.getQualifiedName("Go File", "go");
+    }
+    throw new IllegalStateException("Provide file header template for your IDE");
   }
 
   static String getNewProjectActionId() {
-    if (PlatformUtils.isIntelliJ() || PlatformUtils.isWebStorm()) return "NewProject";
-    if (PlatformUtils.isPhpStorm()) return "NewDirectoryProject";
+    if (PlatformUtils.isIntelliJ() || PlatformUtils.isWebStorm()) {
+      return "NewProject";
+    }
+    if (PlatformUtils.isPhpStorm()) {
+      return "NewDirectoryProject";
+    }
+    if (PlatformUtils.isGoIde()) {
+      return "GoIdeNewProjectAction";
+    }
     throw new IllegalStateException("Provide new project action id for your IDE");
   }
 
@@ -253,7 +264,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     String text = VfsUtilCore.loadText(virtualFile);
     final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(fileHeaderTemplateName);
     final String templateText = template.getText();
-    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new TIntObjectHashMap<>());
+    final Pattern pattern = FileTemplateUtil.getTemplatePattern(template, project, new Int2ObjectOpenHashMap<>());
     String result = convertTemplates(text, pattern, templateText, shouldEscape);
     result = ProjectTemplateFileProcessor.encodeFile(result, virtualFile, project);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-public class AsyncStacksUtils {
+public final class AsyncStacksUtils {
   private static final Logger LOG = Logger.getInstance(AsyncStacksUtils.class);
   // TODO: obtain CaptureStorage fqn from the class somehow
   public static final String CAPTURE_STORAGE_CLASS_NAME = "com.intellij.rt.debugger.agent.CaptureStorage";
@@ -117,15 +116,20 @@ public class AsyncStacksUtils {
             String className = dis.readUTF();
             String methodName = dis.readUTF();
             int line = dis.readInt();
-            Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
+            ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+            if (classType == null) {
+              LOG.error("Unable to find loaded class " + className);
+              return null;
+            }
+            Location location = findLocation(process, classType, methodName, line);
             item = new ProcessStackFrameItem(location, className, methodName);
           }
           res.add(item);
         }
         return res;
       }
-      catch (IOException e) {
-        LOG.error(e);
+      catch (Exception e) {
+        DebuggerUtilsImpl.logError(e);
       }
     }
     return null;
@@ -143,7 +147,7 @@ public class AsyncStacksUtils {
 
     // add points
     if (DebuggerUtilsImpl.isRemote(process)) {
-      Properties properties = CaptureSettingsProvider.getPointsProperties();
+      Properties properties = CaptureSettingsProvider.getPointsProperties(process.getProject());
       if (!properties.isEmpty()) {
         process.addDebugProcessListener(new DebugProcessAdapterImpl() {
           @Override
@@ -225,8 +229,8 @@ public class AsyncStacksUtils {
     }
   }
 
-  private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
-    if (type != null && line >= 0) {
+  private static Location findLocation(DebugProcessImpl debugProcess, @NotNull ReferenceType type, String methodName, int line) {
+    if (line >= 0) {
       for (Method method : DebuggerUtilsEx.declaredMethodsByName(type, methodName)) {
         List<Location> locations = DebuggerUtilsEx.locationsOfLine(method, line);
         if (!locations.isEmpty()) {
@@ -256,7 +260,7 @@ public class AsyncStacksUtils {
             process.invokeMethod(evaluationContext, captureClass, method, args, ObjectReference.INVOKE_SINGLE_THREADED, true);
           }
           catch (Exception e) {
-            LOG.error(e);
+            DebuggerUtilsImpl.logError(e);
           }
         }
       }

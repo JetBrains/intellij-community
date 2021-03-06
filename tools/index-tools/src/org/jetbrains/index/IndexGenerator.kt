@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.index
 
 import com.google.common.hash.HashCode
@@ -32,7 +32,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     val hashing = FileContentHashing()
     val storage = createStorage(indexStorageFilePath)
 
-    println("Writing indices to ${storage.baseFile}")
+    println("Writing indices to ${storage}")
 
     storage.use {
       val map = HashMap<HashCode, String>()

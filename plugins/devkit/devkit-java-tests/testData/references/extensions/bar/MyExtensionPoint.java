@@ -13,6 +13,10 @@ public class MyExtensionPoint {
   @Attribute
   public String implementationClass;
 
+  @RequiredElement(allowEmpty = true)
+  @Attribute
+  public String stringCanBeEmpty;
+
   @Tag
   public Integer intValue;
 }

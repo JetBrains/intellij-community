@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -26,12 +12,12 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,58 +28,65 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
-/**
- * @author spleaner
- */
-public class RegExHelpPopup extends JPanel {
+public final class RegExHelpPopup extends JPanel {
   private static final Logger LOG = Logger.getInstance(RegExHelpPopup.class);
-  private final JEditorPane myEditorPane;
-  private final JScrollPane myScrollPane;
 
   public RegExHelpPopup() {
     setLayout(new BorderLayout());
 
-    myEditorPane = new JEditorPane();
-    myEditorPane.setEditable(false);
-    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
-    myEditorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myEditorPane.setBackground(HintUtil.getInformationColor());
+    JEditorPane editorPane = new JEditorPane();
+    editorPane.setEditable(false);
+    editorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    editorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    editorPane.setBackground(HintUtil.getInformationColor());
 
-    String text;
-    try {
-      text = ResourceUtil.loadText(ResourceUtil.getResourceAsStream(getClass(), "messages", "RegExHelpPopup.html"));
+    @NlsSafe String text;
+    try (InputStream stream = Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("messages/RegExHelpPopup.html"))) {
+      text = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
     }
     catch (IOException e) {
       LOG.error(e);
-      text = "Failed to load help page: " + e.getMessage();
+      text = LangBundle.message("text.failed.to.load.help.page", e.getMessage());
     }
-    myEditorPane.setText(StringUtil.replace(text, "LABEL_BACKGROUND", ColorUtil.toHtmlColor(UIUtil.getLabelBackground())));
+    editorPane.setText(text.replace("LABEL_BACKGROUND", ColorUtil.toHtmlColor(UIUtil.getLabelBackground())));
 
-    myEditorPane.addHyperlinkListener(new HyperlinkListener() {
+    editorPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (HyperlinkEvent.EventType.ACTIVATED == e.getEventType()) BrowserUtil.browse(e.getURL());
       }
     });
 
-    myEditorPane.setCaretPosition(0);
+    editorPane.setCaretPosition(0);
 
-    myScrollPane = ScrollPaneFactory.createScrollPane(myEditorPane);
-    myScrollPane.setBorder(null);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(editorPane);
+    scrollPane.setBorder(null);
 
-    add(myScrollPane, BorderLayout.CENTER);
+    add(scrollPane, BorderLayout.CENTER);
   }
 
-  public static LinkLabel createRegExLink(@NotNull String title, @Nullable Component owner, @Nullable Logger logger) {
-    return createRegExLink(title, owner, logger, null);
+  public static LinkLabel<?> createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner) {
+    return createRegExLink(title, owner, (String)null);
+  }
+
+  /**
+   * @deprecated Use {@link #createRegExLink(String, Component)}
+   */
+  @Deprecated
+  public static LinkLabel createRegExLink(@NotNull @NlsContexts.LinkLabel String title, @Nullable Component owner, @SuppressWarnings("unused") @Nullable Logger logger) {
+    return createRegExLink(title, owner, (String)null);
   }
 
   @NotNull
-  public static LinkLabel createRegExLink(@NotNull String title, @Nullable Component owner, @Nullable Logger logger, @Nullable String place) {
+  public static LinkLabel<?> createRegExLink(@NotNull @NlsContexts.LinkLabel String title,
+                                             @Nullable Component owner,
+                                             @Nullable String place) {
     Runnable action = createRegExLinkRunnable(owner);
-    return new LinkLabel<>(title, null, new LinkListener<Object>() {
-
+    return new LinkLabel<>(title, null, new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
         FindUtil.triggerRegexHelpClicked(place);
@@ -121,7 +114,7 @@ public class RegExHelpPopup extends JPanel {
           .setRequestFocus(true)
           .setMovable(true)
           .setResizable(true)
-          .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton("Hide"))
+          .setCancelOnOtherWindowOpen(false).setCancelButton(new MinimizeButton(LangBundle.message("tooltip.hide")))
           .setTitle(LangBundle.message("popup.title.regular.expressions.syntax")).setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
         Disposer.register(helpPopup, new Disposable() {
           @Override

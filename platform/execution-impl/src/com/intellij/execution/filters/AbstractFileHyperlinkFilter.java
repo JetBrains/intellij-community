@@ -105,6 +105,8 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
   }
 
   private boolean isGrayedHyperlink(@NotNull VirtualFile file) {
+    if (myProject.isDefault()) return true;
+    
     ProjectFileIndex fileIndex = getFileIndex();
     return !fileIndex.isInContent(file) || fileIndex.isInLibrary(file);
   }
@@ -145,7 +147,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       Ref<VirtualFile> fileRef = myFileRef;
       if (fileRef == null) {
         VirtualFile file = WriteAction.compute(() -> VfsUtil.findFileByIoFile(myIoFile, true));

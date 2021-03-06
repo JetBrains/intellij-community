@@ -17,6 +17,12 @@ public class CompositePlistReaderTest {
   }
 
   @Test
+  public void parseJsonWithNewline() throws IOException {
+    Plist read = new CompositePlistReader().read(new ByteArrayInputStream("\n\n{}".getBytes(StandardCharsets.UTF_8)));
+    assertNotNull(read);
+  }
+
+  @Test
   public void parseXml() throws IOException {
     Plist read = new CompositePlistReader().read(new ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                                                           "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +

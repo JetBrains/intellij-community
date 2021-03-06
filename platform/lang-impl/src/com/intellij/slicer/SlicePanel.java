@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
@@ -44,10 +44,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author cdr
- */
-public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider, Disposable {
+public abstract class SlicePanel extends JPanel implements DataProvider, Disposable {
   private final SliceTreeBuilder myBuilder;
   private final JTree myTree;
 
@@ -309,14 +306,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     return result;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
+  public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       List<Navigatable> navigatables = getNavigatables();
-      if (!navigatables.isEmpty()) {
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[0]));
-      }
+      return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
     }
+    return null;
   }
 
   @NotNull
@@ -349,7 +346,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     if (isToShowPreviewButton()) {
-      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text", "usages"),
+      actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"),
                                        LangBundle.message("action.preview.description"), AllIcons.Actions.PreviewDetails) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {

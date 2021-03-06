@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.filters.LogEventTrueFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.internal.statistics.StatisticsTestEventValidator.assertLogEventIsValid
@@ -348,6 +349,22 @@ class FeatureEventLogSerializationTest {
   fun testEventDataWithNestedObject() {
     val event = newEvent()
     event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to "fooValue")))
+
+    testEventSerialization(event, false, "obj1")
+  }
+
+  @Test
+  fun testEventDataWithLongInObject() {
+    val event = newEvent()
+    event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to 1L)))
+
+    testEventSerialization(event, false, "obj1")
+  }
+
+  @Test
+  fun testEventDataWithDoubleInObject() {
+    val event = newEvent()
+    event.event.addData("obj1", mapOf("obj2" to mapOf("foo" to 2.2)))
 
     testEventSerialization(event, false, "obj1")
   }

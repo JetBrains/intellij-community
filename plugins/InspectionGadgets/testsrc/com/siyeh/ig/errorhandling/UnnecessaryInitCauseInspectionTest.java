@@ -51,6 +51,7 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testIncompatibleType() {
+    //noinspection EmptyTryBlock
     doTest("import java.io.*;" +
            "class X {" +
            "  void m() throws Exception {" +
@@ -73,7 +74,7 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
   public void testNotAccessible() {
     doTest("import java.util.*;" +
            "class X {" +
-           "  void z() {" +
+           "  static void z() {" +
            "    RuntimeException cause = new RuntimeException();\n" +
            "    MissingResourceException e = new MissingResourceException(\"asdf\", \"asdf\", \"asdf\");\n" +
            "    e.initCause(cause);" +

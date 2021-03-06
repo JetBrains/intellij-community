@@ -4,7 +4,7 @@ class A1:
 
 
 class B1(A1):
-    def m<warning descr="Signature of method 'B1.m()' does not match signature of base method in class 'A1'">(self, p1, p2)</warning>:
+    def m<warning descr="Signature of method 'B1.m()' does not match signature of the base method in class 'A1'">(self, p1, p2)</warning>:
         pass
 
 
@@ -14,5 +14,5 @@ class A2:
 
 
 class B2(A2):
-    def baz<warning descr="Signature of method 'B2.baz()' does not match signature of base method in class 'A2'">(self, a, /)</warning>:
+    def baz<warning descr="Signature of method 'B2.baz()' does not match signature of the base method in class 'A2'">(self, a, /)</warning>:
         pass

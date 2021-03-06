@@ -7,7 +7,7 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class VFileContentChangeEvent extends VFileEvent {
+public final class VFileContentChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
@@ -39,7 +39,7 @@ public class VFileContentChangeEvent extends VFileEvent {
     super(requestor, isFromRefresh);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
-    myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
+    myNewModificationStamp = newModificationStamp == UNDEFINED_TIMESTAMP_OR_LENGTH ? LocalTimeCounter.currentTime() : newModificationStamp;
     myOldTimestamp = oldTimestamp;
     myNewTimestamp = newTimestamp;
     myOldLength = oldLength;
@@ -83,9 +83,10 @@ public class VFileContentChangeEvent extends VFileEvent {
 
   @NonNls
   public String toString() {
-    return "VfsEvent[update: " + myFile.getUrl() +
-           (myOldTimestamp != myNewTimestamp ? ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp : "") +
-           (myOldLength != myNewLength ? ", oldLength:" + myOldLength + ", newLength:" + myNewLength : "") +
+    return "VfsEvent[update: " + myFile.getPresentableUrl() +
+           ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp +
+           ", oldModificationStamp:" + myOldModificationStamp + ", newModificationStamp:" + myNewModificationStamp +
+           ", oldLength:" + myOldLength + ", newLength:" + myNewLength +
            "]";
   }
 

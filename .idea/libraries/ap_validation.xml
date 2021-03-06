@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="ap-validation" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:ap-validation:0.0.5" >
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.jetbrains:annotations" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ap-validation/0.0.5/ap-validation-0.0.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -1,10 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class FastSparseSetFactory<E> {
 
@@ -69,7 +66,7 @@ public class FastSparseSetFactory<E> {
   }
 
 
-  public static class FastSparseSet<E> implements Iterable<E> {
+  public static final class FastSparseSet<E> implements Iterable<E> {
     public static final FastSparseSet[] EMPTY_ARRAY = new FastSparseSet[0];
 
     private final FastSparseSetFactory<E> factory;
@@ -97,15 +94,7 @@ public class FastSparseSetFactory<E> {
     }
 
     public FastSparseSet<E> getCopy() {
-
-      int arrlength = data.length;
-      int[] cpdata = new int[arrlength];
-      int[] cpnext = new int[arrlength];
-
-      System.arraycopy(data, 0, cpdata, 0, arrlength);
-      System.arraycopy(next, 0, cpnext, 0, arrlength);
-
-      return new FastSparseSet<>(factory, cpdata, cpnext);
+      return new FastSparseSet<>(factory, data.clone(), next.clone());
     }
 
     private int[] ensureCapacity(int index) {
@@ -119,15 +108,10 @@ public class FastSparseSetFactory<E> {
         newlength *= 2;
       }
 
-      int[] newdata = new int[newlength];
-      System.arraycopy(data, 0, newdata, 0, data.length);
-      data = newdata;
+      data = Arrays.copyOf(data, newlength);
+      next = Arrays.copyOf(next, newlength);
 
-      int[] newnext = new int[newlength];
-      System.arraycopy(next, 0, newnext, 0, next.length);
-      next = newnext;
-
-      return newdata;
+      return data;
     }
 
     public void add(E element) {
@@ -360,7 +344,7 @@ public class FastSparseSetFactory<E> {
     }
   }
 
-  public static class FastSparseSetIterator<E> implements Iterator<E> {
+  public static final class FastSparseSetIterator<E> implements Iterator<E> {
 
     private final VBStyleCollection<int[], E> colValuesInternal;
     private final int[] data;

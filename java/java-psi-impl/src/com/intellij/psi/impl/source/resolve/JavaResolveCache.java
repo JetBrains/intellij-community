@@ -1,14 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
@@ -16,12 +10,10 @@ import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +22,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaResolveCache {
-  private static final NotNullLazyKey<JavaResolveCache, Project> INSTANCE_KEY = ServiceManager.createLazyKey(JavaResolveCache.class);
-
   public static JavaResolveCache getInstance(Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return project.getService(JavaResolveCache.class);
   }
 
   private final AtomicReference<Map<PsiVariable,Object>> myVarToConstValueMapPhysical = new AtomicReference<>();
@@ -64,8 +54,7 @@ public class JavaResolveCache {
       return f.fun(expr);
     }
 
-    return CachedValuesManager.getCachedValue(expr, () ->
-      CachedValueProvider.Result.create(f.fun(expr), PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getProjectPsiDependentCache(expr, param -> f.fun(param));
   }
 
   @Nullable
@@ -74,11 +63,17 @@ public class JavaResolveCache {
 
     AtomicReference<Map<PsiVariable, Object>> ref = physical ? myVarToConstValueMapPhysical : myVarToConstValueMapNonPhysical;
     Map<PsiVariable, Object> map = ref.get();
-    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
+    if (map == null) {
+      map = ConcurrencyUtil.cacheOrGet(ref, CollectionFactory.createConcurrentWeakMap());
+    }
 
     Object cached = map.get(variable);
-    if (cached == NULL) return null;
-    if (cached != null) return cached;
+    if (cached == NULL) {
+      return null;
+    }
+    if (cached != null) {
+      return cached;
+    }
 
     Object result = computer.execute(variable, visitedVars);
     map.put(variable, result == null ? NULL : result);

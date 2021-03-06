@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -17,6 +18,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,6 +123,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
    * @deprecated use {@link #breakpointReached(XBreakpoint, String, XSuspendContext)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
   /**
@@ -148,13 +151,14 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void removeSessionListener(@NotNull XDebugSessionListener listener);
 
-  void reportError(@NotNull String message);
+  void reportError(@NotNull @NlsContexts.NotificationContent String message);
 
-  void reportMessage(@NotNull String message, @NotNull MessageType type);
+  void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type);
 
-  void reportMessage(@NotNull String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
+  void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
 
   @NotNull
+  @NlsContexts.TabTitle
   String getSessionName();
 
   @NotNull

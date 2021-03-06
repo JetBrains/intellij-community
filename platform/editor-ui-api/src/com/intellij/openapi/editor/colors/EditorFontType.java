@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.awt.Font;
 
 public enum EditorFontType {
   PLAIN,
@@ -30,15 +16,28 @@ public enum EditorFontType {
   CONSOLE_ITALIC,
   CONSOLE_BOLD_ITALIC;
 
-  private static final Map<EditorFontType, EditorFontType> ourConsoleTypes = new HashMap<>();
-  static {
-    ourConsoleTypes.put(PLAIN, CONSOLE_PLAIN);
-    ourConsoleTypes.put(ITALIC, CONSOLE_ITALIC);
-    ourConsoleTypes.put(BOLD_ITALIC, CONSOLE_BOLD_ITALIC);
-    ourConsoleTypes.put(BOLD, CONSOLE_BOLD);
+  /**
+   * @param type a font type to convert
+   * @return a console variant of the specified font type
+   */
+  public static @Nullable EditorFontType getConsoleType(@Nullable EditorFontType type) {
+    return type == PLAIN ? CONSOLE_PLAIN :
+           type == ITALIC ? CONSOLE_ITALIC :
+           type == BOLD ? CONSOLE_BOLD :
+           type == BOLD_ITALIC ? CONSOLE_BOLD_ITALIC : type;
   }
 
-  public static EditorFontType getConsoleType(EditorFontType fontType) {
-    return ObjectUtils.chooseNotNull(ourConsoleTypes.get(fontType), fontType);
+  /**
+   * @return a plain font according to the global colors scheme
+   */
+  public static @NotNull Font getGlobalPlainFont() {
+    return PLAIN.getGlobalFont();
+  }
+
+  /**
+   * @return a font of this type according to the global colors scheme
+   */
+  public @NotNull Font getGlobalFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(this);
   }
 }

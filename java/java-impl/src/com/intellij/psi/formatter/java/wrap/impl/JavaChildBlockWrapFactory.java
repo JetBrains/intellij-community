@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaChildBlockWrapFactory {
 
   /**
-   * Creates {@link Wrap wrap} to be used with the children blocks of the the given block.
+   * Creates {@link Wrap wrap} to be used with the children blocks of the given block.
    *
    * @param block                   target block which sub-blocks should use wrap created by the current method
    * @param settings                code formatting settings to consider during wrap construction
@@ -53,7 +53,9 @@ public class JavaChildBlockWrapFactory {
     ASTNode node = block.getNode();
     Wrap wrap = block.getWrap();
     final IElementType nodeType = node.getElementType();
-    if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
+    if (nodeType == JavaElementType.EXTENDS_LIST ||
+        nodeType == JavaElementType.IMPLEMENTS_LIST ||
+        nodeType == JavaElementType.PERMITS_LIST) {
       return Wrap.createWrap(settings.EXTENDS_LIST_WRAP, false);
     }
     else if (node instanceof PsiPolyadicExpression) {

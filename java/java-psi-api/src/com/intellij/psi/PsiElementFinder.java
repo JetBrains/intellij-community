@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -15,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Allows to extend the mechanism of locating classes and packages by full-qualified name.
@@ -23,12 +23,6 @@ import java.util.Set;
  */
 public abstract class PsiElementFinder {
   public static final ProjectExtensionPointName<PsiElementFinder> EP = new ProjectExtensionPointName<>("com.intellij.java.elementFinder");
-
-  /**
-   * @deprecated use {@link #EP}
-   */
-  @Deprecated
-  public static final ExtensionPointName<PsiElementFinder> EP_NAME = ExtensionPointName.create("com.intellij.java.elementFinder");
 
   /**
    * Searches the specified scope within the project for a class with the specified full-qualified
@@ -96,8 +90,7 @@ public abstract class PsiElementFinder {
    * @param scope the scope in which classes are searched.
    * @return the filter to use, or null if no additional filtering is necessary
    */
-  @Nullable
-  public Condition<PsiClass> getClassesFilter(@NotNull GlobalSearchScope scope) {
+  public @Nullable Predicate<PsiClass> getClassesFilter(@NotNull GlobalSearchScope scope) {
     return null;
   }
 
@@ -141,7 +134,7 @@ public abstract class PsiElementFinder {
       return Collections.emptySet();
     }
 
-    final HashSet<String> names = new HashSet<>();
+    Set<String> names = new HashSet<>(classes.length);
     for (PsiClass aClass : classes) {
       ContainerUtil.addIfNotNull(names, aClass.getName());
     }

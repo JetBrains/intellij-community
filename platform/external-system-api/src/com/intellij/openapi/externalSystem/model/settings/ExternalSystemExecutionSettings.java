@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,16 +57,6 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
 
   public void setVerboseProcessing(boolean verboseProcessing) {
     myVerboseProcessing = verboseProcessing;
-  }
-
-  /**
-   * @deprecated use {@link #getJvmArguments()}
-   */
-  @Deprecated
-  @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public Set<String> getVmOptions() {
-    return new LinkedHashSet<>(myJvmArguments);
   }
 
   @NotNull

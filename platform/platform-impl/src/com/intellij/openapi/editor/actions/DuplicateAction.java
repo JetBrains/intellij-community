@@ -20,13 +20,9 @@ public class DuplicateAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       duplicateLineOrSelectedBlockAtCaret(editor);
     }
 
@@ -75,7 +71,7 @@ public class DuplicateAction extends EditorAction {
       newOffset++;
       selectionStart++;
     }
-    document.insertString(end, s);
+    DocumentGuardedTextUtil.insertString(document, end, s);
 
     editor.getCaretModel().moveToOffset(newOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

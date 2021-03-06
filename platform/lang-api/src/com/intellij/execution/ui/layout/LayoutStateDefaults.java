@@ -17,6 +17,7 @@
 package com.intellij.execution.ui.layout;
 
 import com.intellij.execution.ui.RunnerLayoutUi;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,17 +71,9 @@ public interface LayoutStateDefaults {
    * @deprecated use {@link #initContentAttraction(String, String)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   default LayoutStateDefaults initFocusContent(@NotNull String contentId, @NotNull String condition) {
     return initContentAttraction(contentId, condition);
-  }
-
-  /**
-   * @deprecated use {@link #initContentAttraction(String, String, LayoutAttractionPolicy)} instead
-   */
-  @Deprecated
-  @NotNull
-  default LayoutStateDefaults initFocusContent(@NotNull String contentId, @NotNull String condition, @NotNull LayoutAttractionPolicy policy) {
-    return initContentAttraction(contentId, condition, policy);
   }
 }

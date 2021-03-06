@@ -7,13 +7,13 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
+import java.util.function.Predicate;
 
 public enum HighlightingLevel {
   INSPECTIONS("option.highlighting.level.inspections", AllIcons.Ide.HectorOn, rangeHighlighter -> true),
@@ -30,11 +30,12 @@ public enum HighlightingLevel {
 
   @NotNull private final String myTextKey;
   @Nullable private final Icon myIcon;
-  @NotNull private final Condition<RangeHighlighter> myCondition;
+  @NotNull
+  private final Predicate<? super RangeHighlighter> myCondition;
 
   HighlightingLevel(@NotNull @PropertyKey(resourceBundle = DiffBundle.BUNDLE) String textKey,
                     @Nullable Icon icon,
-                    @NotNull Condition<RangeHighlighter> condition) {
+                    @NotNull Predicate<? super RangeHighlighter> condition) {
     myTextKey = textKey;
     myIcon = icon;
     myCondition = condition;
@@ -51,8 +52,7 @@ public enum HighlightingLevel {
     return myIcon;
   }
 
-  @NotNull
-  public Condition<RangeHighlighter> getCondition() {
+  public @NotNull Predicate<? super RangeHighlighter> getCondition() {
     return myCondition;
   }
 }

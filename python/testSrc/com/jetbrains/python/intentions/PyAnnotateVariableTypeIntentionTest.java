@@ -191,6 +191,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doNegativeTest();
   }
 
+  // EA-240096
+  public void testNotSuggestedForCyclicAugmentedAssignmentNotHavingPrecedingTarget() {
+    doNegativeTest();
+  }
+
   public void testAnnotationCaretAtReferenceEnd() {
     doAnnotationTest();
   }
@@ -283,11 +288,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.add.type.hint.for.variable.family")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   public void doMultiFileAnnotationTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyPsiBundle.message("INTN.add.type.hint.for.variable.family")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable")));
   }
 
   private void doMultiFileTest(@NotNull String hint) {
@@ -301,6 +306,6 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest(@NotNull LanguageLevel languageLevel) {
-    doTest(PyPsiBundle.message("INTN.add.type.hint.for.variable.family"), languageLevel);
+    doTest(PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable"), languageLevel);
   }
 }

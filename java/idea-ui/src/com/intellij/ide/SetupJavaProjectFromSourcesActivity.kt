@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.Multimap
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
 import com.intellij.ide.impl.ProjectViewSelectInTarget
@@ -17,20 +18,25 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.ThrowableRunnable
 import java.io.File
@@ -43,13 +49,12 @@ private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
 private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 
-class SetupJavaProjectFromSourcesActivity : StartupActivity {
-
+internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
   override fun runActivity(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
     }
-    if (project.hasBeenOpenedBySpecificProcessor()) {
+    if (!project.isOpenedByPlatformProcessor()) {
       return
     }
 
@@ -69,9 +74,6 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
       }
     })
   }
-
-  private fun Project.hasBeenOpenedBySpecificProcessor(): Boolean =
-    true != getUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR)
 
   private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<ProjectOpenProcessor, VirtualFile> {
     val providersAndFiles = ArrayListMultimap.create<ProjectOpenProcessor, VirtualFile>()
@@ -121,9 +123,7 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
     }
     else {
       title = JavaUiBundle.message("build.scripts.from.multiple.providers.found.notification")
-      content = providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
-        provider.name + ": " + filesToLinks(files, projectDirectory)
-      }
+      content = formatContent(providersAndFiles, projectDirectory)
     }
 
     val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION, showFileInProjectViewListener)
@@ -147,6 +147,15 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
     notification.notify(project)
   }
 
+  @NlsSafe
+  private fun formatContent(providersAndFiles: Multimap<ProjectOpenProcessor, VirtualFile>,
+                            projectDirectory: VirtualFile): String {
+    return providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
+      provider.name + ": " + filesToLinks(files, projectDirectory)
+    }
+  }
+
+  @NlsSafe
   private fun filesToLinks(files: MutableCollection<VirtualFile>, projectDirectory: VirtualFile) =
     files.joinToString { file ->
       "<a href='${file.path}'>${VfsUtil.getRelativePath(file, projectDirectory)}</a>"
@@ -178,7 +187,10 @@ class SetupJavaProjectFromSourcesActivity : StartupActivity {
       setCompilerOutputPath(project, compileOutput)
     }
 
-    findAndSetupJdk(project, indicator)
+    val modules = ModuleManager.getInstance(project).modules
+    if (modules.any { it is JavaModuleType }) {
+      findAndSetupJdk(project, indicator)
+    }
 
     if (roots.size > MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE) {
       notifyAboutAutomaticProjectStructure(project)

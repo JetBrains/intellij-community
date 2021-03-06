@@ -1,216 +1,176 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1154px" preserveAspectRatio="none" style="width:1193px;height:1154px;" version="1.1" viewBox="0 0 1193 1154" width="1193px" zoomAndPan="magnify">
+<svg xmlns="http://www.w3.org/2000/svg" contentScriptType="application/ecmascript" contentStyleType="text/css" height="1160px"
+     preserveAspectRatio="none" style="width:1194px;height:1160px;" version="1.1" viewBox="0 0 1194 1160" width="1194px"
+     zoomAndPan="magnify">
+  <style>
+  @import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&amp;display=swap');
+  .text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+  }
+  .code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 14px;
+  }
+  .process {
+    stroke: #383838; stroke-width: 1.0;
+    fill: #F8F8F8;
+  }
+  .note {
+    stroke: #383838; stroke-width: 1.0;
+    fill: #ECECEC;
+  }
+</style>
   <defs>
-    <filter height="300%" id="shadowFilter" width="300%" x="-1" y="-1">
+    <filter height="300%" id="fsv0at21hgsol" width="300%" x="-1" y="-1">
       <feGaussianBlur result="blurOut" stdDeviation="2.0"/>
       <feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/>
       <feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/>
       <feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/>
     </filter>
-    <style><![CDATA[
-@import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&display=swap');
-.b0 {
-  fill: #ECECEC;
-}
-
-.b1 {
-  fill: #F8F8F8;
-}
-
-.b2 {
-  fill: #FFFFFF;
-}
-
-.b3 {
-  fill: none;
-}
-
-.b4 {
-  fill: #383838;
-}
-
-.l0 {
-  stroke: #383838;
-  stroke-width: 1.0px;
-  filter: url(#shadowFilter);
-}
-
-.l1 {
-  stroke: #383838;
-  stroke-width: 1.0px;
-}
-
-.l2 {
-  stroke: #000000;
-  stroke-width: 1.5px;
-  filter: url(#shadowFilter);
-}
-
-.l3 {
-  stroke: #000000;
-  stroke-width: 1.5px;
-}
-
-.l4 {
-  stroke: #383838;
-  stroke-width: 1.5px;
-}
-
-.t0 {
-  fill: #000000;
-  font-size: 14px;
-  font-family: Roboto;
-}
-
-.t1 {
-  fill: #000000;
-  font-size: 14px;
-  font-family: "Roboto Mono";
-}
-]]></style>
   </defs>
   <g>
-    <path class="l0 b0" d="M880.5,15 L880.5,24.2031 L860.5,28.2031 L880.5,32.2031 L880.5,41.4063 A0,0 0 0 0 880.5,41.4063 L1181.5,41.4063 A0,0 0 0 0 1181.5,41.4063 L1181.5,25 L1171.5,15 L880.5,15 A0,0 0 0 0 880.5,15 "/>
-    <path class="l1 b0" d="M1171.5,15 L1171.5,25 L1181.5,25 L1171.5,15 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="280" x="886.5" y="32.9883">Project closing executed in a dispatch thread.</text>
-    <rect class="l0 b1" height="36.4063" rx="12.5" ry="12.5" width="96" x="764.5" y="10"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="76" x="774.5" y="32.9883">closeProject</text>
-    <rect class="l0 b1" height="52.8945" width="197" x="714" y="66.4063"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="57" x="784" y="89.3945">canClose</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="177" x="724" y="106.3477">(ep=ProjectCloseHandler)</text>
-    <polygon class="l0 b1" points="718,139.3008,907,139.3008,919,155.748,907,172.1953,718,172.1953,706,155.748,718,139.3008"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="57" x="784" y="152.2891">canClose</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="0" x="730" y="168.7773"/>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="177" x="730" y="169.2422">(ep=ProjectCloseHandler)</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="21" x="685" y="152.3301">yes</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="16" x="919" y="152.3301">no</text>
-    <rect class="l0 b1" height="36.4063" width="166" x="471.5" y="182.1953"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="146" x="481.5" y="205.1836">Stop Service Preloading</text>
-    <path class="l0 b0" d="M704,243.6836 L704,261.0898 L684,265.0898 L704,269.0898 L704,286.4961 A0,0 0 0 0 704,286.4961 L992,286.4961 A0,0 0 0 0 992,286.4961 L992,253.6836 L982,243.6836 L704,243.6836 A0,0 0 0 0 704,243.6836 "/>
-    <path class="l1 b0" d="M982,243.6836 L982,253.6836 L992,253.6836 L982,243.6836 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="196" x="710" y="261.6719">In unit test mode in a light tests,</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="267" x="710" y="278.0781">light project is not closed and not disposed.</text>
-    <rect class="l0 b1" height="52.9766" width="259" x="425" y="238.6016"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="23" x="435" y="261.6719">Fire</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="175" x="461" y="262.1367">projectClosingBeforeSave</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="35" x="639" y="261.6719">Event</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="186" x="461.5" y="278.625">(l=ProjectManagerListener)</text>
-    <rect class="l0 b1" height="36.4063" width="128" x="490.5" y="311.5781"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="108" x="500.5" y="334.5664">Save Project Files</text>
-    <polygon class="l0 b1" points="489,367.9844,620,367.9844,632,379.9844,620,391.9844,489,391.9844,477,379.9844,489,367.9844"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="131" x="489" y="384.7695">Save Project Settings</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="178" x="299" y="376.5664">Successfully or Error Ignored</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="91" x="632" y="376.5664">Error Occurred</text>
-    <rect class="l0 b1" height="52.9766" width="206" x="105.5" y="401.9844"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="23" x="126.5" y="425.0547">Fire</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="100" x="152.5" y="425.5195">projectClosing</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="35" x="255.5" y="425.0547">Event</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="186" x="115.5" y="442.0078">(l=ProjectManagerListener)</text>
-    <rect class="l2 b2" height="677.334" width="812" x="10" y="465.8789"/>
-    <path class="l3 b3" d="M93,466.8789 L93,475.2852 L83,485.2852 L10,485.2852 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="73" x="13" y="479.8672">write action</text>
-    <path class="l0 b0" d="M417,495.2852 L417,520.9766 L397,524.9766 L417,528.9766 L417,554.668 A0,0 0 0 0 417,554.668 L812,554.668 A0,0 0 0 0 812,554.668 L812,505.2852 L802,495.2852 L417,495.2852 A0,0 0 0 0 417,495.2852 "/>
-    <path class="l1 b0" d="M802,495.2852 L802,505.2852 L812,505.2852 L802,495.2852 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="217" x="423" y="513.3555">If you incorrectly specify project for</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="151" x="643" y="513.8203">MessageBus.connect()</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="3" x="794" y="513.3555">,</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="214" x="423" y="529.7617">it will be disconnected on this step.</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="88" x="423" y="546.25">Do not specify</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="120" x="514" y="546.7148">parentDisposable</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="92" x="637" y="546.25">unless needed.</text>
-    <rect class="l0 b1" height="36.4063" width="377" x="20" y="506.7734"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="357" x="30" y="529.7617">Dispose everything that uses Project as parent disposable</text>
-    <rect class="l0 b1" height="52.8125" width="296" x="60.5" y="574.668"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="263" x="77" y="597.6563">Dispose Project Message Bus Connections</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="276" x="70.5" y="614.0625">without explicitly specified parent disposable</text>
-    <path class="l0 b0" d="M377.5,637.4805 L377.5,671.334 L357.5,675.334 L377.5,679.334 L377.5,713.1875 A0,0 0 0 0 377.5,713.1875 L789.5,713.1875 A0,0 0 0 0 789.5,713.1875 L789.5,647.4805 L779.5,637.4805 L377.5,637.4805 A0,0 0 0 0 377.5,637.4805 "/>
-    <path class="l1 b0" d="M779.5,637.4805 L779.5,647.4805 L789.5,647.4805 L779.5,637.4805 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="294" x="383.5" y="655.4688">Getting services and publishing to message bus</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="162" x="383.5" y="671.875">is prohibited from now on.</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="125" x="383.5" y="688.8281">Project.isDisposed</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="45" x="511.5" y="688.3633">returns</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="28" x="559.5" y="688.8281">true</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="184" x="590.5" y="688.3633">(not changed in a read action,</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="232" x="383.5" y="704.7695">because state is set in a write action).</text>
-    <rect class="l0 b1" height="36.4883" width="298" x="59.5" y="657.0898"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="119" x="69.5" y="680.1602">Set Project State to</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="156" x="191.5" y="680.625">DISPOSE_IN_PROGRESS</text>
-    <path class="l0 b0" d="M402,738.1875 L402,747.3906 L382,751.3906 L402,755.3906 L402,764.5938 A0,0 0 0 0 402,764.5938 L760,764.5938 A0,0 0 0 0 760,764.5938 L760,748.1875 L750,738.1875 L402,738.1875 A0,0 0 0 0 402,738.1875 "/>
-    <path class="l1 b0" d="M750,738.1875 L750,748.1875 L760,748.1875 L750,738.1875 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="337" x="408" y="756.1758">Connecting to message bus is prohibited from now on.</text>
-    <rect class="l0 b1" height="36.4063" width="347" x="35" y="733.1875"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="327" x="45" y="756.1758">Dispose Project Message Bus Connection Disposable</text>
-    <path class="l0 b0" d="M350,786.3496 L350,803.7969 L330,807.7969 L350,811.7969 L350,829.2441 A0,0 0 0 0 350,829.2441 L663,829.2441 A0,0 0 0 0 663,829.2441 L663,796.3496 L653,786.3496 L350,786.3496 A0,0 0 0 0 350,786.3496 "/>
-    <path class="l1 b0" d="M653,786.3496 L653,796.3496 L663,796.3496 L653,786.3496 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="55" x="356" y="804.4199">Result of</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="234" x="414" y="804.8848">ProjectManager.getOpenProjects()</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="173" x="356" y="820.8262">is valid only in a read action.</text>
-    <rect class="l0 b1" height="36.4063" width="243" x="87" y="789.5938"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="223" x="97" y="812.582">Remove Project from List of Opened</text>
-    <rect class="l0 b1" height="52.9766" width="206" x="105.5" y="849.2441"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="23" x="129" y="872.3145">Fire</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="95" x="155" y="872.7793">projectClosed</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="35" x="253" y="872.3145">Event</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="186" x="115.5" y="889.2676">(l=ProjectManagerListener)</text>
-    <rect class="l0 b1" height="36.4883" width="209" x="104" y="922.2207"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="119" x="114" y="945.291">Set Project State to</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="67" x="236" y="945.7559">DISPOSED</text>
-    <path class="l0 b0" d="M345,975.5059 L345,992.9121 L325,996.9121 L345,1000.9121 L345,1018.3184 A0,0 0 0 0 345,1018.3184 L590,1018.3184 A0,0 0 0 0 590,1018.3184 L590,985.5059 L580,975.5059 L345,975.5059 A0,0 0 0 0 345,975.5059 "/>
-    <path class="l1 b0" d="M580,975.5059 L580,985.5059 L590,985.5059 L580,975.5059 "/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="170" x="351" y="993.4941">First created, last disposed.</text>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="224" x="351" y="1009.9004">Children are disposed before parent.</text>
-    <rect class="l0 b1" height="36.4063" width="233" x="92" y="978.709"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="213" x="102" y="1001.6973">Dispose Services and Components</text>
-    <rect class="l0 b1" height="36.4063" width="155" x="131" y="1038.3184"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="135" x="141" y="1061.3066">Dispose Message Bus</text>
-    <rect class="l0 b1" height="36.4883" rx="12.5" ry="12.5" width="289" x="64" y="1094.7246"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="119" x="74" y="1117.7949">Set Project State to</text>
-    <text class="t1" lengthAdjust="spacingAndGlyphs" textLength="147" x="196" y="1118.2598">DISPOSE_COMPLETED</text>
-    <rect class="l0 b1" height="36.4063" rx="12.5" ry="12.5" width="117" x="842" y="401.9844"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="97" x="852" y="424.9727">Close Cancelled</text>
-    <rect class="l0 b1" height="36.4063" rx="12.5" ry="12.5" width="117" x="1012" y="182.1953"/>
-    <text class="t0" lengthAdjust="spacingAndGlyphs" textLength="97" x="1022" y="205.1836">Close Cancelled</text>
-    <line class="l4" x1="812.5" x2="812.5" y1="46.4063" y2="66.4063"/>
-    <polygon class="l1 b4" points="808.5,56.4063,812.5,66.4063,816.5,56.4063,812.5,60.4063"/>
-    <line class="l4" x1="554.5" x2="554.5" y1="218.6016" y2="238.6016"/>
-    <polygon class="l1 b4" points="550.5,228.6016,554.5,238.6016,558.5,228.6016,554.5,232.6016"/>
-    <line class="l4" x1="554.5" x2="554.5" y1="291.5781" y2="311.5781"/>
-    <polygon class="l1 b4" points="550.5,301.5781,554.5,311.5781,558.5,301.5781,554.5,305.5781"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="543.1797" y2="574.668"/>
-    <polygon class="l1 b4" points="204.5,564.668,208.5,574.668,212.5,564.668,208.5,568.668"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="627.4805" y2="657.0898"/>
-    <polygon class="l1 b4" points="204.5,647.0898,208.5,657.0898,212.5,647.0898,208.5,651.0898"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="693.5781" y2="733.1875"/>
-    <polygon class="l1 b4" points="204.5,723.1875,208.5,733.1875,212.5,723.1875,208.5,727.1875"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="769.5938" y2="789.5938"/>
-    <polygon class="l1 b4" points="204.5,779.5938,208.5,789.5938,212.5,779.5938,208.5,783.5938"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="826" y2="849.2441"/>
-    <polygon class="l1 b4" points="204.5,839.2441,208.5,849.2441,212.5,839.2441,208.5,843.2441"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="902.2207" y2="922.2207"/>
-    <polygon class="l1 b4" points="204.5,912.2207,208.5,922.2207,212.5,912.2207,208.5,916.2207"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="958.709" y2="978.709"/>
-    <polygon class="l1 b4" points="204.5,968.709,208.5,978.709,212.5,968.709,208.5,972.709"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="1015.1152" y2="1038.3184"/>
-    <polygon class="l1 b4" points="204.5,1028.3184,208.5,1038.3184,212.5,1028.3184,208.5,1032.3184"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="1074.7246" y2="1094.7246"/>
-    <polygon class="l1 b4" points="204.5,1084.7246,208.5,1094.7246,212.5,1084.7246,208.5,1088.7246"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="454.9609" y2="506.7734"/>
-    <polygon class="l1 b4" points="204.5,496.7734,208.5,506.7734,212.5,496.7734,208.5,500.7734"/>
-    <line class="l4" x1="477" x2="208.5" y1="379.9844" y2="379.9844"/>
-    <line class="l4" x1="208.5" x2="208.5" y1="379.9844" y2="401.9844"/>
-    <polygon class="l1 b4" points="204.5,391.9844,208.5,401.9844,212.5,391.9844,208.5,395.9844"/>
-    <line class="l4" x1="632" x2="900.5" y1="379.9844" y2="379.9844"/>
-    <line class="l4" x1="900.5" x2="900.5" y1="379.9844" y2="401.9844"/>
-    <polygon class="l1 b4" points="896.5,391.9844,900.5,401.9844,904.5,391.9844,900.5,395.9844"/>
-    <line class="l4" x1="554.5" x2="554.5" y1="347.9844" y2="367.9844"/>
-    <polygon class="l1 b4" points="550.5,357.9844,554.5,367.9844,558.5,357.9844,554.5,361.9844"/>
-    <line class="l4" x1="706" x2="554.5" y1="155.748" y2="155.748"/>
-    <line class="l4" x1="554.5" x2="554.5" y1="155.748" y2="182.1953"/>
-    <polygon class="l1 b4" points="550.5,172.1953,554.5,182.1953,558.5,172.1953,554.5,176.1953"/>
-    <line class="l4" x1="919" x2="1070.5" y1="155.748" y2="155.748"/>
-    <line class="l4" x1="1070.5" x2="1070.5" y1="155.748" y2="182.1953"/>
-    <polygon class="l1 b4" points="1066.5,172.1953,1070.5,182.1953,1074.5,172.1953,1070.5,176.1953"/>
-    <line class="l4" x1="812.5" x2="812.5" y1="119.3008" y2="139.3008"/>
-    <polygon class="l1 b4" points="808.5,129.3008,812.5,139.3008,816.5,129.3008,812.5,133.3008"/>
+    <path class="note" d="M881.5,16 L881.5,25.2031 L861.5,29.2031 L881.5,33.2031 L881.5,42.4063 A0,0 0 0 0 881.5,42.4063 L1182.5,42.4063 A0,0 0 0 0 1182.5,42.4063 L1182.5,26 L1172.5,16 L881.5,16 A0,0 0 0 0 881.5,16 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M1172.5,16 L1172.5,26 L1182.5,26 L1172.5,16 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="280" x="887.5" y="33.9883">Project closing executed in a dispatch thread.</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" rx="12.5" ry="12.5" width="96" x="765.5" y="11"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="76" x="775.5" y="33.9883">closeProject</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="52.8945" width="197" x="715" y="67.4063"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="57" x="785" y="90.3945">canClose</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="177" x="725" y="107.3477">(ep=ProjectCloseHandler)</text>
+    <polygon fill="#F8F8F8" filter="url(#fsv0at21hgsol)" points="719,140.3008,908,140.3008,920,156.748,908,173.1953,719,173.1953,707,156.748,719,140.3008" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="57" x="785" y="153.2891">canClose</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="0" x="731" y="169.7773"/>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="177" x="731" y="170.2422">(ep=ProjectCloseHandler)</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="21" x="686" y="153.3301">yes</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="16" x="920" y="153.3301">no</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="166" x="472.5" y="183.1953"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="146" x="482.5" y="206.1836">Stop Service Preloading</text>
+    <path class="note" d="M705,244.6836 L705,262.0898 L685,266.0898 L705,270.0898 L705,287.4961 A0,0 0 0 0 705,287.4961 L993,287.4961 A0,0 0 0 0 993,287.4961 L993,254.6836 L983,244.6836 L705,244.6836 A0,0 0 0 0 705,244.6836 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M983,244.6836 L983,254.6836 L993,254.6836 L983,244.6836 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="196" x="711" y="262.6719">In unit test mode in a light tests,</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="267" x="711" y="279.0781">light project is not closed and not disposed.</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="52.9766" width="259" x="426" y="239.6016"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="23" x="436" y="262.6719">Fire</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="175" x="462" y="263.1367">projectClosingBeforeSave</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="35" x="640" y="262.6719">Event</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="186" x="462.5" y="279.625">(l=ProjectManagerListener)</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="128" x="491.5" y="312.5781"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="108" x="501.5" y="335.5664">Save Project Files</text>
+    <polygon fill="#F8F8F8" filter="url(#fsv0at21hgsol)" points="490,368.9844,621,368.9844,633,380.9844,621,392.9844,490,392.9844,478,380.9844,490,368.9844" style="stroke: #383838; stroke-width: 1.0;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="131" x="490" y="385.7695">Save Project Settings</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="178" x="300" y="377.5664">Successfully or Error Ignored</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="91" x="633" y="377.5664">Error Occurred</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="52.9766" width="206" x="106.5" y="402.9844"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="23" x="127.5" y="426.0547">Fire</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="100" x="153.5" y="426.5195">projectClosing</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="35" x="256.5" y="426.0547">Event</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="186" x="116.5" y="443.0078">(l=ProjectManagerListener)</text>
+    <rect fill="#FFFFFF" filter="url(#fsv0at21hgsol)" height="677.334" style="stroke: #000000; stroke-width: 1.5;" width="812" x="11" y="465.9609"/>
+    <path d="M94,465.9609 L94,475.3672 L84,485.3672 L11,485.3672 " fill="none" style="stroke: #000000; stroke-width: 1.5;"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="73" x="14" y="479.9492">write action</text>
+    <path class="note" d="M418,495.3672 L418,521.0586 L398,525.0586 L418,529.0586 L418,554.75 A0,0 0 0 0 418,554.75 L813,554.75 A0,0 0 0 0 813,554.75 L813,505.3672 L803,495.3672 L418,495.3672 A0,0 0 0 0 418,495.3672 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M803,495.3672 L803,505.3672 L813,505.3672 L803,495.3672 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="217" x="424" y="513.4375">If you incorrectly specify project for</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="151" x="644" y="513.9023">MessageBus.connect()</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="3" x="795" y="513.4375">,</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="214" x="424" y="529.8438">it will be disconnected on this step.</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="88" x="424" y="546.332">Do not specify</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="120" x="515" y="546.7969">parentDisposable</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="92" x="638" y="546.332">unless needed.</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="377" x="21" y="506.8555"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="357" x="31" y="529.8438">Dispose everything that uses Project as parent disposable</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="52.8125" width="296" x="61.5" y="574.75"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="263" x="78" y="597.7383">Dispose Project Message Bus Connections</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="276" x="71.5" y="614.1445">without explicitly specified parent disposable</text>
+    <path class="note" d="M378.5,637.5625 L378.5,671.416 L358.5,675.416 L378.5,679.416 L378.5,713.2695 A0,0 0 0 0 378.5,713.2695 L790.5,713.2695 A0,0 0 0 0 790.5,713.2695 L790.5,647.5625 L780.5,637.5625 L378.5,637.5625 A0,0 0 0 0 378.5,637.5625 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M780.5,637.5625 L780.5,647.5625 L790.5,647.5625 L780.5,637.5625 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="294" x="384.5" y="655.5508">Getting services and publishing to message bus</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="162" x="384.5" y="671.957">is prohibited from now on.</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="125" x="384.5" y="688.9102">Project.isDisposed</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="45" x="512.5" y="688.4453">returns</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="28" x="560.5" y="688.9102">true</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="184" x="591.5" y="688.4453">(not changed in a read action,</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="232" x="384.5" y="704.8516">because state is set in a write action).</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4883" width="298" x="60.5" y="657.1719"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="119" x="70.5" y="680.2422">Set Project State to</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="156" x="192.5" y="680.707">DISPOSE_IN_PROGRESS</text>
+    <path class="note" d="M403,738.2695 L403,747.4727 L383,751.4727 L403,755.4727 L403,764.6758 A0,0 0 0 0 403,764.6758 L761,764.6758 A0,0 0 0 0 761,764.6758 L761,748.2695 L751,738.2695 L403,738.2695 A0,0 0 0 0 403,738.2695 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M751,738.2695 L751,748.2695 L761,748.2695 L751,738.2695 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="337" x="409" y="756.2578">Connecting to message bus is prohibited from now on.</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="347" x="36" y="733.2695"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="327" x="46" y="756.2578">Dispose Project Message Bus Connection Disposable</text>
+    <path class="note" d="M351,786.4316 L351,803.8789 L331,807.8789 L351,811.8789 L351,829.3262 A0,0 0 0 0 351,829.3262 L664,829.3262 A0,0 0 0 0 664,829.3262 L664,796.4316 L654,786.4316 L351,786.4316 A0,0 0 0 0 351,786.4316 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M654,786.4316 L654,796.4316 L664,796.4316 L654,786.4316 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="55" x="357" y="804.502">Result of</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="234" x="415" y="804.9668">ProjectManager.getOpenProjects()</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="173" x="357" y="820.9082">is valid only in a read action.</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="243" x="88" y="789.6758"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="223" x="98" y="812.6641">Remove Project from List of Opened</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="52.9766" width="206" x="106.5" y="849.3262"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="23" x="130" y="872.3965">Fire</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="95" x="156" y="872.8613">projectClosed</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="35" x="254" y="872.3965">Event</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="186" x="116.5" y="889.3496">(l=ProjectManagerListener)</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4883" width="209" x="105" y="922.3027"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="119" x="115" y="945.373">Set Project State to</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="67" x="237" y="945.8379">DISPOSED</text>
+    <path class="note" d="M346,975.5879 L346,992.9941 L326,996.9941 L346,1000.9941 L346,1018.4004 A0,0 0 0 0 346,1018.4004 L591,1018.4004 A0,0 0 0 0 591,1018.4004 L591,985.5879 L581,975.5879 L346,975.5879 A0,0 0 0 0 346,975.5879 " filter="url(#fsv0at21hgsol)"/>
+    <path class="note" d="M581,975.5879 L581,985.5879 L591,985.5879 L581,975.5879 "/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="170" x="352" y="993.5762">First created, last disposed.</text>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="224" x="352" y="1009.9824">Children are disposed before parent.</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="233" x="93" y="978.791"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="213" x="103" y="1001.7793">Dispose Services and Components</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" width="155" x="132" y="1038.4004"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="135" x="142" y="1061.3887">Dispose Message Bus</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4883" rx="12.5" ry="12.5" width="289" x="65" y="1094.8066"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="119" x="75" y="1117.877">Set Project State to</text>
+    <text class="code" lengthAdjust="spacingAndGlyphs" textLength="147" x="197" y="1118.3418">DISPOSE_COMPLETED</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" rx="12.5" ry="12.5" width="117" x="843" y="402.9844"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="97" x="853" y="425.9727">Close Cancelled</text>
+    <rect class="process" filter="url(#fsv0at21hgsol)" height="36.4063" rx="12.5" ry="12.5" width="117" x="1013" y="183.1953"/>
+    <text class="text" lengthAdjust="spacingAndGlyphs" textLength="97" x="1023" y="206.1836">Close Cancelled</text>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="813.5" x2="813.5" y1="47.4063" y2="67.4063"/>
+    <polygon fill="#383838" points="809.5,57.4063,813.5,67.4063,817.5,57.4063,813.5,61.4063" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="555.5" x2="555.5" y1="219.6016" y2="239.6016"/>
+    <polygon fill="#383838" points="551.5,229.6016,555.5,239.6016,559.5,229.6016,555.5,233.6016" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="555.5" x2="555.5" y1="292.5781" y2="312.5781"/>
+    <polygon fill="#383838" points="551.5,302.5781,555.5,312.5781,559.5,302.5781,555.5,306.5781" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="543.2617" y2="574.75"/>
+    <polygon fill="#383838" points="205.5,564.75,209.5,574.75,213.5,564.75,209.5,568.75" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="627.5625" y2="657.1719"/>
+    <polygon fill="#383838" points="205.5,647.1719,209.5,657.1719,213.5,647.1719,209.5,651.1719" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="693.6602" y2="733.2695"/>
+    <polygon fill="#383838" points="205.5,723.2695,209.5,733.2695,213.5,723.2695,209.5,727.2695" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="769.6758" y2="789.6758"/>
+    <polygon fill="#383838" points="205.5,779.6758,209.5,789.6758,213.5,779.6758,209.5,783.6758" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="826.082" y2="849.3262"/>
+    <polygon fill="#383838" points="205.5,839.3262,209.5,849.3262,213.5,839.3262,209.5,843.3262" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="902.3027" y2="922.3027"/>
+    <polygon fill="#383838" points="205.5,912.3027,209.5,922.3027,213.5,912.3027,209.5,916.3027" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="958.791" y2="978.791"/>
+    <polygon fill="#383838" points="205.5,968.791,209.5,978.791,213.5,968.791,209.5,972.791" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="1015.1973" y2="1038.4004"/>
+    <polygon fill="#383838" points="205.5,1028.4004,209.5,1038.4004,213.5,1028.4004,209.5,1032.4004" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="1074.8066" y2="1094.8066"/>
+    <polygon fill="#383838" points="205.5,1084.8066,209.5,1094.8066,213.5,1084.8066,209.5,1088.8066" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="455.9609" y2="506.8555"/>
+    <polygon fill="#383838" points="205.5,496.8555,209.5,506.8555,213.5,496.8555,209.5,500.8555" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="478" x2="209.5" y1="380.9844" y2="380.9844"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="209.5" x2="209.5" y1="380.9844" y2="402.9844"/>
+    <polygon fill="#383838" points="205.5,392.9844,209.5,402.9844,213.5,392.9844,209.5,396.9844" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="633" x2="901.5" y1="380.9844" y2="380.9844"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="901.5" x2="901.5" y1="380.9844" y2="402.9844"/>
+    <polygon fill="#383838" points="897.5,392.9844,901.5,402.9844,905.5,392.9844,901.5,396.9844" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="555.5" x2="555.5" y1="348.9844" y2="368.9844"/>
+    <polygon fill="#383838" points="551.5,358.9844,555.5,368.9844,559.5,358.9844,555.5,362.9844" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="707" x2="555.5" y1="156.748" y2="156.748"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="555.5" x2="555.5" y1="156.748" y2="183.1953"/>
+    <polygon fill="#383838" points="551.5,173.1953,555.5,183.1953,559.5,173.1953,555.5,177.1953" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="920" x2="1071.5" y1="156.748" y2="156.748"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="1071.5" x2="1071.5" y1="156.748" y2="183.1953"/>
+    <polygon fill="#383838" points="1067.5,173.1953,1071.5,183.1953,1075.5,173.1953,1071.5,177.1953" style="stroke: #383838; stroke-width: 1.0;"/>
+    <line style="stroke: #383838; stroke-width: 1.5;" x1="813.5" x2="813.5" y1="120.3008" y2="140.3008"/>
+    <polygon fill="#383838" points="809.5,130.3008,813.5,140.3008,817.5,130.3008,813.5,134.3008" style="stroke: #383838; stroke-width: 1.0;"/>
   </g>
 </svg>

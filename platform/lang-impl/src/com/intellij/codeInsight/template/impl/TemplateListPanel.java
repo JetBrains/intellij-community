@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -47,7 +47,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private static final String TEMPLATE_SETTINGS = "TemplateSettings";
   private static final TemplateImpl MOCK_TEMPLATE = new TemplateImpl("mockTemplate-xxx", "mockTemplateGroup-yyy");
   public static final String ABBREVIATION = "<abbreviation>";
-  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<TemplateImpl>() {
+  public static final Comparator<TemplateImpl> TEMPLATE_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(TemplateImpl o1, TemplateImpl o2) {
       int compareKey = compareCaseInsensitively(o1.getKey(), o2.getKey());
@@ -416,7 +416,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return rows != null && rows.length == 1 ? rows[0] : -1;
   }
 
-  private void removeRows() {
+  void removeRows() {
     TreeNode toSelect = null;
 
     TreePath[] paths = myTree.getSelectionPaths();
@@ -507,7 +507,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
 
     DnDSupport.createBuilder(myTree)
-      .setBeanProvider((NullableFunction<DnDActionInfo, DnDDragStartBean>)dnDActionInfo -> {
+      .setBeanProvider(dnDActionInfo -> {
         Point point = dnDActionInfo.getPoint();
         if (myTree.getPathForLocation(point.x, point.y) == null) return null;
 
@@ -534,7 +534,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
                         Objects.requireNonNull(getDropGroup(event)).getName());
         }
       })
-      .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)dnDActionInfo -> {
+      .setImageProvider(dnDActionInfo -> {
         Point point = dnDActionInfo.getPoint();
         TreePath path = myTree.getPathForLocation(point.x, point.y);
         return path == null ? null : new DnDImage(DnDAwareTree.getDragImage(myTree, path, point).first);
@@ -575,6 +575,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
           addTemplateOrGroup(button);
         }
       })
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton anActionButton) {
@@ -769,14 +770,25 @@ public class TemplateListPanel extends JPanel implements Disposable {
         group.add(revert);
         group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
         group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE));
+        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE));
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });
   }
 
   @Nullable
-  TemplateGroup getSingleSelectedGroup() {
+  private TemplateGroup getSingleSelectedGroup() {
     return getGroup(getSingleSelectedIndex());
+  }
+
+  @Nullable
+  TemplateGroup getSingleContextGroup() {
+    int index = getSingleSelectedIndex();
+    DefaultMutableTreeNode node = getNode(index);
+    if (node != null && node.getUserObject() instanceof TemplateImpl) {
+      node = (DefaultMutableTreeNode)node.getParent();
+    }
+    return node == null ? null : ObjectUtils.tryCast(node.getUserObject(), TemplateGroup.class);
   }
 
   private static Set<String> getAllGroups(Map<TemplateImpl, DefaultMutableTreeNode> templates) {

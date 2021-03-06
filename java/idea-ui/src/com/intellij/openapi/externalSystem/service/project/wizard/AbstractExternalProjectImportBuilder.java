@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -40,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,16 +70,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
    */
   @Deprecated
-  public AbstractExternalProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager projectDataManager,
-                                              @NotNull C control,
-                                              @NotNull ProjectSystemId externalSystemId) {
-    this((ProjectDataManager)projectDataManager, control, externalSystemId);
-  }
-
-  /**
-   * @deprecated use {@link AbstractExternalProjectImportBuilder#AbstractExternalProjectImportBuilder(ProjectDataManager, NotNullFactory, ProjectSystemId)}
-   */
-  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public AbstractExternalProjectImportBuilder(@NotNull ProjectDataManager projectDataManager,
                                               @NotNull C control,
                                               @NotNull ProjectSystemId externalSystemId) {
@@ -104,10 +95,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   @Override
   public boolean isMarked(DataNode<ProjectData> element) {
     return true;
-  }
-
-  @Override
-  public void setList(List<DataNode<ProjectData>> externalSystemProjects) {
   }
 
   @Override
@@ -265,7 +252,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (externalProject == null) {
           return;
         }
-        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
+        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project, false);
       }
     };
   }

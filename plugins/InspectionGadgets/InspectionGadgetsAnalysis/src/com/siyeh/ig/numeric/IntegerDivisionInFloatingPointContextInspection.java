@@ -73,9 +73,6 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
         return;
       }
       final PsiExpression context = getContainingExpression(expression);
-      if (context == null) {
-        return;
-      }
       final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
       if (!PsiType.FLOAT.equals(contextType) && !PsiType.DOUBLE.equals(contextType)) {
         return;
@@ -92,7 +89,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
       return type != null && s_integralTypes.contains(type.getCanonicalText());
     }
 
-    private static PsiExpression getContainingExpression(PsiExpression expression) {
+    private static @NotNull PsiExpression getContainingExpression(@NotNull PsiExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;

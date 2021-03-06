@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,11 +90,11 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
   }
 
   protected class AttachExistingSourceAction implements AttachSourcesAction {
-    private final String myName;
+    private final @Nls(capitalization = Nls.Capitalization.Title) String myName;
     private final VirtualFile mySrcFile;
     private final Library myLibrary;
 
-    public AttachExistingSourceAction(VirtualFile srcFile, Library library, String actionName) {
+    public AttachExistingSourceAction(VirtualFile srcFile, Library library, @Nls(capitalization = Nls.Capitalization.Title) String actionName) {
       mySrcFile = srcFile;
       myLibrary = library;
       myName = actionName;
@@ -139,12 +140,12 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
     @Override
     public String getName() {
-      return "Download Sources";
+      return JavaUiBundle.message("attach.source.provider.download.sources.action.name");
     }
 
     @Override
     public String getBusyText() {
-      return "Downloading Sources...";
+      return JavaUiBundle.message("attach.source.provider.download.sources.action.busy.text");
     }
 
     protected abstract void storeFile(byte[] content);

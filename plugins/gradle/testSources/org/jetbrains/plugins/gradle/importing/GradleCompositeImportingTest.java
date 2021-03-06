@@ -16,14 +16,23 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
+import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Test;
@@ -227,7 +236,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "  compile 'my.group.lib_2:runtime'\n" +
                   "}");
 
-    if (isGradleNewerOrSameThen("4.0")) {
+    if (isGradleNewerOrSameAs("4.0")) {
       assertModules("app", "app_main", "app_test",
                     "app-runtime", "app-runtime_main", "app-runtime_test",
                     "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
@@ -240,7 +249,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                     "lib2", "my.group.lib_2-runtime", "my.group.lib_2-runtime_main", "my.group.lib_2-runtime_test");
     }
 
-    if (isGradleNewerOrSameThen("4.0")) {
+    if (isGradleNewerOrSameAs("4.0")) {
       assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
       assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
       assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
@@ -316,8 +325,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     String myAppApiModuleName = myTestDir.getName() + "-my-app-api";
     String myAppApiMainModuleName = myTestDir.getName() + "-my-app-api_main";
-    String myUtilsApiMainModuleName = isGradleNewerOrSameThen("4.0") ? "org.sample-my-utils-api_main" : "org.sample-api_main";
-    if (isGradleNewerOrSameThen("4.0")) {
+    String myUtilsApiMainModuleName = isGradleNewerOrSameAs("4.0") ? "org.sample-my-utils-api_main" : "org.sample-api_main";
+    if (isGradleNewerOrSameAs("4.0")) {
       assertModules(
         // non-gradle modules
         "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
@@ -610,6 +619,152 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "pC", "pC.main", "pC.test");
 
     assertModuleModuleDepScope("pA.pA-2.main", "pC.main", COMPILE);
+  }
+
+  @Test
+  @TargetVersions("3.3+")
+  public void testIdeCompositeBuild() throws Exception {
+    createSettingsFile("rootProject.name='rootProject'\n");
+    // generate Gradle wrapper files for the test
+    importProject();
+
+    // create files for the first "included" build1
+    createProjectSubFile("build1/settings.gradle", "rootProject.name = 'project1'\n" +
+                                                   "include 'utils'\n");
+    createProjectSubFile("build1/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group 'org.build1'\n" +
+                         "version '1.0'\n" +
+                         "\n" +
+                         "dependencies {\n" +
+                         "  compile 'org.build2:project2:1.0'\n" +
+                         "  compile 'org.build2:utils:1.0'\n" +
+                         "}\n");
+    createProjectSubFile("build1/utils/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group 'org.build1'\n" +
+                         "version '1.0'\n");
+    // use Gradle wrapper of the test root project
+    FileUtil.copyDirContent(file("gradle"), file("build1"));
+
+    // create files for the second "included" build2
+    createProjectSubFile("build2/settings.gradle", "rootProject.name = 'project2'\n" +
+                                                   "include 'utils'\n");
+    createProjectSubFile("build2/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group 'org.build2'\n" +
+                         "version '1.0'\n");
+    createProjectSubFile("build2/utils/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group 'org.build2'\n" +
+                         "version '1.0'\n");
+    // use Gradle wrapper of the test root project
+    FileUtil.copyDirContent(file("gradle"), file("build2"));
+
+    AutoImportProjectTrackerSettings importProjectTrackerSettings = AutoImportProjectTrackerSettings.getInstance(myProject);
+    ExternalSystemProjectTrackerSettings.AutoReloadType autoReloadType = importProjectTrackerSettings.getAutoReloadType();
+    try {
+      importProjectTrackerSettings.setAutoReloadType(ExternalSystemProjectTrackerSettings.AutoReloadType.NONE);
+
+      GradleProjectSettings build1Settings = linkProject(path("build1"));
+      linkProject(path("build2"));
+
+      addToComposite(getCurrentExternalProjectSettings(), "project1", path("build1"));
+      addToComposite(getCurrentExternalProjectSettings(), "project2", path("build2"));
+      addToComposite(build1Settings, "project2", path("build2"));
+
+      ExternalSystemUtil.refreshProject(path("build2"), createImportSpec());
+      ExternalSystemUtil.refreshProject(path("build1"), createImportSpec());
+
+      importProject("apply plugin: 'java'\n" +
+                    "dependencies {\n" +
+                    "  compile 'org.build1:project1:1.0'\n" +
+                    "  compile 'org.build1:utils:1.0'\n" +
+                    "  compile 'org.build2:utils:1.0'\n" +
+                    "}\n");
+
+      assertModules(
+        "rootProject", "rootProject.main", "rootProject.test",
+        "project1", "project1.main", "project1.test",
+        "project1.utils", "project1.utils.main", "project1.utils.test",
+        "project2", "project2.main", "project2.test",
+        "project2.utils", "project2.utils.main", "project2.utils.test"
+      );
+
+      assertModuleLibDeps("rootProject.main", ArrayUtilRt.EMPTY_STRING_ARRAY);
+      assertModuleModuleDeps("rootProject.main", "project1.main", "project1.utils.main", "project2.utils.main", "project2.main");
+    }
+    finally {
+      importProjectTrackerSettings.setAutoReloadType(autoReloadType);
+    }
+  }
+
+  @Test
+  @TargetVersions("4.10+") // https://docs.gradle.org/4.10/release-notes.html#nested-included-builds
+  public void testNestedCompositeBuilds() throws Exception {
+    createSettingsFile("rootProject.name = 'root'\n" +
+                       "includeBuild('A')");
+    createProjectSubFile("A/settings.gradle", "includeBuild('AA')");
+    createProjectSubFile("A/AA/settings.gradle", "includeBuild('AAA')");
+    createProjectSubFile("A/AA/AAA/settings.gradle");
+
+    importProject("");
+
+    assertModules("root", "A", "AA", "AAA");
+  }
+
+  @Test
+  @TargetVersions("6.8+") // https://docs.gradle.org/6.8-rc-1/release-notes.html#desired-cycles-between-builds-are-now-fully-supported
+  public void testNestedCyclicCompositeBuilds() throws Exception {
+    createSettingsFile("rootProject.name = 'root'\n" +
+                       "includeBuild('A')\n" +
+                       "includeBuild('B')\n" +
+                       "includeBuild('C')\n" +
+                       "includeBuild('.')");
+    createProjectSubFile("A/settings.gradle", "includeBuild('AA')");
+    createProjectSubFile("A/AA/settings.gradle", "includeBuild('AAA')");
+    createProjectSubFile("A/AA/AAA/settings.gradle");
+
+    createProjectSubFile("B/settings.gradle", "includeBuild('../C')\n" +
+                                              "includeBuild('../D')");
+
+    createProjectSubFile("C/settings.gradle", "includeBuild('..')\n" +
+                                              "includeBuild('../D')");
+
+    createProjectSubFile("D/settings.gradle", "includeBuild('../A')\n" +
+                                              "includeBuild('../C')");
+
+    importProject("");
+
+    assertModules("root",
+                  "A", "AA", "AAA",
+                  "B",
+                  "C",
+                  "D");
+  }
+
+  private static void addToComposite(GradleProjectSettings settings, String buildRootProjectName, String buildPath) {
+    GradleProjectSettings.CompositeBuild compositeBuild = settings.getCompositeBuild();
+    if (compositeBuild == null) {
+      compositeBuild = new GradleProjectSettings.CompositeBuild();
+      compositeBuild.setCompositeDefinitionSource(CompositeDefinitionSource.IDE);
+      settings.setCompositeBuild(compositeBuild);
+    }
+    assert compositeBuild.getCompositeDefinitionSource() == CompositeDefinitionSource.IDE;
+
+    compositeBuild.setCompositeDefinitionSource(CompositeDefinitionSource.IDE);
+    BuildParticipant buildParticipant = new BuildParticipant();
+    buildParticipant.setRootProjectName(buildRootProjectName);
+    buildParticipant.setRootPath(buildPath);
+    compositeBuild.getCompositeParticipants().add(buildParticipant);
+  }
+
+  private GradleProjectSettings linkProject(String path) {
+    GradleProjectSettings projectSettings = new GradleProjectSettings();
+    projectSettings.setExternalProjectPath(path);
+    projectSettings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
+    GradleSettings.getInstance(myProject).linkProject(projectSettings);
+    return projectSettings;
   }
 
   private void assertTasksProjectPath(String moduleName, String expectedTaskProjectPath) {

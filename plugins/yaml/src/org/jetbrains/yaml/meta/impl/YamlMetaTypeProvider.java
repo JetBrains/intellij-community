@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.meta.model.Field;
 import org.jetbrains.yaml.meta.model.ModelAccess;
+import org.jetbrains.yaml.meta.model.YamlArrayType;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.psi.*;
 
@@ -28,7 +29,7 @@ public class YamlMetaTypeProvider {
 
   private static final Logger LOG = Logger.getInstance(YamlMetaTypeProvider.class);
 
-  private final Key<CachedValue<FieldAndRelation>> myKey;
+  private final Key<CachedValue<MetaTypeProxy>> myKey;
 
   @NotNull
   private final ModelAccess myMetaModel;
@@ -72,7 +73,7 @@ public class YamlMetaTypeProvider {
   public MetaTypeProxy getValueMetaType(@NotNull YAMLValue typedValue) {
     return CachedValuesManager.getCachedValue(typedValue, myKey, () -> {
       debug(" >> computing type for : " + YamlDebugUtil.getDebugInfo(typedValue));
-      FieldAndRelation computed = computeMetaType(typedValue);
+      MetaTypeProxy computed = computeMetaType(typedValue);
       debug(" << finished for : " + YamlDebugUtil.getDebugInfo(typedValue) +
             ", result: " + (computed == null ? "<null>" : computed));
       return new CachedValueProvider.Result<>(computed, typedValue.getContainingFile(), myModificationTracker);
@@ -80,7 +81,7 @@ public class YamlMetaTypeProvider {
   }
 
   @Nullable
-  private FieldAndRelation computeMetaType(@NotNull YAMLValue value) {
+  private MetaTypeProxy computeMetaType(@NotNull YAMLValue value) {
     PsiElement typed = PsiTreeUtil.getParentOfType(value, YAMLKeyValue.class, YAMLSequenceItem.class, YAMLDocument.class);
     if (typed instanceof YAMLDocument) {
       Field root = myMetaModel.getRoot((YAMLDocument)typed);
@@ -93,8 +94,18 @@ public class YamlMetaTypeProvider {
         debug("Unexpected: sequenceItem parent is not a sequence: " + sequenceItem.getParent());
         return null;
       }
-      FieldAndRelation sequenceMeta = (FieldAndRelation)getMetaTypeProxy(sequence);
-      return sequenceMeta == null ? null : FieldAndRelation.forNullable(sequenceMeta.getField(), Field.Relation.SEQUENCE_ITEM);
+      MetaTypeProxy sequenceMeta = getMetaTypeProxy(sequence);
+
+      if (sequenceMeta != null) {
+        YamlMetaType sequenceMetaType = sequenceMeta.getMetaType();
+        Field resultField = value instanceof YAMLSequence && sequenceMetaType instanceof YamlArrayType ?
+                            new Field("<array>", sequenceMetaType) :  // unwind nested array
+                            sequenceMeta.getField();
+
+        return FieldAndRelation.forNullable(specializeField(resultField, sequenceItem.getValue()), Field.Relation.SEQUENCE_ITEM);
+      }
+
+      return null;
     }
     if (typed instanceof YAMLKeyValue) {
       YAMLKeyValue keyValue = (YAMLKeyValue)typed;
@@ -144,7 +155,14 @@ public class YamlMetaTypeProvider {
       return null;
     }
     MetaTypeProxy parentMeta = getMetaTypeProxy(parentMapping);
-    return findChildMeta(parentMeta, keyValue);
+    Field childMeta = findChildMeta(parentMeta, keyValue);
+
+    return childMeta != null ? specializeField(childMeta, keyValue.getValue()) : null;
+  }
+
+  @NotNull
+  private static Field specializeField(@NotNull Field field, @Nullable YAMLValue value) {
+    return value != null ? field.resolveToSpecializedField(value) : field;
   }
 
   @Contract("null, _ -> null")
@@ -157,6 +175,7 @@ public class YamlMetaTypeProvider {
     return parentMeta.getMetaType().findFeatureByName(tag);
   }
 
+  @SuppressWarnings("SameParameterValue")
   @Nullable
   private static <T extends PsiElement> T getTypedAncestorOrSelf(@NotNull PsiElement psi, @NotNull Class<? extends T> clazz) {
     return clazz.isInstance(psi) ? clazz.cast(psi) : PsiTreeUtil.getParentOfType(psi, clazz);

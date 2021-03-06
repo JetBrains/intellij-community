@@ -9,23 +9,25 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
-import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.VcsEP;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-import static com.intellij.util.containers.ContainerUtil.map2Set;
 
 public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
@@ -115,7 +117,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     }
     result.add(new IssueNavigationConfigurationPanel(myProject));
     if (!myProject.isDefault()) {
-      result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
+      result.add(new ChangelistConflictConfigurable(myProject));
     }
     result.add(new CommitDialogConfigurable(myProject));
     result.add(new ShelfProjectConfigurable(myProject));
@@ -125,10 +127,10 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
 
     result.add(new FileStatusColorsConfigurable());
 
-    Set<String> projectConfigurableIds = map2Set(Configurable.PROJECT_CONFIGURABLE.getExtensions(myProject), ep -> ep.id);
-    for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
-      if (!projectConfigurableIds.contains(getVcsConfigurableId(descriptor.getDisplayName()))) {
-        result.add(wrapConfigurable(new VcsConfigurableEP(myProject, descriptor)));
+    for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllSupportedVcss()) {
+      Configurable configurable = vcs.getConfigurable();
+      if (configurable != null) {
+        result.add(wrapConfigurable(new VcsConfigurableEP(myProject, vcs, configurable)));
       }
     }
 
@@ -141,22 +143,22 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   }
 
   @NotNull
-  public static String getVcsConfigurableId(@NotNull String displayName) {
-    return "vcs." + displayName;
+  @NonNls
+  private static String getVcsConfigurableId(@NotNull String vcsName) {
+    return "vcs." + vcsName;
   }
 
   private static class VcsConfigurableEP extends ConfigurableEP<Configurable> {
-
     private static final int WEIGHT = -500;
 
-    @NotNull private final VcsDescriptor myDescriptor;
+    private final Configurable myConfigurable;
 
-    VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
+    VcsConfigurableEP(@NotNull Project project, @NotNull AbstractVcs vcs, @NonNls Configurable configurable) {
       super(project);
 
-      myDescriptor = descriptor;
-      displayName = descriptor.getDisplayName();
-      id = getVcsConfigurableId(descriptor.getDisplayName());
+      myConfigurable = configurable;
+      displayName = vcs.getDisplayName();
+      id = getVcsConfigurableId(vcs.getName());
       groupWeight = WEIGHT;
     }
 
@@ -166,7 +168,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
       return new ObjectProducer() {
         @Override
         protected Object createElement() {
-          return Objects.requireNonNull(ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName())).getConfigurable();
+          return myConfigurable;
         }
 
         @Override

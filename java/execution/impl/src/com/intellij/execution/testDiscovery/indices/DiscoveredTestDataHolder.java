@@ -9,8 +9,10 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +32,7 @@ public final class DiscoveredTestDataHolder {
   private final PersistentStringEnumerator myClassEnumerator;
   private final PersistentStringEnumerator myMethodEnumerator;
   private final PersistentStringEnumerator myPathEnumerator;
-  private final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
+  private final PersistentEnumerator<TestId> myTestEnumerator;
   private final PersistentObjectSeq myConstructedDataFiles = new PersistentObjectSeq();
 
   private boolean myDisposed;
@@ -65,7 +67,7 @@ public final class DiscoveredTestDataHolder {
       PersistentStringEnumerator classNameEnumerator;
       PersistentStringEnumerator methodEnumerator;
       PersistentStringEnumerator pathEnumerator;
-      PersistentEnumeratorDelegate<TestId> testEnumerator;
+      PersistentEnumerator<TestId> testEnumerator;
 
       int iterations = 0;
 
@@ -90,7 +92,7 @@ public final class DiscoveredTestDataHolder {
           pathEnumerator = new PersistentStringEnumerator(pathEnumeratorFile, true);
           myConstructedDataFiles.add(pathEnumerator);
 
-          testEnumerator = new PersistentEnumeratorDelegate<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
+          testEnumerator = new PersistentEnumerator<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
           myConstructedDataFiles.add(testEnumerator);
 
           break;
@@ -184,16 +186,16 @@ public final class DiscoveredTestDataHolder {
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
     final int testNameId = myTestEnumerator.enumerate(createTestId(testClassName, testMethodName, frameworkId));
-    Int2ObjectOpenHashMap<IntArrayList> result = new Int2ObjectOpenHashMap<>();
+    Int2ObjectMap<IntList> result = new Int2ObjectOpenHashMap<>();
     for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-      IntArrayList methodIds = new IntArrayList(e.getValue().size());
+      IntList methodIds = new IntArrayList(e.getValue().size());
       result.put(myClassEnumerator.enumerate(e.getKey()), methodIds);
       for (String methodName : e.getValue()) {
         methodIds.add(myMethodEnumerator.enumerate(methodName));
       }
     }
 
-    Map<Integer, Void> usedVirtualFileIds = new HashMap<>();
+    Int2ObjectMap<Void> usedVirtualFileIds = new Int2ObjectOpenHashMap<>();
     for (String file : usedFiles) {
       if (file.contains("testData") || file.contains("test-data") || file.contains("test_data")) {
         int fileId = myPathEnumerator.enumerate(file);

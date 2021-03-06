@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress
+import org.jetbrains.annotations.Nls
 
 private val COMMIT_WITHOUT_CHANGES_ROOTS_KEY = Key.create<Collection<VcsRoot>>("Vcs.Commit.CommitWithoutChangesRoots")
 var CommitContext.commitWithoutChangesRoots: Collection<VcsRoot> by commitProperty(COMMIT_WITHOUT_CHANGES_ROOTS_KEY, emptyList())
@@ -23,7 +24,7 @@ open class LocalChangesCommitter(
   changes: List<Change>,
   commitMessage: String,
   commitContext: CommitContext,
-  private val localHistoryActionName: String = "Commit Changes"
+  private val localHistoryActionName: @Nls String = message("commit.changes")
 ) : AbstractCommitter(project, changes, commitMessage, commitContext) {
 
   private var myAction = LocalHistoryAction.NULL
@@ -88,7 +89,7 @@ open class LocalChangesCommitter(
     if (!project.isDisposed) {
       // after vcs refresh is completed, outdated notifiers should be removed if some exists...
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToRefresh, null)
-      ChangeListManager.getInstance(project).invokeAfterUpdate({ afterRefreshChanges() }, InvokeAfterUpdateMode.SILENT, null, null)
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) { afterRefreshChanges() }
 
       LocalHistory.getInstance().putSystemLabel(project, "$localHistoryActionName: $commitMessage")
     }

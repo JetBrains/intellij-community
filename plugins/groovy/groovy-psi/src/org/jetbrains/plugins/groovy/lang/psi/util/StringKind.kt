@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil.*
 
@@ -39,6 +40,7 @@ enum class StringKind {
     override fun unescape(escaped: String): String = unescapeDollarSlashyString(escaped)
   };
 
+  @get:NonNls
   open val lineBreaker: String get() = "\n"
 
   abstract fun escape(unescaped: String): String

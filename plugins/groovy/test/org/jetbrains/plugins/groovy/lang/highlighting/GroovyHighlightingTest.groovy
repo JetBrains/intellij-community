@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
 import com.siyeh.ig.junit.TestClassNamingConvention
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt
@@ -2085,6 +2086,36 @@ def usage(Collection<? extends Runnable> cr) {
   Runnable[] ar = cr //https://issues.apache.org/jira/browse/GROOVY-8983
 }
 '''
+  }
+
+  void 'test map constructor with map literal'() {
+    testHighlighting '''
+class A {
+  String s
+}
+
+new A([s : "abc", <warning>q</warning>: 1])
+''', GroovyConstructorNamedArgumentsInspection
+  }
+
+  void 'test map constructor with final field'() {
+    testHighlighting '''
+class A {
+  final String s
+}
+
+new A([<warning>s</warning> : "abc"])
+''', GroovyConstructorNamedArgumentsInspection
+  }
+
+  void 'test map constructor with raw map assignment'() {
+    testHighlighting '''
+class A {
+  final String s
+}
+
+A a = [<warning>s</warning> : "asd"]
+''', GroovyConstructorNamedArgumentsInspection
   }
 
   void testIllegalMethodName() {

@@ -6,10 +6,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -39,11 +41,11 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
       else {
         final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class, false, PyClass.class);
         if (assignment != null && assignment.getTargets()[0] instanceof PyTargetExpression) {
-          gotoSuperClassAttributes(editor, (PyTargetExpression) assignment.getTargets()[0], pyClass);
+          gotoSuperClassAttributes(editor, (PyTargetExpression)assignment.getTargets()[0], pyClass);
         }
         else {
           final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, file);
-          navigateOrChoose(editor, pyClass.getAncestorClasses(context), "Choose superclass");
+          navigateOrChoose(editor, pyClass.getAncestorClasses(context), PyBundle.message("goto.superclass.choose"));
         }
       }
     }
@@ -56,10 +58,10 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
 
   private static void gotoSuperClassAttributes(Editor editor, PyTargetExpression attr, PyClass pyClass) {
     final Collection<PyTargetExpression> attrs = getAllSuperAttributesByName(attr, pyClass);
-    navigateOrChoose(editor, attrs, "Choose superclass attribute");
+    navigateOrChoose(editor, attrs, PyBundle.message("code.insight.goto.superclass.attribute.chooser.title"));
   }
 
-  private static void navigateOrChoose(Editor editor, Collection<? extends NavigatablePsiElement> superElements, final String title) {
+  private static void navigateOrChoose(Editor editor, Collection<? extends NavigatablePsiElement> superElements, @PopupTitle String title) {
     if (!superElements.isEmpty()) {
       NavigatablePsiElement[] superElementArray = superElements.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY);
       if (superElementArray.length == 1) {
@@ -77,7 +79,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
       return Collections.emptyList();
     }
     final List<PyTargetExpression> result = new ArrayList<>();
-    for (PyClass aClass: pyClass.getAncestorClasses(null)) {
+    for (PyClass aClass : pyClass.getAncestorClasses(null)) {
       final PyTargetExpression superAttr = aClass.findClassAttribute(name, false, null);
       if (superAttr != null) {
         result.add(superAttr);
@@ -92,7 +94,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
       return Collections.emptyList();
     }
     final List<PyFunction> result = new ArrayList<>();
-    for (PyClass aClass: pyClass.getAncestorClasses(null)) {
+    for (PyClass aClass : pyClass.getAncestorClasses(null)) {
       final PyFunction byName = aClass.findMethodByName(name, false, null);
       if (byName != null) {
         result.add(byName);

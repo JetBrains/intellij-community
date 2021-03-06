@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,17 +27,20 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author peter
  */
-public class JavaClassReferenceCompletionContributor extends CompletionContributor {
+public class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
     JavaClassReference reference = findJavaClassReference(context.getFile(), context.getStartOffset());
-    if (reference != null && reference.getExtendClassNames() != null) {
+    if (reference != null && !reference.getSuperClasses().isEmpty()) {
       JavaClassReferenceSet set = reference.getJavaClassReferenceSet();
       context.setReplacementOffset(set.getRangeInElement().getEndOffset() + set.getElement().getTextRange().getStartOffset());
     }
@@ -50,14 +54,14 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
       return;
     }
 
-    String[] extendClassNames = reference.getExtendClassNames();
+    List<String> extendClassNames = reference.getSuperClasses();
     PsiElement context = reference.getCompletionContext();
-    if (extendClassNames != null && context instanceof PsiPackage) {
+    if (!extendClassNames.isEmpty() && context instanceof PsiPackage) {
       if (parameters.getCompletionType() == CompletionType.SMART) {
         JavaClassReferenceSet set = reference.getJavaClassReferenceSet();
         int setStart = set.getRangeInElement().getStartOffset() + set.getElement().getTextRange().getStartOffset();
         String fullPrefix = parameters.getPosition().getContainingFile().getText().substring(setStart, parameters.getOffset());
-        reference.processSubclassVariants((PsiPackage)context, extendClassNames, result.withPrefixMatcher(fullPrefix));
+        reference.processSubclassVariants((PsiPackage)context, ArrayUtil.toStringArray(extendClassNames), result.withPrefixMatcher(fullPrefix));
         return;
       }
       result.addLookupAdvertisement(JavaBundle.message("press.0.to.see.inheritors.of.1",

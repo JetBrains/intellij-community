@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
@@ -30,6 +31,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
@@ -38,7 +40,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import com.intellij.util.messages.Topic
+import com.intellij.util.ThreeState
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -69,10 +71,15 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
 }
 
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+  val existing = filterSystemWideSdks(existingSdks)
+    .sortedWith(PreferredSdkComparator.INSTANCE)
+    .filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+
   val detected = detectSystemWideSdks(module, existingSdks, context).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
   return existing + detected
 }
+
+fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkComparator.INSTANCE)
 
 fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
@@ -99,21 +106,35 @@ fun resetSystemWideSdksDetectors() {
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
 
-fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
-
-fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
-  return existingSdks
-    .asSequence()
-    .filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
-    .sortedByDescending { it.homePath }
-    .firstOrNull()
+fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
+  return existingSdks.filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
 }
 
-fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
-  detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
-  detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
-  return null
+fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
+  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, true)
+
+fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
+  return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
+}
+
+fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> {
+  val virtualEnvs = detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
+  val condaEnvs = detectCondaEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
+  return virtualEnvs + condaEnvs
+}
+
+fun chooseEnvironmentToSuggest(module: Module, environments: List<PyDetectedSdk>, trustedState: ThreeState): Pair<PyDetectedSdk, Boolean>? {
+  return if (trustedState == ThreeState.YES) {
+    environments.firstOrNull()?.let { it to false }
+  }
+  else {
+    val (detectedInnerEnvs, detectedOuterEnvs) = environments.partition { it.isLocatedInsideModule(module) }
+
+    when {
+      detectedInnerEnvs.isEmpty() || trustedState == ThreeState.NO -> detectedOuterEnvs.firstOrNull()?.let { it to false }
+      else -> detectedInnerEnvs.firstOrNull()?.let { it to true }
+    }
+  }
 }
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
@@ -123,17 +144,25 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
                             suggestedSdkName: String?): Sdk? {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
-    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException("Directory $homePath not found")
+    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException(
+      PyBundle.message("python.sdk.directory.not.found", homePath)
+    )
   }
   catch (e: ExecutionException) {
-    val description = PyPackageManagementService.toErrorDescription(listOf(e), baseSdk) ?: return null
-    PackagesNotificationPanel.showError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"), description)
+    showSdkExecutionException(baseSdk, e, PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
     return null
   }
   val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
                                        PythonSdkType.getInstance(),
-                                       false, null, suggestedName) ?: return null
+                                       false, null, suggestedName)
+}
+
+fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
+  runInEdt {
+    val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt
+    PackagesNotificationPanel.showError(title, description)
+  }
 }
 
 fun Sdk.associateWithModule(module: Module?, newProjectPath: String?) {
@@ -163,6 +192,7 @@ val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
 
+@Deprecated("Use Sdk.associatedModuleDir instead. There may be several Module objects opened in different projects for a single *.iml module file. To be removed in 2021.2")
 val Sdk.associatedModule: Module?
   get() {
     val associatedPath = associatedModulePath
@@ -171,6 +201,9 @@ val Sdk.associatedModule: Module?
       .flatMap { ModuleManager.getInstance(it).modules.asSequence() }
       .firstOrNull { it?.basePath == associatedPath }
   }
+
+val Sdk.associatedModuleDir: VirtualFile?
+  get() = associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it) }
 
 fun Sdk.adminPermissionsNeeded(): Boolean {
   val pathToCheck = sitePackagesDirectory?.path ?: homePath ?: return false
@@ -193,13 +226,7 @@ var Module.pythonSdk: Sdk?
   set(value) {
     ModuleRootModificationUtil.setModuleSdk(this, value)
     PyUiUtil.clearFileLevelInspectionResults(project)
-    fireActivePythonSdkChanged(value)
   }
-
-fun Module.fireActivePythonSdkChanged(value: Sdk?): Unit = project
-  .messageBus
-  .syncPublisher(ACTIVE_PYTHON_SDK_TOPIC)
-  .activeSdkChanged(this, value)
 
 var Project.pythonSdk: Sdk?
   get() {
@@ -311,25 +338,22 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   return newData
 }
 
-private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
+private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
                                  existingSdks: List<Sdk>,
-                                 module: Module?): List<PyDetectedSdk> {
-  val existingPaths = existingSdks.map { it.homePath }.toSet()
+                                 module: Module?,
+                                 mayContainCondaEnvs: Boolean = false): List<PyDetectedSdk> {
+  val existingPaths = existingSdks.mapTo(HashSet()) { it.homePath }
   return suggestedPaths
     .asSequence()
     .filterNot { it in existingPaths }
     .distinct()
     .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy({ !it.isAssociatedWithModule(module) },
-                          { it.homePath }))
+    .sortedWith(
+      compareBy(
+        { !it.isAssociatedWithModule(module) },
+        { if (mayContainCondaEnvs) !PythonSdkUtil.isBaseConda(it.homePath) else false },
+        { it.homePath }
+      )
+    )
     .toList()
-}
-
-val ACTIVE_PYTHON_SDK_TOPIC: Topic<ActiveSdkListener> = Topic("Active SDK changed", ActiveSdkListener::class.java)
-
-/**
- * The listener that is used with [ACTIVE_PYTHON_SDK_TOPIC] message bus topic.
- */
-interface ActiveSdkListener {
-  fun activeSdkChanged(module: Module, sdk: Sdk?)
 }

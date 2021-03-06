@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
@@ -16,14 +18,17 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.font.TextAttribute;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public abstract class MultilineTreeCellRenderer extends JComponent implements Accessible, TreeCellRenderer {
 
@@ -73,7 +78,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   @Override
   public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
   }
 
   protected void setMinHeight(int height) {
@@ -100,7 +105,11 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   }
 
   private FontMetrics getCurrFontMetrics() {
-    return getFontMetrics(getFont());
+    // Disable kerning for font because of huge performance penalty
+    // String width will increase a bit but it's OK here
+    Font font = getFont().deriveFont(
+      Collections.singletonMap(TextAttribute.KERNING, Integer.valueOf(0)));
+    return getFontMetrics(font);
   }
 
   @Override
@@ -317,8 +326,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   private int getChildIndent(JTree tree) {
     TreeUI newUI = tree.getUI();
-    if (newUI instanceof javax.swing.plaf.basic.BasicTreeUI) {
-      javax.swing.plaf.basic.BasicTreeUI btreeui = (javax.swing.plaf.basic.BasicTreeUI)newUI;
+    if (newUI instanceof BasicTreeUI) {
+      BasicTreeUI btreeui = (BasicTreeUI)newUI;
       return btreeui.getLeftChildIndent() + btreeui.getRightChildIndent();
     }
     else {
@@ -499,7 +508,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   protected class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      String name = accessibleName;
+      @NlsSafe String name = accessibleName;
       if (name == null) {
         name = (String)getClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY);
       }
@@ -508,7 +517,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
         StringBuilder sb = new StringBuilder();
         for (String aLine : myLines) {
           sb.append(aLine);
-          sb.append(SystemProperties.getLineSeparator());
+          sb.append(System.lineSeparator());
         }
         if (sb.length() > 0) name = sb.toString();
       }
@@ -523,6 +532,18 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.LABEL;
     }
+  }
+
+  public Icon getIcon() {
+    return myIcon;
+  }
+
+  public String getPrefix() {
+    return myPrefix;
+  }
+
+  public String[] getLines() {
+    return myLines;
   }
 }
 

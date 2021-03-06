@@ -75,7 +75,7 @@ public class EclipseWorkspaceRootStep extends ProjectImportWizardStep {
 
   @Override
   public String getName() {
-    return "Eclipse Projects Root";
+    return EclipseBundle.message("eclipse.import.step.name");
   }
 
   @Override

@@ -15,10 +15,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -34,17 +37,15 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
-  @NonNls private static final String ROOT_NODE_VALUE = "root";
-
-  public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
-  public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
-  public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
-  public static final Object UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
-  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
-  public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
-  public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
-  public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
+public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
+  public static final Tag IGNORED_FILES_TAG = new VcsBundleTag("changes.nodetitle.ignored.files");
+  public static final Tag LOCKED_FOLDERS_TAG = new VcsBundleTag("changes.nodetitle.locked.folders");
+  public static final Tag LOGICALLY_LOCKED_TAG = new VcsBundleTag("changes.nodetitle.logicallt.locked.folders");
+  public static final Tag UNVERSIONED_FILES_TAG = new VcsBundleTag("changes.nodetitle.unversioned.files");
+  public static final Tag MODIFIED_WITHOUT_EDITING_TAG = new VcsBundleTag("changes.nodetitle.modified.without.editing");
+  public static final Tag SWITCHED_FILES_TAG = new VcsBundleTag("changes.nodetitle.switched.files");
+  public static final Tag SWITCHED_ROOTS_TAG = new VcsBundleTag("changes.nodetitle.switched.roots");
+  public static final Tag LOCALLY_DELETED_NODE_TAG = new VcsBundleTag("changes.nodetitle.locally.deleted.files");
 
   protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
@@ -62,8 +63,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
 
-  private SimpleTextAttributes myAttributes;
-
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
@@ -71,12 +70,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
-    myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @NotNull
   public static ChangesBrowserNode createRoot() {
-    ChangesBrowserNode root = createObject(ROOT_NODE_VALUE);
+    ChangesBrowserNode root = new ChangesBrowserRootNode();
     root.markAsHelperNode();
     return root;
   }
@@ -108,38 +106,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
-    return new ChangesBrowserLockedFoldersNode(project, LOCKED_FOLDERS_TAG);
+    return new ChangesBrowserLockedFoldersNode(project);
   }
 
   @NotNull
   public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
-  }
-
-  @NotNull
-  public static ChangesBrowserNode createObject(@NotNull Object userObject) {
-    return new ChangesBrowserNode<>(userObject);
-  }
-
-  @Deprecated
-  @NotNull
-  public static ChangesBrowserNode create(@NotNull Project project, @NotNull Object userObject) {
-    if (userObject instanceof Change) {
-      return new ChangesBrowserChangeNode(project, (Change)userObject, null);
-    }
-    if (userObject instanceof VirtualFile) {
-      return new ChangesBrowserFileNode(project, (VirtualFile) userObject);
-    }
-    if (userObject instanceof FilePath) {
-      return new ChangesBrowserFilePathNode((FilePath) userObject);
-    }
-    if (userObject == LOCKED_FOLDERS_TAG) {
-      return new ChangesBrowserLockedFoldersNode(project, userObject);
-    }
-    if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
-      return (ChangesBrowserNode) userObject;
-    }
-    return new ChangesBrowserNode<>(userObject);
   }
 
   @Override
@@ -189,7 +161,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return false;
   }
 
-  public void markAsHelperNode() {
+  public final void markAsHelperNode() {
     myHelper = true;
   }
 
@@ -228,14 +200,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public <U> List<U> getAllObjectsUnder(@NotNull Class<U> clazz) {
-    return getObjectsUnderStream(clazz).collect(Collectors.toList());
+    return traverseObjectsUnder().filter(clazz).toList();
   }
 
-  @NotNull
-  public <U> Stream<U> getObjectsUnderStream(@NotNull Class<U> clazz) {
-    return toStream(preorderEnumeration())
-      .map(ChangesBrowserNode::getUserObject)
-      .select(clazz);
+  public @NotNull JBIterable<?> traverseObjectsUnder() {
+    return TreeUtil.treeNodeTraverser(this).traverse().map(TreeUtil::getUserObject);
   }
 
   @NotNull
@@ -245,10 +214,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   @NotNull
   public Stream<VirtualFile> getFilesUnderStream() {
-    return toStream(preorderEnumeration())
-      .map(ChangesBrowserNode::getUserObject)
-      .select(VirtualFile.class)
-      .filter(VirtualFile::isValid);
+    return StreamEx.of(traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid).iterator());
   }
 
   @NotNull
@@ -271,10 +237,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(getTextPresentation(), myAttributes);
+    renderer.append(getTextPresentation());
     appendCount(renderer);
   }
 
+  @Nls
   @NotNull
   protected String getCountText() {
     int count = getFileCount();
@@ -301,14 +268,19 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return getTextPresentation();
   }
 
+  /**
+   * Used by speedsearch, copy-to-clipboard and default renderer.
+   */
+  @Nls
   public String getTextPresentation() {
-    return userObject == null ? "" : userObject.toString();
+    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getTextPresentation", "A proper implementation required");
+    return userObject == null ? "" : userObject.toString(); //NON-NLS
   }
 
   @Override
   public T getUserObject() {
     //noinspection unchecked
-    return (T) userObject;
+    return (T)userObject;
   }
 
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
@@ -335,10 +307,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
 
   public static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
     return ChangesComparator.getFilePathComparator(true).compare(path1, path2);
-  }
-
-  public void setAttributes(@NotNull SimpleTextAttributes attributes) {
-    myAttributes = attributes;
   }
 
   protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
@@ -393,22 +361,60 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return ChangesUtil.findValidParentAccurately(filePath);
   }
 
-  @Deprecated
-  public final int getCount() {
-    return getFileCount();
-  }
-
   public boolean shouldExpandByDefault() {
     return true;
   }
 
-  private static class Tag {
-    @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull private final String myKey;
+  public interface Tag {
+    @Nls
+    @Override
+    String toString();
+  }
 
-    Tag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
+  public static class TagImpl implements Tag {
+    private final @NotNull @Nls String myValue;
+
+    public TagImpl(@NotNull @Nls String value) {
+      myValue = value;
+    }
+
+    @Nls
+    @Override
+    public String toString() {
+      return myValue;
+    }
+  }
+
+  public static class WrapperTag implements Tag {
+    public static Tag wrap(@Nullable Object object) {
+      if (object == null) return null;
+      if (object instanceof Tag) return (Tag)object;
+      return new WrapperTag(object);
+    }
+
+    private final @NotNull Object myValue;
+
+    public WrapperTag(@NotNull Object value) {
+      myValue = value;
+    }
+
+    @Nls
+    @Override
+    public String toString() {
+      return myValue.toString(); //NON-NLS
+    }
+  }
+
+  public static class VcsBundleTag implements Tag {
+    @PropertyKey(resourceBundle = VcsBundle.BUNDLE)
+    @NotNull
+    private final String myKey;
+
+    public VcsBundleTag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 
+    @Nls
     @Override
     public String toString() {
       return VcsBundle.message(myKey);

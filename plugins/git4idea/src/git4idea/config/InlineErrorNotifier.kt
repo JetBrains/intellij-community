@@ -11,15 +11,18 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.Alarm.ThreadToUse.SWING_THREAD
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
+import org.jetbrains.annotations.NotNull
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -39,12 +42,15 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     private set
 
   override fun showError(@Nls(capitalization = Sentence) text: String,
-                         @Nls(capitalization = Sentence) description: String?, fixOption: ErrorNotifier.FixOption) {
+                         @Nls(capitalization = Sentence) description: String?,
+                         fixOption: ErrorNotifier.FixOption?) {
     invokeAndWaitIfNeeded(modalityState) {
-      val linkLabel = LinkLabel<Any>(fixOption.text, null) { _, _ ->
-        fixOption.fix()
+      val linkLabel = fixOption?.let {
+        LinkLabel<Any>(fixOption.text, null) { _, _ ->
+          fixOption.fix()
+        }
       }
-      val message = if (description == null) text else "$text\n$description"
+      val message = if (description == null) text else HtmlBuilder().append(text).br().append(description).wrapWithHtmlBody().toString()
       inlineComponent.showError(message, linkLabel)
     }
   }
@@ -55,7 +61,7 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit) {
     val pi = inlineComponent.showProgress(title)
     isTaskInProgress = true
@@ -80,9 +86,9 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  override fun showMessage(@Nls(capitalization = Sentence) text: String) {
+  override fun showMessage(@NlsContexts.NotificationContent @NotNull message: String) {
     invokeAndWaitIfNeeded(modalityState) {
-      inlineComponent.showMessage(text)
+      inlineComponent.showMessage(message)
     }
   }
 
@@ -133,7 +139,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     panelToValidate?.validate()
   }
 
-  override fun showMessage(@Nls(capitalization = Sentence) text: String) {
+  override fun showMessage(@Nls(capitalization = Sentence) text: @NlsContexts.Label String) {
     container.removeAll()
     progressShown = false
 
@@ -148,7 +154,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     panelToValidate?.validate()
   }
 
-  private fun multilineLabel(text: String): JComponent = JBLabel(text).apply {
+  private fun multilineLabel(text: @NlsContexts.Label String): JComponent = JBLabel(text).apply {
     setAllowAutoWrapping(true)
     setCopyable(true)
   }

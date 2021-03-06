@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.core.JavaPsiBundle;
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -30,13 +30,10 @@ import java.util.List;
 public abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   public static final Key<PsiCompiledElement> COMPILED_ELEMENT = Key.create("COMPILED_ELEMENT");
 
-  private static final Logger LOG = Logger.getInstance(ClsElementImpl.class);
-
   private volatile Pair<TextRange, Identikit.ByType> myMirror;
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
@@ -94,8 +91,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     throw cannotModifyException(this);
   }
 
-  @NotNull
-  static IncorrectOperationException cannotModifyException(@NotNull PsiCompiledElement element) {
+  static @NotNull IncorrectOperationException cannotModifyException(@NotNull PsiCompiledElement element) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     String path = virtualFile == null ? "?" : virtualFile.getPresentableUrl();
     return new IncorrectOperationException(JavaPsiBundle.message("psi.error.attempt.to.edit.class.file", path));
@@ -134,7 +130,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   public abstract void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer);
 
   protected int getIndentSize() {
-    return JavaCodeStyleSettingsFacade.getInstance(getProject()).getIndentSize();
+    return JavaFileCodeStyleFacade.forContext(getContainingFile()).getIndentSize();
   }
 
   public abstract void setMirror(@NotNull TreeElement element) throws InvalidMirrorException;
@@ -189,7 +185,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
     StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
-    LOG.warn("Mirror wasn't set for " + this + " in " + getContainingFile() + ", expected text '" + buffer + "'");
+    Logger.getInstance(ClsElementImpl.class).warn("Mirror wasn't set for " + this + " in " + getContainingFile() + ", expected text '" + buffer + "'");
     return buffer.toString();
   }
 
@@ -202,11 +198,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   @Override
   public boolean textMatches(@NotNull CharSequence text) {
     return getText().equals(text.toString());
-  }
-
-  @Override
-  public boolean textMatches(@NotNull PsiElement element) {
-    return getText().equals(element.getText());
   }
 
   @Override
@@ -242,9 +233,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   protected void setMirrorCheckingType(@NotNull TreeElement element, @Nullable IElementType type) throws InvalidMirrorException {
     // uncomment for extended consistency check
-    //if (myMirror != null) {
-    //  throw new InvalidMirrorException("Mirror should be null: " + myMirror);
-    //}
+    //if (myMirror != null) throw new InvalidMirrorException("Mirror should be null: " + myMirror);
 
     if (type != null && element.getElementType() != type) {
       throw new InvalidMirrorException(element.getElementType() + " != " + type);

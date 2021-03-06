@@ -35,7 +35,7 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
   @Override
   @NotNull
   public GrCodeReferenceElement getReferenceElement() {
-    return (GrCodeReferenceElement)findNotNullChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+    return findNotNullChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Override

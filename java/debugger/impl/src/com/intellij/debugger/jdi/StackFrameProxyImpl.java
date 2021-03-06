@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -15,19 +15,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
   private static final Logger LOG = Logger.getInstance(StackFrameProxyImpl.class);
-  private static final int FRAMES_BATCH_MAX = 10;
+  public static final int FRAMES_BATCH_MAX = 20;
   private final ThreadReferenceProxyImpl myThreadProxy;
   private final int myFrameFromBottomIndex; // 1-based
 
@@ -307,7 +303,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     }
     throw new EvaluateException(error.getMessage(), error);
   }
-  
+
   @Override
   public Value getVariableValue(@NotNull LocalVariableProxy localVariable) throws EvaluateException {
     if (localVariable instanceof LocalVariableProxyImpl) {
@@ -380,7 +376,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     if (myAllValues == null) {
       try {
         StackFrame stackFrame = getStackFrame();
-        myAllValues = new THashMap<>(stackFrame.getValues(stackFrame.visibleVariables()));
+        myAllValues = new HashMap<>(stackFrame.getValues(stackFrame.visibleVariables()));
       }
       catch (AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -389,14 +385,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
         // extra logging for IDEA-141270
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
           LOG.info(e);
-          myAllValues = new THashMap<>();
+          myAllValues = new HashMap<>();
         }
         else throw e;
       }
       catch (Exception e) {
         if (!getVirtualMachine().canBeModified()) { // do not care in read only vms
           LOG.debug(e);
-          myAllValues = new THashMap<>();
+          myAllValues = new HashMap<>();
         }
         else {
           throw e;
@@ -413,7 +409,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
       try {
         final LocalVariable variable = localVariable.getVariable();
         final StackFrame stackFrame = getStackFrame();
-        stackFrame.setValue(variable, (value instanceof ObjectReference)? ((ObjectReference)value) : value);
+        stackFrame.setValue(variable, value);
         if (myAllValues != null) {
           // update cached data if any
           // re-read the value just set from the stackframe to be 100% sure

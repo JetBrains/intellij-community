@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -29,6 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
@@ -39,6 +41,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.XDebugSession;
@@ -50,6 +53,7 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.StepRequest;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +63,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DebuggerSession implements AbstractDebuggerSession {
+public final class DebuggerSession implements AbstractDebuggerSession {
   private static final Logger LOG = Logger.getInstance(DebuggerSession.class);
   // flags
   private final MyDebuggerStateManager myContextManager;
@@ -153,7 +157,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
      * since the thread was resumed
      */
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context, final State state, final Event event, final String description) {
+    public void setState(@NotNull final DebuggerContextImpl context, final State state, final Event event, final @NlsContexts.Label String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
       LOG.assertTrue(session == DebuggerSession.this || session == null);
@@ -201,7 +205,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return session;
   }
 
-  private DebuggerSession(String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
+  private DebuggerSession(@Nls String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
     mySessionName  = sessionName;
     myDebugProcess = debugProcess;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(this, null, null, null);
@@ -224,7 +228,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return getProcess().getProject();
   }
 
-  public String getSessionName() {
+  public @NlsSafe String getSessionName() {
     return mySessionName;
   }
 
@@ -235,9 +239,9 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private static class DebuggerSessionState {
     final State myState;
-    final String myDescription;
+    final @NlsContexts.Label String myDescription;
 
-    DebuggerSessionState(State state, String description) {
+    DebuggerSessionState(State state, @NlsContexts.Label String description) {
       myState = state;
       myDescription = description;
     }
@@ -247,7 +251,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     return myState.myState;
   }
 
-  public String getStateDescription() {
+  public @NlsContexts.Label String getStateDescription() {
     if (myState.myDescription != null) {
       return myState.myDescription;
     }
@@ -259,8 +263,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
         return JavaDebuggerBundle.message("status.app.running");
       case WAITING_ATTACH:
         RemoteConnection connection = getProcess().getConnection();
-        return JavaDebuggerBundle.message(connection.isServerMode() ? "status.listening" : "status.connecting",
-                                          DebuggerUtilsImpl.getConnectionDisplayName(connection));
+        return DebuggerUtilsImpl.getConnectionWaitStatus(connection);
       case PAUSED:
         return JavaDebuggerBundle.message("status.paused");
       case WAIT_EVALUATION:
@@ -431,10 +434,15 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   private void attach() throws ExecutionException {
     RemoteConnection remoteConnection = myDebugEnvironment.getRemoteConnection();
+
     myDebugProcess.attachVirtualMachine(myDebugEnvironment, this);
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH,
-                                 JavaDebuggerBundle.message("status.waiting.attach",
-                                                            DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection)));
+
+    StringBuilder description = new StringBuilder(JavaDebuggerBundle.message("status.waiting.attach"));
+    if (!(remoteConnection instanceof RemoteConnectionStub)) {
+      String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
+      description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
+    }
+    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {
@@ -467,7 +475,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
-            XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
+            XDebuggerManagerImpl.getNotificationGroup().createNotification(
               JavaDebuggerBundle.message("status.breakpoint.reached.in.thread", thread.name()),
               JavaDebuggerBundle.message("status.breakpoint.reached.in.thread.switch"),
               NotificationType.INFORMATION,
@@ -506,10 +514,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
           else {
             // heuristics: try to pre-select EventDispatchThread
-            currentThread = allThreads.stream().filter(thread -> ThreadState.isEDT(thread.name())).findFirst().orElse(null);
+            currentThread = ContainerUtil.find(allThreads, thread -> ThreadState.isEDT(thread.name()));
             if (currentThread == null) {
               // heuristics: try to pre-select main thread
-              currentThread = allThreads.stream().filter(thread -> "main".equals(thread.name())).findFirst().orElse(null);
+              currentThread = ContainerUtil.find(allThreads, thread -> "main".equals(thread.name()));
             }
             if (currentThread == null) {
               // heuristics: display the first thread with RUNNABLE status

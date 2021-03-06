@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.Pair;
@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import static com.intellij.ui.scale.ScaleType.*;
+
 /**
  * Represents a snapshot of the user space scale factors: {@link ScaleType#USR_SCALE} and {@link ScaleType#OBJ_SCALE}).
  * The context can be associated with a UI object (see {@link ScaleContextAware}) to define its HiDPI behaviour.
@@ -21,12 +23,14 @@ import java.util.function.Function;
  * @author tav
  */
 public class UserScaleContext {
-  protected Scale usrScale = ScaleType.USR_SCALE.of(JBUIScale.scale(1f));
-  protected Scale objScale = ScaleType.OBJ_SCALE.of(1d);
+  protected Scale usrScale = USR_SCALE.of(JBUIScale.scale(1f));
+  protected Scale objScale = OBJ_SCALE.of(1d);
   protected double pixScale = usrScale.value;
 
   private List<UpdateListener> listeners;
   private EnumSet<ScaleType> overriddenScales;
+
+  private static final Scale @NotNull [] EMPTY_SCALE_ARRAY = new Scale[]{};
 
   protected UserScaleContext() {
   }
@@ -36,7 +40,7 @@ public class UserScaleContext {
    */
   @NotNull
   public static UserScaleContext createIdentity() {
-    return create(ScaleType.USR_SCALE.of(1));
+    return create(USR_SCALE.of(1));
   }
 
   /**
@@ -102,6 +106,18 @@ public class UserScaleContext {
     return overriddenScales != null && overriddenScales.contains(scale.type);
   }
 
+  protected Scale @NotNull [] getOverriddenScales() {
+    if (overriddenScales == null) {
+      return EMPTY_SCALE_ARRAY;
+    }
+    Scale[] scales = new Scale[overriddenScales.size()];
+    int i = 0;
+    for (ScaleType type : overriddenScales) {
+      scales[i++] = getScaleObject(type);
+    }
+    return scales;
+  }
+
   /**
    * Sets the new scale (system scale is ignored). Use {@link ScaleType#of(double)} to provide the new scale.
    * Note, the new scale value can be change on subsequent {@link #update()}. Use {@link #overrideScale(Scale)}
@@ -138,7 +154,17 @@ public class UserScaleContext {
       case SYS_SCALE: return 1d;
       case OBJ_SCALE: return objScale.value;
     }
-    return 1f; // unreachable
+    throw new IllegalStateException("wrong scale type: " + type);
+  }
+
+  @NotNull
+  protected Scale getScaleObject(@NotNull ScaleType type) {
+    switch (type) {
+      case USR_SCALE: return usrScale;
+      case SYS_SCALE: return SYS_SCALE.of(1d);
+      case OBJ_SCALE: return objScale;
+    }
+    throw new IllegalStateException("wrong scale type: " + type);
   }
 
   public double getScale(@NotNull DerivedScaleType type) {
@@ -148,7 +174,7 @@ public class UserScaleContext {
       case EFF_USR_SCALE:
         return pixScale;
     }
-    return 1f; // unreachable
+    throw new IllegalStateException("wrong scale type: " + type);
   }
 
   /**
@@ -179,23 +205,28 @@ public class UserScaleContext {
    * @return whether any of the scale factors has been updated
    */
   public boolean update() {
-    return onUpdated(setScale(ScaleType.USR_SCALE.of(JBUIScale.scale(1f))));
+    return onUpdated(setScale(USR_SCALE.of(JBUIScale.scale(1f))));
   }
 
   /**
    * Updates the context with the state of the provided one.
    *
-   * @param ctx the new context
+   * @param scaleContext the new context
    * @return whether any of the scale factors has been updated
    */
-  public boolean update(@Nullable UserScaleContext ctx) {
-    if (ctx == null) return update();
-    return onUpdated(updateAll(ctx));
+  public boolean update(@Nullable UserScaleContext scaleContext) {
+    return scaleContext == null ? update() : onUpdated(updateAll(scaleContext));
   }
 
-  protected <T extends UserScaleContext> boolean updateAll(@NotNull T ctx) {
-    boolean updated = setScale(ctx.usrScale);
-    return setScale(ctx.objScale) || updated;
+  protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
+    boolean updated = setScale(scaleContext.usrScale);
+    updated = setScale(scaleContext.objScale) || updated;
+
+    // merge this.overriddenScales with scaleContext.overriddenScales
+    for (Scale scale : scaleContext.getOverriddenScales()) {
+      overrideScale(scale);
+    }
+    return updated;
   }
 
   @Override

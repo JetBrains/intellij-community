@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,8 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.util.*;
 
 /**
- * @author dsl
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link ModuleRootModel} should be used instead.
  */
 @ApiStatus.Internal
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
@@ -74,12 +74,12 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     addSourceOrderEntries();
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager);
 
-    for (ModuleExtension extension : ModuleExtension.EP_NAME.getExtensions(moduleRootManager.getModule())) {
+    for (ModuleExtension extension : ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(moduleRootManager.getModule())) {
       ModuleExtension model = extension.getModifiableModel(false);
       registerOnDispose(model);
       myExtensions.add(model);
     }
-    myConfigurationAccessor = new RootConfigurationAccessor();
+    myConfigurationAccessor = RootConfigurationAccessor.DEFAULT_INSTANCE;
     myExtensionToStateDigest = null;
   }
 
@@ -133,7 +133,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       registerOnDispose(model);
       myExtensions.add(model);
     }
-    myConfigurationAccessor = new RootConfigurationAccessor();
+    myConfigurationAccessor = RootConfigurationAccessor.DEFAULT_INSTANCE;
     myExtensionToStateDigest = null;
   }
 
@@ -172,7 +172,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
     setOrderEntriesFrom(rootModel);
 
-    myExtensionToStateDigest = writable ? new THashMap<>() : null;
+    myExtensionToStateDigest = writable ? new HashMap<>() : null;
 
     for (ModuleExtension extension : rootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(writable);
@@ -516,6 +516,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
+  @Nullable
   public String getSdkName() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {

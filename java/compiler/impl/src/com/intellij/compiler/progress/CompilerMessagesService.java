@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -51,7 +52,7 @@ public class CompilerMessagesService implements BuildViewService {
 
   @NotNull private final Project myProject;
   @NotNull private final Object myContentId;
-  private String myContentName;
+  private @NlsContexts.TabTitle final String myContentName;
   private Runnable myRestartWork;
   private final boolean myHeadlessMode;
   private boolean myMessagesAutoActivated = false;
@@ -61,7 +62,7 @@ public class CompilerMessagesService implements BuildViewService {
   private NewErrorTreeViewPanel myErrorTreeView;
   private CloseListener myCloseListener;
 
-  public CompilerMessagesService(@NotNull Project project, @NotNull Object contentId, String contentName, boolean headlessMode) {
+  public CompilerMessagesService(@NotNull Project project, @NotNull Object contentId, @NlsContexts.TabTitle String contentName, boolean headlessMode) {
     myProject = project;
     myContentId = contentId;
     myContentName = contentName;

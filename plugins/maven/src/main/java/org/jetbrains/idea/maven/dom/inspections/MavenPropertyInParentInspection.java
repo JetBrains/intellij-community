@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
+import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.ArrayList;
@@ -60,8 +61,10 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
       DomManager domManager = DomManager.getDomManager(file.getProject());
       DomFileElement<MavenDomProjectModel> model = domManager.getFileElement((XmlFile)file, MavenDomProjectModel.class);
 
+
       if (model != null) {
-        boolean maven35 = StringUtil.compareVersionNumbers(MavenServerManager.getInstance().getCurrentMavenVersion(), "3.5") >= 0;
+        MavenDistribution distribution = MavenServerManager.getInstance().getConnector(file.getProject(), file.getVirtualFile().getPath()).getMavenDistribution();
+        boolean maven35 = distribution == null || StringUtil.compareVersionNumbers(distribution.getVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = new ArrayList<>(3);
 
         MavenDomParent mavenParent = model.getRootElement().getMavenParent();

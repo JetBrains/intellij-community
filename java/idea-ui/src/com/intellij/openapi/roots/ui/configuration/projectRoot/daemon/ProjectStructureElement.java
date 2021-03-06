@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,18 +15,18 @@ public abstract class ProjectStructureElement {
   }
 
   @NotNull
-  public String getPresentableText() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableText() {
     return getTypeName() + " '" + getPresentableName() + "'";
   }
 
-  public abstract String getPresentableName();
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName();
 
   @Nullable
-  public String getDescription() {
+  public @Nls String getDescription() {
     return null;
   }
 
-  public abstract String getTypeName();
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName();
 
   public abstract String getId();
 

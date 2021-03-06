@@ -6,7 +6,9 @@ import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.builtInHelp.BuiltInHelpBundle;
 import com.jetbrains.builtInHelp.Utils;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -17,12 +19,12 @@ import java.awt.event.ActionListener;
 
 public class SettingsPage implements Configurable {
 
-  public static final String DEFAULT_BROWSER = "<default>";
-
+  @NonNls
   public static final SettingKey OPEN_HELP_FROM_WEB = SettingKey.simple("bundled.help.open.web.site.when.possible");
+  @NonNls
   public static final SettingKey USE_BROWSER = SettingKey.simple("bundled.help.use.specific.web.browser");
+  @NonNls
   public static final SettingKey OPEN_HELP_BASE_URL = SettingKey.simple("bundled.help.open.web.site.base.url");
-
 
   private final SettingsPageUI ui = new SettingsPageUI();
 
@@ -36,7 +38,7 @@ public class SettingsPage implements Configurable {
     ui.addListeners();
 
     WebBrowserManager mgr = WebBrowserManager.getInstance();
-    ui.webBrowserList.addItem(DEFAULT_BROWSER);
+    ui.webBrowserList.addItem(BuiltInHelpBundle.message("use.default.browser"));
     for (WebBrowser browser : mgr.getBrowsers()) {
       ui.webBrowserList.addItem(browser.getName());
     }
@@ -92,6 +94,7 @@ public class SettingsPage implements Configurable {
     JCheckBox openWebSite;
     JTextField baseUrl;
     JComboBox<String> webBrowserList;
+
     DocumentListener textChangeListener = new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
@@ -130,7 +133,16 @@ public class SettingsPage implements Configurable {
     }
 
     void reset() {
-      webBrowserList.setSelectedItem(Utils.getStoredValue(USE_BROWSER, DEFAULT_BROWSER));
+      final String storedSelection = Utils.getStoredValue(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser"));
+      int totalItems = webBrowserList.getItemCount();
+
+      for (int i = 0; i < totalItems; i++) {
+        if (webBrowserList.getItemAt(i).equals(storedSelection)) {
+          webBrowserList.setSelectedIndex(i);
+          break;
+        }
+      }
+
       openWebSite.setSelected(Boolean.valueOf(Utils.getStoredValue(OPEN_HELP_FROM_WEB, "true")));
       baseUrl.setText(Utils.getStoredValue(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
       modified = false;

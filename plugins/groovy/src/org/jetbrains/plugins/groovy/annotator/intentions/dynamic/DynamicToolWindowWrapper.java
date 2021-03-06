@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -61,13 +62,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class DynamicToolWindowWrapper {
+public final class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 
   private static final int CLASS_OR_ELEMENT_NAME_COLUMN = 0;
   private static final int TYPE_COLUMN = 1;
 
-  private static final String[] myColumnNames = {"Dynamic Element", "Type"};
+  private static final @ColumnName String[] myColumnNames = {
+    GroovyBundle.message("dynamic.members.column.name.element"),
+    GroovyBundle.message("dynamic.members.column.name.type")
+  };
 
   private final Project myProject;
   private ToolWindow myToolWindow = null;
@@ -196,8 +200,7 @@ public class DynamicToolWindowWrapper {
   }
 
   private JScrollPane createTable(final MutableTreeNode myTreeRoot) {
-    ColumnInfo[] columnInfos =
-      {new ClassColumnInfo(myColumnNames[CLASS_OR_ELEMENT_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[TYPE_COLUMN])};
+    ColumnInfo[] columnInfos = {new ClassColumnInfo(), new PropertyTypeColumnInfo()};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
@@ -214,11 +217,7 @@ public class DynamicToolWindowWrapper {
       return "";
     });
 
-    PopupHandler.installUnknownPopupHandler(
-      myTreeTable,
-      new DefaultActionGroup(new RemoveDynamicAction()),
-      ActionManager.getInstance()
-    );
+    PopupHandler.installUnknownPopupHandler(myTreeTable, new DefaultActionGroup(new RemoveDynamicAction()));
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 
@@ -487,8 +486,9 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class PropertyTypeColumnInfo extends ColumnInfo<DefaultMutableTreeNode, String> {
-    PropertyTypeColumnInfo(String name) {
-      super(name);
+
+    PropertyTypeColumnInfo() {
+      super(GroovyBundle.message("dynamic.members.column.name.type"));
     }
 
     @Override
@@ -509,8 +509,9 @@ public class DynamicToolWindowWrapper {
   }
 
   private static class ClassColumnInfo extends ColumnInfo<DefaultMutableTreeNode, DNamedElement> {
-    ClassColumnInfo(String name) {
-      super(name);
+
+    ClassColumnInfo() {
+      super(GroovyBundle.message("dynamic.members.column.name.element"));
     }
 
     @Override
@@ -566,14 +567,9 @@ public class DynamicToolWindowWrapper {
 
       if (value instanceof DItemElement) {
         final DItemElement itemElement = ((DItemElement)value);
-        final String substringToHighlight = itemElement.getHighlightedText();
         final String name = itemElement.getName();
 
-        if (substringToHighlight != null) {
-          appendHighlightName(substringToHighlight, name);
-        } else {
-          appendName(name);
-        }
+        appendName(name);
 
         if (value instanceof DMethodElement) {
           appendMethodParameters((DMethodElement)value);
@@ -581,18 +577,7 @@ public class DynamicToolWindowWrapper {
       }
     }
 
-    private void appendHighlightName(String substringToHighlight, String name) {
-      final int begin = name.indexOf(substringToHighlight);
-//          if (name.length() <= begin) return;
-      final String first = name.substring(0, begin);
-      append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-      final TextAttributes textAttributes = new TextAttributes();
-      textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground(true));
-      append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
-      append(name.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-    }
-
-    private void appendName(String name) {
+    private void appendName(@NlsContexts.Label String name) {
       append(name, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 
@@ -609,6 +594,7 @@ public class DynamicToolWindowWrapper {
       }
       buffer.append(")");
 
+      //noinspection HardCodedStringLiteral
       append(buffer.toString(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 

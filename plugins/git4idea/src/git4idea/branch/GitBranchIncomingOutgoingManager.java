@@ -4,6 +4,7 @@ package git4idea.branch;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -15,7 +16,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -34,8 +36,8 @@ import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,22 +47,20 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
-import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.commands.GitAuthenticationMode.NONE;
 import static git4idea.commands.GitAuthenticationMode.SILENT;
 import static git4idea.config.GitIncomingCheckStrategy.Auto;
 import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
-import static java.util.stream.Collectors.toSet;
-import static one.util.streamex.StreamEx.of;
 
-public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener, Disposable {
-
+@Service(Service.Level.PROJECT)
+public final class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener, Disposable {
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
   public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
-    Topic.create("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
+    new Topic<>("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
 
   private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd"; //NON-NLS
 
@@ -151,7 +151,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void stopScheduling() {
     if (myPeriodicalUpdater != null) {
       myPeriodicalUpdater.cancel(true);
@@ -267,7 +267,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
-      lsRemote(repository, gitRemote, map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()), mode);
+      lsRemote(repository, gitRemote, ContainerUtil.map(trackInfoList, info -> info.getRemoteBranch().getNameForRemoteOperations()), mode);
 
     for (Map.Entry<String, Hash> hashEntry : remoteNameWithHash.entrySet()) {
       String remoteBranchName = hashEntry.getKey();
@@ -321,7 +321,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private static boolean containsSSHUrl(@NotNull GitRemote remote) {
-    return exists(remote.getUrls(), url -> !url.startsWith(URLUtil.HTTP_PROTOCOL));
+    return ContainerUtil.exists(remote.getUrls(), url -> !url.startsWith(URLUtil.HTTP_PROTOCOL));
   }
 
   private @NotNull Map<String, Hash> lsRemote(@NotNull GitRepository repository,
@@ -337,12 +337,12 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
 
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = newArrayList("--heads", remote.getName()); //NON-NLS
+      List<String> params = ContainerUtil.newArrayList("--heads", remote.getName()); //NON-NLS
       params.addAll(refs);
       GitCommandResult lsRemoteResult =
         Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {
-        Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
+        Map<String, String> hashWithNameMap = ContainerUtil.map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
         myErrorMap.remove(repository, remote);
         myAuthSuccessMap.putValue(repository, remote);
@@ -408,9 +408,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   private static @NotNull Collection<GitLocalBranch> getBranches(@Nullable GitRepository repository,
                                                                  @NotNull Map<GitRepository, Set<GitLocalBranch>> branchCollection) {
     if (repository != null) {
-      return ObjectUtils.chooseNotNull(branchCollection.get(repository), Collections.emptySet());
+      return Objects.requireNonNullElse(branchCollection.get(repository), Collections.emptySet());
     }
-    return of(branchCollection.values()).flatMap(Set::stream).collect(toSet());
+    return StreamEx.of(branchCollection.values()).flatMap(Set::stream).collect(Collectors.toSet());
   }
 
   @Override
@@ -430,7 +430,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private static @NotNull MultiMap<GitRemote, GitBranchTrackInfo> groupTrackInfoByRemotes(@NotNull GitRepository repository) {
-    return groupBy(repository.getBranchTrackInfos(), GitBranchTrackInfo::getRemote);
+    return ContainerUtil.groupBy(repository.getBranchTrackInfos(), GitBranchTrackInfo::getRemote);
   }
 
   public interface GitIncomingOutgoingListener {

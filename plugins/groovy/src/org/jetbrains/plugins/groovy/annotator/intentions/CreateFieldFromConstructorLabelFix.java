@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -7,7 +7,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -62,11 +61,10 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
     return GroovyBundle.message("create.field.from.usage", getFieldName());
   }
 
-  @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Create field";
+    return GroovyBundle.message("intention.family.name.create.field");
   }
 
   @Override

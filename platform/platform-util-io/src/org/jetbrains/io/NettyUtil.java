@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -22,7 +24,7 @@ import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
-  public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
+  public static final int MAX_CONTENT_LENGTH = Registry.intValue("ide.netty.max.frame.size.in.mb") * 1024 * 1024;
 
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 20;
   public static final int MIN_START_TIME = 100;
@@ -51,7 +53,7 @@ public final class NettyUtil {
       return;
     }
 
-    if (message.startsWith("Connection reset")) {
+    if (message.startsWith("Connection reset")) {//NON-NLS
       return;
     }
 
@@ -63,13 +65,14 @@ public final class NettyUtil {
     }
   }
 
-  private static boolean isAsWarning(@NotNull String message, @NotNull Throwable throwable) {
+  private static boolean isAsWarning(@NlsSafe @NotNull String message, @NotNull Throwable throwable) {
     if (message.equals("Operation timed out") || message.equals("Connection timed out")) {
       return true;
     }
 
     if (throwable instanceof IOException) {
       return throwable instanceof BindException ||
+             message.equals("An established connection was aborted by the software in your host machine") ||
              message.equals("An existing connection was forcibly closed by the remote host") ||
              message.equals("\u0423\u0434\u0430\u043b\u0435\u043d\u043d\u044b\u0439 \u0445\u043e\u0441\u0442 \u043f\u0440\u0438\u043d\u0443\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0440\u0430\u0437\u043e\u0440\u0432\u0430\u043b \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435");
     }
@@ -98,7 +101,7 @@ public final class NettyUtil {
                                                       .allowCredentials()
                                                       .allowNullOrigin()
                                                       .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
-                                                      .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with")
+                                                      .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with") //NON-NLS
                                                       .build()));
   }
 

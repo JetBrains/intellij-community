@@ -85,14 +85,6 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         String value = escape(message.text.substring(index + 1))
         printTeamCityMessage("setParameter", false, "name='$name' value='$value'")
         break
-      case LogMessage.Kind.COMPILATION_ERROR:
-        int index = message.text.indexOf(':')
-        String compiler = escape(message.text.substring(0, index))
-        String messageText = escape(message.text.substring(index + 1))
-        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']")
-        printTeamCityMessage("message", false, "text='$messageText' status='ERROR']")
-        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']")
-        break
       case LogMessage.Kind.COMPILATION_ERRORS:
         String compiler = escape((message as CompilationErrorsLogMessage).compilerName)
         printTeamCityMessage("compilationStarted", false, "compiler='$compiler']")

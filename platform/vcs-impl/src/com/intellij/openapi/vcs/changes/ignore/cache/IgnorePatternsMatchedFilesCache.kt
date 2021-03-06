@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.cache
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -21,7 +21,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import gnu.trove.THashSet
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -33,11 +32,11 @@ import java.util.regex.Pattern
  * * after entries have been expired: entries becomes expired if no read/write operations happened with the corresponding key during some amount of time (10 minutes).
  * * after project dispose
  */
-class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
+internal class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable {
   private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
   private val cache =
-    CacheBuilder.newBuilder()
+    Caffeine.newBuilder()
       .expireAfterAccess(10, TimeUnit.MINUTES)
       .build<String, Collection<VirtualFile>>()
 
@@ -48,7 +47,9 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun after(events: List<VFileEvent>) {
-          if (cache.size() == 0L) return
+          if (cache.estimatedSize() == 0L) {
+            return
+          }
 
           for (event in events) {
             if (event is VFileCreateEvent ||
@@ -108,10 +109,12 @@ class IgnorePatternsMatchedFilesCache(private val project: Project) : Disposable
       override fun doRun() = cache.put(key, doSearch(pattern))
     })
 
-  private fun doSearch(pattern: Pattern): THashSet<VirtualFile> {
-    val files = THashSet<VirtualFile>(1000)
+  private fun doSearch(pattern: Pattern): Set<VirtualFile> {
+    val files = HashSet<VirtualFile>(1000)
     val parts = RegexUtil.getParts(pattern)
-    if (parts.isEmpty()) return files
+    if (parts.isEmpty()) {
+      return files
+    }
 
     val projectScope = GlobalSearchScope.projectScope(project)
     projectFileIndex.iterateContent { fileOrDir ->

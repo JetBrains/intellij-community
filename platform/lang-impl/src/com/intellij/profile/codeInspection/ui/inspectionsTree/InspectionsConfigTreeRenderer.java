@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -59,7 +60,7 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
   }
 
   @Nullable
-  private static String getHint(final Descriptor descriptor) {
+  private static @NlsContexts.Label String getHint(final Descriptor descriptor) {
     final InspectionToolWrapper toolWrapper = descriptor.getToolWrapper();
 
     if (toolWrapper.getTool() instanceof InspectionToolWrapperWithHint) {

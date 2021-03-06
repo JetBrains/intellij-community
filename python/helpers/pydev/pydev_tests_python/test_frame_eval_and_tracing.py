@@ -4,7 +4,7 @@ import pytest
 import time
 
 from contextlib import contextmanager
-from pydev_tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON
+from pydev_tests_python.debugger_unittest import IS_PY36_OR_GREATER, IS_CPYTHON, wait_for_condition
 from pydev_tests_python.debug_constants import TEST_CYTHON
 
 pytest_plugins = [
@@ -14,20 +14,21 @@ pytest_plugins = [
 pytestmark = pytest.mark.skipif(not IS_PY36_OR_GREATER or not IS_CPYTHON or not TEST_CYTHON, reason='Requires CPython >= 3.6')
 
 
+def _get_environ(writer):
+    env = os.environ.copy()
+    env['PYDEVD_USE_FRAME_EVAL'] = 'YES'
+    env['PYDEVD_USE_CYTHON'] = 'YES'
+    return env
+
+
 @pytest.fixture
 def case_setup_force_frame_eval(case_setup):
-
-    def get_environ(writer):
-        env = os.environ.copy()
-        env['PYDEVD_USE_FRAME_EVAL'] = 'YES'
-        env['PYDEVD_USE_CYTHON'] = 'YES'
-        return env
 
     original_test_file = case_setup.test_file
 
     @contextmanager
     def test_file(*args, **kwargs):
-        kwargs.setdefault('get_environ', get_environ)
+        kwargs.setdefault('get_environ', _get_environ)
         with original_test_file(*args, **kwargs) as writer:
             yield writer
 
@@ -251,3 +252,39 @@ def test_frame_eval_ignored_breakpoint(case_setup_force_frame_eval):
         writer.write_run_thread(hit.thread_id)
 
         writer.finished_ok = True
+
+
+@pytest.fixture
+def case_setup_multiproc_force_frame_eval(case_setup_multiproc):
+
+    original_test_file = case_setup_multiproc.test_file
+
+    @contextmanager
+    def test_file(*args, **kwargs):
+        kwargs.setdefault('get_environ', _get_environ)
+        with original_test_file(*args, **kwargs) as writer:
+            yield writer
+
+    case_setup_multiproc.test_file = test_file
+    return case_setup_multiproc
+
+
+def test_frame_eval_reset_environment_on_fork(case_setup_multiproc_force_frame_eval):
+    with case_setup_multiproc_force_frame_eval.test_file('_debugger_case_environment_reset_on_fork.py') as writer:
+        break_line = writer.get_line_index_with_content('break here')
+
+        writer.write_add_breakpoint(break_line)
+
+        wait_for_condition(lambda: len(writer.writers) == 1)
+        writer1 = writer.writers[0]
+
+        writer1.write_make_initial_run()
+
+        hit = writer1.wait_for_breakpoint_hit(line=break_line)
+        writer1.write_run_thread(hit.thread_id)
+
+        wait_for_condition(lambda: len(writer.writers) == 2)
+        writer2 = writer.writers[1]
+        writer2.write_make_initial_run()
+
+        writer.all_finished_ok()

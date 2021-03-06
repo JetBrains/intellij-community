@@ -1,44 +1,31 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.EmptyIntHashSet;
-import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.ApiStatus;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class InvertedIndexUtil {
+public final class InvertedIndexUtil {
   @NotNull
-  public static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
-                                                                       @NotNull Collection<? extends K> dataKeys,
-                                                                       @Nullable Condition<? super K> keyChecker,
-                                                                       @Nullable Condition<? super V> valueChecker,
-                                                                       @Nullable ValueContainer.IntPredicate idChecker)
+  public static <K, V, I> IntSet collectInputIdsContainingAllKeys(@NotNull InvertedIndex<? super K, V, I> index,
+                                                                  @NotNull Collection<? extends K> dataKeys,
+                                                                  @Nullable Condition<? super K> keyChecker,
+                                                                  @Nullable Condition<? super V> valueChecker,
+                                                                  @Nullable ValueContainer.IntPredicate idChecker)
     throws StorageException {
-    TIntHashSet mainIntersection = null;
+    IntSet mainIntersection = null;
 
     for (K dataKey : dataKeys) {
       if (keyChecker != null && !keyChecker.value(dataKey)) continue;
 
-      final TIntHashSet copy = new TIntHashSet();
-      final ValueContainer<V> container = index.getData(dataKey);
+      IntSet copy = new IntOpenHashSet();
+      ValueContainer<V> container = index.getData(dataKey);
 
       for (ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
         final V value = valueIt.next();
@@ -60,19 +47,21 @@ public class InvertedIndexUtil {
           }
         }
         else {
-          mainIntersection.forEach(id -> {
-            if (predicate.contains(id)) copy.add(id);
-            return true;
-          });
+          for (IntIterator intIterator = mainIntersection.iterator(); intIterator.hasNext(); ) {
+            int id = intIterator.nextInt();
+            if (predicate.contains(id) && (idChecker == null || idChecker.contains(id))) {
+              copy.add(id);
+            }
+          }
         }
       }
 
       mainIntersection = copy;
       if (mainIntersection.isEmpty()) {
-        return EmptyIntHashSet.INSTANCE;
+        return IntSets.EMPTY_SET;
       }
     }
 
-    return mainIntersection == null ? EmptyIntHashSet.INSTANCE : mainIntersection;
+    return mainIntersection == null ? IntSets.EMPTY_SET : mainIntersection;
   }
 }

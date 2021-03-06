@@ -16,36 +16,67 @@
 package com.intellij.framework.library;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.net.URL;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
   private final Icon myIcon;
-  private final String myLibraryCategoryName;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
+
+  /**
+   * @deprecated The constructor is meant to maintain the binary compatibility with external plugins.
+   * Please use the constructors with a messagePointer for {@link DownloadableLibraryType#myLibraryCategoryName}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
+                                    @NotNull String libraryTypeId,
+                                    @NotNull String groupId,
+                                    URL @NotNull ... localUrls) {
+    this(() -> libraryCategoryName, libraryTypeId, groupId, localUrls);
+  }
+
+  /**
+   * @deprecated The constructor is meant to maintain the binary compatibility with external plugins.
+   * Please use the constructors with a messagePointer for {@link DownloadableLibraryType#myLibraryCategoryName}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
+                                 @NotNull String libraryTypeId,
+                                 @NotNull String groupId,
+                                 @Nullable Icon icon,
+                                 URL @NotNull ... localUrls) {
+    this(() -> libraryCategoryName, libraryTypeId, groupId, icon, localUrls);
+  }
 
   /**
    * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
    * from it.
+   *
    * @param libraryCategoryName presentable description of the library type
-   * @param libraryTypeId unique id of the library type, used for serialization
-   * @param groupId name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
-   * @param localUrls URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
+   * @param libraryTypeId       unique id of the library type, used for serialization
+   * @param groupId             name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
+   * @param localUrls           URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
    */
-  protected DownloadableLibraryType(@NotNull String libraryCategoryName,
-                               @NotNull String libraryTypeId,
-                               @NotNull String groupId,
-                               URL @NotNull ... localUrls) {
+  protected DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
+                                    @NotNull String libraryTypeId,
+                                    @NotNull String groupId,
+                                    URL @NotNull ... localUrls) {
     this(libraryCategoryName, libraryTypeId, groupId, null, localUrls);
   }
 
@@ -53,12 +84,12 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @deprecated use {@link #DownloadableLibraryType(String, String, String, URL...)} instead and override {@link #getLibraryTypeIcon()}
    */
   @Deprecated
-  public DownloadableLibraryType(@NotNull String libraryCategoryName,
+  public DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
                                  @NotNull String libraryTypeId,
                                  @NotNull String groupId,
                                  @Nullable Icon icon,
                                  URL @NotNull ... localUrls) {
-    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
+    super(new PersistentLibraryKind<>(libraryTypeId) {
       @NotNull
       @Override
       public LibraryVersionProperties createDefaultProperties() {
@@ -97,13 +128,14 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   public String getLibraryCategoryName() {
-    return myLibraryCategoryName;
+    return myLibraryCategoryName.get();
   }
 
   @Override
   public String getDescription(@NotNull LibraryVersionProperties properties) {
     final String versionString = properties.getVersionString();
-    return StringUtil.capitalize(myLibraryCategoryName) + " library" + (versionString != null ? " of version " + versionString : "");
+    final int versionStringPresent = versionString != null ? 0 : 1;
+    return JavaUiBundle.message("downloadable.library.type.description", getLibraryCategoryName(), versionString, versionStringPresent);
   }
 
   @Override
@@ -114,7 +146,9 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   @NotNull
   public Icon getLibraryTypeIcon() {
     if (myIcon == null) {
-      throw PluginException.createByClass("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null, getClass());
+      throw PluginException
+        .createByClass("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null,
+                       getClass());
     }
     return myIcon;
   }

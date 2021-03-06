@@ -26,9 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import git4idea.GitDisposable;
 import git4idea.GitVcs;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @deprecated To remove in IDEA 2017.
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2017")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 @Deprecated
 public class GitTask {
 
@@ -54,11 +57,11 @@ public class GitTask {
 
   private final Project myProject;
   private final GitHandler myHandler;
-  private final String myTitle;
+  private final @NlsContexts.ProgressTitle String myTitle;
   private GitProgressAnalyzer myProgressAnalyzer;
   private ProgressIndicator myProgressIndicator;
 
-  public GitTask(Project project, GitHandler handler, String title) {
+  public GitTask(Project project, GitHandler handler, @NotNull @NlsContexts.ProgressTitle String title) {
     myProject = project;
     myHandler = handler;
     myTitle = title;
@@ -190,7 +193,7 @@ public class GitTask {
 
       @Override
       public void startFailed(@NotNull Throwable exception) {
-        myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
+        myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
       }
 
       @Override
@@ -241,7 +244,7 @@ public class GitTask {
   }
 
   /**
-   * We're using this interface here to work with Task, because standard {@link Task#run(com.intellij.openapi.progress.ProgressIndicator)}
+   * We're using this interface here to work with Task, because standard {@link Task#run(ProgressIndicator)}
    * is busy with timers.
    */
   private interface TaskExecution {
@@ -256,7 +259,9 @@ public class GitTask {
   private abstract class BackgroundableTask extends Task.Backgroundable implements TaskExecution {
     private final GitTaskDelegate myDelegate;
 
-    BackgroundableTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
+    BackgroundableTask(@Nullable final Project project,
+                       @NotNull GitHandler handler,
+                       @NotNull @NlsContexts.ProgressTitle String processTitle) {
       super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
     }
@@ -301,7 +306,7 @@ public class GitTask {
   private abstract class ModalTask extends Task.Modal implements TaskExecution {
     private final GitTaskDelegate myDelegate;
 
-    ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull final String processTitle) {
+    ModalTask(@Nullable final Project project, @NotNull GitHandler handler, @NotNull @NlsContexts.ProgressTitle String processTitle) {
       super(project, processTitle, true);
       myDelegate = new GitTaskDelegate(myProject, handler, this);
     }
@@ -333,13 +338,11 @@ public class GitTask {
     private ProgressIndicator myIndicator;
     private final TaskExecution myTask;
     private ScheduledFuture<?> myTimer;
-    private final Project myProject;
 
     GitTaskDelegate(Project project, GitHandler handler, TaskExecution task) {
-      myProject = project;
       myHandler = handler;
       myTask = task;
-      Disposer.register(myProject, this);
+      Disposer.register(GitDisposable.getInstance(project), this);
     }
 
     public void run(ProgressIndicator indicator) {

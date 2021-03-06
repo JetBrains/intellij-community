@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.toolbar.floating
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.extensions.ExtensionPointName
 import java.awt.FlowLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -21,40 +20,30 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
     val targetComponent = editor.contentComponent
     val container = editor.scrollPane
     val parentDisposable = editor.disposable
-    val toolbarComponents = ArrayList<Pair<FloatingToolbarProvider, FloatingToolbarComponentImpl>>()
-    EP_NAME.forEachExtensionSafe { provider ->
+    val toolbarComponents = ArrayList<FloatingToolbarComponentImpl>()
+    FloatingToolbarProvider.EP_NAME.forEachExtensionSafe { provider ->
       val actionGroup = provider.actionGroup
       val autoHideable = provider.autoHideable
       val component = FloatingToolbarComponentImpl(this, targetComponent, actionGroup, autoHideable, parentDisposable)
-      provider.register(component, parentDisposable)
-      toolbarComponents.add(provider to component)
+      provider.register(editor.dataContext, component, parentDisposable)
+      toolbarComponents.add(component)
+      add(component)
     }
-    toolbarComponents.sortBy { it.first.priority }
-    toolbarComponents.forEach { add(it.second) }
 
     editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-      var lastUpdateTime = Long.MIN_VALUE
-
       override fun mouseMoved(e: EditorMouseEvent) {
-        if (!isInsideActivationArea(container, e.mouseEvent.point)) return
-        for ((provider, component) in toolbarComponents) {
-          if (!provider.autoHideable) continue
-
-          val currentTime = System.nanoTime()
-          if (currentTime > lastUpdateTime + ACTION_UPDATE_THROTTLE_DELAY_NS) {
-            component.update()
-            lastUpdateTime = currentTime
+        if (isInsideActivationArea(container, e.mouseEvent.point)) {
+          for (component in toolbarComponents) {
+            if (component.autoHideable) {
+              component.scheduleShow()
+            }
           }
-          component.scheduleShow()
         }
       }
     })
   }
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<FloatingToolbarProvider>("com.intellij.editorFloatingToolbarProvider")
-    const val ACTION_UPDATE_THROTTLE_DELAY_NS = 500_000_000
-
     private fun isInsideActivationArea(container: JScrollPane, p: Point): Boolean {
       val viewport = container.viewport
       val r = viewport.bounds

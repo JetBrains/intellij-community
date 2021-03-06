@@ -6,9 +6,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -21,12 +22,12 @@ import org.xml.sax.SAXParseException;
 
 import java.util.concurrent.Future;
 
-public class StdErrorReporter extends ErrorReporter {
+public final class StdErrorReporter extends ErrorReporter {
   private static final Logger LOG = Logger.getInstance(StdErrorReporter.class);
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
 
   private final NewErrorTreeViewPanel myErrorsView;
-  private final String myContentName;
+  private final @TabTitle String myContentName;
   private final Project myProject;
 
   public StdErrorReporter(ValidateXmlActionHandler handler, PsiFile psiFile, Runnable rerunAction) {
@@ -61,7 +62,7 @@ public class StdErrorReporter extends ErrorReporter {
         ContentManagerUtil.cleanupContents(content, myProject, myContentName);
         messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
       },
-      XmlBundle.message("validate.xml.open.message.view.command.name"),
+      XmlBundle.message("xml.validate.open.message.view.command.name"),
       null
     );
   }
@@ -146,17 +147,12 @@ public class StdErrorReporter extends ErrorReporter {
 
     @Override
     public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
-      if (event.getContent() == myContent) {
-        if (!myErrorsView.isProcessStopped()) {
-          int result = Messages.showYesNoDialog(
-            XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.text"),
-            XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.title"),
-            Messages.getQuestionIcon()
-          );
-          if (result != Messages.YES) {
-            event.consume();
-          }
-        }
+      if (event.getContent() == myContent &&
+          !myErrorsView.isProcessStopped() &&
+          !MessageDialogBuilder.yesNo(XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.title"),
+                                      XmlBundle.message("xml.validate.validation.is.running.terminate.confirmation.text"))
+            .ask(myProject)) {
+        event.consume();
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.search.searchResultsPanel;
 
 import com.intellij.CommonBundle;
@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
@@ -30,11 +31,11 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -145,7 +146,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
         }
       }
     });
-    myShowingResultsList.setCellRenderer(new ColoredListCellRenderer<ListElementWrapper>() {
+    myShowingResultsList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ListElementWrapper> list,
                                            ListElementWrapper value,
@@ -220,7 +221,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     callScheduledUpdate();
   }
 
-  public void setAdditionalStatusText(@Nullable String statusText) {
+  public void setAdditionalStatusText(@Nullable @NlsContexts.StatusText String statusText) {
     lblSearchStatusCenter.clear();
     if (statusText != null) {
       lblSearchStatusCenter.append(statusText);
@@ -290,7 +291,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateInEdt() {
     try {
       FileDataProviderForSearch fileDataProviderForSearch
@@ -637,7 +638,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
   private class SearchFurtherBtnWrapper implements ListElementWrapper {
     private final SimpleTextAttributes linkText = new SimpleTextAttributes(
-      SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkPressedColor());
+      SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.Foreground.PRESSED);
     private final boolean isForwardDirection;
     private boolean isEnabled = false;
 
@@ -767,10 +768,10 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
   interface EdtRangeSearchEventsListener {
 
-    @CalledInAwt
+    @RequiresEdt
     void onSearchStopped();
 
-    @CalledInAwt
+    @RequiresEdt
     void onSearchFinished();
   }
 }

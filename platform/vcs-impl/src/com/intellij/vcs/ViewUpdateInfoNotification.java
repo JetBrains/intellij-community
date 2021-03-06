@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
@@ -19,8 +20,8 @@ public final class ViewUpdateInfoNotification extends NotificationAction {
   @NotNull private final Project myProject;
   @NotNull private final UpdateInfoTree myTree;
 
-  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree, @NotNull String actionName,
-                                    @NotNull Notification notification) {
+  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree, 
+                                    @NotNull @NlsContexts.NotificationContent String actionName, @NotNull Notification notification) {
     super(actionName);
     myProject = project;
     myTree = updateInfoTree;

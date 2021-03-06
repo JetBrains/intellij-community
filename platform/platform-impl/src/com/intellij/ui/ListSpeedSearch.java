@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.List;
+import java.util.ListIterator;
 
 public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   @Nullable private final Function<? super T, String> myToStringConvertor;
@@ -38,6 +38,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   @Override
   protected void selectElement(Object element, String selectedText) {
     if (element != null) {
+      //noinspection unchecked
       ScrollingUtil.selectItem(myComponent, (T)element);
     }
     else {
@@ -51,20 +52,13 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    return getAllListElements(myComponent);
+  protected int getElementCount() {
+    return myComponent.getModel().getSize();
   }
 
-  public static <T> Object[] getAllListElements(final @NotNull JList<T> list) {
-    ListModel<T> model = list.getModel();
-    if (model instanceof DefaultListModel){ // optimization
-      return ((DefaultListModel<T>)model).toArray();
-    }
-    Object[] elements = new Object[model.getSize()];
-    for(int i = 0; i < elements.length; i++){
-      elements[i] = model.getElementAt(i);
-    }
-    return elements;
+  @Override
+  protected Object getElementAt(int viewIndex) {
+    return myComponent.getModel().getElementAt(viewIndex);
   }
 
   @Override
@@ -77,14 +71,16 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   }
 
   @NotNull
-  private TIntArrayList findAllFilteredElements(@NotNull String s) {
-    TIntArrayList indices = new TIntArrayList();
-    String _s = s.trim();
+  private IntList findAllFilteredElements(@NotNull String s) {
+    IntList indices = new IntArrayList();
+    String trimmed = s.trim();
 
-    Object[] elements = getAllListElements(myComponent);
-    for (int i = 0; i < elements.length; i++) {
-      final Object element = elements[i];
-      if (isMatchingElement(element, _s)) indices.add(i);
+    ListIterator<Object> iterator = getElementIterator(0);
+    while (iterator.hasNext()) {
+      Object element = iterator.next();
+      if (isMatchingElement(element, trimmed)) {
+        indices.add(iterator.previousIndex());
+      }
     }
     return indices;
   }
@@ -116,10 +112,12 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
       String query = mySearch.getEnteredPrefix();
       if (query == null) return;
 
-      TIntArrayList filtered = mySearch.findAllFilteredElements(query);
-      if (filtered.isEmpty()) return;
+      IntList filtered = mySearch.findAllFilteredElements(query);
+      if (filtered.isEmpty()) {
+        return;
+      }
 
-      boolean alreadySelected = Arrays.equals(filtered.toNativeArray(), myList.getSelectedIndices());
+      boolean alreadySelected = Arrays.equals(filtered.toIntArray(), myList.getSelectedIndices());
 
       if (alreadySelected) {
         int anchor = myList.getAnchorSelectionIndex();
@@ -133,12 +131,17 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
         int anchor = -1;
         Object currentElement = mySearch.findElement(query);
         if (currentElement != null) {
-          List<Object> elements = Arrays.asList(getAllListElements(myList));
-          anchor = ContainerUtil.indexOfIdentity(elements, currentElement);
+          ListIterator<Object> iterator = mySearch.getElementIterator(0);
+          while (iterator.hasNext()) {
+            if (iterator.next() == currentElement) {
+              anchor = iterator.previousIndex();
+              break;
+            }
+          }
         }
-        if (anchor == -1) anchor = filtered.get(0);
+        if (anchor == -1) anchor = filtered.getInt(0);
 
-        myList.setSelectedIndices(filtered.toNativeArray());
+        myList.setSelectedIndices(filtered.toIntArray());
         sm.setAnchorSelectionIndex(anchor);
       }
     }

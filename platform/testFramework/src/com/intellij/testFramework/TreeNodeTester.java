@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -13,7 +14,7 @@ import java.util.function.Function;
  * Helper class for testing structure of Swing's trees. It's an improved version of {@link PlatformTestUtil#assertTreeEqual} which allows
  * using custom presentation for tree nodes. Later we can enhance this class to support other kinds of trees.
  */
-public class TreeNodeTester {
+public final class TreeNodeTester {
   private final TreeNode myNode;
   private Function<? super TreeNode, String> myPresenter = Object::toString;
 
@@ -21,6 +22,7 @@ public class TreeNodeTester {
    * @deprecated use {@link com.intellij.ui.tree.TreeTestUtil#TreeTestUtil(JTree)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static TreeNodeTester forTree(JTree tree) {
     return forNode((TreeNode)tree.getModel().getRoot());
   }

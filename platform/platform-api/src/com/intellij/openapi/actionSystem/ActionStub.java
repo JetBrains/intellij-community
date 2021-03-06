@@ -4,12 +4,13 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartFMap;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -28,7 +29,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final String myId;
   private final PluginDescriptor myPlugin;
   private final String myIconPath;
-  private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
+  private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
@@ -45,12 +46,14 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     myIconPath = iconPath;
   }
 
-  public void addActionTextOverride(@NotNull String place, @NotNull Supplier<String> text) {
-    myActionTextOverrides = myActionTextOverrides.plus(place, text);
-  }
-
-  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
-    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
+  @Override
+  public void addSynonym(@NotNull Supplier<String> text) {
+    if (mySynonyms == Collections.<Supplier<String>>emptyList()) {
+      mySynonyms = new SmartList<>(text);
+    }
+    else {
+      mySynonyms.add(text);
+    }
   }
 
   @NotNull
@@ -97,8 +100,9 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   public final void initAction(@NotNull AnAction targetAction) {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
-    for (String place : myActionTextOverrides.keySet()) {
-      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
+    copyActionTextOverrides(targetAction);
+    for (Supplier<String> synonym : mySynonyms) {
+      targetAction.addSynonym(synonym);
     }
   }
 

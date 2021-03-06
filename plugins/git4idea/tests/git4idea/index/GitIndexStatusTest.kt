@@ -21,7 +21,7 @@ class GitIndexStatusTest : GitPlatformTest() {
     get() = _repository!!
 
   private val executable
-    get() = GitExecutableManager.getInstance().getPathToGit(project)
+    get() = GitExecutableManager.getInstance().getExecutable(project)
 
   override fun setUp() {
     super.setUp()

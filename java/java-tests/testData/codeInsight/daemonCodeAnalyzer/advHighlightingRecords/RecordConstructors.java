@@ -1,5 +1,5 @@
 record NotPublic(int x, int y) {
-  <error descr="Canonical constructor must be 'public'">NotPublic</error>(int x, int y) {this.x = x; this.y = y;}
+  NotPublic(int x, int y) {this.x = x; this.y = y;}
   NotPublic() {this(0,0);}
 }
 record Generic(String x) {
@@ -72,5 +72,11 @@ record AssignmentInNonCanonical(int x, int y, long depth) {
 
   void method() {
     <error descr="Cannot assign a value to final variable 'x'">this.x</error> = 0;
+  }
+}
+record DelegateInitializesField(int n) {
+  DelegateInitializesField(boolean b) {
+    this(b ? 1 : 0);
+    System.out.println(n);
   }
 }

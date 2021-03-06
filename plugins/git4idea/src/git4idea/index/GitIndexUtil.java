@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -23,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -33,6 +20,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +33,7 @@ import java.util.List;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
-public class GitIndexUtil {
+public final class GitIndexUtil {
   private static final Logger LOG = getInstance(GitIndexUtil.class);
 
   private static final String EXECUTABLE_MODE = "100755";
@@ -177,6 +165,42 @@ public class GitIndexUtil {
   }
 
   @NotNull
+  public static Hash loadStagedSubmoduleHash(@NotNull GitRepository submodule,
+                                             @NotNull GitRepository parentRepo) throws VcsException {
+    GitLineHandler h = new GitLineHandler(parentRepo.getProject(), parentRepo.getRoot(), GitCommand.SUBMODULE);
+    h.addParameters("status", "--cached");
+    h.addRelativeFiles(Collections.singletonList(submodule.getRoot()));
+    String out = Git.getInstance().runCommand(h).getOutputOrThrow();
+
+    StringScanner s = new StringScanner(out);
+    s.skipChars(1); // status char
+    String hash = s.spaceToken();
+    return HashImpl.build(hash);
+  }
+
+  @Nullable
+  public static Hash loadSubmoduleHashAt(@NotNull GitRepository submodule,
+                                         @NotNull GitRepository parentRepo,
+                                         @NotNull VcsRevisionNumber revisionNumber) throws VcsException {
+    FilePath filePath = VcsUtil.getFilePath(submodule.getRoot());
+    List<StagedFileOrDirectory> lsTree = listTree(parentRepo, Collections.singletonList(filePath), revisionNumber);
+    if (lsTree.size() != 1) {
+      LOG.warn(String.format("Unexpected output of ls-tree command for submodule [%s] at [%s]: %s", filePath, revisionNumber, lsTree));
+      return null;
+    }
+    StagedSubrepo tree = ObjectUtils.tryCast(lsTree.get(0), GitIndexUtil.StagedSubrepo.class);
+    if (tree == null) {
+      LOG.warn(String.format("Unexpected type of ls-tree for submodule [%s] at [%s]: %s", filePath, revisionNumber, tree));
+      return null;
+    }
+    if (!filePath.equals(tree.getPath())) {
+      LOG.warn(String.format("Submodule path [%s] doesn't match the ls-tree output path [%s]", tree.getPath(), filePath));
+      return null;
+    }
+    return HashImpl.build(tree.getBlobHash());
+  }
+
+  @NotNull
   public static Hash write(@NotNull GitRepository repository,
                            @NotNull FilePath filePath,
                            byte @NotNull [] bytes,
@@ -194,8 +218,15 @@ public class GitIndexUtil {
   public static Hash write(@NotNull Project project, @NotNull VirtualFile root,
                            @NotNull FilePath filePath, @NotNull InputStream content,
                            boolean executable) throws VcsException {
+    return write(project, root, filePath, content, executable, false);
+  }
+
+  @NotNull
+  public static Hash write(@NotNull Project project, @NotNull VirtualFile root,
+                           @NotNull FilePath filePath, @NotNull InputStream content,
+                           boolean executable, boolean addNewFiles) throws VcsException {
     Hash hash = hashObject(project, root, filePath, content);
-    updateIndex(project, root, filePath, hash, executable);
+    updateIndex(project, root, filePath, hash, executable, addNewFiles);
     return hash;
   }
 
@@ -217,16 +248,19 @@ public class GitIndexUtil {
                                  @NotNull FilePath filePath,
                                  @NotNull Hash blobHash,
                                  boolean isExecutable) throws VcsException {
-    updateIndex(repository.getProject(), repository.getRoot(), filePath, blobHash, isExecutable);
+    updateIndex(repository.getProject(), repository.getRoot(), filePath, blobHash, isExecutable, false);
   }
 
   public static void updateIndex(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath filePath,
                                  @NotNull Hash blobHash,
-                                 boolean isExecutable) throws VcsException {
+                                 boolean isExecutable, boolean addNewFiles) throws VcsException {
     String mode = isExecutable ? EXECUTABLE_MODE : DEFAULT_MODE;
     String path = VcsFileUtil.relativePath(root, filePath);
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.UPDATE_INDEX);
+    if (addNewFiles) {
+      h.addParameters("--add");
+    }
     if (GitVersionSpecialty.CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM.existsIn(project)) {
       h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
     }
@@ -260,6 +294,7 @@ public class GitIndexUtil {
       return myPath;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "StagedFileOrDirectory[" + myPath + "]";
@@ -285,6 +320,7 @@ public class GitIndexUtil {
       return myExecutable;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "StagedFile[" + myPath + "] at [" + myBlobHash + "]";
@@ -310,6 +346,7 @@ public class GitIndexUtil {
       return myBlobHash;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "StagedSubRepo[" + myPath + "] at [" + myBlobHash + "]";

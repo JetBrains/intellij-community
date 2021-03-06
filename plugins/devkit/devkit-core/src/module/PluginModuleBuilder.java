@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
@@ -46,7 +46,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     String contentEntryPath = getContentEntryPath();
     if (contentEntryPath == null) return;
 
-    String resourceRootPath = contentEntryPath + "/resources";
+    String resourceRootPath = contentEntryPath + "/resources"; //NON-NLS
     VirtualFile contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath);
     if (contentRoot == null) return;
 
@@ -55,7 +55,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
       contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE);
     }
 
-    final String defaultPluginXMLLocation = resourceRootPath + "/META-INF/plugin.xml";
+    final String defaultPluginXMLLocation = resourceRootPath + "/" + PluginDescriptorConstants.PLUGIN_XML_PATH;
     final Module module = rootModel.getModule();
     final Project project = module.getProject();
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
@@ -108,9 +108,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
 
     final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setHtmlText("This project type is recommended for simple plugins, such as a custom UI theme. " +
-                          "For more complex plugins, a Gradle-based project is <a>recommended</a>.");
-    linkLabel.setHyperlinkTarget("https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
+    linkLabel.setHtmlText(DevKitBundle.message("module.wizard.devkit.simple.plugin.label"));
+    linkLabel.setHyperlinkTarget("https://plugins.jetbrains.com/docs/intellij/getting-started.html?from=DevkitPluginModuleWizard");
     panel.addToCenter(linkLabel);
 
     final JComponent component = step.getComponent();

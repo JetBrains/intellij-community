@@ -2,8 +2,10 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -13,6 +15,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,15 +27,13 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.util.ui.TimerUtil.createNamedTimer;
-
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
 
   @NonNls private static final String SOURCE_KEY = "DnD Source";
   @NonNls private static final String TARGET_KEY = "DnD Target";
 
-  public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
+  private static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
 
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
@@ -53,7 +54,7 @@ public final class DnDManagerImpl extends DnDManager {
   private static final Image EMPTY_IMAGE = ImageUtil.createImage(1, 1, Transparency.TRANSLUCENT);
 
   private final Timer myTooltipTimer =
-    createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
+    TimerUtil.createNamedTimer("DndManagerImpl tooltip timer", ToolTipManager.sharedInstance().getInitialDelay(), e -> onTimer());
   private Runnable myHighlighterShowRequest;
   private Rectangle myLastHighlightedRec;
   private int myLastProcessedAction;
@@ -73,6 +74,17 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   @Override
+  public void registerSource(@NotNull DnDSource source, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
+    registerSource(source, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterSource(source, component);
+      }
+    });
+  }
+
+  @Override
   public void unregisterSource(@NotNull AdvancedDnDSource source) {
     unregisterSource(source, source.getComponent());
   }
@@ -80,12 +92,12 @@ public final class DnDManagerImpl extends DnDManager {
   @Override
   public void unregisterSource(@NotNull DnDSource source, @NotNull JComponent component) {
     component.putClientProperty(SOURCE_KEY, null);
-    cleanup(source, null, null);
+    cleanup(null, null);
   }
 
-  private void cleanup(@Nullable final DnDSource source, @Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
+  private void cleanup(@Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
     Runnable cleanup = () -> {
-      if (shouldCancelCurrentDnDOperation(source, target, targetComponent)) {
+      if (shouldCancelCurrentDnDOperation(target, targetComponent)) {
         myLastProcessedOverComponent = null;
         myCurrentDragContext = null;
         resetEvents("cleanup");
@@ -100,9 +112,9 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private boolean shouldCancelCurrentDnDOperation(DnDSource source, DnDTarget target, JComponent targetComponent) {
+  private boolean shouldCancelCurrentDnDOperation(DnDTarget target, JComponent targetComponent) {
     DnDEvent currentDnDEvent = myLastProcessedEvent;
-    if (currentDnDEvent == null || (source != null && currentDnDEvent.equals(source))) {
+    if (currentDnDEvent == null) {
       return true;
     }
 
@@ -127,10 +139,21 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   @Override
+  public void registerTarget(@NotNull DnDTarget target, @NotNull JComponent component, @NotNull Disposable parentDisposable) {
+    registerTarget(target, component);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        unregisterTarget(target, component);
+      }
+    });
+  }
+
+  @Override
   public void unregisterTarget(DnDTarget target, JComponent component) {
     component.putClientProperty(TARGET_KEY, null);
 
-    cleanup(null, target, component);
+    cleanup(target, component);
   }
 
   private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, DataFlavor @Nullable [] flavors, @Nullable Transferable transferable) {
@@ -153,7 +176,7 @@ public final class DnDManagerImpl extends DnDManager {
       }
     }
 
-    if (currentEvent == null) return currentEvent;
+    if (currentEvent == null) return null;
 
     final DnDAction dndAction = getDnDActionForPlatformAction(nativeAction);
     if (dndAction == null) return null;
@@ -281,7 +304,7 @@ public final class DnDManagerImpl extends DnDManager {
     myCurrentDragContext.setCursor(cursor);
   }
 
-  private boolean update(DnDTarget target, DnDEvent currentEvent) {
+  private boolean update(DnDTargetChecker target, DnDEvent currentEvent) {
     LOG.debug("update target:" + target);
 
     currentEvent.clearDelegatedTarget();
@@ -518,7 +541,7 @@ public final class DnDManagerImpl extends DnDManager {
           pair = Pair.create(EMPTY_IMAGE, new Point(0, 0));
         }
 
-        if (SystemInfo.isMac && MultiResolutionImageProvider.isMultiResolutionImageAvailable()) {
+        if (SystemInfo.isMac && true) {
           Image mrImage = MultiResolutionImageProvider.convertFromJBImage(pair.first);
           if (mrImage != null) pair = new Pair<>(mrImage, pair.second);
         }

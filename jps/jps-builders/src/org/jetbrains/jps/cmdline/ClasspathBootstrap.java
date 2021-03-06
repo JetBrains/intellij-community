@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.google.gson.Gson;
@@ -18,12 +18,16 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
+import kotlin.Pair;
 import net.n3.nanoxml.IXMLBuilder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
+import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -32,18 +36,20 @@ import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import javax.tools.*;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class ClasspathBootstrap {
+public final class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance(ClasspathBootstrap.class);
 
   private ClasspathBootstrap() { }
 
   private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
-    Message.class, // protobuf
     NetUtil.class, // netty common
     EventLoopGroup.class, // netty transport
     AddressResolverGroup.class, // netty resolver
@@ -51,11 +57,20 @@ public class ClasspathBootstrap {
     ProtobufDecoder.class,  // netty codec
   };
 
+
+  private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
+  private static final String PROTOBUF_JAVA6_VERSION = "3.5.1";
+  private static final String PROTOBUF_JAVA6_JAR_NAME = "protobuf-java-" + PROTOBUF_JAVA6_VERSION + ".jar";
+
+  private static final String EXTERNAL_JAVAC_MODULE_NAME = "intellij.platform.jps.build.javac.rt.rpc";
+  private static final String EXTERNAL_JAVAC_JAR_NAME = "jps-javac-rt-rpc.jar";
+
   public static List<String> getBuildProcessApplicationClasspath() {
     final Set<String> cp = new HashSet<>();
 
     cp.add(getResourcePath(BuildMain.class));
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
+    cp.add(getResourcePath(JavacReferenceCollector.class));  // jps-javac-extension library
 
     cp.addAll(PathManager.getUtilClassPath()); // intellij.platform.util
 
@@ -63,6 +78,7 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(aClass));
     }
 
+    cp.add(getResourcePath(Message.class));  // protobuf
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(JpsModel.class));  // intellij.platform.jps.model
@@ -76,10 +92,11 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(JavaProjectBuilder.class));  // QDox lightweight java parser
     cp.add(getResourcePath(Gson.class));  // gson
 
-    cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
+    cp.add(getResourcePath(Pair.class)); // kotlin-stdlib
+    cp.add(PathManager.getResourceRoot(ClasspathBootstrap.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
+    cp.add(PathManager.getResourceRoot(ClasspathBootstrap.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
 
-    cp.addAll(getJavac8RefScannerClasspath());
-    //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly
+    cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
@@ -102,6 +119,8 @@ public class ClasspathBootstrap {
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
+    cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
+
     // util
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
@@ -110,6 +129,7 @@ public class ClasspathBootstrap {
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
     }
+    addExternalJavacRpcClasspath(cp);
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
@@ -136,15 +156,18 @@ public class ClasspathBootstrap {
         else {
           compilerClass = Class.forName("com.sun.tools.javac.api.JavacTool", false, ClasspathBootstrap.class.getClassLoader());
         }
-        String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(compilerClass).getPath());
-        String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
-        if (relPath != null) {
-          if (relPath.contains("..")) {
-            relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-          }
+        final File resourceFile = getResourceFile(compilerClass);
+        if (resourceFile != null) {
+          String localJarPath = FileUtil.toSystemIndependentName(resourceFile.getPath());
+          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
           if (relPath != null) {
-            final File targetFile = new File(sdkHome, relPath);
-            cp.add(targetFile);  // tools.jar
+            if (relPath.contains("..")) {
+              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+            }
+            if (relPath != null) {
+              final File targetFile = new File(sdkHome, relPath);
+              cp.add(targetFile);  // tools.jar
+            }
           }
         }
       }
@@ -162,12 +185,41 @@ public class ClasspathBootstrap {
     return new ArrayList<>(cp);
   }
 
+  private static void addExternalJavacRpcClasspath(@NotNull Collection<File> cp) {
+    Path rootPath = Paths.get(getResourcePath(ExternalJavacProcess.class));
+    if (Files.isRegularFile(rootPath)) {
+      // running regular installation
+      Path rtDirPath = rootPath.resolveSibling("rt");
+      cp.add(rtDirPath.resolve(EXTERNAL_JAVAC_JAR_NAME).toFile());
+      cp.add(rtDirPath.resolve(PROTOBUF_JAVA6_JAR_NAME).toFile());
+    }
+    else {
+      // running from sources or on the build server
+      cp.add(rootPath.resolveSibling(EXTERNAL_JAVAC_MODULE_NAME).toFile());
+
+      // take the library from the local maven repository
+      File localRepositoryDir = getMavenLocalRepositoryDir();
+      File protobufJava6File = new File(FileUtil.join(localRepositoryDir.getAbsolutePath(),
+                               "com", "google", "protobuf", "protobuf-java", PROTOBUF_JAVA6_VERSION,
+                               PROTOBUF_JAVA6_JAR_NAME));
+      cp.add(protobufJava6File);
+    }
+  }
+
+  private static @NotNull File getMavenLocalRepositoryDir() {
+    final String userHome = System.getProperty("user.home", null);
+    return userHome != null ? new File(userHome, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
+  }
+
+  @Nullable
   public static String getResourcePath(Class<?> aClass) {
     return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 
+  @Nullable
   public static File getResourceFile(Class<?> aClass) {
-    return new File(getResourcePath(aClass));
+    final String resourcePath = getResourcePath(aClass);
+    return resourcePath != null? new File(resourcePath) : null;
   }
 
   private static List<String> getInstrumentationUtilRoots() {
@@ -183,15 +235,4 @@ public class ClasspathBootstrap {
     }
   }
 
-  private static List<String> getJavac8RefScannerClasspath() {
-    String instrumentationPath = getResourcePath(NotNullVerifyingInstrumenter.class);
-    File instrumentationUtil = new File(instrumentationPath);
-    if (instrumentationUtil.isDirectory()) {
-      //running from sources: load classes from .../out/production/intellij.java.jps.javacRefScanner8
-      return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "intellij.java.jps.javacRefScanner8").getAbsolutePath());
-    }
-    else {
-      return Collections.singletonList(instrumentationPath);
-    }
-  }
 }

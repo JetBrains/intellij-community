@@ -2,24 +2,25 @@
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
-import com.intellij.credentialStore.EncryptionSpec
-import com.intellij.credentialStore.LOG
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KdbxPassword.Companion.createAndClear
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
-import com.intellij.credentialStore.toByteArrayAndClear
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import java.awt.Component
 import java.nio.file.Files
 import java.nio.file.Path
@@ -115,7 +116,7 @@ internal open class KeePassFileManager(private val file: Path,
           null
         }
         catch (e: IncorrectMasterPasswordException) {
-          "Master password not correct."
+          CredentialStoreBundle.message("dialog.message.master.password.not.correct")
         }
       }) {
       return false
@@ -128,7 +129,7 @@ internal open class KeePassFileManager(private val file: Path,
     return true
   }
 
-  fun askAndSetMasterKey(event: AnActionEvent?, topNote: String? = null): Boolean {
+  fun askAndSetMasterKey(event: AnActionEvent?, @Nls(capitalization = Sentence) topNote: String? = null): Boolean {
     val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
 
     // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
@@ -200,7 +201,10 @@ internal open class KeePassFileManager(private val file: Path,
     return chars
   }
 
-  protected open fun requestMasterPassword(title: String, topNote: String? = null, contextComponent: Component? = null, ok: (value: ByteArray) -> String?): Boolean {
+  protected open fun requestMasterPassword(@DialogTitle title: String,
+                                           @Nls(capitalization = Sentence) topNote: String? = null,
+                                           contextComponent: Component? = null,
+                                           @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
     val passwordField = JPasswordField()
     val panel = panel {
       topNote?.let {

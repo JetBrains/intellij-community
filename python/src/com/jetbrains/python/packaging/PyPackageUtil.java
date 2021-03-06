@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Sets;
@@ -21,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -55,7 +42,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +55,7 @@ import java.util.stream.Stream;
 /**
  * @author vlan
  */
-public class PyPackageUtil {
+public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
   public static final String PIP = "pip";
   public static final String DISTRIBUTE = "distribute";
@@ -104,7 +90,7 @@ public class PyPackageUtil {
     for (VirtualFile root : PyUtil.getSourceRoots(module)) {
       final VirtualFile child = root.findChild("setup.py");
       if (child != null) {
-        final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(child);
+        final PsiFile file = ReadAction.compute(() -> PsiManager.getInstance(module.getProject()).findFile(child));
         if (file instanceof PyFile) {
           return (PyFile)file;
         }
@@ -291,7 +277,7 @@ public class PyPackageUtil {
     final Ref<PyCallExpression> result = new Ref<>(null);
     file.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyCallExpression(PyCallExpression node) {
+      public void visitPyCallExpression(@NotNull PyCallExpression node) {
         final PyExpression callee = node.getCallee();
         final String name = PyUtil.getReadableRepr(callee, true);
         if ("setup".equals(name)) {
@@ -300,7 +286,7 @@ public class PyPackageUtil {
       }
 
       @Override
-      public void visitPyElement(PyElement node) {
+      public void visitPyElement(@NotNull PyElement node) {
         if (!(node instanceof ScopeOwner)) {
           super.visitPyElement(node);
         }
@@ -370,6 +356,11 @@ public class PyPackageUtil {
     final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
+      if (PythonSdkUtil.isDisposed(sdk)) {
+        packagesRef.set(Collections.emptyList());
+        return;
+      }
+
       indicator.setIndeterminate(true);
       try {
         final PyPackageManager manager = PyPackageManager.getInstance(sdk);
@@ -412,7 +403,7 @@ public class PyPackageUtil {
   }
 
 
-  public static boolean hasManagement(@NotNull List<? extends PyPackage> packages) {
+  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
     return (PyPsiPackageUtil.findPackage(packages, SETUPTOOLS) != null || PyPsiPackageUtil.findPackage(packages, DISTRIBUTE) != null) ||
            PyPsiPackageUtil.findPackage(packages, PIP) != null;
   }
@@ -518,17 +509,20 @@ public class PyPackageUtil {
   /**
    * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
    *
-   * @param sdk      SDK those roots need to be watched
-   * @param runnable executable that's going to be executed
+   * @param sdk              SDK those roots need to be watched
+   * @param parentDisposable disposable for the registered event listeners
+   * @param runnable         executable that's going to be executed
    */
-  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk, @NotNull Runnable runnable) {
+  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk,
+                                                      @NotNull Disposable parentDisposable,
+                                                      @NotNull Runnable runnable) {
     final Application app = ApplicationManager.getApplication();
-    final Disposable disposable = sdk instanceof Disposable ? (Disposable)sdk : app;
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
         final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
+        if (roots.isEmpty()) return null;
         allEvents:
         for (VFileEvent event : events) {
           if (event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) continue;
@@ -552,13 +546,13 @@ public class PyPackageUtil {
         // No continuation in write action is needed
         return null;
       }
-    }, disposable);
+    }, parentDisposable);
   }
 
   @NotNull
   private static Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
     final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-    final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
+    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     final VirtualFile skeletonsRoot = LocalFileSystem.getInstance().findFileByPath(skeletonsPath);
     result.removeIf(vf -> vf.equals(skeletonsRoot) ||
                           vf.equals(PyUserSkeletonsUtil.getUserSkeletonsDirectory()) ||

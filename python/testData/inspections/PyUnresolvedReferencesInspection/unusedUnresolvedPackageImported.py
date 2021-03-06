@@ -1,1 +1,1 @@
-<warning descr="Unused import statement 'import spam.eggs'">import <error descr="No module named spam">spam</error>.eggs</warning>
+<warning descr="Unused import statement 'import spam.eggs'">import <error descr="No module named 'spam'">spam</error>.eggs</warning>

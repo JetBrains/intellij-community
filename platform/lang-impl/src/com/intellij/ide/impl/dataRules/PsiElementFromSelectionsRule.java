@@ -34,6 +34,7 @@ public class PsiElementFromSelectionsRule implements GetDataRule {
     Object items = PlatformDataKeys.SELECTED_ITEMS.getData(dataProvider);
     if (items == null) return null;
 
+    //noinspection ConstantConditions
     if (!(items instanceof Object[])) {
       String errorMessage = "Value of type Object[] is expected, but " + items.getClass() + " is returned by " + dataProvider.getClass();
       PluginException.logPluginError(LOG, errorMessage, null, dataProvider.getClass());

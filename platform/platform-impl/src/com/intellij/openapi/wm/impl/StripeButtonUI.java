@@ -17,19 +17,19 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-public final class StripeButtonUI extends MetalToggleButtonUI {
+public class StripeButtonUI extends MetalToggleButtonUI {
   private final Rectangle myIconRect = new Rectangle();
   private final Rectangle myTextRect = new Rectangle();
   private final Rectangle myViewRect = new Rectangle();
   private Insets ourViewInsets = JBUI.emptyInsets();
 
-  private static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.hoverBackground",
+  static final Color BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.hoverBackground",
                                new JBColor(Gray.x55.withAlpha(40), Gray.x0F.withAlpha(40)));
 
-  private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedBackground",
+  static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedBackground",
                                new JBColor(Gray.x55.withAlpha(85), Gray.x0F.withAlpha(85)));
 
-  private static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedForeground", new JBColor(Gray.x00, Gray.xFF));
+  static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("ToolWindow.Button.selectedForeground", new JBColor(Gray.x00, Gray.xFF));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {

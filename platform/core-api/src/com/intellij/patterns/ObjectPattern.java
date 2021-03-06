@@ -101,7 +101,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   public Self and(final ElementPattern pattern) {
     return with(new PatternConditionPlus<T, T>("and", pattern) {
       @Override
-      public boolean processValues(T t, ProcessingContext context, PairProcessor<T, ProcessingContext> processor) {
+      public boolean processValues(T t, ProcessingContext context, PairProcessor<? super T, ? super ProcessingContext> processor) {
         return processor.process(t, context);
       }
     });

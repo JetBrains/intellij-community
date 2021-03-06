@@ -52,3 +52,49 @@ class V extends B implements Consumer<String> {}
 interface Consumer<T> {
   void accept(T t);
 }
+class Y {
+
+  private void <warning descr="Method 'x()' may be 'static'">x</warning>() {
+    new Object() {
+      String s;
+      void z() {
+        s.hashCode();
+      }
+    };
+  }
+}
+class X {
+  private void test() {
+    new X() {
+      void run() {
+        foo();
+        test();
+        X.this.test();
+      }
+    };
+  }
+
+  native void foo();
+}
+class Xx {
+  private void <warning descr="Method 'test()' may be 'static'">test</warning>() {
+    new Xx() {
+      void run() {
+        foo(); // super.foo(), not Xx.this.foo()
+        test();
+      }
+    };
+  }
+
+  native void foo();
+}
+
+
+interface IntSupplier {
+  Object[] supply(int dim);
+}
+class WithArrayReference {
+  private void <warning descr="Method 'foo()' may be 'static'">foo</warning>() {
+    IntSupplier aNew = Object[]::new;
+  }
+}

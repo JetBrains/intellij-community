@@ -115,7 +115,7 @@ public class CoreLocalVirtualFile extends VirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     return VfsUtilCore.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(myIoFile)), this);
   }
 

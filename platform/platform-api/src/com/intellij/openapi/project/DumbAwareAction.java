@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<String> dynamicText) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText) {
     super(dynamicText);
   }
 
@@ -51,23 +51,26 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text, description, icon);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                            @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                            @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText, @Nullable Icon icon) {
     super(dynamicText, icon);
   }
 
-  private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
+  static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>>,
+                                                                        LightEditCompatible {
     private final Consumer<? super AnActionEvent> myActionPerformed;
 
-    private SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
+    SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@NlsActions.ActionText String text,
-                                  Consumer<? super AnActionEvent> actionPerformed) {
+    SimpleDumbAwareAction(@NlsActions.ActionText String text,
+                          Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
     }

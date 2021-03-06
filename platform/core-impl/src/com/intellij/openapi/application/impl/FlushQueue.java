@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -9,13 +10,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-class FlushQueue {
+final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
   private static final boolean DEBUG = LOG.isDebugEnabled();
   private final Object LOCK = new Object();
@@ -23,14 +23,13 @@ class FlushQueue {
   private final List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
 
   private final ArrayDeque<RunnableInfo> myQueue = new ArrayDeque<>(); //protected by LOCK
-  @NotNull
-  private final Consumer<Runnable> myRunnableExecutor;
+  private final @NotNull Consumer<? super Runnable> myRunnableExecutor;
 
-  private volatile boolean myMayHaveItems = false;
+  private volatile boolean myMayHaveItems;
 
   private RunnableInfo myLastInfo;
 
-  FlushQueue(@NotNull Consumer<Runnable> executor) {
+  FlushQueue(@NotNull Consumer<? super Runnable> executor) {
     myRunnableExecutor = executor;
   }
 
@@ -77,11 +76,13 @@ class FlushQueue {
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Async.Execute RunnableInfo info) {
-    if (ClientId.Companion.getPropagateAcrossThreads())
+  private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
+    if (ClientId.Companion.getPropagateAcrossThreads()) {
       ClientId.withClientId(info.clientId, info.runnable);
-    else
+    }
+    else {
       info.runnable.run();
+    }
   }
 
   @Override
@@ -189,7 +190,7 @@ class FlushQueue {
     }
   }
 
-  static class RunnableInfo {
+  final static class RunnableInfo {
     @NotNull private final Runnable runnable;
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;

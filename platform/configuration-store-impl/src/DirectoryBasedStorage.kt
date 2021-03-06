@@ -10,12 +10,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
-import com.intellij.util.SmartList
-import com.intellij.util.containers.SmartHashSet
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -26,9 +21,11 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
                                          protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
-  protected abstract val virtualFile: VirtualFile?
+  protected abstract val dir: Path
 
-  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  public override fun loadData(): StateMap {
+    return StateMap.fromMap(DirectoryStorageUtil.loadFrom(dir, pathMacroSubstitutor))
+  }
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
@@ -57,13 +54,13 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
       }
     }
     else {
-      val subElements = SmartList<Element>()
+      val subElements = ArrayList<Element>()
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
         subElements.add(subState.clone())
       }
 
-      if (!subElements.isEmpty()) {
+      if (subElements.isNotEmpty()) {
         splitter.mergeStatesInto(state, subElements.toTypedArray())
       }
     }
@@ -78,7 +75,7 @@ interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
   fun setFileState(fileName: String, componentName: String, element: Element?)
 }
 
-open class DirectoryBasedStorage(private val dir: Path,
+open class DirectoryBasedStorage(override val dir: Path,
                                  @Suppress("DEPRECATION") splitter: com.intellij.openapi.components.StateSplitter,
                                  pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
   override val isUseVfsForWrite: Boolean
@@ -87,15 +84,14 @@ open class DirectoryBasedStorage(private val dir: Path,
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 
-  override val virtualFile: VirtualFile?
-    get() {
-      var result = cachedVirtualFile
-      if (result == null) {
-        result = LocalFileSystem.getInstance().findFileByPath(dir.systemIndependentPath)
-        cachedVirtualFile = result
-      }
-      return result
+  private fun getVirtualFile(): VirtualFile? {
+    var result = cachedVirtualFile
+    if (result == null) {
+      result = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir)
+      cachedVirtualFile = result
     }
+    return result
+  }
 
   internal fun setVirtualDir(dir: VirtualFile?) {
     cachedVirtualFile = dir
@@ -106,7 +102,7 @@ open class DirectoryBasedStorage(private val dir: Path,
   private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase(), SaveSession, DirectoryBasedSaveSessionProducer {
     private var copiedStorageData: MutableMap<String, Any>? = null
 
-    private val dirtyFileNames = SmartHashSet<String>()
+    private val dirtyFileNames = HashSet<String>()
     private var isSomeFileRemoved = false
 
     override fun setSerializedState(componentName: String, element: Element?) {
@@ -118,12 +114,12 @@ open class DirectoryBasedStorage(private val dir: Path,
           copiedStorageData!!.clear()
         }
         else if (!originalStates.isEmpty()) {
-          copiedStorageData = Object2ObjectOpenHashMap()
+          copiedStorageData = HashMap()
         }
         return
       }
 
-      val existingFiles = ObjectOpenHashSet<String>(stateAndFileNameList.size)
+      val existingFiles = HashSet<String>(stateAndFileNameList.size)
       for (pair in stateAndFileNameList) {
         doSetState(pair.second, pair.first)
         existingFiles.add(pair.second)
@@ -173,7 +169,7 @@ open class DirectoryBasedStorage(private val dir: Path,
       val stateMap = StateMap.fromMap(copiedStorageData!!)
 
       if (copiedStorageData!!.isEmpty()) {
-        val dir = storage.virtualFile
+        val dir = storage.getVirtualFile()
         if (dir != null && dir.exists()) {
           dir.delete(this)
         }
@@ -181,11 +177,11 @@ open class DirectoryBasedStorage(private val dir: Path,
         return
       }
 
-      if (!dirtyFileNames.isEmpty) {
+      if (dirtyFileNames.isNotEmpty()) {
         saveStates(stateMap)
       }
       if (isSomeFileRemoved) {
-        val dir = storage.virtualFile
+        val dir = storage.getVirtualFile()
         if (dir != null && dir.exists()) {
           deleteFiles(dir)
         }
@@ -204,7 +200,7 @@ open class DirectoryBasedStorage(private val dir: Path,
         val element = states.getElement(fileName) ?: continue
 
         if (dir == null || !dir.exists()) {
-          dir = storage.virtualFile
+          dir = storage.getVirtualFile()
           if (dir == null || !dir.exists()) {
             dir = createDir(storage.dir, this)
             storage.cachedVirtualFile = dir
@@ -244,7 +240,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     storageDataRef.set(newStates)
   }
 
-  override fun toString() = "${javaClass.simpleName}(file=${virtualFile?.path}, componentName=$componentName)"
+  override fun toString() = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
 }
 
 private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {

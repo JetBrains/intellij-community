@@ -1,14 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.DarculaColors;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
-import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,10 +16,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
  * @author Pavel.Dolgov
  */
 class PreviewTreeRenderer extends ColoredTreeCellRenderer {
-  private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-  private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
-  private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
-
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value,
                                     boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -48,8 +41,7 @@ class PreviewTreeRenderer extends ColoredTreeCellRenderer {
       append(node.getLineNumberChunk(), node);
     }
     else {
-      SimpleTextAttributes attributes = StartupUiUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes;
-      append("Invalid ", patchMainTextAttrs(attributes, node));
+      append(JavaRefactoringBundle.message("extract.method.preview.node.invalid.prefix"), patchMainTextAttrs(UsageTreeColors.INVALID_ATTRIBUTES, node));
     }
 
     for (TextChunk textChunk : node.getTextChunks()) {

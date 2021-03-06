@@ -85,7 +85,7 @@ public class LanguageListCompletionTest extends BasePlatformTestCase {
   }
 
   public void testCustomCompletionProvider() {
-    CodeFenceLanguageProvider.EP_NAME.getPoint(null).registerExtension(new CodeFenceLanguageProvider() {
+    CodeFenceLanguageProvider.EP_NAME.getPoint().registerExtension(new CodeFenceLanguageProvider() {
         @Nullable
         @Override
         public Language getLanguageByInfoString(@NotNull String infoString) {

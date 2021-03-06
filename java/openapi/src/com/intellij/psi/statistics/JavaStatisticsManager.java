@@ -134,7 +134,7 @@ public abstract class JavaStatisticsManager {
     return ArrayUtilRt.toStringArray(list);
   }
 
-  @NotNull
+  @NotNull @NonNls
   public static String getAfterNewKey(@Nullable PsiType expectedType) {
     return getMemberUseKey1(expectedType) + "###smartAfterNew";
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -22,7 +23,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         doCheckCall(expression, () -> expression.resolve(), qualifierExpression, referenceNameElement,
-                    "Method reference can be replaced with qualifier");
+                    InspectionGadgetsBundle.message("replace.method.ref.with.qualifier.problem.method"));
       }
 
       @Override
@@ -34,7 +35,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
           PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)asMethodReference).getMethodExpression();
           PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
           doCheckCall(lambdaExpression, () -> ((PsiMethodCallExpression)asMethodReference).resolveMethod(), qualifierExpression, asMethodReference,
-                      "Lambda can be replaced with call qualifier");
+                    InspectionGadgetsBundle.message("replace.method.ref.with.qualifier.problem.lambda"));
         }
       }
 
@@ -42,7 +43,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
                                Supplier<? extends PsiElement> resolver,
                                PsiExpression qualifierExpression,
                                PsiElement referenceNameElement,
-                               final String errorMessage) {
+                               final @InspectionMessage String errorMessage) {
         if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {

@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataFile;
@@ -131,13 +132,13 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-4556
   public void testAddSelfFunction() {
     doInspectionTest("AddSelfFunction.py", PyUnresolvedReferencesInspection.class,
-                     PyBundle.message("QFIX.unresolved.reference", "get_a", "self"), true, true);
+                     PyPsiBundle.message("QFIX.unresolved.reference", "get_a", "self"), true, true);
   }
 
   // PY-9721
   public void testAddSelfToClassmethod() {
     doInspectionTest("AddSelfToClassmethod.py", PyUnresolvedReferencesInspection.class,
-                     PyBundle.message("QFIX.unresolved.reference", "foo", "cls"), true, true);
+                     PyPsiBundle.message("QFIX.unresolved.reference", "foo", "cls"), true, true);
   }
 
   public void testAddCls() {
@@ -145,7 +146,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testRenameToSelf() {
-    doInspectionTest(PyMethodParametersInspection.class, PyPsiBundle.message("QFIX.rename.parameter.to.$0", "self"), true, true);
+    doInspectionTest(PyMethodParametersInspection.class, PyPsiBundle.message("QFIX.rename.parameter", "self"), true, true);
   }
 
   public void testRemoveTrailingSemicolon() {
@@ -166,6 +167,12 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyDictCreationInspection.class, PyPsiBundle.message("QFIX.dict.creation"), true, true);
   }
 
+  // PY-40177
+  public void testDictCreationWithDoubleStars() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doInspectionTest(PyDictCreationInspection.class, PyPsiBundle.message("QFIX.dict.creation"), true, true));
+  }
+
   public void testTransformClassicClass() {
     doInspectionTest(PyClassicStyleClassInspection.class, PyPsiBundle.message("QFIX.classic.class.transform"), true, true);
   }
@@ -179,7 +186,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testSimplifyBooleanCheck() {
-    doInspectionTest(PySimplifyBooleanCheckInspection.class, PyPsiBundle.message("QFIX.simplify.$0", "b"), true, true);
+    doInspectionTest(PySimplifyBooleanCheckInspection.class, PyPsiBundle.message("QFIX.simplify.boolean.expression", "b"), true, true);
   }
 
   public void testMoveFromFutureImport() {
@@ -204,6 +211,12 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest("AddClass.py", PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true);
   }
 
+  // PY-42389
+  public void testAddClassFixPython3() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () ->
+                         doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true));
+  }
+
   // PY-21204
   public void testAddClassFromTypeComment() {
     doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true);
@@ -215,20 +228,56 @@ public class PyQuickFixTest extends PyTestCase {
                          () -> doInspectionTest(PyUnresolvedReferencesInspection.class, "Create class 'MyClass'", true, true));
   }
 
+  // PY-33802
+  public void testAddClassToImportedModule() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "mod.py"), "mod.py");
+  }
+
+  // PY-33802
+  public void testAddClassToImportedPackage() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "__init__.py"), "pkg/__init__.py");
+  }
+
+  // PY-33802
+  public void testAddClassToModuleInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "mod.py"), "mod.py");
+  }
+
+  // PY-33802
+  public void testAddClassToPackageInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.class.in.module", "Clzz", "__init__.py"),
+                               "mypack/__init__.py");
+  }
+
   // PY-21204
   public void testAddFunctionFromFString() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "my_function"), true, true));
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "my_function"), true, true));
   }
 
-  // PY-1602
-  public void testAddFunctionToModule() {
-    doInspectionTest(
-      "AddFunctionToModule.py",
-      PyUnresolvedReferencesInspection.class,
-      PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", "frob", "AddFunctionToModule.py"),
-      true, true
-    );
+  // PY-1465
+  public void testAddFunctionToModuleInImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.function.in.module", "func", "mod.py"),
+                               "mod.py");
+  }
+
+  // PY-34710
+  public void testAddFunctionToModuleInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.function.in.module", "foo", "mod.py"),
+                               "mod.py");
+  }
+
+  // PY-34710
+  public void testAddFunctionToPackageInFromImport() {
+    doMultiFilesInspectionTest(PyUnresolvedReferencesInspection.class,
+                               PyPsiBundle.message("QFIX.create.function.in.module", "foo", "__init__.py"),
+                               "mypack/__init__.py");
   }
 
   // PY-1470
@@ -334,20 +383,20 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-1265
   public void testStatementEffectIntroduceVariable() {
-    doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
+    doInspectionTest(PyStatementEffectInspection.class, PyPsiBundle.message("QFIX.introduce.variable"), true, true);
   }
 
   // PY-2092
   public void testUnresolvedRefCreateFunction() {
     doInspectionTest(PyUnresolvedReferencesInspection.class,
-                     PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true);
+                     PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true);
   }
 
   public void testUnresolvedRefNoCreateFunction() {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.configureByFile("UnresolvedRefNoCreateFunction.py");
     myFixture.checkHighlighting(true, false, false);
-    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"));
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"));
     assertNull(intentionAction);
   }
 
@@ -356,6 +405,11 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testListCreation() {
+    doInspectionTest(PyListCreationInspection.class, PyPsiBundle.message("QFIX.list.creation"), true, true);
+  }
+
+  // PY-16194
+  public void testListCreationOnlyConsecutiveAppends() {
     doInspectionTest(PyListCreationInspection.class, PyPsiBundle.message("QFIX.list.creation"), true, true);
   }
 
@@ -457,12 +511,12 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testAddParameter() {
     doInspectionTest(PyUnresolvedReferencesInspection.class,
-                     PyBundle.message("QFIX.unresolved.reference.add.param.$0", "test"), true, true);
+                     PyPsiBundle.message("QFIX.unresolved.reference.add.param", "test"), true, true);
   }
 
   // PY-6595
   public void testRenameUnresolvedReference() {
-    doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.rename.unresolved.reference"), true, true);
+    doInspectionTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.rename.unresolved.reference"), true, true);
   }
 
   // PY-3120
@@ -470,80 +524,76 @@ public class PyQuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doInspectionTest(PySetFunctionToLiteralInspection.class, PyPsiBundle.message("QFIX.replace.function.set.with.literal"), true, true));
   }
 
-  public void testDictComprehensionToCall() {
-    doInspectionTest(PyCompatibilityInspection.class, PyPsiBundle.message("INTN.convert.dict.comp.to"), true, true);
-  }
-
   // PY-3394
   public void testDocstringParams() {
     getIndentOptions().INDENT_SIZE = 2;
     runWithDocStringFormat(DocStringFormat.EPYTEXT,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.$0", "b"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "b"), true, true));
   }
 
   public void testDocstringParams1() {
     getIndentOptions().INDENT_SIZE = 2;
     runWithDocStringFormat(DocStringFormat.EPYTEXT,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "c"), true, true));
   }
 
   // PY-4964
   public void testDocstringParams2() {
     runWithDocStringFormat(DocStringFormat.EPYTEXT,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.$0", "ham"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "ham"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringAddParam() {
     runWithDocStringFormat(DocStringFormat.GOOGLE,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.$0", "b"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "b"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringRemoveParam() {
     runWithDocStringFormat(DocStringFormat.GOOGLE,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "c"), true, true));
   }
 
   // PY-9795
   public void testGoogleDocStringRemoveParamWithSection() {
     runWithDocStringFormat(DocStringFormat.GOOGLE,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "c"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "c"), true, true));
   }
 
   // PY-16761
   public void testGoogleDocStringRemovePositionalVararg() {
     runWithDocStringFormat(DocStringFormat.GOOGLE,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "args"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "args"), true, true));
   }
 
   // PY-16761
   public void testGoogleDocStringRemoveKeywordVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "kwargs"), true, true));
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "kwargs"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveFirstOfCombinedParams() {
     runWithDocStringFormat(DocStringFormat.NUMPY,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "x"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "x"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveMidOfCombinedParams() {
     runWithDocStringFormat(DocStringFormat.NUMPY,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "y"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "y"), true, true));
   }
   
   // PY-16908
   public void testNumpyDocStringRemoveLastOfCombinedParams() {
     runWithDocStringFormat(DocStringFormat.NUMPY,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "z"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "z"), true, true));
   }
 
   // PY-16908
   public void testNumpyDocStringRemoveCombinedVarargParam() {
     runWithDocStringFormat(DocStringFormat.NUMPY,
-                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.$0", "args"), true, true));
+                           () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "args"), true, true));
   }
 
   public void testUnnecessaryBackslash() {
@@ -559,7 +609,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3051
   public void testUnresolvedRefTrueFalse() {
-    doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.replace.$0", "True"), true, true);
+    doInspectionTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.replace.with.true.or.false", "True"), true, true);
   }
 
   public void testUnnecessaryBackslashInArgumentList() {
@@ -636,7 +686,7 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-20452
   public void testRemoveRedundantEscapeInOnePartRegExp() {
     myFixture.enableInspections(new RedundantEscapeInspection());
-    myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((\\/(?P<bar>.+))?))\")");
+    myFixture.configureByText(PythonFileType.INSTANCE, "import re\nre.compile(\"(?P<foo>((<caret>\\/(?P<bar>.+))?))\")");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
     assertEquals(1, quickFixes.size());
@@ -653,7 +703,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.enableInspections(new RedundantEscapeInspection());
     myFixture.configureByText(PythonFileType.INSTANCE, "import re\n" +
                                                        "re.compile(\"(?P<foo>\"\n" +
-                                                       "           \"((\\/(?P<bar>.+))?))\")");
+                                                       "           \"((<caret>\\/(?P<bar>.+))?))\")");
 
     final List<IntentionAction> quickFixes = myFixture.getAllQuickFixes();
     assertEquals(1, quickFixes.size());
@@ -669,33 +719,33 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureKeywordAndPositionalParameters() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of f(x, foo, <b>bar</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of f(x, foo, <b>bar</b>)</html>", true, true);
   }
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
-      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
     );
   }
 
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
   }
 
   // PY-8174
   public void testChangeSignatureParametersDefaultValues() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
   }
 
   public void testAddKwargsToNewMethodIncompatibleWithInit() {
-    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change the signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
   }
 
   public void testAddKwargsToIncompatibleOverridingMethod() {
-    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change signature of m(self, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change the signature of m(self, <b>**kwargs</b>)</html>", true, true);
   }
 
   // PY-30789
@@ -713,7 +763,7 @@ public class PyQuickFixTest extends PyTestCase {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 
-  private void doInspectionTest(@NotNull Class inspectionClass,
+  private void doInspectionTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass,
                                 @NotNull String quickFixName,
                                 boolean applyFix,
                                 boolean available) {
@@ -721,7 +771,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   protected void doInspectionTest(@TestDataFile @NonNls @NotNull String testFileName,
-                                  @NotNull Class inspectionClass,
+                                  @NotNull Class<? extends LocalInspectionTool> inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,
                                   boolean available) {
@@ -739,7 +789,7 @@ public class PyQuickFixTest extends PyTestCase {
    * @throws Exception
    */
   protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
-                                  @NotNull Class inspectionClass,
+                                  @NotNull Class<? extends LocalInspectionTool> inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,
                                   boolean available) {
@@ -764,6 +814,20 @@ public class PyQuickFixTest extends PyTestCase {
     else {
       assertEmpty("Quick fix \"" + quickFixName + "\" should not be available", intentionActions);
     }
+  }
+
+  private void doMultiFilesInspectionTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass,
+                                          @NotNull String intentionStr,
+                                          @NotNull String modifiedFile) {
+    myFixture.enableInspections(inspectionClass);
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
+    myFixture.checkHighlighting(true, false, false);
+    final IntentionAction intentionAction = myFixture.findSingleIntention(intentionStr);
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    final String expectedFile = getTestName(true) + "/" + graftBeforeExt(modifiedFile, "_after");
+    myFixture.checkResultByFile(modifiedFile, expectedFile, true);
   }
 
   // Turns "name.ext" to "name_insertion.ext"

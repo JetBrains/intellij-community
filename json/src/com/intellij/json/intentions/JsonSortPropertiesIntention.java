@@ -3,10 +3,12 @@ package com.intellij.json.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -22,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class JsonSortPropertiesIntention implements IntentionAction, LowPriorityAction {
+public class JsonSortPropertiesIntention implements IntentionAction, LowPriorityAction, LightEditCompatible, DumbAware {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override

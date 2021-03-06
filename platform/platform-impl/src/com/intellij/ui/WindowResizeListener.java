@@ -4,6 +4,7 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -191,7 +192,7 @@ public class WindowResizeListener extends WindowMouseListener {
     }
 
     @Override
-    protected void setCursor(Component content, Cursor cursor) {
+    protected void setCursor(@NotNull Component content, Cursor cursor) {
       myHelper.setCursor(content, cursor, () -> super.setCursor(content, cursor));
     }
 

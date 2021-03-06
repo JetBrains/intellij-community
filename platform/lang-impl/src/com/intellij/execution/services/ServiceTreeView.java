@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,26 +6,27 @@ import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.navigationToolbar.NavBarModel;
-import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -35,10 +36,12 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
@@ -52,7 +55,7 @@ class ServiceTreeView extends ServiceView {
   private final ServiceViewTreeModel myTreeModel;
   private final ServiceViewModel.ServiceViewModelListener myListener;
 
-  private final NavBarPanel myNavBarPanel;
+  private final ServiceViewNavBarPanel myNavBarPanel;
 
   private volatile ServiceViewItem myLastSelection;
   private boolean mySelected;
@@ -64,7 +67,7 @@ class ServiceTreeView extends ServiceView {
     myTreeModel = new ServiceViewTreeModel(model);
     myTree = new ServiceViewTree(myTreeModel, this);
 
-    myListener = this::rootsChanged;
+    myListener = new ServiceViewTreeModelListener();
     model.addModelListener(myListener);
 
     ServiceViewActionProvider actionProvider = ServiceViewActionProvider.getInstance();
@@ -89,7 +92,7 @@ class ServiceTreeView extends ServiceView {
           }
         }));
     myNavBarPanel = new ServiceViewNavBarPanel(getProject(), true, getModel(), selector);
-    myNavBarPanel.getModel().updateModel(null);
+    myNavBarPanel.getModel().updateModel((Object)null);
     myUi.setNavBar(myNavBarPanel);
 
     if (model instanceof ServiceViewModel.AllServicesModel) {
@@ -137,7 +140,7 @@ class ServiceTreeView extends ServiceView {
     for (int i = 0; i < rows.length; i++) {
       objectRows.add(Pair.create(objects.get(i), rows[i]));
     }
-    objectRows.sort(Comparator.comparing(pair -> pair.second));
+    objectRows.sort(Pair.comparingBySecond());
     return ContainerUtil.mapNotNull(objectRows, pair -> ObjectUtils.tryCast(pair.first, ServiceViewItem.class));
   }
 
@@ -173,6 +176,22 @@ class ServiceTreeView extends ServiceView {
           .onSuccess(expandedPath -> {
             result.setResult(null);
           });
+      });
+    return result;
+  }
+
+  @Override
+  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    myTreeModel.findPath(service, contributorClass)
+      .onError(result::setError)
+      .onSuccess(path -> {
+        ServiceViewItem item = (ServiceViewItem)path.getLastPathComponent();
+        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          ServiceViewManagerImpl manager = (ServiceViewManagerImpl)ServiceViewManager.getInstance(getProject());
+          manager.extract(new ServiceViewDragHelper.ServiceViewDragBean(this, Collections.singletonList(item)));
+          result.setResult(null);
+        });
       });
     return result;
   }
@@ -230,15 +249,22 @@ class ServiceTreeView extends ServiceView {
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
   }
 
-  private void rootsChanged() {
-    updateSelectionPaths();
-    updateNavBar();
-    updateLastSelection();
+  private void selectFirstItemIfNeeded() {
+    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+      List<ServiceViewItem> selected = getSelectedItems();
+      if (selected.isEmpty()) {
+        ServiceViewItem item = ContainerUtil.getFirstItem(getModel().getRoots());
+        if (item != null) {
+          select(item.getValue(), item.getRootContributor().getClass());
+        }
+      }
+    });
   }
 
   private void updateLastSelection() {
     ServiceViewItem lastSelection = myLastSelection;
-    ServiceViewItem updatedItem = lastSelection == null ? null : getModel().findItem(lastSelection);
+    WeakReference<ServiceViewItem> itemRef =
+      new WeakReference<>(lastSelection == null ? null : getModel().findItem(lastSelection));
     AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
       List<ServiceViewItem> selected = getSelectedItems();
       if (selected.isEmpty()) {
@@ -249,6 +275,7 @@ class ServiceTreeView extends ServiceView {
         }
       }
 
+      ServiceViewItem updatedItem = itemRef.get();
       ServiceViewItem newSelection = ContainerUtil.getOnlyItem(selected);
       if (Comparing.equal(newSelection, updatedItem)) {
         newSelection = updatedItem;
@@ -271,12 +298,20 @@ class ServiceTreeView extends ServiceView {
       ServiceViewItem item = getNavBarItem();
       if (item == null) return;
 
+      WeakReference<ServiceViewItem> itemRef = new WeakReference<>(item);
       getModel().getInvoker().invoke(() -> {
-        ServiceViewItem updatedItem = getModel().findItem(item);
+        ServiceViewItem viewItem = itemRef.get();
+        if (viewItem == null) return;
+
+        ServiceViewItem updatedItem = getModel().findItem(viewItem);
         if (updatedItem != null) {
+          WeakReference<ServiceViewItem> updatedRef = new WeakReference<>(updatedItem);
           AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+            ServiceViewItem updatedViewItem = updatedRef.get();
+            if (updatedViewItem == null) return;
+
             ServiceViewItem navBarItem = getNavBarItem();
-            if (updatedItem.equals(navBarItem) && !updatedItem.isRemoved()) {
+            if (updatedViewItem.equals(navBarItem) && !updatedViewItem.isRemoved()) {
               myNavBarPanel.getModel().updateModel(updatedItem);
             }
           });
@@ -337,7 +372,7 @@ class ServiceTreeView extends ServiceView {
   /**
    * @return {@code true} if selection and updated paths are equal but contain at least one nonidentical element, otherwise {@code false}
    */
-  private static boolean isSelectionUpdateNeeded(List<TreePath> selectionPaths, List<TreePath> updatedPaths) {
+  private static boolean isSelectionUpdateNeeded(List<? extends TreePath> selectionPaths, List<? extends TreePath> updatedPaths) {
     if (selectionPaths.size() != updatedPaths.size()) return false;
 
     boolean result = false;
@@ -405,7 +440,7 @@ class ServiceTreeView extends ServiceView {
   private static void setEmptyText(JComponent component, StatusText emptyText) {
     emptyText.setText(ExecutionBundle.message("service.view.empty.tree.text"));
     emptyText.appendSecondaryText(ExecutionBundle.message("service.view.add.service.action.name"),
-                                  new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
+                                  SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                   new ActionListener() {
                                     @Override
                                     public void actionPerformed(ActionEvent e) {
@@ -413,12 +448,21 @@ class ServiceTreeView extends ServiceView {
                                         ActionManager.getInstance().getAction(ADD_SERVICE_ACTION_ID), ActionGroup.class);
                                       if (addActionGroup == null) return;
 
+                                      Point position = component.getMousePosition();
+                                      if (position == null) {
+                                        Rectangle componentBounds = component.getBounds();
+                                        Rectangle textBounds = emptyText.getComponent().getBounds();
+                                        position = new Point(componentBounds.width / 2,
+                                                             componentBounds.height / (emptyText.isShowAboveCenter() ? 3 : 2) +
+                                                             textBounds.height / 4);
+
+                                      }
                                       DataContext dataContext = DataManager.getInstance().getDataContext(component);
                                       JBPopupFactory.getInstance().createActionGroupPopup(
                                         addActionGroup.getTemplatePresentation().getText(), addActionGroup, dataContext,
                                         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                         false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(ADD_SERVICE_ACTION_ID))
-                                        .show(new RelativePoint(component, component.getMousePosition()));
+                                        .show(new RelativePoint(component, position));
                                     }
                                   });
     AnAction addAction = ActionManager.getInstance().getAction(ADD_SERVICE_ACTION_ID);
@@ -429,22 +473,55 @@ class ServiceTreeView extends ServiceView {
     }
   }
 
-  private static List<TreePath> adjustPaths(List<TreePath> paths, Collection<? extends ServiceViewItem> roots, Object treeRoot) {
+  private static List<TreePath> adjustPaths(List<? extends TreePath> paths, Collection<? extends ServiceViewItem> roots, Object treeRoot) {
     List<TreePath> result = new SmartList<>();
     for (TreePath path : paths) {
       Object[] items = path.getPath();
       for (int i = 1; i < items.length; i++) {
-        //noinspection SuspiciousMethodCalls
         if (roots.contains(items[i])) {
-          Object[] adjustedItems = new Object[items.length - i + 1];
-          adjustedItems[0] = treeRoot;
-          System.arraycopy(items, i, adjustedItems, 1, items.length - i);
+          Object[] adjustedItems = ArrayUtil.insert(items, 0, treeRoot);
           result.add(new TreePath(adjustedItems));
           break;
         }
       }
     }
     return result;
+  }
+
+  private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
+    @Override
+    public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
+      if (e.type == ServiceEventListener.EventType.SYNC_RESET) {
+        TreeModel model = myTree.getModel();
+        if (model instanceof Disposable) {
+          Disposer.dispose((Disposable)model);
+        }
+        myTree.setModel(null);
+        AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
+        myTree.setModel(asyncTreeModel);
+        myNavBarPanel.hidePopup();
+        myNavBarPanel.getModel().updateModel((Object)null);
+        myNavBarPanel.getUpdateQueue().rebuildUi();
+        updateLastSelection();
+      }
+      else {
+        updateNavBar();
+        ServiceViewItem lastSelection = myLastSelection;
+        if (lastSelection != null && lastSelection.getRootContributor().getClass().equals(e.contributorClass)) {
+          updateLastSelection();
+        }
+        else {
+          selectFirstItemIfNeeded();
+        }
+      }
+      updateSelectionPaths();
+    }
+
+    @Override
+    public void structureChanged() {
+      selectFirstItemIfNeeded();
+      updateSelectionPaths();
+    }
   }
 
   private static class PathSelectionVisitor implements TreeVisitor {
@@ -467,9 +544,9 @@ class ServiceTreeView extends ServiceView {
   }
 
   private static class PathExpandVisitor implements TreeVisitor {
-    private final List<TreePath> myPaths;
+    private final List<? extends TreePath> myPaths;
 
-    PathExpandVisitor(List<TreePath> paths) {
+    PathExpandVisitor(List<? extends TreePath> paths) {
       myPaths = paths;
     }
 

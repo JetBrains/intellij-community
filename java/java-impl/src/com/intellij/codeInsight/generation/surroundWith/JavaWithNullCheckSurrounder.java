@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -65,6 +66,6 @@ public class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
 
   @Override
   public String getTemplateDescription() {
-    return "if (expr != null) {...}";
+    return JavaBundle.message("null.check.surrounder.description");
   }
 }

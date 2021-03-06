@@ -4,15 +4,15 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -20,7 +20,10 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.PlatformIcons;
@@ -38,16 +41,9 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
 
-    myReturnType = isConstructor() ? null : new AtomicNotNullLazyValue<PsiTypeElement>() {
-      @NotNull
-      @Override
-      protected PsiTypeElement compute() {
-        PsiMethodStub stub = getStub();
-        String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
-        assert typeText != null : stub;
-        return new ClsTypeElementImpl(ClsMethodImpl.this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
-      }
-    };
+    myReturnType = isConstructor() ? null : NotNullLazyValue.atomicLazy(() -> {
+      return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText());
+    });
 
     final String text = getStub().getDefaultValueText();
     myDefaultValue = StringUtil.isEmptyOrSpaces(text) ? null : new VolatileNullableLazyValue<PsiAnnotationMemberValue>() {
@@ -260,11 +256,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
 
   @Nullable
   public PsiMethod getSourceMirrorMethod() {
-    return CachedValuesManager.getCachedValue(this, () -> {
-      PsiFile file = getContainingFile();
-      ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
-      return CachedValueProvider.Result.create(calcSourceMirrorMethod(), file, file.getNavigationElement(), tracker);
-    });
+    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calcSourceMirrorMethod());
   }
 
   @Nullable

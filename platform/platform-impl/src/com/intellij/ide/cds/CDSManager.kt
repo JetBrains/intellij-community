@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
@@ -6,6 +6,7 @@ import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.util.ExecUtil
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -14,11 +15,12 @@ import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.system.CpuArch
 import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
@@ -46,20 +48,11 @@ object CDSManager {
     // AppCDS requires classes packed into JAR files, not from the out folder
     if (PluginManagerCore.isRunningFromSources()) return@lazy false
 
-    // CDS features are only available on 64 bit JVMs
-    if (!SystemInfo.is64Bit) return@lazy false
+    // CDS features are only available on 64-bit JVMs
+    if (CpuArch.is32Bit()) return@lazy false
 
-    // The AppCDS (JEP 310) is only added in JDK10,
-    // The closest JRE we ship/support is 11
-    if (!SystemInfo.isJavaVersionAtLeast(11)) return@lazy false
-
-    //AppCDS does not support Windows and macOS
-    if (!SystemInfo.isLinux) {
-      //Specific patches are included into JetBrains runtime
-      //to support Windows and macOS
-      if (!SystemInfo.isJetBrainsJvm) return@lazy false
-      if (VersionComparatorUtil.compare(SystemInfo.JAVA_RUNTIME_VERSION, "11.0.4+10-b520.2") < 0) return@lazy false
-    }
+    // AppCDS does not support Windows and macOS, but specific patches are included into JetBrains runtime
+    if (!(SystemInfo.isLinux || SystemInfo.isJetBrainsJvm)) return@lazy false
 
     // we do not like to overload a potentially small computer with our process
     val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
@@ -114,7 +107,7 @@ object CDSManager {
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(
       null,
-      "Optimizing startup performance...",
+      IdeBundle.message("progress.title.cds.optimize.startup"),
       true,
       PerformInBackgroundOption.ALWAYS_BACKGROUND
     ) {
@@ -132,7 +125,7 @@ object CDSManager {
 
           override var text2: String?
             get() = indicator.text2
-            set(value) {
+            set(@NlsContexts.ProgressText value) {
               indicator.text2 = value
             }
         }
@@ -197,7 +190,7 @@ object CDSManager {
     }
 
   private fun generateClassList(indicator: CDSProgressIndicator, paths: CDSPaths) {
-    indicator.text2 = "Collecting classes list..."
+    indicator.text2 = IdeBundle.message("progress.text.collecting.classes")
 
     val selfAttachKey = "jdk.attach.allowAttachSelf"
     if (!System.getProperties().containsKey(selfAttachKey)) {
@@ -218,7 +211,7 @@ object CDSManager {
   }
 
   private fun generateSharedArchive(indicator: CDSProgressIndicator, paths: CDSPaths) {
-    indicator.text2 = "Generating classes archive..."
+    indicator.text2 = IdeBundle.message("progress.text.generate.classes.archive")
 
     val logLevel = if (LOG.isDebugEnabled) "=debug" else ""
     val args = listOf(

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -23,29 +23,19 @@ class GradleTasksTest extends GradleHighlightingBaseTest implements ExpressionTe
   @Test
   void test() {
     importProject("apply plugin:'java'")
-    new RunAll().append {
-      'task ref'()
-    } append {
-      'task call'()
-    } append {
-      'task call delegate'()
-    } append {
-      'task container vs task ref'()
-    } append {
-      'task container vs task call'()
-    } append {
-      'task via TaskContainer'()
-    } append {
-      'task via Project'()
-    } append {
-      'task in allProjects'()
-    } append {
-      'task in allProjects via explicit delegate'()
-    } append {
-      'task declaration configuration delegate'()
-    } append {
-      'task declaration configuration delegate with explicit type'()
-    } run()
+    new RunAll(
+      { 'task ref'() },
+      { 'task call'() },
+      { 'task call delegate'() },
+      { 'task container vs task ref'() },
+      { 'task container vs task call'() },
+      { 'task via TaskContainer'() },
+      { 'task via Project'() },
+      { 'task in allProjects'() },
+      { 'task in allProjects via explicit delegate'() },
+      { 'task declaration configuration delegate'() },
+      { 'task declaration configuration delegate with explicit type'() }
+    ).run()
   }
 
   void 'task ref'() {

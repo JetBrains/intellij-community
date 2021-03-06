@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.apache.http.Consts
 import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.*
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
@@ -19,6 +20,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.impl.retry.Retry
 
+import java.util.concurrent.TimeUnit
+
 @CompileStatic
 class CompilationPartsUploader implements Closeable {
   private final BuildMessages myMessages
@@ -29,11 +32,17 @@ class CompilationPartsUploader implements Closeable {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
     CompilationPartsUtil.initLog4J(messages)
+    def timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
+    def config = RequestConfig.custom()
+      .setConnectTimeout(timeout)
+      .setConnectionRequestTimeout(timeout)
+      .setSocketTimeout(timeout).build()
     myHttpClient = HttpClientBuilder.create()
       .setUserAgent('Parts Uploader')
       .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
       .setMaxConnTotal(20)
       .setMaxConnPerRoute(10)
+      .setDefaultRequestConfig(config)
       .build()
   }
 
@@ -142,6 +151,22 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
+  protected void doDelete(String path) throws UploadException {
+    CloseableHttpResponse response = null
+    try {
+      String url = myServerUrl + StringUtil.trimStart(path, '/')
+      debug("DELETE " + url)
+      executeWithRetry(new HttpDelete(url))
+    }
+    catch (Exception e) {
+      throw new UploadException("Failed to DELETE $path: " + e.getMessage(), e)
+    }
+    finally {
+      StreamUtil.closeStream(response)
+    }
+  }
+
+  @NotNull
   private String doPut(String path, File file) throws UploadException {
     CloseableHttpResponse response = null
     try {
@@ -172,7 +197,12 @@ class CompilationPartsUploader implements Closeable {
 
   CloseableHttpResponse executeWithRetry(HttpUriRequest request) {
     return new Retry(myMessages).call {
-      myHttpClient.execute(request)
+      def response = myHttpClient.execute(request)
+      if (response.statusLine.statusCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+        // server error, will retry
+        throw new RuntimeException("$request: response is $response.statusLine.statusCode, $response.entity.content.text")
+      }
+      response
     }
   }
 

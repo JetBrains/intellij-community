@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
+import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -25,80 +26,66 @@ import static org.jetbrains.java.decompiler.code.CodeConstants.*;
   }
 */
 public class StructMethod extends StructMember {
+  public static StructMethod create(DataInputFullStream in, ConstantPool pool, String clQualifiedName, int bytecodeVersion, boolean own) throws IOException {
+    int accessFlags = in.readUnsignedShort();
+    int nameIndex = in.readUnsignedShort();
+    int descriptorIndex = in.readUnsignedShort();
+
+    String[] values = pool.getClassElement(ConstantPool.METHOD, clQualifiedName, nameIndex, descriptorIndex);
+
+    Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
+    StructCodeAttribute code = (StructCodeAttribute)attributes.remove(StructGeneralAttribute.ATTRIBUTE_CODE.name);
+    if (code != null) {
+      attributes.putAll(code.codeAttributes);
+    }
+
+    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null);
+  }
+
   private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
   private static final int[] opr_loadstore = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
   private static final int[] opcs_load = {opc_iload, opc_lload, opc_fload, opc_dload, opc_aload};
   private static final int[] opcs_store = {opc_istore, opc_lstore, opc_fstore, opc_dstore, opc_astore};
 
-  private final StructClass classStruct;
   private final String name;
   private final String descriptor;
-
-  private boolean containsCode = false;
-  private int localVariables = 0;
-  private int codeLength = 0;
-  private int codeFullLength = 0;
-  private InstructionSequence seq;
+  private final int bytecodeVersion;
+  private final int localVariables;
+  private final int codeLength;
+  private final int codeFullLength;
+  private InstructionSequence seq = null;
   private boolean expanded = false;
-  private Map<String, StructGeneralAttribute> codeAttributes;
 
-  public StructMethod(DataInputFullStream in, StructClass clStruct) throws IOException {
-    classStruct = clStruct;
-
-    accessFlags = in.readUnsignedShort();
-    int nameIndex = in.readUnsignedShort();
-    int descriptorIndex = in.readUnsignedShort();
-
-    ConstantPool pool = clStruct.getPool();
-    String[] values = pool.getClassElement(ConstantPool.METHOD, clStruct.qualifiedName, nameIndex, descriptorIndex);
-    name = values[0];
-    descriptor = values[1];
-
-    attributes = readAttributes(in, pool);
-    if (codeAttributes != null) {
-      attributes.putAll(codeAttributes);
-      codeAttributes = null;
+  private StructMethod(int accessFlags,
+                       Map<String, StructGeneralAttribute> attributes,
+                       String name,
+                       String descriptor,
+                       int bytecodeVersion,
+                       StructCodeAttribute code) {
+    super(accessFlags, attributes);
+    this.name = name;
+    this.descriptor = descriptor;
+    this.bytecodeVersion = bytecodeVersion;
+    if (code != null) {
+      this.localVariables = code.localVariables;
+      this.codeLength = code.codeLength;
+      this.codeFullLength = code.codeFullLength;
+    }
+    else {
+      this.localVariables = this.codeLength = this.codeFullLength = -1;
     }
   }
 
-  @Override
-  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
-    if (StructGeneralAttribute.ATTRIBUTE_CODE.getName().equals(name)) {
-      if (!classStruct.isOwn()) {
-        // skip code in foreign classes
-        in.discard(8);
-        in.discard(in.readInt());
-        in.discard(8 * in.readUnsignedShort());
-      }
-      else {
-        containsCode = true;
-        in.discard(6);
-        localVariables = in.readUnsignedShort();
-        codeLength = in.readInt();
-        in.discard(codeLength);
-        int excLength = in.readUnsignedShort();
-        in.discard(excLength * 8);
-        codeFullLength = codeLength + excLength * 8 + 2;
-      }
-
-      codeAttributes = readAttributes(in, pool);
-
-      return null;
-    }
-
-    return super.readAttribute(in, pool, name);
-  }
-
-  public void expandData() throws IOException {
-    if (containsCode && !expanded) {
-      byte[] code = classStruct.getLoader().loadBytecode(this, codeFullLength);
+  public void expandData(StructClass classStruct) throws IOException {
+    if (codeLength >= 0 && !expanded) {
+      byte[] code = classStruct.getLoader().loadBytecode(classStruct, this, codeFullLength);
       seq = parseBytecode(new DataInputFullStream(code), codeLength, classStruct.getPool());
       expanded = true;
     }
   }
 
   public void releaseResources() {
-    if (containsCode && expanded) {
+    if (codeLength >= 0 && expanded) {
       seq = null;
       expanded = false;
     }
@@ -108,10 +95,7 @@ public class StructMethod extends StructMember {
   private InstructionSequence parseBytecode(DataInputFullStream in, int length, ConstantPool pool) throws IOException {
     VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<>();
 
-    int bytecode_version = classStruct.getBytecodeVersion();
-
     for (int i = 0; i < length; ) {
-
       int offset = i;
 
       int opcode = in.readUnsignedByte();
@@ -197,7 +181,7 @@ public class StructMethod extends StructMember {
             }
             break;
           case opc_invokedynamic:
-            if (classStruct.isVersionGE_1_7()) { // instruction unused in Java 6 and before
+            if (bytecodeVersion >= CodeConstants.BYTECODE_JAVA_7) { // instruction unused in Java 6 and before
               operands.add(in.readUnsignedShort());
               in.discard(2);
               group = GROUP_INVOCATION;
@@ -313,7 +297,7 @@ public class StructMethod extends StructMember {
         }
       }
 
-      Instruction instr = Instruction.create(opcode, wide, group, bytecode_version, ops);
+      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops);
 
       instructions.addWithKey(instr, offset);
 
@@ -355,10 +339,6 @@ public class StructMethod extends StructMember {
     return seq;
   }
 
-  public StructClass getClassStruct() {
-    return classStruct;
-  }
-
   public String getName() {
     return name;
   }
@@ -367,8 +347,12 @@ public class StructMethod extends StructMember {
     return descriptor;
   }
 
+  public int getBytecodeVersion() {
+    return bytecodeVersion;
+  }
+
   public boolean containsCode() {
-    return containsCode;
+    return codeLength >= 0;
   }
 
   public int getLocalVariables() {

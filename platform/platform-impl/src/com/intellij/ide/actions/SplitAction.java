@@ -3,14 +3,13 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladimir Kondratyev
@@ -32,37 +31,33 @@ public abstract class SplitAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-    final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    final VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
+    final EditorWindow window = event.getRequiredData(EditorWindow.DATA_KEY);
+    final VirtualFile file = window.getSelectedFile();
 
-    fileEditorManager.createSplitter(myOrientation, window);
-
-    if (myCloseSource && window != null && file != null) {
+    if (myCloseSource && file != null) {
       window.closeFile(file, false, false);
     }
+
+    window.split(myOrientation, true, file, false);
   }
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
-    final Project project = event.getData(CommonDataKeys.PROJECT);
-    final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    boolean isForbidden = window != null && isProhibitionAllowed() && window.getSelectedFile().getUserData(FORBID_TAB_SPLIT) != null;
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    VirtualFile selectedFile = window != null ? window.getSelectedFile() : null;
 
-    if (isForbidden) {
-      event.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      final int minimum = myCloseSource ? 2 : 1;
-      final boolean enabled = project != null
-                              && window != null
-                              && window.getTabCount() >= minimum;
-      event.getPresentation().setEnabledAndVisible(enabled);
-    }
+    boolean enabled = isEnabled(selectedFile, window);
+    event.getPresentation().setEnabledAndVisible(enabled);
   }
 
-  protected boolean isProhibitionAllowed() {
-    return false;
+  private boolean isEnabled(@Nullable VirtualFile vFile, @Nullable EditorWindow window) {
+    if (vFile == null || window == null) {
+      return false;
+    }
+    if (!myCloseSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
+      return false;
+    }
+    int minimum = myCloseSource ? 2 : 1;
+    return window.getTabCount() >= minimum;
   }
 }

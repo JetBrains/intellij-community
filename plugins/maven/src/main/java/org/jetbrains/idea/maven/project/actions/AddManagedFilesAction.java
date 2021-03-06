@@ -17,23 +17,35 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
-
-import java.util.Arrays;
+import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider;
 
 public class AddManagedFilesAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
-    if(manager == null) return;
-    FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {
+    Project project = MavenActionUtil.getProject(e.getDataContext());
+    if (project == null) {
+      return;
+    }
+    MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
+    if (manager == null) {
+      return;
+    }
+    FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, true, false, false, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         return super.isFileSelectable(file) && !manager.isManagedFile(file);
@@ -46,12 +58,27 @@ public class AddManagedFilesAction extends MavenAction {
       }
     };
 
-    Project project = MavenActionUtil.getProject(e.getDataContext());
     VirtualFile fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     VirtualFile[] files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect);
-    if (files.length == 0) return;
-
-    manager.addManagedFilesOrUnignore(Arrays.asList(files));
+    if (files.length == 1) {
+      VirtualFile projectFile = files[0];
+      ReadAction.nonBlocking(() -> projectFile.isDirectory() ? projectFile.getChildren() : files).
+        finishOnUiThread(ModalityState.defaultModalityState(), it -> {
+          if (ContainerUtil.exists(it, MavenActionUtil::isMavenProjectFile)) {
+            MavenOpenProjectProvider openProjectProvider = new MavenOpenProjectProvider();
+            openProjectProvider.linkToExistingProject(projectFile, project);
+          }
+          else {
+            String projectPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFile.getPath()));
+            String message = projectFile.isDirectory()
+                             ? MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
+                             : MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath);
+            String title = MavenProjectBundle.message("maven.AddManagedFiles.warning.title");
+            Messages.showWarningDialog(project, message, title);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 }

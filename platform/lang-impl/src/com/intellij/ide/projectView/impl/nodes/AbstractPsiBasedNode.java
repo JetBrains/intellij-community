@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
+import com.intellij.ide.tags.TagManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.navigation.NavigationItem;
@@ -31,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.PlatformIcons;
@@ -42,6 +44,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+
+import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
  * Class for node descriptors based on PsiElements. Subclasses should define
@@ -147,21 +151,44 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       LOG.assertTrue(value.isValid());
 
       int flags = getIconableFlags();
-
+      Icon icon = null;
+      boolean deprecated = false;
       try {
-        Icon icon = value.getIcon(flags);
-        data.setIcon(icon);
+        icon = value.getIcon(flags);
       }
       catch (IndexNotReadyException ignored) {
       }
+      try {
+        deprecated = isDeprecated();
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+
+      SimpleColoredText coloredText = null;
+      Icon tagIcon;
+      if (!TagManager.isEnabled()) {
+        Bookmark bookmark = BookmarkManager.getInstance(myProject).findElementBookmark(value);
+        tagIcon = bookmark == null ? null : bookmark.getIcon();
+      }
+      else {
+        tagIcon = TagManager.appendTags(value, coloredText = new SimpleColoredText());
+      }
+      if (tagIcon != null) {
+        icon = new com.intellij.ui.RowIcon(tagIcon, icon);
+      }
+      data.setIcon(icon);
       data.setPresentableText(myName);
-
-      try {
-        if (isDeprecated()) {
-          data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
-        }
+      if (deprecated) {
+        data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
       }
-      catch (IndexNotReadyException ignored) {
+      if (coloredText != null) {
+        int fragment = 0;
+        for (String text : coloredText.getTexts()) {
+          data.getColoredText().add(new ColoredFragment(text, coloredText.getAttributes().get(fragment++)));
+        }
+        if (fragment > 0) {
+          data.getColoredText().add(new ColoredFragment(myName, getSimpleTextAttributes(data)));
+        }
       }
       updateImpl(data);
       data.setIcon(patchIcon(myProject, data.getIcon(true), getVirtualFile()));
@@ -235,7 +262,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
         NavigationUtil.openFileWithPsiElement(extractPsiFromValue(), requestFocus, requestFocus);
       }
       else {
-        getNavigationItem().navigate(requestFocus);
+        getNavigationItem().navigate(false);
       }
     }
   }

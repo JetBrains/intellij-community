@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -32,8 +33,8 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    runnable.run();
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    testRunnable.run();
   }
 
   public void testDeadlocks() {
@@ -44,7 +45,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
@@ -72,7 +73,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {
@@ -104,7 +105,7 @@ public class MultiThreadSearchDeadlockTest extends BasePlatformTestCase {
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     ProgressIndicator progressIndicator = searcher.search(contributorsMap, "tst");
 
     try {

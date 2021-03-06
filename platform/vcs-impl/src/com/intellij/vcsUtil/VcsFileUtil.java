@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -33,7 +34,7 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
-public class VcsFileUtil {
+public final class VcsFileUtil {
   /**
    * If multiple paths are specified on the command line, this limit is used to split paths into chunks.
    * The limit is less than OS limit to leave space to quoting, spaces, charset conversion, and commands arguments.
@@ -539,5 +540,30 @@ public class VcsFileUtil {
   @NotNull
   public static String unescapeGitPath(@NotNull String path) {
     return unescapeGitPath(path, null);
+  }
+
+  public static final Hash.Strategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new FilePathCaseSensitiveStrategy();
+
+  private static class FilePathCaseSensitiveStrategy implements Hash.Strategy<FilePath> {
+
+    @Override
+    public boolean equals(FilePath path1, FilePath path2) {
+      if (path1 == path2) return true;
+      if (path1 == null || path2 == null) return false;
+
+      if (path1.isDirectory() != path2.isDirectory()) return false;
+      String canonical1 = FileUtil.toCanonicalPath(path1.getPath());
+      String canonical2 = FileUtil.toCanonicalPath(path2.getPath());
+      return canonical1.equals(canonical2);
+    }
+
+    @Override
+    public int hashCode(FilePath path) {
+      if (path == null) return 0;
+
+      int result = path.getPath().isEmpty() ? 0 : FileUtil.toCanonicalPath(path.getPath()).hashCode();
+      result = 31 * result + (path.isDirectory() ? 1 : 0);
+      return result;
+    }
   }
 }

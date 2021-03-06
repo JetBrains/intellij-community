@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -28,11 +27,6 @@ public class QualifiedClassNameMacro extends Macro {
   @Override
   public String getName() {
     return "qualifiedClassName";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.qualified.class.name");
   }
 
   @Override

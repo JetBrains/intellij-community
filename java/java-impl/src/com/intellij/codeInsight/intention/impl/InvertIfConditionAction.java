@@ -327,7 +327,8 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           }
         }
       }
-      if (thenBranch instanceof PsiContinueStatement) {
+      if (thenBranch instanceof PsiContinueStatement || 
+          thenBranch instanceof PsiReturnStatement && ((PsiReturnStatement)thenBranch).getReturnValue() == null) {
         PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch != null) {
           elseBranch.delete();

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
+import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,7 @@ public class InspectionsFixture extends ToolWindowFixture {
   private final InspectionTree myTree;
 
   public InspectionsFixture(@NotNull Robot robot, @NotNull Project project, InspectionTree tree) {
-    super(ToolWindowId.INSPECTION, project, robot);
+    super(ProblemsView.ID, project, robot);
     myTree = tree;
   }
 
@@ -30,7 +31,7 @@ public class InspectionsFixture extends ToolWindowFixture {
     activate();
     waitUntilIsVisible();
 
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       @NotNull
       protected String executeInEDT() {
@@ -42,10 +43,8 @@ public class InspectionsFixture extends ToolWindowFixture {
   }
 
   public static void describe(@NotNull InspectionTreeNode node, @NotNull StringBuilder sb, int depth) {
-    for (int i = 0; i < depth; i++) {
-      sb.append("    ");
-    }
-    sb.append(node.toString());
+    sb.append("    ".repeat(depth));
+    sb.append(node);
     sb.append("\n");
 
     // The exact order of the results sometimes varies so sort the children alphabetically

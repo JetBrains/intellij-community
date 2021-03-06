@@ -7,10 +7,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryKeyBean;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator;
 import org.jetbrains.uast.UExpression;
@@ -40,6 +41,11 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                        .definedInClass(Registry.class.getName())),
                                      new UastInjectionHostReferenceProvider() {
                                        @Override
+                                       public boolean acceptsTarget(@NotNull PsiElement target) {
+                                         return PropertyReferenceBase.isPropertyPsi(target);
+                                       }
+
+                                       @Override
                                        public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression uExpression,
                                                                                                      @NotNull PsiLanguageInjectionHost host,
                                                                                                      @NotNull ProcessingContext context) {
@@ -49,26 +55,31 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  private static class RegistryKeyIdReference extends ExtensionPointReferenceBase {
+  private static final class RegistryKeyIdReference extends ExtensionPointReferenceBase {
 
     private RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);
     }
 
     @Override
-    protected String getExtensionPointClassname() {
-      return RegistryKeyBean.class.getName();
+    protected String getExtensionPointFqn() {
+      return "com.intellij.registryKey";
     }
 
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve registry key '" + getValue() + "'";
+      return DevKitBundle.message("code.convert.registry.key.cannot.resolve", getValue());
     }
 
     @Override
     protected GenericAttributeValue<?> getNameElement(Extension extension) {
       return getAttribute(extension, "key");
+    }
+
+    @Override
+    protected boolean hasCustomNameElement() {
+      return true;
     }
 
     @Nullable
@@ -98,8 +109,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
         if (key == null || extension.getXmlElement() == null) return true;
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "restartRequired"));
-        final String description = " " + StringUtil.notNullize(getAttributeValue(extension, "description"), "No Description");
-        final String defaultValue = StringUtil.notNullize(getAttributeValue(extension, "defaultValue"), "No Default");
+        final String description = " " + StringUtil.notNullize(getAttributeValue(extension, "description"),
+                                                               DevKitBundle.message("code.convert.registry.key.no.description"));
+        final String defaultValue = StringUtil.notNullize(getAttributeValue(extension, "defaultValue"),
+                                                          DevKitBundle.message("code.convert.registry.key.no.default.value"));
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), key)
                        .withIcon(requireRestart ? AllIcons.Nodes.PluginRestart : AllIcons.Nodes.Plugin)

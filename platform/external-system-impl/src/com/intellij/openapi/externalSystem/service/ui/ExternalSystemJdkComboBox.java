@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -19,13 +19,17 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +38,12 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 /**
  * @author Sergey Evdokimov
  */
-public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
-
+public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
   private static final int MAX_PATH_LENGTH = 50;
 
   @Nullable
@@ -52,7 +57,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
   public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
-    setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
+    setRenderer(new ColoredListCellRenderer<>() {
 
       @Override
       protected void customizeCellRenderer(@NotNull JList list, JdkComboBoxItem value, int index, boolean selected, boolean hasFocus) {
@@ -98,14 +103,14 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
   public void setSetupButton(@NotNull JButton setUpButton,
                              @NotNull ProjectSdksModel jdksModel,
-                             @Nullable String actionGroupTitle,
+                             @Nullable @Nls(capitalization = Title) String actionGroupTitle,
                              @Nullable Condition<? super SdkTypeId> creationFilter) {
     setSetupButton(setUpButton, jdksModel, actionGroupTitle, creationFilter, null);
   }
 
   public void setSetupButton(@NotNull JButton setUpButton,
                              @NotNull ProjectSdksModel jdksModel,
-                             @Nullable String actionGroupTitle,
+                             @Nullable @Nls(capitalization = Title) String actionGroupTitle,
                              @Nullable Condition<? super SdkTypeId> creationFilter,
                              @Nullable WizardContext wizardContext) {
     Arrays.stream(setUpButton.getActionListeners()).forEach(setUpButton::removeActionListener);
@@ -114,9 +119,8 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
       DefaultActionGroup group = new DefaultActionGroup();
       Sdk selectedJdk = getSelectedJdk();
       Consumer<Sdk> updateTree = jdk -> {
-        Sdk existingJdk = Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
-                                .filter(sdk -> StringUtil.equals(sdk.getHomePath(), jdk.getHomePath()))
-                                .findFirst().orElse(null);
+        Sdk existingJdk = ContainerUtil
+          .find(ProjectJdkTable.getInstance().getAllJdks(), sdk -> StringUtil.equals(sdk.getHomePath(), jdk.getHomePath()));
 
         String jdkName;
         if (existingJdk == null) {
@@ -202,7 +206,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     }
     else if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
       assert selectedValue.length() > 0;
-      jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false));
+      jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false)); //NON-NLS
     }
 
     removeAllItems();
@@ -273,7 +277,8 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
     if (myProjectJdk != null) {
       result.put(ExternalSystemJdkUtil.USE_PROJECT_JDK,
-                 new JdkComboBoxItem(ExternalSystemJdkUtil.USE_PROJECT_JDK, "Use Project JDK", buildComment(myProjectJdk), true));
+                 new JdkComboBoxItem(ExternalSystemJdkUtil.USE_PROJECT_JDK,
+                                     ExternalSystemBundle.message("external.system.java.project.jdk"), buildComment(myProjectJdk), true));
     }
 
     String javaHomePath = ExternalSystemJdkUtil.getJavaHome();
@@ -281,25 +286,27 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
       result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
                  new JdkComboBoxItem(
                    ExternalSystemJdkUtil.USE_JAVA_HOME, ExternalSystemBundle.message("external.system.java.home.env"),
-                   truncateLongPath(javaHomePath), true
+                   ExternalSystemBundle.message("external.system.sdk.hint.path", truncateLongPath(javaHomePath)), true
                  ));
     }
     return result;
   }
 
+  @NlsContexts.HintText
   private static String buildComment(@NotNull Sdk sdk) {
     String versionString = sdk.getVersionString();
-    String path = sdk.getHomePath();
-    StringBuilder buf = new StringBuilder();
-    if (versionString != null) {
-      buf.append(versionString);
+    String homePath = sdk.getHomePath();
+    String path = homePath == null ? null : truncateLongPath(homePath);
+    if(versionString == null && path == null) {
+      return "";
     }
-    if (path != null) {
-      buf.append(versionString != null ? ", " : "");
-      buf.append("path: ").append(truncateLongPath(path));
+    if (path == null) {
+      return versionString;
     }
-
-    return buf.toString();
+    if (versionString == null){
+      return ExternalSystemBundle.message("external.system.sdk.hint.path", path);
+    }
+    return ExternalSystemBundle.message("external.system.sdk.hint.path.and.version", versionString, path);
   }
 
   @NotNull
@@ -315,7 +322,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     if (!valid) {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
     }
-    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
+    else if (selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))) {
       return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
     }
     else {
@@ -325,11 +332,11 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
 
   static class JdkComboBoxItem {
     private final String jdkName;
-    private final String label;
-    private final String comment;
+    private final @NlsContexts.Label String label;
+    private final @NlsContexts.HintText String comment;
     private final boolean valid;
 
-    JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
+    JdkComboBoxItem(String jdkName, @NlsContexts.Label String label, @NlsContexts.HintText String comment, boolean valid) {
       this.jdkName = jdkName;
       this.label = label;
       this.comment = comment;

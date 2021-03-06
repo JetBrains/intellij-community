@@ -5,48 +5,38 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
 
-/**
- * @author Eugene Zhuravlev
- * Date: 14-Nov-18
- */
 public class CompilationPaths {
-  private final Collection<File> myPlatformClasspath;
-  private final Collection<File> myClasspath;
-  private final Collection<File> myUpgradeModulePath;
+  private final Iterable<? extends File> myPlatformClasspath;
+  private final Iterable<? extends File> myClasspath;
+  private final Iterable<? extends File> myUpgradeModulePath;
   private final ModulePath myModulePath;
-  private final Collection<File> mySourcePath;
+  private final Iterable<? extends File> mySourcePath;
 
-  public CompilationPaths(Collection<? extends File> platformClasspath,
-                          Collection<? extends File> classpath,
-                          Collection<? extends File> upgradeModulePath,
+  public CompilationPaths(Iterable<? extends File> platformClasspath,
+                          Iterable<? extends File> classpath,
+                          Iterable<? extends File> upgradeModulePath,
                           ModulePath modulePath,
-                          Collection<? extends File> sourcePath) {
-    myPlatformClasspath = constCollection(platformClasspath);
-    myClasspath = constCollection(classpath);
-    myUpgradeModulePath = constCollection(upgradeModulePath);
+                          Iterable<? extends File> sourcePath) {
+    myPlatformClasspath = platformClasspath;
+    myClasspath = classpath;
+    myUpgradeModulePath = upgradeModulePath;
     myModulePath = modulePath;
-    mySourcePath = constCollection(sourcePath);
-  }
-
-  private static <T> Collection<T> constCollection(Collection<? extends T> col) {
-    return col == null || col.isEmpty()? Collections.emptyList() : Collections.unmodifiableCollection(col);
+    mySourcePath = sourcePath;
   }
 
   @NotNull
-  public Collection<File> getPlatformClasspath() {
+  public Iterable<? extends File> getPlatformClasspath() {
     return myPlatformClasspath;
   }
 
   @NotNull
-  public Collection<File> getClasspath() {
+  public Iterable<? extends File> getClasspath() {
     return myClasspath;
   }
 
   @NotNull
-  public Collection<File> getUpgradeModulePath() {
+  public Iterable<? extends File> getUpgradeModulePath() {
     return myUpgradeModulePath;
   }
 
@@ -56,15 +46,15 @@ public class CompilationPaths {
   }
 
   @NotNull
-  public Collection<File> getSourcePath() {
+  public Iterable<? extends File> getSourcePath() {
     return mySourcePath;
   }
 
-  public static CompilationPaths create(@Nullable Collection<? extends File> platformCp,
-                                        @Nullable Collection<? extends File> cp,
-                                        @Nullable Collection<? extends File> upgradeModCp,
+  public static CompilationPaths create(@Nullable Iterable<? extends File> platformCp,
+                                        @Nullable Iterable<? extends File> cp,
+                                        @Nullable Iterable<? extends File> upgradeModCp,
                                         @NotNull ModulePath modulePath,
-                                        @Nullable Collection<? extends File> sourcePath) {
+                                        @Nullable Iterable<? extends File> sourcePath) {
     return new CompilationPaths(platformCp, cp, upgradeModCp, modulePath, sourcePath);
   }
 

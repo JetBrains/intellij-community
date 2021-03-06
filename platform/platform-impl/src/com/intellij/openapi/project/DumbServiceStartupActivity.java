@@ -4,7 +4,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
-public class DumbServiceStartupActivity implements StartupActivity {
+final class DumbServiceStartupActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull Project project) {
     DumbServiceImpl dumbService = (DumbServiceImpl)DumbService.getInstance(project);

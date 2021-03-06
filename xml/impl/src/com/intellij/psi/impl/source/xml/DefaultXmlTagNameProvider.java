@@ -18,12 +18,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
@@ -91,8 +94,12 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (xmlExtension.useXmlTagInsertHandler()) {
         lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
+      boolean deprecated = descriptor instanceof HtmlElementDescriptorImpl && ((HtmlElementDescriptorImpl)descriptor).isDeprecated();
+      if (deprecated) {
+        lookupElement = lookupElement.withStrikeoutness(true);
+      }
       lookupElement = lookupElement.withCaseSensitivity(!(descriptor instanceof HtmlElementDescriptorImpl));
-      elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
+      elements.add(PrioritizedLookupElement.withPriority(lookupElement, deprecated ? -1 : separator > 0 ? 0 : 1));
     }
   }
 
@@ -104,7 +111,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       return;
     }
 
-    if (Arrays.stream(tag.getChildren()).anyMatch(it -> it instanceof OuterLanguageElement)) {
+    if (ContainerUtil.exists(tag.getChildren(), OuterLanguageElement.class::isInstance)) {
       return;
     }
 
@@ -125,10 +132,10 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     Processor<String> processor = Processors.cancelableCollectProcessor(result);
     fbi.processAllKeys(XmlNamespaceIndex.NAME, processor, tag.getProject());
 
-    final GlobalSearchScope scope = new EverythingGlobalScope(tag.getProject());
+    final GlobalSearchScope scope = GlobalSearchScope.everythingScope(tag.getProject());
     for (final String ns : result) {
       if (ns.isEmpty()) continue;
-      fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {
+      fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<>() {
         @Override
         public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {
           List<String> tags = value.getRootTags();
@@ -143,7 +150,8 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
                 caretMarker.setGreedyToRight(true);
 
                 XmlFile psiFile = (XmlFile)context.getFile();
-                boolean incomplete = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null && XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null;
+                boolean incomplete = XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
+                                     XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null;
                 XmlNamespaceHelper.getHelper(psiFile).insertNamespaceDeclaration(psiFile, editor, Collections.singleton(ns), null, null);
                 editor.getCaretModel().moveToOffset(caretMarker.getEndOffset());
 

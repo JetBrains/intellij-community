@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.actions.NextWordWithSelectionAction;
+import com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.EditorTabPreviewEscapeAction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.commit.ChangesViewCommitPanel;
+import com.intellij.vcs.commit.CommitActionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,7 +22,7 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 
 public class VcsActionPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(List<AnAction> actions, DataContext context) {
+  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     ActionManager am = ActionManager.getInstance();
     List<AnAction> reorderedActions = new ArrayList<>(actions);
     List<String> reorderedIds = ContainerUtil.map(reorderedActions, it -> am.getId(it));
@@ -27,7 +31,10 @@ public class VcsActionPromoter implements ActionPromoter {
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
 
     Set<AnAction> promoted = new HashSet<>(filter(actions, action ->
-      action instanceof ShowMessageHistoryAction || action instanceof ChangesViewCommitPanel.DefaultCommitAction
+      action instanceof ShowMessageHistoryAction || action instanceof CommitActionsPanel.DefaultCommitAction ||
+      isCommitMessageEditor(context) && (
+        action instanceof PreviousWordWithSelectionAction || action instanceof NextWordWithSelectionAction
+      )
     ));
     Set<AnAction> demoted = new HashSet<>(filter(actions, action ->
       action instanceof EditorTabPreviewEscapeAction
@@ -39,6 +46,10 @@ public class VcsActionPromoter implements ActionPromoter {
     reorderedActions.addAll(demoted);
 
     return reorderedActions;
+  }
+
+  private static boolean isCommitMessageEditor(@NotNull DataContext context) {
+    return context.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL) != null;
   }
 
   /**

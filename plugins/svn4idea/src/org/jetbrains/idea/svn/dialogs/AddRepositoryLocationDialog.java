@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -32,18 +32,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
     super(project, true);
     myPreviousLocations = sorted(values);
 
-    setTitle(getTitle());
     init();
-    myComboField.setText(initText());
-  }
-
-  @Override
-  public String getTitle() {
-    return message("repository.browser.add.location.title");
-  }
-
-  protected String initText() {
-    return "http://";
   }
 
   @Override
@@ -86,7 +75,7 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
       return null;
     }
     catch (SvnBindException e) {
-      return new ValidationInfo("Could not parse url", myCombo);
+      return new ValidationInfo(message("dialog.message.could.not.parse.url"), myCombo);
     }
   }
 
@@ -98,5 +87,9 @@ public class AddRepositoryLocationDialog extends DialogWrapper {
   @Nullable
   public Url getSelected() {
     return mySelected;
+  }
+
+  public void setSelected(@NotNull Url url) {
+    myComboField.setText(url.toDecodedString());
   }
 }

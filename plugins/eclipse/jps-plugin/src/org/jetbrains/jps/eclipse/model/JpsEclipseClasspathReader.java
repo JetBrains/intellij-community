@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -95,7 +96,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
 
   @Override
   protected void addJUnitDefaultLib(JpsModule rootModel, String junitName, ExpandMacroToPathMap macroMap) {
-    final String ideaHome = macroMap.substitute("$APPLICATION_HOME_DIR$", SystemInfo.isFileSystemCaseSensitive);
+    final @NonNls String ideaHome = macroMap.substitute("$APPLICATION_HOME_DIR$", SystemInfo.isFileSystemCaseSensitive);
     final FilenameFilter junitFilter = (dir, name) -> name.startsWith("junit");
     File[] junitJars = new File(ideaHome, "lib").listFiles(junitFilter);
     if (junitJars == null || junitJars.length == 0) {
@@ -188,10 +189,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                             Element classpathElement, JpsMacroExpander expander) throws IOException {
     LOG.debug("start loading classpath for " + model.getName());
     final HashSet<String> libs = new HashSet<>();
-    for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+    for (Element o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
         readClasspathEntry(model, new ArrayList<>(), new ArrayList<>(), new HashSet<>(),
-                           testPattern, (Element)o, 0, null, expander.getExpandMacroMap(), libs);
+                           testPattern, o, 0, null, expander.getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         throw new IOException(e);

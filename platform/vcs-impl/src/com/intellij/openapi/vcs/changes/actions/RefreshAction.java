@@ -4,17 +4,12 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.ChangesViewRefresher;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +21,13 @@ import static com.intellij.openapi.vcs.changes.actions.VcsActionUsagesCollectorK
  * @author yole
  */
 public class RefreshAction extends AnAction implements DumbAware {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    boolean isEnabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
+    e.getPresentation().setEnabledAndVisible(isEnabled);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -55,7 +57,7 @@ public class RefreshAction extends AnAction implements DumbAware {
   }
 
   private static void performRefreshAndTrackChanges(Project project) {
-    ChangeListManagerImpl changeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
 
     Collection<Change> changesBeforeUpdate = changeListManager.getAllChanges();
     Collection<FilePath> unversionedBefore = changeListManager.getUnversionedFilesPaths();
@@ -63,11 +65,11 @@ public class RefreshAction extends AnAction implements DumbAware {
 
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
 
-    changeListManager.invokeAfterUpdate(() -> {
+    changeListManager.invokeAfterUpdate(true, () -> {
       Collection<Change> changesAfterUpdate = changeListManager.getAllChanges();
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 
-      logRefreshActionPerformed(changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
-    }, InvokeAfterUpdateMode.SILENT, "Refresh Action", ModalityState.current());
+      logRefreshActionPerformed(project, changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
+    });
   }
 }

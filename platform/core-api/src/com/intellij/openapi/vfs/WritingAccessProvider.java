@@ -5,6 +5,7 @@ import com.intellij.core.CoreBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ public abstract class WritingAccessProvider {
    * @deprecated Use {@link #EP}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
 
   public static final ProjectExtensionPointName<WritingAccessProvider> EP = new ProjectExtensionPointName<>("com.intellij.writingAccessProvider");

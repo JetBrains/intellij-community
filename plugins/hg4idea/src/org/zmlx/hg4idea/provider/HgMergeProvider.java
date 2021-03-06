@@ -27,6 +27,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.DEBUGANCESTOR_ERROR;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -82,7 +84,9 @@ public class HgMergeProvider implements MergeProvider {
         if (parts.size() < 2) {
           LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
           new HgCommandResultNotifier(myProject)
-            .notifyError(null, HgBundle.message("hg4idea.error.debugancestor.command.execution"),
+            .notifyError(DEBUGANCESTOR_ERROR,
+                         null,
+                         HgBundle.message("hg4idea.error.debugancestor.command.execution"),
                          HgBundle.message("hg4idea.error.debugancestor.command.description"));
         }
         else {
@@ -92,7 +96,9 @@ public class HgMergeProvider implements MergeProvider {
       else {
         LOG.info(HgBundle.message("hg4idea.error.debugancestor.command.execution") + arguments);
         new HgCommandResultNotifier(myProject)
-          .notifyError(null, HgBundle.message("hg4idea.error.debugancestor.command.execution"),
+          .notifyError(DEBUGANCESTOR_ERROR,
+                       null,
+                       HgBundle.message("hg4idea.error.debugancestor.command.execution"),
                        HgBundle.message("hg4idea.error.debugancestor.command.description"));
       }
     }

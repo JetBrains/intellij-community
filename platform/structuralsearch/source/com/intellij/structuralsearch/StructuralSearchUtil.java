@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,16 +26,21 @@ import java.util.stream.Collectors;
 public final class StructuralSearchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-  private static LanguageFileType ourDefaultFileType = null;
+  private static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
+    Comparator.comparing(Configuration::getCategory, NaturalComparator.INSTANCE)
+      .thenComparing(Configuration::getName, NaturalComparator.INSTANCE);
+  private static LanguageFileType ourDefaultFileType;
 
-  private static boolean ourUseUniversalMatchingAlgorithm = false;
+  private static boolean ourUseUniversalMatchingAlgorithm;
+  private static Map<String, LanguageFileType> ourNames2FileTypes;
   private static final Map<String, StructuralSearchProfile> cache = new HashMap<>();
 
-  private static List<Configuration> ourPredefinedConfigurations = null;
+  private static List<Configuration> ourPredefinedConfigurations;
   static {
     StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
       ourPredefinedConfigurations = null;
       ourDefaultFileType = null;
+      ourNames2FileTypes = null;
       cache.clear();
     }, null);
   }
@@ -53,8 +58,8 @@ public final class StructuralSearchUtil {
   }
 
   @Nullable
-  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType) {
-    return getProfileByLanguage(fileType.getLanguage());
+  public static StructuralSearchProfile getProfileByFileType(@Nullable LanguageFileType fileType) {
+    return (fileType == null) ? null : getProfileByLanguage(fileType.getLanguage());
   }
 
   @Nullable
@@ -81,7 +86,7 @@ public final class StructuralSearchUtil {
   }
 
   public static PsiElement getParentIfIdentifier(PsiElement element) {
-    return !isIdentifier(element) ? element : element.getParent();
+    return isIdentifier(element) ? element.getParent() : element;
   }
 
   @Contract("!null -> !null")
@@ -115,7 +120,7 @@ public final class StructuralSearchUtil {
         ourDefaultFileType = profile.getDefaultFileType(ourDefaultFileType);
       }
       if (ourDefaultFileType == null) {
-        ourDefaultFileType = StdFileTypes.XML;
+        ourDefaultFileType = XmlFileType.INSTANCE;
       }
     }
     return ourDefaultFileType;
@@ -125,17 +130,31 @@ public final class StructuralSearchUtil {
     return name.length() > 1 && name.charAt(0) == '$' && name.charAt(name.length() - 1) == '$';
   }
 
-  public static LanguageFileType @NotNull [] getSuitableFileTypes() {
-    final FileType[] types = FileTypeManager.getInstance().getRegisteredFileTypes();
-    final Set<LanguageFileType> fileTypes = StreamEx.of(types).select(LanguageFileType.class).collect(Collectors.toSet());
+  public static Collection<LanguageFileType> getSuitableFileTypes() {
+    return Collections.unmodifiableCollection(getNames2FileTypes().values());
+  }
+
+  private static @NotNull Map<String, LanguageFileType> getNames2FileTypes() {
+    final Map<String, LanguageFileType> names2FileTypes = ourNames2FileTypes;
+    if (names2FileTypes != null) {
+      return names2FileTypes;
+    }
+
+    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    final Map<String, LanguageFileType> cache = Arrays.stream(fileTypes)
+      .filter(fileType -> fileType instanceof LanguageFileType)
+      .collect(Collectors.toMap(FileType::getName, fileType -> (LanguageFileType)fileType));
     for (Language language : Language.getRegisteredLanguages()) {
       final LanguageFileType fileType = language.getAssociatedFileType();
       if (fileType != null) {
-        fileTypes.add(fileType);
+        cache.put(fileType.getName(), fileType);
       }
     }
+    return ourNames2FileTypes = cache;
+  }
 
-    return fileTypes.toArray(new LanguageFileType[0]);
+  public static LanguageFileType getSuitableFileTypeByName(String name) {
+    return getNames2FileTypes().get(name);
   }
 
   public static boolean containsRegExpMetaChar(String s) {
@@ -146,8 +165,18 @@ public final class StructuralSearchUtil {
     return REG_EXP_META_CHARS.indexOf(ch) >= 0;
   }
 
-  public static String shieldRegExpMetaChars(String word) {
+  @NotNull
+  public static String shieldRegExpMetaChars(@NotNull String word) {
     return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
+  }
+
+  public static String makeExtremeSpacesOptional(String word) {
+    if (word.trim().isEmpty()) return word;
+
+    String result = word;
+    if (word.startsWith(" ")) result = "(?:\\s|\\b)" + result.substring(1);
+    if (word.endsWith(" ")) result = result.substring(0, result.length() - 1) + "(?:\\s|\\b)";
+    return result;
   }
 
   @NotNull
@@ -178,13 +207,13 @@ public final class StructuralSearchUtil {
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }
-      Collections.sort(result);
+      Collections.sort(result, CONFIGURATION_COMPARATOR);
       ourPredefinedConfigurations = Collections.unmodifiableList(result);
     }
     return ourPredefinedConfigurations;
   }
 
-  public static boolean isDocCommentOwner(PsiElement match) {
+  public static boolean isDocCommentOwner(@NotNull PsiElement match) {
     final StructuralSearchProfile profile = getProfileByPsiElement(match);
     return profile != null && profile.isDocCommentOwner(match);
   }
@@ -194,11 +223,12 @@ public final class StructuralSearchUtil {
     return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
   }
 
-  public static String getAlternativeText(PsiElement matchedNode, String previousText) {
+  public static String getAlternativeText(@NotNull PsiElement matchedNode, @NotNull String previousText) {
     final StructuralSearchProfile profile = getProfileByPsiElement(matchedNode);
     return profile != null ? profile.getAlternativeText(matchedNode, previousText) : null;
   }
 
+  @NotNull
   public static String normalizeWhiteSpace(@NotNull String text) {
     text = text.trim();
     final StringBuilder result = new StringBuilder();
@@ -219,10 +249,12 @@ public final class StructuralSearchUtil {
     return result.toString();
   }
 
+  @NotNull
   public static String stripAccents(@NotNull String input) {
     return ACCENTS.matcher(Normalizer.normalize(input, Normalizer.Form.NFD)).replaceAll("");
   }
 
+  @NotNull
   public static String normalize(@NotNull String text) {
     return stripAccents(normalizeWhiteSpace(text));
   }

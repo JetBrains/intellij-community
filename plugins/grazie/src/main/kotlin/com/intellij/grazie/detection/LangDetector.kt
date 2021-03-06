@@ -28,8 +28,6 @@ object LangDetector : GrazieStateLifecycle {
 
     if (detected.preferred == Language.UNKNOWN) return null
 
-    GrazieFUSCounter.languageDetected(detected.preferred)
-
     return detected.preferred
   }
 

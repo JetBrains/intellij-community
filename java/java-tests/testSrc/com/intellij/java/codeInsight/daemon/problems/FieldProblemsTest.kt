@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
-import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 
 internal class FieldProblemsTest : ProjectProblemsViewTest() {
 
@@ -61,14 +61,51 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         it.replace(replacement)
       }
 
-      assertTrue(hasReportedProblems<PsiLocalVariable>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass))
 
       changeField(targetClass) {
         val replacement = factory.createFieldFromText("public static String field;", targetClass)
         it.replace(replacement)
       }
 
-      assertEmpty(getProblems(targetClass.containingFile))
+      assertEmpty(getProblems())
+    }
+  }
+
+  fun testTwoClassesWithSameFieldName() {
+    val aClass = myFixture.addClass("""
+      package foo;
+      public class A {
+        public static String mySpecialField;
+      }
+    """.trimIndent())
+
+    val bClass = myFixture.addClass("""
+      package foo;
+      public class B {
+      }
+    """.trimIndent())
+
+    val refClass = myFixture.addClass("""
+      package foo;
+      public class C {
+        void test() {
+          int i = new A().mySpecialField / 2;
+        }
+      }
+    """.trimIndent())
+
+    doTest(bClass) {
+      val factory = JavaPsiFacade.getInstance(project).elementFactory
+      val field = factory.createFieldFromText("public static String mySpecialField;", bClass)
+      WriteCommandAction.runWriteCommandAction(project) { bClass.add(field) }
+      myFixture.doHighlighting()
+      assertEmpty(getProblems())
+
+      myFixture.openFileInEditor(aClass.containingFile.virtualFile)
+      myFixture.doHighlighting()
+      changeField(aClass) { it.modifierList?.setModifierProperty(PsiModifier.STATIC, false) }
+      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass))
     }
   }
 
@@ -103,8 +140,8 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       WriteCommandAction.runWriteCommandAction(project) {
         bClass.add(field)
       }
-      myFixture.checkHighlighting()
-      assertTrue(hasReportedProblems<PsiLocalVariable>(bClass, cClass))
+      myFixture.doHighlighting()
+      assertTrue(hasReportedProblems<PsiLocalVariable>(cClass))
     }
   }
 
@@ -131,22 +168,23 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       .map { myFixture.addClass(refClassText.replace("classname", "RefClass$it")) }
       .toList()
 
+
     Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(nRefClasses + 1)
 
     doTest(targetClass) {
       val factory = JavaPsiFacade.getInstance(project).elementFactory
 
       changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
-      assertTrue(hasReportedProblems<PsiLocalVariable>(targetClass, *refClasses.toTypedArray()))
+      assertTrue(hasReportedProblems<PsiLocalVariable>(*refClasses.toTypedArray()))
 
       changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("field")) }
       val psiFile = targetClass.containingFile
-      assertEmpty(getProblems(psiFile))
+      assertEmpty(getProblems())
 
       myFixture.addClass(refClassText.replace("classname", "RefClass$nRefClasses"))
 
       changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
-      assertEmpty(getProblems(psiFile))
+      assertEmpty(getProblems())
     }
   }
 
@@ -187,16 +225,16 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val psiField = factory.createFieldFromText("static final String field = \"foo\";", null)
         targetClass.add(psiField)
       }
-      myFixture.checkHighlighting()
+      myFixture.doHighlighting()
 
-      assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
-      myFixture.checkHighlighting()
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
+      assertFalse(hasReportedProblems<PsiStatement>(outsideRefClass))
+      myFixture.doHighlighting()
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
 
       changeField(targetClass) { field -> field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true) }
       // too many usages now, cannot analyse all of them, so we give up and remove old errors
-      assertFalse(hasReportedProblems<PsiStatement>(targetClass, outsideRefClass))
-      assertFalse(hasReportedProblems<PsiAssignmentExpression>(targetClass, packageRefClass))
+      assertFalse(hasReportedProblems<PsiStatement>(outsideRefClass))
+      assertFalse(hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
     }
   }
 
@@ -228,9 +266,10 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
         modifiers.setModifierProperty(PsiModifier.STATIC, false)
       }
-      myFixture.checkHighlighting()
-      val inlays = ProjectProblemPassUtils.getInlays(myFixture.editor)
-      UsefulTestCase.assertSize(1, inlays.entries)
+      myFixture.doHighlighting()
+      val inlays = ProjectProblemUtils.getReportedProblems(
+        myFixture.editor)
+      assertSize(1, inlays.entries)
     }
   }
 
@@ -257,13 +296,13 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val modifiers = it.modifierList!!
         modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
       }
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(refClass))
 
       changeField(targetClass) {
         val modifiers = it.modifierList!!
         modifiers.setModifierProperty(PsiModifier.FINAL, false)
       }
-      assertEmpty(getProblems(targetClass.containingFile))
+      assertEmpty(getProblems())
     }
   }
 
@@ -291,7 +330,47 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val factory = JavaPsiFacade.getInstance(project).elementFactory
         identifier.replace(factory.createIdentifier("BAR"))
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
+    }
+  }
+
+  fun testFieldWithTypeParameter() {
+    myFixture.addClass("""
+      public class Id<T> {
+        T id(T t) {
+          return t;
+        }
+      }
+    """.trimIndent())
+
+    val targetClass = myFixture.addClass("""
+      public class TargetClass {
+        final static Id<Integer> ID = new ID(); 
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass {
+        void test() {
+          TargetClass.ID.id("foo");
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeField(targetClass) { psiField ->
+        psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      changeField(targetClass) { psiField ->
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        val typeElement = factory.createTypeElementFromText("Id<String>", targetClass)
+        psiField.typeElement?.replace(typeElement)
+      }
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
@@ -318,7 +397,7 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
         val factory = JavaPsiFacade.getInstance(project).elementFactory
         fieldChangeAction(it, factory)
       }
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiAssignmentExpression>(refClass))
     }
   }
 
@@ -328,6 +407,6 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
     val field = fields[0]
 
     WriteCommandAction.runWriteCommandAction(project) { changeAction(field) }
-    myFixture.checkHighlighting()
+    myFixture.doHighlighting()
   }
 }

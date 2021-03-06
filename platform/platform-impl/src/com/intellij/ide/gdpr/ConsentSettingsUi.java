@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -18,6 +21,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,7 +51,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   public void reset(@NotNull List<Consent> consents) {
     consentMapping.clear();
     if (consents.isEmpty()) {
-      JLabel label = new JLabel("There are no data-sharing options available", SwingConstants.CENTER);
+      JLabel label = new JLabel(IdeBundle.message("gdpr.label.there.are.no.data.sharing.options.available"), SwingConstants.CENTER);
       label.setVerticalAlignment(SwingConstants.CENTER);
       label.setOpaque(true);
       label.setBackground(JBColor.background());
@@ -68,12 +72,10 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       );
     }
     if (!ConsentOptions.getInstance().isEAP()) {
-      addHintLabel(body, "Data sharing preferences apply to all installed " + ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " products.");
+      addHintLabel(body, IdeBundle.message("gdpr.hint.text.apply.to.all.installed.products", ApplicationInfoImpl.getShadowInstance().getShortCompanyName()));
     }
     if (!myPreferencesMode) {
-      addHintLabel(body, "You can always change this behavior in " +
-                           ShowSettingsUtil.getSettingsMenuName() +
-                           " | Appearance & Behavior | System Settings | Data Sharing.");
+      addHintLabel(body, IdeBundle.message("gdpr.hint.text.you.can.always.change.this.behavior", ShowSettingsUtil.getSettingsMenuName()));
     }
     if (!myPreferencesMode) {
       body.setBorder(JBUI.Borders.empty(10));
@@ -84,7 +86,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     add(scrollPane);
   }
 
-  private static void addHintLabel(JPanel body, String text) {
+  private static void addHintLabel(JPanel body, @NlsContexts.HintText String text) {
     JLabel hintLabel = new JBLabel(text);
     hintLabel.setForeground(UIUtil.getContextHelpForeground());
     hintLabel.setVerticalAlignment(SwingConstants.TOP);
@@ -96,7 +98,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     );
   }
 
-  private static String getParagraphTag() {
+  private static @NlsSafe String getParagraphTag() {
     return "<p style=\"margin-bottom:" + JBUIScale.scale(10) + "px;\">";
   }
 
@@ -109,7 +111,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       if (ConsentOptions.getInstance().isEAP()) {
         final Consent usageStatsConsent = ConsentOptions.getInstance().getUsageStatsConsent();
         if (usageStatsConsent != null && consent.getId().equals(usageStatsConsent.getId())) {
-          checkBoxText += " when using EAP versions";
+          checkBoxText = IdeBundle.message("gdpr.checkbox.when.using.eap.versions", checkBoxText);
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
@@ -133,7 +135,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
           }
         }
       });
-      viewer.setText("<html><body>"+getParagraphTag() + StringUtil.replace(consent.getText(), "\n", "</p>" + getParagraphTag()) + "</p></body></html>");
+      viewer.setText("<html><body>" + replaceParagraphs(consent.getText()) + "</body></html>");
       StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
       //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
       styleSheet.addRule("body {margin-top:0;padding-top:0;}");
@@ -143,15 +145,20 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       styleSheet.addRule("p, h1 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
       styleSheet.addRule("li {margin-bottom:" + JBUIScale.scaleFontSize((float)6) + "pt;}");
       styleSheet.addRule("h2 {margin-top:0;padding-top:" + JBUIScale.scaleFontSize((float)13) + "pt;}");
-      styleSheet.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
-      styleSheet.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
-      styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
+      styleSheet.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED) + ";}");
+      styleSheet.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.HOVERED) + ";}");
+      styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}");
       viewer.setCaretPosition(0);
       pane.add(viewer, BorderLayout.CENTER);
       consentMapping.add(Pair.create(null, consent));
     }
     pane.setOpaque(false);
     return pane;
+  }
+
+  @Contract(pure = true)
+  private static String replaceParagraphs(String text) {
+    return getParagraphTag() + StringUtil.replace(text, "\n", "</p>" + getParagraphTag()) + "</p>";
   }
 
   @NotNull

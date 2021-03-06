@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.diff.DiffContentFactory;
@@ -47,7 +47,7 @@ import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +67,8 @@ final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, Pr
   private Document myPatternDocument; // accessed in EDT
   private long myInitialDocumentStamp; // accessed in EDT
 
+  private static final @NonNls String DIFF_PLACE = "ExtractMethod";
+
   PreviewDiffPanel(@NotNull ExtractMethodProcessor processor, PreviewTree tree) {
     myProject = processor.getProject();
     myTree = tree;
@@ -77,7 +79,7 @@ final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, Pr
     myAnchor = smartPointerManager.createSmartPsiElementPointer(processor.getAnchor());
 
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, null);
-    myDiffPanel.putContextHints(DiffUserDataKeys.PLACE, "ExtractMethod");
+    myDiffPanel.putContextHints(DiffUserDataKeys.PLACE, DIFF_PLACE);
     myDiffPanel.putContextHints(DiffUserDataKeys.FORCE_READ_ONLY, true);
     myDiffPanel.putContextHints(DiffUserDataKeysEx.FORCE_DIFF_TOOL, UnifiedDiffTool.INSTANCE);
     addToCenter(myDiffPanel.getComponent());
@@ -364,7 +366,7 @@ final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, Pr
     if (ContainerUtil.isEmpty(allDuplicates)) {
       return Collections.emptyMap();
     }
-    Map<DuplicateNode, Match> selectedDuplicates = new THashMap<>();
+    Map<DuplicateNode, Match> selectedDuplicates = new HashMap<>();
     for (DuplicateNode duplicateNode : selectedNodes) {
       TextRange selectedRange = duplicateNode.getTextRange();
       if (selectedRange != null) {

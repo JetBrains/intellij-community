@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +50,7 @@ public class InvokeTemplateAction extends AnAction {
     myCallback = afterInvocationCallback;
   }
 
-  public static String extractMnemonic(String caption, Set<? super Character> usedMnemonics) {
+  public static @ActionText String extractMnemonic(@ActionText String caption, Set<? super Character> usedMnemonics) {
     if (StringUtil.isEmpty(caption)) return "";
 
     for (int i = 0; i < caption.length(); i++) {
@@ -74,8 +75,8 @@ public class InvokeTemplateAction extends AnAction {
   public void perform() {
     final Document document = myEditor.getDocument();
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(file));
+    if (file != null && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles()) {
+      return;
     }
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {

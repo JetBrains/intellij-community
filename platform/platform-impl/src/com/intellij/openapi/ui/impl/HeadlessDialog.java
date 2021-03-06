@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFocusManagerHeadless;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.awt.event.MouseMotionListener;
 */
 class HeadlessDialog implements AbstractDialog {
   @NotNull private final DialogWrapper myWrapper;
-  private String myTitle;
+  private @NlsContexts.DialogTitle String myTitle;
 
   HeadlessDialog(@NotNull DialogWrapper wrapper) {
     myWrapper = wrapper;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -25,8 +25,8 @@ private val LOG = Logger.getInstance(ProjectConfigurationFilesProcessorImpl::cla
 private val configurationFilesExtensionsOutsideStoreDirectory =
   ContainerUtil.newHashSet(ProjectFileType.DEFAULT_EXTENSION, ModuleFileType.DEFAULT_EXTENSION)
 
-internal const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CONFIGURATION_FILES"
-internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES"
+internal const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CONFIGURATION_FILES" //NON-NLS
+internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES" //NON-NLS
 
 class ProjectConfigurationFilesProcessorImpl(project: Project,
                                              private val parentDisposable: Disposable,
@@ -86,7 +86,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     addChosenFiles(files)
   }
 
-  override val notificationDisplayId: String = "project.configuration.files.added.notification"
+  override val notificationDisplayId: String = VcsNotificationIdsHolder.PROJECT_CONFIGURATION_FILES_ADDED
 
   override val askedBeforeProperty = ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY
 
@@ -96,12 +96,12 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
   override fun notificationMessage(): String = VcsBundle.message("project.configuration.files.add.notification.message", vcsName)
 
-  override val showActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.view")
-  override val forCurrentProjectActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.add")
+  override val showActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.view")
+  override val forCurrentProjectActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.add")
 
 
   override val forAllProjectsActionText: String? = null
-  override val muteActionText: String = VcsBundle.getString("project.configuration.files.add.notification.action.mute")
+  override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
   override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
 
   override fun rememberForAllProjects() {}
@@ -112,7 +112,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   private fun Project.getProjectConfigDir(): VirtualFile? {
     if (!isDirectoryBased || isDefault) return null
 
-    val projectConfigDir = stateStore.projectConfigDir?.let(fileSystem::findFileByPath)
+    val projectConfigDir = stateStore.directoryStorePath?.let(fileSystem::findFileByNioFile)
     if (projectConfigDir == null) {
       LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
     }

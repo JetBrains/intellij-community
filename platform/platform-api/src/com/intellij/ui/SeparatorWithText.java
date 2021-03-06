@@ -34,10 +34,10 @@ import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 public class SeparatorWithText extends JComponent implements Accessible {
-  private String myCaption;
-  private int myPrefWidth;
-  private int myAlignment;
-  private Color myTextForeground;
+  protected @NlsContexts.Separator String myCaption;
+  protected int myPrefWidth;
+  protected int myAlignment;
+  protected Color myTextForeground;
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
@@ -69,10 +69,17 @@ public class SeparatorWithText extends JComponent implements Accessible {
 
   @Override
   public Dimension getPreferredSize() {
-    return isPreferredSizeSet() ? super.getPreferredSize() : getPreferredFontSize();
+    return isPreferredSizeSet() ? super.getPreferredSize() : getPreferredElementSize();
   }
 
-  private Dimension getPreferredFontSize() {
+  protected Dimension getPreferredElementSize() {
+    Dimension size = getLabelSize();
+    JBInsets.addTo(size, getInsets());
+    return size;
+  }
+
+  @NotNull
+  protected Dimension getLabelSize() {
     Dimension size = new Dimension(Math.max(myPrefWidth, 0), 1);
     String caption = getCaption();
     if (caption != null) {
@@ -82,13 +89,13 @@ public class SeparatorWithText extends JComponent implements Accessible {
         size.width = 2 * getHgap() + fm.stringWidth(caption);
       }
     }
-    JBInsets.addTo(size, getInsets());
+
     return size;
   }
 
   @Override
   public Dimension getMinimumSize() {
-    return isMinimumSizeSet() ? super.getMinimumSize() : getPreferredFontSize();
+    return isMinimumSizeSet() ? super.getMinimumSize() : getPreferredElementSize();
   }
 
   public void setMinimumWidth(int width) {
@@ -135,7 +142,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }
 
-  public String getCaption() {
+  public @NlsContexts.Separator String getCaption() {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 

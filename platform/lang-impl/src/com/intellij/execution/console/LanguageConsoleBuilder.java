@@ -44,8 +44,7 @@ import java.awt.*;
 public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
-  @Nullable
-  private Condition<LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
+  private Condition<? super LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
 
   @Nullable
   private PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
@@ -74,7 +73,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsoleView> condition) {
+  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<? super LanguageConsoleView> condition) {
     executionEnabled = condition;
     return this;
   }
@@ -112,7 +111,7 @@ public final class LanguageConsoleBuilder {
                                                @NotNull final Consumer<? super String> executeActionHandler,
                                                @NotNull String historyType,
                                                @Nullable String historyPersistenceId,
-                                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
+                                               @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
       void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
@@ -132,7 +131,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
+   * @see EditorEx#setOneLineMode(boolean)
    */
   @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
@@ -141,7 +140,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
+   * @see EditorEx#setOneLineMode(boolean)
    */
   public LanguageConsoleBuilder oneLineInput(boolean value) {
     oneLineInput = value;
@@ -363,7 +362,9 @@ public final class LanguageConsoleBuilder {
           return;
         }
 
-        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel().addRangeHighlighter(0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE);
+        RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
+          .addRangeHighlighter(null, 0, getDocument().getTextLength(), HighlighterLayer.ADDITIONAL_SYNTAX,
+                               HighlighterTargetArea.EXACT_RANGE);
         highlighter.setGreedyToRight(true);
         highlighter.setCustomRenderer(renderer);
         lineSeparatorPainter = highlighter;

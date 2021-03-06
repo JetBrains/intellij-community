@@ -38,8 +38,4 @@ public class JpsApplicationRunConfigurationSerializer extends JpsRunConfiguratio
                                                      XmlSerializer.deserialize(runConfigurationTag, JpsApplicationRunConfigurationState.class) : new JpsApplicationRunConfigurationState();
     return JpsJavaExtensionService.getInstance().createRunConfigurationProperties(properties);
   }
-
-  @Override
-  public void saveProperties(JpsApplicationRunConfigurationProperties properties, Element runConfigurationTag) {
-  }
 }

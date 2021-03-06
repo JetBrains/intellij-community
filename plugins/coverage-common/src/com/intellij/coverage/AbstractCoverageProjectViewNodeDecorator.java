@@ -1,22 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Roman.Chernyatchik
- */
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
   private Project myProject;
-
-  @Deprecated
-  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @Nullable CoverageDataManager coverageDataManager) {
-  }
 
   public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
     myProject = project;
@@ -28,6 +23,7 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected final CoverageDataManager getCoverageDataManager() {
     return getCoverageDataManager(myProject);
   }
@@ -38,7 +34,7 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
     return CoverageDataManager.getInstance(project);
   }
 
-  protected static void appendCoverageInfo(ColoredTreeCellRenderer cellRenderer, String coverageInfo) {
+  protected static void appendCoverageInfo(ColoredTreeCellRenderer cellRenderer, @Nls String coverageInfo) {
     if (coverageInfo != null) {
       cellRenderer.append(" (" + coverageInfo + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
     }

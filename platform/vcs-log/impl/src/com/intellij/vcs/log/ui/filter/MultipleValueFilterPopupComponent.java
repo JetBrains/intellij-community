@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.TextCompletionProvider;
@@ -90,6 +91,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   protected String getTooltip(@NotNull Collection<String> values) {
     return StringUtil.join(getLocalizedValues(values), ", ");
   }
@@ -98,7 +100,7 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   protected abstract List<String> parseLocalizedValues(@NotNull Collection<String> values);
 
   @NotNull
-  protected abstract List<String> getLocalizedValues(@NotNull Collection<String> values);
+  protected abstract List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
 
   @NotNull
   protected AnAction createSelectMultipleValuesAction() {
@@ -123,7 +125,8 @@ abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterMod
   }
 
   @NotNull
-  static String displayableText(@NotNull Collection<String> values, int maxLength) {
+  @Nls
+  static String displayableText(@NotNull Collection<@Nls String> values, int maxLength) {
     String text;
     if (values.size() == 1) {
       text = Objects.requireNonNull(ContainerUtil.getFirstItem(values));

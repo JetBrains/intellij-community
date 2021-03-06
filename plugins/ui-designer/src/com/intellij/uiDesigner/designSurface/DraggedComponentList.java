@@ -22,7 +22,7 @@ import java.util.Collections;
 /**
  * @author yole
  */
-public class DraggedComponentList implements Transferable, ComponentDragObject {
+public final class DraggedComponentList implements Transferable, ComponentDragObject {
   private static final Logger LOG = Logger.getInstance(DraggedComponentList.class);
 
   private static DataFlavor ourDataFlavor;

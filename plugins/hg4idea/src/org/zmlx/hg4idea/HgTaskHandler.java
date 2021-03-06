@@ -27,6 +27,9 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.util.Collections;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.EXCEPTION_DURING_MERGE_COMMIT;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.MERGE_ERROR;
+
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   private final HgReferenceValidator myNameValidator;
 
@@ -73,15 +76,15 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
         Project project = repository.getProject();
         VirtualFile repositoryRoot = repository.getRoot();
         try {
-          new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
+          new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread(); //NON-NLS
           HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
         }
         catch (HgCommandException e) {
-            HgErrorUtil.handleException(project, e);
+            HgErrorUtil.handleException(project, MERGE_ERROR, e);
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project)
-            .notifyError(HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
+            .notifyError(EXCEPTION_DURING_MERGE_COMMIT, HgBundle.message("hg4idea.commit.merge.error", branch), e.getMessage());
         }
       });
     }

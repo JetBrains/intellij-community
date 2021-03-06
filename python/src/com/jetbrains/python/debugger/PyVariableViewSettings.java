@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -31,13 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PyVariableViewSettings {
-  public static final String LOADING_TIMED_OUT = PyBundle.message("debugger.variables.view.loading.timed.out");
-  public static final String ON_DEMAND_LINK_TEXT = PyBundle.message("debugger.variables.view.switch.to.loading.on.demand");
-  public static final String WARNING_MESSAGE = PyBundle.message("debugger.variables.view.warning.message");
-
   public static class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
-    private final String myText;
+    private final @ActionText String myText;
     private volatile boolean mySimplifiedView;
 
     public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
@@ -76,8 +73,10 @@ public class PyVariableViewSettings {
     if (debuggerSettings.getValuesPolicy() == PyDebugValue.ValuesPolicy.ON_DEMAND) return;
 
     node.setMessage(
-      WARNING_MESSAGE, AllIcons.General.BalloonWarning, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-      new XDebuggerTreeNodeHyperlink(ON_DEMAND_LINK_TEXT) {
+      PyBundle.message("debugger.variables.view.warning.message"),
+      AllIcons.General.BalloonWarning,
+      SimpleTextAttributes.REGULAR_ATTRIBUTES,
+      new XDebuggerTreeNodeHyperlink(PyBundle.message("debugger.variables.view.switch.to.loading.on.demand")) {
         private boolean linkClicked = false;
 
         @Override
@@ -93,7 +92,7 @@ public class PyVariableViewSettings {
             return "";
           }
           else {
-            return ON_DEMAND_LINK_TEXT;
+            return PyBundle.message("debugger.variables.view.switch.to.loading.on.demand");
           }
         }
       });
@@ -143,7 +142,7 @@ public class PyVariableViewSettings {
   }
 
   public static class PolicyAction extends ToggleAction {
-    @NotNull private final String myText;
+    @NotNull private final @ActionText String myText;
     @NotNull private final PyDebugValue.ValuesPolicy myPolicy;
     @NotNull private final VariablesPolicyGroup myActionGroup;
     private volatile boolean isEnabled;

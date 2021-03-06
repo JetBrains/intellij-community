@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,12 +82,12 @@ public abstract class DiffActionExecutor {
     DiffContent diffContent;
     if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
-      if (content == null) throw new VcsException("Failed to load content");
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
-      if (content == null) throw new VcsException("Failed to load content");
+      if (content == null) throw new VcsException(VcsBundle.message("vcs.error.failed.to.load.file.content.from.vcs"));
       diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 
@@ -111,7 +112,8 @@ public abstract class DiffActionExecutor {
     public @NotNull DiffRequest process(@NotNull UserDataHolder context,
                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       final ContentRevision contentRevision = getContentRevision();
-      if (contentRevision == null) throw new DiffRequestProducerException("Can't get revision content");
+      if (contentRevision == null) throw new DiffRequestProducerException(
+        VcsBundle.message("diff.producer.error.cant.get.revision.content"));
 
       try {
         DiffContent content1 = createRemote(contentRevision);
@@ -157,7 +159,11 @@ public abstract class DiffActionExecutor {
     }
   }
 
+  /**
+   * @deprecated use {@link #showDiff(DiffProvider, VcsRevisionNumber, VirtualFile, Project)} instead
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
                               final Project project, final VcsBackgroundableActions actionKey) {
     showDiff(diffProvider, revisionNumber, selectedFile, project);

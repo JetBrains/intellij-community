@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DocStringUtil {
+public final class DocStringUtil {
   private DocStringUtil() {
   }
 
@@ -304,7 +304,7 @@ public class DocStringUtil {
   // For instance, an empty IDEA project with a Python scratch file.
   @Nullable
   public static Module getModuleForElement(@NotNull PsiElement element) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element.getContainingFile());
     if (module != null) {
       return module;
     }

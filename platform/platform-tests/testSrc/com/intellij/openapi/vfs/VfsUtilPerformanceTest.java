@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
@@ -28,7 +28,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSets;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -120,7 +120,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         dir = dir.createChildDirectory(this, "foo");
       }
       VirtualFile leafDir = dir;
-      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<RuntimeException>() {
+      ThrowableRunnable<RuntimeException> checkPerformance = new ThrowableRunnable<>() {
         private VirtualFile findRoot(VirtualFile file) {
           while (true) {
             VirtualFile parent = file.getParent();
@@ -142,14 +142,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           assertEquals(findRoot(vDir), findRoot(leafDir));
         }
       };
-      int time = 1500;
+      int time = 1000;
       PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
       VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
       VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
       for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).reattemptUntilJitSettlesDown().assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
     });
   }
 
@@ -331,7 +331,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       })
       .forEach(events::add);
     List<CharSequence> names = ContainerUtil.map(events, e -> ((VFileCreateEvent)e).getChildName());
-    temp.removeChildren(new TIntHashSet(), names);
+    temp.removeChildren(IntSortedSets.EMPTY_SET, names);
   }
 
   private void eventsForDeleting(List<? super VFileEvent> events, VirtualDirectoryImpl temp) {

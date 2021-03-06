@@ -56,6 +56,7 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    //noinspection HardCodedStringLiteral
     setText((value == null) ? "" : value.toString());
     setFont(UIUtil.getListFont());
     setIcon(null);

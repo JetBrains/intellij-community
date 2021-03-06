@@ -1,31 +1,31 @@
-  // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
-  import com.intellij.openapi.diagnostic.Logger;
-  import com.intellij.openapi.util.Pair;
-  import com.intellij.openapi.util.text.StringUtil;
-  import com.intellij.util.containers.ContainerUtil;
-  import git4idea.GitLocalBranch;
-  import git4idea.GitRemoteBranch;
-  import git4idea.branch.GitBranchUtil;
-  import one.util.streamex.StreamEx;
-  import org.ini4j.Ini;
-  import org.ini4j.Profile;
-  import org.jetbrains.annotations.NotNull;
-  import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.branch.GitBranchUtil;
+import one.util.streamex.StreamEx;
+import org.ini4j.Ini;
+import org.ini4j.Profile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-  import java.io.File;
-  import java.io.IOException;
-  import java.util.ArrayList;
-  import java.util.Collection;
-  import java.util.List;
-  import java.util.Map;
-  import java.util.regex.Matcher;
-  import java.util.regex.Pattern;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-  import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyList;
 
-  /**
+/**
  * Reads information from the {@code .git/config} file, and parses it to actual objects.
  * <p/>
  * Currently doesn't read all the information: just general information about remotes and branch tracking.
@@ -96,7 +96,7 @@ public final class GitConfig {
   @NotNull
   static GitConfig read(@NotNull File configFile) {
     GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList());
-    if (!configFile.exists()) {
+    if (!configFile.exists() || configFile.isDirectory()) {
       LOG.info("No .git/config file at " + configFile.getPath());
       return emptyConfig;
     }
@@ -106,6 +106,7 @@ public final class GitConfig {
       ini = GitConfigHelperKt.loadIniFile(configFile);
     }
     catch (IOException e) {
+      LOG.warn("Couldn't read .git/config at" + configFile.getPath(), e);
       return emptyConfig;
     }
 
@@ -303,7 +304,7 @@ public final class GitConfig {
     return new UrlsAndPushUrls(urls, pushUrls);
   }
 
-  private static class UrlsAndPushUrls {
+  private static final class UrlsAndPushUrls {
     final List<String> myUrls;
     final Collection<String> myPushUrls;
 
@@ -351,7 +352,7 @@ public final class GitConfig {
     return null;
   }
 
-  private static class Remote {
+  private static final class Remote {
 
     @NotNull private final String myName;
     @NotNull List<String> myFetchSpecs;
@@ -392,7 +393,7 @@ public final class GitConfig {
     }
   }
 
-  private static class Url {
+  private static final class Url {
     private final String myName;
     @Nullable private final String myInsteadof;
     @Nullable private final String myPushInsteadof;
@@ -416,7 +417,7 @@ public final class GitConfig {
     }
   }
 
-  private static class BranchConfig {
+  private static final class BranchConfig {
     private final String myName;
     @Nullable private final String myRemote;
     @Nullable private final String myMerge;

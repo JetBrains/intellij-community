@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,10 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
-import gnu.trove.THashMap;
 
 import java.io.File;
-import java.util.Map;
 
 public class MacroManagerTest extends CodeInsightFixtureTestCase {
   private void doTest(String filePath, String str, String expected) throws Macro.ExecutionCancelledException {
@@ -27,11 +25,11 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
 
   public DataContext getContext(VirtualFile file) {
     Project project = myFixture.getProject();
-    Map<String, Object> dataId2data = new THashMap<>();
-    dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
-    dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
-    dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), PlatformTestUtil.getOrCreateProjectTestBaseDir(project));
-    return SimpleDataContext.getSimpleContext(dataId2data, null);
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, file)
+      .add(PlatformDataKeys.PROJECT_FILE_DIRECTORY, PlatformTestUtil.getOrCreateProjectBaseDir(project))
+      .build();
   }
 
   public void testFileParentDirMacro() throws Throwable {

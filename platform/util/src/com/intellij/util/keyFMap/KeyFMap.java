@@ -67,7 +67,7 @@ public interface KeyFMap {
   /**
    * @return an array of all keys present in this {@code KeyFMap}, in no particular order. The length of the array equals to KeyFMap size.
    */
-  Key @NotNull [] getKeys();
+  @NotNull Key @NotNull [] getKeys();
 
   /**
    * @return true if this {@code KeyFMap} is empty.
@@ -85,5 +85,5 @@ public interface KeyFMap {
    * @param other {@code KeyFMap} to compare with
    * @return true if other map equals to this map.
    */
-  boolean equalsByReference(KeyFMap other);
+  boolean equalsByReference(@NotNull KeyFMap other);
 }

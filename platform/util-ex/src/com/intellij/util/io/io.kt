@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.util.SmartList
@@ -9,6 +9,7 @@ import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.util.*
+import kotlin.math.min
 
 fun Reader.readCharSequence(length: Int): CharSequence {
   use {
@@ -24,10 +25,6 @@ fun Reader.readCharSequence(length: Int): CharSequence {
     return CharSequenceBackedByChars(chars, 0, count)
   }
 }
-
-@Suppress("unused")
-@Deprecated(message = "For Java code only (Reader is accepted now instead of InputStreamReader and it breaks compatibility)", level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("reader.readCharSequence()"))
-fun readCharSequence(reader: InputStreamReader) = reader.readCharSequence()
 
 /**
  * Think twice before use - consider to to specify length.
@@ -47,10 +44,10 @@ fun Reader.readCharSequence(): CharSequence {
     total += n
     if (count == chars.size) {
       if (buffers == null) {
-        buffers = SmartList<CharArray>()
+        buffers = SmartList()
       }
       buffers.add(chars)
-      val newLength = Math.min(1024 * 1024, chars.size * 2)
+      val newLength = min(1024 * 1024, chars.size * 2)
       chars = CharArray(newLength)
       count = 0
     }

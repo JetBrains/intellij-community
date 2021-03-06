@@ -9,6 +9,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ public abstract class XDebuggerManager {
    * @param sessionName title of 'Debug' tool window
    */
   @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName,
+  public abstract XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                                        @Nullable RunContentDescriptor contentToReuse,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException;
 
@@ -60,7 +61,7 @@ public abstract class XDebuggerManager {
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
    */
   @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+  public abstract XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                                        boolean showToolWindowOnSuspendOnly,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException;
 
@@ -71,7 +72,7 @@ public abstract class XDebuggerManager {
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
    */
   @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable Icon icon,
+  public abstract XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable Icon icon,
                                                        @Nullable RunContentDescriptor contentToReuse, boolean showToolWindowOnSuspendOnly,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException;
 }

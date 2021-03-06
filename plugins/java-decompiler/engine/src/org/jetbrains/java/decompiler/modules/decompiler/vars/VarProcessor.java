@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -55,7 +55,7 @@ public class VarProcessor {
       Integer index = mapOriginalVarIndices.get(pair.var);
       if (index != null) {
         String debugName = mapDebugVarNames.get(index);
-        if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getClassStruct().getBytecodeVersion())) {
+        if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getBytecodeVersion())) {
           name = debugName;
         }
       }
@@ -72,11 +72,7 @@ public class VarProcessor {
   }
 
   public Integer getVarOriginalIndex(int index) {
-    if (varVersions == null) {
-      return null;
-    }
-
-    return varVersions.getMapOriginalVarIndices().get(index);
+    return varVersions == null ? null : varVersions.getMapOriginalVarIndices().get(index);
   }
 
   public void refreshVarNames(VarNamesCollector vc) {

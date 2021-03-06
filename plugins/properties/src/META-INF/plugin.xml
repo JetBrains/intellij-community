@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.lang.properties">
   <id>com.intellij.properties</id>
   <name>Properties</name>
   <category>Languages</category>
@@ -10,10 +10,13 @@
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
-                    interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"
+                    interface="com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider"
                     dynamic="true"/>
     <extensionPoint name="alphaUnsortedInspectionSuppressor"
-                    interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"
+                    interface="com.intellij.lang.properties.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"
+                    dynamic="true"/>
+    <extensionPoint name="duplicatePropertyKeyAnnotationSuppressor"
+                    interface="com.intellij.lang.properties.DuplicatePropertyKeyAnnotationSuppressor"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -49,11 +52,10 @@
     <lang.ast.factory language="Properties" implementationClass="com.intellij.lang.properties.psi.impl.PropertiesASTFactory"/>
     <joinLinesHandler implementation="com.intellij.lang.properties.PropertiesJoinLinesHandler"/>
 
-    <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterInPropertiesFileHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.lang.properties.EnterInPropertiesFileHandler"/>
 
     <lang.syntaxHighlighter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesHighlighter"/>
     <lang.parserDefinition language="Properties" implementationClass="com.intellij.lang.properties.parsing.PropertiesParserDefinition"/>
-    <renameHandler implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleFromProjectViewRenameHandler"/>
     <automaticRenamerFactory implementation="com.intellij.lang.properties.refactoring.rename.ResourceBundleRenamerFactory"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.properties.refactoring.rename.RenamePropertyProcessor"/>
     <stubElementTypeHolder class="com.intellij.lang.properties.parsing.PropertiesElementTypes"/>
@@ -63,37 +65,37 @@
     <refactoring.safeDeleteProcessor implementation="com.intellij.lang.properties.refactoring.PropertiesFilesSafeDeleteProcessor"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.lang.properties.refactoring.PropertyKeysSafeDeleteProcessor"/>
     <refactoring.moveHandler implementation="com.intellij.lang.properties.projectView.ResourceBundleMoveProvider"/>
-    <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.PropertiesColorsPage"/>
+    <colorSettingsPage implementation="com.intellij.lang.properties.PropertiesColorsPage"/>
     <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
     <elementDescriptionProvider implementation="com.intellij.lang.properties.PropertiesDescriptionProvider"/>
     <fileType name="Properties" language="Properties" extensions="properties" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.PropertiesFileType"/>
     <fileType name="ResourceBundle" fieldName="INSTANCE" implementationClass="com.intellij.lang.properties.editor.ResourceBundleFileType"/>
 
-    <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
+    <favoriteNodeProvider implementation="com.intellij.lang.properties.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 
     <localInspection language="Properties" shortName="UnusedProperty" bundle="messages.PropertiesBundle"
                      key="unused.property.inspection.display.name"
                      groupKey="properties.files.inspection.group.display.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.unused.UnusedPropertyInspection"/>
+                     implementationClass="com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection"/>
     <globalInspection language="Properties" shortName="DuplicatePropertyInspection" bundle="messages.InspectionsBundle"
                       key="duplicate.property.display.name"
                       groupKey="group.names.properties.files" enabledByDefault="false" level="WARNING"
-                      implementationClass="com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>
+                      implementationClass="com.intellij.lang.properties.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection"/>
     <localInspection language="Properties" shortName="TrailingSpacesInProperty" bundle="messages.PropertiesBundle"
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.TrailingSpacesInPropertyInspection"/>
+                     implementationClass="com.intellij.lang.properties.codeInspection.TrailingSpacesInPropertyInspection"/>
     <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
                      key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="false" level="WEAK WARNING"
-                     implementationClass="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection"/>
+                     implementationClass="com.intellij.lang.properties.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection"/>
     <localInspection language="Properties" shortName="WrongPropertyKeyValueDelimiter" bundle="messages.PropertiesBundle"
                      key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WEAK WARNING" cleanupTool="true"
-                     implementationClass="com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
+                     implementationClass="com.intellij.lang.properties.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
 
-    <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
-    <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>
+    <idIndexer filetype="Properties" implementationClass="com.intellij.lang.properties.idCache.PropertiesIdIndexer"/>
+    <todoIndexer filetype="Properties" implementationClass="com.intellij.lang.properties.idCache.PropertiesTodoIndexer"/>
 
     <projectService serviceImplementation="com.intellij.lang.properties.PropertiesReferenceManager"/>
 
@@ -116,19 +118,19 @@
     <definitionsScopedSearch implementation="com.intellij.lang.properties.editor.PropertiesInheritorsSearcher"/>
     <gotoDeclarationHandler implementation="com.intellij.lang.properties.editor.GotoPropertyParentDeclarationHandler"/>
 
-    <properties.implicitPropertyUsageProvider implementation="com.intellij.codeInspection.unused.LoggerConfigPropertyUsageProvider"/>
+    <properties.implicitPropertyUsageProvider implementation="com.intellij.lang.properties.codeInspection.unused.LoggerConfigPropertyUsageProvider"/>
 
     <stripTrailingSpacesFilterFactory implementation="com.intellij.lang.properties.formatting.PropertiesStripTrailingSpacesFilterFactory"/>
 
-    <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
-    <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
+    <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.lang.properties.codeInspection.PropertiesInspectionSuppressor"/>
+    <qualifiedNameProvider implementation="com.intellij.lang.properties.ide.actions.PropertiesQualifiedNameProvider"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>
   </projectListeners>
 
   <actions>
-    <action id="DissociateResourceBundleAction" text="Dissociate Resource Bundle" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
+    <action id="DissociateResourceBundleAction" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
       <add-to-group group-id="ProjectViewPopupMenu"/>
     </action>
     <action id="CombinePropertiesFilesAction" class="com.intellij.lang.properties.customizeActions.CombinePropertiesFilesAction">
@@ -142,4 +144,5 @@
     </action>
 
   </actions>
+  <resource-bundle>messages.PropertiesBundle</resource-bundle>
 </idea-plugin>

@@ -25,7 +25,7 @@ public abstract class ValueTypeConverter<A, B> {
   public abstract Class<A> getSourceType();
   public abstract Class<B> getTargetType();
 
-  public static final ValueTypeConverter<String, Integer>STRING_2_INTEGER = new ValueTypeConverter<String, Integer>() {
+  public static final ValueTypeConverter<String, Integer>STRING_2_INTEGER = new ValueTypeConverter<>() {
     @Override
     public String to(Integer integer) {
       return integer.toString();

@@ -1,1 +1,1 @@
-<error bundleMsg="bad-trail|l">1000l</error>
+<error descr="Python version 3.10 does not support a trailing 'l'">1000l</error>

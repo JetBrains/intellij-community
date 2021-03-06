@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -89,23 +91,36 @@ public class UnifiedDiffChangeUi {
     return new DiffGutterOperation.Simple(myEditor, offset, builder);
   }
 
+  static @NotNull @Nls String getApplyActionText(@NotNull UnifiedDiffViewer viewer, @NotNull Side sourceSide) {
+    String customValue = DiffUtil.getUserData(viewer.getRequest(), viewer.getContext(),
+                                              sourceSide.select(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT,
+                                                                DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT));
+    if (customValue != null) return customValue;
+
+    return sourceSide.isLeft() ? DiffBundle.message("action.presentation.diff.revert.text")
+                               : DiffBundle.message("action.presentation.diff.accept.text");
+  }
+
+  @NotNull
+  static Icon getApplyIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.Revert, AllIcons.Actions.Checked);
+  }
+
   @NotNull
   private DiffGutterOperation createAcceptOperation(@NotNull Side sourceSide) {
     return createOperation(() -> {
       if (myViewer.isStateIsOutOfDate()) return null;
       if (!myViewer.isEditable(sourceSide.other(), true)) return null;
 
-      if (sourceSide.isLeft()) {
-        return createIconRenderer(sourceSide, DiffBundle.message("action.presentation.diff.revert.text"), AllIcons.Diff.Remove);
-      }
-      else {
-        return createIconRenderer(sourceSide, DiffBundle.message("action.presentation.diff.accept.text"), AllIcons.Actions.Checked);
-      }
+      String text = getApplyActionText(myViewer, sourceSide);
+      Icon icon = getApplyIcon(sourceSide);
+
+      return createIconRenderer(sourceSide, text, icon);
     });
   }
 
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,
-                                                @NotNull final String tooltipText,
+                                                @NotNull final @NlsContexts.Tooltip String tooltipText,
                                                 @NotNull final Icon icon) {
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override

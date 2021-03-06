@@ -1,19 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +32,11 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author Gregory.Shrago
  */
-public class DfaUtil {
-
-  public static @NotNull Collection<PsiExpression> 
-  getCachedVariableValues(final @Nullable PsiVariable variable, final @Nullable PsiElement context) {
+public final class DfaUtil {
+  public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
 
-    final PsiCodeBlock codeBlock = tryCast(DfaPsiUtil.getEnclosingCodeBlock(variable, context), PsiCodeBlock.class);
+    final PsiCodeBlock codeBlock = tryCast(getEnclosingCodeBlock(variable, context), PsiCodeBlock.class);
     if (codeBlock == null) return Collections.emptyList();
     PsiElement[] defs = DefUseUtil.getDefs(codeBlock, variable, context);
 
@@ -43,9 +46,9 @@ public class DfaUtil {
         ContainerUtil.addIfNotNull(results, ((PsiLocalVariable)def).getInitializer());
       }
       else if (def instanceof PsiReferenceExpression) {
-        PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(def.getParent());
+        PsiAssignmentExpression assignment = tryCast(def.getParent(), PsiAssignmentExpression.class);
         if(assignment != null && assignment.getLExpression() == def) {
-          ContainerUtil.addIfNotNull(results, assignment.getRExpression());
+          ContainerUtil.addIfNotNull(results, unrollConcatenation(assignment, variable, codeBlock));
         }
       }
       else if (def instanceof PsiExpression) {
@@ -53,6 +56,62 @@ public class DfaUtil {
       }
     }
     return results;
+  }
+
+  private static PsiElement getEnclosingCodeBlock(final PsiVariable variable, final PsiElement context) {
+    PsiElement codeBlock;
+    if (variable instanceof PsiParameter) {
+      codeBlock = ((PsiParameter)variable).getDeclarationScope();
+      if (codeBlock instanceof PsiMethod) {
+        codeBlock = ((PsiMethod)codeBlock).getBody();
+      }
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    }
+    else {
+      codeBlock = DfaPsiUtil.getTopmostBlockInSameClass(context);
+    }
+    while (codeBlock != null) {
+      PsiAnonymousClass anon = PsiTreeUtil.getParentOfType(codeBlock, PsiAnonymousClass.class);
+      if (anon == null) break;
+      codeBlock = PsiTreeUtil.getParentOfType(anon, PsiCodeBlock.class);
+    }
+    return codeBlock;
+  }
+
+  private static PsiExpression unrollConcatenation(PsiAssignmentExpression assignment, PsiVariable variable, PsiCodeBlock block) {
+    List<PsiExpression> operands = new ArrayList<>();
+    while (true) {
+      if (assignment == null) return null;
+      PsiExpression rExpression = assignment.getRExpression();
+      if (rExpression == null) return null;
+      operands.add(rExpression);
+      IElementType type = assignment.getOperationTokenType();
+      if (type.equals(JavaTokenType.EQ)) break;
+      if (!type.equals(JavaTokenType.PLUSEQ)) {
+        return null;
+      }
+      PsiElement[] previous = DefUseUtil.getDefs(block, variable, assignment);
+      if (previous.length != 1) return null;
+      PsiElement def = previous[0];
+      if (def instanceof PsiLocalVariable) {
+        PsiExpression initializer = ((PsiLocalVariable)def).getInitializer();
+        if (initializer == null) return null;
+        operands.add(initializer);
+        break;
+      }
+      else if (def instanceof PsiReferenceExpression) {
+        assignment = tryCast(def.getParent(), PsiAssignmentExpression.class);
+      }
+      else return null;
+    }
+    if (operands.size() == 1) {
+      return operands.get(0);
+    }
+    return JavaPsiFacade.getElementFactory(block.getProject()).createExpressionFromText(
+      StreamEx.ofReversed(operands).map(op -> ParenthesesUtils.getText(op, PsiPrecedenceUtil.ADDITIVE_PRECEDENCE)).joining("+"),
+      assignment);
   }
 
   /**
@@ -77,7 +136,7 @@ public class DfaUtil {
       if (!(targetElement instanceof PsiVariable)) {
         return Collections.emptyList();
       }
-      Collection<PsiExpression> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
+      Collection<PsiExpression> variableValues = getVariableValues((PsiVariable)targetElement, qualifierExpression);
       if (variableValues.isEmpty()) {
         return DfaPsiUtil.getVariableAssignmentsInFile((PsiVariable)targetElement, false, qualifierExpression);
       }
@@ -121,7 +180,7 @@ public class DfaUtil {
     if (body == null) return Nullability.UNKNOWN;
 
     final DataFlowRunner dfaRunner = new DataFlowRunner(owner.getProject());
-    class BlockNullabilityVisitor extends StandardInstructionVisitor {
+    final class BlockNullabilityVisitor extends StandardInstructionVisitor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
       boolean hasUnknowns = false;
@@ -235,8 +294,9 @@ public class DfaUtil {
     return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
   }
 
-  public static boolean hasInitializationHacks(@NotNull PsiField field) {
-    PsiClass containingClass = field.getContainingClass();
+  public static boolean hasInitializationHacks(@NotNull PsiVariable var) {
+    if (!(var instanceof PsiField)) return false;
+    PsiClass containingClass = ((PsiField)var).getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
   }
 
@@ -265,7 +325,7 @@ public class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover 
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover
    * given expression.
    *
    * @param expression expression to cover
@@ -299,12 +359,11 @@ public class DfaUtil {
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {
-        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value, type);
-        return boxed == null ? value.getFactory().getUnknown() : boxed;
+        return value.getFactory().getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, value);
       }
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
-      if (value instanceof DfaBoxedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
+      if (value instanceof DfaWrappedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {
@@ -348,7 +407,7 @@ public class DfaUtil {
   }
 
   public static boolean isNaN(Object value) {
-    return value instanceof Double && ((Double)value).isNaN() || 
+    return value instanceof Double && ((Double)value).isNaN() ||
            value instanceof Float && ((Float)value).isNaN();
   }
 }

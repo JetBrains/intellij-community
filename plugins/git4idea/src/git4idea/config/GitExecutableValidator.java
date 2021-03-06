@@ -17,12 +17,9 @@ package git4idea.config;
 
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.project.Project;
-import git4idea.GitVcs;
-import git4idea.commands.GitImpl;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 /**
  * Project service that is used to check whether currently set git executable is valid (just calls 'git version' and parses the output),
@@ -32,25 +29,34 @@ import java.util.Collections;
  * @deprecated in favor of {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class GitExecutableValidator extends ExecutableValidator {
-
   public GitExecutableValidator(@NotNull Project project) {
     super(project, GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));
   }
 
   @Override
   protected String getCurrentExecutable() {
-    return GitExecutableManager.getInstance().getPathToGit(myProject);
+    GitExecutable executable = GitExecutableManager.getInstance().getExecutable(myProject);
+    if (executable instanceof GitExecutable.Local) return executable.getExePath();
+    return "";
   }
 
   @NotNull
   @Override
   protected String getConfigurableDisplayName() {
-    return GitVcs.NAME;
+    return GitBundle.message("settings.git.option.group");
   }
 
   @Override
-  public boolean isExecutableValid(@NotNull String executable) {
-    return doCheckExecutable(executable, Collections.singletonList("--version"), GitImpl.getGitTraceEnvironmentVariables(GitVersion.NULL));
+  public boolean isExecutableValid(@NotNull String pathToGit) {
+    try {
+      GitExecutable.Local executable = new GitExecutable.Local(pathToGit);
+      GitVersion version = GitExecutableManager.getInstance().identifyVersion(executable);
+      return !GitVersion.NULL.equals(version);
+    }
+    catch (GitVersionIdentificationException e) {
+      return false;
+    }
   }
 }

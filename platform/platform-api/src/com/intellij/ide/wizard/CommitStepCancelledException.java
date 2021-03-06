@@ -16,10 +16,10 @@
 
 package com.intellij.ide.wizard;
 
-import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.ide.IdeBundle;
 
 public class CommitStepCancelledException extends CommitStepException {
   public CommitStepCancelledException() {
-    super("User cancelled");
+    super(IdeBundle.message("commit.step.user.cancelled"));
   }
 }

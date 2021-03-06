@@ -3,6 +3,9 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.java.JavaBundle;
+import com.intellij.model.BranchableUsageInfo;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -24,8 +27,11 @@ import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +43,7 @@ import java.util.Set;
  */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
   private static final Logger LOG = Logger.getInstance(MakeMethodStaticProcessor.class);
-  private List<PsiMethod> myAdditionalMethods;
+  private @Nullable List<PsiMethod> myAdditionalMethods;
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {
     super(project, method, settings);
@@ -75,7 +81,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     for (UsageInfo usage : usages) {
       PsiElement element = usage.getElement();
       if (element instanceof PsiMethodReferenceExpression && needLambdaConversion((PsiMethodReferenceExpression)element)) {
-        descriptions.putValue(element, "Method reference will be converted to lambda");
+        descriptions.putValue(element, JavaBundle.message("refactoring.method.reference.to.lambda.conflict"));
       }
     }
     return descriptions;
@@ -187,7 +193,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
       }
       addParameterAfter = paramList.addAfter(parameter, null);
-      anchor = javaDocHelper.addParameterAfter(classParameterName, anchor);
+      anchor = javaDocHelper.addParameterAfter(classParameterName, null);
     }
 
     if (mySettings.isMakeFieldParameters()) {
@@ -223,6 +229,11 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     modifierList.setModifierProperty(PsiModifier.STATIC, true);
     modifierList.setModifierProperty(PsiModifier.FINAL, false);
     modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+
+    PsiReceiverParameter receiverParameter = PsiTreeUtil.getChildOfType(member.getParameterList(), PsiReceiverParameter.class);
+    if (receiverParameter != null) {
+      receiverParameter.delete();
+    }
   }
 
   @Override
@@ -398,5 +409,21 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         result.add(new ChainedCallUsageInfo(containingMethod));
       }
     }
+  }
+
+  @Override
+  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
+    MakeMethodStaticProcessor processor = new MakeMethodStaticProcessor(
+      myProject, branch.obtainPsiCopy(myMember), mySettings.obtainBranchCopy(branch));
+    if (myAdditionalMethods != null) {
+      processor.myAdditionalMethods = ContainerUtil.map(myAdditionalMethods, branch::obtainPsiCopy);
+    }
+    UsageInfo[] convertedUsages = BranchableUsageInfo.convertUsages(usages, branch);
+    processor.performRefactoring(convertedUsages);
+  }
+
+  @Override
+  protected boolean canPerformRefactoringInBranch() {
+    return true;
   }
 }

@@ -16,18 +16,23 @@
 
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.model.BranchableUsageInfo;
+import com.intellij.model.ModelBranch;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
-class InternalUsageInfo extends UsageInfo{
-  private final PsiElement myReferencedElement;
+import java.util.Objects;
+
+class InternalUsageInfo extends UsageInfo implements BranchableUsageInfo {
+  final PsiElement myReferencedElement;
   private Boolean myIsInsideAnonymous;
 
-  InternalUsageInfo(PsiElement element, PsiElement referencedElement) {
+  InternalUsageInfo(PsiElement element, @NotNull PsiElement referencedElement) {
     super(element);
     myReferencedElement = referencedElement;
     myIsInsideAnonymous = null;
@@ -49,5 +54,11 @@ class InternalUsageInfo extends UsageInfo{
   public boolean isWriting() {
     return myReferencedElement instanceof PsiField &&
               getElement() instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting(((PsiReferenceExpression)getElement()));
+  }
+
+  @Override
+  public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
+    return new InternalUsageInfo(branch.obtainPsiCopy(Objects.requireNonNull(getElement())), 
+                                 branch.obtainPsiCopy(myReferencedElement));
   }
 }

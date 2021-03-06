@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -13,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -21,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ViewAsGroup.class);
@@ -88,57 +92,66 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     return myChildren;
   }
 
-  private static AnAction [] calcChildren(List<JavaValue> values, Project project) {
-    List<AnAction> renderers = new ArrayList<>();
+  private void updateChildren(List<JavaValue> values, Project project, AnActionEvent event) {
+    getApplicableRenderers(values, project).thenAccept(rs -> {
+      List<RendererAction> renderers = StreamEx.of(rs).map(RendererAction::new).toList();
+      if (ContainerUtil.isEmpty(renderers)) {
+        return;
+      }
 
-    List<NodeRenderer> allRenderers = NodeRendererSettings.getInstance().getAllRenderers(project);
-
-    boolean anyValueDescriptor = false;
-
-    for (NodeRenderer nodeRenderer : allRenderers) {
-      boolean allApp = true;
-
-      for (JavaValue value : values) {
-        if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
-          return AnAction.EMPTY_ARRAY;
+      List<AnAction> children = new ArrayList<>();
+      AnAction[] viewAsActions =
+        ((DefaultActionGroup)ActionManager.getInstance().getAction(DebuggerActions.REPRESENTATION_LIST)).getChildren(null);
+      for (AnAction viewAsAction : viewAsActions) {
+        if (viewAsAction instanceof AutoRendererAction) {
+          if (renderers.size() > 1) {
+            viewAsAction.getTemplatePresentation().setVisible(true);
+            children.add(viewAsAction);
+          }
         }
-        ValueDescriptorImpl valueDescriptor = value.getDescriptor();
-        anyValueDescriptor = true;
-        if (!valueDescriptor.isValueValid() || !nodeRenderer.isApplicable(valueDescriptor.getType())) {
-          allApp = false;
-          break;
-        }
-      }
-
-      if (!anyValueDescriptor) {
-        return AnAction.EMPTY_ARRAY;
-      }
-
-      if (allApp) {
-        renderers.add(new RendererAction(nodeRenderer));
-      }
-    }
-
-    List<AnAction> children = new ArrayList<>();
-    AnAction[] viewAsActions = ((DefaultActionGroup) ActionManager.getInstance().getAction(DebuggerActions.REPRESENTATION_LIST)).getChildren(null);
-    for (AnAction viewAsAction : viewAsActions) {
-      if (viewAsAction instanceof AutoRendererAction) {
-        if (renderers.size() > 1) {
-          viewAsAction.getTemplatePresentation().setVisible(true);
+        else {
           children.add(viewAsAction);
         }
       }
-      else {
-        children.add(viewAsAction);
+
+      if (!children.isEmpty()) {
+        children.add(Separator.getInstance());
       }
+      children.addAll(renderers);
+
+      myChildren = children.toArray(AnAction.EMPTY_ARRAY);
+      DebuggerAction.enableAction(event, myChildren.length > 0);
+    });
+  }
+
+  @NotNull
+  private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, Project project) {
+    List<CompletableFuture<List<NodeRenderer>>> futures = new ArrayList<>(values.size());
+    for (JavaValue value : values) {
+      if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
+        return CompletableFuture.completedFuture(Collections.emptyList());
+      }
+      ValueDescriptorImpl valueDescriptor = value.getDescriptor();
+      if (!valueDescriptor.isValueValid()) {
+        return CompletableFuture.completedFuture(Collections.emptyList());
+      }
+      futures.add(DebuggerUtilsImpl.getApplicableRenderers(NodeRendererSettings.getInstance().getAllRenderers(project),
+                                                            valueDescriptor.getType()));
     }
 
-    if (!children.isEmpty()) {
-      children.add(Separator.getInstance());
-    }
-    children.addAll(renderers);
-
-    return children.toArray(AnAction.EMPTY_ARRAY);
+    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(__ -> {
+      List<NodeRenderer> res = null;
+      for (CompletableFuture<List<NodeRenderer>> future : futures) {
+        List<NodeRenderer> list = future.join();
+        if (res == null) {
+          res = list;
+        }
+        else {
+          res.retainAll(list);
+        }
+      }
+      return ContainerUtil.notNullize(res);
+    });
   }
 
   @Override
@@ -164,8 +177,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        myChildren = calcChildren(values, process.getProject());
-        DebuggerAction.enableAction(event, myChildren.length > 0);
+        updateChildren(values, process.getProject(), event);
       }
     });
   }

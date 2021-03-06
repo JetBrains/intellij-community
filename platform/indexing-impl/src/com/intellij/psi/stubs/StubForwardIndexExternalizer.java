@@ -2,10 +2,12 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.*;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,14 +16,20 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState> implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
+  @ApiStatus.Internal
+  public static final String USE_SHAREABLE_STUBS_PROP = "idea.uses.shareable.serialized.stubs";
+  @ApiStatus.Internal
+  public static final boolean USE_SHAREABLE_STUBS = SystemProperties.is(USE_SHAREABLE_STUBS_PROP);
+
   @NotNull
   public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
-    if (System.getProperty("idea.uses.shareable.serialized.stubs") == null) {
+    if (!USE_SHAREABLE_STUBS) {
       return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer();
     }
     return new FileLocalStubForwardIndexExternalizer();
@@ -62,7 +70,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
   <K> Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> doRead(@NotNull DataInput in, @Nullable StubIndexKey<K, ?> requestedIndex, @Nullable K requestedKey) throws IOException {
     int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
     if (stubIndicesValueMapSize > 0) {
-      THashMap<StubIndexKey<?, ?>, Map<Object, StubIdList>> stubIndicesValueMap = requestedIndex != null ? null : new THashMap<>(stubIndicesValueMapSize);
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> stubIndicesValueMap = requestedIndex != null ? null : new HashMap<>(stubIndicesValueMapSize);
       StubKeySerializationState stubKeySerializationState = createStubIndexKeySerializationState(in, stubIndicesValueMapSize);
       for (int i = 0; i < stubIndicesValueMapSize; ++i) {
         ID<Object, ?> indexKey = (ID<Object, ?>)readStubIndexKey(in, stubKeySerializationState);
@@ -75,12 +83,14 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
               return Collections.singletonMap(requestedIndex, value);
             }
             stubIndicesValueMap.put(stubIndexKey, value);
-          } else {
+          }
+          else {
             skipIndexValue(in);
           }
-        } else {
+        }
+        else {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null;
+          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
           skipIndexValue(in);
         }
       }
@@ -111,18 +121,17 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
     in.readFully(buffer);
     UnsyncByteArrayInputStream indexIs = new UnsyncByteArrayInputStream(buffer);
     DataInputStream indexDis = new DataInputStream(indexIs);
-    TObjectHashingStrategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
-    Map<K, StubIdList> result = new THashMap<>(hashingStrategy);
+    Hash.Strategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
+    Map<K, StubIdList> result = new Object2ObjectOpenCustomHashMap<>(hashingStrategy);
     while (indexDis.available() > 0) {
       K key = keyDescriptor.read(indexDis);
       StubIdList read = StubIdExternalizer.INSTANCE.read(indexDis);
-      if (requestedKey != null) {
-        if (hashingStrategy.equals(requestedKey, key)) {
-          result.put(key, read);
-          return result;
-        }
-      } else {
+      if (requestedKey == null) {
         result.put(key, read);
+      }
+      else if (hashingStrategy.equals(requestedKey, key)) {
+        result.put(key, read);
+        return result;
       }
     }
     return result;

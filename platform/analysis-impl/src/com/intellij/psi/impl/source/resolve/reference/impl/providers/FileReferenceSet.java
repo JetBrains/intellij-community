@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -11,17 +12,19 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext.toTargetContexts;
 import static java.util.Collections.*;
@@ -113,6 +116,7 @@ public class FileReferenceSet {
    * @deprecated use {@link FileReference#getContexts()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected Collection<PsiFileSystemItem> getExtraContexts() {
     return emptyList();
   }
@@ -297,7 +301,14 @@ public class FileReferenceSet {
   public Collection<PsiFileSystemItem> getDefaultContexts() {
     Collection<PsiFileSystemItem> result = myDefaultContexts;
     if (result == null) {
-      myDefaultContexts = result = computeDefaultContexts();
+      result = computeDefaultContexts();
+      ModelBranch branch = ModelBranch.getPsiBranch(getElement());
+      if (branch != null) {
+        result = result.stream()
+          .map(item -> ModelBranch.getPsiBranch(item) == branch ? item : branch.obtainPsiCopy(item))
+          .collect(Collectors.toCollection(LinkedHashSet::new));
+      }
+      myDefaultContexts = result;
     }
     return result;
   }
@@ -417,7 +428,7 @@ public class FileReferenceSet {
     return filterLocalFsContexts(targetContexts);
   }
 
-  private static Collection<FileTargetContext> filterLocalFsContexts(Collection<FileTargetContext> contexts) {
+  private static Collection<FileTargetContext> filterLocalFsContexts(Collection<? extends FileTargetContext> contexts) {
     return ContainerUtil.filter(contexts, c -> {
       VirtualFile file = c.getFileSystemItem().getVirtualFile();
       return file != null && c.getFileSystemItem().isDirectory() && file.isInLocalFileSystem();
@@ -516,7 +527,7 @@ public class FileReferenceSet {
     return toTargetContexts(getParentDirectoryContext());
   }
 
-  public String getPathString() {
+  public @NlsSafe String getPathString() {
     return myPathString;
   }
 
@@ -598,7 +609,7 @@ public class FileReferenceSet {
   @NotNull
   protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
-    return ContainerUtil.mapNotNull(files, (NullableFunction<VirtualFile, PsiFileSystemItem>)file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
+    return ContainerUtil.mapNotNull(files, file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
   }
 
   protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {

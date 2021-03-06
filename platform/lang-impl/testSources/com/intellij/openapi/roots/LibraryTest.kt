@@ -3,6 +3,7 @@ package com.intellij.openapi.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -28,6 +29,7 @@ class LibraryTest {
   fun `empty library`() {
     val library = projectModel.addProjectLevelLibrary("a")
     assertThat(library.name).isEqualTo("a")
+    assertThat(library.presentableName).isEqualTo("a")
     assertThat(library.getUrls(OrderRootType.CLASSES)).isEmpty()
     assertThat(library.table).isEqualTo(projectModel.projectLibraryTable)
     assertThat(library.excludedRoots).isEmpty()
@@ -204,6 +206,7 @@ class LibraryTest {
       assertThat(it.name).isEqualTo("b")
     }
     assertThat(library.name).isEqualTo("b")
+    assertThat(library.presentableName).isEqualTo("b")
   }
 
   @Test
@@ -231,6 +234,63 @@ class LibraryTest {
     }
 
     assertThat(library.getFiles(OrderRootType.CLASSES)).containsExactly(root1, root2)
+  }
+
+  @Test
+  fun `set dummy properties for library without type`() {
+    val library = projectModel.addProjectLevelLibrary("a")
+    edit(library) {
+      it.properties = DummyLibraryProperties.INSTANCE
+    }
+    assertThat(library.properties).isNull()
+  }
+
+  @Test
+  fun `root set listener`() {
+    val library = projectModel.addProjectLevelLibrary("a")
+    var changeCount = 0
+    library.rootProvider.addRootSetChangedListener { changeCount++ }
+    edit(library) { model ->
+      assertThat(changeCount).isEqualTo(0)
+      model.addRoot(projectModel.baseProjectDir.newVirtualDirectory("classes"), OrderRootType.CLASSES)
+      assertThat(changeCount).isEqualTo(0)
+    }
+    assertThat(changeCount).isEqualTo(1)
+  }
+
+  @Test
+  fun `commit without changes`() {
+    val library = projectModel.addProjectLevelLibrary("a")
+    var changeCount = 0
+    library.rootProvider.addRootSetChangedListener { changeCount++ }
+    edit(library) { model ->
+      assertThat(changeCount).isEqualTo(0)
+    }
+    assertThat(changeCount).isEqualTo(0)
+  }
+
+  @Test
+  fun `compare libraries with the same content`() {
+    val mavenModuleName = "maven"
+    val gradleModuleName = "gradle"
+    val libraryName = "kotlin"
+    val classesRoot = projectModel.baseProjectDir.newVirtualDirectory("classes").url
+
+    val mavenModule = projectModel.createModule(mavenModuleName)
+    val gradleModule = projectModel.createModule(gradleModuleName)
+    ModuleRootModificationUtil.addModuleLibrary(mavenModule, libraryName, listOf(classesRoot), emptyList())
+    ModuleRootModificationUtil.addModuleLibrary(gradleModule, libraryName, listOf(classesRoot), emptyList())
+
+    val mavenModuleLibrary = ModuleRootManager.getInstance(mavenModule).orderEntries.filterIsInstance<LibraryOrderEntry>().first().library
+    val gradleModuleLibrary = ModuleRootManager.getInstance(gradleModule).orderEntries.filterIsInstance<LibraryOrderEntry>().first().library
+    assertThat(mavenModuleLibrary).isNotNull
+    assertThat(gradleModuleLibrary).isNotNull
+    assertThat(mavenModuleLibrary!!.hasSameContent(gradleModuleLibrary!!))
+
+    val projectLevelLibrary = projectModel.addProjectLevelLibrary(libraryName) { libraryModel ->
+      libraryModel.addRoot(classesRoot, OrderRootType.CLASSES)
+    }
+    assertThat(projectLevelLibrary.hasSameContent(gradleModuleLibrary))
   }
 
   private fun checkConsistency(library: LibraryEx) {

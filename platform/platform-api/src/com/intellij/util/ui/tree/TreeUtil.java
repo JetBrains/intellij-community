@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
@@ -10,7 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -19,11 +25,13 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +58,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static com.intellij.util.ReflectionUtil.getField;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
@@ -57,8 +66,24 @@ public final class TreeUtil {
   private static final Logger LOG = Logger.getInstance(TreeUtil.class);
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
+  private static final Key<Function<TreePath, Navigatable>> NAVIGATABLE_PROVIDER = Key.create("TreeUtil: convert TreePath to Navigatable");
 
   private TreeUtil() {}
+
+  /**
+   * @return a navigatable object that corresponds to the specified path,  or {@code null} otherwise
+   */
+  public static @Nullable Navigatable getNavigatable(@NotNull JTree tree, @Nullable TreePath path) {
+    Function<? super TreePath, ? extends Navigatable> supplier = UIUtil.getClientProperty(tree, NAVIGATABLE_PROVIDER);
+    return supplier != null ? supplier.apply(path) : getLastUserObject(Navigatable.class, path);
+  }
+
+  /**
+   * Sets the mapping function that provides a navigatable object for a tree path.
+   */
+  public static void setNavigatableProvider(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends Navigatable> provider) {
+    tree.putClientProperty(NAVIGATABLE_PROVIDER, provider);
+  }
 
   @NotNull
   public static JBTreeTraverser<Object> treeTraverser(@NotNull JTree tree) {
@@ -92,6 +117,52 @@ public final class TreeUtil {
   public static JBIterable<TreeNode> nodeChildren(@Nullable TreeNode treeNode) {
     int count = treeNode == null ? 0 : treeNode.getChildCount();
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
+  }
+
+  public static boolean hasManyNodes(@NotNull Tree tree, int threshold) {
+    return treeTraverser(tree).traverse().take(threshold).size() >= threshold;
+  }
+
+  /**
+   * @param tree a tree, which nodes should be found
+   * @param x    a number of pixels from the left edge of the given tree
+   * @param y    a number of pixels from the top of the specified tree
+   * @return found visible tree path or {@code null}
+   */
+  public static @Nullable TreePath getPathForLocation(@NotNull JTree tree, int x, int y) {
+    TreePath path = tree.getClosestPathForLocation(x, y);
+    Rectangle bounds = tree.getPathBounds(path);
+    return bounds != null && bounds.y <= y && y < bounds.y + bounds.height ? path : null;
+  }
+
+  /**
+   * @param tree a tree, which nodes should be found
+   * @param x    a number of pixels from the left edge of the given tree
+   * @param y    a number of pixels from the top of the specified tree
+   * @return found row number or {@code -1}
+   */
+  public static int getRowForLocation(@NotNull JTree tree, int x, int y) {
+    return Math.max(-1, tree.getRowForPath(getPathForLocation(tree, x, y)));
+  }
+
+  /**
+   * @param tree a tree to repaint
+   * @param path a visible tree path to repaint
+   */
+  public static void repaintPath(@NotNull JTree tree, @Nullable TreePath path) {
+    assert EventQueue.isDispatchThread();
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+  }
+
+  /**
+   * @param tree a tree to repaint
+   * @param row  a row number to repaint
+   */
+  public static void repaintRow(@NotNull JTree tree, int row) {
+    assert EventQueue.isDispatchThread();
+    Rectangle bounds = tree.getRowBounds(row);
+    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
   }
 
   /**
@@ -200,20 +271,6 @@ public final class TreeUtil {
     return false;
   }
 
-  private static boolean isAncestor(@NotNull final TreePath ancestor, @NotNull final TreePath path) {
-    if (path.getPathCount() < ancestor.getPathCount()) return false;
-    for (int i = 0; i < ancestor.getPathCount(); i++)
-      if (!path.getPathComponent(i).equals(ancestor.getPathComponent(i))) return false;
-    return true;
-  }
-
-  private static boolean isDescendants(@NotNull final TreePath path, final TreePath @NotNull [] paths) {
-    for (final TreePath ancestor : paths) {
-      if (isAncestor(ancestor, path)) return true;
-    }
-    return false;
-  }
-
   @NotNull
   public static TreePath getPathFromRoot(@NotNull TreeNode node) {
     TreeNode[] path = getPathFromRootTo(null, node, false);
@@ -283,23 +340,6 @@ public final class TreeUtil {
   }
 
   /**
-   * @deprecated use TreePathUtil#findCommonAncestor(TreePath...) instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath findCommonPath(final TreePath @NotNull [] treePaths) {
-    LOG.assertTrue(areComponentsEqual(treePaths, 0));
-    TreePath result = new TreePath(treePaths[0].getPathComponent(0));
-    int pathIndex = 1;
-    while (areComponentsEqual(treePaths, pathIndex)) {
-      result = result.pathByAddingChild(treePaths[0].getPathComponent(pathIndex));
-      pathIndex++;
-    }
-    return result;
-  }
-
-  /**
    * Tries to select the first node in the specified tree as soon as possible.
    *
    * @param tree a tree, which node should be selected
@@ -322,10 +362,16 @@ public final class TreeUtil {
     return selectionPath;
   }
 
+  public static int getRowForNode(@NotNull JTree tree, @NotNull DefaultMutableTreeNode targetNode) {
+    TreeNode[] path = targetNode.getPath();
+    return tree.getRowForPath(new TreePath(path));
+  }
+
   /**
    * @deprecated use {@link #promiseSelectFirstLeaf}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static TreePath getFirstLeafNodePath(@NotNull JTree tree) {
     final TreeModel model = tree.getModel();
@@ -347,41 +393,6 @@ public final class TreeUtil {
     return selectionState;
   }
 
-
-  private static boolean areComponentsEqual(final TreePath @NotNull [] paths, final int componentIndex) {
-    if (paths[0].getPathCount() <= componentIndex) return false;
-    final Object pathComponent = paths[0].getPathComponent(componentIndex);
-    for (final TreePath treePath : paths) {
-      if (treePath.getPathCount() <= componentIndex) return false;
-      if (!pathComponent.equals(treePath.getPathComponent(componentIndex))) return false;
-    }
-    return true;
-  }
-
-  private static TreePath @NotNull [] removeDuplicates(final TreePath @NotNull [] paths) {
-    final ArrayList<TreePath> result = new ArrayList<>();
-    for (final TreePath path : paths) {
-      if (!result.contains(path)) result.add(path);
-    }
-    return result.toArray(EMPTY_TREE_PATH);
-  }
-
-  /**
-   * @deprecated use TreeCollector.TreePathRoots#collect(TreePath...) instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static TreePath @NotNull [] selectMaximals(final TreePath @Nullable [] paths) {
-    if (paths == null) return EMPTY_TREE_PATH;
-    final TreePath[] noDuplicates = removeDuplicates(paths);
-    final ArrayList<TreePath> result = new ArrayList<>();
-    for (final TreePath path : noDuplicates) {
-      final ArrayList<TreePath> otherPaths = new ArrayList<>(Arrays.asList(noDuplicates));
-      otherPaths.remove(path);
-      if (!isDescendants(path, otherPaths.toArray(EMPTY_TREE_PATH))) result.add(path);
-    }
-    return result.toArray(EMPTY_TREE_PATH);
-  }
 
   public static void sort(@NotNull final DefaultTreeModel model, @Nullable Comparator comparator) {
     sort((DefaultMutableTreeNode) model.getRoot(), comparator);
@@ -418,12 +429,14 @@ public final class TreeUtil {
 
   /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
     return treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS).processEach(traverse::accept);
   }
 
   /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean traverseDepth(@NotNull TreeNode node, @NotNull Traverse traverse) {
     return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
@@ -692,7 +705,7 @@ public final class TreeUtil {
         bounds.x = tree.getVisibleRect().x;
       }
 
-    LOG.debug("tree scroll: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("tree scroll: ", path);
     tree.scrollRectToVisible(bounds);
     // try to scroll later when the tree is ready
     Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
@@ -714,7 +727,7 @@ public final class TreeUtil {
       if (pathBounds != null) {
         Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
         long stamp = property instanceof Long ? (Long)property : Long.MAX_VALUE;
-        LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
+        if (LOG.isTraceEnabled()) LOG.debug("tree scroll ", attempt, stamp == expected ? ": try again: " : ": ignore: ", path);
         if (stamp == expected) {
           bounds.y = pathBounds.y - offset; // restore bounds according to the current row
           Rectangle visible = tree.getVisibleRect();
@@ -1281,6 +1294,19 @@ public final class TreeUtil {
     }
   }
 
+  public static boolean isLoadingPath(@Nullable TreePath path) {
+    return path != null && isLoadingNode(path.getLastPathComponent());
+  }
+
+  public static boolean isLoadingNode(@Nullable Object node) {
+    while (node != null) {
+      if (node instanceof LoadingNode) return true;
+      if (!(node instanceof DefaultMutableTreeNode)) return false;
+      node = ((DefaultMutableTreeNode)node).getUserObject();
+    }
+    return false;
+  }
+
   @Nullable
   public static Object getUserObject(@Nullable Object node) {
     return node instanceof DefaultMutableTreeNode ? ((DefaultMutableTreeNode)node).getUserObject() : node;
@@ -1313,6 +1339,7 @@ public final class TreeUtil {
 
   /** @deprecated use TreeUtil#treePathTraverser() */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @FunctionalInterface
   public interface Traverse{
     boolean accept(Object node);
@@ -1369,7 +1396,7 @@ public final class TreeUtil {
   }
 
   private static void expandPathWithDebug(@NotNull JTree tree, @NotNull TreePath path) {
-    LOG.debug("tree expand path: ", path);
+    if (LOG.isTraceEnabled()) LOG.debug("tree expand path: ", path);
     tree.expandPath(path);
   }
 
@@ -1523,7 +1550,7 @@ public final class TreeUtil {
         // do not expand children if parent path is collapsed
         if (!tree.isVisible(path)) {
           if (!promise.isCancelled()) {
-            LOG.debug("tree expand canceled");
+            if (LOG.isTraceEnabled()) LOG.debug("tree expand canceled");
             promise.cancel();
           }
           return TreeVisitor.Action.SKIP_SIBLINGS;
@@ -1531,23 +1558,6 @@ public final class TreeUtil {
         if (action == TreeVisitor.Action.CONTINUE) expandPathWithDebug(tree, path);
       }
       return action;
-    });
-  }
-
-  /**
-   * Selects a node in the specified tree.
-   *
-   * @param tree     a tree, which nodes should be selected
-   * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on EDT if path is found and selected
-   * @deprecated use {@code promiseSelect(tree, visitor).onSuccess(consumer)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseMakeVisibleOne(tree, visitor, path -> {
-      internalSelect(tree, path);
-      consumer.accept(path);
     });
   }
 
@@ -1602,30 +1612,37 @@ public final class TreeUtil {
     assert EventQueue.isDispatchThread();
     Rectangle bounds = tree.getPathBounds(path);
     if (bounds == null) {
-      LOG.debug("cannot scroll to: ", path);
+      if (LOG.isTraceEnabled()) LOG.debug("cannot scroll to: ", path);
       return false;
     }
-    Container parent = tree.getParent();
-    if (parent instanceof JViewport) {
-      if (centered) {
-        Rectangle visible = tree.getVisibleRect();
-        centered = bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height;
-        // disable centering if the given path is already visible
-      }
-      int width = parent.getWidth();
+    internalScroll(tree, bounds, centered);
+    // notify screen readers that they should notify the user that the visual appearance of the component has changed
+    AccessibleContext context = tree.getAccessibleContext();
+    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
+    // try to scroll later when the tree is ready
+    long stamp = 1L + getScrollTimeStamp(tree);
+    tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, stamp);
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      Rectangle boundsLater = stamp != getScrollTimeStamp(tree) ? null : tree.getPathBounds(path);
+      if (boundsLater != null) internalScroll(tree, boundsLater, centered);
+    }, 5, MILLISECONDS);
+    return true;
+  }
+
+  private static void internalScroll(@NotNull JTree tree, @NotNull Rectangle bounds, boolean centered) {
+    JViewport viewport = ComponentUtil.getViewport(tree);
+    if (viewport != null) {
+      int width = viewport.getWidth();
       if (!centered && tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
         bounds.x = -tree.getX();
         bounds.width = width;
       }
       else {
-        bounds.width = Math.min(bounds.width, width / 2);
-        bounds.x -= JBUIScale.scale(20); // TODO: calculate a control width
-        if (bounds.x < 0) {
-          bounds.width += bounds.x;
-          bounds.x = 0;
-        }
+        int control = JBUIScale.scale(20); // calculate a control width
+        bounds.x = Math.max(0, bounds.x - control);
+        bounds.width = bounds.x > 0 ? Math.min(bounds.width + control, centered ? width : width / 2) : width;
       }
-      int height = parent.getHeight();
+      int height = viewport.getHeight();
       if (height > bounds.height && height < tree.getHeight()) {
         if (centered || height < bounds.height * 5) {
           bounds.y -= (height - bounds.height) / 2;
@@ -1643,14 +1660,12 @@ public final class TreeUtil {
         if (y > 0) bounds.height -= y;
       }
     }
-    scrollToVisibleWithAccessibility(tree, bounds);
-    return true;
+    tree.scrollRectToVisible(bounds);
   }
 
-  private static void scrollToVisibleWithAccessibility(@NotNull JTree tree, @NotNull Rectangle bounds) {
-    tree.scrollRectToVisible(bounds);
-    AccessibleContext context = tree.getAccessibleContext();
-    if (context != null) context.firePropertyChange(AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, false, true);
+  private static long getScrollTimeStamp(@NotNull JTree tree) {
+    Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
+    return property instanceof Long ? (Long)property : Long.MIN_VALUE;
   }
 
   /**
@@ -1875,5 +1890,103 @@ public final class TreeUtil {
     List<T> list = new ArrayList<>(count);
     visitVisibleRows(tree, path -> filter.test(path) ? mapper.apply(path) : null, list::add);
     return list;
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param path      a starting tree path
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, TreePath path, @NotNull Predicate<? super TreePath> predicate) {
+    return nextVisiblePath(tree, tree.getRowForPath(path), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<? super TreePath> predicate) {
+    return nextVisiblePath(tree, row, isCyclicScrollingAllowed(), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param cyclic    {@code true} if cyclic searching is allowed, {@code false} otherwise
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if next visible path cannot be found
+   */
+  public static @Nullable TreePath nextVisiblePath(@NotNull JTree tree, int row, boolean cyclic,
+                                                   @NotNull Predicate<? super TreePath> predicate) {
+    assert EventQueue.isDispatchThread();
+    if (row < 0) return null; // ignore illegal row
+    int count = tree.getRowCount();
+    if (count <= row) return null; // ignore illegal row
+    int stop = row;
+    while (true) {
+      row++; // NB!: increase row before checking for cycle scrolling
+      if (row == count && cyclic) row = 0;
+      if (row == count) return null; // stop scrolling on last node if no cyclic scrolling
+      if (row == stop) return null; // stop scrolling when cyclic scrolling is done
+      TreePath path = tree.getPathForRow(row);
+      if (path != null && predicate.test(path)) return path;
+    }
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param path      a starting tree path
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, TreePath path, @NotNull Predicate<? super TreePath> predicate) {
+    return previousVisiblePath(tree, tree.getRowForPath(path), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, @NotNull Predicate<? super TreePath> predicate) {
+    return previousVisiblePath(tree, row, isCyclicScrollingAllowed(), predicate);
+  }
+
+  /**
+   * @param tree      a tree, which nodes should be iterated
+   * @param row       a starting row number to iterate
+   * @param cyclic    {@code true} if cyclic searching is allowed, {@code false} otherwise
+   * @param predicate a predicate that allows to skip some paths
+   * @return {@code null} if previous visible path cannot be found
+   */
+  public static @Nullable TreePath previousVisiblePath(@NotNull JTree tree, int row, boolean cyclic,
+                                                       @NotNull Predicate<? super TreePath> predicate) {
+    assert EventQueue.isDispatchThread();
+    if (row < 0) return null; // ignore illegal row
+    int count = tree.getRowCount();
+    if (count <= row) return null; // ignore illegal row
+    int stop = row;
+    while (true) {
+      if (row == 0 && cyclic) row = count;
+      if (row == 0) return null; // stop scrolling on first node if no cyclic scrolling
+      row--; // NB!: decrease row after checking for cyclic scrolling
+      if (row == stop) return null; // stop scrolling when cyclic scrolling is done
+      TreePath path = tree.getPathForRow(row);
+      if (path != null && predicate.test(path)) return path;
+    }
+  }
+
+  /**
+   * @return {@code true} if cyclic scrolling in trees is allowed, {@code false} otherwise
+   */
+  public static boolean isCyclicScrollingAllowed() {
+    if (ScreenReader.isActive()) return false;
+    if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
+    UISettings settings = UISettings.getInstanceOrNull();
+    return settings != null && settings.getCycleScrolling();
   }
 }

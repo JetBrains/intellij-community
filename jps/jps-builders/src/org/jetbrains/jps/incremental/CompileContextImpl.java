@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
@@ -38,7 +39,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class CompileContextImpl extends UserDataHolderBase implements CompileContext {
-  private static final String CANCELED_MESSAGE = "The build has been canceled";
   private final CompileScope myScope;
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<>();
@@ -83,7 +83,6 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
-  @Override
   public boolean isMake() {
     return JavaBuilderUtil.isCompileJavaIncrementally(this);
   }
@@ -143,7 +142,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public final void checkCanceled() throws ProjectBuildException {
     if (getCancelStatus().isCanceled()) {
-      throw new StopBuildException(CANCELED_MESSAGE);
+      throw new StopBuildException(JpsBuildBundle.message("build.message.the.build.has.been.canceled"));
     }
   }
 

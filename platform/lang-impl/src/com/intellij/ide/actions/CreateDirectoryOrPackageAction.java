@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -113,7 +114,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
 
     if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-      createLightWeightPopup(title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
+      createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
     }
     else {
       Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
@@ -164,7 +165,8 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
   }
 
-  private static JBPopup createLightWeightPopup(String title,
+  private static JBPopup createLightWeightPopup(@Nullable Project project,
+                                                @NlsContexts.PopupTitle String title,
                                                 String initialText,
                                                 @NotNull PsiDirectory directory,
                                                 CreateGroupHandler validator,
@@ -178,7 +180,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     contentPanel.setApplyAction(event -> {
       for (CompletionItem it : contentPanel.getSelectedItems()) {
-        it.reportToStatistics();
+        it.reportToStatistics(project);
       }
 
       // if there are selected suggestions, we need to create the selected folders (not the path in the text field)
@@ -207,7 +209,6 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     contentPanel.addTemplatesVisibilityListener(visible -> {
       // The re-layout should be delayed since we are in the middle of model changes processing and not all components updated their states
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> popup.pack(false, true));
     });
 
@@ -254,7 +255,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private static List<PsiElement> createDirectories(List<Pair<String, JpsModuleSourceRootType<?>>> toCreate,
+  private static List<PsiElement> createDirectories(List<? extends Pair<String, JpsModuleSourceRootType<?>>> toCreate,
                                                     CreateGroupHandler validator) {
     List<PsiElement> createdDirectories = new ArrayList<>(toCreate.size());
 
@@ -310,13 +311,13 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return createdDirectories;
   }
 
-  private static class CompletionItem {
+  private static final class CompletionItem {
     @NotNull final CreateDirectoryCompletionContributor contributor;
 
     @NotNull final String relativePath;
     @Nullable final JpsModuleSourceRootType<?> rootType;
 
-    @NotNull final String displayText;
+    @NlsContexts.ListItem @NotNull final String displayText;
     @Nullable final Icon icon;
 
     private CompletionItem(@NotNull CreateDirectoryCompletionContributor contributor,
@@ -332,12 +333,12 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       this.icon = icon;
     }
 
-    public void reportToStatistics() {
+    public void reportToStatistics(@Nullable Project project) {
       Class contributorClass = contributor.getClass();
       String nameToReport = getPluginInfo(contributorClass).isSafeToReport()
                             ? contributorClass.getSimpleName() : "third.party";
 
-      FUCounterUsageLogger.getInstance().logEvent("create.directory.dialog",
+      FUCounterUsageLogger.getInstance().logEvent(project, "create.directory.dialog",
                                                   "completion.variant.chosen",
                                                   new FeatureUsageData().addData("contributor", nameToReport));
     }
@@ -413,7 +414,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     private void setupRenderers() {
       ColoredListCellRenderer<CompletionItem> itemRenderer =
-        new ColoredListCellRenderer<CompletionItem>() {
+        new ColoredListCellRenderer<>() {
           @Override
           protected void customizeCellRenderer(@NotNull JList<? extends CompletionItem> list,
                                                @Nullable CompletionItem value,

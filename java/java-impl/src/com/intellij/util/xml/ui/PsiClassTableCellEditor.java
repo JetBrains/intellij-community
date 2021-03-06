@@ -15,11 +15,11 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Conditions;
@@ -68,7 +68,7 @@ public class PsiClassTableCellEditor extends AbstractTableCellEditor {
   @Override
   public final Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final Document document = JavaReferenceEditorUtil.createDocument(value == null ? "" : (String)value, myProject, true);
-    myEditor = new EditorTextField(document, myProject, StdFileTypes.JAVA){
+    myEditor = new EditorTextField(document, myProject, JavaFileType.INSTANCE){
       @Override
       protected boolean shouldHaveBorder() {
         return false;

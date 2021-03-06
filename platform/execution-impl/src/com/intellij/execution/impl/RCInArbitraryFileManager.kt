@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import java.io.ByteArrayInputStream
@@ -27,8 +27,12 @@ import java.io.ByteArrayInputStream
 internal class RCInArbitraryFileManager(private val project: Project) {
   private val LOG = logger<RCInArbitraryFileManager>()
 
-  internal class DeletedAndAddedRunConfigs(val deletedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl>,
-                                           val addedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl>)
+  internal class DeletedAndAddedRunConfigs(deleted: Collection<RunnerAndConfigurationSettingsImpl>,
+                                           added: Collection<RunnerAndConfigurationSettingsImpl>) {
+    // new lists are created to make sure that lists used in model are not available outside this class
+    val deletedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl> = if (deleted.isEmpty()) emptyList() else ArrayList(deleted)
+    val addedRunConfigs: Collection<RunnerAndConfigurationSettingsImpl> = if (added.isEmpty()) emptyList() else ArrayList(added)
+  }
 
   private var saving = false
   private val filePathToRunConfigs = mutableMapOf<String, MutableList<RunnerAndConfigurationSettingsImpl>>()
@@ -62,7 +66,8 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       val filePath = fileEntry.key
       val runConfigIterator = fileEntry.value.iterator()
       for (rc in runConfigIterator) {
-        if (rc == runConfig) {
+        if (rc == runConfig ||
+            rc.isTemplate && runConfig.isTemplate && rc.type == runConfig.type) {
           if (filePath != runConfig.pathIfStoredInArbitraryFileInProject || !removeRunConfigOnlyIfFileNameChanged) {
             runConfigIterator.remove()
             if (fileEntry.value.isEmpty()) {
@@ -126,7 +131,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
 
     if (element.name != "component" || element.getAttributeValue("name") != "ProjectRunConfigurationManager") {
-      LOG.info("Unexpected root element ${element.name} with name=${element.getAttributeValue("name")} in $filePath")
+      LOG.trace("Unexpected root element ${element.name} with name=${element.getAttributeValue("name")} in $filePath")
       return DeletedAndAddedRunConfigs(previouslyLoadedRunConfigs, emptyList())
     }
 
@@ -136,10 +141,6 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     for (configElement in element.getChildren("configuration")) {
       try {
         val runConfig = RunnerAndConfigurationSettingsImpl(runManager)
-
-        // TEMPLATE_FLAG_ATTRIBUTE attribute is never set programmatically in *.run.xml files but we want to be sure it's not added somehow externally.
-        // This is to make sure that it is not parsed as a template RC in runConfig.readExternal()
-        configElement.removeAttribute(TEMPLATE_FLAG_ATTRIBUTE)
         runConfig.readExternal(configElement, true)
         runConfig.storeInArbitraryFileInProject(filePath)
         loadedRunConfigs.add(runConfig)
@@ -150,7 +151,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       }
     }
 
-    val previouslyLoadedDigests = filePathToDigests[filePath] ?: emptyList<ByteArray>()
+    val previouslyLoadedDigests = filePathToDigests[filePath] ?: emptyList()
     if (sameDigests(loadedDigests, previouslyLoadedDigests)) {
       return DeletedAndAddedRunConfigs(emptyList(), emptyList())
     }
@@ -213,7 +214,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
           newDigests.add(element.digest())
         }
 
-        val previouslyLoadedDigests = filePathToDigests[filePath] ?: emptyList<ByteArray>()
+        val previouslyLoadedDigests = filePathToDigests[filePath] ?: emptyList()
         if (!sameDigests(newDigests, previouslyLoadedDigests)) {
           saveToFile(filePath, rootElement.toBufferExposingByteArray())
           filePathToDigests[filePath] = newDigests
@@ -227,7 +228,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       }
     }
 
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    throwIfNotEmpty(errors)
   }
 
   private fun sameDigests(digests1: List<ByteArray>, digests2: List<ByteArray>): Boolean {

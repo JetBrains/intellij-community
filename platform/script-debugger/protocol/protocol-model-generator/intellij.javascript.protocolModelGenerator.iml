@@ -11,7 +11,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.javascript.schemaReaderGenerator" />
     <orderEntry type="module" module-name="intellij.javascript.protocolReader" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />

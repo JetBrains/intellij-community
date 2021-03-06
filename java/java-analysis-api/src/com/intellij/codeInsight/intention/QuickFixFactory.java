@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -6,13 +6,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,12 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public abstract class QuickFixFactory {
   public static QuickFixFactory getInstance() {
-    return ServiceManager.getService(QuickFixFactory.class);
+    return ApplicationManager.getApplication().getService(QuickFixFactory.class);
   }
 
   /**
@@ -272,6 +270,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method);
 
   @NotNull
+  public abstract IntentionAction createAddMethodBodyFix(@NotNull PsiMethod method, @NotNull @Nls String text);
+
+  @NotNull
   public abstract IntentionAction createDeleteMethodBodyFix(@NotNull PsiMethod method);
 
   @NotNull
@@ -344,6 +345,11 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createInitializeFinalFieldInConstructorFix(@NotNull PsiField field);
 
+  /**
+   * @deprecated use {@link #createDeleteFix(PsiElement)} on {@link PsiReferenceParameterList} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public abstract IntentionAction createRemoveTypeArgumentsFix(@NotNull PsiElement variable);
 
@@ -372,17 +378,6 @@ public abstract class QuickFixFactory {
 
   public abstract void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo);
 
-  /**
-   * @deprecated Use {@link #createAddToDependencyInjectionAnnotationsFix(Project, String)} instead
-   */
-  @Deprecated
-  @NotNull
-  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
-                                                                      @NotNull String qualifiedName,
-                                                                      @NotNull String element) {
-    return createAddToDependencyInjectionAnnotationsFix(project, qualifiedName);
-  }
-
   @NotNull
   public abstract IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String qualifiedName);
 
@@ -399,6 +394,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createEnableOptimizeImportsOnTheFlyFix();
 
   @NotNull
+  public abstract IntentionAction createDeleteFix(@NotNull PsiElement @NotNull ... elements);
+
+  @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element);
 
   @NotNull
@@ -410,7 +408,7 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
-  @Nullable
+  @NotNull
   public abstract List<LocalQuickFix> registerOrderEntryFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference);
 
   @NotNull
@@ -456,9 +454,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createPushDownMethodFix();
 
   @NotNull
-  public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
-    throw new AbstractMethodError();
-  }
+  public abstract IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod);
 
   @NotNull
   public abstract IntentionAction createAddMissingEnumBranchesFix(@NotNull PsiSwitchBlock switchBlock, @NotNull Set<String> missingCases);
@@ -473,11 +469,47 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createChangeModifierFix();
 
   @NotNull
-  public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
-  
-  @NotNull
-  public abstract IntentionAction createAddParameterListFix(PsiMethod method);
+  public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement rule);
 
   @NotNull
-  public abstract IntentionAction createAddEmptyRecordHeaderFix(PsiClass record);
+  public abstract IntentionAction createAddParameterListFix(@NotNull PsiMethod method);
+
+  @NotNull
+  public abstract IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass record);
+
+  @NotNull
+  public abstract IntentionAction createCreateFieldFromParameterFix();
+  @NotNull
+  public abstract IntentionAction createAssignFieldFromParameterFix();
+
+  @NotNull
+  public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);
+
+  /**
+   * @param subClass class that should be added to parents permits list
+   * @param superClass sealed parent class from subclasses' extends / implements clause
+   */
+  @NotNull
+  public abstract IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass);
+
+  @NotNull
+  public abstract IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName);
+
+  /**
+   * Provides fixes to make class extend sealed class and
+   * possibly mark extending class with one of sealed subclass modifiers (final, sealed, non-sealed)
+   *
+   * @param subclassRef reference in permits list of a parent class
+   */
+  public abstract @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
+                                                                            @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
+
+  public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
+
+  public abstract @NotNull IntentionAction createUnimplementInterfaceAction(boolean isDuplicates);
+
+  public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
+
+  public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
+                                                                          @NotNull PsiType enclosingClassType);
 }

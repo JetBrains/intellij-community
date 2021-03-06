@@ -16,18 +16,20 @@
 
 package com.intellij.refactoring.move;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveMultipleElementsViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myPsiElements;
-  private String myProcessedElementsHeader;
-  private final String myCodeReferencesText;
+  private @NlsContexts.ListItem String myProcessedElementsHeader;
+  private final @Nls String myCodeReferencesText;
 
   public MoveMultipleElementsViewDescriptor(PsiElement @NotNull [] psiElements, @NotNull String targetName) {
     myPsiElements = psiElements;

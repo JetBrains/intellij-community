@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.facet.Facet;
@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -49,7 +49,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
     );
   }
 
-  public static class FacetTypeUtilValidator extends CustomWhiteListRule {
+  public static class FacetTypeUtilValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -66,7 +66,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
         return ValidationResultType.REJECTED;
       }
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(facet.getClass());
-      context.setPluginInfo(info);
+      context.setPayload(PLUGIN_INFO, info);
       return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
     }
 

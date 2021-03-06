@@ -13,13 +13,13 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBar;
@@ -28,12 +28,12 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.*;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
-import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,13 +58,13 @@ import java.util.Objects;
 public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
 
-  private static boolean ourUpdatingTitle;
+  private boolean isUpdatingTitle;
 
   private String myTitle;
-  private String myFileTitle;
-  private Path myCurrentFile;
+  private String fileTitle;
+  private Path currentFile;
 
-  private Project myProject;
+  private Project project;
 
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
@@ -74,10 +74,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   @SuppressWarnings("unused")
   private volatile Image selfie;
 
-  private IdeFrameImpl myFrame;
+  private IdeFrameImpl frame;
 
   public ProjectFrameHelper(@NotNull IdeFrameImpl frame, @Nullable Image selfie) {
-    myFrame = frame;
+    this.frame = frame;
     this.selfie = selfie;
     setupCloseAction();
 
@@ -106,25 +106,24 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private void preInit() {
-    updateTitle();
-
     myRootPane = createIdeRootPane();
-    myFrame.setRootPane(myRootPane);
+    frame.setRootPane(myRootPane);
     // NB!: the root pane must be set before decorator,
     // which holds its own client properties in a root pane
-    myFrameDecorator = IdeFrameDecorator.decorate(myFrame, this);
+    myFrameDecorator = IdeFrameDecorator.decorate(frame, this);
 
-    myFrame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
+    frame.setFrameHelper(new IdeFrameImpl.FrameHelper() {
       @Override
       public @Nullable Object getData(@NotNull String dataId) {
         return ProjectFrameHelper.this.getData(dataId);
       }
 
       @Override
+      @NlsSafe
       public String getAccessibleName() {
         StringBuilder builder = new StringBuilder();
-        if (myProject != null) {
-          builder.append(myProject.getName());
+        if (project != null) {
+          builder.append(project.getName());
           builder.append(" - ");
         }
         builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -133,8 +132,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
       @Override
       public void dispose() {
-        if (isTemporaryDisposed(myFrame)) {
-          myFrame.doDispose();
+        if (isTemporaryDisposed(frame)) {
+          frame.doDispose();
           return;
         }
 
@@ -148,7 +147,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
       @Override
       public @Nullable Project getProject() {
-        return myProject;
+        return project;
       }
 
       @Override
@@ -157,9 +156,9 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
 
       @Override
-      public void setTitle(String title) {
-        if (ourUpdatingTitle) {
-          myFrame.doSetTitle(title);
+      public void setTitle(@Nullable String title) {
+        if (isUpdatingTitle) {
+          frame.doSetTitle(title);
         }
         else {
           myTitle = title;
@@ -170,11 +169,11 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     }, myFrameDecorator);
 
     myBalloonLayout = new BalloonLayoutImpl(myRootPane, JBUI.insets(8));
-    myFrame.setBackground(UIUtil.getPanelBackground());
+    frame.setBackground(UIUtil.getPanelBackground());
   }
 
   protected @NotNull IdeRootPane createIdeRootPane() {
-    return new IdeRootPane(myFrame, this, this);
+    return new IdeRootPane(frame, this, this);
   }
 
   public void releaseFrame() {
@@ -185,43 +184,41 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   // purpose of delayed init - to show project frame as earlier as possible (and start loading of project too) and use it as project loading "splash"
   // show frame -> start project loading (performed in a pooled thread) -> do UI tasks while project loading
   public void init() {
-    myRootPane.init(this, this);
-
-    MnemonicHelper.init(myFrame);
-
-    myFrame.setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
+    myRootPane.createAndConfigureStatusBar(this, this);
+    MnemonicHelper.init(frame);
+    frame.setFocusTraversalPolicy(new IdeFocusTraversalPolicy());
 
     // to show window thumbnail under Macs
     // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
-    if (SystemInfo.isMac) {
-      myFrame.setIconImage(null);
+    if (SystemInfoRt.isMac) {
+      frame.setIconImage(null);
     }
 
-    IdeMenuBar.installAppMenuIfNeeded(myFrame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
     // in production (not from sources) makes sense only on Linux
-    AppUIUtil.updateWindowIcon(myFrame);
+    AppUIUtil.updateWindowIcon(frame);
 
     MouseGestureManager.getInstance().add(this);
   }
 
   @Override
   public JComponent getComponent() {
-    return myFrame.getRootPane();
+    return frame.getRootPane();
   }
 
   private void setupCloseAction() {
-    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     CloseProjectWindowHelper helper = createCloseProjectWindowHelper();
-    myFrame.addWindowListener(new WindowAdapter() {
+    frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull WindowEvent e) {
-        if (isTemporaryDisposed(myFrame) || LaterInvocator.isInModalContext()) {
+        if (isTemporaryDisposed(frame) || LaterInvocator.isInModalContext()) {
           return;
         }
 
         Application app = ApplicationManager.getApplication();
         if (app != null && !app.isDisposed()) {
-          helper.windowClosing(myProject);
+          helper.windowClosing(project);
         }
       }
     });
@@ -236,23 +233,32 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myRootPane == null ? null : myRootPane.getStatusBar();
   }
 
-  /**
-   * @deprecated Get frame and set title directly.
-   */
-  @Deprecated
-  public void setTitle(@NotNull String title) {
-    myFrame.setTitle(title);
-  }
-
   @Override
   public void setFrameTitle(String text) {
-    myFrame.setTitle(text);
+    frame.setTitle(text);
+  }
+
+  void frameReleased() {
+    if (project != null) {
+      project = null;
+      // already disposed
+      if (myRootPane != null) {
+        myRootPane.deinstallNorthComponents();
+      }
+    }
+
+    fileTitle = null;
+    currentFile = null;
+    myTitle = null;
+    if (frame != null) {
+      frame.doSetTitle("");
+    }
   }
 
   @Override
   public void setFileTitle(@Nullable String fileTitle, @Nullable Path file) {
-    myFileTitle = fileTitle;
-    myCurrentFile = file;
+    this.fileTitle = fileTitle;
+    currentFile = file;
     updateTitle();
   }
 
@@ -261,51 +267,49 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return myRootPane.findByName(key);
   }
 
-  private void updateTitle() {
-    updateTitle(myFrame, myTitle, myFileTitle, myCurrentFile, myTitleInfoExtensions);
+  protected @NotNull List<TitleInfoProvider> getTitleInfoProviders() {
+    return TitleInfoProvider.EP.getExtensionList();
   }
 
-  public static @Nullable
-  String getSuperUserSuffix() {
-    return !SuperUserStatus.isSuperUser() ? null : SystemInfo.isWindows ? "Administrator" : "ROOT";
-  }
-
-  private List<TitleInfoProvider> myTitleInfoExtensions = null;
-
-  public static void updateTitle(@NotNull JFrame frame,
-                                 @Nullable String title,
-                                 @Nullable String fileTitle,
-                                 @Nullable Path currentFile,
-                                 @Nullable List<TitleInfoProvider> extensions) {
-    if (ourUpdatingTitle) {
+  void updateTitle() {
+    if (isUpdatingTitle) {
       return;
     }
 
+    isUpdatingTitle = true;
     try {
-      ourUpdatingTitle = true;
-
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
-        File ioFile = currentFile != null ? currentFile.toFile() : null;
+        File ioFile = currentFile == null ? null : currentFile.toFile();
         frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
 
-      Builder builder = new Builder().append(title).append(fileTitle);
-      if (extensions != null && !extensions.isEmpty()) {
-        for (TitleInfoProvider extension : extensions) {
-          if (extension.isActive()) {
-            String it = extension.getValue();
+      StringBuilder builder = new StringBuilder();
+      appendTitlePart(builder, myTitle);
+      appendTitlePart(builder, fileTitle);
+      List<TitleInfoProvider> titleInfoProviders = getTitleInfoProviders();
+      if (!titleInfoProviders.isEmpty()) {
+        assert project != null;
+        for (TitleInfoProvider extension : titleInfoProviders) {
+          if (extension.isActive(project)) {
+            String it = extension.getValue(project);
             if (!it.isEmpty()) {
-              builder.append(it, " ");
+              appendTitlePart(builder, it, " ");
             }
           }
         }
       }
 
-      frame.setTitle(builder.toString());
+      if (builder.length() > 0) {
+        frame.doSetTitle(builder.toString());
+      }
     }
     finally {
-      ourUpdatingTitle = false;
+      isUpdatingTitle = false;
     }
+  }
+
+  public static @Nullable String getSuperUserSuffix() {
+    return !SuperUserStatus.isSuperUser() ? null : SystemInfoRt.isWindows ? "Administrator" : "ROOT";
   }
 
   public void updateView() {
@@ -316,60 +320,50 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   @Override
   public AccessibleContext getCurrentAccessibleContext() {
-    return myFrame.getAccessibleContext();
+    return frame.getAccessibleContext();
   }
 
-  private static final class Builder {
-    private final StringBuilder sb = new StringBuilder();
+  public static void appendTitlePart(@NotNull StringBuilder sb, @Nullable String s) {
+    appendTitlePart(sb, s, " \u2013 ");
+  }
 
-    Builder append(@Nullable String s) {
-      return append(s, " \u2013 ");
-    }
-
-    Builder append(@Nullable String s, String separator) {
-      if (!StringUtil.isEmptyOrSpaces(s)) {
-        if (sb.length() > 0) sb.append(separator);
-        sb.append(s);
+  private static void appendTitlePart(@NotNull StringBuilder sb, @Nullable String s, String separator) {
+    if (!Strings.isEmptyOrSpaces(s)) {
+      if (sb.length() > 0) {
+        sb.append(separator);
       }
-      return this;
-    }
-
-    @Override
-    public String toString() {
-      return sb.toString();
+      sb.append(s);
     }
   }
 
   @Override
   public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
-      if (myProject != null) {
-        return myProject.isInitialized() ? myProject : null;
+      if (project != null) {
+        return project.isInitialized() ? project : null;
       }
     }
 
-    if (IdeFrame.KEY.getName().equals(dataId)) {
+    if (IdeFrame.KEY.is(dataId)) {
       return this;
     }
 
     return null;
   }
 
-  public void setProject(@Nullable Project project) {
-    if (myProject == project) {
+  @Override
+  public @Nullable Project getProject() {
+    return project;
+  }
+
+  public void setProject(@NotNull Project project) {
+    if (this.project == project) {
       return;
     }
 
-    myProject = project;
-    if (project == null) {
-      // already disposed
-      if (myRootPane != null) {
-        myRootPane.deinstallNorthComponents();
-      }
-      return;
-    }
-
+    this.project = project;
     if (myRootPane != null) {
+      myRootPane.setProject(project);
       myRootPane.installNorthComponents(project);
       StatusBar statusBar = myRootPane.getStatusBar();
       if (statusBar != null) {
@@ -377,29 +371,22 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       }
     }
 
-    installDefaultProjectStatusBarWidgets(myProject);
-    initTitleInfoProviders(project);
+    installDefaultProjectStatusBarWidgets(project);
+    updateTitle();
     if (selfie != null) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+      StartupManager.getInstance(project).runAfterOpened(() -> {
         selfie = null;
       });
     }
-  }
 
-  protected void initTitleInfoProviders(@NotNull Project project) {
-    myTitleInfoExtensions = TitleInfoProvider.getProviders(project, (it) -> {
-      updateTitle();
-      return Unit.INSTANCE;
-    });
+    if (myFrameDecorator != null) {
+      myFrameDecorator.setProject();
+    }
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
+    project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
     PopupHandler.installPopupHandler(Objects.requireNonNull(getStatusBar()), StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
-  }
-
-  @Override
-  public Project getProject() {
-    return myProject;
   }
 
   @Override
@@ -407,6 +394,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     MouseGestureManager.getInstance().remove(this);
 
     if (myBalloonLayout != null) {
+      //noinspection SSBasedInspection
       ((BalloonLayoutImpl)myBalloonLayout).dispose();
       myBalloonLayout = null;
     }
@@ -416,24 +404,46 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         myRootPane.removeNotify();
       }
-      myFrame.setRootPane(new JRootPane());
+      frame.setRootPane(new JRootPane());
       myRootPane = null;
     }
 
-    if (myFrame != null) {
-      myFrame.doDispose();
-      myFrame.setFrameHelper(null, null);
-      myFrame = null;
+    if (frame != null) {
+      frame.doDispose();
+      frame.setFrameHelper(null, null);
+      frame = null;
     }
     myFrameDecorator = null;
   }
 
-  static boolean isTemporaryDisposed(@Nullable JFrame frame) {
+  private static boolean isTemporaryDisposed(@Nullable RootPaneContainer frame) {
     return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
-  public @NotNull IdeFrameImpl getFrame() {
-    return myFrame;
+  public @Nullable IdeFrameImpl getFrame() {
+    IdeFrameImpl frame = this.frame;
+    if (frame == null) {
+      if (Disposer.isDisposed(this)) {
+        LOG.error(getClass().getSimpleName() + " is already disposed");
+      }
+      else {
+        LOG.error("Frame is null, but " + getClass().getSimpleName() + " is not disposed yet");
+      }
+    }
+    return frame;
+  }
+
+  public @NotNull IdeFrameImpl requireNotNullFrame() {
+    IdeFrameImpl frame = this.frame;
+    if (frame != null) {
+      return frame;
+    }
+    if (Disposer.isDisposed(this)) {
+      throw new AssertionError(getClass().getSimpleName() + " is already disposed");
+    }
+    else {
+      throw new AssertionError("Frame is null, but " + getClass().getSimpleName() + " is not disposed yet");
+    }
   }
 
   @ApiStatus.Internal
@@ -443,7 +453,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   @Override
   public @NotNull Rectangle suggestChildFrameBounds() {
-    Rectangle b = myFrame.getBounds();
+    Rectangle b = frame.getBounds();
     b.x += 100;
     b.width -= 200;
     b.y += 100;
@@ -466,26 +476,27 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     if (temporaryFixForIdea156004(state) || myFrameDecorator == null) {
       return Promises.resolvedPromise();
     }
-    return myFrameDecorator.toggleFullScreen(state);
+    else {
+      return myFrameDecorator.toggleFullScreen(state);
+    }
   }
 
-  private boolean temporaryFixForIdea156004(final boolean state) {
-    if (!SystemInfo.isMac) {
-      return false;
-    }
-
-    try {
-      Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
-      modalBlockerField.setAccessible(true);
-      Window modalBlocker = (Window)modalBlockerField.get(myFrame);
-      if (modalBlocker != null) {
-        ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
-        return true;
+  private boolean temporaryFixForIdea156004(boolean state) {
+    if (SystemInfoRt.isMac) {
+      try {
+        Field modalBlockerField = Window.class.getDeclaredField("modalBlocker");
+        modalBlockerField.setAccessible(true);
+        Window modalBlocker = (Window)modalBlockerField.get(frame);
+        if (modalBlocker != null) {
+          ApplicationManager.getApplication().invokeLater(() -> toggleFullScreen(state), ModalityState.NON_MODAL);
+          return true;
+        }
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        LOG.error(e);
       }
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
-      LOG.error(e);
-    }
+
     return false;
   }
 }

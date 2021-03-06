@@ -21,6 +21,7 @@ import com.intellij.ide.diff.DiffErrorElement;
 import com.intellij.ide.diff.DiffType;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.SortedList;
@@ -329,6 +330,7 @@ public class DTree {
     this.myType = type;
   }
 
+  @NlsSafe
   public String getPath() {
     if (myPath == null) {
       final DTree parent = getParent();

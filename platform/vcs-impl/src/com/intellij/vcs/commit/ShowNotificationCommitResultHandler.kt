@@ -1,18 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_CANCELED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FAILED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED_WITH_WARNINGS
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
 import org.jetbrains.annotations.Nls
 
 private val FROM = listOf("<", ">") // NON-NLS // NON-NLS
 private val TO = listOf("&lt;", "&gt;") // NON-NLS // NON-NLS
-
-private const val BR = "<br/>" // NON-NLS
 
 /*
   Commit message is passed to NotificationManagerImpl#doNotify and displayed as HTML.
@@ -28,7 +32,7 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
 
   override fun onSuccess(commitMessage: String) = reportResult()
   override fun onCancel() {
-    notifier.notifyMinorWarning("", message("vcs.commit.canceled"))
+    notifier.notifyMinorWarning(COMMIT_CANCELED, "", message("vcs.commit.canceled"))
   }
   override fun onFailure(errors: List<VcsException>) = reportResult()
 
@@ -42,16 +46,17 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
     when {
       errorsSize > 0 -> {
         val title = message("message.text.commit.failed.with.error", errorsSize)
-        notifier.notifyError(title, message)
+        notifier.notifyError(COMMIT_FAILED, title, message)
       }
       warningsSize > 0 -> {
         val title = message("message.text.commit.finished.with.warning", warningsSize)
-        notifier.notifyImportantWarning(title, message)
+        notifier.notifyImportantWarning(COMMIT_FINISHED_WITH_WARNINGS, title, message)
       }
-      else -> notifier.notifySuccess(message)
+      else -> notifier.notifySuccess(COMMIT_FINISHED, "", message)
     }
   }
 
+  @NlsContexts.NotificationContent
   private fun getCommitSummary() = StringBuilder(getFileSummaryReport()).apply {
     val commitMessage = committer.commitMessage
     if (!isEmpty(commitMessage)) {
@@ -59,13 +64,13 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
     }
     val feedback = committer.feedback
     if (feedback.isNotEmpty()) {
-      append(BR)
-      append(join(feedback, BR))
+      append(UIUtil.BR)
+      append(join(feedback, UIUtil.BR))
     }
     val exceptions = committer.exceptions
     if (!hasOnlyWarnings(exceptions)) {
-      append(BR)
-      append(join(exceptions, { it.message }, BR))
+      append(UIUtil.BR)
+      append(join(exceptions, { it.message }, UIUtil.BR))
     }
   }.toString()
 

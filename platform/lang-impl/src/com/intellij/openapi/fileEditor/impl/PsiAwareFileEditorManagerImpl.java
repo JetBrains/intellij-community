@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.PowerSaveMode;
@@ -11,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
@@ -28,7 +28,6 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   /**
    * Updates icons for open files when project roots change
    */
-
   public PsiAwareFileEditorManagerImpl(@NotNull Project project) {
     super(project);
 
@@ -53,18 +52,17 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   }
 
   @Override
-  public boolean isProblem(@NotNull final VirtualFile file) {
+  public boolean isProblem(@NotNull VirtualFile file) {
     return myProblemSolver.isProblemFile(file);
   }
 
-  @NotNull
   @Override
-  public String getFileTooltipText(@NotNull final VirtualFile file) {
-    final StringBuilder tooltipText = new StringBuilder();
+  public @NotNull String getFileTooltipText(@NotNull VirtualFile file) {
+    @NlsSafe StringBuilder tooltipText = new StringBuilder();
     if (Registry.is("ide.tab.tooltip.module")) {
-      final Module module = ModuleUtilCore.findModuleForFile(file, getProject());
+      Module module = ModuleUtilCore.findModuleForFile(file, getProject());
       if (module != null && ModuleManager.getInstance(getProject()).getModules().length > 1) {
-        tooltipText.append("[");
+        tooltipText.append('[');
         tooltipText.append(module.getName());
         tooltipText.append("] ");
       }
@@ -75,7 +73,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
   private final class MyProblemListener implements ProblemListener {
     @Override
-    public void problemsAppeared(@NotNull final VirtualFile file) {
+    public void problemsAppeared(@NotNull VirtualFile file) {
       updateFile(file);
     }
 

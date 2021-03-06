@@ -5,7 +5,6 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -22,36 +21,27 @@ abstract class SaveAndSyncHandler {
   protected val externalChangesModificationTracker = SimpleModificationTracker()
 
   /**
-   * Schedule to save documents, all opened projects (or only passed project if not null) and application.
-   *
-   * Save is not performed immediately and not finished on method call return.
+   * If project is specified - only project settings will be saved.
+   * If project is not specified - app and all project settings will be saved.
    */
-  fun scheduleSaveDocumentsAndProjectsAndApp(onlyProject: Project?) {
-    scheduleSave(SaveTask(onlyProject))
-  }
-
-  data class SaveTask @JvmOverloads constructor(val onlyProject: Project? = null, val saveDocuments: Boolean = true, val forceSavingAllSettings: Boolean = false) {
+  data class SaveTask @JvmOverloads constructor(val project: Project? = null, val forceSavingAllSettings: Boolean = false) {
     companion object {
       // for Java clients
       @JvmStatic
-      fun projectIncludingAllSettings(project: Project) = SaveTask(onlyProject = project, saveDocuments = false, forceSavingAllSettings = true)
-    }
-
-    fun isMoreGenericThan(other: SaveTask): Boolean {
-      return onlyProject == null && other.onlyProject != null && saveDocuments == other.saveDocuments && forceSavingAllSettings == other.forceSavingAllSettings
+      fun projectIncludingAllSettings(project: Project) = SaveTask(project = project, forceSavingAllSettings = true)
     }
   }
 
-  @ApiStatus.Experimental
-  abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean = false)
+  @ApiStatus.Internal
+  abstract fun scheduleSave(task: SaveTask, forceExecuteImmediately: Boolean)
 
-  fun scheduleProjectSave(project: Project) = scheduleSave(SaveTask(project, saveDocuments = false))
+  fun scheduleSave(task: SaveTask) {
+    scheduleSave(task, forceExecuteImmediately = false)
+  }
 
-  @Deprecated("", ReplaceWith("FileDocumentManager.getInstance().saveAllDocuments()", "com.intellij.openapi.fileEditor.FileDocumentManager"))
-  fun saveProjectsAndDocuments() {
-    // used only by https://plugins.jetbrains.com/plugin/11072-openjml-esc
-    // so, just save documents and nothing more, to simplify SaveAndSyncHandlerImpl
-    FileDocumentManager.getInstance().saveAllDocuments()
+  @JvmOverloads
+  fun scheduleProjectSave(project: Project, forceSavingAllSettings: Boolean = false) {
+    scheduleSave(SaveTask(project, forceSavingAllSettings = forceSavingAllSettings))
   }
 
   abstract fun scheduleRefresh()
@@ -72,11 +62,7 @@ abstract class SaveAndSyncHandler {
   open fun maybeRefresh(modalityState: ModalityState) {
   }
 
-  @ApiStatus.Experimental
-  open fun cancelScheduledSave() {
-  }
-
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean
 
   /**

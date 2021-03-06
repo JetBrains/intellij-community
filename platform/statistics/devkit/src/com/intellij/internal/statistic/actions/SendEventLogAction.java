@@ -1,11 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.connect.StatisticsResult;
+import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.service.fus.FUSWhitelist;
+import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
+import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter;
+import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NavigatablePsiElement;
@@ -31,12 +35,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
 public class SendEventLogAction extends AnAction {
-  private static final String FUS_RECORDER = "FUS";
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
+    e.getPresentation().setEnabled(StatisticsRecorderUtil.isTestModeEnabled(recorderId));
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -64,37 +73,39 @@ public class SendEventLogAction extends AnAction {
       }
 
       private StatisticsResult send() {
+        String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
+        EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
         return EventLogStatisticsService.send(
-          new DeviceConfiguration(EventLogConfiguration.INSTANCE.getDeviceId(), EventLogConfiguration.INSTANCE.getBucket()),
-          new EventLogInternalRecorderConfig(FUS_RECORDER),
-          new EventLogTestSettingsService(),
+          new DeviceConfiguration(config.getDeviceId(), config.getBucket()),
+          new EventLogInternalRecorderConfig(recorderId),
+          new EventLogTestSettingsService(recorderId),
           new EventLogTestResultDecorator()
         );
       }
     });
   }
 
-  private static class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
-    private EventLogTestSettingsService() {
-      super(FUS_RECORDER, new EventLogTestApplication());
+  private static final class EventLogTestSettingsService extends EventLogUploadSettingsService implements EventLogSettingsService {
+    private EventLogTestSettingsService(@NotNull String recorderId) {
+      super(recorderId, new EventLogTestApplication(recorderId));
     }
 
     @Override
-    public int getPermittedTraffic() {
-      return 100;
-    }
-
-    @NotNull
-    @Override
-    public LogEventFilter getEventFilter() {
-      final FUSWhitelist whitelist = getWhitelistedGroups();
-      return new LogEventWhitelistFilter(whitelist != null ? whitelist : FUSWhitelist.empty());
+    public @NotNull LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
+      LogEventFilter filter = super.getEventFilter(base, type);
+      if (filter instanceof LogEventCompositeFilter) {
+        LogEventFilter[] withoutSnapshot = Arrays.stream(((LogEventCompositeFilter)filter).getFilters())
+          .filter(f -> f != LogEventSnapshotBuildFilter.INSTANCE)
+          .toArray(LogEventFilter[]::new);
+        return new LogEventCompositeFilter(withoutSnapshot);
+      }
+      return filter;
     }
   }
 
-  private static class EventLogTestApplication extends EventLogInternalApplicationInfo {
-    private EventLogTestApplication() {
-      super(FUS_RECORDER, true);
+  private static final class EventLogTestApplication extends EventLogInternalApplicationInfo {
+    private EventLogTestApplication(@NotNull String recorderId) {
+      super(recorderId, true);
     }
 
     @Override
@@ -108,12 +119,12 @@ public class SendEventLogAction extends AnAction {
     private final List<LogEventRecordRequest> myFailed = new ArrayList<>();
 
     @Override
-    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content) {
+    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content, @NotNull String logPath) {
       mySucceed.add(request);
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
+    public void onFailed(@Nullable LogEventRecordRequest request, int error, @Nullable String content) {
       if (request != null) {
         myFailed.add(request);
       }

@@ -15,6 +15,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param file the file which is the source of the importable
    * @param importElement an existing import element that can be a source for the importable.
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable PyImportElement importElement) {
+  public void addImport(@NotNull PsiNamedElement importable, @NotNull PsiFile file, @Nullable PyImportElement importElement) {
     myImports.add(new ImportCandidateHolder(importable, file, importElement, null));
   }
 
@@ -79,12 +80,40 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
    * @param file the file which is the source of the importable
    * @param path import path for the file, as a qualified name (a.b.c)
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
+  public void addImport(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path));
   }
 
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path, @Nullable String asName) {
+  /**
+   * @deprecated Use {@link #addImport(PsiNamedElement, PsiFileSystemItem, QualifiedName)} accepting a named element.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
+    if (importable instanceof PsiNamedElement) {
+      addImport((PsiNamedElement)importable, file, path);
+    }
+  }
+
+  public void addImport(@NotNull PsiNamedElement importable,
+                        @NotNull PsiFileSystemItem file,
+                        @Nullable QualifiedName path,
+                        @Nullable String asName) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
+  }
+
+  /**
+   * @deprecated Use {@link #addImport(PsiNamedElement, PsiFileSystemItem, QualifiedName, String)} accepting a named element.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
+  public void addImport(@NotNull PsiElement importable,
+                        @NotNull PsiFileSystemItem file,
+                        @Nullable QualifiedName path,
+                        @Nullable String asName) {
+    if (importable instanceof PsiNamedElement) {
+      addImport((PsiNamedElement)importable, file, path, asName);
+    }
   }
 
   @Override
@@ -92,7 +121,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   public String getText() {
     if (myUseQualifiedImport) return PyPsiBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
-      return PyPsiBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText(myInitialName));
+      return PyPsiBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText());
     }
     else {
       return PyPsiBundle.message("QFIX.auto.import.import.this.name");
@@ -102,7 +131,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.auto.import.family");
+    return PyPsiBundle.message("QFIX.NAME.auto.import");
   }
 
   @NotNull
@@ -184,7 +213,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       @NotNull
       @Override
       public String getFamilyName() {
-        return PyPsiBundle.message("QFIX.local.auto.import.family");
+        return PyPsiBundle.message("QFIX.NAME.local.auto.import");
       }
 
       @NotNull

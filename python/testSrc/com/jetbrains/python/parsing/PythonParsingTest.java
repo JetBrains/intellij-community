@@ -868,6 +868,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testFStringTextTokenMerging() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-19036
   public void testAwaitInNonAsyncNestedFunction() {
     doTest(LanguageLevel.PYTHON35);
@@ -926,6 +930,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON38);
   }
 
+  // PY-33886, PY-36478
+  public void testInvalidNonParenthesizedAssignmentExpressions() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   // PY-33886
   public void testAssignmentExpressionsInFString() {
     doTest(LanguageLevel.PYTHON38);
@@ -934,6 +943,11 @@ public class PythonParsingTest extends ParsingTestCase {
   // PY-36167
   public void testFunctionWithPassAndAwaitAfterInPy36() {
     doTest(LanguageLevel.PYTHON36);
+  }
+
+  // PY-41305
+  public void testExpressionsInDecorators() {
+    doTest(LanguageLevel.getLatest());
   }
 
   public void doTest() {

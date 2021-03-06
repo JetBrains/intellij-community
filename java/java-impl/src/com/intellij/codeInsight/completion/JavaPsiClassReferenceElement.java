@@ -24,8 +24,10 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -221,4 +223,13 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return CodeStyle.getLanguageSettings(element.getContainingFile(), JavaLanguage.INSTANCE).SPACE_AFTER_COMMA;
   }
 
+  static boolean isInaccessibleConstructorSuggestion(@NotNull PsiElement position, @Nullable PsiClass cls) {
+    if (cls == null || cls.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
+    PsiMethod[] constructors = cls.getConstructors();
+    if (constructors.length > 0) {
+      return !ContainerUtil.exists(constructors, ctor ->
+        JavaResolveUtil.isAccessible(ctor, cls, ctor.getModifierList(), position, null, null));
+    }
+    return false;
+  }
 }

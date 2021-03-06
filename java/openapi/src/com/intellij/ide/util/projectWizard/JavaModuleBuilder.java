@@ -152,7 +152,6 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
     if (aDefault != null && !aDefault) {
       instance.setLanguageLevel(extension.getLanguageLevel());
-      instance.setDefault(false);
     }
     else {
       //setup language level according to jdk, then setup default flag

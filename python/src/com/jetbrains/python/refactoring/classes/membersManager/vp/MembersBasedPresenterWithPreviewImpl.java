@@ -24,7 +24,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Does refactoring with preview (based on {@link com.intellij.refactoring.BaseRefactoringProcessor}).
+ * Does refactoring with preview (based on {@link BaseRefactoringProcessor}).
  * Child must implement {@link #createProcessor()} and return appropriate processor.
  * "Preview" button would be displayed.
  *

@@ -26,7 +26,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +94,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      final PsiExpression strippedQualifier = ParenthesesUtils.stripParentheses(qualifier);
+      final PsiExpression strippedQualifier = PsiUtil.skipParenthesizedExprDown(qualifier);
       if (strippedQualifier == null) {
         return;
       }

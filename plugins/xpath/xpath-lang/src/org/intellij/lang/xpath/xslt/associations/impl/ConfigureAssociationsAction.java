@@ -20,11 +20,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 class ConfigureAssociationsAction extends AnAction {
     ConfigureAssociationsAction() {
-        super("Configure...");
+        super(XPathBundle.message("action.configure.associations.text"));
     }
 
     @Override

@@ -3,17 +3,17 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntProcedure;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -38,7 +38,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  */
 public final class ModifierKeyDoubleClickHandler {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
-  private static final TIntIntHashMap KEY_CODE_TO_MODIFIER_MAP = new TIntIntHashMap();
+  private static final Int2IntMap KEY_CODE_TO_MODIFIER_MAP=new Int2IntOpenHashMap();
 
   static {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_ALT, InputEvent.ALT_MASK);
@@ -93,7 +93,7 @@ public final class ModifierKeyDoubleClickHandler {
   }
 
   public static int getMultiCaretActionModifier() {
-    return SystemInfo.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
+    return SystemInfoRt.isMac ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL;
   }
 
   /**
@@ -187,13 +187,13 @@ public final class ModifierKeyDoubleClickHandler {
     }
 
     private boolean hasOtherModifiers(KeyEvent keyEvent) {
-      final int modifiers = keyEvent.getModifiers();
-      return !KEY_CODE_TO_MODIFIER_MAP.forEachEntry(new TIntIntProcedure() {
-        @Override
-        public boolean execute(int keyCode, int modifierMask) {
-          return keyCode == myModifierKeyCode || (modifiers & modifierMask) == 0;
+      int modifiers = keyEvent.getModifiers();
+      for (Int2IntMap.Entry entry : KEY_CODE_TO_MODIFIER_MAP.int2IntEntrySet()) {
+        if (!(entry.getIntKey() == myModifierKeyCode || (modifiers & entry.getIntValue()) == 0)) {
+          return true;
         }
-      });
+      }
+      return false;
     }
 
     private void handleModifier(KeyEvent event) {
@@ -264,7 +264,8 @@ public final class ModifierKeyDoubleClickHandler {
         ex.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         ex.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
-        ActionsCollector.getInstance().record("DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
+        ActionsCollectorImpl
+          .recordCustomActionInvoked(anActionEvent.getProject(), "DoubleShortcut", anActionEvent.getInputEvent(), action.getClass());
         return true;
       }
       finally {

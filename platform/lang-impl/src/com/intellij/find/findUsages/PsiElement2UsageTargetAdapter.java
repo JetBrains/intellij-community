@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.findUsages;
 
@@ -12,10 +12,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -36,20 +34,22 @@ import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
 public class PsiElement2UsageTargetAdapter
-  implements PsiElementUsageTarget, TypeSafeDataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
+  implements PsiElementUsageTarget, DataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
   private final SmartPsiElementPointer<?> myPointer;
   @NotNull protected final FindUsagesOptions myOptions;
   private String myPresentableText;
   private Icon myIcon;
 
-  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options, boolean update) {
     if (!(element instanceof NavigationItem)) {
       throw new IllegalArgumentException("Element is not a navigation item: " + element);
     }
@@ -57,11 +57,33 @@ public class PsiElement2UsageTargetAdapter
     PsiFile file = element.getContainingFile();
     myPointer = file == null ? SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element) :
                 SmartPointerManager.getInstance(file.getProject()).createSmartPsiElementPointer(element, file);
-    update(element, file);
+    if (update) {
+      update(element, file);
+    }
   }
 
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, boolean update) {
+    this(element, new FindUsagesOptions(element.getProject()), update);
+  }
+
+  /**
+   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, FindUsagesOptions, boolean)} to avoid
+   * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
+   * @param element
+   */
+  @Deprecated
+  public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
+    this(element, options, true);
+  }
+
+  /**
+   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
+   * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
+   * @param element
+   */
+  @Deprecated
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
-    this(element, new FindUsagesOptions(element.getProject()));
+    this(element, true);
   }
 
   @Override
@@ -169,10 +191,15 @@ public class PsiElement2UsageTargetAdapter
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
+  @Deprecated
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
+    return convert(psiElements, true);
+  }
+
+  public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements, boolean update) {
     PsiElement2UsageTargetAdapter[] targets = new PsiElement2UsageTargetAdapter[psiElements.length];
     for (int i = 0; i < targets.length; i++) {
-      targets[i] = new PsiElement2UsageTargetAdapter(psiElements[i]);
+      targets[i] = new PsiElement2UsageTargetAdapter(psiElements[i], update);
     }
 
     return targets;
@@ -187,17 +214,19 @@ public class PsiElement2UsageTargetAdapter
     return targets;
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    if (key == UsageView.USAGE_INFO_KEY) {
+  public Object getData(@NotNull String dataId) {
+    if (UsageView.USAGE_INFO_KEY.is(dataId)) {
       PsiElement element = getElement();
       if (element != null && element.getTextRange() != null) {
-        sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
+        return new UsageInfo(element);
       }
     }
-    else if (key == UsageView.USAGE_SCOPE) {
-      sink.put(UsageView.USAGE_SCOPE, myOptions.searchScope);
+    else if (UsageView.USAGE_SCOPE.is(dataId)) {
+      return myOptions.searchScope;
     }
+    return null;
   }
 
   @Override
@@ -205,9 +234,8 @@ public class PsiElement2UsageTargetAdapter
     return UsageViewImpl.getShowUsagesWithSettingsShortcut();
   }
 
-  @NotNull
   @Override
-  public String getLongDescriptiveName() {
+  public @Nls @NotNull String getLongDescriptiveName() {
     SearchScope searchScope = myOptions.searchScope;
     String scopeString = searchScope.getDisplayName();
     PsiElement psiElement = getElement();
@@ -216,7 +244,7 @@ public class PsiElement2UsageTargetAdapter
            FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                               DescriptiveNameUtil.getDescriptiveName(psiElement),
                               scopeString
-    );
+           );
   }
 
   @Override
@@ -264,11 +292,6 @@ public class PsiElement2UsageTargetAdapter
   @Override
   public String getPresentableText() {
     return myPresentableText;
-  }
-
-  @Override
-  public String getLocationString() {
-    return null;
   }
 
   @Override

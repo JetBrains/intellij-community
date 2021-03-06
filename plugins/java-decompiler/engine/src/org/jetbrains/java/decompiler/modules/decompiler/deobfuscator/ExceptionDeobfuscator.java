@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.deobfuscator;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -18,9 +18,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ExceptionDeobfuscator {
+public final class ExceptionDeobfuscator {
 
-  private static class Range {
+  private static final class Range {
     private final BasicBlock handler;
     private final String uniqueStr;
     private final Set<BasicBlock> protectedRange;
@@ -407,7 +407,7 @@ public class ExceptionDeobfuscator {
 
       for (ExceptionRangeCFG range : ranges) {
 
-        // add some dummy instructions to prevent optimizing away the empty block  
+        // add some dummy instructions to prevent optimizing away the empty block
         SimpleInstructionSequence seq = new SimpleInstructionSequence();
         seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
         seq.addInstruction(Instruction.create(CodeConstants.opc_pop, false, CodeConstants.GROUP_GENERAL, bytecode_version, null), -1);

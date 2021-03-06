@@ -11,6 +11,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.ui.IconManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -31,9 +33,14 @@ fun loadHeadlessAppInUnitTestMode() {
 }
 
 internal fun doLoadApp(setupEventQueue: () -> Unit) {
-  Main.setFlags(arrayOf("inspect", "", "", ""))
-  assert(Main.isHeadless())
-  assert(Main.isCommandLine())
+  var isHeadless = true
+  if (System.getProperty("java.awt.headless") == "false") {
+    isHeadless = false
+  }
+  else {
+    System.setProperty("java.awt.headless", "true")
+  }
+  Main.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
@@ -43,7 +50,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
 
   setupEventQueue()
 
-  val app = ApplicationImpl(true, true, true, true)
+  val app = ApplicationImpl(true, true, isHeadless, true)
 
   if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
     RecursionManager.assertOnMissedCache(app)
@@ -52,8 +59,9 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
   IconManager.activate()
   val plugins: List<IdeaPluginDescriptorImpl>
   try {
+    // 40 seconds - tests maybe executed on cloud agents where IO speed is a very slow
     plugins = registerRegistryAndInitStore(registerAppComponents(loadedPluginFuture, app), app)
-      .get(20, TimeUnit.SECONDS)
+      .get(40, TimeUnit.SECONDS)
 
     val boundedExecutor = createExecutorToPreloadServices()
 
@@ -63,10 +71,13 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
 
     preloadServiceFuture
       .thenCompose { callAppInitialized(app, boundedExecutor) }
-      .get(20, TimeUnit.SECONDS)
+      .get(40, TimeUnit.SECONDS)
+
+    (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
+
   }
   catch (e: TimeoutException) {
-    throw RuntimeException("Cannot preload services in 20 seconds: ${ThreadDumper.dumpThreadsToString()}", e)
+    throw RuntimeException("Cannot preload services in 40 seconds: ${ThreadDumper.dumpThreadsToString()}", e)
   }
   catch (e: ExecutionException) {
     throw e.cause ?: e

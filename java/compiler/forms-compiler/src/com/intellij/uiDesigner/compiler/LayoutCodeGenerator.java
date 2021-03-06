@@ -38,7 +38,7 @@ public abstract class LayoutCodeGenerator {
   }
 
   public abstract void generateComponentLayout(final LwComponent lwComponent, final GeneratorAdapter generator, final int componentLocal,
-                                               final int parentLocal);
+                                               final int parentLocal, final String formClassName);
 
   protected static void newDimensionOrNull(final GeneratorAdapter generator, final Dimension dimension) {
     if (dimension.width == -1 && dimension.height == -1) {

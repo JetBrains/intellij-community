@@ -17,7 +17,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiMethod;
-import com.intellij.rt.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -68,12 +67,6 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
       @Override
       protected void fillForkModule(Map<Module, List<String>> perModule, Module module, String name) {
         super.fillForkModule(perModule, toRoot.get(module), name);
-      }
-
-      @NotNull
-      @Override
-      protected String getRunner() {
-        return JUnitStarter.JUNIT4_PARAMETER;
       }
     };
   }

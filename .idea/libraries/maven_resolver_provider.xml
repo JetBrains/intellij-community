@@ -1,0 +1,28 @@
+<component name="libraryTable">
+  <library name="maven-resolver-provider" type="repository">
+    <properties maven-id="org.apache.maven:maven-resolver-provider:3.6.3">
+      <exclude>
+        <dependency maven-id="org.apache.commons:commons-lang3" />
+        <dependency maven-id="org.codehaus.plexus:plexus-utils" />
+        <dependency maven-id="javax.inject:javax.inject" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-resolver-provider/3.6.3/maven-resolver-provider-3.6.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.6.3/maven-model-3.6.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.6.3/maven-model-builder-3.6.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.25/plexus-interpolation-1.25.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.6.3/maven-artifact-3.6.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.6.3/maven-builder-support-3.6.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.4/org.eclipse.sisu.inject-0.3.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.6.3/maven-repository-metadata-3.6.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-api/1.4.1/maven-resolver-api-1.4.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-spi/1.4.1/maven-resolver-spi-1.4.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-util/1.4.1/maven-resolver-util-1.4.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-impl/1.4.1/maven-resolver-impl-1.4.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

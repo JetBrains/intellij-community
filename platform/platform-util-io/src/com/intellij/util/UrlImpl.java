@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,10 +21,9 @@ public final class UrlImpl implements Url {
   private String externalForm;
   private UrlImpl withoutParameters;
 
-  /**
-   * @deprecated Use {@link Urls#newUnparsable(String)}
-   */
+  /** @deprecated Use {@link Urls#newUnparsable(String)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public UrlImpl(@NotNull String path) {
     this(null, null, path, null);
   }
@@ -40,13 +40,12 @@ public final class UrlImpl implements Url {
   }
 
   @Override
-  public Url resolve(@NotNull String subPath) {
+  public @NotNull Url resolve(@NotNull String subPath) {
     return new UrlImpl(scheme, authority, path.isEmpty() ? subPath : (path + "/" + subPath), parameters);
   }
 
-  @NotNull
   @Override
-  public Url addParameters(@NotNull Map<String, String> parameters) {
+  public @NotNull Url addParameters(@NotNull Map<String, String> parameters) {
     if (parameters.isEmpty()) {
       return this;
     }
@@ -63,24 +62,21 @@ public final class UrlImpl implements Url {
     return new UrlImpl(scheme, authority, path, builder.toString());
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     if (decodedPath == null) {
       decodedPath = URLUtil.unescapePercentSequences(path);
     }
     return decodedPath;
   }
 
-  @Nullable
   @Override
-  public String getScheme() {
+  public @Nullable String getScheme() {
     return scheme;
   }
 
   @Override
-  @Nullable
-  public String getAuthority() {
+  public @Nullable String getAuthority() {
     return authority;
   }
 
@@ -89,9 +85,8 @@ public final class UrlImpl implements Url {
     return URLUtil.FILE_PROTOCOL.equals(scheme);
   }
 
-  @Nullable
   @Override
-  public String getParameters() {
+  public @Nullable String getParameters() {
     return parameters;
   }
 
@@ -119,8 +114,7 @@ public final class UrlImpl implements Url {
   }
 
   @Override
-  @NotNull
-  public String toExternalForm() {
+  public @NotNull String toExternalForm() {
     if (externalForm != null) {
       return externalForm;
     }
@@ -142,8 +136,7 @@ public final class UrlImpl implements Url {
   }
 
   @Override
-  @NotNull
-  public Url trimParameters() {
+  public @NotNull Url trimParameters() {
     if (parameters == null) {
       return this;
     }
@@ -160,12 +153,8 @@ public final class UrlImpl implements Url {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof UrlImpl)) {
-      return false;
-    }
+    if (this == o) return true;
+    if (!(o instanceof UrlImpl)) return false;
 
     UrlImpl url = (UrlImpl)o;
     return StringUtil.equals(scheme, url.scheme) && StringUtil.equals(authority, url.authority) && getPath().equals(url.getPath()) && StringUtil.equals(parameters, url.parameters);
@@ -173,12 +162,8 @@ public final class UrlImpl implements Url {
 
   @Override
   public boolean equalsIgnoreCase(@Nullable Url o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof UrlImpl)) {
-      return false;
-    }
+    if (this == o) return true;
+    if (!(o instanceof UrlImpl)) return false;
 
     UrlImpl url = (UrlImpl)o;
     return StringUtil.equalsIgnoreCase(scheme, url.scheme) &&

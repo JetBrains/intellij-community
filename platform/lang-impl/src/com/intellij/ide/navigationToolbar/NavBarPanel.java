@@ -3,10 +3,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.CopyPasteSupport;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.TransferableWrapper;
@@ -18,7 +15,6 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -42,6 +38,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -93,6 +90,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private Component myContextComponent;
 
   private final NavBarUpdateQueue myUpdateQueue;
+  private final Set<PsiFile> myForcedFileUpdateQueue = new HashSet<>();
 
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
@@ -120,7 +118,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     Disposer.register(project, this);
-    AccessibleContextUtil.setName(this, "Navigation Bar");
+    AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"));
   }
 
   /**
@@ -306,7 +304,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void updateItems() {
-    for (NavBarItem item : myList) {
+    for (NavBarItem item : new ArrayList<>(myList)) {
       item.update();
     }
     if (UISettings.getInstance().getShowNavigationBar()) {
@@ -321,7 +319,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  public void rebuildAndSelectItem(final Function<List<NavBarItem>, Integer> indexToSelectCallback, boolean showPopup) {
+  public void rebuildAndSelectItem(final Function<? super List<NavBarItem>, Integer> indexToSelectCallback, boolean showPopup) {
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
     myUpdateQueue.queueSelect(() -> {
@@ -411,7 +409,15 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           return true;
         }
 
+        if (eachLabel.getObject() instanceof PsiFile && myForcedFileUpdateQueue.remove(eachLabel.getObject())) {
+          return true;
+        }
+
         if (!StringUtil.equals(eachLabel.getText(), getPresentation().getPresentableText(eachElement, false))) {
+          return true;
+        }
+
+        if (!Objects.equals(eachLabel.getIcon(), getPresentation().getIcon(eachElement))) {
           return true;
         }
 
@@ -539,23 +545,29 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void doubleClick(final Object object) {
-    if (object instanceof Navigatable) {
-      Navigatable navigatable = (Navigatable)object;
+    Object target = ObjectUtils.notNull(getNavigatable(object), object);
+    if (target instanceof Navigatable) {
+      Navigatable navigatable = (Navigatable)target;
       if (navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
     }
-    else if (object instanceof Module) {
+    else if (target instanceof Module) {
       ProjectView projectView = ProjectView.getInstance(myProject);
       AbstractProjectViewPane projectViewPane = projectView.getProjectViewPaneById(projectView.getCurrentViewId());
       if (projectViewPane != null) {
-        projectViewPane.selectModule((Module)object, true);
+        projectViewPane.selectModule((Module)target, true);
       }
     }
-    else if (object instanceof Project) {
+    else if (target instanceof Project) {
       return;
     }
     hideHint(true);
+  }
+
+  @Nullable
+  private Navigatable getNavigatable(Object object) {
+    return CommonDataKeys.NAVIGATABLE.getData(getDataProvider(() -> JBIterable.of(object)));
   }
 
   private void ctrlClick(final int index) {
@@ -588,7 +600,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void navigateInsideBar(int sourceItemIndex, final Object object) {
-    UIEventLogger.logUIEvent(UIEventId.NavBarNavigate);
+    UIEventLogger.NavBarNavigate.log(myProject);
 
     boolean restorePopup = shouldRestorePopupOnSelect(object, sourceItemIndex);
     Object obj = expandDirsWithJustOneSubdir(object);
@@ -657,16 +669,27 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(@NotNull String dataId) {
-    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
-      Object data = modelExtension.getData(dataId, this::getDataInner);
-      if (data != null) return data;
-    }
-    return getDataInner(dataId);
+    return getData(dataId, () -> getSelection());
   }
 
   @Nullable
-  private Object getDataInner(String dataId) {
-    return getDataImpl(dataId, this, () -> getSelection());
+  private Object getData(@NotNull String dataId, Getter<JBIterable<?>> selection) {
+    DataProvider dataProvider = getDataProviderInner(selection);
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
+      Object data = modelExtension.getData(dataId, dataProvider);
+      if (data != null) return data;
+    }
+    return dataProvider.getData(dataId);
+  }
+
+  @NotNull
+  private DataProvider getDataProvider(Getter<JBIterable<?>> selection) {
+    return d -> getData(d, selection);
+  }
+
+  @NotNull
+  private DataProvider getDataProviderInner(Getter<JBIterable<?>> selection) {
+    return d -> getDataImpl(d, this, selection);
   }
 
   @NotNull
@@ -798,47 +821,48 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   // ------ popup NavBar ----------
   public void showHint(@Nullable final Editor editor, final DataContext dataContext) {
-    myModel.updateModel(dataContext);
-    if (myModel.isEmpty()) return;
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(this);
-    panel.setOpaque(true);
-    panel.setBackground(UIUtil.getListBackground());
+    myModel.updateModelAsync(dataContext, () -> {
+      if (myModel.isEmpty()) return;
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(this);
+      panel.setOpaque(true);
+      panel.setBackground(UIUtil.getListBackground());
 
-    myHint = new LightweightHint(panel) {
-      @Override
-      public void hide() {
-        super.hide();
-        cancelPopup();
-        Disposer.dispose(NavBarPanel.this);
-      }
-    };
-    myHint.setForceShowAsPopup(true);
-    myHint.setFocusRequestor(this);
-    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    myUpdateQueue.rebuildUi();
-    if (editor == null) {
-      myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
-        final Component owner = focusManager.getFocusOwner();
-        final Component cmp = relativePoint.getComponent();
-        if (cmp instanceof JComponent && cmp.isShowing()) {
-          myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
-                      owner instanceof JComponent ? (JComponent)owner : null,
-                      new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
+      myHint = new LightweightHint(panel) {
+        @Override
+        public void hide() {
+          super.hide();
+          cancelPopup();
+          Disposer.dispose(NavBarPanel.this);
         }
-      });
-    }
-    else {
-      myHintContainer = editor.getContentComponent();
-      getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)rp -> {
-        Point p = rp.getPointOn(myHintContainer).getPoint();
-        final HintHint hintInfo = new HintHint(editor, p);
-        HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
-      });
-    }
+      };
+      myHint.setForceShowAsPopup(true);
+      myHint.setFocusRequestor(this);
+      final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      myUpdateQueue.rebuildUi();
+      if (editor == null) {
+        myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+        getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
+          final Component owner = focusManager.getFocusOwner();
+          final Component cmp = relativePoint.getComponent();
+          if (cmp instanceof JComponent && cmp.isShowing()) {
+            myHint.show((JComponent)cmp, relativePoint.getPoint().x, relativePoint.getPoint().y,
+                        owner instanceof JComponent ? (JComponent)owner : null,
+                        new HintHint(relativePoint.getComponent(), relativePoint.getPoint()));
+          }
+        });
+      }
+      else {
+        myHintContainer = editor.getContentComponent();
+        getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)rp -> {
+          Point p = rp.getPointOn(myHintContainer).getPoint();
+          final HintHint hintInfo = new HintHint(editor, p);
+          HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
+        });
+      }
 
-    rebuildAndSelectTail(true);
+      rebuildAndSelectTail(true);
+    });
   }
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {
@@ -880,7 +904,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < myList.size(); i++) {
       NavBarItem each = myList.get(i);
@@ -924,5 +948,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   boolean isUpdating() {
     return myUpdateQueue.isUpdating();
+  }
+
+  void queueFileUpdate(PsiFile psiFile) {
+    myForcedFileUpdateQueue.add(psiFile);
   }
 }

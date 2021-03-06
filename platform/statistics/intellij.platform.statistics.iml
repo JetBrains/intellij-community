@@ -16,7 +16,13 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" exported="" name="ap-validation" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeNodeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
@@ -16,6 +17,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -34,11 +36,12 @@ public class GlobalCompilingVisitor {
   private final List<PsiElement> myLexicalNodes = new SmartList<>();
   private int myCodeBlockLevel;
 
+  @NotNull
   public static NodeFilter getFilter() {
     return ourFilter;
   }
 
-  public void setHandler(PsiElement element, MatchingHandler handler) {
+  public void setHandler(@NotNull PsiElement element, @NotNull MatchingHandler handler) {
     MatchingHandler realHandler = context.getPattern().getHandlerSimple(element);
 
     if (realHandler instanceof SubstitutionHandler) {
@@ -50,23 +53,27 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public final void handle(PsiElement element) {
+  public final void handle(@NotNull PsiElement element) {
     if ((!ourFilter.accepts(element) ||
          StructuralSearchUtil.isIdentifier(element)) &&
         context.getPattern().isRealTypedVar(element) &&
         context.getPattern().getHandlerSimple(element) == null
       ) {
-      String name = context.getPattern().getTypedVarString(element);
+      final CompiledPattern pattern = context.getPattern();
+      String name = pattern.getTypedVarString(element);
       // name is the same for named element (clazz,methods, etc) and token (name of ... itself)
       // @todo need fix this
 
-      final SubstitutionHandler handler = (SubstitutionHandler)context.getPattern().getHandler(name);
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(name);
       if (handler == null) return;
-      context.getPattern().setHandler(element, handler);
+      pattern.setHandler(element, handler);
 
       if (context.getOptions().getVariableConstraint(handler.getName()).isPartOfSearchResults()) {
         handler.setTarget(true);
-        context.getPattern().setTargetNode(element);
+        final PsiElement targetNode = pattern.getTargetNode();
+        if (targetNode == null || targetNode == element.getParent()) {
+          pattern.setTargetNode(element);
+        }
       }
     }
   }
@@ -83,7 +90,7 @@ public class GlobalCompilingVisitor {
     this.myCodeBlockLevel = codeBlockLevel;
   }
 
-  public static void setFilter(MatchingHandler handler, NodeFilter filter) {
+  public static void setFilter(@NotNull MatchingHandler handler, @NotNull NodeFilter filter) {
     if (handler.getFilter() != null && handler.getFilter().getClass() != filter.getClass()) {
       // for constructor we will have the same handler for class and method and tokens itself
       handler.setFilter(new CompositeNodeFilter(filter, handler.getFilter()));
@@ -93,43 +100,44 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public void setFilterSimple(PsiElement element, NodeFilter filter) {
+  public void setFilterSimple(@NotNull PsiElement element, @NotNull NodeFilter filter) {
     context.getPattern().getHandler(element).setFilter(filter);
   }
 
+  @NotNull
   public List<PsiElement> getLexicalNodes() {
     return myLexicalNodes;
   }
 
-  public void addLexicalNode(PsiElement node) {
+  public void addLexicalNode(@NotNull PsiElement node) {
     myLexicalNodes.add(node);
   }
 
-  void compile(PsiElement[] elements, CompileContext context) {
+  void compile(PsiElement @NotNull [] elements, @NotNull CompileContext context) {
     if (elements.length == 0) {
       throw new MalformedPatternException();
     }
     myCodeBlockLevel = 0;
     this.context = context;
-    final StructuralSearchProfile profile =
-      StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
     assert profile != null;
     profile.compile(elements, this);
 
     assert context.getPattern().getStrategy() != null;
   }
 
-  public boolean hasFragments(String pattern) {
+  public boolean hasFragments(@NotNull String pattern) {
     return ourSubstitutionPattern.matcher(pattern).find();
   }
 
   @Nullable
-  public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind) {
     return processPatternStringWithFragments(pattern, kind, ourSubstitutionPattern);
   }
 
   @Nullable
-  public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind, Pattern substitutionPattern) {
+  public MatchingHandler processPatternStringWithFragments(@NotNull String pattern, @NotNull OccurenceKind kind,
+                                                           @NotNull Pattern substitutionPattern) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {
@@ -154,10 +162,10 @@ public class GlobalCompilingVisitor {
     while (matcher.find()) {
       word = content.substring(start, matcher.start());
       if (!word.isEmpty()) {
-        buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
         hasLiteralContent = true;
+        buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
 
-        processTokenizedName(word, false, kind);
+        processTokenizedName(word, kind);
       }
 
       handler = (SubstitutionHandler)getContext().getPattern().getHandler(matcher.group(1));
@@ -174,7 +182,7 @@ public class GlobalCompilingVisitor {
       }
 
       if (isSuitablePredicate(predicate, handler)) {
-        processTokenizedName(predicate.getRegExp(), false, kind);
+        processTokenizedName(predicate.getRegExp(), kind);
       }
 
       start = matcher.end();
@@ -184,9 +192,9 @@ public class GlobalCompilingVisitor {
 
     if (!word.isEmpty()) {
       hasLiteralContent = true;
-      buf.append(StructuralSearchUtil.shieldRegExpMetaChars(word));
+      buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
 
-      processTokenizedName(word, false, kind);
+      processTokenizedName(word, kind);
     }
 
     if (hasLiteralContent) {
@@ -206,14 +214,14 @@ public class GlobalCompilingVisitor {
   }
 
   @Contract("null,_ -> false")
-  public static boolean isSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
+  public static boolean isSuitablePredicate(RegExpPredicate predicate, @NotNull SubstitutionHandler handler) {
     return predicate != null && handler.getMinOccurs() != 0 && predicate.couldBeOptimized();
   }
 
-  public static void addFilesToSearchForGivenWord(String word,
+  public static void addFilesToSearchForGivenWord(@NotNull String word,
                                                   boolean endTransaction,
-                                                  GlobalCompilingVisitor.OccurenceKind kind,
-                                                  CompileContext compileContext) {
+                                                  @NotNull GlobalCompilingVisitor.OccurenceKind kind,
+                                                  @NotNull CompileContext compileContext) {
     if (!compileContext.getSearchHelper().doOptimizing()) {
       return;
     }
@@ -240,7 +248,7 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  public void processTokenizedName(String name, boolean skipComments, GlobalCompilingVisitor.OccurenceKind kind) {
+  public void processTokenizedName(@NotNull String name, @NotNull GlobalCompilingVisitor.OccurenceKind kind) {
     if (kind == OccurenceKind.LITERAL) name = StringUtil.unescapeStringCharacters(name);
     for (String word : StringUtil.getWordsInStringLongestFirst(name)) {
       addFilesToSearchForGivenWord(word, true, kind, getContext());

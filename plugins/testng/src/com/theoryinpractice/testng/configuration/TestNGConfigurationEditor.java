@@ -135,7 +135,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
     }
     myTestKind.setModel(testKindModel);
-    myTestKind.addActionListener(e -> TestNGConfigurationEditor.this.model.setType((TestType)myTestKind.getSelectedItem()));
+    myTestKind.addActionListener(e -> this.model.setType((TestType)myTestKind.getSelectedItem()));
     myTestKind.setRenderer(SimpleListCellRenderer.create("", value -> value.getPresentableName()));
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(e -> evaluateModuleClassPath());
@@ -170,7 +170,12 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     commonJavaParameters.setProgramParametersLabel(TestngBundle.message("junit.configuration.test.runner.parameters.label"));
 
-    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()));
+    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()) {
+      @Override
+      protected boolean productionOnly() {
+        return false;
+      }
+    });
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
@@ -178,7 +183,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
-    myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
+    if (!project.isDefault()) {
+      myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
+    }
   }
 
   private void evaluateModuleClassPath() {
@@ -268,7 +275,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       packagesInProject.setSelected(true);
     }
     evaluateModuleClassPath();
-    alternateJDK.setPathOrName(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
+    alternateJDK.setPathOrName(config.getAlternativeJrePath(), config.ALTERNATIVE_JRE_PATH_ENABLED);
     propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
@@ -298,7 +305,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
     commonJavaParameters.applyTo(config);
-    config.ALTERNATIVE_JRE_PATH = alternateJDK.getJrePathOrName();
+    config.setAlternativeJrePath(alternateJDK.getJrePathOrName());
     config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isAlternativeJreSelected();
 
     data.TEST_PROPERTIES.clear();
@@ -513,7 +520,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       final TestListenerFilter filter = new TestListenerFilter(searchScope, project);
 
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-        .createWithInnerClassesScopeChooser("Choose Listener Class", filter.getScope(), filter, null);
+        .createWithInnerClassesScopeChooser(TestngBundle.message("testng.config.editor.dialog.title.choose.listener.class"), filter.getScope(), filter, null);
       chooser.showDialog();
       PsiClass psiclass = chooser.getSelected();
       if (psiclass == null) {

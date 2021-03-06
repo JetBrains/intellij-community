@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +50,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
+    applyTextEditorCustomizers();
 
     TransientEditorState state = myFile.getUserData(TRANSIENT_EDITOR_STATE_KEY);
     if (state != null) {
@@ -137,7 +140,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @Override
   @NotNull
   public String getName() {
-    return "Text";
+    return IdeBundle.message("tab.title.text");
   }
 
   @Override
@@ -224,8 +227,15 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "Editor: "+myComponent.getFile();
+  }
+
+  private void applyTextEditorCustomizers() {
+    for (TextEditorCustomizer customizer : TextEditorCustomizer.EP.getExtensionList()) {
+      customizer.customize(this);
+    }
   }
 
   private static class TransientEditorState {

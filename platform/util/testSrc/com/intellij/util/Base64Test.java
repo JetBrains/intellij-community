@@ -17,14 +17,12 @@ package com.intellij.util;
 
 import org.junit.Test;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class Base64Test {
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-
   @Test
   public void decodePadded() {
     decode("YW55IGNhcm5hbCBwbGVhcw==", "any carnal pleas");
@@ -40,6 +38,6 @@ public class Base64Test {
   }
 
   private static void decode(String base64, String expected) {
-    assertEquals(expected, new String(Base64.decode(base64), UTF8));
+    assertEquals(expected, new String(Base64.decode(base64), StandardCharsets.UTF_8));
   }
 }

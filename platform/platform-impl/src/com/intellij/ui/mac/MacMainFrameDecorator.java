@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
@@ -22,13 +22,14 @@ import java.awt.*;
 import java.lang.reflect.Method;
 import java.util.EventListener;
 import java.util.LinkedList;
+import java.util.Queue;
 
 public final class MacMainFrameDecorator extends IdeFrameDecorator {
   private interface FSListener extends FullScreenListener, EventListener {}
   private static class FSAdapter extends FullScreenAdapter implements FSListener {}
 
   private static class FullScreenQueue {
-    private final LinkedList<Runnable> myQueue = new LinkedList<>();
+    private final Queue<Runnable> myQueue = new LinkedList<>();
     private boolean myWaitingForAppKit = false;
 
     synchronized void runOrEnqueue(Runnable runnable) {
@@ -56,6 +57,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     myInFullScreen = true;
     storeFullScreenStateIfNeeded();
     myFullScreenQueue.runFromQueue();
+
+    myTabsHandler.enterFullScreen();
   }
 
   private void exitFullScreen() {
@@ -65,6 +68,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
     myFullScreenQueue.runFromQueue();
+
+    myTabsHandler.exitFullScreen();
   }
 
   private void storeFullScreenStateIfNeeded() {
@@ -74,7 +79,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
 
-  private static Method requestToggleFullScreenMethod;
+  private static Method toggleFullScreenMethod;
   private static Method enterFullScreenMethod;
   private static Method leaveFullScreenMethod;
 
@@ -91,7 +96,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       catch (NoSuchMethodException e) {
         // temporary solution for the old runtime
         //noinspection JavaReflectionMemberAccess
-        requestToggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
+        toggleFullScreenMethod = Application.class.getMethod("requestToggleFullScreen", Window.class);
       }
     }
     catch (Exception e) {
@@ -101,12 +106,15 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
   private final FullScreenQueue myFullScreenQueue = new FullScreenQueue();
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
+  private final MacWinTabsHandler myTabsHandler;
   private boolean myInFullScreen;
 
   public MacMainFrameDecorator(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     super(frame);
 
-    if (leaveFullScreenMethod != null || requestToggleFullScreenMethod != null) {
+    myTabsHandler = new MacWinTabsHandler(frame, parentDisposable);
+
+    if (leaveFullScreenMethod != null || toggleFullScreenMethod != null) {
       FullScreenUtilities.setWindowCanFullScreen(frame, true);
 
       // Native full screen listener can be set only once
@@ -139,6 +147,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
             rootPane.setBorder(null);
           }
+          myTabsHandler.enteringFullScreen();
         }
 
         @Override
@@ -169,13 +178,22 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   }
 
   @Override
+  public void frameShow() {
+    myTabsHandler.frameShow();
+  }
+
+  @Override
+  public void setProject() {
+    myTabsHandler.setProject();
+  }
+
+  @Override
   public boolean isInFullScreen() {
     return myInFullScreen;
   }
 
-  @NotNull
   @Override
-  public Promise<Boolean> toggleFullScreen(boolean state) {
+  public @NotNull Promise<Boolean> toggleFullScreen(boolean state) {
     if (myInFullScreen == state) {
       return Promises.resolvedPromise(state);
     }
@@ -196,8 +214,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     });
 
     // temporary solution for the old runtime
-    if (requestToggleFullScreenMethod != null) {
-      myFullScreenQueue.runOrEnqueue(() -> invokeAppMethod(requestToggleFullScreenMethod));
+    if (toggleFullScreenMethod != null) {
+      myFullScreenQueue.runOrEnqueue(() -> invokeAppMethod(toggleFullScreenMethod));
     }
     else if (state) {
       myFullScreenQueue.runOrEnqueue(() -> invokeAppMethod(enterFullScreenMethod));

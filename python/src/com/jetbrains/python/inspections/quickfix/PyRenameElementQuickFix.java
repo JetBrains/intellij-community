@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @see com.intellij.psi.util.PsiEditorUtilBase#findEditorByPsiElement
  */
-public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement implements OnTheFlyLocalFix {
 
   public PyRenameElementQuickFix(@Nullable PsiElement element) {
     super(element);
@@ -32,7 +33,7 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyBundle.message("QFIX.NAME.rename.element");
+    return PyBundle.message("QFIX.FAMILY.NAME.rename.element");
   }
 
   @NotNull

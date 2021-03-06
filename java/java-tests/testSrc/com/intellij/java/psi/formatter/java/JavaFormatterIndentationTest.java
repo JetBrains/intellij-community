@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
@@ -59,7 +59,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testNestedMethodsIndentation() {
     // Inspired by IDEA-43962
 
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 4;
 
     doMethodTest(
       "BigDecimal.ONE\n" +
@@ -88,7 +88,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testShiftedChainedIfElse() {
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     getSettings().ELSE_ON_NEW_LINE = true;
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
     doMethodTest(
       "long a = System.currentTimeMillis();\n" +
       "    if (a == 0){\n" +
@@ -126,7 +126,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
   public void testAlignedSubBlockIndentation() {
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 8;
 
     // Inspired by IDEA-54671
     doTextTest(
@@ -661,5 +661,58 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                    "}\n" +
                    "}";
     doTextTest(before, after);
+  }
+
+
+  public void testKeepBuilderMethodsIndents() {
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().BUILDER_METHODS = "wrap,flowPanel,widget,builder,end";
+    getSettings().KEEP_BUILDER_METHODS_INDENTS = true;
+
+    doTextTest(
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
+      "            .flowPanel(\"sidebar-offset\")   //content\n" +
+      "              .widget(myReviewHints)\n" +
+      "              .flowPanel(\"island\")          //changes island\n" +
+      "                .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\") //paneToolbar\n" +
+      "                  .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\") //paneToolbarLeft\n" +
+      "                    .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
+      "                    .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
+      "                    .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
+      "                  .end()\n" +
+      "                .end()\n" +
+      "                .flowPanel(\"revision-files-standalone\") // review changes view\n" +
+      "                  .widget(myChangesListView)\n" +
+      "                .end()\n" +
+      "              .end()\n" +
+      "              .widget(myReviewFeedView)\n" +
+      "            .end();\n" +
+      "    }\n" +
+      "}",
+
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
+      "                .flowPanel(\"sidebar-offset\")   //content\n" +
+      "                  .widget(myReviewHints)\n" +
+      "                  .flowPanel(\"island\")          //changes island\n" +
+      "                    .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\") //paneToolbar\n" +
+      "                      .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\") //paneToolbarLeft\n" +
+      "                        .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
+      "                        .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
+      "                        .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
+      "                      .end()\n" +
+      "                    .end()\n" +
+      "                    .flowPanel(\"revision-files-standalone\") // review changes view\n" +
+      "                      .widget(myChangesListView)\n" +
+      "                    .end()\n" +
+      "                  .end()\n" +
+      "                  .widget(myReviewFeedView)\n" +
+      "                .end();\n" +
+      "    }\n" +
+      "}"
+    );
   }
 }

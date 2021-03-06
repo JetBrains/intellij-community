@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
@@ -53,4 +54,10 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   }
   public void testNoArraySuperType() { doTest(true, true);}
   public void testCaptureItself() { doTest(true, true); }
+  public void testNestedConditionalWithOverloads() { doTest(true, true); }
+  public void testConditionalWithCompoundAssignment() { doTest(true, true); }
+  public void testDeprecatedFunctionalInterface() {
+    enableInspectionTool(new DeprecationInspection());
+    doTest(true, true); 
+  }
 }

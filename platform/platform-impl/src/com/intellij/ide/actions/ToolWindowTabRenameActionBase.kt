@@ -6,10 +6,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.impl.content.BaseLabel
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
@@ -31,16 +33,18 @@ private const val OUTLINE_PROPERTY = "JComponent.outline"
 private const val ERROR_VALUE = "error"
 
 
-open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText: String) : ToolWindowContextMenuActionBase() {
+@Suppress("ComponentNotRegistered")
+open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.Label val labelText: String) : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, selectedContent: Content?) {
     val id = toolWindow.id
     e.presentation.isEnabledAndVisible = e.project != null && id == toolWindowId && selectedContent != null
   }
 
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val baseLabel = e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? BaseLabel
-    val contextContent = baseLabel?.content ?: return
-    showContentRenamePopup(baseLabel, contextContent)
+    val contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val tabLabel = if (contextComponent is BaseLabel) contextComponent else e.getData(ToolWindowContentUi.SELECTED_CONTENT_TAB_LABEL)
+    val tabLabelContent = tabLabel?.content ?: return
+    showContentRenamePopup(tabLabel, tabLabelContent)
   }
 
   private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content) {
@@ -78,6 +82,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText
               return
             }
             content.displayName = textField.text
+            contentNameUpdated(content)
           }
           balloon.hide()
         }
@@ -96,4 +101,6 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText
 
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
   }
+
+  open fun contentNameUpdated(content: Content) {}
 }

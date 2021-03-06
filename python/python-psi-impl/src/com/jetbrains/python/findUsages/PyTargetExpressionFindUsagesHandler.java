@@ -4,7 +4,7 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Mikhail Golubev
+ * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyTargetExpressionFindUsagesHandler extends PyFindUsagesHandler {
   public PyTargetExpressionFindUsagesHandler(@NotNull PyTargetExpression psiElement) {

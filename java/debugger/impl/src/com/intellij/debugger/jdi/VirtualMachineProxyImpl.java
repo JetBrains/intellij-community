@@ -5,21 +5,16 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.Patches;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
@@ -269,14 +264,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.eventRequestManager();
   }
 
-  /**
-   * @deprecated use {@link #mirrorOfVoid()} instead
-   */
-  @Deprecated
-  public VoidValue mirrorOf() throws EvaluateException {
-    return mirrorOfVoid();
-  }
-
   public VoidValue mirrorOfVoid() {
     return myVirtualMachine.mirrorOfVoid();
   }
@@ -338,18 +325,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     catch (UnsupportedOperationException e) {
       LOG.info(e);
-    }
-    finally {
-      if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
-        // Memory leak workaround, see IDEA-163334
-        Object target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, null, "target");
-        if (target != null) {
-          Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
-          if (controller != null) {
-            controller.stop();
-          }
-        }
-      }
     }
   }
 
@@ -659,10 +634,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     //myAllThreadsDirty = true;
     myTimeStamp++;
-
-    if (Registry.is("debugger.types.preload")) {
-      scheduleTypesDataPreload();
-    }
   }
 
   @Override
@@ -707,7 +678,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
-
   private abstract static class Capability {
     private ThreeState myValue = ThreeState.UNSURE;
 
@@ -725,49 +695,5 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
 
     protected abstract boolean calcValue();
-  }
-
-  private long myLastTypesCheckTime;
-  private int myLastTypesSize;
-
-  // Preload all supertypes information for faster queries (especially for emulated method breakpoints)
-  private void scheduleTypesDataPreload() {
-    if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
-      return;
-    }
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    long time = System.currentTimeMillis();
-    if (time > myLastTypesCheckTime + 10000) {
-      List<ReferenceType> types = allClasses();
-      if (time > myLastTypesCheckTime + 60000 || Math.abs(types.size() - myLastTypesSize) > 1000) {
-        scheduleTypesDataPreload(types.iterator());
-        myLastTypesCheckTime = time;
-        myLastTypesSize = types.size();
-      }
-    }
-  }
-
-  private void scheduleTypesDataPreload(Iterator<ReferenceType> iterator) {
-    if (iterator.hasNext()) {
-      myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> {
-        long start = System.currentTimeMillis();
-        do {
-          ReferenceType type = iterator.next();
-          if (type.isPrepared()) {
-            try {
-              DebuggerUtilsImpl.supertypes(type);
-            }
-            catch (ObjectCollectedException ignored) {
-            }
-          }
-          if (System.currentTimeMillis() - start > 50) { // batch process for 50ms
-            // schedule here to allow other LOWEST priority commands to be processed
-            scheduleTypesDataPreload(iterator);
-            return;
-          }
-        }
-        while (iterator.hasNext());
-      });
-    }
   }
 }

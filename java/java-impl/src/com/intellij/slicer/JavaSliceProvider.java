@@ -62,7 +62,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
 
     if (!(element instanceof PsiExpression || element instanceof PsiVariable)) return null;
     SliceUsage newUsage = parent != null
-                        ? new JavaSliceUsage(element, parent, PsiSubstitutor.EMPTY, 0, "")
+                        ? new JavaSliceUsage(element, parent, PsiSubstitutor.EMPTY)
                         : createRootUsage(element, usage.params);
     return Collections.singletonList(newUsage);
   }
@@ -128,14 +128,14 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
         throw new SliceFilterParseException(
           JavaBundle.message("slice.filter.parse.error.null.filter.not.applicable.for.primitive.type", type.getPresentableText()));
       }
-      return new JavaDfaSliceValueFilter(DfTypes.NULL);
+      return new JavaValueFilter(DfTypes.NULL);
     }
     if (filter.equals("!null")) {
       if (type instanceof PsiPrimitiveType) {
         throw new SliceFilterParseException(
           JavaBundle.message("slice.filter.parse.error.not.null.filter.not.applicable.for.primitive.type", type.getPresentableText()));
       }
-      return new JavaDfaSliceValueFilter(DfTypes.NOT_NULL_OBJECT);
+      return new JavaValueFilter(DfTypes.NOT_NULL_OBJECT);
     }
     RelationType relationType = RelationType.EQ;
     if (PsiType.BYTE.equals(type) ||
@@ -155,7 +155,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
     if (psiClass != null && psiClass.isEnum()) {
       PsiField enumConstant = psiClass.findFieldByName(filter, false);
       if (enumConstant instanceof PsiEnumConstant) {
-        return new JavaDfaSliceValueFilter(DfTypes.constant(enumConstant, type));
+        return new JavaValueFilter(DfTypes.constant(enumConstant, type));
       } else {
         throw new SliceFilterParseException(JavaBundle.message("slice.filter.parse.error.enum.constant.not.found", filter));
       }
@@ -181,12 +181,12 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
       }
       if (PsiType.LONG.equals(type)) {
         LongRangeSet rangeSet = LongRangeSet.point(((Number)o).longValue()).fromRelation(relationType);
-        return new JavaDfaSliceValueFilter(DfTypes.longRange(rangeSet));
+        return new JavaValueFilter(DfTypes.longRange(rangeSet));
       }
       LongRangeSet rangeSet = LongRangeSet.point(((Number)o).intValue()).fromRelation(relationType);
-      return new JavaDfaSliceValueFilter(DfTypes.intRangeClamped(rangeSet));
+      return new JavaValueFilter(DfTypes.intRangeClamped(rangeSet));
     }
-    return new JavaDfaSliceValueFilter(DfTypes.constant(o, type));
+    return new JavaValueFilter(DfTypes.constant(o, type));
   }
 
   private static @Nullable PsiType getType(@NotNull PsiElement expression) {

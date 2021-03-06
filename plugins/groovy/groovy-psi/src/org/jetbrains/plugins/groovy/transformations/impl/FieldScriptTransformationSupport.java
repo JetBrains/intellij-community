@@ -1,6 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.search.PsiSearchHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -11,16 +14,18 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import static com.intellij.psi.impl.cache.impl.id.IdIndex.hasIdentifierInFile;
 import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.isGroovySourceFile;
 
 public class FieldScriptTransformationSupport implements AstTransformationSupport {
+  @NlsSafe private static final String FIELD = "Field";
+
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
     if (!(context.getCodeClass() instanceof GroovyScriptClass)) return;
     final GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
     final GroovyFile containingFile = scriptClass.getContainingFile();
-    if (isGroovySourceFile(containingFile) && !hasIdentifierInFile(containingFile, "Field")) {
+    Project project = containingFile.getProject();
+    if (isGroovySourceFile(containingFile) && !PsiSearchHelper.getInstance(project).hasIdentifierInFile(containingFile, FIELD)) {
       return;
     }
     for (GrVariableDeclaration declaration : containingFile.getScriptDeclarations(true)) {

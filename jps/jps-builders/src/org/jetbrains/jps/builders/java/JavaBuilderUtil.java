@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,15 +7,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.builders.BuildRootIndex;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -29,8 +28,6 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -44,11 +41,12 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
-public class JavaBuilderUtil {
+public final class JavaBuilderUtil {
   /**
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private static final Logger LOG = Logger.getInstance(Builder.class);
@@ -181,7 +179,7 @@ public class JavaBuilderUtil {
       final boolean errorsDetected = Utils.errorsDetected(context);
       if (!isForcedRecompilationAllJavaModules(context)) {
         if (context.shouldDifferentiate(chunk)) {
-          context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getPresentableShortName() + "]"));
+          context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.checking.dependencies.0", chunk.getPresentableShortName())));
           final Set<File> allCompiledFiles = getFilesContainer(context, ALL_COMPILED_FILES_KEY);
           final Set<File> allAffectedFiles = getFilesContainer(context, ALL_AFFECTED_FILES_KEY);
 
@@ -192,7 +190,7 @@ public class JavaBuilderUtil {
           // unmark as affected all successfully compiled
           allAffectedFiles.removeAll(successfullyCompiled);
 
-          final Set<File> affectedBeforeDif = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> affectedBeforeDif = FileCollectionFactory.createCanonicalFileSet();
           affectedBeforeDif.addAll(allAffectedFiles);
 
           final Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
@@ -221,7 +219,7 @@ public class JavaBuilderUtil {
             final Set<File> newlyAffectedFiles = new HashSet<>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
 
-            final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
+            final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", newlyAffectedFiles.size());
             LOG.info(infoMessage);
             context.processMessage(new ProgressMessage(infoMessage));
 
@@ -254,7 +252,7 @@ public class JavaBuilderUtil {
                     final File targetModuleInfo = moduleIndex.getModuleInfoFile(target.getModule(), target.isTests());
                     if (FileUtil.filesEqual(targetModuleInfo, file)) {
                       if (targetsToMark == null) {
-                        targetsToMark = new THashSet<>(); // lazy init
+                        targetsToMark = new HashSet<>(); // lazy init
                       }
                       targetsToMark.add(target);
                     }
@@ -262,18 +260,6 @@ public class JavaBuilderUtil {
                 }
                 else {
                   FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
-                }
-              }
-              
-              if (targetsToMark == null || !targetsToMark.contains(chunk.representativeTarget())) {
-                // additionally check whether annotation-processor generated files from this chunk are affected
-                if (containsProcessorGeneratedFiles(chunk, newlyAffectedFiles)) {
-                  // If among affected files are those processor-generated, then we need to re-generate them before compiling.
-                  // To achieve this, we need to recompile the whole chunk which will cause processors to re-generated these affected files
-                  if (targetsToMark == null) {
-                    targetsToMark = new THashSet<>(); // lazy init
-                  }
-                  targetsToMark.addAll(chunk.getTargets());
                 }
               }
 
@@ -302,7 +288,7 @@ public class JavaBuilderUtil {
           }
           else {
             // non-incremental mode
-            final String messageText = "Marking " + chunk.getPresentableShortName() + " and direct dependants for recompilation";
+            final String messageText = JpsBuildBundle.message("progress.message.marking.0.and.direct.dependants.for.recompilation", chunk.getPresentableShortName());
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
@@ -342,7 +328,7 @@ public class JavaBuilderUtil {
       }
 
       if (performIntegrate) {
-        context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
+        context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.updating.dependency.information.0", chunk.getPresentableShortName())));
         globalMappings.integrate(delta);
       }
 
@@ -354,26 +340,6 @@ public class JavaBuilderUtil {
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
     }
-  }
-
-  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<? extends File> files) {
-    final JpsModule module = chunk.representativeTarget().getModule();
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
-    assert compilerConfig != null;
-    final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(module);
-    if (!profile.isEnabled()) {
-      return false;
-    }
-    final File outputDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, chunk.containsTests(), profile);
-    if (outputDir == null) {
-      return false;
-    }
-    for (File file : files) {
-      if (FileUtil.isAncestor(outputDir, file, true)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @Nullable
@@ -438,7 +404,7 @@ public class JavaBuilderUtil {
   private static Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
     Set<File> files = dataKey.get(context);
     if (files == null) {
-      files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      files = FileCollectionFactory.createCanonicalFileSet();
       dataKey.set(context, files);
     }
     return files;
@@ -472,11 +438,11 @@ public class JavaBuilderUtil {
   }
 
   @NotNull
-  public static JpsSdk<JpsDummyElement> ensureModuleHasJdk(JpsModule module, CompileContext context, final String compilerName) throws
-                                                                                                                                ProjectBuildException {
+  public static JpsSdk<JpsDummyElement> ensureModuleHasJdk(JpsModule module, CompileContext context, final @Nls String compilerName) throws ProjectBuildException {
     JpsSdkReference<JpsDummyElement> reference = module.getSdkReference(JpsJavaSdkType.INSTANCE);
     if (reference == null) {
-      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, "JDK isn't specified for module '" + module.getName() + "'"));
+      context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
+                                                 JpsBuildBundle.message("build.message.jdk.isn.t.specified.for.module.0", module.getName())));
       throw new StopBuildException();
     }
 
@@ -486,10 +452,11 @@ public class JavaBuilderUtil {
       JpsSdkType sdkType = library != null ? ObjectUtils.tryCast(library.getType(), JpsSdkType.class) : null;
       String errorMessage;
       if (sdkType == null) {
-        errorMessage = "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'";
+        errorMessage = JpsBuildBundle.message("build.message.cannot.find.jdk.0.for.module.1", reference.getSdkName(), module.getName());
       }
       else {
-        errorMessage = "Cannot find JDK for module '" + module.getName() + "': '" + reference.getSdkName() + "' points to " + sdkType.getPresentableName();
+        errorMessage = JpsBuildBundle.message("build.message.cannot.find.jdk.for.module.0.1.points.to.2", module.getName(), reference.getSdkName(),
+                                              sdkType.getPresentableName());
       }
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, errorMessage));
       throw new StopBuildException();
@@ -507,7 +474,7 @@ public class JavaBuilderUtil {
     return null;
   }
 
-  private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
+  private static final class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<? extends BuildTarget<?>> myChunkTargets;
     private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<>();

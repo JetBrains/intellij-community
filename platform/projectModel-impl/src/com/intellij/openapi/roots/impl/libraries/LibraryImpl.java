@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -10,24 +10,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.PersistentOrderRootType;
-import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryKind;
-import com.intellij.openapi.roots.libraries.LibraryProperties;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TraceableDisposable;
+import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl;
@@ -35,37 +22,28 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
+import java.util.*;
+
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link LibraryEx} should be used instead.
+ */
+@ApiStatus.Internal
 public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
   private static final Logger LOG = Logger.getInstance(LibraryImpl.class);
-  @NonNls public static final String LIBRARY_NAME_ATTR = "name";
-  @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
-  @NonNls public static final String ROOT_PATH_ELEMENT = "root";
-  @NonNls public static final String ELEMENT = "library";
-  @NonNls public static final String PROPERTIES_ELEMENT = "properties";
-  public static final String EXCLUDED_ROOTS_TAG = "excluded";
-  private String myName;
+  private static final String EXCLUDED_ROOTS_TAG = "excluded";
+  private @NlsSafe String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots = new HashMap<>(3);
   @Nullable private VirtualFilePointerContainer myExcludedRoots;
@@ -137,7 +115,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Nullable
   private static PersistentLibraryKind<?> findPersistentLibraryKind(@NotNull Element element) {
-    String typeString = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    String typeString = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeString == null) return null;
     LibraryKind kind = LibraryKind.findById(typeString);
     if (kind == null) {
@@ -181,6 +159,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public @NotNull String getPresentableName() {
+    return getPresentableName(this);
   }
 
   @Override
@@ -241,6 +224,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public void setProperties(LibraryProperties properties) {
     LOG.assertTrue(isWritable());
+    if (myKind == null) {
+      if (properties != null && !(properties instanceof DummyLibraryProperties)) {
+        LOG.error("Cannot set properties for library with default type");
+      }
+      return;
+    }
     myProperties = properties;
   }
 
@@ -314,7 +303,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void readProperties(@NotNull Element element) {
-    final String typeId = element.getAttributeValue(LIBRARY_TYPE_ATTR);
+    final String typeId = element.getAttributeValue(JpsLibraryTableSerializer.TYPE_ATTRIBUTE);
     if (typeId == null) return;
 
     myKind = (PersistentLibraryKind<?>) LibraryKind.findById(typeId);
@@ -334,7 +323,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void readName(@NotNull Element element) {
-    myName = element.getAttributeValue(LIBRARY_NAME_ATTR);
+    myName = element.getAttributeValue(JpsLibraryTableSerializer.NAME_ATTRIBUTE);
   }
 
   private void readRoots(@NotNull Element element) throws InvalidDataException {
@@ -345,7 +334,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
       if (!rootChild.getChildren(JpsLibraryTableSerializer.ROOT_TAG).isEmpty()) {
         VirtualFilePointerContainer roots = getOrCreateContainer(rootType);
-        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, false);
+        roots.readExternal(rootChild, JpsLibraryTableSerializer.ROOT_TAG, true);
       }
     }
     Element excludedRoot = element.getChild(EXCLUDED_ROOTS_TAG);
@@ -376,12 +365,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public void writeExternal(Element rootElement) {
     checkDisposed();
 
-    Element element = new Element(ELEMENT);
+    Element element = new Element(JpsLibraryTableSerializer.LIBRARY_TAG);
     if (myName != null) {
-      element.setAttribute(LIBRARY_NAME_ATTR, myName);
+      element.setAttribute(JpsLibraryTableSerializer.NAME_ATTRIBUTE, myName);
     }
     if (myKind != null) {
-      element.setAttribute(LIBRARY_TYPE_ATTR, myKind.getKindId());
+      element.setAttribute(JpsLibraryTableSerializer.TYPE_ATTRIBUTE, myKind.getKindId());
       LOG.assertTrue(myProperties != null, "Properties is 'null' in library with kind " + myKind);
       final Object state = myProperties.getState();
       if (state != null) {
@@ -605,6 +594,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   @Override
+  public boolean hasSameContent(@NotNull Library library) {
+    return this.equals(library);
+  }
+
+  @Override
   public boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
     checkDisposed();
     LOG.assertTrue(isWritable());
@@ -688,9 +682,10 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       ApplicationManager.getApplication().assertWriteAccessAllowed();
     }
     if (!Objects.equals(fromModel.myName, myName)) {
+      String oldName = myName;
       myName = fromModel.myName;
       if (myLibraryTable instanceof LibraryTableBase) {
-        ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
+        ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this, oldName);
       }
     }
     myKind = fromModel.getKind();
@@ -718,7 +713,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   private void disposeMyPointers() {
-    for (VirtualFilePointerContainer container : new THashSet<>(myRoots.values())) {
+    for (VirtualFilePointerContainer container : new HashSet<>(myRoots.values())) {
       container.killAll();
     }
     if (myExcludedRoots != null) {
@@ -783,5 +778,21 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   private void fireRootSetChanged() {
     myDispatcher.getMulticaster().rootSetChanged(this);
+  }
+
+  @NotNull
+  public static @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName(@NotNull LibraryEx library) {
+    final String name = library.getName();
+    if (name != null) {
+      return name;
+    }
+    if (library.isDisposed()) {
+      return ProjectModelBundle.message("disposed.library.title");
+    }
+    String[] urls = library.getUrls(OrderRootType.CLASSES);
+    if (urls.length > 0) {
+      return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]));
+    }
+    return ProjectModelBundle.message("empty.library.title");
   }
 }

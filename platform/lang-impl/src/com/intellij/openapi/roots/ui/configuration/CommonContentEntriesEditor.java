@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -33,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -57,6 +59,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
    * @deprecated Use {@link #getName()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final String NAME = "Sources";
 
   protected ContentEntryTreeEditor myRootTreeEditor;
@@ -111,7 +114,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   @Override
   protected ModifiableRootModel getModel() {
-    return myState.getRootModel();
+    return myState.getModifiableRootModel();
   }
 
   @Override
@@ -486,7 +489,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
   }
 
-  public static String getName() {
+  public static @NlsContexts.ConfigurableName String getName() {
     return ProjectBundle.message("module.paths.title");
   }
 }

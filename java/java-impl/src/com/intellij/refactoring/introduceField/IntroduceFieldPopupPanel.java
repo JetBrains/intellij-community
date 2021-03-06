@@ -138,7 +138,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     if (TestFrameworks.getInstance().isTestClass(myParentClass)) {
       myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
-    initializeInitializerPlace(myInitializerExpression, InplaceIntroduceFieldPopup.ourLastInitializerPlace);
+    initializeInitializerPlace(myInitializerExpression, IntroduceFieldDialog.ourLastInitializerPlace);
     if (myInitialisersPlaceModel.getSize() > 1) {
       final JLabel initLabel = new JLabel(RefactoringBundle.message("initialize.in.border.title") + ":");
       initLabel.setDisplayedMnemonic('i');
@@ -204,11 +204,6 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   public void setInitializeInFieldDeclaration() {
     LOG.assertTrue(myInitializerCombo != null);
     myInitializerCombo.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
-  }
-
-  @Override
-  public void setVisibility(String visibility) {
-    myVisibilityCombo.setSelectedItem(visibility);
   }
 
   @Override

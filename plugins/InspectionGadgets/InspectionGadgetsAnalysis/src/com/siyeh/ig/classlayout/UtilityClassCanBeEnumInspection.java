@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -97,6 +98,23 @@ public class UtilityClassCanBeEnumInspection extends BaseInspection {
       }
       if (!UtilityClassUtil.isUtilityClass(aClass) || !UtilityClassUtil.hasPrivateEmptyOrNoConstructor(aClass)) {
         return;
+      }
+      LocalSearchScope scope = null;
+      for (PsiField field : aClass.getFields()) {
+        if (!field.hasModifierProperty(PsiModifier.FINAL) || !PsiUtil.isCompileTimeConstant(field)) {
+          if (scope == null) {
+            scope = new LocalSearchScope(new PsiElement[]{aClass}, null, true);
+          }
+          // It's a compile error when non-constant is accessed from initializer or constructor in an enum
+          for (PsiReference reference : ReferencesSearch.search(field, scope)) {
+            // no need to check constructors, or instance field, because utility classes only have empty constructors and static fields
+            final PsiClassInitializer initializer =
+              PsiTreeUtil.getParentOfType(reference.getElement(), PsiClassInitializer.class, true, PsiClass.class);
+            if (initializer != null && !initializer.hasModifierProperty(PsiModifier.STATIC)) {
+              return;
+            }
+          }
+        }
       }
       for (PsiReference reference : ReferencesSearch.search(aClass)) {
         if (reference.getElement().getParent() instanceof PsiNewExpression) {

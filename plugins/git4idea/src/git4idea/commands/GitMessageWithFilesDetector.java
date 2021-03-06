@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,11 +99,11 @@ public class GitMessageWithFilesDetector implements GitLineHandlerListener {
   }
 
   public static class Event {
-    @NotNull private final String name;
-    @NotNull private final String messageStartMarker;
-    @NotNull private final String messageEndMarker;
+    @NotNull private final @NonNls String name;
+    @NotNull private final @NonNls String messageStartMarker;
+    @NotNull private final @NonNls String messageEndMarker;
 
-    Event(@NotNull String eventName, @NotNull String messageStartMarker, @NotNull String messageEndMarker) {
+    Event(@NotNull @NonNls String eventName, @NotNull @NonNls String messageStartMarker, @NotNull @NonNls String messageEndMarker) {
       name = eventName;
       this.messageStartMarker = messageStartMarker;
       this.messageEndMarker = messageEndMarker;

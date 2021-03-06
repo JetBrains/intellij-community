@@ -18,6 +18,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class XMLParserDefinition implements ParserDefinition {
@@ -28,7 +29,7 @@ public class XMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return XmlElementType.XML_FILE;
   }
 
@@ -67,20 +68,28 @@ public class XMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.XML_FILE);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    final Lexer lexer = createLexer(left.getPsi().getProject());
-    return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return canStickTokensTogether(left, right);
   }
 
+  /**
+   * @deprecated use {@link XMLParserDefinition#canStickTokensTogether(ASTNode, ASTNode)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
                                                                                       final ASTNode right,
                                                                                       final Lexer lexer,
                                                                                       int state) {
+    return canStickTokensTogether(left, right);
+  }
+
+  public static SpaceRequirements canStickTokensTogether(final ASTNode left, final ASTNode right) {
     if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
         right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       return SpaceRequirements.MUST_NOT;

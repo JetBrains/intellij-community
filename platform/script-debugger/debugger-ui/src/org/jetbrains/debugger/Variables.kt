@@ -98,31 +98,6 @@ fun processScopeVariables(scope: Scope,
   }
 }
 
-fun processNamedObjectProperties(variables: List<Variable>,
-                                 node: XCompositeNode,
-                                 context: VariableContext,
-                                 memberFilter: MemberFilter,
-                                 maxChildrenToAdd: Int,
-                                 defaultIsLast: Boolean): List<Variable>? {
-  val list = filterAndSort(variables, memberFilter)
-  if (list.isEmpty()) {
-    if (defaultIsLast) {
-      node.addChildren(XValueChildrenList.EMPTY, true)
-    }
-    return null
-  }
-
-  val to = Math.min(maxChildrenToAdd, list.size)
-  val isLast = to == list.size
-  node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast)
-  if (isLast) {
-    return null
-  }
-  else {
-    node.tooManyChildren(list.size - to)
-    return list
-  }
-}
 
 fun filterAndSort(variables: List<Variable>, memberFilter: MemberFilter): List<Variable> {
   if (variables.isEmpty()) {

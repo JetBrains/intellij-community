@@ -39,7 +39,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
     List<TabInfo> layout = data.toLayout;
     for (int i = 0; i < layout.size(); i++) {
-      final TabLabel label = myTabs.myInfo2Label.get(layout.get(i));
+      TabInfo tabInfo = layout.get(i);
+      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
       if (maxGridSize == 0) {
         Font font = label.getLabelComponent().getFont();
         maxGridSize = GraphicsUtil.stringWidth("m", font == null ? JBFont.label() : font) * myTabs.tabMSize();
@@ -63,7 +64,8 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
 
 
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
-      final TabLabel label = myTabs.myInfo2Label.get(iterator.next());
+      TabInfo tabInfo = iterator.next();
+      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -75,6 +77,9 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
       }
       else {
         length = Math.max(lengthIncrement, actualGridSize);
+      }
+      if (tabInfo.isPinned()) {
+        length = Math.min(getMaxPinnedTabWidth(), length);
       }
       spentLength += length + myTabs.getTabHGap();
       applyTabLayout(data, label, length);

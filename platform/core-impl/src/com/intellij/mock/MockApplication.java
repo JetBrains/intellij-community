@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -12,10 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,6 +108,10 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public void assertIsNonDispatchThread() {
+  }
+
+  @Override
   public void assertIsWriteThread() {
   }
 
@@ -139,13 +143,13 @@ public class MockApplication extends MockComponentManager implements Application
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return PooledThreadExecutor.INSTANCE.submit(action);
+    return AppExecutorUtil.getAppExecutorService().submit(action);
   }
 
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return PooledThreadExecutor.INSTANCE.submit(action);
+    return AppExecutorUtil.getAppExecutorService().submit(action);
   }
 
   @Override
@@ -159,12 +163,12 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal) {
+  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal) {
     action.run();
   }
 
   @Override
-  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
+  public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
     action.run();
   }
 
@@ -323,7 +327,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void load(@Nullable String path) {
+  public void load() {
   }
 
   @Override
@@ -335,39 +339,13 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
-                                                     @NotNull final String progressTitle,
-                                                     final boolean canBeCanceled,
-                                                     @Nullable final Project project,
-                                                     final JComponent parentComponent) {
-    return false;
-  }
-
-  @Override
   public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                      @NotNull String progressTitle,
                                                      boolean canBeCanceled,
+                                                     boolean modal,
                                                      @Nullable Project project,
-                                                     JComponent parentComponent,
-                                                     String cancelText) {
-    return false;
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                     @NotNull String progressTitle,
-                                                     boolean canBeCanceled,
-                                                     Project project) {
-    return false;
-  }
-
-  @Override
-  public boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
-                                                                 @NotNull String progressTitle,
-                                                                 boolean canBeCanceled,
-                                                                 String cancelText,
-                                                                 JComponent parentComponent,
-                                                                 @NotNull Runnable process) {
+                                                     @Nullable JComponent parentComponent,
+                                                     @Nullable String cancelText) {
     return false;
   }
 

@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
+import com.jetbrains.python.psi.search.PySearchUtilBase
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 
 /**
@@ -26,9 +27,10 @@ class PyModulePackageCompletionContributor : PyExtendedCompletionContributor() {
     val targetFile = parameters.originalFile
     val inStringLiteral = parameters.position.parent is PyStringLiteralExpression
     val moduleKeys = PyModuleNameIndex.getAllKeys(targetFile.project)
+    val scope = PySearchUtilBase.defaultSuggestionScope(targetFile)
     val modulesFromIndex = moduleKeys.asSequence()
       .filter { result.prefixMatcher.prefixMatches(it) }
-      .flatMap { PyModuleNameIndex.find(it, targetFile.project, true).asSequence() }
+      .flatMap { PyModuleNameIndex.findByShortName(it, targetFile.project, scope).asSequence() }
       .toList()
 
     val resolveContext = fromFoothold(targetFile)

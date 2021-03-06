@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -266,7 +252,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     return JpsJavaExtensionService.getInstance();
   }
 
-  private static class JpsModuleOutputPackagingElementSerializer
+  private static final class JpsModuleOutputPackagingElementSerializer
     extends JpsPackagingElementSerializer<JpsProductionModuleOutputPackagingElement> {
     private JpsModuleOutputPackagingElementSerializer() {
       super("module-output", JpsProductionModuleOutputPackagingElement.class);
@@ -277,14 +263,9 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
       return getService().createProductionModuleOutput(reference);
     }
-
-    @Override
-    public void save(JpsProductionModuleOutputPackagingElement element, Element tag) {
-      tag.setAttribute("name", element.getModuleReference().getModuleName());
-    }
   }
 
-  private static class JpsModuleSourcePackagingElementSerializer
+  private static final class JpsModuleSourcePackagingElementSerializer
     extends JpsPackagingElementSerializer<JpsProductionModuleSourcePackagingElement> {
     private JpsModuleSourcePackagingElementSerializer() {
       super("module-source", JpsProductionModuleSourcePackagingElement.class);
@@ -295,14 +276,9 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
       return getService().createProductionModuleSource(reference);
     }
-
-    @Override
-    public void save(JpsProductionModuleSourcePackagingElement element, Element tag) {
-      tag.setAttribute("name", element.getModuleReference().getModuleName());
-    }
   }
 
-  private static class JpsTestModuleOutputPackagingElementSerializer extends JpsPackagingElementSerializer<JpsTestModuleOutputPackagingElement> {
+  private static final class JpsTestModuleOutputPackagingElementSerializer extends JpsPackagingElementSerializer<JpsTestModuleOutputPackagingElement> {
     private JpsTestModuleOutputPackagingElementSerializer() {
       super("module-test-output", JpsTestModuleOutputPackagingElement.class);
     }
@@ -311,11 +287,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     public JpsTestModuleOutputPackagingElement load(Element element) {
       JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
       return getService().createTestModuleOutput(reference);
-    }
-
-    @Override
-    public void save(JpsTestModuleOutputPackagingElement element, Element tag) {
-      tag.setAttribute("name", element.getModuleReference().getModuleName());
     }
   }
 
@@ -348,22 +319,9 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
         extension.setLanguageLevel(readLanguageLevel(languageLevel, LanguageLevel.HIGHEST));
       }
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-      JpsJavaProjectExtension extension = getService().getProjectExtension(project);
-      if (extension == null) return;
-
-      String outputUrl = extension.getOutputUrl();
-      if (outputUrl != null) {
-        componentTag.addContent(new Element(OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, outputUrl));
-      }
-      LanguageLevel level = extension.getLanguageLevel();
-      componentTag.setAttribute(LANGUAGE_LEVEL_ATTRIBUTE, level.name());
-    }
   }
 
-  private static class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaSourceRootProperties> {
+  private static final class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaSourceRootProperties> {
     private JavaSourceRootPropertiesSerializer(JpsModuleSourceRootType<JavaSourceRootProperties> type, String typeId) {
       super(type, typeId);
     }
@@ -389,7 +347,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaResourceRootProperties> {
+  private static final class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaResourceRootProperties> {
     private JavaResourceRootPropertiesSerializer(JpsModuleSourceRootType<JavaResourceRootProperties> type, String typeId) {
       super(type, typeId);
     }
@@ -438,22 +396,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       List<String> excludedDependencies = ContainerUtil.map(dependencyTags, it -> it.getAttributeValue(MAVEN_ID_ATTRIBUTE));
       return new JpsMavenRepositoryLibraryDescriptor(elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null),
                                                      includeTransitiveDependencies, excludedDependencies);
-    }
-
-    @Override
-    public void saveProperties(JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> properties, Element element) {
-      final String mavenId = properties.getData().getMavenId();
-      if (mavenId != null) {
-        element.setAttribute(MAVEN_ID_ATTRIBUTE, mavenId);
-      }
-      List<String> excludedDependencies = properties.getData().getExcludedDependencies();
-      if (!excludedDependencies.isEmpty()) {
-        Element excludeTag = new Element(EXCLUDE_TAG);
-        element.addContent(excludeTag);
-        for (String dependency : excludedDependencies) {
-          excludeTag.addContent(new Element(DEPENDENCY_TAG).setAttribute(MAVEN_ID_ATTRIBUTE, dependency));
-        }
-      }
     }
   }
 }

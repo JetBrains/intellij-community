@@ -21,7 +21,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.PossiblyDumbAware;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.FormHighlightingPass;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -87,6 +87,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return myEditor;
   }
 
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
   @Override
   public boolean isModified(){
     return false;
@@ -97,15 +103,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     //TODO[anton,vova] fire when changed
     return
       FileDocumentManager.getInstance().getDocument(myFile) != null &&
-      FileTypeRegistry.getInstance().isFileOfType(myFile, StdFileTypes.GUI_DESIGNER_FORM);
-  }
-
-  @Override
-  public void selectNotify(){
-  }
-
-  @Override
-  public void deselectNotify(){
+      FileTypeRegistry.getInstance().isFileOfType(myFile, GuiFormFileType.INSTANCE);
   }
 
   @Override

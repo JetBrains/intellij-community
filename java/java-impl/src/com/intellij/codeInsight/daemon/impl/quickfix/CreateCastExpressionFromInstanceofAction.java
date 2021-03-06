@@ -25,9 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFromInstanceofAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

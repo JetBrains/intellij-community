@@ -7,7 +7,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -127,21 +126,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   @Override
   public XmlElementDescriptor getDescriptor() {
     return getImpl().getDescriptor();
-  }
-
-  @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    IElementType i = child.getElementType();
-    if (i == XmlTokenType.XML_NAME || i == XmlTokenType.XML_TAG_NAME) {
-      return XmlChildRole.XML_TAG_NAME;
-    }
-    else if (i instanceof IXmlAttributeElementType) {
-      return XmlChildRole.XML_ATTRIBUTE;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
   }
 
   @Override

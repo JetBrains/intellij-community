@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
@@ -23,18 +24,14 @@ final class BindingsCache {
   private static final Logger LOG = Logger.getInstance(BindingsCache.class);
   @NonNls
   private static final String BINDINGS_FILE_NAME = "formbinding.dat";
-  private StateCache<MyState> myCache;
+  private final StateCache<MyState> myCache;
 
   BindingsCache(final Project project) {
     final File cacheStoreDirectory = CompilerPaths.getCacheStoreDirectory(project);
+    StateCache<MyState> cache;
     try {
-      if (cacheStoreDirectory != null) {
-        FileUtil.createParentDirs(cacheStoreDirectory);
-        myCache = createCache(cacheStoreDirectory);
-      }
-      else {
-        myCache = null;
-      }
+      FileUtil.createParentDirs(cacheStoreDirectory);
+      cache = createCache(cacheStoreDirectory);
     }
     catch (IOException e) {
       LOG.info(e);
@@ -44,17 +41,18 @@ final class BindingsCache {
         }
       }
       try {
-        myCache = createCache(cacheStoreDirectory);
+        cache = createCache(cacheStoreDirectory);
       }
       catch (IOException e1) {
         LOG.info(e1);
-        myCache = null;
+        cache = null;
       }
     }
+    myCache = cache;
   }
 
-  private static StateCache<MyState> createCache(final File cacheStoreDirectory) throws IOException {
-    return new StateCache<MyState>(new File(cacheStoreDirectory, BINDINGS_FILE_NAME)) {
+  private static @NotNull StateCache<MyState> createCache(final File cacheStoreDirectory) throws IOException {
+    return new StateCache<>(new File(cacheStoreDirectory, BINDINGS_FILE_NAME)) {
       @Override
       public MyState read(final DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stream.readUTF());

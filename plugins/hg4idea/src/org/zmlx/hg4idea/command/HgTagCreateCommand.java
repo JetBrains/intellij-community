@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -51,7 +52,7 @@ public class HgTagCreateCommand {
       arguments.add("--rev");
       arguments.add(revisionNumberOrHash);
     }
-    BackgroundTaskUtil.executeOnPooledThread(project, () -> {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(project), () -> {
       HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "tag", arguments);
       if (resultHandler != null) {
         resultHandler.process(result);

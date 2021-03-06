@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,31 @@ public abstract class IdFilter {
   private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
   private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
+
+  public enum FilterScopeType {
+    OTHER {
+      @Override
+      public @NonNls @NotNull String getId() {
+        throw new UnsupportedOperationException();
+      }
+    },
+    PROJECT {
+      @Override
+      public @NonNls @NotNull String getId() {
+        return "false";
+      }
+    },
+    PROJECT_AND_LIBRARIES {
+      @Override
+      public @NonNls @NotNull String getId() {
+        return "true";
+      }
+    };
+
+    @NonNls
+    @NotNull
+    public abstract String getId();
+  }
 
   @NotNull
   public static IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
@@ -78,16 +104,16 @@ public abstract class IdFilter {
 
       @NotNull
       @Override
-      public GlobalSearchScope getEffectiveFilteringScope() {
-        return includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+      public FilterScopeType getFilteringScopeType() {
+        return includeNonProjectItems ? FilterScopeType.PROJECT_AND_LIBRARIES : FilterScopeType.PROJECT;
       }
     };
   }
 
   public abstract boolean containsFileId(int id);
 
-  @Nullable
-  public GlobalSearchScope getEffectiveFilteringScope() {
-    return null;
+  @NotNull
+  public FilterScopeType getFilteringScopeType() {
+    return FilterScopeType.OTHER;
   }
 }

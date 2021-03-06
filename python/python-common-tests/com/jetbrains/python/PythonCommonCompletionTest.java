@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -29,6 +30,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    PyModuleNameCompletionContributor.ENABLED = false;
   }
 
   protected void doTest() {
@@ -1827,6 +1829,55 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertDoesntContain(suggested, "Union", "TypeVar", "Generic", "_S", "_T");
     assertProjectFilesNotParsed(file);
     assertSdkRootsNotParsed(file);
+  }
+
+  // PY-42520
+  public void testNoRepeatingNamedArgs() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        List<String> suggested = doTestByText("print(end='.', <caret>");
+        assertContainsElements(suggested, "sep=", "file=");
+        assertDoesntContain(suggested, "end=");
+      }
+    );
+  }
+
+  // PY-42772
+  public void testNoPositionalOnlyArgumentsSuggestion() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        List<String> suggested = doTestByText("def foo(argument_1, /, argument_2):\n" +
+                                              "    pass\n" +
+                                              "\n" +
+                                              "foo(<caret>)");
+        assertContainsElements(suggested, "argument_2=");
+        assertDoesntContain(suggested, "argument_1=");
+      }
+    );
+  }
+
+  // PY-25832
+  public void testTypeVarBoundAttributes() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
+
+  // PY-25832
+  public void testTypeVarConstraintsAttributes() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      List<String> variants = doTestByFile();
+      assertContainsElements(variants, "upper", "bit_length");
+    });
+  }
+
+  // PY-25832
+  public void testTypeVarClassObjectBoundAttributes() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      List<String> variants = doTestByFile();
+      assertContainsElements(variants, "class_attr");
+      assertDoesntContain(variants, "inst_attr");
+    });
   }
 
   private void doTestHasattrContributor(String[] inList, String[] notInList) {

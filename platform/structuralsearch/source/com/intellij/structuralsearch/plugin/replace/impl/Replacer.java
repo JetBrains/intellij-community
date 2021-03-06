@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -26,6 +26,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,12 +36,13 @@ import java.util.List;
  */
 public class Replacer {
   private final Project project;
+  @NotNull
   private final ReplaceOptions options;
   private final StructuralReplaceHandler replaceHandler;
   private final ReplacementBuilder replacementBuilder;
-  private PsiElement lastAffectedElement = null;
+  private PsiElement lastAffectedElement;
 
-  public Replacer(Project project, ReplaceOptions options) {
+  public Replacer(@NotNull Project project, @NotNull ReplaceOptions options) {
     this.project = project;
     this.options = options;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getMatchOptions().getFileType());
@@ -67,12 +69,13 @@ public class Replacer {
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project, boolean sourceIsFile) {
-    final LanguageFileType type = options.getMatchOptions().getFileType();
-    return testReplace(in, what, by, options, project, sourceIsFile, false, type, null);
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    assert fileType != null;
+    return testReplace(in, what, by, options, project, sourceIsFile, false, fileType, fileType.getLanguage());
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions replaceOptions, Project project, boolean sourceIsFile,
-                                   boolean createPhysicalFile, LanguageFileType sourceFileType, Language sourceDialect) {
+                                   boolean createPhysicalFile, @NotNull LanguageFileType sourceFileType, @NotNull Language sourceDialect) {
     replaceOptions.setReplacement(by);
 
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
@@ -84,12 +87,15 @@ public class Replacer {
     final Replacer replacer = new Replacer(project, replaceOptions);
     final Matcher matcher = new Matcher(project, matchOptions);
     try {
-      final PsiElement firstElement, lastElement, parent;
+      final PsiElement firstElement;
+      final PsiElement lastElement;
+      final PsiElement parent;
       if (matchOptions.getScope() == null) {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
           new PatternContextInfo(sourceIsFile ? PatternTreeContext.File : PatternTreeContext.Block),
-          sourceFileType, sourceDialect,
+          sourceFileType,
+          sourceDialect,
           project,
           createPhysicalFile
         );
@@ -188,13 +194,13 @@ public class Replacer {
     );
   }
 
-  public void replace(ReplacementInfo info) {
+  public void replace(@NotNull ReplacementInfo info) {
     replaceHandler.prepare(info);
     reformatAndPostProcess(doReplace(info));
   }
 
   @Nullable
-  private PsiElement doReplace(ReplacementInfo info) {
+  private PsiElement doReplace(@NotNull ReplacementInfo info) {
     final PsiElement element = info.getMatch(0);
 
     if (element==null || !element.isWritable() || !element.isValid()) return null;
@@ -258,11 +264,10 @@ public class Replacer {
     }
   }
 
-  public static void checkReplacementPattern(Project project, ReplaceOptions options) {
+  public static void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {
     try {
       final String search = options.getMatchOptions().getSearchPattern();
       final String replacement = options.getReplacement();
-      final LanguageFileType fileType = options.getMatchOptions().getFileType();
       final Template searchTemplate = TemplateManager.getInstance(project).createTemplate("" , "", search);
       final Template replaceTemplate = TemplateManager.getInstance(project).createTemplate("", "", replacement);
 
@@ -301,17 +306,22 @@ public class Replacer {
         }
       }
 
+      final LanguageFileType fileType = options.getMatchOptions().getFileType();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-      assert profile != null;
-      ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+      if (profile != null) {
+        ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+      }
     } catch (IncorrectOperationException ex) {
       throw new MalformedPatternException(SSRBundle.message("incorrect.pattern.message"));
     }
   }
 
-  public ReplacementInfo buildReplacement(MatchResult result) {
+  @NotNull
+  public ReplacementInfo buildReplacement(@NotNull MatchResult result) {
     final ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl(result, project);
-    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType()));
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    assert fileType != null;
+    replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, fileType));
 
     return replacementInfo;
   }

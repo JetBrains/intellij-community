@@ -11,49 +11,71 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import git4idea.DialogManager
+import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_SUCCESS
+import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_SUCCESS
+import git4idea.GitNotificationIdsHolder.Companion.REVERT_ABORT_FAILED
+import git4idea.GitNotificationIdsHolder.Companion.REVERT_ABORT_SUCCESS
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFreezingProcess
+import org.jetbrains.annotations.Nls
 
 internal abstract class GitAbortOperationAction(repositoryState: Repository.State,
-                                                final override val operationName: String,
+                                                final override val operationName: @Nls String,
                                                 private val gitCommand: GitCommand)
   : GitOperationActionBase(repositoryState) {
 
   private val operationNameCapitalised = StringUtil.capitalizeWords(operationName, true)
 
-  class Merge : GitAbortOperationAction(Repository.State.MERGING, "merge", GitCommand.MERGE)
-  class CherryPick : GitAbortOperationAction(Repository.State.GRAFTING, "cherry-pick", GitCommand.CHERRY_PICK)
-  class Revert : GitAbortOperationAction(Repository.State.REVERTING, "revert", GitCommand.REVERT)
+  protected abstract val notificationSuccessDisplayId: String
+  protected abstract val notificationErrorDisplayId: String
+
+  class Merge : GitAbortOperationAction(Repository.State.MERGING, GitBundle.message("abort.operation.merge.name"), GitCommand.MERGE) {
+    override val notificationSuccessDisplayId = MERGE_ABORT_SUCCESS
+    override val notificationErrorDisplayId = MERGE_ABORT_FAILED
+  }
+
+  class CherryPick : GitAbortOperationAction(Repository.State.GRAFTING, GitBundle.message("abort.operation.cherry.pick.name"), GitCommand.CHERRY_PICK) {
+    override val notificationSuccessDisplayId = CHERRY_PICK_ABORT_SUCCESS
+    override val notificationErrorDisplayId = CHERRY_PICK_ABORT_FAILED
+  }
+
+  class Revert : GitAbortOperationAction(Repository.State.REVERTING, GitBundle.message("abort.operation.revert.name"), GitCommand.REVERT) {
+    override val notificationSuccessDisplayId = REVERT_ABORT_SUCCESS
+    override val notificationErrorDisplayId = REVERT_ABORT_FAILED
+  }
 
   override fun performInBackground(repository: GitRepository) {
     if (!confirmAbort(repository)) return
 
-    runBackgroundableTask("Aborting $operationNameCapitalised Process", repository.project) { indicator ->
+    runBackgroundableTask(GitBundle.message("abort.operation.progress.title", operationNameCapitalised), repository.project) { indicator ->
       doAbort(repository, indicator)
     }
   }
 
   private fun confirmAbort(repository: GitRepository): Boolean {
-    var title = "Abort $operationNameCapitalised"
-    var message = "Abort $operationName" + GitUtil.mention(repository) + "?"
+    var title = GitBundle.message("abort.operation.dialog.title", operationNameCapitalised)
+    var message = GitBundle.message("abort.operation.dialog.msg", operationName, GitUtil.mention(repository))
     if (Messages.canShowMacSheetPanel()) {
       title = message
       message = ""
     }
-    return DialogManager.showOkCancelDialog(repository.project, message, title, "Abort", CommonBundle.getCancelButtonText(),
+    return DialogManager.showOkCancelDialog(repository.project, message, title, GitBundle.message("abort"), CommonBundle.getCancelButtonText(),
                                             Messages.getQuestionIcon()) == Messages.OK
   }
 
   private fun doAbort(repository: GitRepository, indicator: ProgressIndicator) {
     val project = repository.project
-    GitFreezingProcess(project, "abort") {
-      DvcsUtil.workingTreeChangeStarted(project, "Abort").use {
-        indicator.text2 = "git ${gitCommand.name()} --abort" + GitUtil.mention(repository)
+    GitFreezingProcess(project, GitBundle.message("abort")) {
+      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("abort")).use {
+        indicator.text2 = GitBundle.message("abort.operation.indicator.text", gitCommand.name(), GitUtil.mention(repository))
 
         val startHash = GitUtil.getHead(repository)
         val stagedChanges = GitChangeUtils.getStagedChanges(project, repository.root)
@@ -63,10 +85,10 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
         val result = Git.getInstance().runCommand(handler)
 
         if (!result.success()) {
-          VcsNotifier.getInstance(project).notifyError("$operationNameCapitalised Abort Failed", result.errorOutputAsHtmlString, true)
+          VcsNotifier.getInstance(project).notifyError(notificationErrorDisplayId, GitBundle.message("abort.operation.failed", operationNameCapitalised), result.errorOutputAsHtmlString, true)
         }
         else {
-          VcsNotifier.getInstance(project).notifySuccess("$operationNameCapitalised Abort Succeeded")
+          VcsNotifier.getInstance(project).notifySuccess(notificationSuccessDisplayId, "", GitBundle.message("abort.operation.succeeded", operationNameCapitalised))
 
           GitUtil.updateAndRefreshChangedVfs(repository, startHash)
           RefreshVFsSynchronously.refresh(stagedChanges, true)

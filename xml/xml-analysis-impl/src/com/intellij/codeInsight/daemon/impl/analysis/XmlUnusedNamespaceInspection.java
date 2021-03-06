@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
+public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -221,7 +221,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
+      return XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl");
     }
 
     @Override
@@ -321,9 +321,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  public static class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
-
-    public static final String NAME = "Remove unused namespace location";
+  public static final class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
 
     private RemoveNamespaceLocationFix(String namespace) {
       super(namespace, true, true);
@@ -332,7 +330,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     @NotNull
     @Override
     public String getName() {
-      return NAME;
+      return XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location");
     }
 
     @Override

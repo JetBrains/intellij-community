@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     }
   };
 
-  private static final String PULL_UP_STATISTICS_KEY = "pull.up##";
+  private static final @NonNls String PULL_UP_STATISTICS_KEY = "pull.up##";
 
   public interface Callback {
     boolean checkConflicts(PullUpDialog dialog);
@@ -204,14 +205,18 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
         return element.hasModifierProperty(PsiModifier.STATIC);
       }
       if (element instanceof PsiMethod) {
-        final PsiSubstitutor superSubstitutor =
-          TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, getPsiClass(), PsiSubstitutor.EMPTY);
-        final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
-        final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
+        final PsiMethod superClassMethod = findSuperMethod(currentSuperClass, (PsiMethod)element);
         if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
         return !element.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
       }
       return true;
+    }
+
+    private PsiMethod findSuperMethod(PsiClass currentSuperClass, PsiMethod element) {
+      final PsiSubstitutor superSubstitutor =
+        TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, getPsiClass(), PsiSubstitutor.EMPTY);
+      final MethodSignature signature = element.getSignature(superSubstitutor);
+      return MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
     }
 
     @Override
@@ -229,9 +234,12 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return false;
       if (currentSuperClass.isInterface()) {
+        if (!PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) {
+          return true;
+        }
         final PsiMember psiMember = member.getMember();
         if (psiMember instanceof PsiMethod) {
-          return !psiMember.hasModifierProperty(PsiModifier.STATIC);
+          return !psiMember.hasModifierProperty(PsiModifier.STATIC) && findSuperMethod(currentSuperClass, (PsiMethod)psiMember) == null;
         }
       }
       return false;

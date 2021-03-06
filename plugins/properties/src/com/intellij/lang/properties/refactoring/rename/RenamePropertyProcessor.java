@@ -1,14 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.refactoring.rename;
 
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesImplUtil;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
@@ -52,16 +48,18 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor {
                              @NotNull Map<? extends PsiElement, String> allRenames,
                              @NotNull List<UsageInfo> result) {
     allRenames.forEach((key, value) -> {
-      for (IProperty property : ((PropertiesFile)key.getContainingFile()).getProperties()) {
-        if (Comparing.strEqual(value, property.getKey())) {
-          result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
-            @Override
-            public String getDescription() {
-              return "New property name \'" + value + "\' hides existing property";
-            }
-          });
+      final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(key.getContainingFile());
+      if (propertiesFile == null) return;
+
+      final IProperty property = propertiesFile.findPropertyByKey(value);
+      if (property == null) return;
+
+      result.add(new UnresolvableCollisionUsageInfo(property.getPsiElement(), key) {
+        @Override
+        public String getDescription() {
+          return PropertiesBundle.message("rename.hides.existing.property.conflict", value);
         }
-      }
+      });
     });
   }
 

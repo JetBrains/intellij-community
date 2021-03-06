@@ -49,7 +49,7 @@ public class UpdateCopyrightCheckinHandlerFactory extends CheckinHandlerFactory 
         return UpdateCopyrightCheckinHandlerState.getInstance(panel.getProject());
       }
 
-      private PsiFile[] getPsiFiles() {
+      private PsiFile @NotNull [] getPsiFiles() {
         final Collection<VirtualFile> files = panel.getVirtualFiles();
         final List<PsiFile> psiFiles = new ArrayList<>();
         final PsiManager manager = PsiManager.getInstance(panel.getProject());

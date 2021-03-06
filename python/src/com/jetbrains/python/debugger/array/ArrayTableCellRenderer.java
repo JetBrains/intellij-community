@@ -2,21 +2,18 @@
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.JBColor;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
+import com.jetbrains.python.debugger.dataframe.DataViewCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
 /**
  * @author amarch
  */
-class ArrayTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
+class ArrayTableCellRenderer extends DataViewCellRenderer implements ColoredCellRenderer {
   private static final Logger LOG = Logger.getInstance(ArrayTableCellRenderer.class);
   private double myMin = Double.MIN_VALUE;
   private double myMax = Double.MIN_VALUE;
@@ -40,32 +37,19 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer implements Colored
   }
 
   @Override
-  public Component getTableCellRendererComponent(JTable table, Object value,
-                                                 boolean isSelected, boolean hasFocus, int row, int col) {
-    super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-    if (value != null) {
-      setText(value.toString());
-    }
-
-    if (hasFocus) {
-      this.setBorder(new LineBorder(JBColor.BLUE, 2));
-    }
-
+  protected void colorize(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    Color background = null;
     if (myMax != myMin) {
       if (myColored && value != null) {
         try {
           double rangedValue = PyNumericViewUtil.getRangedValue(value.toString(), myType, myMin, myMax, myComplexMax, myComplexMin);
-          this.setBackground(PyNumericViewUtil.rangedValueToColor(rangedValue));
+          background = PyNumericViewUtil.rangedValueToColor(rangedValue);
         }
         catch (NumberFormatException ignored) {
         }
       }
-      else {
-        this.setBackground(UIUtil.getBgFillColor(table));
-      }
     }
-
-    return this;
+    this.setBackground(background);
   }
 
   public void setMin(double min) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface RepositoryNodeListener<T extends PushTarget> {
@@ -23,5 +24,5 @@ public interface RepositoryNodeListener<T extends PushTarget> {
 
   void onSelectionChanged(boolean isSelected);
 
-  void onTargetInEditMode(@NotNull String currentValue);
+  void onTargetInEditMode(@NotNull @Nls String currentValue);
 }

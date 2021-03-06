@@ -2,7 +2,9 @@
 package com.intellij.terminal;
 
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.jediterm.terminal.emulator.ColorPalette;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,31 +12,41 @@ import java.awt.*;
 
 public class JBTerminalSchemeColorPalette extends ColorPalette {
 
-  private static final int ANSI_INDEXED_COLOR_COUNT = 16;
+  private static final Logger LOG = Logger.getInstance(JBTerminalSchemeColorPalette.class);
 
   private final EditorColorsScheme myColorsScheme;
 
   protected JBTerminalSchemeColorPalette(@NotNull EditorColorsScheme scheme) {
-    super();
     myColorsScheme = scheme;
   }
 
   @Override
-  public Color[] getIndexColors() {
-    Color[] result = new Color[ANSI_INDEXED_COLOR_COUNT + 2];
-    for (int i = 0; i < ANSI_INDEXED_COLOR_COUNT; i++) {
-      result[i] = myColorsScheme.getAttributes(ColoredOutputTypeRegistry.getAnsiColorKey(i)).getForegroundColor();
+  protected @NotNull Color getForegroundByColorIndex(int colorIndex) {
+    TextAttributes attributes = myColorsScheme.getAttributes(ColoredOutputTypeRegistry.getAnsiColorKey(colorIndex));
+    Color foregroundColor = attributes.getForegroundColor();
+    if (foregroundColor != null) {
+      return foregroundColor;
     }
-    result[getDefaultForegroundIndex()] = myColorsScheme.getDefaultForeground();
-    result[getDefaultBackgroundIndex()] = myColorsScheme.getDefaultBackground();
-    return result;
+    Color backgroundColor = attributes.getBackgroundColor();
+    if (backgroundColor != null) {
+      return backgroundColor;
+    }
+    LOG.error("No foreground color for ANSI color index #" + colorIndex);
+    return myColorsScheme.getDefaultForeground();
   }
 
-  static int getDefaultForegroundIndex() {
-    return ANSI_INDEXED_COLOR_COUNT;
-  }
-
-  static int getDefaultBackgroundIndex() {
-    return ANSI_INDEXED_COLOR_COUNT + 1;
+  @Override
+  protected @NotNull Color getBackgroundByColorIndex(int colorIndex) {
+    TextAttributes attributes = myColorsScheme.getAttributes(ColoredOutputTypeRegistry.getAnsiColorKey(colorIndex));
+    Color backgroundColor = attributes.getBackgroundColor();
+    if (backgroundColor != null) {
+      return backgroundColor;
+    }
+    Color foregroundColor = attributes.getForegroundColor();
+    if (foregroundColor != null) {
+      return foregroundColor;
+    }
+    LOG.error("No background color for ANSI color index #" + colorIndex);
+    return myColorsScheme.getDefaultBackground();
   }
 }

@@ -153,12 +153,68 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testDefaultWrappingForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    doTest();
+  }
+
+  public void testDefaultWrappingWithNewLineParensForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = false;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testWrappingChopDownIfLongForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_WRAP = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    doTest();
+  }
+
+  public void testWrappingChopDownIfLongWithNewLineParensForMethodParameters() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_WRAP = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = false;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
   public void testNoAlignForMethodArguments() {  // PY-3995
     getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
     doTest();
   }
 
   public void testAlignForMethodArguments() {  // PY-3995
+    doTest();
+  }
+
+  public void testDefaultWrappingForCallArguments() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    doTest();
+  }
+
+  public void testDefaultWrappingWithNewLineParensForCallArguments() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+    getCommonCodeStyleSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testWrappingChopDownIfLongForCallArguments() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().CALL_PARAMETERS_WRAP = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    doTest();
+  }
+
+  public void testWrappingChopDownIfLongWithNewLineParensForCallArguments() {  // PY-33060
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCommonCodeStyleSettings().CALL_PARAMETERS_WRAP = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+    getCommonCodeStyleSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
     doTest();
   }
 
@@ -613,6 +669,38 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
   
+  public void testForceNewLineAfterLeftParenInMethodParameters() {  // PY-33060
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testForceNewLineBeforeRightParenInMethodParameters() {  // PY-33060
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testForceNewLineBeforeRightParenNoAlignInMethodParameters() {  // PY-33060
+    getCommonCodeStyleSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS = false;
+    doTest();
+  }
+
+  public void testForceNewLineAfterLeftParenInCallArguments() {  // PY-33060
+    getCommonCodeStyleSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testForceNewLineBeforeRightParenInCallArguments() {  // PY-33060
+    getCommonCodeStyleSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTest();
+  }
+
+  public void testForceNewLineBeforeRightParenNoAlignInCallArguments() {  // PY-33060
+    getCommonCodeStyleSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    getCommonCodeStyleSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
+    doTest();
+  }
+
   // PY-17674
   public void testForceNewLineBeforeRightBraceInDictAfterColon() {
     getPythonCodeStyleSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
@@ -657,6 +745,17 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-17593
   public void testBlanksBetweenImportsPreservedWithoutOptimizeImports() {
+    doTest();
+  }
+
+  // PY-33060
+  public void testContinuationIndentBeforeFunctionParameters() {
+    doTest();
+  }
+
+  // PY-33060
+  public void testNoContinuationIndentBeforeFunctionParameters() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_PARAMETERS = false;
     doTest();
   }
 
@@ -954,6 +1053,11 @@ public class PyFormatterTest extends PyTestCase {
     getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
     getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-40778
+  public void testFStringSpacesBetweenFragmentAndExpressionBracesPreserved() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 
   // PY-31991

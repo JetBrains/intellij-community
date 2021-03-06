@@ -9,12 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -49,8 +49,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     ComponentWithTextFieldWrapper componentWithTextField = createComponentWithTextField(project);
     myNameTextField = componentWithTextField.getEditorTextField();
     myNameTextField.setOneLineMode(true);
-    String generateUniqueName = UniqueNameGenerator
-      .generateUniqueName("New changelist", "", "", " (", ")", s -> ChangeListManager.getInstance(myProject).findChangeList(s) == null);
+    String generateUniqueName = ChangeListUtil.createNameForChangeList(project, VcsBundle.message("changes.new.changelist"));
     myNameTextField.setText(generateUniqueName);
     myNameTextField.selectAll();
     add(componentWithTextField.myComponent, gb);

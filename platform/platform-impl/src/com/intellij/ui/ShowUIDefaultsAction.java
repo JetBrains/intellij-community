@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TextCopyProvider;
@@ -19,11 +20,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +51,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -181,9 +184,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 return box;
               }
             }
-            final JPanel panel = new JPanel(new BorderLayout());
             final JLabel label = new JLabel(value == null ? "" : value.toString());
-            panel.add(label, BorderLayout.CENTER);
+            final JPanel panel = simplePanel(label);
             if (value instanceof Color) {
               final Color c = (Color)value;
               label.setText(String.format("  [%d,%d,%d] #%s", c.getRed(), c.getGreen(), c.getBlue(), StringUtil.toUpperCase(ColorUtil.toHex(c))));
@@ -215,6 +217,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
         new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
+        TableHoverListener.DEFAULT.removeFrom(table);
         myTable = table;
         TableUtil.ensureSelectionExists(myTable);
         mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -255,7 +258,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   return new TextCopyProvider() {
                     @Override
                     public Collection<String> getTextLinesToCopy() {
-                      List<String> result = new ArrayList<String>();
+                      List<String> result = new ArrayList<>();
                       String tail = rows.length > 1 ? "," : "";
                       for (int row : rows) {
                         Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
@@ -296,9 +299,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               .createPanel();
           }
 
-          @Nullable
           @Override
-          public JComponent getPreferredFocusedComponent() {
+          public @NotNull JComponent getPreferredFocusedComponent() {
             return name;
           }
 

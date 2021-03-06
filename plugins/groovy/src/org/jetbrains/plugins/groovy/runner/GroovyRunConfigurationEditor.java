@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.runner;
 
@@ -21,6 +21,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
@@ -44,7 +45,9 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   public GroovyRunConfigurationEditor(@NotNull Project project) {
     final TextFieldWithBrowseButton scriptPath = myScriptPathComponent.getComponent();
     scriptPath.addBrowseFolderListener(
-      "Script Path", "Specify path to script", project,
+      GroovyBundle.message("script.runner.chooser.title"),
+      GroovyBundle.message("script.runner.chooser.description"),
+      project,
       FileChooserDescriptorFactory.createSingleFileDescriptor(GroovyFileType.GROOVY_FILE_TYPE)
     );
 
@@ -55,20 +58,21 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
       VirtualFile script = ScriptFileUtil.findScriptFileByPath(scriptPath.getText());
       return script != null && !fileIndex.isInTestSourceContent(script);
     };
-    myJrePathEditor.setDefaultJreSelector(new SdkFromModuleDependencies<ModulesComboBox>(modulesComboBox, ModulesComboBox::getSelectedModule, productionOnly) {
-      @Override
-      public void addChangeListener(@NotNull Runnable listener) {
-        super.addChangeListener(listener);
-        scriptPath.getChildComponent().getDocument().addDocumentListener(
-          new DocumentAdapter() {
-            @Override
-            protected void textChanged(@NotNull DocumentEvent e) {
-              listener.run();
+    myJrePathEditor.setDefaultJreSelector(
+      new SdkFromModuleDependencies<>(modulesComboBox, ModulesComboBox::getSelectedModule, productionOnly) {
+        @Override
+        public void addChangeListener(@NotNull Runnable listener) {
+          super.addChangeListener(listener);
+          scriptPath.getChildComponent().getDocument().addDocumentListener(
+            new DocumentAdapter() {
+              @Override
+              protected void textChanged(@NotNull DocumentEvent e) {
+                listener.run();
+              }
             }
-          }
-        );
-      }
-    });
+          );
+        }
+      });
     myAnchor = UIUtil.mergeComponentsWithAnchor(
       myScriptPathComponent,
       myCommonJavaParametersPanel,

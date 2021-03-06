@@ -4,7 +4,7 @@ package com.jetbrains.python;
 /**
  * @author yole
  */
-public class PythonTestUtil {
+public final class PythonTestUtil {
   private PythonTestUtil() {
   }
 

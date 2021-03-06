@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -31,7 +32,7 @@ public class AuthenticationPanel extends JPanel {
    * If true, the checkbox will be selected; if false, the checkbox won't be selected; if null, there will be no checkbox for remembering
    * password.
    */
-  public AuthenticationPanel(@Nullable String description, @Nullable String login, @Nullable String password, @Nullable Boolean rememberPassword) {
+  public AuthenticationPanel(@Nullable @NlsContexts.Label String description, @Nullable String login, @Nullable String password, @Nullable Boolean rememberPassword) {
     add(myMainPanel);
     myDescriptionLabel.setText(description);
     myLoginTextField.setText(login);

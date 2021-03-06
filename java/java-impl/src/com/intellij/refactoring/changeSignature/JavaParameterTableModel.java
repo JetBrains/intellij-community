@@ -4,8 +4,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -20,6 +20,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     this(typeContext, defaultValueContext,
          new JavaTypeColumn(typeContext.getProject()),
          new JavaNameColumn(typeContext.getProject()),
-         new DefaultValueColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>(typeContext.getProject(), StdFileTypes.JAVA) {
+         new DefaultValueColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>>(typeContext.getProject(), JavaFileType.INSTANCE) {
            @Override
            public TableCellEditor doCreateEditor(ParameterTableModelItemBase<ParameterInfoImpl> item) {
              return new EditorWithExpectedType(typeContext);
@@ -80,7 +81,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       f.createExpressionCodeFragment(ObjectUtils.notNull(value, ""), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
-    return new ParameterTableModelItemBase<ParameterInfoImpl>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
+    return new ParameterTableModelItemBase<>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
       @Override
       public boolean isEllipsisType() {
         try {
@@ -102,8 +103,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       try {
         type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText((String)aValue, myTypeContext);
       }
-      catch (IncorrectOperationException e) {
-        type = null;
+      catch (IncorrectOperationException ignored) {
       }
     }
 
@@ -151,7 +151,6 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     private static void completeVariable(EditorTextField editorTextField, PsiType type) {
       Editor editor = editorTextField.getEditor();
       String prefix = editorTextField.getText();
-      if (prefix == null) prefix = "";
       Set<LookupElement> set = new LinkedHashSet<>();
       JavaCompletionUtil.completeVariableNameForRefactoring(editorTextField.getProject(), set, prefix, type, VariableKind.PARAMETER);
 
@@ -180,7 +179,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
 
   public static class JavaTypeColumn extends TypeColumn<ParameterInfoImpl, ParameterTableModelItemBase<ParameterInfoImpl>> {
     public JavaTypeColumn(Project project) {
-      super(project, StdFileTypes.JAVA);
+      super(project, JavaFileType.INSTANCE);
     }
 
     @Override
@@ -206,7 +205,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
     public TableCellRenderer doCreateRenderer(ParameterTableModelItemBase<ParameterInfoImpl> item) {
       return new ColoredTableCellRenderer() {
         @Override
-        public void customizeCellRenderer(JTable table, Object value,
+        public void customizeCellRenderer(@NotNull JTable table, Object value,
                                           boolean isSelected, boolean hasFocus, int row, int column) {
           if (value == null) return;
           if (isSelected || hasFocus) {

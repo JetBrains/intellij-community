@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package com.intellij.lang.properties.psi;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,14 +81,15 @@ public interface PropertiesFile {
    * @see #addProperty(String, String)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @NotNull
   PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException;
 
   /**
-   * Adds property to the the file after the specified property.
-   * If anchor is null, property added to the beginning of the file.
+   * Adds property to the file after the specified property.
+   * If anchor is null, property is added to the beginning of the file.
    *
-   * In the most cases one can consider to use {@link PropertiesFile#addPropertyAfter(String, String, IProperty)} instead of this method
+   * In most cases one can consider to use {@link PropertiesFile#addPropertyAfter(String, String, IProperty)} instead of this method.
    *
    * @param property to add. Typically you create the property via {@link PropertiesElementFactory}.
    * @param anchor property after which to add the new property
@@ -97,7 +100,7 @@ public interface PropertiesFile {
   PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;
 
   /**
-   * Adds property to the the file after the specified property.
+   * Adds property to the file after the specified property.
    * If anchor is null, property added to the beginning of the file.
    *
    * @param key of a property to add.
@@ -123,7 +126,7 @@ public interface PropertiesFile {
   @NotNull
   Map<String,String> getNamesMap();
 
-  @NotNull
+  @NotNull @NlsSafe
   String getName();
 
   VirtualFile getVirtualFile();

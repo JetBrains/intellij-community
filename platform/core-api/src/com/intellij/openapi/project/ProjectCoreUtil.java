@@ -15,6 +15,7 @@ public final class ProjectCoreUtil {
    * @deprecated for internal use only, see {@link #theOnlyOpenProject()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @ApiStatus.Internal
   public static volatile Project theProject;
 
@@ -35,6 +36,7 @@ public final class ProjectCoreUtil {
    * @deprecated Please use {@link com.intellij.psi.PsiElement#getProject()} or {@link com.intellij.openapi.project.ProjectManager#getOpenProjects()} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @ApiStatus.Internal
   @Nullable
   public static Project theOnlyOpenProject() {

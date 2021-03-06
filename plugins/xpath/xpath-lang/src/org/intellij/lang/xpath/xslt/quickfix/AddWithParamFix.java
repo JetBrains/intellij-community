@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltParameter;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class AddWithParamFix extends AbstractFix {
@@ -48,7 +49,12 @@ public class AddWithParamFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        return "Add Argument for '" + myName + "'";
+        return XPathBundle.message("intention.name.add.argument.for.x", myName);
+    }
+
+    @Override
+    public String getFamilyName() {
+        return XPathBundle.message("intention.family.name.add.argument");
     }
 
     @Override

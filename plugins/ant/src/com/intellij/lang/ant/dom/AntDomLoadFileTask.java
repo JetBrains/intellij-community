@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -43,7 +45,7 @@ public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
   public abstract GenericAttributeValue<String> getEncoding();
 
   @Override
-  protected String calcPropertyValue(String propertyName) {
+  protected @NlsSafe String calcPropertyValue(@NonNls String propertyName) {
     String text = myCachedText;
     if (text != null) {
       return text;

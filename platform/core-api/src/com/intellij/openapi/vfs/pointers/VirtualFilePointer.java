@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vfs.pointers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,18 +31,12 @@ public interface VirtualFilePointer {
   VirtualFile getFile();
 
   @NotNull
-  String getUrl();
+  @NonNls String getUrl();
 
-  @NotNull
-  String getPresentableUrl();
-
-  boolean isValid();
+  @NlsSafe @NotNull String getPresentableUrl();
 
   /**
-   * @return true if {@link VirtualFilePointerListener#validityChanged(VirtualFilePointer[])}
-   * should fired for every change beneath this directory (Used for jar directories in libraries)
+   * @return true if the file exists
    */
-  default boolean isRecursive() {
-    return false;
-  }
+  boolean isValid();
 }

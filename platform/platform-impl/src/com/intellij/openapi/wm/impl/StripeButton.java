@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
@@ -11,8 +11,11 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +32,7 @@ import java.awt.image.BufferedImage;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class StripeButton extends AnchoredButton implements DataProvider {
+public class StripeButton extends AnchoredButton implements DataProvider {
   /**
    * This is analog of Swing mnemonic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
@@ -38,7 +41,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
   private boolean myPressedWhenSelected;
 
   private JLayeredPane myDragPane;
-  private final ToolWindowsPane pane;
+  @NotNull final ToolWindowsPane pane;
   final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
@@ -56,16 +59,15 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
     addActionListener(e -> {
       String id = toolWindow.getId();
+      ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
       if (myPressedWhenSelected) {
-        toolWindow.getToolWindowManager().hideToolWindow(id, false);
+        manager.hideToolWindow(id, false, true, ToolWindowEventSource.StripeButton);
       }
       else {
-        toolWindow.getToolWindowManager().activated$intellij_platform_ide_impl(toolWindow);
+        manager.activated$intellij_platform_ide_impl(toolWindow, ToolWindowEventSource.StripeButton);
       }
 
       myPressedWhenSelected = false;
-      //noinspection SpellCheckingInspection
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
     });
     addMouseListener(new PopupHandler() {
       @Override
@@ -84,6 +86,18 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
         processDrag(e);
       }
     });
+
+    updateHelpTooltip();
+  }
+
+  private void updateHelpTooltip() {
+    HelpTooltip.dispose(this);
+
+    HelpTooltip tooltip = new HelpTooltip();
+    tooltip.setTitle(toolWindow.getStripeTitle());
+    String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.getId());
+    tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId));
+    tooltip.installOn(this);
   }
 
   public @NotNull WindowInfo getWindowInfo() {
@@ -118,6 +132,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
 
   private void setMnemonic2(int mnemonic) {
     myMnemonic = mnemonic;
+    updateHelpTooltip();
     revalidate();
     repaint();
   }
@@ -314,7 +329,10 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
   @Override
   public void updateUI() {
     setUI(StripeButtonUI.createUI(this));
-    setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+
+    Font font = StartupUiUtil.getLabelFont();
+    RelativeFont relativeFont = RelativeFont.NORMAL.fromResource("StripeButton.fontSizeOffset", -2, JBUIScale.scale(11f));
+    setFont(relativeFont.derive(font));
   }
 
   void updatePresentation() {
@@ -341,6 +359,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
       }
     }
     setText(text);
+    updateHelpTooltip();
   }
 
   private void updateState(@NotNull ToolWindowImpl toolWindow) {

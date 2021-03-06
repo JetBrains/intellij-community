@@ -2,12 +2,12 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -23,11 +23,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.ImageFileFilter;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +86,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     myItemToBeEdited = itemToBeEdited;
     myOneOff = oneOff;
 
-    myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA);
+    myEditorTextField = new EditorTextField("", project, JavaFileType.INSTANCE);
     myEditorTextField.setFontInheritedFromLAF(true);
     myTfClassName = new ComponentWithBrowseButton<>(myEditorTextField, new MyChooseClassActionListener(project));
 
@@ -117,7 +119,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     myTfNestedForm.addActionListener(new MyChooseFileActionListener(project, new TreeFileChooser.PsiFileFilter() {
       @Override
       public boolean accept(PsiFile file) {
-        return file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM);
+        return file.getFileType().equals(GuiFormFileType.INSTANCE);
       }
     }, myTfNestedForm, UIDesignerBundle.message("add.component.choose.form")));
 
@@ -373,12 +375,12 @@ public final class ComponentItemDialog extends DialogWrapper {
     private final Project myProject;
     private final TreeFileChooser.PsiFileFilter myFilter;
     private final TextFieldWithBrowseButton myTextField;
-    private final String myTitle;
+    private final @Nls String myTitle;
 
     MyChooseFileActionListener(final Project project,
                                       final TreeFileChooser.PsiFileFilter filter,
                                       final TextFieldWithBrowseButton textField,
-                                      final String title) {
+                                      final @Nls String title) {
       myProject = project;
       myFilter = filter;
       myTextField = textField;

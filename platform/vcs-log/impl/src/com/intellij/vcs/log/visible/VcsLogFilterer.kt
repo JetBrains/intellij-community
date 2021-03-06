@@ -7,7 +7,7 @@ import com.intellij.vcs.log.graph.PermanentGraph
 
 interface VcsLogFilterer {
 
-  fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean
+  fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = false
 
   fun filter(dataPack: DataPack,
              oldVisiblePack: VisiblePack,

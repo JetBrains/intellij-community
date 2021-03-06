@@ -25,7 +25,7 @@ public interface ProjectTaskListener {
    * @param executionResult provides aggregated information about the {@link ProjectTask} execution
    * @deprecated use {@link #finished(ProjectTaskManager.Result)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   @Deprecated
   default void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {}
 }

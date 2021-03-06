@@ -23,7 +23,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       }
     } else {
       val myInfo2Label = tabs.myInfo2Label
-      val firstLabel = myInfo2Label[tabs.lastLayoutPass.getTabAt(0, 0)] ?: return
+      val firstLabel = myInfo2Label[tabs.visibleInfos[0]] ?: return
 
       val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
 

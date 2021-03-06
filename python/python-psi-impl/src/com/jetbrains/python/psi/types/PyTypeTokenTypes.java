@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.PyElementType;
 /**
  * @author vlan
  */
-public class PyTypeTokenTypes {
+public final class PyTypeTokenTypes {
   private PyTypeTokenTypes() {}
 
   public static final PyElementType NL = new PyElementType("NL");

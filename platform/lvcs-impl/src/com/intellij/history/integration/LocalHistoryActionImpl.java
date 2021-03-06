@@ -3,12 +3,13 @@
 package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.util.NlsContexts;
 
 public class LocalHistoryActionImpl implements LocalHistoryAction {
-  private final String myName;
+  private final @NlsContexts.Label String myName;
   private final LocalHistoryEventDispatcher myDispatcher;
 
-  public LocalHistoryActionImpl(LocalHistoryEventDispatcher l, String name) {
+  public LocalHistoryActionImpl(LocalHistoryEventDispatcher l, @NlsContexts.Label String name) {
     myName = name;
     myDispatcher = l;
   }

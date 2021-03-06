@@ -190,8 +190,7 @@ public class ReflectionAccessMethodBuilder {
 
 
   private static class MyFieldAccessor implements MyMemberAccessor {
-    private static final List<String> EXCEPTIONS = Collections.unmodifiableList(
-      Collections.singletonList("java.lang.ReflectiveOperationException"));
+    private static final List<String> EXCEPTIONS = Collections.singletonList("java.lang.ReflectiveOperationException");
     private final String myFieldName;
     private final String myClassName;
     private final FieldAccessType myAccessType;
@@ -261,7 +260,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public List<String> getPossibleExceptions() {
-      return Collections.unmodifiableList(Collections.singletonList("java.lang.ReflectiveOperationException"));
+      return Collections.singletonList("java.lang.ReflectiveOperationException");
     }
 
     @Override
@@ -302,8 +301,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public List<String> getPossibleExceptions() {
-      return Collections.unmodifiableList(Collections.singletonList("java.lang.ReflectiveOperationException"
-      ));
+      return Collections.singletonList("java.lang.ReflectiveOperationException");
     }
   }
 }

@@ -117,3 +117,10 @@ def outer = new Outer()
 outer.this
 outer.super
 outer.def
+
+@Newify(C)
+def foo() {
+  def a = C()
+  def b = C.new(1, 2)
+}
+

@@ -98,22 +98,23 @@ public class ShowXPathAction extends XPathAction {
 
         final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
         if (!(element instanceof XmlElement || element instanceof PsiWhiteSpace)) {
-            XPathAppComponent.showEditorHint("No suitable context for an XPath-expression selected.", editor);
+            XPathAppComponent.showEditorHint(XPathBundle.message("hint.text.no.suitable.context.for.xpath.expression.selected"), editor);
             return;
         }
 
         final PsiElement node = XPathExpressionGenerator.transformToValidShowPathNode(element);
         if (node == null) {
-            XPathAppComponent.showEditorHint("No suitable context for an XPath-expression selected.", editor);
+            XPathAppComponent.showEditorHint(XPathBundle.message("hint.text.no.suitable.context.for.xpath.expression.selected"), editor);
             return;
         }
 
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         final RangeHighlighter h = HighlighterUtil.highlightNode(editor, node, cfg.getContextAttributes(), cfg);
 
-        final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null);
+        final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null); //NON-NLS
 
         final JTextField label = new JTextField(path);
+        //noinspection HardCodedStringLiteral
         label.setPreferredSize(new Dimension(label.getPreferredSize().width + new JLabel("M").getPreferredSize().width, label.getPreferredSize().height));
         label.setOpaque(false);
         label.setEditable(false);
@@ -122,7 +123,7 @@ public class ShowXPathAction extends XPathAction {
         label.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 
         final JPanel p = new NonOpaquePanel(new BorderLayout());
-        final JLabel l = new JLabel("XPath:");
+        final JLabel l = new JLabel(XPathBundle.message("label.xpath"));
         p.add(l, BorderLayout.WEST);
         p.add(label, BorderLayout.CENTER);
 

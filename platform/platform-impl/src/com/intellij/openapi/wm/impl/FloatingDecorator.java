@@ -18,6 +18,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
+import com.intellij.util.MathUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,8 +57,8 @@ public final class FloatingDecorator extends JDialog {
   private float myStartRatio;
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
-  FloatingDecorator(@NotNull JFrame owner, @NotNull InternalDecorator decorator) {
-    super(owner, decorator.getToolWindow().getId());
+  FloatingDecorator(@NotNull JFrame owner, @NotNull InternalDecoratorImpl decorator) {
+    super(owner, decorator.getToolWindow().getStripeTitle());
 
     MnemonicHelper.init(getContentPane());
 
@@ -109,6 +111,8 @@ public final class FloatingDecorator extends JDialog {
 
   @Override
   public final void show(){
+    UIUtil.decorateWindowHeader(rootPane);
+    UIUtil.setCustomTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     boolean isActive = myInfo.isActiveOnStart();
     setFocusableWindowState(isActive);
 
@@ -187,7 +191,7 @@ public final class FloatingDecorator extends JDialog {
       delta*=2;
     }
     final float ratio=myStartRatio+(float)myCurrentFrame*delta;
-    return Math.min(1.0f,Math.max(.0f,ratio));
+    return MathUtil.clamp(ratio, .0f, 1.0f);
   }
 
   private final class BorderItem extends JPanel {
@@ -213,8 +217,8 @@ public final class FloatingDecorator extends JDialog {
         int screenMaxX = screenBounds.x + screenBounds.width;
         int screenMaxY = screenBounds.y + screenBounds.height;
 
-        newPoint.x = Math.min(Math.max(newPoint.x, screenBounds.x), screenMaxX);
-        newPoint.y = Math.min(Math.max(newPoint.y, screenBounds.y), screenMaxY);
+        newPoint.x = MathUtil.clamp(newPoint.x, screenBounds.x, screenMaxX);
+        newPoint.y = MathUtil.clamp(newPoint.y, screenBounds.y, screenMaxY);
 
         final Rectangle oldBounds=FloatingDecorator.this.getBounds();
         final Rectangle newBounds=new Rectangle(oldBounds);

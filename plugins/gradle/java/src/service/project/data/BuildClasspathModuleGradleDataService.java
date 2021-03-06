@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.data;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -41,8 +41,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
-
+public final class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
   private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
   @NotNull
@@ -52,7 +51,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataNode<BuildScriptClasspathData>> toImport,
+  public void importData(final @NotNull Collection<? extends DataNode<BuildScriptClasspathData>> toImport,
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
@@ -60,7 +59,8 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
       return;
     }
 
-    final GradleInstallationManager gradleInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
+    final GradleInstallationManager gradleInstallationManager =
+      ApplicationManager.getApplication().getService(GradleInstallationManager.class);
 
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID);
     assert manager != null;
@@ -75,23 +75,19 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
 
     Interner<List<String>> interner = new HashSetInterner<>();
-    final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = new NotNullLazyValue<List<String>>() {
-      @NotNull
-      @Override
-      protected List<String> compute() {
-        final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
-        File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
-        if (gradleHome != null && gradleHome.isDirectory()) {
-          final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
-          if (libraries != null) {
-            for (File library : libraries) {
-              gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
-            }
+    final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.lazy(() -> {
+      final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
+      File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
+      if (gradleHome != null && gradleHome.isDirectory()) {
+        final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
+        if (libraries != null) {
+          for (File library : libraries) {
+            gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
           }
         }
-        return interner.intern(new ArrayList<>(gradleSdkLibraries));
       }
-    };
+      return interner.intern(new ArrayList<>(gradleSdkLibraries));
+    });
 
     final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath = new THashMap<>(localSettings.getProjectBuildClasspath());
 

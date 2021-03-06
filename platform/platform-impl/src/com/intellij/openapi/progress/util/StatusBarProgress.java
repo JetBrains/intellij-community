@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -15,9 +16,9 @@ import java.util.Map;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class StatusBarProgress extends ProgressIndicatorBase {
+public final class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
-  private final Map<StatusBar, Pair<String, String>> myStatusBar2SavedText = new HashMap<>();
+  private final Map<StatusBar, Pair<@StatusBarText String, @StatusBarText String>> myStatusBar2SavedText = new HashMap<>();
   private boolean myScheduledStatusBarTextSave;
 
   public StatusBarProgress() {
@@ -35,7 +36,6 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     super.stop();
 
     if (myScheduledStatusBarTextSave) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(
         () -> {
           for (StatusBar statusBar : myStatusBar2SavedText.keySet()) {
@@ -72,10 +72,10 @@ public class StatusBarProgress extends ProgressIndicatorBase {
         text += " " + (int)(fraction * 100 + 0.5) + "%";
       }
     }
-    final String _text = text;
+
+    String _text = text;
     if (!myScheduledStatusBarTextSave) {
       myScheduledStatusBarTextSave = true;
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(
         () -> {
           if (ApplicationManager.getApplication().isDisposed()) return;
@@ -95,7 +95,7 @@ public class StatusBarProgress extends ProgressIndicatorBase {
         }
       );
     }
-    //noinspection SSBasedInspection
+
     SwingUtilities.invokeLater(
       () -> {
         for (StatusBar statusBarEx : myStatusBar2SavedText.keySet()) {
@@ -105,20 +105,20 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     );
   }
 
-  private void setStatusBarText(StatusBar statusBar, String text) {
+  private void setStatusBarText(StatusBar statusBar, @StatusBarText String text) {
     updateRestoreText(statusBar);
-    Pair<String, String> textsPair = myStatusBar2SavedText.get(statusBar);
+    Pair<@StatusBarText String, @StatusBarText String> textsPair = myStatusBar2SavedText.get(statusBar);
     myStatusBar2SavedText.put(statusBar, pair(textsPair.first, text));
     statusBar.setInfo(text);
   }
 
-  private String updateRestoreText(StatusBar statusBar) {
-    Pair<String, String> textsPair = myStatusBar2SavedText.get(statusBar);
+  private @StatusBarText String updateRestoreText(StatusBar statusBar) {
+    Pair<@StatusBarText String, @StatusBarText String> textsPair = myStatusBar2SavedText.get(statusBar);
     // if current status bar info doesn't match the value, that we set, use this value as a restore value
     String info = notNull(statusBar.getInfo(), "");
-    if (!textsPair.getSecond().equals(info)) {
+    if (!textsPair.second.equals(info)) {
       myStatusBar2SavedText.put(statusBar, pair(info, textsPair.second));
     }
-    return textsPair.getFirst();
+    return textsPair.first;
   }
 }

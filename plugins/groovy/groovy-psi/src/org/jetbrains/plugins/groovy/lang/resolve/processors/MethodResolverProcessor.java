@@ -57,7 +57,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
     mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
-    myArgumentTypes = argumentTypes == null ? null : Arrays.copyOf(argumentTypes, argumentTypes.length);
+    myArgumentTypes = argumentTypes == null ? null : argumentTypes.clone();
     if (myArgumentTypes != null) {
       for (int i = 0; i < myArgumentTypes.length; i++) {
         myArgumentTypes[i] = TypeConversionUtil.erasure(myArgumentTypes[i]);

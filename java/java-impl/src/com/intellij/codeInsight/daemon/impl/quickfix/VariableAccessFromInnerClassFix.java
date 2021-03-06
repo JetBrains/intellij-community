@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -22,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -38,8 +25,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -66,22 +51,20 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    @NonNls String message;
-    switch (myFixType) {
-      case MAKE_FINAL:
-        message = "make.final.text";
-        break;
-      case MAKE_ARRAY:
-        message = "make.final.transform.to.one.element.array";
-        break;
-      case COPY_TO_FINAL:
-        return QuickFixBundle.message("make.final.copy.to.temp", myVariable.getName(), (!PsiUtil.isLanguageLevel8OrHigher(myContext) ? "" : "effectively ") + "final");
-      default:
-        return "";
-    }
     Collection<PsiVariable> vars = getVariablesToFix();
-    String varNames = vars.size() == 1 ? "'"+myVariable.getName()+"'" : "variables";
-    return QuickFixBundle.message(message, varNames);
+    if (myFixType == MAKE_FINAL) {
+      return JavaBundle.message("intention.name.make.variable.final", myVariable.getName(), vars.size() == 1 ? 0 : 1);
+    }
+    else if (myFixType == MAKE_ARRAY) {
+      return JavaBundle.message("intention.name.transform.variables.into.final.one.element.array", myVariable.getName(), vars.size() == 1 ? 0 : 1);
+    }
+    else if (myFixType == COPY_TO_FINAL) {
+      return JavaBundle
+        .message("intention.name.copy.to.final.temp.variable", myVariable.getName(), !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
+    }
+    else {
+      return "";
+    }
   }
 
   @Override
@@ -141,7 +124,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
     if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
     final Map<PsiVariable, Boolean> finalVars = vars;
-    return new AbstractCollection<PsiVariable>() {
+    return new AbstractCollection<>() {
       @Override
       public boolean add(PsiVariable psiVariable) {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;
@@ -324,8 +307,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<? extends PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
-    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
-    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new HashMap<>();
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
       HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,

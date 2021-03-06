@@ -5,6 +5,8 @@
     <property name="ideVersion">2019.2.0.0</property>
     <property name="modified">2019-06-07T17:20:15</property>
     <property name="originalScheme">Default</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">intellij.light.color.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="CARET_ROW_COLOR" value="fcfaed" />
@@ -294,11 +296,6 @@
         <option name="FOREGROUND" value="264eff" />
       </value>
     </option>
-    <option name="LIVE_TEMPLATE_ATTRIBUTES">
-      <value>
-        <option name="EFFECT_COLOR" value="e63900" />
-      </value>
-    </option>
     <option name="List/map to object conversion">
       <value>
         <option name="FOREGROUND" value="ff" />
@@ -331,7 +328,7 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
-    <option name="TEMPLATE_VARIABLE_ATTRIBUTES">
+      <option name="TEMPLATE_VARIABLE_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="7f0000" deuteranopia="0" protanopia="0"/>
         <option name="FONT_TYPE" value="2" />

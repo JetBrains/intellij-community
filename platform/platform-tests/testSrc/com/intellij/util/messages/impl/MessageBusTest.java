@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -17,14 +17,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+@SuppressWarnings("TypeMayBeWeakened")
 public class MessageBusTest implements MessageBusOwner {
   private CompositeMessageBus myBus;
   private final List<String> myLog = new ArrayList<>();
@@ -282,13 +284,13 @@ public class MessageBusTest implements MessageBusOwner {
       public void t12() {
       }
     });
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1_000; i++) {
       new MessageBusImpl(this, childBus);
     }
 
-    PlatformTestUtil.assertTiming("Too long", 3000, () -> {
+    PlatformTestUtil.assertTiming("Too long", 3_000, () -> {
       T1Listener publisher = myBus.syncPublisher(TOPIC1);
-      for (int i = 0; i < 1000000; i++) {
+      for (int i = 0; i < 1_000_000; i++) {
         publisher.t11();
       }
     });
@@ -371,7 +373,7 @@ public class MessageBusTest implements MessageBusOwner {
   @Test
   public void testHasUndeliveredEventsInChildBys() {
     MessageBusImpl childBus = new MessageBusImpl(this, myBus);
-    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertTrue(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
+    myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertThat(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue());
     childBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
   }
@@ -414,7 +416,7 @@ public class MessageBusTest implements MessageBusOwner {
       myBus.connect(disposable).subscribe(RUNNABLE_TOPIC, () -> Disposer.dispose(disposable));
     }
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
-    assertTrue(Disposer.isDisposed(disposable));
+    assertThat(Disposer.isDisposed(disposable)).isTrue();
   }
 
   @Test
@@ -443,9 +445,7 @@ public class MessageBusTest implements MessageBusOwner {
     child.syncPublisher(TO_PARENT_TOPIC).run();
 
     Ref<Boolean> isCalled = new Ref<>(false);
-    myBus.connect().subscribe(TO_PARENT_TOPIC, () -> {
-      isCalled.set(true);
-    });
+    myBus.connect().subscribe(TO_PARENT_TOPIC, () -> isCalled.set(true));
     child.syncPublisher(TO_PARENT_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
   }
@@ -458,10 +458,105 @@ public class MessageBusTest implements MessageBusOwner {
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
 
     Ref<Boolean> isCalled = new Ref<>(false);
-    child.connect().subscribe(RUNNABLE_TOPIC, () -> {
-      isCalled.set(true);
-    });
+    child.connect().subscribe(RUNNABLE_TOPIC, () -> isCalled.set(true));
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertThat(isCalled.get()).isTrue();
+  }
+
+  @Test
+  public void disconnectOnPluginUnload() {
+    // child must be created before to ensure that cache is not cleared on a new child
+    MessageBus child = new CompositeMessageBus(this, myBus);
+    // call to compute cache
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+
+    AtomicInteger callCounter = new AtomicInteger();
+    Runnable listener = () -> callCounter.incrementAndGet();
+
+    // add twice
+    child.connect().subscribe(RUNNABLE_TOPIC, listener);
+    child.connect().subscribe(RUNNABLE_TOPIC, listener);
+
+    myBus.disconnectPluginConnections(new Predicate<>() {
+      boolean isRemoved;
+
+      @Override
+      public boolean test(Class<?> aClass) {
+        // remove first one
+        if (isRemoved) {
+          return false;
+        }
+        isRemoved = true;
+        return true;
+      }
+    });
+
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertThat(callCounter.get()).isEqualTo(1);
+  }
+
+  @Test
+  public void removeEmptyConnectionsRecursively() throws Throwable {
+    int threadsNumber = 10;
+    AtomicReference<Throwable> exception = new AtomicReference<>();
+    CountDownLatch latch = new CountDownLatch(threadsNumber);
+    List<Future<?>> threads = new ArrayList<>();
+    AtomicInteger eventCounter = new AtomicInteger();
+    for (int i = 0; i < threadsNumber; i++) {
+      Future<?> thread = AppExecutorUtil.getAppScheduledExecutorService().submit(() -> {
+        try {
+          MessageBusConnection connection = myBus.connect();
+          myBus.removeEmptyConnectionsRecursively();
+          connection.subscribe(RUNNABLE_TOPIC, () -> eventCounter.incrementAndGet());
+        }
+        catch (Throwable e) {
+          exception.set(e);
+        }
+        finally {
+          latch.countDown();
+        }
+      });
+      threads.add(thread);
+    }
+    latch.await();
+
+    Throwable e = exception.get();
+    if (e != null) {
+      throw e;
+    }
+    for (Future<?> thread : threads) {
+      thread.get();
+    }
+
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertThat(eventCounter.get()).isEqualTo(threadsNumber);
+  }
+
+  @Test
+  public void disconnectOnDisposeForImmediateDeliveryTopic() {
+    Topic<Runnable> TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+
+    Disposable disposable = Disposer.newDisposable();
+    MessageBusConnectionImpl connection = myBus.connect(disposable);
+    connection.subscribe(TOPIC, () -> fail("must be not called"));
+    Disposer.dispose(disposable);
+    myBus.syncPublisher(TOPIC).run();
+  }
+
+  @Test
+  public void disconnectAndDisposeOnDisposeForImmediateDeliveryTopic() {
+    Topic<Runnable> TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
+
+    Disposable disposable = Disposer.newDisposable();
+
+    MessageBusConnection connection2 = myBus.connect();
+    connection2.subscribe(TOPIC, () -> {
+      Disposer.dispose(disposable);
+    });
+
+    MessageBusConnectionImpl connection = myBus.connect(disposable);
+    connection.subscribe(TOPIC, () -> fail("must be not called"));
+
+    myBus.syncPublisher(TOPIC).run();
   }
 }

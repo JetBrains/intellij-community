@@ -32,6 +32,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -61,17 +63,19 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   @Override
   public boolean isAccepted(final PsiClass aClass) {
     return ReadAction.compute(() -> {
-      if (aClass.getQualifiedName() != null &&
-          (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) ||
-           isTopMostTestClass(aClass))) {
-        final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
-        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-        if (virtualFile == null) return false;
-        return !compilerConfiguration.isExcludedFromCompilation(virtualFile) &&
-               !ProjectRootManager.getInstance(myProject).getFileIndex()
-                 .isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES);
-      }
-      return false;
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+        if (aClass.getQualifiedName() != null &&
+            (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) ||
+             isTopMostTestClass(aClass))) {
+          final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
+          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+          if (virtualFile == null) return false;
+          return !compilerConfiguration.isExcludedFromCompilation(virtualFile) &&
+                 !ProjectRootManager.getInstance(myProject).getFileIndex()
+                   .isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES);
+        }
+        return false;
+      });
     });
   }
 

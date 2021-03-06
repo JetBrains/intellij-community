@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -24,26 +25,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class BackspaceHandler extends EditorWriteActionHandler {
+public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Logger LOGGER = Logger.getInstance(BackspaceHandler.class);
 
   protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     if (!handleBackspace(editor, caret, dataContext, false)) {
       myOriginalHandler.execute(editor, caret, dataContext);
     }
@@ -156,6 +159,15 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     return editables.size() == 1 && editables.get(0).equals(rangeToEdit);
   }
 
+  static @NotNull Language getLanguageAtCursorPosition(final PsiFile file, final Editor editor) {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    Language language = element != null ? PsiUtilCore.findLanguageFromElement(element) : Language.ANY;
+    if (language != Language.ANY) {
+      return language;
+    }
+    return file.getLanguage();
+  }
+
   @Nullable
   public static LogicalPosition getBackspaceUnindentPosition(final PsiFile file, final Editor editor) {
     if (editor.getSelectionModel().hasSelection()) return null;
@@ -168,8 +180,16 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       return null;
     }
 
+    // Determine indent size
+    CommonCodeStyleSettings.IndentOptions fileIndentOptions = CodeStyle.getIndentOptions(file);
+    int indent = fileIndentOptions.INDENT_SIZE;
+    if (!fileIndentOptions.isOverrideLanguageOptions()) {
+      Language language = getLanguageAtCursorPosition(file, editor);
+      if (language != file.getLanguage()) {
+        indent = CodeStyle.getSettings(file).getLanguageIndentOptions(language).INDENT_SIZE;
+      }
+    }
     // Decrease column down to indentation * n
-    final int indent = CodeStyle.getIndentOptions(file).INDENT_SIZE;
     int column = indent > 0 ? (caretPos.column - 1) / indent * indent : 0;
     return new LogicalPosition(caretPos.line, column);
   }
@@ -183,7 +203,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (pos.column < logicalPosition.column) {
       int targetOffset = editor.logicalPositionToOffset(pos);
       int offset = editor.getCaretModel().getOffset();
-      editor.getSelectionModel().setSelection(targetOffset, offset);
+      editor.getCaretModel().getCurrentCaret().setSelection(targetOffset, offset, false);
       EditorModificationUtil.deleteSelectedText(editor);
       editor.getCaretModel().moveToLogicalPosition(pos);
     }

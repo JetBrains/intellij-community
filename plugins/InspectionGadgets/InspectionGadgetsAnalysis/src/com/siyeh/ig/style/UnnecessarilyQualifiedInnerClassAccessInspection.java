@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -27,12 +13,16 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings({"PublicField"})
@@ -136,7 +126,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
         return;
       }
       ProblemHighlightType highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
-      if (!referenceClass.equals(qualifierTarget) || !ImportUtils.isInsideClassBody(reference, referenceClass)) {
+      if (!referenceClass.equals(qualifierTarget) || !ClassUtils.isInsideClassBody(reference, referenceClass)) {
         if (ignoreReferencesNeedingImport &&
             (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget, true) ||
              !PsiTreeUtil.isAncestor(qualifierTarget, referenceClass, true))) {

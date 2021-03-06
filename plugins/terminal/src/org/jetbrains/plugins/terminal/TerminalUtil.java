@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.process.OSProcessUtil;
@@ -15,19 +15,16 @@ import com.intellij.remote.RemoteSshProcess;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.execution.ParametersListUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jvnet.winp.WinProcess;
-import org.jvnet.winp.WinpException;
 
 import java.io.IOException;
 import java.util.StringTokenizer;
 
-public class TerminalUtil {
+public final class TerminalUtil {
 
   private static final Logger LOG = Logger.getInstance(TerminalUtil.class);
 
@@ -73,7 +70,7 @@ public class TerminalUtil {
     if (SystemInfo.isWindows && process instanceof WinPtyProcess) {
       WinPtyProcess winPty = (WinPtyProcess)process;
       try {
-        String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty.getChildProcessId())));
+        String executable = FileUtil.toSystemIndependentName(StringUtil.notNullize(getExecutable(winPty)));
         int consoleProcessCount = winPty.getConsoleProcessCount();
         if (executable.endsWith("/Git/bin/bash.exe")) {
           return consoleProcessCount > 3;
@@ -88,17 +85,7 @@ public class TerminalUtil {
     return false;
   }
 
-  @Nullable
-  private static String getExecutable(int pid) {
-    WinProcess winProcess = new WinProcess(pid);
-    String commandLine;
-    try {
-      commandLine = winProcess.getCommandLine();
-    }
-    catch (WinpException e) {
-      LOG.error(e);
-      return null;
-    }
-    return ContainerUtil.getFirstItem(ParametersListUtil.parse(commandLine));
+  private static @Nullable String getExecutable(@NotNull WinPtyProcess process) {
+    return ContainerUtil.getFirstItem(process.getCommand());
   }
 }

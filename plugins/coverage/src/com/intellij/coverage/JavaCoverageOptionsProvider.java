@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -8,7 +8,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "JavaCoverageOptionsProvider",
@@ -16,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
     @Storage(StoragePathMacros.WORKSPACE_FILE)
   }
 )
-public class JavaCoverageOptionsProvider implements PersistentStateComponent<JavaCoverageOptionsProvider.State> {
+public final class JavaCoverageOptionsProvider implements PersistentStateComponent<JavaCoverageOptionsProvider.State> {
   private final State myState = new State();
   private final Project myProject;
 
@@ -35,11 +34,11 @@ public class JavaCoverageOptionsProvider implements PersistentStateComponent<Jav
   public void setIgnoreImplicitConstructors(boolean state) {
     myState.myIgnoreImplicitConstructors = state;
   }
-  
+
   public void setIgnoreEmptyPrivateConstructors(boolean state) {
     myState.myIgnoreEmptyPrivateConstructors = state;
   }
-  
+
   public boolean ignoreEmptyPrivateConstructors() {
     return myState.myIgnoreEmptyPrivateConstructors;
   }
@@ -51,10 +50,9 @@ public class JavaCoverageOptionsProvider implements PersistentStateComponent<Jav
     }
     return false;
   }
-  
-  @Nullable
+
   @Override
-  public JavaCoverageOptionsProvider.State getState() {
+  public JavaCoverageOptionsProvider.@NotNull State getState() {
     return myState;
   }
 
@@ -63,8 +61,8 @@ public class JavaCoverageOptionsProvider implements PersistentStateComponent<Jav
      myState.myIgnoreEmptyPrivateConstructors = state.myIgnoreEmptyPrivateConstructors;
      myState.myIgnoreImplicitConstructors = state.myIgnoreImplicitConstructors;
   }
-  
-  
+
+
   public static class State {
     public boolean myIgnoreEmptyPrivateConstructors = true;
     public boolean myIgnoreImplicitConstructors = true;

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.action
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
@@ -26,6 +27,7 @@ class ImportProjectFromScriptAction: ExternalSystemAction() {
     val virtualFile = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE) ?: return
     val project = e.getData<Project>(CommonDataKeys.PROJECT) ?: return
     val externalProjectPath = getDefaultPath(virtualFile)
+    ExternalSystemUtil.confirmLoadingUntrustedProject(project, GradleConstants.SYSTEM_ID)
     linkAndRefreshGradleProject(externalProjectPath, project)
   }
 

@@ -16,21 +16,19 @@ import java.util.Set;
  * @author Denis Zhdanov
  */
 public class JavaElementArrangementEntry extends DefaultArrangementEntry
-  implements TypeAwareArrangementEntry, NameAwareArrangementEntry,ModifierAwareArrangementEntry
-{
+  implements TypeAwareArrangementEntry, NameAwareArrangementEntry, ModifierAwareArrangementEntry {
 
   @NotNull private final Set<ArrangementSettingsToken> myModifiers = new HashSet<>();
-  @NotNull private final Set<ArrangementSettingsToken> myTypes     = new HashSet<>();
+  @NotNull private final Set<ArrangementSettingsToken> myTypes = new HashSet<>();
 
-  @NotNull private final  ArrangementSettingsToken myType;
-  @Nullable private final String                   myName;
+  @NotNull private final ArrangementSettingsToken myType;
+  @Nullable private final String myName;
 
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
                                      @NotNull TextRange range,
                                      @NotNull ArrangementSettingsToken type,
                                      @Nullable String name,
-                                     boolean canBeMatched)
-  {
+                                     boolean canBeMatched) {
     this(parent, range.getStartOffset(), range.getEndOffset(), type, name, canBeMatched);
   }
 
@@ -39,8 +37,7 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
                                      int endOffset,
                                      @NotNull ArrangementSettingsToken type,
                                      @Nullable String name,
-                                     boolean canBeArranged)
-  {
+                                     boolean canBeArranged) {
     super(parent, startOffset, endOffset, canBeArranged);
     myType = type;
     myTypes.add(type);

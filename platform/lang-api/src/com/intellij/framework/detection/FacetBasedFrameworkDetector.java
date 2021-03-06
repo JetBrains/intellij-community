@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +38,11 @@ import java.util.Set;
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
   private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkDetector.class);
 
-  protected FacetBasedFrameworkDetector(String detectorId) {
+  protected FacetBasedFrameworkDetector(@NonNls String detectorId) {
     super(detectorId);
   }
 
-  protected FacetBasedFrameworkDetector(@NotNull String detectorId, int detectorVersion) {
+  protected FacetBasedFrameworkDetector(@NonNls @NotNull String detectorId, int detectorVersion) {
     super(detectorId, detectorVersion);
   }
 

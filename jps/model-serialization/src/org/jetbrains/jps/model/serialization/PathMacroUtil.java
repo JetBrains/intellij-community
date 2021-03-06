@@ -2,20 +2,20 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
-
-public class PathMacroUtil {
+public final class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
   @NonNls public static final String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
 
@@ -33,10 +33,9 @@ public class PathMacroUtil {
   private static volatile Map<String, String> ourGlobalMacrosForIde;
   private static volatile Map<String, String> ourGlobalMacrosForStandalone;
 
-  @Nullable
-  public static String getModuleDir(@NotNull String moduleFilePath) {
+  public static @Nullable String getModuleDir(@NotNull String moduleFilePath) {
     String moduleDir = PathUtilRt.getParentPath(moduleFilePath);
-    if (StringUtil.isEmpty(moduleDir)) {
+    if (Strings.isEmpty(moduleDir)) {
       return null;
     }
 
@@ -44,28 +43,25 @@ public class PathMacroUtil {
     // rather than the .idea directory itself is considered the module root
     // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
     String moduleDirParent = PathUtilRt.getParentPath(moduleDir);
-    if (!StringUtil.isEmpty(moduleDirParent) && PathUtilRt.getFileName(moduleDir).equals(DIRECTORY_STORE_NAME)) {
+    if (!Strings.isEmpty(moduleDirParent) && PathUtilRt.getFileName(moduleDir).equals(DIRECTORY_STORE_NAME)) {
       moduleDir = moduleDirParent;
     }
-    moduleDir = toSystemIndependentName(moduleDir);
+    moduleDir = FileUtilRt.toSystemIndependentName(moduleDir);
     if (moduleDir.endsWith(":/")) {
       moduleDir = moduleDir.substring(0, moduleDir.length() - 1);
     }
     return moduleDir;
   }
 
-  @NotNull
-  public static String getUserHomePath() {
+  public static @NotNull String getUserHomePath() {
     return Objects.requireNonNull(getGlobalSystemMacroValue(USER_HOME_NAME));
   }
 
-  @NotNull
-  public static Map<String, String> getGlobalSystemMacros() {
+  public static @NotNull Map<String, String> getGlobalSystemMacros() {
     return getGlobalSystemMacros(true);
   }
 
-  @NotNull
-  public static Map<String, String> getGlobalSystemMacros(boolean insideIde) {
+  public static @NotNull Map<String, String> getGlobalSystemMacros(boolean insideIde) {
     if (insideIde) {
       if (ourGlobalMacrosForIde == null) {
         ourGlobalMacrosForIde = computeGlobalPathMacrosInsideIde();
@@ -81,37 +77,35 @@ public class PathMacroUtil {
   }
 
   private static Map<String, String> computeGlobalPathMacrosForStandaloneCode() {
-    ContainerUtil.ImmutableMapBuilder<String, String> builder = ContainerUtil.immutableMapBuilder();
+    Map<String, String> result = new HashMap<>();
     String homePath = PathManager.getHomePath(false);
     if (homePath != null) {
-      builder.put(APPLICATION_HOME_DIR, toSystemIndependentName(homePath))
-             .put(APPLICATION_CONFIG_DIR, toSystemIndependentName(PathManager.getConfigPath()))
-             .put(APPLICATION_PLUGINS_DIR, toSystemIndependentName(PathManager.getPluginsPath()));
+      result.put(APPLICATION_HOME_DIR, FileUtilRt.toSystemIndependentName(homePath));
+      result.put(APPLICATION_CONFIG_DIR, FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()));
+      result.put(APPLICATION_PLUGINS_DIR, FileUtilRt.toSystemIndependentName(PathManager.getPluginsPath()));
     }
-    builder.put(USER_HOME_NAME, computeUserHomePath());
-    return builder.build();
+    result.put(USER_HOME_NAME, computeUserHomePath());
+    return Collections.unmodifiableMap(result);
   }
 
   private static Map<String, String> computeGlobalPathMacrosInsideIde() {
-    return ContainerUtil.<String, String>immutableMapBuilder()
-      .put(APPLICATION_HOME_DIR, toSystemIndependentName(PathManager.getHomePath()))
-      .put(APPLICATION_CONFIG_DIR, toSystemIndependentName(PathManager.getConfigPath()))
-      .put(APPLICATION_PLUGINS_DIR, toSystemIndependentName(PathManager.getPluginsPath()))
-      .put(USER_HOME_NAME, computeUserHomePath()).build();
+    Map<String, String> result = new HashMap<>();
+    result.put(APPLICATION_HOME_DIR, FileUtilRt.toSystemIndependentName(PathManager.getHomePath()));
+    result.put(APPLICATION_CONFIG_DIR, FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()));
+    result.put(APPLICATION_PLUGINS_DIR, FileUtilRt.toSystemIndependentName(PathManager.getPluginsPath()));
+    result.put(USER_HOME_NAME, computeUserHomePath());
+    return Collections.unmodifiableMap(result);
   }
 
-  @NotNull
-  private static String computeUserHomePath() {
-    return StringUtil.trimEnd(toSystemIndependentName(SystemProperties.getUserHome()), "/");
+  private static @NotNull String computeUserHomePath() {
+    return Strings.trimEnd(FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome()), "/");
   }
 
-  @Nullable
-  public static String getGlobalSystemMacroValue(String name) {
+  public static @Nullable String getGlobalSystemMacroValue(String name) {
     return getGlobalSystemMacroValue(name, true);
   }
 
-  @Nullable
-  public static String getGlobalSystemMacroValue(String name, boolean insideIde) {
+  public static @Nullable String getGlobalSystemMacroValue(String name, boolean insideIde) {
     return getGlobalSystemMacros(insideIde).get(name);
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,15 +35,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.PathsList;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -53,11 +54,11 @@ import java.util.function.Consumer;
 /**
  * @author Denis Zhdanov
  */
-public class ExternalSystemApiUtil {
+public final class ExternalSystemApiUtil {
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 
-  @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
+  @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<>() {
 
     @Override
     public int compare(@NotNull Object o1, @NotNull Object o2) {
@@ -149,13 +150,13 @@ public class ExternalSystemApiUtil {
 
   /**
    * @param path target path
-   * @return absolute path that points to the same location as the given one and that uses only slashes
+   * @return path that points to the same location as the given one and that uses only slashes
    */
   @NotNull
   public static String toCanonicalPath(@NotNull String path) {
-    String p = normalizePath(new File(path).getAbsolutePath());
+    String p = normalizePath(path);
     assert p != null;
-    return PathUtil.getCanonicalPath(p);
+    return FileUtil.toCanonicalPath(p);
   }
 
   @NotNull
@@ -179,12 +180,12 @@ public class ExternalSystemApiUtil {
     return ExternalSystemManager.EP_NAME.getExtensionList();
   }
 
-  public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<? extends DataNode<?>> nodes) {
     MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<>();
-    Queue<Collection<DataNode<?>>> queue = new LinkedList<>();
+    Queue<Collection<? extends DataNode<?>>> queue = new LinkedList<>();
     queue.add(nodes);
     while (!queue.isEmpty()) {
-      Collection<DataNode<?>> _nodes = queue.remove();
+      Collection<? extends DataNode<?>> _nodes = queue.remove();
       result.putAllValues(group(_nodes));
       for (DataNode<?> _node : _nodes) {
         queue.add(_node.getChildren());
@@ -422,7 +423,7 @@ public class ExternalSystemApiUtil {
 
   @Nullable
   public static String normalizePath(@Nullable String s) {
-    return StringUtil.isEmpty(s) ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
+    return s == null ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
   }
 
   /**
@@ -474,7 +475,7 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
+  public static @NlsSafe String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
     if (rootProjectPath == null) {
       File rootProjectDir = new File(targetProjectPath);
       if (rootProjectDir.isFile()) {
@@ -532,14 +533,15 @@ public class ExternalSystemApiUtil {
    * @return error message for the given exception
    */
   @NotNull
-  public static String buildErrorMessage(@NotNull Throwable e) {
+  public static @Nls String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
     String reason = unwrapped.getLocalizedMessage();
     if (!StringUtil.isEmpty(reason)) {
       return reason;
     }
     else if (unwrapped.getClass() == ExternalSystemException.class) {
-      return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
+      String originalReason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      return ExternalSystemBundle.message("external.system.api.error.message.prefix", originalReason);
     }
     else {
       return stacktraceAsString(unwrapped);
@@ -547,7 +549,7 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static String stacktraceAsString(@NotNull Throwable throwable) {
+  public static @NlsSafe String stacktraceAsString(@NotNull Throwable throwable) {
     Throwable unwrapped = RemoteUtil.unwrap(throwable);
     StringWriter writer = new StringWriter();
     unwrapped.printStackTrace(new PrintWriter(writer));
@@ -692,9 +694,10 @@ public class ExternalSystemApiUtil {
     ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return Collections.emptyList();
 
-    ExternalProjectInfo projectInfo = ProjectDataManager.getInstance().getExternalProjectsData(project, systemId).stream()
-      .filter(info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath()))
-      .findFirst().orElse(null);
+    ExternalProjectInfo projectInfo = ContainerUtil.find(
+      ProjectDataManager.getInstance().getExternalProjectsData(project, systemId),
+      info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath())
+    );
 
     if (projectInfo == null) return Collections.emptyList();
     DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
@@ -702,9 +705,10 @@ public class ExternalSystemApiUtil {
 
     List<TaskData> tasks = new SmartList<>();
 
-    DataNode<ModuleData> moduleDataNode = findAll(projectStructure, ProjectKeys.MODULE).stream()
-      .filter(moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath()))
-      .findFirst().orElse(null);
+    DataNode<ModuleData> moduleDataNode = ContainerUtil.find(
+      findAll(projectStructure, ProjectKeys.MODULE),
+      moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath())
+    );
     if (moduleDataNode == null) return Collections.emptyList();
 
     findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);

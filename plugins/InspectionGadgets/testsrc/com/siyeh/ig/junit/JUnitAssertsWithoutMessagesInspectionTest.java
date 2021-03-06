@@ -18,6 +18,7 @@ package com.siyeh.ig.junit;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.testFrameworks.AssertWithoutMessageInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,53 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
 
   public void testFailWithMessage() {
     doTest();
+  }
+
+  public void testQuickFixAssertEquals() {
+    doTest("import org.junit.Test;\n" +
+           "import static org.junit.Assert.*;\n" +
+
+           "class TestCase {\n" +
+           "    @Test\n" +
+           "    public void test() {\n" +
+           "        <warning descr=\"'assertEquals()' without message\"><caret>assertEquals</warning>(1, 1);\n" +
+           "    }\n" +
+           "}");
+    checkQuickFix("Add error message", "import org.junit.Test;\n" +
+                                       "import static org.junit.Assert.*;\n" +
+
+                                       "class TestCase {\n" +
+                                       "    @Test\n" +
+                                       "    public void test() {\n" +
+                                       "        assertEquals(\"<caret>\", 1, 1);\n" +
+                                       "    }\n" +
+                                       "}");
+  }
+
+  public void testQuickFixFail() {
+    doTest("import org.junit.Test;\n" +
+           "import static org.junit.Assert.*;\n" +
+
+           "class TestCase {\n" +
+           "    @Test\n" +
+           "    public void test() {\n" +
+           "        <warning descr=\"'fail()' without message\"><caret>fail</warning>();\n" +
+           "    }\n" +
+           "}");
+    checkQuickFix("Add error message", "import org.junit.Test;\n" +
+                                       "import static org.junit.Assert.*;\n" +
+
+                                       "class TestCase {\n" +
+                                       "    @Test\n" +
+                                       "    public void test() {\n" +
+                                       "        fail(\"<caret>\");\n" +
+                                       "    }\n" +
+                                       "}");
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/junit_asserts_without_messages";
   }
 
   @Override
@@ -42,6 +90,11 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
       "public class Assert {" +
       "  static public void assertEquals(double expected, double actual, double delta) {}" +
       "  static public void assertEquals(Object expected, Object actual){}" +
+      "  static public void assertEquals(String message, Object expected, Object actual){}" +
+      "  static public void assertSame(Object expected, Object actual){}" +
+      "  static public void assertSame(String message, Object expected, Object actual){}" +
+      "  static public void fail(){}" +
+      "  static public void fail(String message){}" +
       "}",
 
       "package org.junit.jupiter.api;\n" +
@@ -60,6 +113,6 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new JUnitAssertsWithoutMessagesInspection();
+    return new AssertWithoutMessageInspection();
   }
 }

@@ -12,6 +12,8 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightTestCase {
   public void testArrayIndex() {
     doTest("java.lang.ArrayIndexOutOfBoundsException: 10",
@@ -20,14 +22,59 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testClassCast() {
     doTest("java.lang.ClassCastException: class X cannot be cast to class java.lang.Number",
-           "Find why 'obj' could be instanceof X (not-null)",
+           "Find why 'obj' could be X (not-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
+  }
+  
+  public void testClassCastUnresolvedTarget() {
+    doTest("java.lang.ClassCastException: class X cannot be cast to class foo.Bar",
+           "Find why 'obj' could be X (not-null)",
+           "class X {static void test(Object obj) {System.out.println(((Bar) obj).intValue());}}");
   }
   
   public void testClassCastUnknownClass() {
     doTest("java.lang.ClassCastException: class XYZ cannot be cast to class java.lang.Number",
            "Find why 'obj' could be not instanceof java.lang.Number (not-null)",
            "class X {static void test(Object obj) {System.out.println(((Number) obj).intValue());}}");
+  }
+  
+  public void testClassCastGenericArray() {
+    //noinspection unchecked
+    doTest("java.lang.ClassCastException: class java.lang.String cannot be cast to class [Ljava.lang.Object; (java.lang.String and [Ljava.lang.Object; are in module java.base of loader 'bootstrap')",
+           "Find why 'obj' could be java.lang.String (not-null)",
+           "class X {static <E> E[] asArray(Object obj) {return (E[])obj;}}");
+  }
+  
+  public void testClassCastFromArray() {
+    doTest("java.lang.ClassCastException: class [Ljava.lang.String; cannot be cast to class java.lang.String",
+           "Find why 'obj' could be java.lang.String[] (not-null)",
+           "class X {static String cast(Object obj) {return (String)obj;}}");
+  }
+  
+  public void testClassCastFromPrimitiveTwoDimArray() {
+    doTest("java.lang.ClassCastException: class [[J cannot be cast to class java.lang.String",
+           "Find why 'obj' could be long[][] (not-null)",
+           "class X {static String cast(Object obj) {return (String)obj;}}");
+  }
+  
+  public void testClassCastFromNested() {
+    doTest("java.lang.ClassCastException: class MainTest$X cannot be cast to class java.lang.String",
+           "Find why 'obj' could be MainTest.X (not-null)",
+           "class MainTest {static String cast(Object obj) {return (String)obj;}static class X {}}");
+  }
+  
+  public void testClassCastFromLocal() {
+    doTest("java.lang.ClassCastException: class MainTest$1X cannot be cast to class java.lang.String",
+           "Find why 'obj' could be X (not-null)",
+           "class MainTest {static String cast(Object obj) {return (String)obj;}" +
+           "public static void main(String[] args) { class X{}cast(new X()); }}");
+  }
+  
+  public void testClassCastFromAnonymous() {
+    doTest("java.lang.ClassCastException: class MainTest$1 cannot be cast to class java.lang.String",
+           "Find why 'obj' could be anonymous java.lang.Object (not-null)",
+           "class MainTest {static String cast(Object obj) {return (String)obj;}" +
+           "public static void main(String[] args) { cast(new Object() {});}}");
   }
   
   public void testNpe() {
@@ -62,7 +109,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
   
   public void testAssertDivisibility() {
     doTest("java.lang.AssertionError",
-           "Find why 'i' could be odd",
+           "Find why 'i % 2' could be != 0",
            "class X {static void test(int i) {assert i % 2 == 0;}}");
   }
 
@@ -267,6 +314,12 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
                        "class X {static void test(int x) {<caret>assertFalse(x > 0);}" +
                        "static void assertFalse(boolean flag) {if(flag) throw new AssertionError();}}");
   }
+  
+  public void testAssertTrueUnboxing() {
+    doTestIntermediate("Find why 'x' could be false",
+                       "class X {static void test(Boolean x) {<caret>assertTrue(x);}" +
+                       "static void assertTrue(boolean flag) {if(!flag) throw new AssertionError();}}");
+  }
 
   public void testOptionalGet() {
     // Not supported
@@ -287,6 +340,42 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "\n" +
            "  void callee(String x, String y, String z) {}\n" +
            "}");
+  }
+  
+  public void testNpeJetBrainsOverride() {
+    doTest("Exception in thread \"main\" java.lang.IllegalArgumentException: Argument for @NotNull parameter 's' of MainTest$XImpl.foo must not be null\n" +
+           "\tat MainTest$XImpl.$$$reportNull$$$0(MainTest.java)\n" +
+           "\tat MainTest$XImpl.foo(MainTest.java)",
+           "Find why 's1' could be null",
+           "import org.jetbrains.annotations.NotNull;\n" +
+           "\n" +
+           "public class MainTest {\n" +
+           "    static void test(X x, String s, String s1) { x.foo(s, s1); }\n" +
+           "    interface X { void foo(String s, String t);}\n" +
+           "    static class XImpl implements X { @Override public void foo(String t, @NotNull String s) {}}" +
+           "    public static void main(String[] args) { test(new XImpl(), \"\", null); }" +
+           "}");
+  }
+  
+  public void testArrayCopySource() {
+    doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: source index -1 out of bounds for int[10]\n" +
+           "\tat java.base/java.lang.System.arraycopy(Native Method)",
+           "Find why 'src' could be -1",
+           "class Test {static void test(int[] data, int src, int dst, int len) { System.arraycopy(data, src, data, dst, len); }}");
+  }
+  
+  public void testArrayCopyDest() {
+    doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: destination index -1 out of bounds for int[10]\n" +
+           "\tat java.base/java.lang.System.arraycopy(Native Method)",
+           "Find why 'dst' could be -1",
+           "class Test {static void test(int[] data, int src, int dst, int len) { System.arraycopy(data, src, data, dst, len); }}");
+  }
+  
+  public void testArrayCopyLength() {
+    doTest("java.lang.ArrayIndexOutOfBoundsException: arraycopy: length -1 is negative\n" +
+           "\tat java.base/java.lang.System.arraycopy(Native Method)",
+           "Find why 'len' could be -1",
+           "class Test {static void test(int[] data, int src, int dst, int len) { System.arraycopy(data, src, data, dst, len); }}");
   }
 
   private void doTest(@NotNull String exceptionLine,
@@ -317,7 +406,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
       leaf = PsiTreeUtil.nextLeaf(leaf);
     }
     assertNotNull("No anchors found", anchor);
-    AnAction action = analysisProvider.getAnalysisAction(anchor, info);
+    AnAction action = analysisProvider.getAnalysisAction(anchor, info, Collections::emptyList);
     checkAction(action, expectedActionTitle);
   }
 
@@ -328,7 +417,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
     int offset = getEditor().getCaretModel().getOffset();
     assertTrue("Offset is not set", offset > 0);
     PsiElement leaf = getFile().findElementAt(offset);
-    AnAction action = analysisProvider.getIntermediateRowAnalysisAction(leaf);
+    AnAction action = analysisProvider.getIntermediateRowAnalysisAction(leaf, Collections::emptyList);
     checkAction(action, expectedActionTitle);
   }
 

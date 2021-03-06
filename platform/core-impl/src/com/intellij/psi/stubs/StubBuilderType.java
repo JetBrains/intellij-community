@@ -42,6 +42,16 @@ class StubBuilderType {
     myProperties = Collections.emptyList();
   }
 
+  @NotNull Class<?> getClassToBlameInCaseOfException() {
+    if (myElementType != null) {
+      return myElementType.getClass();
+    }
+    if (myBinarySubBuilder == null) {
+      return myBinaryFileStubBuilder.getClass();
+    }
+    return myBinarySubBuilder.getClass();
+  }
+
   BinaryFileStubBuilder getBinaryFileStubBuilder() {
     return myBinaryFileStubBuilder;
   }
@@ -49,7 +59,7 @@ class StubBuilderType {
   String getVersion() {
     if (myElementType != null) {
       if (myElementType.getLanguage() instanceof TemplateLanguage &&
-          myElementType.getStubVersion() < IStubFileElementType.getTemplateStubVersion()) {
+          myElementType.getStubVersion() < IStubFileElementType.getTemplateStubBaseVersion()) {
         PluginException.logPluginError(LOG, myElementType.getLanguage() + " stub version should call super.getStubVersion()",
                                        null, myElementType.getClass());
       }

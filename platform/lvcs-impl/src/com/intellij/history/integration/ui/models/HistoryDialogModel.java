@@ -12,6 +12,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +45,7 @@ public abstract class HistoryDialogModel {
     myGateway = gw;
   }
 
+  @NlsContexts.DialogTitle
   public String getTitle() {
     return FileUtil.toSystemDependentName(myFile.getPath());
   }

@@ -43,7 +43,7 @@ public class ExternalSystemException extends RuntimeException {
     this(message, null, quickFixes);
   }
 
-public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
+  public ExternalSystemException(@Nullable String message, @Nullable Throwable cause, @NotNull String... quickFixes) {
     super(extractMessage(message, cause));
     myQuickFixes = mergeArrays(cause instanceof ExternalSystemException
                                ? ((ExternalSystemException)cause).getQuickFixes()
@@ -99,7 +99,7 @@ public ExternalSystemException(@Nullable String message, @Nullable Throwable cau
     return super.initCause(cause);
   }
 
-  @Nullable
+  @NotNull
   private static String extractMessage(@Nullable String message, @Nullable Throwable cause) {
     StringBuilder buffer = new StringBuilder();
     if (message != null) {
@@ -114,6 +114,10 @@ public ExternalSystemException(@Nullable String message, @Nullable Throwable cau
       }
       if (first) {
         first = false;
+        // do not append same exception.message twice
+        if (m.equals(message)) {
+          continue;
+        }
       }
       else if (buffer.length() > 0) {
         buffer.append("\n");

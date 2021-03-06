@@ -16,13 +16,14 @@
 
 package com.intellij.openapi.util.registry;
 
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowRegistryAction extends AnAction implements DumbAware {
+public class ShowRegistryAction extends AnAction implements DumbAware, LightEditCompatible {
 
   private RegistryUi myUi;
 

@@ -3,9 +3,11 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.*;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.MessageView;
 import org.jetbrains.annotations.NotNull;
@@ -17,14 +19,18 @@ final class MessageViewImpl implements MessageView {
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
 
-  public MessageViewImpl(@NotNull Project project) {
+  MessageViewImpl(@NotNull Project project) {
     StartupManager.getInstance(project).runAfterOpened(() -> {
-      myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closable(ToolWindowId.MESSAGES_WINDOW, AllIcons.Toolwindows.ToolWindowMessages, ToolWindowAnchor.BOTTOM));
-      ContentManagerWatcher.watchContentManager(myToolWindow, getContentManager());
-      for (Runnable postponedRunnable : myPostponedRunnables) {
-        postponedRunnable.run();
-      }
-      myPostponedRunnables.clear();
+      AppUIExecutor.onUiThread().expireWith(project).submit(() -> {
+        myToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask.closable(
+          ToolWindowId.MESSAGES_WINDOW, UIBundle.messagePointer("tool.window.name.messages"),
+          AllIcons.Toolwindows.ToolWindowMessages, ToolWindowAnchor.BOTTOM));
+        ContentManagerWatcher.watchContentManager(myToolWindow, getContentManager());
+        for (Runnable postponedRunnable : myPostponedRunnables) {
+          postponedRunnable.run();
+        }
+        myPostponedRunnables.clear();
+      });
     });
   }
 

@@ -36,7 +36,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
         describable.text,
         describable.section.header.text
       )
-      else -> EditorConfigBundle["usage.type.unknown"]
+      else -> EditorConfigBundle.get("usage.type.unknown")
     }
   }
 
@@ -53,7 +53,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
       is EditorConfigConstantDescriptor ->
         EditorConfigBundle.get("usage.descriptive.name.site", describable.text, describable.declarationSite)
 
-      else -> EditorConfigBundle["usage.descriptive.name.unknown"]
+      else -> EditorConfigBundle.get("usage.descriptive.name.unknown")
     }
   }
 
@@ -70,7 +70,7 @@ class EditorConfigFindUsagesProvider : FindUsagesProvider {
       is EditorConfigConstantDescriptor ->
         return EditorConfigBundle.get("usage.node.text", describable.option.text, describable.section.header.text)
 
-      else -> EditorConfigBundle["usage.node.unknown"]
+      else -> EditorConfigBundle.get("usage.node.unknown")
     }
   }
 }

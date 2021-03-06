@@ -15,7 +15,7 @@ public class KeyValue<Key, Value> extends Pair<Key, Value> {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   @NotNull
   public static <Key, Value> KeyValue<Key, Value> create(final Key key, final Value value) {
-    return new KeyValue<Key, Value>(key, value);
+    return new KeyValue<>(key, value);
   }
 
   public Key getKey() {

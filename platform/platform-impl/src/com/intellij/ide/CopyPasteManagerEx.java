@@ -22,6 +22,7 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
@@ -90,6 +91,26 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public void stopKillRings() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Kill ring reset", new Throwable());
+    }
+    doStopKillRings();
+  }
+
+  @Override
+  public void stopKillRings(@NotNull Document document) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Kill ring reset for " + document, new Throwable());
+    }
+    if (!myData.isEmpty()) {
+      Transferable top = myData.get(0);
+      if (top instanceof KillRingTransferable && document == ((KillRingTransferable)top).getDocument()) {
+        doStopKillRings();
+      }
+    }
+  }
+
+  private void doStopKillRings() {
     for (Transferable data : myData) {
       if (data instanceof KillRingTransferable) {
         ((KillRingTransferable)data).setReadyToCombine(false);
@@ -219,19 +240,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private void deleteAfterAllowedMaximum() {
     int maxCount = Math.max(1, Registry.intValue("clipboard.history.max.items"));
     int maxMemory = Math.max(0, Registry.intValue("clipboard.history.max.memory"));
-    int smallItemSizeLimit = maxMemory / maxCount / 10;
-
-    if (myData.size() > maxCount) {
-      myData.subList(maxCount, myData.size()).clear();
-    }
-
-    LinkedListWithSum<Transferable>.ListIterator it = myData.listIterator(myData.size());
-    while (myData.getSum() > maxMemory && it.hasPrevious() && it.previousIndex() > 0) {
-      it.previous();
-      if (it.getValue() > smallItemSizeLimit) {
-        it.set(createPurgedItem());
-      }
-    }
+    deleteAfterAllowedMaximum(myData, maxCount, maxMemory, item -> createPurgedItem());
   }
 
   @Override
@@ -296,11 +305,29 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
     else if (t instanceof Sizeable) {
       int size = ((Sizeable)t).getSize();
+      //noinspection ConstantConditions
       if (size >= 0) {
         return size;
       }
       LOG.error("Got negative size (" + size + ") from " + t);
     }
     return 1000; // some value for an unknown type
+  }
+
+  public static <T> void deleteAfterAllowedMaximum(@NotNull LinkedListWithSum<T> data, int maxCount, int maxMemory,
+                                                   @NotNull Function<? super T, ? extends T> purgedItemFactory) {
+    int smallItemSizeLimit = maxMemory / maxCount / 10;
+
+    if (data.size() > maxCount) {
+      data.subList(maxCount, data.size()).clear();
+    }
+
+    LinkedListWithSum<T>.ListIterator it = data.listIterator(data.size());
+    while (data.getSum() > maxMemory && it.hasPrevious() && it.previousIndex() > 0) {
+      T purgedItem = it.previous();
+      if (it.getValue() > smallItemSizeLimit) {
+        it.set(purgedItemFactory.apply(purgedItem));
+      }
+    }
   }
 }

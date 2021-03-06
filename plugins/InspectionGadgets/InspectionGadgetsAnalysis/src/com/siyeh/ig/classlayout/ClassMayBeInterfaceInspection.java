@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.application.WriteAction;
@@ -161,8 +162,6 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
 
     private static void moveSubClassExtendsToImplements(List<PsiClass> inheritors) {
       final PsiClass oldClass = inheritors.get(0);
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(oldClass.getProject());
-      final PsiJavaCodeReferenceElement classReference = elementFactory.createClassReferenceElement(oldClass);
       for (int i = 1; i < inheritors.size(); i++) {
         final PsiClass inheritor = inheritors.get(i);
         final PsiReferenceList extendsList = inheritor.getExtendsList();
@@ -170,17 +169,15 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
           continue;
         }
         final PsiReferenceList implementsList = inheritor.getImplementsList();
-        moveReference(extendsList, implementsList, classReference);
+        moveReference(extendsList, implementsList, oldClass);
       }
     }
 
     private static void moveReference(@NotNull PsiReferenceList source, @Nullable PsiReferenceList target,
-                                      @NotNull PsiJavaCodeReferenceElement reference) {
+                                      @NotNull PsiClass oldClass) {
       final PsiJavaCodeReferenceElement[] sourceReferences = source.getReferenceElements();
-      final String fqName = reference.getQualifiedName();
       for (final PsiJavaCodeReferenceElement sourceReference : sourceReferences) {
-        final String implementsReferenceFqName = sourceReference.getQualifiedName();
-        if (fqName.equals(implementsReferenceFqName)) {
+        if (sourceReference.isReferenceTo(oldClass)) {
           if (target != null) {
             target.add(sourceReference);
           }
@@ -211,6 +208,9 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
         return;
       }
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
+      if (PsiUtil.isLocalClass(aClass) && !HighlightingFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
         return;
       }
       if (!mayBeInterface(aClass)) {

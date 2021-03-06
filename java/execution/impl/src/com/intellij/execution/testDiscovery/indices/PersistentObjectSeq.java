@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.InvertedIndex;
-import com.intellij.util.io.PersistentEnumeratorDelegate;
+import com.intellij.util.io.PersistentEnumerator;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -34,7 +34,7 @@ class PersistentObjectSeq {
     });
   }
 
-  public void add(PersistentEnumeratorDelegate<?> enumerator) {
+  public void add(PersistentEnumerator<?> enumerator) {
     myObjects.add(new PersistentObject() {
       @Override
       public void flush() {

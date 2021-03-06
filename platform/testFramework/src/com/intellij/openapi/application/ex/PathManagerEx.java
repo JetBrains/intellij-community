@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -7,30 +7,32 @@ import com.intellij.openapi.module.impl.ModulePath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestFrameworkUtil;
-import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static java.util.Arrays.asList;
-
-public class PathManagerEx {
+public final class PathManagerEx {
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>
@@ -47,8 +49,8 @@ public class PathManagerEx {
   /**
    * Caches test data lookup strategy by class.
    */
-  private static final ConcurrentMap<Class, TestDataLookupStrategy> CLASS_STRATEGY_CACHE = new ConcurrentHashMap<>();
-  private static final ConcurrentMap<String, Class> CLASS_CACHE = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<Class<?>, TestDataLookupStrategy> CLASS_STRATEGY_CACHE = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
   private static Set<String> ourCommunityModules;
 
   private PathManagerEx() { }
@@ -96,10 +98,10 @@ public class PathManagerEx {
    * <p/>
    * Hence, the order of relative paths for the single test group matters.
    */
-  private static final List<Pair<TestDataLookupStrategy, String>> TEST_DATA_RELATIVE_PATHS = asList(
-    pair(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, toSystemDependentName("community/java/java-tests/testData")),
-    pair(TestDataLookupStrategy.COMMUNITY, toSystemDependentName("java/java-tests/testData")),
-    pair(TestDataLookupStrategy.ULTIMATE, "testData"));
+  private static final List<Pair<TestDataLookupStrategy, String>> TEST_DATA_RELATIVE_PATHS = Arrays.asList(
+    new Pair<>(TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE, FileUtil.toSystemDependentName("community/java/java-tests/testData")),
+    new Pair<>(TestDataLookupStrategy.COMMUNITY, FileUtil.toSystemDependentName("java/java-tests/testData")),
+    new Pair<>(TestDataLookupStrategy.ULTIMATE, "testData"));
 
   /**
    * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with
@@ -114,7 +116,7 @@ public class PathManagerEx {
   }
 
   public static String getTestDataPath(String relativePath) throws IllegalStateException {
-    return getTestDataPath() + toSystemDependentName(relativePath);
+    return getTestDataPath() + FileUtil.toSystemDependentName(relativePath);
   }
 
   /**
@@ -158,21 +160,21 @@ public class PathManagerEx {
    * @param relativePath path to file relative to 'community' directory
    * @return file under the home directory of 'community' project
    */
-  public static File findFileUnderCommunityHome(String relativePath) {
-    return findFileByRelativePath(PathManager.getCommunityHomePath(), relativePath);
+  public static @NotNull File findFileUnderCommunityHome(@NotNull String relativePath) {
+    return findFileByRelativePath(PathManager.getCommunityHomePath(), relativePath).toFile();
   }
 
   /**
    * Find file by its path relative to project home directory (the 'community' project if {@code testClass} is located
    * in the community project, and the 'ultimate' project otherwise)
    */
-  public static File findFileUnderProjectHome(String relativePath, Class<? extends TestCase> testClass) {
-    return findFileByRelativePath(getHomePath(testClass), relativePath);
+  public static @NotNull File findFileUnderProjectHome(@NotNull String relativePath, Class<? extends TestCase> testClass) {
+    return findFileByRelativePath(getHomePath(testClass), relativePath).toFile();
   }
 
-  private static File findFileByRelativePath(String homePath, String relativePath) {
-    File file = new File(homePath, toSystemDependentName(relativePath));
-    if (!file.exists()) {
+  private static @NotNull Path findFileByRelativePath(@NotNull String homePath, @NotNull String relativePath) {
+    Path file = Paths.get(homePath, relativePath);
+    if (!Files.exists(file)) {
       throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" + homePath + "' directory");
     }
     return file;
@@ -268,7 +270,7 @@ public class PathManagerEx {
     ClassLoader definingClassLoader = PathManagerEx.class.getClassLoader();
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
 
-    for (ClassLoader classLoader : asList(contextClassLoader, definingClassLoader, systemClassLoader)) {
+    for (ClassLoader classLoader : Arrays.asList(contextClassLoader, definingClassLoader, systemClassLoader)) {
       clazz = loadClass(className, classLoader);
       if (clazz != null) {
         CLASS_CACHE.put(className, clazz);
@@ -341,14 +343,14 @@ public class PathManagerEx {
       return ourCommunityModules;
     }
 
-    ourCommunityModules = new THashSet<>();
+    ourCommunityModules = new HashSet<>();
     File modulesXml = findFileUnderCommunityHome(Project.DIRECTORY_STORE_FOLDER + "/modules.xml");
     if (!modulesXml.exists()) {
       throw new IllegalStateException("Cannot obtain test data path: " + modulesXml.getAbsolutePath() + " not found");
     }
 
     try {
-      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
+      Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), JpsProjectLoader.MODULE_MANAGER_COMPONENT);
       assert element != null;
       for (ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
         ourCommunityModules.add(file.getModuleName());

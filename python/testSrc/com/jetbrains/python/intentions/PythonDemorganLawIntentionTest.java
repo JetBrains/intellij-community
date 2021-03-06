@@ -16,7 +16,6 @@
 
 package com.jetbrains.python.intentions;
 
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 
 public class PythonDemorganLawIntentionTest extends PyIntentionTestCase {
@@ -42,6 +41,6 @@ public class PythonDemorganLawIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest() {
-    doIntentionTest(PyPsiBundle.message("INTN.demorgan.law"));
+    doIntentionTest(PyPsiBundle.message("INTN.NAME.demorgan.law"));
   }
 }

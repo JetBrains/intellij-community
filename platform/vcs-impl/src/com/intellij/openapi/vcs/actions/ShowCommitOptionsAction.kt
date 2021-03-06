@@ -4,6 +4,8 @@ package com.intellij.openapi.vcs.actions
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
 
 class ShowCommitOptionsAction : AnAction() {
   init {
@@ -12,11 +14,16 @@ class ShowCommitOptionsAction : AnAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.getProjectCommitWorkflowHandler()?.isActive == true
+    e.presentation.isEnabledAndVisible =
+      when (val workflowHandler = e.getContextCommitWorkflowHandler()) {
+        is ChangesViewCommitWorkflowHandler -> workflowHandler.isActive
+        is NonModalCommitWorkflowHandler<*, *> -> true
+        else -> false
+      }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val workflowHandler = e.getProjectCommitWorkflowHandler()!!
+    val workflowHandler = e.getContextCommitWorkflowHandler() as NonModalCommitWorkflowHandler<*, *>
     workflowHandler.showCommitOptions(e.isFromActionToolbar, e.dataContext)
   }
 }

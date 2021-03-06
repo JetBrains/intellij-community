@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
@@ -50,7 +50,19 @@ class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBas
   override fun getModificationCount(): Long {
     return when (value) {
       is MyMap -> value.modificationCount
-      else -> super.getModificationCount()
+      else -> {
+        var result = 0L
+        for (value in value.values) {
+          if (value is BaseState) {
+            result += value.modificationCount
+          }
+          else {
+            // or all values are BaseState or not
+            break
+          }
+        }
+        result
+      }
     }
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.java.psi.formatter.java;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
@@ -146,7 +146,7 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
   public void testClassInitializationBlockBracesPlacement() {
     // Inspired by IDEA-54191
-    getSettings().getRootSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().getRootSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE = 4;
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
     doMethodTest(
       "new Expectations() {\n" +

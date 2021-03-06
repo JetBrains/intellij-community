@@ -1,4 +1,5 @@
 import org.gradle.internal.os.OperatingSystem
+import java.util.concurrent.TimeUnit
 
 final def IJ_DIR = project.file("../../..").canonicalFile
 final def REPOSITORY = "https://repo.labs.intellij.net/clion"
@@ -31,7 +32,7 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldbkit: [
-    version: "9b3e89d",
+    version: "087c881",
     platforms: [
       win: ["x64", "x86"],
       linux: ["x64"],
@@ -87,6 +88,9 @@ task setupCidr
             src downloadUrl
             dest packageArchive
             tempAndMove true
+            connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+            readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+            retries 10
           }
         }
       }

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.notification.NotificationType;
@@ -90,7 +91,7 @@ public class ThreadBlockedMonitor {
   private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
                                       @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
-    XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
+    XDebuggerManagerImpl.getNotificationGroup().createNotification(
       JavaDebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
       JavaDebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
       NotificationType.INFORMATION, (notification, event) -> {
@@ -138,10 +139,15 @@ public class ThreadBlockedMonitor {
             }
             catch (ObjectCollectedException ignored) {
             }
+            catch (IncompatibleThreadStateException e) {
+              LOG.info(e);
+            }
+            catch (InternalException e) {
+              if (e.errorCode() != JvmtiError.THREAD_NOT_ALIVE) {
+                throw e;
+              }
+            }
           }
-        }
-        catch (IncompatibleThreadStateException e) {
-          LOG.info(e);
         }
         finally {
           vmProxy.getVirtualMachine().resume();
@@ -150,7 +156,7 @@ public class ThreadBlockedMonitor {
     });
   }
 
-  public static class InvocationWatcher {
+  public static final class InvocationWatcher {
     private final AtomicBoolean myObsolete = new AtomicBoolean();
     private final AtomicBoolean myAllResumed = new AtomicBoolean();
     private final Future myTask;

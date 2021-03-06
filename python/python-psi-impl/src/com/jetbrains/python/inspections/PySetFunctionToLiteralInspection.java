@@ -15,13 +15,8 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
@@ -53,8 +48,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
-      if (!isAvailable(node)) return;
+    public void visitPyCallExpression(final @NotNull PyCallExpression node) {
       PyExpression callee = node.getCallee();
       if (node.isCalleeText(PyNames.SET) && callee != null && PyBuiltinCache.isInBuiltins(callee)) {
         PyExpression[] arguments = node.getArguments();
@@ -65,21 +59,6 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
                               new ReplaceFunctionWithSetLiteralQuickFix());
         }
       }
-    }
-
-    private static boolean isAvailable(PyCallExpression node) {
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(node.getProject()).getCurrentProfile();
-      final InspectionToolWrapper inspectionTool = profile.getInspectionTool("PyCompatibilityInspection", node.getProject());
-      if (inspectionTool != null) {
-        final InspectionProfileEntry inspection = inspectionTool.getTool();
-        if (inspection instanceof PyCompatibilityInspection) {
-          final JDOMExternalizableStringList versions = ((PyCompatibilityInspection)inspection).ourVersions;
-          for (String s : versions) {
-            if (!LanguageLevel.fromPythonVersion(s).supportsSetLiterals()) return false;
-          }
-        }
-      }
-      return LanguageLevel.forElement(node).supportsSetLiterals();
     }
   }
 

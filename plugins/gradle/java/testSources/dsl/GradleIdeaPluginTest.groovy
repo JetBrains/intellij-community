@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
@@ -15,17 +15,13 @@ class GradleIdeaPluginTest extends GradleHighlightingBaseTest implements Express
   @Test
   void test() {
     importProject("apply plugin: 'idea'")
-    new RunAll().append {
-      'idea closure delegate'()
-    } append {
-      'idea project closure delegate'()
-    } append {
-      'idea project ipr closure delegate'()
-    } append {
-      'idea module closure delegate'()
-    } append {
-      'idea module iml closure delegate'()
-    } run()
+    new RunAll(
+      { 'idea closure delegate'() },
+      { 'idea project closure delegate'() },
+      { 'idea project ipr closure delegate'() },
+      { 'idea module closure delegate'() },
+      { 'idea module iml closure delegate'() }
+    ).run()
   }
 
   void 'idea closure delegate'() {

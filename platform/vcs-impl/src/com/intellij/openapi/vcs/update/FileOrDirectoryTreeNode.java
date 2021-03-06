@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -27,13 +28,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
-import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -45,7 +46,7 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   @NotNull
   private final Project myProject;
   protected final File myFile;
-  private final String myName;
+  private final @NlsSafe String myName;
 
   FileOrDirectoryTreeNode(@NotNull String path,
                           @NotNull SimpleTextAttributes invalidAttributes,

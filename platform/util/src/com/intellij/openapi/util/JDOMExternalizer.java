@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +20,7 @@ import java.util.Map;
  * @deprecated Use {@link XmlSerializer} instead.
  */
 @Deprecated
-public class JDOMExternalizer {
+public final class JDOMExternalizer {
   private JDOMExternalizer() {
   }
 
@@ -117,7 +117,7 @@ public class JDOMExternalizer {
    * @param nodeName node name (tag, in our example)
    * @param attrName attribute name (attr, in our example)
    * @param values a pack of values to add
-   * @see #loadStringsList(org.jdom.Element, String, String)
+   * @see #loadStringsList(Element, String, String)
    */
   public static void saveStringsList(@NotNull final Element parent,
                                      @NotNull final String nodeName,
@@ -134,9 +134,9 @@ public class JDOMExternalizer {
   public static List<String> loadStringsList(Element element, String rootName, String attrName) {
     final List<String> paths = new LinkedList<>();
     if (element != null) {
-      @NotNull final List list = element.getChildren(rootName);
-      for (Object o : list) {
-        paths.add(((Element)o).getAttribute(attrName).getValue());
+      final List<Element> list = element.getChildren(rootName);
+      for (Element e : list) {
+        paths.add(e.getAttribute(attrName).getValue());
       }
     }
     return paths;

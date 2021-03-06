@@ -2,6 +2,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyAsyncCallInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -11,19 +12,19 @@ public class PyAsyncCallQuickFixTest extends PyQuickFixTestCase {
 
   // PY-17292
   public void testAddAwaitBeforeCall() {
-    doQuickFixTest(PyAsyncCallInspection.class, PyAsyncCallInspection.coroutineIsNotAwaited, LanguageLevel.PYTHON35);
+    doQuickFixTest(PyAsyncCallInspection.class, PyPsiBundle.message("QFIX.coroutine.is.not.awaited"), LanguageLevel.PYTHON35);
   }
 
   // PY-17292
   public void testAddYieldFromBeforeCall() {
     runWithLanguageLevel(LanguageLevel.PYTHON35,
-                         () -> doMultifilesTest(PyAsyncCallInspection.class, PyAsyncCallInspection.coroutineIsNotAwaited,
+                         () -> doMultifilesTest(PyAsyncCallInspection.class, PyPsiBundle.message("QFIX.coroutine.is.not.awaited"),
                                                 new String[]{"addYieldFromBeforeCall.py", "asyncio/__init__.py", "asyncio/coroutines.py"}));
   }
 
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -26,6 +27,21 @@ class GHPRCommentServiceImpl(private val progressManager: ProgressManager,
       comment
     }.logError(LOG, "Error occurred while adding PR comment")
   }
+
+  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.Comment.getCommentBody(repository.serverPath, commentId))
+    }.logError(LOG, "Error occurred while loading comment source")
+
+  override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, text: String) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.Comment.updateComment(repository.serverPath, commentId, text))
+    }.logError(LOG, "Error occurred while updating comment")
+
+  override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String) =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(GHGQLRequests.Comment.deleteComment(repository.serverPath, commentId))
+    }.logError(LOG, "Error occurred while deleting comment")
 
   companion object {
     private val LOG = logger<GHPRCommentService>()

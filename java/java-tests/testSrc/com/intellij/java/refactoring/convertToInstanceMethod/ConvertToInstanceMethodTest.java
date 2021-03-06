@@ -92,4 +92,5 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_6;
   }
+
 }

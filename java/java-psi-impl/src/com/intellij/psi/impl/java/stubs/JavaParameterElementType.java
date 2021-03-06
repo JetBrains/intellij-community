@@ -54,7 +54,7 @@ public class JavaParameterElementType extends JavaStubElementType<PsiParameterSt
   @Override
   public void serialize(@NotNull PsiParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    TypeInfo.writeTYPE(dataStream, stub.getType(false));
+    TypeInfo.writeTYPE(dataStream, stub.getType());
     dataStream.writeByte(((PsiParameterStubImpl)stub).getFlags());
   }
 

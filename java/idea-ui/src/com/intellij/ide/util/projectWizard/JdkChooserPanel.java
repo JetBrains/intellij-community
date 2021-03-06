@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -14,10 +14,12 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -29,7 +31,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.StatusText;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +50,7 @@ import java.util.*;
  * @deprecated use {@link SdkPopupFactory} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class JdkChooserPanel extends JPanel {
   private final @Nullable Project myProject;
   private final DefaultListModel<Sdk> myListModel;
@@ -60,7 +65,7 @@ public class JdkChooserPanel extends JPanel {
     myListModel = new DefaultListModel<>();
     myList = new JBList<>(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ColoredListCellRenderer<Sdk>() {
+    myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends Sdk> list, Sdk value, int index, boolean selected, boolean hasFocus) {
         OrderEntryAppearanceService.getInstance().forJdk(value, false, selected, true).customize(this);
@@ -133,14 +138,14 @@ public class JdkChooserPanel extends JPanel {
     fillList(type, globalSdks);
     // restore selection
     if (selectedJdk != null) {
-      TIntArrayList list = new TIntArrayList();
+      IntList list = new IntArrayList();
       for (int i = 0; i < myListModel.size(); i++) {
         Sdk jdk = myListModel.getElementAt(i);
         if (Comparing.strEqual(jdk.getName(), selectedJdk.getName())){
           list.add(i);
         }
       }
-      final int[] indicesToSelect = list.toNativeArray();
+      final int[] indicesToSelect = list.toIntArray();
       if (indicesToSelect.length > 0) {
         myList.setSelectedIndices(indicesToSelect);
       }
@@ -284,7 +289,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   @Nullable
-  private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
+  private static Sdk showDialog(final Project project, @NlsContexts.DialogTitle String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     jdkChooserPanel.fillList(null, null);
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
@@ -308,7 +313,7 @@ public class JdkChooserPanel extends JPanel {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.openapi.roots.ui.configuration.SdkPopupFactory}
+   * @deprecated Use {@link SdkPopupFactory}
    */
   @Nullable
   @Deprecated

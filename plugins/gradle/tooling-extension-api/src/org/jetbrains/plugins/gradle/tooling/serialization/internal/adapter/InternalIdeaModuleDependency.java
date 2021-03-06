@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
+import org.jetbrains.annotations.ApiStatus;
 
-public class InternalIdeaModuleDependency extends InternalIdeaDependency implements IdeaModuleDependency {
-
+@ApiStatus.Internal
+public final class InternalIdeaModuleDependency extends InternalIdeaDependency implements IdeaModuleDependency {
   private String targetModuleName;
 
   @Override

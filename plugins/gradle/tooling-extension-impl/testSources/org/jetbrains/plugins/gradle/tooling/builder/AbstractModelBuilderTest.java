@@ -1,32 +1,19 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import gnu.trove.THash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.tooling.BuildActionExecuter;
@@ -44,6 +31,8 @@ import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -59,6 +48,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -75,13 +66,14 @@ import static org.junit.Assume.assumeThat;
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
+  /**
+   * !When adding new versions here change also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
+   */
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
-    // Support for builds using Gradle older than 2.6 was deprecated and will be removed in Gradle 5.0.
-    {"2.6"}, /*{"2.7"}, {"2.8"}, {"2.9"}, {"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
     {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
     {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
-    {"6.0"}, /* {"6.0.1"}, */ { "6.1" }
+    {"6.0"}, /* {"6.0.1"},  {"6.1"}, {"6.2"}, {"6.3"}, {"6.4"}, */ {"6.8.1"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -123,29 +115,18 @@ public abstract class AbstractModelBuilderTest {
     testDir = new File(ourTempDir, methodName);
     FileUtil.ensureExists(testDir);
 
-    final InputStream buildScriptStream = getClass().getResourceAsStream("/" + methodName + "/" + GradleConstants.DEFAULT_SCRIPT_NAME);
-    try {
-      FileUtil.writeToFile(
-        new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME),
-        FileUtil.loadTextAndClose(buildScriptStream)
-      );
-    }
-    finally {
-      StreamUtil.closeStream(buildScriptStream);
+    try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {
+      Files.copy(buildScriptStream, new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-    final InputStream settingsStream = getClass().getResourceAsStream("/" + methodName + "/" + GradleConstants.SETTINGS_FILE_NAME);
-    try {
-      if(settingsStream != null) {
-        FileUtil.writeToFile(
-          new File(testDir, GradleConstants.SETTINGS_FILE_NAME),
-          FileUtil.loadTextAndClose(settingsStream)
-        );
+    try (InputStream settingsStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.SETTINGS_FILE_NAME)) {
+      if (settingsStream != null) {
+        Files.copy(settingsStream, new File(testDir, GradleConstants.SETTINGS_FILE_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
       }
-    } finally {
-      StreamUtil.closeStream(settingsStream);
     }
 
+    // fix exception of FJP at org.gradle.process.internal.ExecHandleRunner.run => ... => net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start => java.lang.ProcessBuilder.start => java.lang.ProcessHandleImpl.completion
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
     GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
@@ -156,25 +137,32 @@ public abstract class AbstractModelBuilderTest {
     try {
       daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "10"));
     }
-    catch (NumberFormatException ignore) {}
+    catch (NumberFormatException ignore) {
+    }
 
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
     ProjectConnection connection = connector.connect();
 
     try {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported, false);
-      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(), set(IdeaProject.class)));
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
+      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
+                                                                                        ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
+      GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
+      GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
+      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
+
+      buildActionExecutor.withArguments(executionSettings.getArguments());
       String jdkHome = IdeaTestUtil.requireRealJdkHome();
       buildActionExecutor.setJavaHome(new File(jdkHome));
       buildActionExecutor.setJvmArguments("-Xmx128m", "-XX:MaxPermSize=64m");
-      buildActionExecutor.withArguments("--info", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
-    } finally {
+    }
+    finally {
       connection.close();
     }
   }
@@ -206,6 +194,8 @@ public abstract class AbstractModelBuilderTest {
       ShortTypeHandling.class,
       // trove4j jar
       THash.class,
+      // fastutil
+      Object2ObjectMap.class,
       // ion-java jar
       IonType.class,
       // util-rt jat
@@ -235,10 +225,13 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {
-      final T value = allModels.getModel(module, aClass);
-      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-      return Pair.create(key, value);
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
+      @Override
+      public Pair<String, T> fun(IdeaModule module) {
+        final T value = allModels.getModel(module, aClass);
+        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+        return Pair.create(key, value);
+      }
     });
 
     map.remove(filterKey);
@@ -276,9 +269,9 @@ public abstract class AbstractModelBuilderTest {
     private static final String RELEASE_REPOSITORY_ENV = "GRADLE_RELEASE_REPOSITORY";
     private static final String SNAPSHOT_REPOSITORY_ENV = "GRADLE_SNAPSHOT_REPOSITORY";
     private static final String INTELLIJ_LABS_GRADLE_RELEASE_MIRROR =
-      "https://services.gradle.org-mirror.labs.intellij.net/distributions";
+      "https://cache-redirector.jetbrains.com/downloads.gradle.org/distributions";
     private static final String INTELLIJ_LABS_GRADLE_SNAPSHOT_MIRROR =
-      "https://services.gradle.org-mirror.labs.intellij.net/distributions-snapshots";
+      "https://cache-redirector.jetbrains.com/downloads.gradle.org/distributions-snapshots";
     private static final String GRADLE_RELEASE_REPO = "https://services.gradle.org/distributions";
     private static final String GRADLE_SNAPSHOT_REPO = "https://services.gradle.org/distributions-snapshots";
 

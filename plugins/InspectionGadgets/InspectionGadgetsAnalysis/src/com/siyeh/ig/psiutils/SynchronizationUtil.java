@@ -16,12 +16,10 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
+import org.jetbrains.annotations.NonNls;
 
-public class SynchronizationUtil {
+public final class SynchronizationUtil {
 
   private SynchronizationUtil() {}
 
@@ -53,13 +51,13 @@ public class SynchronizationUtil {
   }
 
   public static boolean isCallToHoldsLock(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiMethodCallExpression)) {
       return false;
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    final String name = methodExpression.getReferenceName();
+    @NonNls final String name = methodExpression.getReferenceName();
     if (!"holdsLock".equals(name)) {
       return false;
     }

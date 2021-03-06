@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Eugene Zhuravlev
  */
-public class UnknownSdkType extends SdkType {
+public final class UnknownSdkType extends SdkType {
   private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new ConcurrentHashMap<>();
 
   /**
@@ -39,7 +39,7 @@ public class UnknownSdkType extends SdkType {
   }
 
   @Override
-  public boolean isValidSdkHome(String path) {
+  public boolean isValidSdkHome(@NotNull String path) {
     return false;
   }
 
@@ -50,7 +50,7 @@ public class UnknownSdkType extends SdkType {
 
   @NotNull
   @Override
-  public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
+  public String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
     return currentSdkName != null ? currentSdkName : "";
   }
 
@@ -78,9 +78,8 @@ public class UnknownSdkType extends SdkType {
     }
   }
 
-  @Nullable
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
+  public @NotNull SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return new UnknownSdkAdditionalData(additional);
   }
 

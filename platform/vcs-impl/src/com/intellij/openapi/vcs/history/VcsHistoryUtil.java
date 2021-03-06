@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactoryImpl;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -26,12 +13,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -44,10 +30,7 @@ import java.io.IOException;
 
 import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 
-public class VcsHistoryUtil {
-  @Deprecated
-  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffVcsDataKeys.REVISION_INFO;
-
+public final class VcsHistoryUtil {
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
   private VcsHistoryUtil() {
@@ -88,7 +71,7 @@ public class VcsHistoryUtil {
    */
   public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
-                              @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
+                              @NotNull @NlsContexts.Label String title1, @NotNull @NlsContexts.Label String title2) throws VcsException, IOException {
     FilePath path1 = getRevisionPath(revision1);
     FilePath path2 = getRevisionPath(revision2);
 
@@ -134,7 +117,8 @@ public class VcsHistoryUtil {
 
   public static byte @NotNull [] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.loadContent();
-    if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
+    if (content == null) throw new VcsException(
+      VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
     return content;
   }
 
@@ -202,7 +186,7 @@ public class VcsHistoryUtil {
       }
 
       @NotNull
-      private String makeTitle(@NotNull VcsFileRevision revision) {
+      private @NlsContexts.Label String makeTitle(@NotNull VcsFileRevision revision) {
         return revision.getRevisionNumber().asString() +
                (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }

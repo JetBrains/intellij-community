@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -32,7 +32,7 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void setStringAttribute(@NotNull Constants.StringKey key, @Nullable CharSequence value);
 
-  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable TIntObjectHashMap<CharSequence> captures);
+  void setCaptures(@NotNull Constants.CaptureKey key, @Nullable Int2ObjectMap<CharSequence> captures);
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 

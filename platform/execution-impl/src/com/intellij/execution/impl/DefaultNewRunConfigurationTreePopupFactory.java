@@ -4,7 +4,10 @@ package com.intellij.execution.impl;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.VirtualConfigurationType;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurationTreePopupFactory {
   private NodeDescriptor<?> root;
@@ -22,6 +26,17 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
   private List<ConfigurationType> myTypesToShow;
   private List<ConfigurationType> myOtherTypes;
 
+  public DefaultNewRunConfigurationTreePopupFactory() {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionRemoved(@NotNull ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myTypesToShow = null;
+        myOtherTypes = null;
+        myGroups = null;
+      }
+    }, null);
+  }
+
   @Override
   public void initStructure(@NotNull Project project) {
     root = createDescriptor(project, "<invisible-templates-root>", null);
@@ -29,8 +44,10 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
                              NodeDescriptor.DEFAULT_WEIGHT + 1);
     myTypesToShow = new ArrayList<>(
       RunConfigurable.Companion.configurationTypeSorted(project, true,
-                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()));
-    myOtherTypes = new ArrayList<>(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
+                                                        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), true));
+    myOtherTypes = ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList().stream()
+            .filter(configurationType -> !(configurationType instanceof VirtualConfigurationType))
+            .collect(Collectors.toList());
     myOtherTypes.sort((o1, o2) -> RunConfigurationListManagerHelperKt.compareTypesForUi(o1, o2));
     myOtherTypes.removeAll(myTypesToShow);
     myGroups = createGroups(project, myTypesToShow);
@@ -104,7 +121,7 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
   protected static class GroupDescriptor extends NodeDescriptor<String> {
     private final List<ConfigurationType> myTypes;
 
-    protected GroupDescriptor(@NotNull Project project,
+    public GroupDescriptor(@NotNull Project project,
                             @NotNull NodeDescriptor parent,
                             @Nullable Icon icon,
                             @NotNull String name,

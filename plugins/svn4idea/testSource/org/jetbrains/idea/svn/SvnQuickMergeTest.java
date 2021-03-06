@@ -49,8 +49,8 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     myBranchUrl = prepareBranchesStructure();
     myBranchRoot = new File(myTempDirFixture.getTempDirPath(), "b1");

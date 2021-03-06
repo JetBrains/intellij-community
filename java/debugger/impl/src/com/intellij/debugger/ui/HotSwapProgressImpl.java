@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -18,6 +18,8 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.reference.SoftReference;
@@ -28,27 +30,31 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HotSwapProgressImpl extends HotSwapProgress {
+public final class HotSwapProgressImpl extends HotSwapProgress {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
-  private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
+  private final Int2ObjectMap<List<String>> myMessages = new Int2ObjectOpenHashMap<>();
   private final ProgressWindow myProgressWindow;
-  private String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
+  private @NlsContexts.ProgressTitle String myTitle = JavaDebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
   private final List<HotSwapProgressListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public HotSwapProgressImpl(Project project) {
     super(project);
+    assert EventQueue.isDispatchThread();
     myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, new PerformInBackgroundOption() {
       @Override
       public boolean shouldStartInBackground() {
@@ -93,14 +99,14 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     }
     else if (!myMessages.isEmpty()){
       List<String> messages = new ArrayList<>();
-      for (int category : myMessages.keys()) {
-        messages.addAll(getMessages(category));
+      for (IntIterator iterator = myMessages.keySet().iterator(); iterator.hasNext(); ) {
+        messages.addAll(getMessages(iterator.nextInt()));
       }
       notifyUser("", buildMessage(messages, false), NotificationType.INFORMATION);
     }
   }
 
-  private void notifyUser(String title, String message, NotificationType type) {
+  private void notifyUser(@NlsContexts.NotificationTitle String title, @NlsContexts.NotificationContent String message, NotificationType type) {
     NotificationListener notificationListener = null;
     if (SoftReference.dereference(mySessionRef) != null) {
       notificationListener = new HotSwapNotificationListener(mySessionRef);
@@ -144,7 +150,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     return ContainerUtil.notNullize(myMessages.get(category));
   }
 
-  private String buildMessage(List<String> messages, boolean withRestart) {
+  private @NlsSafe String buildMessage(List<String> messages, boolean withRestart) {
     StringBuilder res = new StringBuilder(StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n"));
     if (SoftReference.dereference(mySessionRef) != null) {
       res.append("\n").append(JavaDebuggerBundle.message("status.hot.swap.completed.stop"));
@@ -154,7 +160,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     }
     return res.toString();
   }
-  
+
   @Override
   public void addMessage(DebuggerSession session, final int type, final String text) {
     List<String> messages = myMessages.get(type);
@@ -166,7 +172,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   @Override
-  public void setText(final String text) {
+  public void setText(final @NlsContexts.ProgressText String text) {
     myUpdateQueue.queue(new Update("Text") {
       @Override
       public void run() {
@@ -180,7 +186,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   @Override
-  public void setTitle(final String text) {
+  public void setTitle(final @NlsContexts.ProgressTitle @NotNull String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
       myProgressWindow.setTitle(text);

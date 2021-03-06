@@ -295,6 +295,9 @@
     <keyboard-shortcut first-keystroke="ENTER"/>
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
+  <action id="SelectVirtualTemplateElement">
+    <keyboard-shortcut first-keystroke="Alt Shift O"/>
+  </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>
     <keyboard-shortcut first-keystroke="ENTER"/>
@@ -332,4 +335,5 @@
   <action id="MoveStatementUp"/>
   <action id="MoveStatementDown"/>
   <action id="ToggleRenderedDocPresentation"/>
+  <action id="EditorAddCaretPerSelectedLine"/>
 </keymap>

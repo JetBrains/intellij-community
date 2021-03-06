@@ -22,46 +22,47 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import java.awt.BorderLayout
 
 /**
  * @author vlan
  */
-class PyAddSystemWideInterpreterPanel(private val module: Module?,
+open class PyAddSystemWideInterpreterPanel(private val module: Module?,
                                       private val existingSdks: List<Sdk>,
                                       private val context: UserDataHolderBase) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.system.interpreter")
-  private val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val sdkComboBox = PySdkPathChoosingComboBox()
+  protected val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
 
   init {
     layout = BorderLayout()
-    val permWarning = JBLabel(
-      """|<html><strong>Note:</strong> You'll need admin permissions to install packages for this interpreter. Consider
-         |creating a per-project virtual environment instead.</html>""".trimMargin()).apply {
-    }
     Runnable {
       permWarning.isVisible = sdkComboBox.selectedSdk?.adminPermissionsNeeded() ?: false
     }.apply {
       run()
       addChangeListener(this)
     }
-    val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
-      .addComponentToRightColumn(permWarning)
-      .panel
-    add(formPanel, BorderLayout.NORTH)
+    layoutComponents()
     addInterpretersAsync(sdkComboBox) {
       detectSystemWideSdks(module, existingSdks, context).takeIf { it.isNotEmpty() || filterSystemWideSdks(existingSdks).isNotEmpty() }
       ?: getSdksToInstall()
     }
   }
 
+  protected open fun layoutComponents() {
+    val formPanel = FormBuilder.createFormBuilder()
+      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
+      .addComponentToRightColumn(permWarning)
+      .panel
+    add(formPanel, BorderLayout.NORTH)
+  }
+
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    return when (val sdk = sdkComboBox.selectedSdk) {
-      is PySdkToInstall -> sdk.install(module) { detectSystemWideSdks(module, existingSdks, context) }?.setup(existingSdks)
+    return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
       is PyDetectedSdk -> sdk.setup(existingSdks)
       else -> sdk
     }

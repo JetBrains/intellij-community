@@ -1,15 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 /**
  * @author Aleksey.Rostovskiy
  */
 @CompileStatic
-class PyCharmBuildOptions {
+final class PyCharmBuildOptions {
   /**
    * Build step of generating indices and stubs. Pass it to {@link org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip} to skip
    */
@@ -32,21 +35,16 @@ class PyCharmBuildOptions {
   static final String prebuiltStubsArchive = System.getProperty("intellij.build.pycharm.prebuilt.stubs.archive")
 
   /**
-   * Build PyCharm with Anaconda plugin distributions together with regular PyCharm
-   */
-  static final boolean buildWithAnacondaEdition = SystemProperties.getBooleanProperty("intellij.build.pycharm.anaconda.edition", false)
-
-  /**
    * Miniconda installer folder name
    * The same folder should be specified at com.jetbrains.python.conda.PythonMinicondaLocator#getMinicondaInstallerFolder()
    * */
   static final String minicondaInstallerFolderName = "minicondaInstaller"
 
-  static File getFolderForIndicesAndStubs(BuildContext context) {
-    return new File(context.paths.buildOutputRoot, "index")
+  static Path getFolderForIndicesAndStubs(BuildContext context) {
+    return Paths.get(context.paths.buildOutputRoot, "index")
   }
 
-  static File getTemporaryFolderForUnzip(BuildContext context) {
-    return new File(context.paths.temp, "unzips")
+  static Path getTemporaryFolderForUnzip(BuildContext context) {
+    return context.paths.tempDir.resolve("unzips")
   }
 }

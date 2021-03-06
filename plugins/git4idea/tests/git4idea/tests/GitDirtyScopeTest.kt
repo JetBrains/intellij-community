@@ -162,6 +162,42 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     assertFalse(isDirtyPath(file))
   }
 
+  fun testCaseOnlyDirectoryRename() {
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+
+    val dir = repo.root.createDir("dir")
+    val file = dir.createFile("file.txt", "initial")
+    git("add .")
+    commit("initial")
+
+    editDocument(file, "initial")
+    saveDocument(file)
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+
+    changeListManager.forceStopInTestMode()
+
+    writeAction {
+      dir.delete(this)
+      val newDir = repo.root.createDir("DIR")
+      newDir.createFile("file.txt", "initial")
+    }
+    dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "DHq")) // hash code collisions
+    dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "djS"))
+    git("add .")
+    VcsDirtyScopeVfsListener.getInstance(project).waitForAsyncTaskCompletion()
+
+    changeListManager.forceGoInTestMode()
+    changeListManager.waitUntilRefreshed()
+
+    assertChanges {
+      rename("dir/file.txt", "DIR/file.txt")
+    }
+    assertFalse(isDirtyPath(file))
+  }
+
+
   private fun editDocument(file: VirtualFile, newContent: String) {
     runInEdtAndWait {
       WriteCommandAction.runWriteCommandAction(project) {

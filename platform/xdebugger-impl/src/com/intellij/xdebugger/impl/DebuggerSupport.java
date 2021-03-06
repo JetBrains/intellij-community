@@ -5,8 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.AbstractDebuggerSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
@@ -151,6 +149,12 @@ public abstract class DebuggerSupport {
     return DisabledActionHandler.INSTANCE;
   }
 
+  @NotNull
+  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+
   public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
     return DisabledActionHandler.INSTANCE;
   }
@@ -195,15 +199,6 @@ public abstract class DebuggerSupport {
   @NotNull
   public MarkObjectActionHandler getMarkObjectHandler() {
     return DISABLED_MARK_HANDLER;
-  }
-
-  /**
-   * @deprecated {@link XDebuggerManager#getCurrentSession()} is used instead
-   */
-  @Nullable
-  @Deprecated
-  public AbstractDebuggerSession getCurrentSession(@NotNull Project project) {
-    return null;
   }
 
   protected static final EditBreakpointActionHandler DISABLED_EDIT = new EditBreakpointActionHandler() {

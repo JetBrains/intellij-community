@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -60,7 +61,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isValidElement(PsiElement result);
 
-  protected void chooseTargetClass(@NotNull Project project, @NotNull Editor editor, @NotNull Consumer<PsiClass> createInClass) {
+  protected void chooseTargetClass(@NotNull Project project, @NotNull Editor editor, @NotNull Consumer<? super PsiClass> createInClass) {
     PsiElement element = getElement();
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
 
@@ -77,7 +78,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 
-  private static void doInvoke(final PsiClass targetClass, Consumer<PsiClass> invokeImpl) {
+  private static void doInvoke(final PsiClass targetClass, Consumer<? super PsiClass> invokeImpl) {
     if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
@@ -89,7 +90,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   @Nullable
   protected abstract PsiElement getElement();
 
-  private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<PsiClass> invokeImpl) {
+  private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<? super PsiClass> invokeImpl) {
     final PsiClass firstClass = classes.get(0);
     final Project project = firstClass.getProject();
 
@@ -233,7 +234,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return true;
   }
 
-  //Should return only valid inproject classes
+  //Should return only valid project classes
   @NotNull
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     PsiClass psiClass = null;
@@ -382,7 +383,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       final Template template,
                                       @NotNull final Project project,
                                       final TemplateEditingListener listener,
-                                      final String commandName) {
+                                      final @NlsContexts.Command String commandName) {
     Runnable runnable = () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener);
     CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);
   }
@@ -410,7 +411,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(psiClass.getName(), null));
       } else {
         while (true) {
-          final String paramName = idx > 0 ? "T" + idx : "T";
+          final @NonNls String paramName = idx > 0 ? "T" + idx : "T";
           if (typeParamNames.add(paramName)) {
             targetClass.getTypeParameterList().add(factory.createTypeParameterFromText(paramName, null));
             break;

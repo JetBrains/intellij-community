@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public interface NodeStructure<T> {
-  NodeStructure<LighterASTNode> LIGHTER_NODE_STRUCTURE = new NodeStructure<LighterASTNode>() {
+  NodeStructure<LighterASTNode> LIGHTER_NODE_STRUCTURE = new NodeStructure<>() {
     @Override
     public int getStartOffset(@NotNull LighterASTNode node) {
       return node.getStartOffset();
@@ -41,7 +41,7 @@ public interface NodeStructure<T> {
   };
 
 
-  NodeStructure<ASTNode> AST_NODE_STRUCTURE = new NodeStructure<ASTNode>() {
+  NodeStructure<ASTNode> AST_NODE_STRUCTURE = new NodeStructure<>() {
     @Override
     public int getStartOffset(@NotNull ASTNode node) {
       return node.getTextRange().getStartOffset();

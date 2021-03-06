@@ -7,6 +7,7 @@ import com.intellij.index.PrebuiltIndexProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeExtension
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.indexing.FileContent
@@ -14,7 +15,6 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentHashMap
-import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -63,8 +63,7 @@ open class HashCodeExternalizers : DataExternalizer<HashCode> {
   }
 }
 
-class GeneratingFullStubExternalizer : SerializedStubTreeDataExternalizer(true,
-                                                                          SerializationManagerEx.getInstanceEx(),
+class GeneratingFullStubExternalizer : SerializedStubTreeDataExternalizer(SerializationManagerEx.getInstanceEx(),
                                                                           StubForwardIndexExternalizer.createFileLocalExternalizer())
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubTree>(), PrebuiltStubsProvider {
@@ -74,7 +73,7 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
 
   override val indexName: String get() = SDK_STUBS_STORAGE_NAME
 
-  override val indexExternalizer: SerializedStubTreeDataExternalizer get() = SerializedStubTreeDataExternalizer(true, mySerializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer())
+  override val indexExternalizer: SerializedStubTreeDataExternalizer get() = SerializedStubTreeDataExternalizer(mySerializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer())
 
   companion object {
     const val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
@@ -116,12 +115,13 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
     try {
       return get(fileContent)
     }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
     catch (e: Exception) {
+      dispose()
       LOG.error("Can't get prebuilt stub tree from ${this.javaClass.name}", e)
     }
     return null
   }
 }
-
-@TestOnly
-fun PrebuiltStubsProviderBase.reset(): Boolean = this.init()

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleNodeVisitor;
@@ -35,13 +36,13 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
   private final NodeSelector mySelector;
 
   public SelectFromMavenProjectsDialog(Project project,
-                                       String title,
+                                       @NlsContexts.DialogTitle String title,
                                        final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass) {
     this(project, title, nodeClass, null);
   }
 
   public SelectFromMavenProjectsDialog(Project project,
-                                       String title,
+                                       @NlsContexts.DialogTitle String title,
                                        final Class<? extends MavenProjectsStructure.MavenSimpleNode> nodeClass,
                                        @Nullable NodeSelector selector) {
     super(project, false);

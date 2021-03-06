@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -26,13 +25,9 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
   }
 
   @Override
-  public PsiExpression getExpression() {
-    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
-  }
-
-  @Override
   public PsiType getType() {
-    if (PsiPolyExpressionUtil.isPolyExpression(this) &&
+    if (PsiUtil.isLanguageLevel8OrHigher(this) &&
+        PsiPolyExpressionUtil.isPolyExpression(this) &&
         !MethodCandidateInfo.isOverloadCheck(PsiUtil.skipParenthesizedExprUp(getParent()))) {
       return InferenceSession.getTargetType(this);
     }
@@ -95,12 +90,8 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
       if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
         type = ((PsiPrimitiveType)type).getBoxedType(this);
       }
-      if (leastUpperBound == PsiType.NULL) {
-        leastUpperBound = type;
-      }
-      else {
-        leastUpperBound = GenericsUtil.getLeastUpperBound(type, leastUpperBound, getManager());
-      }
+      
+      leastUpperBound = GenericsUtil.getLeastUpperBound(type, leastUpperBound, getManager());
     }
     return leastUpperBound != null ? PsiUtil.captureToplevelWildcards(leastUpperBound, this) : null;
   }

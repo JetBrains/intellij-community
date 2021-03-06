@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,7 +36,7 @@ import java.util.Map;
 
 public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifact {
   private CompositePackagingElement<?> myRootElement;
-  private String myName;
+  private @NlsSafe String myName;
   private boolean myBuildOnMake;
   private String myOutputPath;
   private final EventDispatcher<? extends ArtifactListener> myDispatcher;
@@ -43,13 +44,15 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
   private final ProjectModelExternalSource myExternalSource;
 
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
+  public ArtifactImpl(@NotNull @NlsSafe String name,
+                      @NotNull ArtifactType artifactType, boolean buildOnMake,
                       @NotNull CompositePackagingElement<?> rootElement, String outputPath,
                       @Nullable ProjectModelExternalSource externalSource) {
     this(name, artifactType, buildOnMake, rootElement, outputPath, externalSource, null);
   }
 
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
+  public ArtifactImpl(@NotNull @NlsSafe String name,
+                      @NotNull ArtifactType artifactType, boolean buildOnMake,
                       @NotNull CompositePackagingElement<?> rootElement, String outputPath,
                       @Nullable ProjectModelExternalSource externalSource, EventDispatcher<? extends ArtifactListener> dispatcher) {
     myName = name;

@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class CollectionUtils {
+public final class CollectionUtils {
   private static final CallMatcher COLLECTION_MAP_SIZE =
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0),
@@ -57,7 +57,7 @@ public class CollectionUtils {
     new HashMap<>();
 
   static {
-    s_allCollectionClassesAndInterfaces = ContainerUtil.immutableSet(
+    s_allCollectionClassesAndInterfaces = Set.of(
     "java.util.AbstractCollection",
     "java.util.AbstractList",
     "java.util.AbstractMap",
@@ -252,7 +252,7 @@ public class CollectionUtils {
   }
 
   public static String getInterfaceForClass(String name) {
-    final int parameterStart = name.indexOf((int)'<');
+    final int parameterStart = name.indexOf('<');
     final String baseName;
     if (parameterStart >= 0) {
       baseName = name.substring(0, parameterStart).trim();

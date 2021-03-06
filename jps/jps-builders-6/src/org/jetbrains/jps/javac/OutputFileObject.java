@@ -1,13 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
 import java.io.*;
 import java.net.URI;
+import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
@@ -21,21 +25,10 @@ public final class OutputFileObject extends JpsFileObject {
   private final File myFile;
   @Nullable
   private final String myClassName;
-  @Nullable private final URI mySourceUri;
+  private final Iterable<URI> mySources;
   private volatile BinaryContent myContent;
-  private final File mySourceFile;
   private final String myEncodingName;
-
-  public OutputFileObject(@NotNull JpsJavacFileManager.Context context,
-                          @Nullable File outputRoot,
-                          String relativePath,
-                          @NotNull File file,
-                          @NotNull Kind kind,
-                          @Nullable String className,
-                          @Nullable final URI sourceUri,
-                          @Nullable final String encodingName, final JavaFileManager.Location location) {
-    this(context, outputRoot, relativePath, file, kind, className, sourceUri, encodingName, null, location);
-  }
+  private final boolean myIsGenerated;
 
   public OutputFileObject(@Nullable JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
@@ -43,19 +36,21 @@ public final class OutputFileObject extends JpsFileObject {
                           @NotNull File file,
                           @NotNull Kind kind,
                           @Nullable String className,
-                          @Nullable final URI srcUri,
+                          @NotNull final Iterable<URI> sources,
                           @Nullable final String encodingName,
-                          @Nullable BinaryContent content, final JavaFileManager.Location location) {
-    super(file.toURI(), kind, location);
+                          @Nullable BinaryContent content,
+                          final JavaFileManager.Location location,
+                          boolean isFromGeneratedSource) {
+    super(FileUtilRt.fileToUri(file), kind, location);
     myContext = context;
-    mySourceUri = srcUri;
+    mySources = sources;
     myContent = content;
     myOutputRoot = outputRoot;
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
-    mySourceFile = srcUri != null ? new File(srcUri) : null;
     myEncodingName = encodingName;
+    myIsGenerated = isFromGeneratedSource;
   }
 
   @Nullable
@@ -77,14 +72,34 @@ public final class OutputFileObject extends JpsFileObject {
     return myClassName;
   }
 
-  @Nullable
-  public File getSourceFile() {
-    return mySourceFile;
+  public boolean isGenerated() {
+    return myIsGenerated;
   }
 
+  /**
+   * @deprecated In general, an output object may be generated from several source files. Use {@link OutputFileObject#getSourceFiles()} method instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
-  public URI getSourceUri() {
-    return mySourceUri;
+  public File getSourceFile() {
+    final Iterator<File> it = getSourceFiles().iterator();
+    return it.hasNext()? it.next() : null;
+  }
+
+  @NotNull
+  public Iterable<File> getSourceFiles() {
+    return Iterators.filter(Iterators.map(getSourceUris(), new Function<URI, File>() {
+      @Override
+      public File fun(URI uri) {
+        return "file".equalsIgnoreCase(uri.getScheme())? new File(uri) : null;
+      }
+    }), Iterators.<File>notNullFilter());
+  }
+
+  @NotNull
+  public Iterable<URI> getSourceUris() {
+    return mySources;
   }
 
   @Override
@@ -96,15 +111,23 @@ public final class OutputFileObject extends JpsFileObject {
   @Override
   public ByteArrayOutputStream openOutputStream() {
     return new ByteArrayOutputStream() {
+      private boolean isClosed = false;
+
+      private synchronized boolean markClosed() {
+        return !isClosed && (isClosed = true);
+      }
+      
       @Override
       public void close() throws IOException {
-        try {
-          super.close();
-        }
-        finally {
-          myContent = new BinaryContent(buf, 0, size());
-          if (myContext != null) {
-            myContext.consumeOutputFile(OutputFileObject.this);
+        if (markClosed()) {
+          try {
+            super.close();
+          }
+          finally {
+            myContent = new BinaryContent(buf, 0, size());
+            if (myContext != null) {
+              myContext.consumeOutputFile(OutputFileObject.this);
+            }
           }
         }
       }

@@ -8,14 +8,23 @@ import git4idea.GitUtil.HEAD
 import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.BUNDLE
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
 fun validateName(repositories: Collection<GitRepository>, inputString: String): ValidationInfo? =
   checkRefName(inputString) ?: checkBranchConflict(repositories, inputString)
 
 fun checkRefName(inputString: String?): ValidationInfo? =
-  if (!GitRefNameValidator.getInstance().checkInput(inputString) || StringUtil.equalsIgnoreCase(inputString, HEAD))
+  checkRefNameEmptyOrHead(inputString) ?:
+  if (!GitRefNameValidator.getInstance().checkInput(inputString))
     ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.name.invalid", inputString))
+  else null
+
+fun checkRefNameEmptyOrHead(inputString: String?): ValidationInfo? =
+  if (StringUtil.isEmptyOrSpaces(inputString))
+    ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.name.empty"))
+  else if (StringUtil.equalsIgnoreCase(inputString, HEAD))
+    ValidationInfo(GitBundle.message("new.branch.dialog.error.branch.name.head"))
   else null
 
 private fun checkBranchConflict(repositories: Collection<GitRepository>, inputString: String) =
@@ -41,6 +50,7 @@ private fun conflictsWithLocalOrRemote(repositories: Collection<GitRepository>,
   return ValidationInfo(errorText)
 }
 
+@Nls
 private fun getAdditionalDescription(repositories: List<GitRepository>) =
   " " +
   if (repositories.size > 1) GitBundle.message("common.suffix.in.several.repositories", repositories.size)

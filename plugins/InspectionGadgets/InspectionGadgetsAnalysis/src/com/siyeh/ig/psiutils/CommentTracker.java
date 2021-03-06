@@ -1,14 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -20,7 +24,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A helper class to implement quick-fix which collects removed comments from the PSI and can restore them at once.
+ * A helper class for implementing quick-fixes. CommentTracker collects removed comments from the PSI and can restore them at once.
  *
  * After this object restores comments, it becomes unusable.
  *
@@ -32,7 +36,7 @@ public final class CommentTracker {
   private PsiElement lastTextWithCommentsElement = null;
 
   /**
-   * Marks the element as unchanged and returns its text. The unchanged elements are assumed to be preserved
+   * Marks the element as unchanged and returns its text. Unchanged elements are assumed to be preserved
    * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param element element to return the text
@@ -46,7 +50,7 @@ public final class CommentTracker {
 
   /**
    * Marks the expression as unchanged and returns its text, adding parentheses if necessary.
-   * The unchanged elements are assumed to be preserved in the resulting code as is,
+   * Unchanged elements are assumed to be preserved in the resulting code as is,
    * so the comments from them will not be extracted.
    *
    * @param element    expression to return the text
@@ -66,14 +70,14 @@ public final class CommentTracker {
    *
    * @param variable   a variable to use as lambda parameter
    * @param expression an expression to use as lambda body
-   * @return a string representation of lambda
+   * @return a string representation of the created lambda
    */
   public @NotNull String lambdaText(@NotNull PsiVariable variable, @NotNull PsiExpression expression) {
     return variable.getName() + " -> " + text(expression);
   }
 
   /**
-   * Marks the element as unchanged and returns it. The unchanged elements are assumed to be preserved
+   * Marks the element as unchanged and returns it. Unchanged elements are assumed to be preserved
    * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param element element to mark
@@ -88,7 +92,7 @@ public final class CommentTracker {
   }
 
   /**
-   * Marks the range of elements as unchanged and returns their text. The unchanged elements are assumed to be preserved
+   * Marks the range of elements as unchanged and returns their text. Unchanged elements are assumed to be preserved
    * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param firstElement first element to mark
@@ -113,7 +117,7 @@ public final class CommentTracker {
   }
 
   /**
-   * Marks the range of elements as unchanged. The unchanged elements are assumed to be preserved
+   * Marks the range of elements as unchanged. Unchanged elements are assumed to be preserved
    * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param firstElement first element to mark
@@ -187,8 +191,8 @@ public final class CommentTracker {
   }
 
   /**
-   * Returns an element text, possibly prepended with comments which are located between the supplied element
-   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * Returns the text of the specified element, possibly prepended with comments which are located between the supplied element
+   * and the preceding element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
    * The used comments are deleted from the original document.
    *
    * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
@@ -196,11 +200,11 @@ public final class CommentTracker {
    *
    * <p>This method can be used if several parts of original code are reused in the generated replacement.
    *
-   * @param element an element to convert to the text
-   * @return the string containing the element text and possibly some comments.
+   * @param element the element to convert to text
+   * @return a string containing the element text and possibly some comments.
    */
   public String textWithComments(@NotNull PsiElement element) {
-    return commentsBefore(element)+element.getText();
+    return commentsBefore(element)+text(element);
   }
 
   /**
@@ -214,18 +218,18 @@ public final class CommentTracker {
    *
    * <p>This method can be used if several parts of original code are reused in the generated replacement.
    *
-   * @param expression an expression to convert to the text
+   * @param expression an expression to convert to text
    * @param precedence precedence of surrounding operation
-   * @return the string containing the element text and possibly some comments.
+   * @return a string containing the element text and possibly some comments.
    */
   public String textWithComments(@NotNull PsiExpression expression, int precedence) {
     return commentsBefore(expression)+ParenthesesUtils.getText(expression, precedence + 1);
   }
 
   /**
-   * Deletes given PsiElement collecting all the comments inside it.
+   * Deletes the given PsiElement collecting all comments inside it.
    *
-   * @param element element to delete
+   * @param element an element to delete
    */
   public void delete(@NotNull PsiElement element) {
     grabCommentsOnDelete(element);
@@ -233,7 +237,7 @@ public final class CommentTracker {
   }
 
   /**
-   * Deletes all given PsiElement's collecting all the comments inside them.
+   * Deletes all given PsiElements collecting all comments inside them.
    *
    * @param elements elements to delete (all not null)
    */
@@ -244,7 +248,7 @@ public final class CommentTracker {
   }
 
   /**
-   * Deletes given PsiElement replacing it with the comments including comments inside the deleted element
+   * Deletes the given PsiElement replacing it with the comments, including comments inside the deleted element
    * and previously gathered comments.
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
@@ -262,21 +266,47 @@ public final class CommentTracker {
   }
 
   /**
-   * Replaces given PsiElement collecting all the comments inside it.
+   * Replaces the given PsiElement collecting all comments inside it. In the case that the replacement is a {@link PsiPolyadicExpression}
+   * and the parent of the element to replace is also a PsiPolyadicExpression, with the same operator and type, a combined flattened
+   * PsiPolyadicExpression is created from both expressions and inserted instead of the parent of the element to replace.
    *
    * @param element     element to replace
    * @param replacement replacement element. It's also marked as unchanged (see {@link #markUnchanged(PsiElement)})
-   * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
+   * @return the element which was actually inserted in the tree (either {@code replacement}, its copy or a newly created polyadic expression)
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    final PsiElement parent = element.getParent();
+    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
+      // flatten nested polyadic expressions
+      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
+      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
+      IElementType parentTokenType = parentPolyadic.getOperationTokenType();
+      IElementType childTokenType = childPolyadic.getOperationTokenType();
+      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType) &&
+          !PsiPrecedenceUtil.areParenthesesNeeded(childPolyadic, parentPolyadic, false)) {
+        PsiElement[] children = parentPolyadic.getChildren();
+        int idx = ArrayUtil.indexOf(children, element);
+        if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
+          StringBuilder text = new StringBuilder();
+          for (int i = 0; i < children.length; i++) {
+            PsiElement child = children[i];
+            text.append(text((i == idx) ? replacement : child));
+          }
+          replacement = JavaPsiFacade.getElementFactory(parent.getProject()).createExpressionFromText(text.toString(), parent);
+          element = parent;
+        }
+      }
+    }
     markUnchanged(replacement);
     grabComments(element);
     return element.replace(replacement);
   }
 
   /**
-   * Creates a replacement element from the text and replaces given element,
-   * collecting all the comments inside it.
+   * Creates a replacement element from the text and replaces the given PsiElement collecting all comments inside it. When
+   * the replacement parses to a {@link PsiPolyadicExpression} and the parent of the element to replace is also a
+   * PsiPolyadicExpression, with the same operator and type, a combined flattened
+   * PsiPolyadicExpression is created from both expressions and inserted instead of the parent of the element to replace.
    *
    * <p>
    * The type of the created replacement will mimic the type of supplied element.
@@ -288,14 +318,17 @@ public final class CommentTracker {
    * @param text    replacement text
    * @return the element which was actually inserted in the tree
    */
-  public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull String text) {
-    PsiElement replacement = createElement(element, text);
+  public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
+    PsiElement replacement = createElementFromText(text, element);
     return replace(element, replacement);
   }
 
   /**
    * Replaces given PsiElement collecting all the comments inside it and restores comments putting them
-   * to the appropriate place before replaced element.
+   * to the appropriate place before replaced element. See also the javadoc of {@link #replace(PsiElement, PsiElement)}
+   * In the case that the replacement is a {@link PsiPolyadicExpression} and the parent of the element to replace is also
+   * a PsiPolyadicExpression, with the same operator and type, a combined flattened PsiPolyadicExpression is created
+   * from both expressions and inserted instead of the parent of the element to replace.
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
@@ -306,6 +339,13 @@ public final class CommentTracker {
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     List<PsiElement> suffix = grabSuffixComments(element);
     PsiElement result = replace(element, replacement);
+    PsiElement anchor = findAnchor(result);
+    restoreSuffixComments(result, suffix);
+    insertCommentsBefore(anchor);
+    return result;
+  }
+
+  private static @NotNull PsiElement findAnchor(@NotNull PsiElement result) {
     PsiElement anchor = PsiTreeUtil
       .getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class, PsiNameValuePair.class);
     if (anchor instanceof PsiLambdaExpression && anchor != result) {
@@ -317,15 +357,15 @@ public final class CommentTracker {
     if (anchor instanceof PsiStatement && (anchor.getParent() instanceof PsiIfStatement || anchor.getParent() instanceof PsiLoopStatement)) {
       anchor = anchor.getParent();
     }
-    if (anchor == null) anchor = result;
-    restoreSuffixComments(result, suffix);
-    insertCommentsBefore(anchor);
-    return result;
+    return anchor == null ? result : anchor;
   }
 
   /**
    * Replaces the specified expression and restores any comments to their appropriate place before and/or after the expression.
-   * Meant to be used with {@link #commentsBefore(PsiElement)} and {@link #commentsBetween(PsiElement, PsiElement)}
+   * Meant to be used with {@link #commentsBefore(PsiElement)} and {@link #commentsBetween(PsiElement, PsiElement)}.
+   * When the replacement parses to a {@link PsiPolyadicExpression} and the parent of the element to replace is also a
+   * PsiPolyadicExpression, with the same operator and type, a combined flattened
+   * PsiPolyadicExpression is created from both expressions and inserted instead of the parent of the element to replace
    *
    * @param expression  the expression to replace
    * @param replacementText  text of the replacement expression
@@ -335,6 +375,18 @@ public final class CommentTracker {
     return replaceExpressionAndRestoreComments(expression, replacementText, Collections.emptyList());
   }
 
+  /**
+   * Replaces the specified expression and restores any comments to their appropriate place before and/or after the expression.
+   * Meant to be used with {@link #commentsBefore(PsiElement)} and {@link #commentsBetween(PsiElement, PsiElement)}.
+   * When the replacement parses to a {@link PsiPolyadicExpression} and the parent of the element to replace is also a
+   * PsiPolyadicExpression, with the same operator and type, a combined flattened
+   * PsiPolyadicExpression is created from both expressions and inserted instead of the parent of the element to replace
+   *
+   * @param expression  the expression to replace
+   * @param replacementText  text of the replacement expression
+   * @param toDelete  elements to delete, comments inside will be collected
+   * @return the element which was inserted in the tree
+   */
   public @NotNull PsiElement replaceExpressionAndRestoreComments(@NotNull PsiExpression expression, @NotNull String replacementText,
                                                                  List<? extends PsiElement> toDelete) {
     List<PsiElement> trailingComments = new SmartList<>();
@@ -359,7 +411,11 @@ public final class CommentTracker {
       replacement.getParent().addAfter(element, replacement);
     }
     toDelete.forEach(this::delete);
-    insertCommentsBefore(replacement);
+    PsiElement anchor = replacement;
+    while (anchor.getParent() != null && anchor.getPrevSibling() == null) {
+      anchor = anchor.getParent();
+    }
+    insertCommentsBefore(anchor);
     return replacement;
   }
 
@@ -400,6 +456,11 @@ public final class CommentTracker {
    * Creates a replacement element from the text and replaces given element,
    * collecting all the comments inside it and restores comments putting them
    * to the appropriate place before replaced element.
+   * In the case that the replacement parses to a {@link PsiPolyadicExpression}
+   * and the parent of the element to replace is also a PsiPolyadicExpression,
+   * with the same operator and type, a combined flattened
+   * PsiPolyadicExpression is created from both expressions and inserted
+   * instead of the parent of the element to replace.
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
@@ -413,30 +474,30 @@ public final class CommentTracker {
    * @param text    replacement text
    * @return the element which was actually inserted in the tree
    */
-  public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull String text) {
-    PsiElement replacement = createElement(element, text);
+  public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
+    PsiElement replacement = createElementFromText(text, element);
     return replaceAndRestoreComments(element, replacement);
   }
 
-  private static @NotNull PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    if (element instanceof PsiExpression) {
-      return factory.createExpressionFromText(text, element);
+  private static @NotNull PsiElement createElementFromText(@NotNull String text, @NotNull PsiElement context) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
+    if (context instanceof PsiExpression) {
+      return factory.createExpressionFromText(text, context);
     }
-    else if (element instanceof PsiStatement) {
-      return factory.createStatementFromText(text, element);
+    else if (context instanceof PsiStatement) {
+      return factory.createStatementFromText(text, context);
     }
-    else if (element instanceof PsiTypeElement) {
-      return factory.createTypeElementFromText(text, element);
+    else if (context instanceof PsiTypeElement) {
+      return factory.createTypeElementFromText(text, context);
     }
-    else if (element instanceof PsiIdentifier) {
+    else if (context instanceof PsiIdentifier) {
       return factory.createIdentifier(text);
     }
-    else if (element instanceof PsiComment) {
-      return factory.createCommentFromText(text, element);
+    else if (context instanceof PsiComment) {
+      return factory.createCommentFromText(text, context);
     }
     else {
-      throw new IllegalArgumentException("Unsupported element type: " + element);
+      throw new IllegalArgumentException("Unsupported element type: " + context);
     }
   }
 

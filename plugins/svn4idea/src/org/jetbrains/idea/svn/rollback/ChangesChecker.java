@@ -51,7 +51,7 @@ public class ChangesChecker {
     myExceptions = new ArrayList<>();
   }
 
-  public void gather(final List<Change> changes) {
+  public void gather(final List<? extends Change> changes) {
     final TreeMap<String, File> renames = new TreeMap<>();
     final Set<String> alsoReverted = new HashSet<>();
     final Map<String, FilePath> files = new HashMap<>();

@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Marks misplaced default 'except' clauses.
@@ -13,7 +14,7 @@ import com.jetbrains.python.psi.*;
  */
 public class TryExceptAnnotator extends PyAnnotator {
   @Override
-  public void visitPyTryExceptStatement(final PyTryExceptStatement node) {
+  public void visitPyTryExceptStatement(final @NotNull PyTryExceptStatement node) {
     final PyExceptPart[] exceptParts = node.getExceptParts();
     boolean haveDefaultExcept = false;
     for (PyExceptPart part : exceptParts) {
@@ -27,10 +28,10 @@ public class TryExceptAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyRaiseStatement(PyRaiseStatement node) {
+  public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
     if (node.getExpressions().length == 0 &&
         PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class, PyFunction.class) == null) {
-      markError(node, "No exception to reraise");
+      markError(node, PyBundle.message("ANN.no.exception.to.reraise"));
     }
   }
 }

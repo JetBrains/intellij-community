@@ -291,17 +291,6 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
   @NotNull
   @Override
-  @Deprecated
-  public List<LineFragment> compareLinesInner(@NotNull CharSequence text1,
-                                              @NotNull CharSequence text2,
-                                              @NotNull List<LineFragment> lineFragments,
-                                              @NotNull ComparisonPolicy policy,
-                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    return compareLinesInner(text1, text2, policy, indicator);
-  }
-
-  @NotNull
-  @Override
   public List<DiffFragment> compareWords(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
@@ -334,6 +323,15 @@ public final class ComparisonManagerImpl extends ComparisonManager {
       fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
     }
     return fragments;
+  }
+
+  @NotNull
+  public static List<LineFragment> convertIntoLineFragments(@NotNull LineOffsets lineOffsets1,
+                                                            @NotNull LineOffsets lineOffsets2,
+                                                            @NotNull DiffIterable changes) {
+    Range range = new Range(0, lineOffsets1.getLineCount(),
+                            0, lineOffsets2.getLineCount());
+    return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, changes);
   }
 
   @NotNull

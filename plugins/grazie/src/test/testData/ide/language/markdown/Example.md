@@ -16,13 +16,15 @@ val a = "So big!"
 
 ## Now bad part have <warning descr="HAVE_PART_AGREEMENT">go</warning> there
 
-It <warning descr="IT_VBZ">are</warning> written not <warning descr="MANY_NN_U">many good</warning> .
+It <warning descr="IT_VBZ">are</warning> written not many good .
 
 Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course it</warning> has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
 * so much <TYPO descr="Typo: In word 'errorsss'">errorsss</TYPO>!
-* even here it is <warning descr="ARTICLE_MISSING">friend</warning> of error
+* even here it is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of error
 
 Once more we have an inline <warning descr="COMMA_BEFORE_AND">fragment and</warning> it is `a` friend.
+
+It is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of human
 
 <warning descr="And">And</warning> we've got error in injected code!
 ```kotlin

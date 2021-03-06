@@ -4,6 +4,7 @@ package com.intellij.openapi.module;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.project.ProjectBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,7 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
    * @deprecated Use {@link ModuleTypeWithWebFeatures#isAvailable}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isWebModule(@NotNull Module module) {
     return ModuleTypeWithWebFeatures.isAvailable(module);
   }

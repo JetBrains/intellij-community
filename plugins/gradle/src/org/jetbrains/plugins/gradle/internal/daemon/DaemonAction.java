@@ -1,19 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
 import org.gradle.api.internal.file.DefaultFileCollectionFactory;
+import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.api.internal.file.collections.DefaultDirectoryFileTreeFactory;
+import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory;
 import org.gradle.api.internal.tasks.DefaultTaskDependencyFactory;
+import org.gradle.api.internal.tasks.TaskDependencyFactory;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.api.tasks.util.internal.PatternSets;
 import org.gradle.api.tasks.util.internal.PatternSpecFactory;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.Factory;
+import org.gradle.internal.file.PathToFileResolver;
 import org.gradle.internal.logging.events.OutputEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
+import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.daemon.client.DaemonClientFactory;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
@@ -22,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author Vladislav.Soroka
@@ -48,27 +53,148 @@ public abstract class DaemonAction {
 
   @NotNull
   protected static DaemonParameters getDaemonParameters(BuildLayoutParameters layout) {
-    DaemonParameters daemonParameters;
-    boolean isGradle5Dot3OrNewer = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.3")) >= 0;
-    if (isGradle5Dot3OrNewer) {
-      Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
-      daemonParameters = new DaemonParameters(layout, new DefaultFileCollectionFactory(new IdentityFileResolver(patternSetFactory),
-                                                                                       DefaultTaskDependencyFactory
-                                                                                         .withNoAssociatedProject(),
-                                                                                       new DefaultDirectoryFileTreeFactory(),
-                                                                                       patternSetFactory));
+    // Constructors have changed for different versions of Gradle, need to use the correct version by reflection
+    GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
+     if (gradleBaseVersion.compareTo(GradleVersion.version("6.6")) >= 0) {
+      // DaemonParameters(BuildLayoutResult, FileCollectionFactory) with DefaultFileCollectionFactory using
+      // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>,
+      //   PropertyHost, FileSystem) using IdentityFileResolver()
+      return daemonParameters6Dot6(layout);
+    }
+    else if (gradleBaseVersion.compareTo(GradleVersion.version("6.4")) >= 0) {
+      // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory using
+      // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>,
+      //   PropertyHost, FileSystem) using IdentityFileResolver()
+      return daemonParameters6Dot4(layout);
+    }
+    else if (gradleBaseVersion.compareTo(GradleVersion.version("6.3")) >= 0) {
+      // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory using
+      // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>,
+      //   PropertyHost, FileSystem)
+      return daemonParameters6Dot3(layout);
+    }
+    else if (gradleBaseVersion.compareTo(GradleVersion.version("6.0")) >= 0) {
+      // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory using
+      // DefaultFileCollectionFactory(PathToFileResolver, TaskDependencyFactory, DirectoryFileTreeFactory, Factory<PatternSet>)
+      return daemonParameters6Dot0(layout);
+    }
+    else if (gradleBaseVersion.compareTo(GradleVersion.version("5.3")) >= 0) {
+      // DaemonParameters(BuildLayoutParameters, FileCollectionFactory) with DefaultFileCollectionFactory constructor with no parameters
+      return daemonParameters5Dot3(layout);
     }
     else {
-      try {
-        //noinspection JavaReflectionMemberAccess
-        daemonParameters = DaemonParameters.class.getConstructor(BuildLayoutParameters.class)
-          .newInstance(layout);
-      }
-      catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-        throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
-      }
+      // DaemonParameters(BuildLayoutParameters)
+      return daemonParametersPre5Dot3(layout);
     }
-    return daemonParameters;
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static DaemonParameters daemonParameters6Dot6(BuildLayoutParameters layout) {
+    try {
+      ClassLoader classLoader = DaemonAction.class.getClassLoader();
+      // Using reflection for code: "new BuildLayoutConverter().defaultValues().applyTo(BuildLayoutParameters);"
+      Class buildLayoutConvertedClass = classLoader.loadClass("org.gradle.launcher.cli.converter.BuildLayoutConverter");
+      Object buildLayoutConverter = buildLayoutConvertedClass.newInstance();
+      Method defaultValuesMethod = buildLayoutConvertedClass.getMethod("defaultValues");
+      Object buildLayoutResult = defaultValuesMethod.invoke(buildLayoutConverter);
+      Class buildLayoutResultClass = classLoader.loadClass("org.gradle.launcher.configuration.BuildLayoutResult");
+      Method applyTo = buildLayoutResultClass.getMethod("applyTo", BuildLayoutParameters.class);
+      applyTo.invoke(buildLayoutResult, layout);
+
+      Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
+      //noinspection JavaReflectionMemberAccess
+      IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor().newInstance();
+      DefaultFileCollectionFactory collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory);
+      return DaemonParameters.class.getConstructor(buildLayoutResultClass, FileCollectionFactory.class).newInstance(buildLayoutResult, collectionFactory);
+    }
+    catch (ClassNotFoundException | NoSuchFieldException | InstantiationException | IllegalAccessException | InvocationTargetException |
+      NoSuchMethodException e) {
+      throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
+    }
+  }
+
+  private static DaemonParameters daemonParameters6Dot4(BuildLayoutParameters layout) {
+    try {
+      Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
+      IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor().newInstance();
+      DefaultFileCollectionFactory collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory);
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(layout, collectionFactory);
+    }
+    catch (ClassNotFoundException | NoSuchFieldException | InstantiationException | IllegalAccessException | InvocationTargetException |
+      NoSuchMethodException e) {
+      throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
+    }
+  }
+
+  private static DaemonParameters daemonParameters6Dot3(BuildLayoutParameters layout) {
+    try {
+      Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
+      //noinspection JavaReflectionMemberAccess
+      IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor(Factory.class).newInstance(patternSetFactory);
+      DefaultFileCollectionFactory collectionFactory = createCollectionFactory6Dot3(identityFileResolver, patternSetFactory);
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(layout, collectionFactory);
+    }
+    catch (ClassNotFoundException | NoSuchFieldException | InstantiationException | IllegalAccessException | InvocationTargetException |
+      NoSuchMethodException e) {
+      throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
+    }
+  }
+
+  private static DefaultFileCollectionFactory createCollectionFactory6Dot3(IdentityFileResolver fileResolver,
+                                                                           Factory<PatternSet> patternFactory)
+    throws ClassNotFoundException, NoSuchFieldException, NoSuchMethodException, IllegalAccessException, InvocationTargetException,
+           InstantiationException {
+    ClassLoader classLoader = DaemonAction.class.getClassLoader();
+    //noinspection rawtypes
+    Class propertyHostClass = classLoader.loadClass("org.gradle.api.internal.provider.PropertyHost");
+    Object propertyHostNoOp = propertyHostClass.getField("NO_OP").get(null);
+    Constructor<DefaultFileCollectionFactory> collectionFactoryConstructor = DefaultFileCollectionFactory.class.getConstructor(
+      PathToFileResolver.class, TaskDependencyFactory.class, DirectoryFileTreeFactory.class, Factory.class, propertyHostClass,
+      FileSystem.class);
+    return collectionFactoryConstructor.newInstance(fileResolver, DefaultTaskDependencyFactory.withNoAssociatedProject(),
+                                                    new DefaultDirectoryFileTreeFactory(), patternFactory, propertyHostNoOp, null);
+  }
+
+  private static DaemonParameters daemonParameters6Dot0(BuildLayoutParameters layout) {
+    try {
+      Factory<PatternSet> patternSetFactory = PatternSets.getPatternSetFactory(PatternSpecFactory.INSTANCE);
+      //noinspection JavaReflectionMemberAccess
+      IdentityFileResolver identityFileResolver = IdentityFileResolver.class.getConstructor(Factory.class).newInstance(patternSetFactory);
+      //noinspection JavaReflectionMemberAccess
+      Constructor<DefaultFileCollectionFactory> collectionFactoryConstructor = DefaultFileCollectionFactory.class.getConstructor(
+        PathToFileResolver.class, TaskDependencyFactory.class, DirectoryFileTreeFactory.class, Factory.class);
+      DefaultFileCollectionFactory factory = collectionFactoryConstructor.newInstance(
+        identityFileResolver, DefaultTaskDependencyFactory.withNoAssociatedProject(),
+        new DefaultDirectoryFileTreeFactory(), patternSetFactory);
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(layout, factory);
+    }
+    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
+    }
+  }
+
+  private static DaemonParameters daemonParameters5Dot3(BuildLayoutParameters layout) {
+    try {
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class, FileCollectionFactory.class).newInstance(
+        layout, DefaultFileCollectionFactory.class.getConstructor().newInstance());
+    }
+    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
+    }
+  }
+
+  private static DaemonParameters daemonParametersPre5Dot3(BuildLayoutParameters layout) {
+    try {
+      //noinspection JavaReflectionMemberAccess
+      return DaemonParameters.class.getConstructor(BuildLayoutParameters.class).newInstance(layout);
+    }
+    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new RuntimeException("Cannot create DaemonParameters by reflection, gradle version " + GradleVersion.current(), e);
+    }
   }
 
   @NotNull

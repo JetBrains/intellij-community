@@ -24,6 +24,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -187,7 +188,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     myTreeChangeListeners.remove(listener);
   }
 
-  private static String logPsi(@Nullable PsiElement element) {
+  private static @NonNls String logPsi(@Nullable PsiElement element) {
     return element == null ? " null" : element.getClass().getName();
   }
 
@@ -413,36 +414,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     catch (Throwable e) {
       LOG.error(e);
     }
-  }
-
-  @Override
-  public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
-    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        if (isPhysical) runnable.run();
-      }
-    });
-  }
-
-  @Override
-  public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-        runnable.run();
-      }
-    });
-  }
-
-  @Override
-  public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myProject.getMessageBus().connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
-        runnable.run();
-      }
-    });
   }
 
   @Override

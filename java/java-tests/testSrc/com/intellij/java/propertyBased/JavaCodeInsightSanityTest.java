@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.CodeStyle;
@@ -55,7 +55,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 
   public void testRandomActivity() {
@@ -64,7 +64,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaPreviewIntentionPolicy()),
                                     new InvokeCompletion(file, new JavaCompletionPolicy()),
                                     new StripTestDataMarkup(file),
-                                    new DeleteRange(file));
+                                    new DeleteRange(file),
+                                    new IntroduceVariableActionOnFile(file));
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
@@ -144,7 +145,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     ));
   }
 
-  private static class InsertTypeCastCommand extends ActionOnFile {
+  private static final class InsertTypeCastCommand extends ActionOnFile {
     private InsertTypeCastCommand(PsiFile file) {
       super(file);
     }
@@ -162,7 +163,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
         PsiElement expr = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
         if (!(expr instanceof PsiExpression)) return;
         PsiType type = ((PsiExpression)expr).getType();
-        if (type == null || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
+        if (type == null || type instanceof PsiDisjunctionType || !PsiTypesUtil.isDenotableType(type, expr)) return; //accept cast in expression statement
         env.logMessage("Inserting cast '" +
                        StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
                        "' at " +

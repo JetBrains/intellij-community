@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class OpenapiIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, OpenapiIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, OpenapiIcons.class.getClassLoader(), cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon RepositoryLibraryLogo = load("/icons/repositoryLibraryLogo.svg");
+  /** 16x16 */ public static final @NotNull Icon RepositoryLibraryLogo = load("icons/repositoryLibraryLogo.svg", -1750344903510804378L, 0);
 }

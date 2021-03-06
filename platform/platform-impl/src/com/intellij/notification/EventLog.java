@@ -4,12 +4,14 @@ package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,10 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -38,6 +37,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,10 +60,29 @@ public final class EventLog {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
-  @NonNls private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
+  @NonNls private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>", "<li>");
   private static final String DEFAULT_CATEGORY = "";
 
   private final LogModel myModel = new LogModel(null);
+
+  public static void expireNotifications() {
+    for (Notification notification : getApplicationService().myModel.getNotifications()) {
+      notification.expire();
+    }
+
+    for (Project project : ProjectUtil.getOpenProjects()) {
+      if (!project.isDisposed()) {
+        ProjectTracker service = getProjectService(project);
+        for (Notification notification : service.myProjectModel.getNotifications()) {
+          notification.expire();
+        }
+        for (Notification notification : service.myInitial) {
+          notification.expire();
+        }
+        service.myInitial.clear();
+      }
+    }
+  }
 
   public static void expireNotification(@NotNull Notification notification) {
     getApplicationService().myModel.removeNotification(notification);
@@ -109,7 +128,15 @@ public final class EventLog {
     getProjectService(project).clearNMore(groups);
   }
 
-  public static @Nullable Trinity<Notification, String, Long> getStatusMessage(@Nullable Project project) {
+  public static boolean isClearAvailable(@NotNull Project project) {
+    return getProjectService(project).isClearAvailable();
+  }
+
+  public static void doClear(@NotNull Project project) {
+    getProjectService(project).doClear();
+  }
+
+  public static @Nullable Trinity<Notification, @NlsContexts.StatusBarText String, Long> getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
 
@@ -141,7 +168,7 @@ public final class EventLog {
 
     List<AnAction> actions = notification.getActions();
     if (!actions.isEmpty()) {
-      String text = "<p>" + StringUtil.join(actions, new Function<AnAction, String>() {
+      String text = "<p>" + StringUtil.join(actions, new Function<>() {
         private int index;
 
         @Override
@@ -149,14 +176,19 @@ public final class EventLog {
           return "<a href=\"" + index++ + "\">" + action.getTemplatePresentation().getText() + "</a>";
         }
       }, isLongLine(actions) ? "<br>" : "&nbsp;&nbsp;&nbsp;") + "</p>";
+      //noinspection UnresolvedPluginConfigReference
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
           Object source = event.getSource();
           DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
           AnAction action = notification.getActions().get(Integer.parseInt(event.getDescription()));
+          Project project = null;
+          if (context != null) {
+            project = context.getData(CommonDataKeys.PROJECT);
+          }
           NotificationCollector.getInstance()
-            .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
+            .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.EVENT_LOG);
           Notification.fire(notification, action, context);
         }
       });
@@ -180,7 +212,7 @@ public final class EventLog {
     }
 
     if (showMore.get()) {
-      String sb = "show balloon";
+      String sb = IdeBundle.message("tooltip.event.log.show.balloon");
       if (!logDoc.getText().endsWith(" ")) {
         appendText(logDoc, " ");
       }
@@ -250,12 +282,12 @@ public final class EventLog {
     }
   }
 
-  private static String getStatusText(DocumentImpl logDoc,
+  private static @Nls String getStatusText(DocumentImpl logDoc,
                                       AtomicBoolean showMore,
                                       List<? extends RangeMarker> lineSeparators,
                                       String indent,
                                       boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(), true);
     List<RangeMarker> statusSeparators = new ArrayList<>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
@@ -325,12 +357,12 @@ public final class EventLog {
       "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd",
       "del", "details", "dfn", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form",
       "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe", "img", "input",
-      "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript",
+      "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "nobr", "noframes", "noscript",
       "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script",
       "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td",
       "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"};
 
-  @NonNls private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font"};
+  @NonNls private static final String[] SKIP_TAGS = {"html", "body", "b", "i", "font", "ul"};
 
   private static boolean isTag(String @NotNull [] tags, @NotNull String tag) {
     tag = tag.substring(1, tag.length() - 1); // skip <>
@@ -400,11 +432,11 @@ public final class EventLog {
 
   public static class LogEntry {
     public final String message;
-    public final String status;
+    public final @NlsContexts.StatusBarText String status;
     public final List<Pair<TextRange, HyperlinkInfo>> links;
     public final int titleLength;
 
-    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
+    public LogEntry(@NotNull String message, @NotNull @Nls String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
       this.message = message;
       this.status = status;
       this.links = links;
@@ -474,6 +506,7 @@ public final class EventLog {
         appService.myModel.setStatusMessage(null, 0);
       }
       StatusBar.Info.set("", null, LOG_REQUESTOR);
+      myProjectModel.projectDispose(appService == null ? null : appService.myModel);
     }
 
     void initDefaultContent() {
@@ -539,6 +572,32 @@ public final class EventLog {
       }
     }
 
+    private boolean isClearAvailable() {
+      if (!myProjectModel.getNotifications().isEmpty()) {
+        return true;
+      }
+      for (EventLogConsole console : myCategoryMap.values()) {
+        if (console.getConsoleEditor().getDocument().getTextLength() > 0) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private void doClear() {
+      for (Notification notification : myProjectModel.getNotifications()) {
+        notification.expire();
+        myProjectModel.removeNotification(notification);
+      }
+      myInitial.clear();
+      myProjectModel.setStatusMessage(null, 0);
+
+      for (EventLogConsole console : myCategoryMap.values()) {
+        Document document = console.getConsoleEditor().getDocument();
+        document.deleteString(0, document.getTextLength());
+      }
+    }
+
     private @Nullable EventLogConsole getConsole(@NotNull Notification notification) {
       return getConsole(notification.getGroupId());
     }
@@ -554,7 +613,7 @@ public final class EventLog {
       return console == null ? createNewContent(name) : console;
     }
 
-    private @NotNull EventLogConsole createNewContent(@NotNull String name) {
+    private @NotNull EventLogConsole createNewContent(@NotNull @Nls String name) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(myProject).getToolWindow(LOG_TOOL_WINDOW_ID));
       EventLogConsole newConsole = new EventLogConsole(myProjectModel, toolWindow.getDisposable());
@@ -564,7 +623,7 @@ public final class EventLog {
     }
   }
 
-  private static @NotNull String getContentName(@NotNull String groupId) {
+  private static @NotNull @Nls String getContentName(@NotNull String groupId) {
     for (EventLogCategory category : EventLogCategory.EP_NAME.getExtensionList()) {
       if (category.acceptsNotification(groupId)) {
         return category.getDisplayName();
@@ -587,7 +646,7 @@ public final class EventLog {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       NotificationListener listener = myNotification.getListener();
       if (listener != null) {
         EventLogConsole console = Objects.requireNonNull(getProjectService(project).getConsole(myNotification));
@@ -610,7 +669,7 @@ public final class EventLog {
     }
 
     @Override
-    public void navigate(Project project) {
+    public void navigate(@NotNull Project project) {
       hideBalloon(myNotification);
 
       for (Notification notification : getLogModel(project).getNotifications()) {
@@ -628,7 +687,7 @@ public final class EventLog {
         Balloon balloon =
           NotificationsManagerImpl.createBalloon(frame, myNotification, true, true, BalloonLayoutData.fullContent(), project);
         balloon.show(target, Balloon.Position.above);
-        NotificationCollector.getInstance().logBalloonShownFromEventLog(myNotification);
+        NotificationCollector.getInstance().logBalloonShownFromEventLog(project, myNotification);
       }
     }
 

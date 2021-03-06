@@ -133,7 +133,7 @@ public class StringConcatenationInspection extends BaseInspection {
   }
 
   private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner variable) {
-    return new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, variable,PsiNameValuePair.EMPTY_ARRAY));
+    return new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, variable));
   }
 
   @Nullable

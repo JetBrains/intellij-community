@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -14,8 +14,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-
 /**
  * <p>
  * Storage for local, remote and current branches.
@@ -26,7 +24,6 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
  * </p>
  */
 public final class GitBranchesCollection {
-
   @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
   @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
 
@@ -73,9 +70,9 @@ public final class GitBranchesCollection {
     return findByName(myRemoteBranches.keySet(), name);
   }
 
-  @Nullable
-  public GitBranch findBranchByName(@NotNull String name) {
-    return chooseNotNull(findLocalBranch(name), findRemoteBranch(name));
+  public @Nullable GitBranch findBranchByName(@NotNull String name) {
+    GitLocalBranch result = findLocalBranch(name);
+    return result == null ? findRemoteBranch(name) : result;
   }
 
   @Nullable

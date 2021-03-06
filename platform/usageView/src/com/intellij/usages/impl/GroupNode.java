@@ -13,10 +13,12 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -68,20 +70,46 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
-    GroupNode newNode;
+  GroupNode addOrGetGroup(@NotNull UsageGroup group,
+                          int ruleIndex,
+                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
     synchronized (this) {
-      newNode = new GroupNode(this, group, ruleIndex);
-      int i = getNodeIndex(newNode, myChildren);
+      return insertGroupNode(group, ruleIndex, edtModelToSwingNodeChangesQueue);
+    }
+  }
+
+  private boolean isNodeTreePathValid() {
+    boolean isValid = true;
+    if (this.isStructuralChangeDetected()) {
+      isValid = false;
+    }
+    else {
+      if (getParent() != null) {
+        isValid = !((Node)getParent()).isStructuralChangeDetected();
+      }
+    }
+    return isValid;
+  }
+
+
+  @NotNull
+  private GroupNode insertGroupNode(@NotNull UsageGroup group,
+                                    int ruleIndex,
+                                    @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue) {
+    synchronized (this) {
+      GroupNode newNode = new GroupNode(this, group, ruleIndex);
+      int i = getNodeIndex(newNode, this.myChildren);
       if (i >= 0) {
-        return (GroupNode)myChildren.get(i);
+        return (GroupNode)this.myChildren.get(i);
       }
       int insertionIndex = -i - 1;
-      myChildren.add(insertionIndex, newNode);
+      this.myChildren.add(insertionIndex, newNode);
+      edtModelToSwingNodeChangesQueue.consume(new UsageViewImpl.NodeChange(UsageViewImpl.NodeChangeType.ADDED, this,
+                                                                           newNode));
+      return newNode;
     }
-    edtInsertedUnderQueue.consume(this);
-    return newNode;
   }
+
 
   // >= 0 if found, < 0 if not found
   private static int getNodeIndex(@NotNull Node newNode, @NotNull List<? extends Node> children) {
@@ -91,7 +119,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   // always >= 0
   private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<? extends Node> children) {
     int i = getNodeIndex(node, children);
-    return i >= 0 ? i : -i-1;
+    return i >= 0 ? i : -i - 1;
   }
 
   void addTargetsNode(@NotNull Node node, @NotNull DefaultTreeModel treeModel) {
@@ -132,7 +160,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return null;
   }
 
-  int removeUsagesBulk(@NotNull Set<UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
+
+  int removeUsagesBulk(@NotNull Set<? extends UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int removed = 0;
     synchronized (this) {
@@ -175,9 +204,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   /**
    * Implementation of javax.swing.tree.DefaultTreeModel#removeNodeFromParent(javax.swing.tree.MutableTreeNode) for multiple nodes.
    * Fires a single event, or does nothing when nodes is empty.
-   * @param treeModel  to fire the treeNodesRemoved event on
-   * @param parent  the parent
-   * @param nodes  must all be children of parent
+   *
+   * @param treeModel to fire the treeNodesRemoved event on
+   * @param parent    the parent
+   * @param nodes     must all be children of parent
    */
   private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
                                             @NotNull List<? extends MutableTreeNode> nodes) {
@@ -185,12 +215,13 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     if (count == 0) {
       return;
     }
-    ObjectIntHashMap<MutableTreeNode> ordering = new ObjectIntHashMap<>(count);
+    Object2IntMap<MutableTreeNode> ordering = new Object2IntOpenHashMap<>(count);
+    ordering.defaultReturnValue(-1);
     for (MutableTreeNode node : nodes) {
       ordering.put(node, parent.getIndex(node));
     }
-    nodes.sort(Comparator.comparingInt(ordering::get)); // need ascending order
-    int[] indices = ordering.getValues();
+    nodes.sort(Comparator.comparingInt(ordering::getInt)); // need ascending order
+    int[] indices = ordering.values().toIntArray();
     Arrays.sort(indices);
     for (int i = count - 1; i >= 0; i--) {
       parent.remove(indices[i]);
@@ -201,7 +232,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   @NotNull
   UsageNode addOrGetUsage(@NotNull Usage usage,
                           boolean filterDuplicateLines,
-                          @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
+                          @NotNull Consumer<? super UsageViewImpl.NodeChange> edtModelToSwingNodeChangesQueue,
+                          @NotNull Consumer<? super Usage> invalidatedUsagesConsumer) {
+    if (!isNodeTreePathValid()) {
+      invalidatedUsagesConsumer.consume(usage);
+      return new UsageNode(this, usage);
+    }
     UsageNode newNode;
     synchronized (this) {
       if (filterDuplicateLines) {
@@ -217,19 +253,19 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
         newNode = (UsageNode)myChildren.get(i);
       }
       else {
-        int insertionIndex = -i-1;
+        int insertionIndex = -i - 1;
         myChildren.add(insertionIndex, newNode);
       }
     }
-    edtInsertedUnderQueue.consume(this);
+    edtModelToSwingNodeChangesQueue.consume(new UsageViewImpl.NodeChange(UsageViewImpl.NodeChangeType.ADDED, this, newNode));
     return newNode;
   }
 
-  void incrementUsageCount() {
+  void incrementUsageCount(int i) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     GroupNode groupNode = this;
     while (true) {
-      groupNode.myRecursiveUsageCount++;
+      groupNode.myRecursiveUsageCount += i;
       TreeNode parent = groupNode.getParent();
       if (!(parent instanceof GroupNode)) return;
       groupNode = (GroupNode)parent;
@@ -237,7 +273,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @Override
-  public String tree2string(int indent, String lineSeparator) {
+  @TestOnly
+  public String tree2string(int indent, @NotNull String lineSeparator) {
     StringBuffer result = new StringBuffer();
     StringUtil.repeatSymbol(result, ' ', indent);
 
@@ -265,7 +302,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @Override
   protected boolean isDataReadOnly() {
-    Enumeration enumeration = children();
+    Enumeration<?> enumeration = children();
     while (enumeration.hasMoreElements()) {
       Object element = enumeration.nextElement();
       if (element instanceof Node && ((Node)element).isReadOnly()) return true;
@@ -273,9 +310,10 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return false;
   }
 
-  private static class NodeComparator implements Comparator<DefaultMutableTreeNode> {
-    enum ClassIndex { UNKNOWN, USAGE_TARGET, GROUP, USAGE }
-    private static ClassIndex getClassIndex(DefaultMutableTreeNode node) {
+  static class NodeComparator implements Comparator<DefaultMutableTreeNode> {
+    enum ClassIndex {UNKNOWN, USAGE_TARGET, GROUP, USAGE}
+
+    private static ClassIndex getClassIndex(@NotNull DefaultMutableTreeNode node) {
       if (node instanceof UsageNode) return ClassIndex.USAGE;
       if (node instanceof GroupNode) return ClassIndex.GROUP;
       if (node instanceof UsageTargetNode) return ClassIndex.USAGE_TARGET;
@@ -385,7 +423,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   static class Root extends GroupNode {
     @NonNls
     public String toString() {
-      return "Root "+super.toString();
+      return "Root " + super.toString();
     }
 
     @NotNull

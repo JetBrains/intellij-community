@@ -3,11 +3,11 @@ package com.siyeh.ig.javabeans;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,9 +45,9 @@ public class PropertyValueSetToItselfInspection extends BaseInspection {
         return;
       }
       final PsiReferenceExpression methodExpression1 = expression.getMethodExpression();
-      final PsiExpression qualifierExpression1 = ParenthesesUtils.stripParentheses(methodExpression1.getQualifierExpression());
+      final PsiExpression qualifierExpression1 = PsiUtil.skipParenthesizedExprDown(methodExpression1.getQualifierExpression());
       final PsiReferenceExpression methodExpression2 = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression2 = ParenthesesUtils.stripParentheses(methodExpression2.getQualifierExpression());
+      final PsiExpression qualifierExpression2 = PsiUtil.skipParenthesizedExprDown(methodExpression2.getQualifierExpression());
       if (qualifierExpression1 instanceof PsiReferenceExpression && qualifierExpression2 instanceof PsiReferenceExpression) {
         if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifierExpression1, qualifierExpression2)) {
           return;

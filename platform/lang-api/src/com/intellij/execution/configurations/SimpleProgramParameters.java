@@ -2,7 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.util.EnvironmentUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -12,7 +12,7 @@ import java.util.Map;
 public class SimpleProgramParameters {
   private final ParametersList myProgramParameters = new ParametersList();
   private String myWorkingDirectory;
-  private Map<String, String> myEnv = new THashMap<>();
+  private Map<String, String> myEnv = new HashMap<>();
   private boolean myPassParentEnvs = true;
 
   public String getWorkingDirectory() {
@@ -53,7 +53,8 @@ public class SimpleProgramParameters {
   }
 
   /** @deprecated Use {@link #setEnv(Map)} and {@link #setPassParentEnvs(boolean)} instead with already preprocessed variables */
-  @Deprecated 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setupEnvs(Map<String, String> envs, boolean passDefault) {
     if (!envs.isEmpty()) {
       envs = new HashMap<>(envs);

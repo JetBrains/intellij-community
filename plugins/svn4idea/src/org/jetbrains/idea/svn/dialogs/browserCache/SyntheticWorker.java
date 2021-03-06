@@ -86,7 +86,7 @@ public class SyntheticWorker {
     }
   }
 
-  private class Adder implements NotNullFunction<RepositoryTreeNode, Object> {
+  private final class Adder implements NotNullFunction<RepositoryTreeNode, Object> {
     private final int myOldPrefixLen;
     private final Url myNewParentUrl;
 

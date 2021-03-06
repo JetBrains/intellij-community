@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.lw.ColorDescriptor;
@@ -36,8 +37,8 @@ public class ColorRenderer extends ColoredListCellRenderer implements PropertyRe
     setIcon(AllIcons.Nodes.EmptyNode);
     setBackground(selected ? UIUtil.getTableSelectionBackground(true) : UIUtil.getTableBackground());
     if (myColorDescriptor != null) {
-      append(myColorDescriptor.toString(),
-             selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+      @NlsSafe String fragment = myColorDescriptor.toString();
+      append(fragment, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
   }
 

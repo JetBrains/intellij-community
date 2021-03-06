@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ProjectTopics;
@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -23,8 +24,8 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +38,15 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
   @NotNull private DirtBuilder myDirtBuilder = new DirtBuilder();
   @Nullable private DirtBuilder myDirtInProgress;
+  @Nullable private ActionCallback myRefreshInProgress;
 
   private boolean myReady;
   private final Object LOCK = new Object();
+
+  @NotNull
+  public static VcsDirtyScopeManagerImpl getInstanceImpl(@NotNull Project project) {
+    return ((VcsDirtyScopeManagerImpl)getInstance(project));
+  }
 
   public VcsDirtyScopeManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -81,16 +88,18 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     boolean wasReady;
+    ActionCallback ongoingRefresh;
     synchronized (LOCK) {
       wasReady = myReady;
       if (wasReady) {
-        myDirtBuilder.setEverythingDirty(true);
+        myDirtBuilder.markEverythingDirty();
       }
+      ongoingRefresh = myRefreshInProgress;
     }
+    if (ongoingRefresh != null) ongoingRefresh.setRejected();
 
     if (wasReady) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
-      myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).everythingDirty();
     }
   }
 
@@ -100,19 +109,24 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       myReady = false;
       myDirtBuilder = new DirtBuilder();
       myDirtInProgress = null;
+      myRefreshInProgress = null;
     }
   }
 
-  @NotNull
-  private Map<VcsRoot, Set<FilePath>> groupByVcs(@Nullable Iterable<? extends FilePath> from) {
-    if (from == null) return Collections.emptyMap();
+  private @NotNull Map<VcsRoot, Set<FilePath>> groupByVcs(@Nullable Iterable<? extends FilePath> from) {
+    if (from == null) {
+      return Collections.emptyMap();
+    }
 
     ProjectLevelVcsManager vcsManager = getVcsManager(myProject);
     Map<VcsRoot, Set<FilePath>> map = new HashMap<>();
     for (FilePath path : from) {
       VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
       if (vcsRoot != null && vcsRoot.getVcs() != null) {
-        Set<FilePath> pathSet = map.computeIfAbsent(vcsRoot, key -> new THashSet<>(getDirtyScopeHashingStrategy(key.getVcs())));
+        Set<FilePath> pathSet = map.computeIfAbsent(vcsRoot, key -> {
+          Hash.Strategy<FilePath> strategy = getDirtyScopeHashingStrategy(key.getVcs());
+          return strategy == null ? new HashSet<>() : new ObjectOpenCustomHashSet<>(strategy);
+        });
         pathSet.add(path);
       }
     }
@@ -136,31 +150,19 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     boolean hasSomethingDirty = false;
     for (VcsRoot vcsRoot : ContainerUtil.union(filesConverted.keySet(), dirsConverted.keySet())) {
-      AbstractVcs vcs = Objects.requireNonNull(vcsRoot.getVcs());
-      VirtualFile root = vcsRoot.getPath();
-
       Set<FilePath> files = ContainerUtil.notNullize(filesConverted.get(vcsRoot));
       Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
 
       synchronized (LOCK) {
-        if (!myReady || myDirtBuilder.isEverythingDirty()) return;
-        VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
-
-        for (FilePath filePath : files) {
-          scope.addDirtyPathFast(root, filePath, false);
+        if (myReady) {
+          hasSomethingDirty |= myDirtBuilder.addDirtyFiles(vcsRoot, files, dirs);
         }
-        for (FilePath filePath : dirs) {
-          scope.addDirtyPathFast(root, filePath, true);
-        }
-
-        hasSomethingDirty |= !myDirtBuilder.isEmpty();
       }
     }
 
     if (hasSomethingDirty) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
-    myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).filePathsDirty(filesConverted, dirsConverted);
   }
 
   @Override
@@ -203,47 +205,38 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     filePathsDirty(null, Collections.singleton(path));
   }
 
-  @Override
+  /**
+   * Take current dirty scope into processing.
+   * Should call {@link #changesProcessed} when done to notify {@link #whatFilesDirty} that scope is no longer dirty.
+   */
   @Nullable
   public VcsInvalidated retrieveScopes() {
+    ActionCallback callback = new ActionCallback();
     DirtBuilder dirtBuilder;
     synchronized (LOCK) {
       if (!myReady) return null;
+      LOG.assertTrue(myDirtInProgress == null);
+
       dirtBuilder = myDirtBuilder;
       myDirtInProgress = dirtBuilder;
       myDirtBuilder = new DirtBuilder();
+      myRefreshInProgress = callback;
     }
-    return calculateInvalidated(dirtBuilder);
+    return calculateInvalidated(dirtBuilder, callback);
   }
 
-  @NotNull
-  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
-    boolean isEverythingDirty = dirt.isEverythingDirty();
-    if (isEverythingDirty) {
-      // Mark roots explicitly dirty
-      VcsRoot[] roots = getVcsManager(myProject).getAllVcsRoots();
-      for (VcsRoot root : roots) {
-        AbstractVcs vcs = root.getVcs();
-        VirtualFile path = root.getPath();
-        if (vcs != null) {
-          dirt.getScope(vcs).addDirtyPathFast(path, VcsUtil.getFilePath(path), true);
-        }
-      }
-    }
-
-    List<VcsDirtyScopeImpl> scopes = dirt.getScopes();
-    for (VcsDirtyScopeImpl scope : scopes) {
-      scope.pack();
-    }
-
-    return new VcsInvalidated(scopes, isEverythingDirty);
-  }
-
-  @Override
   public void changesProcessed() {
     synchronized (LOCK) {
       myDirtInProgress = null;
+      myRefreshInProgress = null;
     }
+  }
+
+  @NotNull
+  private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt, @NotNull ActionCallback callback) {
+    boolean isEverythingDirty = dirt.isEverythingDirty();
+    List<VcsDirtyScopeImpl> scopes = dirt.buildScopes(myProject);
+    return new VcsInvalidated(scopes, isEverythingDirty, callback);
   }
 
   @NotNull
@@ -280,16 +273,15 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     return null;
   }
 
-  @NotNull
-  public static TObjectHashingStrategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
+  public static @Nullable Hash.Strategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
     return vcs.needsCaseSensitiveDirtyScope() ? ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
-                                              : ContainerUtil.canonicalStrategy();
+                                              : null;
   }
 
   static final class MyStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      ((VcsDirtyScopeManagerImpl)getInstance(project)).startListenForChanges();
+      getInstanceImpl(project).startListenForChanges();
     }
 
     @Override

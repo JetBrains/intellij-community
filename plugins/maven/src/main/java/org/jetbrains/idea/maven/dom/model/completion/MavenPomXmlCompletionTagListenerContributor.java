@@ -1,14 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -34,8 +28,7 @@ import java.util.Set;
  * @author Sergey Evdokimov
  */
 public class MavenPomXmlCompletionTagListenerContributor extends CompletionContributor {
-
-  private final Set<String> myHandledTags = ImmutableSet.of("dependency", "exclusion");
+  private final Set<String> myHandledTags = Set.of("dependency", "exclusion");
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
@@ -58,7 +51,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
       final String lookupString = lookupElement.getLookupString();
       if (myHandledTags.contains(lookupString)) {
         LookupElement decorator =
-          LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+          LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<>() {
             @Override
             public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
               lookupElement.handleInsert(context);

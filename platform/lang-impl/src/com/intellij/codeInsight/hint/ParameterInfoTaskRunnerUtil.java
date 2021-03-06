@@ -7,15 +7,14 @@ import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.HintListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -31,25 +30,24 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.EventObject;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-class ParameterInfoTaskRunnerUtil {
+public final class ParameterInfoTaskRunnerUtil {
 
   public static final int DEFAULT_PROGRESS_POPUP_DELAY_MS = 1000;
 
   /**
    * @param progressTitle null means no loading panel should be shown
    */
-  static <T> void runTask(Project project,
-                          NonBlockingReadAction<T> nonBlockingReadAction,
-                          Consumer<T> continuationConsumer,
-                          @Nullable String progressTitle,
-                          Editor editor) {
+  public static <T> void runTask(Project project,
+                                 NonBlockingReadAction<T> nonBlockingReadAction,
+                                 Consumer<? super T> continuationConsumer,
+                                 @Nullable @NlsContexts.ProgressTitle String progressTitle,
+                                 Editor editor) {
     AtomicReference<CancellablePromise<?>> cancellablePromiseRef = new AtomicReference<>();
     Consumer<Boolean> stopAction =
       startProgressAndCreateStopAction(editor.getProject(), progressTitle, cancellablePromiseRef, editor);
@@ -83,8 +81,8 @@ class ParameterInfoTaskRunnerUtil {
 
   @NotNull
   private static Consumer<Boolean> startProgressAndCreateStopAction(Project project,
-                                                                    String progressTitle,
-                                                                    AtomicReference<CancellablePromise<?>> promiseRef,
+                                                                    @NlsContexts.ProgressTitle String progressTitle,
+                                                                    AtomicReference<? extends CancellablePromise<?>> promiseRef,
                                                                     Editor editor) {
     AtomicReference<Consumer<Boolean>> stopActionRef = new AtomicReference<>();
 

@@ -27,19 +27,20 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConvertIfToChooseIntention implements IntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Convert if to choose";
+        return XPathBundle.message("intention.family.name.convert.if.to.choose");
     }
 
     @Override
     @NotNull
     public String getText() {
-        return "Convert xsl:if to xsl:choose";
+        return getFamilyName();
     }
 
     @Override

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
@@ -14,7 +15,7 @@ import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-class LazyStubList extends StubList {
+final class LazyStubList extends StubList {
   private final AtomicReferenceArray<StubBase<?>> myStubs;
   private final ObjectStubSerializer myRootSerializer;
   private int mySize;
@@ -104,7 +105,7 @@ class LazyStubList extends StubList {
 
 }
 
-class LazyStubData {
+final class LazyStubData {
   private final AbstractStringEnumerator myStorage;
   private final MostlyUShortIntList myParentsAndStarts;
   private final byte[] mySerializedStubs;
@@ -130,7 +131,9 @@ class LazyStubData {
     StubBase<?> stub = (StubBase<?>)type.deserialize(stream, parent);
     int available = stream.available();
     if (available > 0) {
-      assert available == 1 : "Stub serializer/deserializer mismatch in " + type;
+      if (available != 1) {
+        throw new AssertionError(getSerializeDeserializerMismatchMessage(type));
+      }
       stub.markDangling();
     }
     return stub;
@@ -143,5 +146,12 @@ class LazyStubData {
     int end = myAllStarts.nextSetBit(start + 1);
     if (end < 0) end = mySerializedStubs.length + 1;
     return new ByteArrayInputStream(mySerializedStubs, start - 1, end - start);
+  }
+
+  @NotNull
+  private static String getSerializeDeserializerMismatchMessage(@NotNull IStubElementType<?, ?> type) {
+    return "Stub serializer/deserialize mismatch for StubElementType: " +
+           "name = " + type.getDebugName() +
+           ", language = " + type.getLanguage();
   }
 }

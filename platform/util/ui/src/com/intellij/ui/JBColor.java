@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +36,7 @@ public class JBColor extends Color {
   private final NotNullProducer<? extends Color> func;
 
   public JBColor(int rgb, int darkRGB) {
-    this(new Color(rgb), new Color(darkRGB));
+    this(new Color(rgb, (rgb & 0xff000000) != 0), new Color(darkRGB, (rgb & 0xff000000) != 0));
   }
 
   public JBColor(@NotNull Color regular, @NotNull Color dark) {
@@ -62,10 +64,11 @@ public class JBColor extends Color {
   @NotNull
   public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
-      Color color = notNull(UIManager.getColor(propertyName), () ->
-                            notNull(findPatternMatch(propertyName), defaultColor));
+      Color color = notNull(UIManager.getColor(propertyName), () -> notNull(findPatternMatch(propertyName), defaultColor));
       if (UIManager.get(propertyName) == null) {
-        UIManager.put(propertyName, color);
+        if (Registry.is("ide.save.missing.jb.colors", false)) {
+          return _saveAndReturnColor(propertyName, color);
+        }
       }
       return color;
     });
@@ -105,13 +108,14 @@ public class JBColor extends Color {
   }
 
   /**
-   * @deprecated use {@link JBUI.CurrentTheme.Link#linkColor()}
+   * @deprecated use {@link JBUI.CurrentTheme.Link.Foreground#ENABLED}
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Color link() {
     //noinspection UnnecessaryFullyQualifiedName
-    return com.intellij.util.ui.JBUI.CurrentTheme.Link.linkColor();
+    return com.intellij.util.ui.JBUI.CurrentTheme.Link.Foreground.ENABLED;
   }
 
   public static void setDark(boolean dark) {
@@ -122,7 +126,9 @@ public class JBColor extends Color {
     return !Lazy.DARK;
   }
 
-  private Color getDarkVariant() {
+  @ApiStatus.Internal
+  //For CodeWithMe only
+  public Color getDarkVariant() {
     return darkColor;
   }
 
@@ -320,5 +326,26 @@ public class JBColor extends Color {
       defaultThemeColors.put(colorId, defaultColor);
       return defaultColor;
     });
+  }
+
+  private static void saveMissingColorInUIDefaults(String propertyName, Color color) {
+    if (Registry.is("ide.save.missing.jb.colors", false)) {
+      String key = propertyName + "!!!";
+      if (UIManager.get(key) == null) {
+        UIManager.put(key, color);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  private static Color _saveAndReturnColor(@NonNls @NotNull String propertyName, Color color) {
+    String key = propertyName + "!!!";
+    Object saved = UIManager.get(key);
+    if (saved instanceof Color) {
+      //in case a designer changed the key
+      return (Color)saved;
+    }
+    UIManager.put(key, color);
+    return color;
   }
 }

@@ -1,52 +1,27 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrays;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author peter
  */
-public class PathInterner {
-  private static final TObjectHashingStrategy<CharSegment[]> HASHING_STRATEGY = new TObjectHashingStrategy<CharSegment[]>() {
-    @Override
-    public int computeHashCode(CharSegment[] object) {
-      return Arrays.hashCode(object);
-    }
-
-    @Override
-    public boolean equals(CharSegment[] o1, CharSegment[] o2) {
-      return Arrays.equals(o1, o2);
-    }
-  };
-  private final OpenTHashSet<CharSegment> myInternMap = new OpenTHashSet<>();
+public final class PathInterner {
+  private final HashSetInterner<CharSegment> myInternMap = new HashSetInterner<>();
 
   @Contract("_,true->!null")
   private CharSegment[] internParts(@NotNull CharSequence path, boolean forAddition) {
@@ -61,7 +36,7 @@ public class PathInterner {
         if (!forAddition) {
           return null;
         }
-        myInternMap.add(interned = flyweightKey.createPersistentCopy(asBytes));
+        myInternMap.intern(interned = flyweightKey.createPersistentCopy(asBytes));
       }
       key.add(interned);
       start += flyweightKey.length();
@@ -136,7 +111,7 @@ public class PathInterner {
     }
   }
 
-  private static class SubSegment extends CharSegment {
+  private static final class SubSegment extends CharSegment {
     private Object encodedString;
     private int start;
     private int end;
@@ -206,7 +181,7 @@ public class PathInterner {
     }
   }
 
-  private static class SegmentedCharSequence implements CharSequenceWithStringHash {
+  private static final class SegmentedCharSequence implements CharSequenceWithStringHash {
     private final CharSegment[] myWrappers;
     private transient int hash;
 
@@ -305,7 +280,8 @@ public class PathInterner {
   }
 
   public static class PathEnumerator extends Interner<CharSequence> {
-    private final TObjectIntHashMap<CharSegment[]> mySeqToIdx = new TObjectIntHashMap<>(HASHING_STRATEGY);
+    @SuppressWarnings("unchecked")
+    private final Object2IntMap<CharSegment[]> mySeqToIdx = new Object2IntOpenCustomHashMap<>((Hash.Strategy<CharSegment[]>)ObjectArrays.HASH_STRATEGY);
     private final List<CharSequence> myIdxToSeq = new ArrayList<>();
     private final PathInterner myInterner = new PathInterner();
 
@@ -325,7 +301,7 @@ public class PathInterner {
         mySeqToIdx.put(seq, myIdxToSeq.size());
         myIdxToSeq.add(new SegmentedCharSequence(seq));
       }
-      return mySeqToIdx.get(seq);
+      return mySeqToIdx.getInt(seq);
     }
 
     @NotNull
@@ -352,7 +328,7 @@ public class PathInterner {
     @NotNull
     @Override
     public Set<CharSequence> getValues() {
-      return new THashSet<>(getAllPaths());
+      return CollectionFactory.createSmallMemoryFootprintSet(getAllPaths());
     }
 
     @Override

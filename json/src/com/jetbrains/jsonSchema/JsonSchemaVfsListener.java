@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
@@ -29,12 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 /**
  * @author Irina.Chernushina on 3/30/2016.
  */
-public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
+public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
   public static final Topic<Runnable> JSON_DEPS_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable.class);
 
@@ -70,8 +70,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     @NotNull private final JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
-    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(JsonBundle.message(
-      "json.vfs.updater.executor"));
+    private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Json Vfs Updater Executor");
 
     protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       myProject = project;
@@ -95,13 +94,14 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
         final PsiManager psiManager = PsiManager.getInstance(project);
         final Editor[] editors = EditorFactory.getInstance().getAllEditors();
-        Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
+        Arrays.stream(editors)
+              .filter(editor -> editor instanceof EditorEx && editor.getProject() == myProject)
               .map(editor -> ((EditorEx)editor).getVirtualFile())
               .filter(file -> file != null && file.isValid())
               .forEach(file -> {
                 final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
                 if (schemaFiles.stream().anyMatch(finalScope::contains)) {
-                  ReadAction.nonBlocking(() -> Optional.ofNullable(file.isValid() ? psiManager.findFile(file) : null).ifPresent(analyzer::restart)).submit(myTaskExecutor);
+                  ReadAction.nonBlocking(() -> Optional.ofNullable(!psiManager.isDisposed() && file.isValid() ? psiManager.findFile(file) : null).ifPresent(analyzer::restart)).submit(myTaskExecutor);
                 }
               });
       };

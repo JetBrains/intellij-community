@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.DebugLogManager.DebugLogLevel
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -44,14 +45,13 @@ private class DebugLogConfigureDialog(project: Project, categories: List<DebugLo
         DebugLogLevel.TRACE -> "${it.category}$TRACE_SUFFIX"
       }
     }
-    title = "Custom Debug Log Configuration"
+    title = IdeBundle.message("dialog.title.custom.debug.log.configuration")
     init()
   }
 
   override fun getDimensionServiceKey() = "#com.intellij.ide.actions.DebugLogConfigureAction"
 
-  override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml(
-    "Enable DEBUG level for log categories (one per line).<br>Append '$TRACE_SUFFIX' suffix to a category to enable TRACE level.<br><br>"))
+  override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml(IdeBundle.message("label.enable.debug.level", TRACE_SUFFIX)))
 
   override fun createCenterPanel() = ScrollPaneFactory.createScrollPane(myTextArea)
 

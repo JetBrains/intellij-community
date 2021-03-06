@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -6,16 +6,12 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Getter;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
-import com.intellij.util.containers.Queue;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.IntStream;
 
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
@@ -119,20 +115,24 @@ public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   }
 
   public static void updateUpHierarchy(Collection<? extends InspectionConfigTreeNode> nodes) {
-    Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
-    Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
+    Deque<InspectionConfigTreeNode> q = new ArrayDeque<>(nodes.size());
+    Set<InspectionConfigTreeNode> alreadyUpdated = new HashSet<>();
     for (InspectionConfigTreeNode node : nodes) {
       q.addLast(node);
     }
-    while (!q.isEmpty()) {
-      final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
-      if (!alreadyUpdated.add(inspectionConfigTreeNode)) continue;
+    while (true) {
+      InspectionConfigTreeNode inspectionConfigTreeNode = q.pollFirst();
+      if (inspectionConfigTreeNode == null) {
+        break;
+      }
+      if (!alreadyUpdated.add(inspectionConfigTreeNode)) {
+        continue;
+      }
       inspectionConfigTreeNode.dropCache();
-      final TreeNode parent = inspectionConfigTreeNode.getParent();
+      TreeNode parent = inspectionConfigTreeNode.getParent();
       if (parent != null && parent.getParent() != null) {
         q.addLast((InspectionConfigTreeNode)parent);
       }
     }
-
   }
 }

@@ -135,6 +135,11 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertNull(ExceptionWorker.parseExceptionLine(line + "\n"));
   }
 
+  public void testNativeMethod() {
+    assertParsed("at java.base/java.security.AccessController.doPrivileged(Native Method)\n",
+                 "java.security.AccessController", "doPrivileged", null, -1);
+  }
+
   public void testColumnFinder() {
     @Language("JAVA") String classText =
       "/** @noinspection ALL*/\n" +
@@ -658,6 +663,34 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
       Trinity.create("java.lang.NullPointerException\n", null, null),
       Trinity.create("\tat MainTest.main(MainTest.java:4)\n", 4, 20));
     checkColumnFinder(classText, traceAndPositions);
+  }
+  
+  public void testInternalFrames() {
+    @Language("JAVA") String classText =
+      "import java.util.stream.Collectors;\n" +
+      "\n" +
+      "public class InternalFrames {\n" +
+      "  public static void main(String[] args) {\n" +
+      "    Runnable r = () -> {\n" +
+      "      String frames = StackWalker.getInstance(StackWalker.Option.SHOW_HIDDEN_FRAMES)\n" +
+      "          .walk(s -> s.map(sf -> \"\\tat \" + sf.toStackTraceElement() + \"\\n\").collect(Collectors.joining()));\n" +
+      "      System.out.println(frames);\n" +
+      "    };\n" +
+      "    r.run();\n" +
+      "  }\n" +
+      "}\n";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = List.of(
+      Trinity.create("\tat InternalFrames.lambda$main$2(InternalFrames.java:7)\n", 7, 1),
+      Trinity.create("\tat InternalFrames$$Lambda$14/0x0000000800c01200.run(Unknown Source)\n", null, null),
+      Trinity.create("\tat InternalFrames.main(InternalFrames.java:10)\n", 10, 7));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+  
+  public void testParseExceptionLine() {
+    String exceptionLine = "Caused by: java.lang.AssertionError: expected same";
+    ExceptionInfo info = ExceptionInfo.parseMessage(exceptionLine, exceptionLine.length());
+    assertNotNull(info);
+    assertEquals("java.lang.AssertionError", info.getExceptionClassName());
   }
 
   private void checkColumnFinder(String classText, List<Trinity<String, Integer, Integer>> traceAndPositions) {

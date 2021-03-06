@@ -1,17 +1,28 @@
 <html>
 <body>
-Reports <b>clone()</b> methods which are not declared as throwing
-<b>CloneNotSupportedException</b>. If <b>clone()</b> is not declared
-to possibly throw <b>CloneNotSupportedException</b>, then subclasses which need to
-prohibit cloning will not be able to do so in the standard way. This inspection will not report
-<b>clone()</b> methods declared <b>final</b>,
-or <b>clone()</b> methods on <b>final</b> classes.
+Reports <code>clone()</code> methods that don't declare <code>CloneNotSupportedException</code>.
+If <code>CloneNotSupportedException</code> is not declared, then subclasses will not be able to prohibit cloning
+in the standard way. This inspection does not report <code>clone()</code> methods declared <code>final</code>
+and <code>clone()</code> methods on <code>final</code> classes.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to indicate if this inspection should only warn on <b>protected</b> methods.
-In <i>Effective Java, Second Edition</i> (but not in the first edition) it is recommended to omit the <b>CloneNotSupportedException</b>
-declaration on <b>public</b> methods, because methods that don't throw checked exceptions are easier to use.
+Use the checkbox below to indicate if this inspection should only warn on <code>protected</code> methods.
+  You can disable warnings for <code>public</code> methods if you are following the recommendation given in <i>Effective Java, Second Edition</i>> to omit
+  the exception declaration for <code>public</code> methods to make them easier to use.
 <p>
+<p>Example</p>
+<pre><code>
+  public class Example implements Cloneable {
+    protected Object clone() { // method doesn't have 'throw CloneNotSupportedException' clause, so inheritors can't throw it
+        try {
+            return super.clone();
+        }
+        catch(CloneNotSupportedException e){
+            return null;
+        }
+    }
+  }
+</code></pre>
 
 </body>
 </html>

@@ -45,6 +45,6 @@ public abstract class LightQuickFixParameterizedTestCase extends LightQuickFixTe
 
   @Test
   public void runSingle() throws Throwable {
-    runSingleTest(() -> doSingleTest(myFileSuffix, myTestDataPath));
+    doSingleTest(myFileSuffix, myTestDataPath);
   }
 }

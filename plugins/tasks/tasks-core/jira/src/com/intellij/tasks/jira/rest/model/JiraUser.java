@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.jira.rest.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +36,7 @@ public class JiraUser {
   }
 
   @NotNull
-  public String getDisplayName() {
+  public @NlsSafe String getDisplayName() {
     return displayName;
   }
 

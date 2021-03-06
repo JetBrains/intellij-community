@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.WindowWrapper.Mode;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ui.UIUtil;
@@ -24,9 +25,9 @@ public class WindowWrapperBuilder {
   @NotNull private final JComponent myComponent;
   @Nullable private Project myProject;
   @Nullable private Component myParent;
-  @Nullable private String title;
+  @Nullable private @NlsContexts.DialogTitle String title;
   @Nullable private Computable<JComponent> myPreferredFocusedComponent;
-  @Nullable private String myDimensionServiceKey;
+  @NonNls @Nullable private String myDimensionServiceKey;
   @Nullable private Runnable myOnShowCallback;
   @Nullable private BooleanGetter myOnCloseHandler;
 
@@ -48,7 +49,7 @@ public class WindowWrapperBuilder {
   }
 
   @NotNull
-  public WindowWrapperBuilder setTitle(@Nullable String title) {
+  public WindowWrapperBuilder setTitle(@NlsContexts.DialogTitle @Nullable String title) {
     this.title = title;
     return this;
   }
@@ -66,7 +67,7 @@ public class WindowWrapperBuilder {
   }
 
   @NotNull
-  public WindowWrapperBuilder setDimensionServiceKey(@Nullable @NonNls String dimensionServiceKey) {
+  public WindowWrapperBuilder setDimensionServiceKey(@NonNls @Nullable String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }
@@ -185,7 +186,7 @@ public class WindowWrapperBuilder {
 
     private static class MyDialogWrapper extends DialogWrapper {
       @NotNull private final JComponent myComponent;
-      @Nullable private String myDimensionServiceKey;
+      @Nullable @NonNls private String myDimensionServiceKey;
       @Nullable private Computable<? extends JComponent> myPreferredFocusedComponent;
       @Nullable private BooleanGetter myOnCloseHandler;
 
@@ -199,7 +200,7 @@ public class WindowWrapperBuilder {
         myComponent = component;
       }
 
-      public void setParameters(@Nullable String dimensionServiceKey,
+      public void setParameters(@Nullable @NonNls String dimensionServiceKey,
                                 @Nullable Computable<? extends JComponent> preferredFocusedComponent,
                                 @Nullable BooleanGetter onCloseHandler) {
         myDimensionServiceKey = dimensionServiceKey;

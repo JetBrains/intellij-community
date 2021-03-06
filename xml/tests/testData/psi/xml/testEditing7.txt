@@ -14,7 +14,7 @@ XmlFile:test.xml
         PsiWhiteSpace(' ')
         PsiElement(XML_ATTRIBUTE)
           XmlToken:XML_NAME('a')
-          PsiErrorElement:'=' expected
+          PsiErrorElement:= expected
             <empty list>
       XmlText
         XmlToken:XML_DATA_CHARACTERS(',b"/>')

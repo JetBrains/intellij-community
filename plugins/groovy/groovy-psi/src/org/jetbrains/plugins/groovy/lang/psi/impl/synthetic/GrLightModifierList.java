@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -21,8 +22,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP;
 
-public class GrLightModifierList extends LightElement implements GrModifierList {
-
+public final class GrLightModifierList extends LightElement implements GrModifierList {
   private int myModifiers;
   private final List<GrAnnotation> myAnnotations = new ArrayList<>();
 
@@ -44,7 +44,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   public void addModifier(String modifier) {
-    int code = NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+    int code = NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier);
     assert code != 0;
     myModifiers |= code;
   }
@@ -61,7 +61,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     myModifiers = modifiers;
   }
 
-  public void setModifiers(String... modifiers) {
+  public void setModifiers(@GrModifierConstant String... modifiers) {
     myModifiers = 0;
 
     for (String modifier : modifiers) {
@@ -209,7 +209,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     else if (modifierList != null) {
       for (String modifier : PsiModifier.MODIFIERS) {
         if (modifierList.hasExplicitModifier(modifier)) {
-          mod |= NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+          mod |= NAME_TO_MODIFIER_FLAG_MAP.getInt(modifier);
         }
       }
     }

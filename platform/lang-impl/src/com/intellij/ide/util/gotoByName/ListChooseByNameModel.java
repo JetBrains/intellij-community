@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
@@ -11,6 +13,7 @@ import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +31,13 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
   private static final String ELLIPSIS_SUFFIX = "...";
 
   private Pattern myCompiledPattern;
-  private String myPattern;
+  private @NlsSafe String myPattern;
   private final List<? extends T> myItems;
-  private final String myNotInMessage;
+  private final @NlsContexts.Label String myNotInMessage;
 
   public ListChooseByNameModel(@NotNull final Project project,
-                               @NotNull String prompt,
-                               @NotNull String notInMessage,
+                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String prompt,
+                               @NotNull @NlsContexts.Label String notInMessage,
                                @NotNull List<? extends T> items) {
     super(project, prompt, null);
 
@@ -94,7 +97,7 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         if (value instanceof ChooseByNameItem) {
           final ChooseByNameItem item = (ChooseByNameItem) value;
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
+          final Color fg = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
 
           final JLabel actionLabel = new JLabel(item.getName(), null, LEFT);
           actionLabel.setBackground(bg);
@@ -124,7 +127,8 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         }
         else {
           // E.g. "..." item
-          final JLabel actionLabel = new JLabel(value.toString(), null, LEFT);
+          @NlsSafe String text = value.toString();
+          final JLabel actionLabel = new JLabel(text, null, LEFT);
           actionLabel.setBackground(bg);
           actionLabel.setForeground(UIUtil.getListForeground());
           actionLabel.setFont(actionLabel.getFont().deriveFont(Font.PLAIN));

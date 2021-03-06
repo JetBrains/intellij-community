@@ -8,15 +8,21 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -146,7 +152,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestCompletionOrder("main.path", "first.foo.path", "sys.path", "_second.bar.path")
+      (__) -> doTestCompletionOrder("combinedOrdering.path", "first.foo.path", "sys.path", "_second.bar.path")
     );
   }
 
@@ -155,27 +161,100 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTestCompletionOrder("c.foo", "b._foo", "a.__foo__");
   }
 
+  // PY-44586
+  public void testNoDuplicatesForStubsAndOverloads() {
+    doExtendedCompletion();
+    List<String> allVariants = myFixture.getLookupElementStrings();
+    assertNotNull(allVariants);
+    assertEquals(1, Collections.frequency(allVariants, "my_func"));
+  }
+
+  // PY-45541
+  public void testCanonicalImportPathUsedAsLookupTailText() {
+    LookupElement[] lookupElements = doExtendedCompletion();
+    LookupElement reexportedFunc = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("my_func"));
+    assertNotNull(reexportedFunc);
+    TestLookupElementPresentation funcPresentation = TestLookupElementPresentation.renderReal(reexportedFunc);
+    assertEquals(" (pkg)", funcPresentation.getTailText());
+
+    LookupElement notExportedVar = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("my_var"));
+    assertNotNull(notExportedVar);
+    TestLookupElementPresentation varPresentation = TestLookupElementPresentation.renderReal(notExportedVar);
+    assertEquals(" (pkg.mod)", varPresentation.getTailText());
+  }
+
+  // PY-45566
+  public void testPythonSkeletonsVariantsNotSuggested() {
+    LookupElement[] lookupElements = doExtendedCompletion();
+
+    LookupElement ndarray = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("ndarray"));
+    assertNull(ndarray);
+
+    PyClass ndarrayUserSkeleton = PyClassNameIndex.findClass("numpy.core.multiarray.ndarray", myFixture.getProject());
+    assertNotNull(ndarrayUserSkeleton);
+    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(ndarrayUserSkeleton.getContainingFile()));
+  }
+
+  // PY-46381
+  public void testThirdPartyPackageTestsNotSuggested() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/site-packages", () -> {
+      myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
+      myFixture.configureByFile("main.py");
+      LookupElement[] variants = myFixture.complete(CompletionType.BASIC, 2);
+      assertNotNull(variants);
+      List<String> variantQNames = ContainerUtil.mapNotNull(variants, PyClassNameCompletionTest::getElementQualifiedName);
+      assertDoesntContain(variantQNames, "mypkg.test.test_mod.test_func");
+      assertContainsElements(variantQNames, "mod.func", "tests.test_func", "mypkg.mod.func");
+    });
+  }
+
+  // PY-46381
+  public void testThirdPartyPackageBundledDependenciesNotSuggested() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(true) + "/site-packages", () -> {
+      myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
+      myFixture.configureByFile("main.py");
+      LookupElement[] variants = myFixture.complete(CompletionType.BASIC, 2);
+      assertNotNull(variants);
+      List<String> variantQNames = ContainerUtil.mapNotNull(variants, PyClassNameCompletionTest::getElementQualifiedName);
+      assertDoesntContain(variantQNames, "pip._vendor.requests", "pip._vendor.requests.request");
+      assertContainsElements(variantQNames, "requests", "requests.request");
+    });
+  }
+
+  @Nullable
+  private static String getElementQualifiedName(@NotNull LookupElement le) {
+    PsiElement element = le.getPsiElement();
+    if (element instanceof PyQualifiedNameOwner) {
+      return ((PyQualifiedNameOwner)element).getQualifiedName();
+    }
+    else if (element instanceof PsiFileSystemItem) {
+      return Objects.toString(QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)element));
+    }
+    return null;
+  }
+
   private void doTest() {
-    final String path = "/completion/className/" + getTestName(true);
-    myFixture.copyDirectoryToProject(path, "");
-    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
-    myFixture.complete(CompletionType.BASIC, 2);
-    if (myFixture.getLookupElements() != null) {
+    LookupElement[] lookupElements = doExtendedCompletion();
+    if (lookupElements != null) {
       myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
-    myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "/" + getTestName(true) + ".after.py", true);
   }
 
   private void doTestCompletionOrder(String @NotNull ... expected) {
-    myFixture.copyDirectoryToProject("/completion/className/" + getTestName(true), "");
-    myFixture.configureByFile("main.py");
-    myFixture.complete(CompletionType.BASIC, 2);
-    List<String> qNames = StreamEx.of(myFixture.getLookupElements())
+    LookupElement[] lookupElements = doExtendedCompletion();
+    List<String> qNames = StreamEx.of(lookupElements)
       .map(LookupElement::getPsiElement)
       .nonNull()
       .map(PyClassNameCompletionTest::extractQualifiedName)
       .toList();
     assertContainsInRelativeOrder(qNames, expected);
+  }
+
+  private LookupElement @Nullable [] doExtendedCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
+    return myFixture.complete(CompletionType.BASIC, 2);
   }
 
   @Nullable
@@ -195,5 +274,10 @@ public class PyClassNameCompletionTest extends PyTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/completion/className/";
   }
 }

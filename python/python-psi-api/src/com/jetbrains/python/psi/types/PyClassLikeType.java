@@ -54,9 +54,9 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInst
    * @param processor visitor
    * @param inherited call on parents too
    * @param context   context to be used to resolve types
-   * @see PyTypeUtil#getMembersOfType(PyClassLikeType, Class, boolean, TypeEvalContext) 
+   * @see PyTypeUtil#getMembersOfType(PyClassLikeType, Class, boolean, TypeEvalContext)
    */
-  void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context);
+  void visitMembers(@NotNull Processor<? super PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context);
 
   @NotNull
   Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context);

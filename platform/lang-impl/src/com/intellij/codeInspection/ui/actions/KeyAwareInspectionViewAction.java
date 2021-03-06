@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -20,7 +20,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +111,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
     @Override
     protected void actionPerformed(@NotNull InspectionResultsView view, @NotNull HighlightDisplayKey key) {
-      Set<PsiFile> files = new THashSet<>();
+      Set<PsiFile> files = new HashSet<>();
       for (RefEntity entity : view.getTree().getSelectedElements()) {
         if (entity instanceof RefElement && entity.isValid()) {
           final PsiElement element = ((RefElement)entity).getPsiElement();

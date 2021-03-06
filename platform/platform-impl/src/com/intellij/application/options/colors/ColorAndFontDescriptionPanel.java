@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
@@ -10,7 +11,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
@@ -34,9 +37,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
@@ -79,7 +79,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     myEffectsCombo.setModel(new CollectionComboBoxModel<>(new ArrayList<>(myEffectsMap.keySet())));
-    myEffectsCombo.setRenderer(SimpleListCellRenderer.create("<invalid>", Functions.id()));
+    myEffectsCombo.setRenderer(SimpleListCellRenderer.create(IdeBundle.message("label.invalid.color"), Functions.id()));
 
     ActionListener actionListener = e -> {
       if (myUiEventsEnabled) {
@@ -198,7 +198,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
       updateColorChooser(myCbEffects, myEffectsColorChooser, description.isEffectsColorEnabled(),
                          description.isEffectsColorChecked(), description.getEffectColor(), description.isTransparencyEnabled());
 
-      String name = ContainerUtil.reverseMap(myEffectsMap).get(effectType);
+      @NlsSafe String name = ContainerUtil.reverseMap(myEffectsMap).get(effectType);
       myEffectsCombo.getModel().setSelectedItem(name);
       myEffectsCombo
         .setEnabled((description.isEffectsColorEnabled() && description.isEffectsColorChecked()) && description.isEditable());
@@ -213,21 +213,21 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
   private void setInheritanceInfo(ColorAndFontDescription description) {
     Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> baseDescriptor = description.getFallbackKeyDescriptor();
-    if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
+    if (baseDescriptor != null) {
       String attrName = baseDescriptor.second.getDisplayName();
       String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
       ColorAndFontDescriptorsProvider settingsPage = baseDescriptor.first;
-      String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
       String tooltipText;
       String labelText;
+      HtmlChunk.Element div = HtmlChunk.div("text-align:right").attr("vertical-align", "top");
       if (settingsPage != null) {
         String pageName = settingsPage.getDisplayName();
-        tooltipText = "Editor | Color Scheme | " + pageName + "<br>" + attrLabel;
-        labelText = style + "<a href=\"" + pageName + "\">" + attrLabel + "</a><br>(" + pageName + ")";
+        tooltipText = IdeBundle.message("tooltip.inherited.editor.color.scheme", pageName, attrLabel);
+        labelText = div.children(HtmlChunk.link(pageName, attrLabel), HtmlChunk.br(), HtmlChunk.text("(" + pageName + ")")).toString();
       }
       else {
         tooltipText = attrLabel;
-        labelText = style + attrLabel + "<br>&nbsp;";
+        labelText = div.children(HtmlChunk.text(attrLabel), HtmlChunk.br(), HtmlChunk.nbsp()).toString();
       }
 
       myInheritanceLabel.setVisible(true);

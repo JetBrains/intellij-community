@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.preview;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class ElementPreviewHintProvider implements ElementPreviewProvider {
     for (PreviewHintProvider hintProvider : PreviewHintProvider.EP_NAME.getExtensionList()) {
       JComponent preview;
       try {
-        preview = hintProvider.getPreviewComponent(element);
+        preview = SlowOperations.allowSlowOperations(() -> hintProvider.getPreviewComponent(element));
       }
       catch (ProcessCanceledException e) {
         throw e;

@@ -5,9 +5,8 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.PatternVariableCanBeUsedInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 public class PatternVariableCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -18,7 +17,7 @@ public class PatternVariableCanBeUsedInspectionTest extends LightQuickFixParamet
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_16;
   }
   
   @Override

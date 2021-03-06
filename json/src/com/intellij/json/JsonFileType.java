@@ -23,7 +23,7 @@ public class JsonFileType extends LanguageFileType{
     super(language, secondary);
   }
 
-  public JsonFileType() {
+  protected JsonFileType() {
     super(JsonLanguage.INSTANCE);
   }
 

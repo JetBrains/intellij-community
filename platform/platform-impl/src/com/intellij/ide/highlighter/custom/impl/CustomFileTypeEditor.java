@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.CommonBundle;
@@ -38,7 +38,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JCheckBox mySupportEscapes = new JCheckBox(IdeBundle.message("checkbox.customfiletype.support.string.escapes"));
 
   private final JTextField myLineComment = new JTextField(5);
-  private final JCheckBox myCommentAtLineStart = new JCheckBox(UIUtil.replaceMnemonicAmpersand("&Only at line start"));
+  private final JCheckBox myCommentAtLineStart = new JCheckBox(UIUtil.replaceMnemonicAmpersand(IdeBundle.message("only.at.line.start")));
   private final JTextField myBlockCommentStart = new JTextField(5);
   private final JTextField myBlockCommentEnd = new JTextField(5);
   private final JTextField myHexPrefix = new JTextField(5);
@@ -67,27 +67,25 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
     SyntaxTable table = fileType.getSyntaxTable();
 
-    if (table != null) {
-      myLineComment.setText(table.getLineComment());
-      myBlockCommentEnd.setText(table.getEndComment());
-      myBlockCommentStart.setText(table.getStartComment());
-      myHexPrefix.setText(table.getHexPrefix());
-      myNumPostfixes.setText(table.getNumPostfixChars());
-      myIgnoreCase.setSelected(table.isIgnoreCase());
-      myCommentAtLineStart.setSelected(table.lineCommentOnlyAtStart);
+    myLineComment.setText(table.getLineComment());
+    myBlockCommentEnd.setText(table.getEndComment());
+    myBlockCommentStart.setText(table.getStartComment());
+    myHexPrefix.setText(table.getHexPrefix());
+    myNumPostfixes.setText(table.getNumPostfixChars());
+    myIgnoreCase.setSelected(table.isIgnoreCase());
+    myCommentAtLineStart.setSelected(table.lineCommentOnlyAtStart);
 
-      mySupportBraces.setSelected(table.isHasBraces());
-      mySupportBrackets.setSelected(table.isHasBrackets());
-      mySupportParens.setSelected(table.isHasParens());
-      mySupportEscapes.setSelected(table.isHasStringEscapes());
+    mySupportBraces.setSelected(table.isHasBraces());
+    mySupportBrackets.setSelected(table.isHasBrackets());
+    mySupportParens.setSelected(table.isHasParens());
+    mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      myKeywordsLists[0].setText(StreamEx.of(table.getKeywords1()).sorted().joining("\n"));
-      myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
-      myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
-      myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
-      for (int i = 0; i < 4; i++) {
-        myKeywordsLists[i].setCaretPosition(0);
-      }
+    myKeywordsLists[0].setText(StreamEx.of(table.getKeywords1()).sorted().joining("\n"));
+    myKeywordsLists[1].setText(StreamEx.of(table.getKeywords2()).sorted().joining("\n"));
+    myKeywordsLists[2].setText(StreamEx.of(table.getKeywords3()).sorted().joining("\n"));
+    myKeywordsLists[3].setText(StreamEx.of(table.getKeywords4()).sorted().joining("\n"));
+    for (int i = 0; i < 4; i++) {
+      myKeywordsLists[i].setCaretPosition(0);
     }
   }
 

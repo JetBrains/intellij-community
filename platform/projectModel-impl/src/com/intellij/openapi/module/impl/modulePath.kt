@@ -16,11 +16,11 @@
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.module.impl.ModuleManagerImpl.*
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.JpsProjectLoader
 
 /**
  * Path here must be system-independent.
@@ -47,14 +47,14 @@ internal abstract class SaveItem {
     // moduleFilePath is empty for non-persistent modules. Such modules should disappear when IDE exits,
     // hence they should not be mentioned in `modules.xml`.
     if (moduleFilePath.isNotEmpty()) {
-      val moduleElement = Element(ELEMENT_MODULE)
+      val moduleElement = Element(JpsProjectLoader.MODULE_TAG)
       val url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath)
-      moduleElement.setAttribute(ATTRIBUTE_FILEURL, url)
+      moduleElement.setAttribute(JpsProjectLoader.FILE_URL_ATTRIBUTE, url)
       // support for older builds
-      moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath)
+      moduleElement.setAttribute(JpsProjectLoader.FILE_PATH_ATTRIBUTE, moduleFilePath)
 
       groupPathString?.let {
-        moduleElement.setAttribute(ATTRIBUTE_GROUP, it)
+        moduleElement.setAttribute(JpsProjectLoader.GROUP_ATTRIBUTE, it)
       }
       parentElement.addContent(moduleElement)
     }

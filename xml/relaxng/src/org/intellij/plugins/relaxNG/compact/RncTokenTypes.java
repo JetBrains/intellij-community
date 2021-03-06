@@ -16,18 +16,18 @@
 
 package org.intellij.plugins.relaxNG.compact;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
 
 import java.lang.reflect.Field;
 
-public class RncTokenTypes {
-  private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<>();
+public final class RncTokenTypes {
+  private static final Int2ObjectMap<IElementType> ourTokenTypes = new Int2ObjectOpenHashMap<>();
 
   static {
     assert RngCompactLanguage.INSTANCE != null;
@@ -71,22 +71,19 @@ public class RncTokenTypes {
   @NotNull
   private static IElementType get(final String name) {
     assert !ourTokenTypes.isEmpty();
-    final Ref<IElementType> ref = new Ref<>();
-    ourTokenTypes.forEachValue(iElementType -> {
+    for (IElementType iElementType : ourTokenTypes.values()) {
       if (iElementType.toString().equals(name)) {
-        ref.set(iElementType);
-        return false;
+        return iElementType;
       }
-      return true;
-    });
-    return ref.get();
+    }
+    return null;
   }
 
   private static final IElementType WS = get(CompactSyntaxConstants.WS);
   public static final TokenSet WHITESPACE = TokenSet.create(WS);
 
   public static final IElementType ILLEGAL_CHAR = get(CompactSyntaxConstants.ILLEGAL_CHAR);
-  
+
   public static final IElementType LBRACE = get("{");
   public static final IElementType RBRACE = get("}");
   public static final IElementType LBRACKET = get("[");
@@ -146,10 +143,6 @@ public class RncTokenTypes {
 
   public static final IElementType LITERAL = get(CompactSyntaxConstants.LITERAL);
   public static final TokenSet STRINGS = TokenSet.create(LITERAL);
-
-  static final TokenSet READABLE_TEXT = TokenSet.orSet(
-          DOC_TOKENS, COMMENTS,
-          TokenSet.create(LITERAL));
 
   public static final IElementType KEYWORD_ElEMENT = get("KEYWORD_ELEMENT");
   public static final IElementType KEYWORD_ATTRIBUTE = get("KEYWORD_ATTRIBUTE");

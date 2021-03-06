@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
+import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
@@ -10,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrParameterStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
 
 import java.io.IOException;
 
@@ -49,5 +51,14 @@ public class GrParameterElementType extends GrStubElementType<GrParameterStub, G
     final String typeText = GrStubUtils.readNullableString(dataStream);
     final int flags = dataStream.readVarInt();
     return new GrParameterStub(parentStub, name, annotations, typeText, flags);
+  }
+
+  @Override
+  public void indexStub(@NotNull GrParameterStub stub, @NotNull IndexSink sink) {
+    for (String annName : stub.getAnnotations()) {
+      if (annName != null) {
+        sink.occurrence(GrAnnotatedMemberIndex.KEY, annName);
+      }
+    }
   }
 }

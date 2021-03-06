@@ -1,17 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -67,7 +64,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   }
 
   static void updateCheckboxPresentation(JCheckBox checkBox, Presentation presentation) {
-    checkBox.setText(presentation.getText());
+    checkBox.setText(presentation.getText(true));
     checkBox.setToolTipText(presentation.getDescription());
     checkBox.setMnemonic(presentation.getMnemonic());
     checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
@@ -86,13 +83,10 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
       @Override
       public void actionPerformed(ActionEvent e) {
         JCheckBox checkBox = (JCheckBox)e.getSource();
-        ActionToolbar actionToolbar =
-          ComponentUtil.getParentOfType((Class<? extends ActionToolbar>)ActionToolbar.class, (Component)checkBox);
-        DataContext dataContext =
-          actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(checkBox);
+        DataContext dataContext = ActionToolbar.getDataContextFor(checkBox);
         InputEvent inputEvent = new KeyEvent(checkBox, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_SPACE, ' ');
         AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, place, dataContext);
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
       }
     });
 

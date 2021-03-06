@@ -16,7 +16,9 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,8 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class PatternPackageSet extends PatternBasedPackageSet {
@@ -47,11 +47,6 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     myAspectJSyntaxPattern = aspectPattern;
     myScope = scope;
     myPattern = aspectPattern != null ? Pattern.compile(FilePatternPackageSet.convertToRegexp(aspectPattern, '.')) : null;
-  }
-
-  @Override
-  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
   }
 
   @Override
@@ -149,30 +144,5 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   @Override
   public String getPattern() {
     return myAspectJSyntaxPattern;
-  }
-
-  private static boolean matchesLibrary(final Pattern libPattern,
-                                       final VirtualFile file,
-                                       final ProjectFileIndex fileIndex) {
-    if (libPattern != null) {
-      final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(file);
-      for (OrderEntry orderEntry : entries) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final String libraryName = ((LibraryOrderEntry)orderEntry).getLibraryName();
-          if (libraryName != null) {
-            if (libPattern.matcher(libraryName).matches()) return true;
-          } else {
-            final String presentableName = orderEntry.getPresentableName();
-            final String fileName = new File(presentableName).getName();
-            if (libPattern.matcher(fileName).matches()) return true;
-          }
-        } else if (orderEntry instanceof JdkOrderEntry) {
-          final String jdkName = ((JdkOrderEntry)orderEntry).getJdkName();
-          if (jdkName != null && libPattern.matcher(jdkName).matches()) return true;
-        }
-      }
-      return false;
-    }
-    return true;
   }
 }

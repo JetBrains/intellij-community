@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenArtifactIndex {
+public final class MavenArtifactIndex {
 
   private static final MavenArtifactIndex EMPTY_INDEX = new MavenArtifactIndex(Collections.emptyMap());
 

@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.containers.UnsignedShortArrayList;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+
+import java.util.function.IntUnaryOperator;
 
 /** An int list where most values are in range 0..2^16 */
-class MostlyUShortIntList implements IntIntFunction {
+final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
   private final UnsignedShortArrayList myList;
-  private TIntIntHashMap myMap;
+  private Int2IntMap myMap;
 
   MostlyUShortIntList(int initialCapacity) {
     myList = new UnsignedShortArrayList(initialCapacity);
@@ -31,13 +33,15 @@ class MostlyUShortIntList implements IntIntFunction {
     myList.setQuick(index, value);
   }
 
-  private TIntIntHashMap initMap() {
-    if (myMap == null) myMap = new TIntIntHashMap();
+  private Int2IntMap initMap() {
+    if (myMap == null) {
+      myMap = new Int2IntOpenHashMap();
+    }
     return myMap;
   }
 
   @Override
-  public int fun(int index) {
+  public int applyAsInt(int index) {
     return get(index);
   }
 
@@ -53,7 +57,7 @@ class MostlyUShortIntList implements IntIntFunction {
   void trimToSize() {
     myList.trimToSize();
     if (myMap != null) {
-      myMap.trimToSize();
+      ((Int2IntOpenHashMap)myMap).trim();
     }
   }
 }

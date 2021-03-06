@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -34,7 +35,7 @@ public class AddConstructorFix implements LocalQuickFix, IntentionAction {
 
   private final SmartPsiElementPointer<PsiClass> myBeanClass;
   private final List<? extends PsiParameter> myParameters;
-  private final String name;
+  private final @IntentionName String name;
 
   public AddConstructorFix(PsiClass beanClass, List<? extends PsiParameter> parameters) {
     myBeanClass = SmartPointerManager.getInstance(beanClass.getProject()).createSmartPsiElementPointer(beanClass);

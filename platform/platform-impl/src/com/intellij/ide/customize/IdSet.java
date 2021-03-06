@@ -3,22 +3,23 @@ package com.intellij.ide.customize;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
-final class IdSet {
-  private static final List<String> BLACK_LIST = Arrays.asList("Support", "support", "Integration", "integration");
+public final class IdSet {
+  private static final List<@NonNls String> BLACK_LIST = Arrays.asList("Support", "support", "Integration", "integration");
 
-  String myTitle;
+  @Nls String myTitle;
   List<PluginId> myIds;
 
   IdSet(final PluginGroups pluginGroups, @NonNls String description) {
     int i = description.indexOf(":");
     if (i > 0) {
-      myTitle = description.substring(0, i);
+      myTitle = description.substring(0, i); //NON-NLS
       description = description.substring(i + 1);
     }
     myIds = ContainerUtil.map(description.split(","), PluginId::getId);
@@ -36,7 +37,7 @@ final class IdSet {
     }
     if (myTitle != null) {
       for (String skipWord : BLACK_LIST) {
-        myTitle = myTitle.replaceAll(skipWord, "");
+        myTitle = myTitle.replaceAll(skipWord, ""); //NON-NLS
       }
       myTitle = myTitle.replaceAll("  ", " ").trim();
     }
@@ -48,7 +49,7 @@ final class IdSet {
   }
 
   @Nullable
-  public String getTitle() {
+  public @Nls String getTitle() {
     return myTitle;
   }
 

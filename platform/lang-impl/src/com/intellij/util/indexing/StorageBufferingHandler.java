@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,23 +14,22 @@ abstract class StorageBufferingHandler {
 
   boolean runUpdate(boolean transientInMemoryIndices, @NotNull Computable<Boolean> update) {
     StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
-
-    if (myPreviousDataBufferingState != transientInMemoryIndices) {
-      synchronized (myBufferingStateUpdateLock) {
-        if (myPreviousDataBufferingState != transientInMemoryIndices) {
-          getIndexes().forEach(index -> {
-            assert index != null;
-            index.setBufferingEnabled(transientInMemoryIndices);
-          });
-          myPreviousDataBufferingState = transientInMemoryIndices;
-        }
-      }
-    }
-
     try {
+      ensureBufferingState(transientInMemoryIndices);
       return update.compute();
     } finally {
       storageModeExitHandler.leave();
+    }
+  }
+
+  private void ensureBufferingState(boolean transientInMemoryIndices) {
+    if (myPreviousDataBufferingState != transientInMemoryIndices) {
+      synchronized (myBufferingStateUpdateLock) {
+        if (myPreviousDataBufferingState != transientInMemoryIndices) {
+          getIndexes().forEach(index -> index.setBufferingEnabled(transientInMemoryIndices));
+          myPreviousDataBufferingState = transientInMemoryIndices;
+        }
+      }
     }
   }
 

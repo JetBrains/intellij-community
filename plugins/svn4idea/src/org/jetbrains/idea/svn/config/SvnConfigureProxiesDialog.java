@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -6,15 +6,26 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBTabbedPane;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.openapi.ui.Messages.showInfoMessage;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
+import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
 
 public class SvnConfigureProxiesDialog extends DialogWrapper implements ValidationListener, TestConnectionPerformer {
   private final SvnConfigureProxiesComponent mySystemTab;
@@ -29,16 +40,14 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     valid = true;
     myProject = project;
 
-    setTitle(SvnBundle.message("dialog.title.edit.http.proxies.settings"));
+    setTitle(message("dialog.title.edit.http.proxies.settings"));
 
-    final Ref<SvnServerFileManager> systemManager = new Ref<>();
-    final Ref<SvnServerFileManager> userManager = new Ref<>();
-
-    SvnConfiguration.getInstance(project).getServerFilesManagers(systemManager, userManager);
+    var systemManager = new ServersFileManager(new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME)));
+    var userManager = new ServersFileManager(SvnConfiguration.getInstance(project).getServersFile());
 
     myValidator = new GroupsValidator(this);
-    mySystemTab = new SvnConfigureProxiesComponent(systemManager.get(), myValidator, this);
-    myUserTab = new SvnConfigureProxiesComponent(userManager.get(), myValidator, this);
+    mySystemTab = new SvnConfigureProxiesComponent(systemManager, myValidator, this);
+    myUserTab = new SvnConfigureProxiesComponent(userManager, myValidator, this);
 
     init();
 
@@ -48,7 +57,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
   }
 
   @Override
-  public void onError(final String text, final JComponent component, final boolean forbidSave) {
+  public void onError(@NotNull String text, @NotNull JComponent component, boolean forbidSave) {
     myTabbedPane.setSelectedComponent(component);
     String errorPrefix = myTabbedPane.getTitleAt(myTabbedPane.indexOfComponent(component)) + ": ";
 
@@ -110,8 +119,8 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
   @Override
   public void execute(final String url) {
-    Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.text"),
-                             SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.title"));
+    showInfoMessage(myProject, message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.text"),
+                    message("dialog.edit.http.proxies.settings.test.connection.settings.will.be.stored.title"));
     if (!applyImpl()) {
       return;
     }
@@ -120,7 +129,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
     pm.runProcessWithProgressSynchronously(() -> {
       final ProgressIndicator pi = pm.getProgressIndicator();
       if (pi != null) {
-        pi.setText("Connecting to " + url);
+        pi.setText(message("progress.message.connecting.to.url", url));
       }
       try {
         SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), Revision.HEAD);
@@ -128,21 +137,21 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
       catch (SvnBindException e) {
         excRef.set(e);
       }
-    }, "Test connection", true, myProject);
+    }, message("progress.title.test.connection"), true, myProject);
     if (!excRef.isNull()) {
-      Messages.showErrorDialog(myProject, excRef.get().getMessage(),
-                               SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.error.title"));
+      showErrorDialog(myProject, excRef.get().getMessage(),
+                      message("dialog.edit.http.proxies.settings.test.connection.error.title"));
     }
     else {
-      Messages.showInfoMessage(myProject, SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.text"),
-                               SvnBundle.message("dialog.edit.http.proxies.settings.test.connection.succes.title"));
+      showInfoMessage(myProject, message("dialog.edit.http.proxies.settings.test.connection.success.text"),
+                      message("dialog.edit.http.proxies.settings.test.connection.success.title"));
     }
   }
 
   private boolean valid;
 
-  private void setInvalid(final String text, JComponent component) {
-    valid = (text == null) || ("".equals(text.trim()));
+  private void setInvalid(@DialogMessage @Nullable String text, @Nullable JComponent component) {
+    valid = isEmptyOrSpaces(text);
     setErrorText(text, component);
   }
 
@@ -154,8 +163,8 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
   @Override
   protected JComponent createCenterPanel() {
     myTabbedPane = new JBTabbedPane();
-    myTabbedPane.add(myUserTab.createComponent(), SvnBundle.message("dialog.edit.http.proxies.settings.tab.edit.user.file.title"));
-    myTabbedPane.add(mySystemTab.createComponent(), SvnBundle.message("dialog.edit.http.proxies.settings.tab.edit.system.file.title"));
+    myTabbedPane.add(myUserTab.createComponent(), message("dialog.edit.http.proxies.settings.tab.edit.user.file.title"));
+    myTabbedPane.add(mySystemTab.createComponent(), message("dialog.edit.http.proxies.settings.tab.edit.system.file.title"));
     myPanel.add(myTabbedPane, BorderLayout.NORTH);
     return myPanel;
   }

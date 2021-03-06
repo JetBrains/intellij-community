@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class JBAutoscroller implements ActionListener {
+public final class JBAutoscroller implements ActionListener {
   private static final int SCROLL_UPDATE_INTERVAL = 15;
   private static final Key<ScrollDeltaProvider> SCROLL_HANDLER_KEY = Key.create("JBAutoScroller.AutoScrollHandler");
   private static final JBAutoscroller INSTANCE = new JBAutoscroller();
@@ -177,7 +178,7 @@ public class JBAutoscroller implements ActionListener {
     }
 
     protected int getScrollDelta(int low, int high, int value) {
-      return value - (value > high ? high : value < low ? low : value);
+      return value - MathUtil.clamp(value, low, high);
     }
   }
 

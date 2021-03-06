@@ -1,5 +1,4 @@
 #import "ScrubberItemView.h"
-#import "Utils.h"
 
 //#define TRACE_TEXT_SIZES
 
@@ -10,8 +9,8 @@ const int g_marginBorders = 10;
     bool _isSelected;
     bool _isEnabled;
 }
-@property (retain) NSImageView * imageView;
-@property (retain) NSTextField * textField;
+@property (retain, nonatomic) NSImageView * imageView;
+@property (retain, nonatomic) NSTextField * textField;
 @end
 
 @implementation ScrubberItemView
@@ -78,13 +77,13 @@ const int g_marginBorders = 10;
     NSDictionary * viewBindings = NSDictionaryOfVariableBindings(targetImageView, targetTextField);
     NSString * formatString = [NSString stringWithFormat:@"H:|-%d-[targetImageView]-%d-[targetTextField]-%d-|", g_marginBorders, g_marginImgText, g_marginBorders];
     NSArray * hConstraints = [NSLayoutConstraint constraintsWithVisualFormat:formatString
-        options:0
+        options:NSLayoutFormatDirectionLeadingToTrailing
         metrics:nil
         views:viewBindings];
 
     formatString = @"V:|-0-[targetImageView]-0-|";
     NSArray *vConstraints = [NSLayoutConstraint constraintsWithVisualFormat:formatString
-        options:0
+        options:NSLayoutFormatDirectionLeadingToTrailing
         metrics:nil
         views:viewBindings];
 

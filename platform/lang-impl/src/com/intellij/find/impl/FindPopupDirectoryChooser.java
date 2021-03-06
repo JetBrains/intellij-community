@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -114,7 +115,7 @@ public class FindPopupDirectoryChooser extends JPanel {
   @SuppressWarnings("WeakerAccess")
   public void initByModel(@NotNull FindModel findModel) {
     final String directoryName = findModel.getDirectoryName();
-    java.util.List<String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
+    List<@NlsSafe String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
 
     if (myDirectoryComboBox.getItemCount() > 0) {
       myDirectoryComboBox.removeAllItems();

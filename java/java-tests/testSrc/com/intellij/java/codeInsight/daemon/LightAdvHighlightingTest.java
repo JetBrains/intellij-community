@@ -89,6 +89,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDuplicateClassMethod() { doTest(false); }
   public void testStringLiterals() { doTest(false); }
   public void testStaticInInner() { doTest(false); }
+  public void testStaticInInnerJava16() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> doTest(false)); }
   public void testInvalidExpressions() { doTest(false); }
   public void testIllegalVoidType() { doTest(false); }
   public void testIllegalType() { doTest(false); }
@@ -262,7 +263,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnusedNonPrivateMembers2() {
-    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null);
+    ExtensionPoint<EntryPoint> point = EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint();
     EntryPoint extension = new EntryPoint() {
       @NotNull
       @Override

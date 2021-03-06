@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
@@ -25,9 +25,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
-private val LOG = Logger.getInstance(LoadModuleRenamingSchemeAction::class.java)
-
-class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog) : AbstractAction() {
+internal class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog) : AbstractAction() {
   init {
     UIUtil.setActionNameAndMnemonic(ProjectBundle.message("module.renaming.scheme.load.button.text"), this)
   }
@@ -62,9 +60,12 @@ class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQu
       IdeFocusManager.getGlobalInstance().requestFocus(dialog.preferredFocusedComponent, true)
     }
   }
+  companion object {
+    val LOG = Logger.getInstance(LoadModuleRenamingSchemeAction::class.java)
+  }
 }
 
-class SaveModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog, private val onSaved: () -> Unit) : AbstractAction() {
+internal class SaveModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog, private val onSaved: () -> Unit) : AbstractAction() {
   init {
     UIUtil.setActionNameAndMnemonic(ProjectBundle.message("module.renaming.scheme.save.button.text"), this)
   }
@@ -93,7 +94,7 @@ internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedName
       return true
     }
     catch (e: Exception) {
-      LOG.info(e)
+      LoadModuleRenamingSchemeAction.LOG.info(e)
       Messages.showErrorDialog(project, CommonBundle.getErrorTitle(),
                                ProjectBundle.message("module.renaming.scheme.cannot.save.error", e.message ?: ""))
     }

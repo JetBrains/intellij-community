@@ -83,7 +83,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doHighlighting()
       .stream()
       .filter(info -> info.type == HighlightInfoType.ERROR)
-      .forEach(info -> Assert.assertEquals("<html>Cannot resolve method 'm'</html>",
+      .forEach(info -> Assert.assertEquals("<html>Reference to 'm' is ambiguous, both 'm(Test, String)' and 'm(String)' match</html>",
                                            info.getToolTip()));
   }
   public void testSuperClassPotentiallyApplicableMembers() { doTest(); }
@@ -197,6 +197,9 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testVoidConflict() { doTest(); }
   public void testCreateMethodFromMethodRefApplicability() { doTest(); }
   public void testErrorMessageOnTopCallWhenFunctionalInterfaceIsNotInferred() { doTest(); }
+  public void testReferencesToPolymorphicMethod() { doTest(); }
+  public void testTypeArgumentsOnFirstSearchAccessibleMethod() { doTest(); }
+  public void testIDEA250434() { doTest(); }
 
   private void doTest() {
     doTest(false);

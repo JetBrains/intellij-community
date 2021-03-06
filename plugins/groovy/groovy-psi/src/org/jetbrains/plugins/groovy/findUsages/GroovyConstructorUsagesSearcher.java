@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.findUsages;
 
@@ -38,7 +38,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Maxim.Medvedev
@@ -67,7 +69,8 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     SearchScope onlyGroovy = GroovyScopeUtil.restrictScopeToGroovyFiles(searchScope, GroovyScopeUtil.getEffectiveScope(constructor));
     Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
     if (processed == null) {
-      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = ContainerUtil.newConcurrentSet());
+      collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed =
+        ContainerUtil.newConcurrentSet());
     }
     if (!processed.add(clazz)) return;
 
@@ -101,7 +104,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       }
     }
     //super()
-    DirectClassInheritorsSearch.search(clazz, onlyGroovy).forEach(new ReadActionProcessor<PsiClass>() {
+    DirectClassInheritorsSearch.search(clazz, onlyGroovy).forEach(new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(PsiClass inheritor) {
         if (inheritor instanceof GrTypeDefinition) {

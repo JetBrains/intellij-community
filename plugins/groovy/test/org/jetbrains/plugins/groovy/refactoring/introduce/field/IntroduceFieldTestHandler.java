@@ -52,7 +52,7 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
   @NotNull
   @Override
   protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
-    return new GrIntroduceDialog<GrIntroduceFieldSettings>() {
+    return new GrIntroduceDialog<>() {
       @Override
       public GrIntroduceFieldSettings getSettings() {
         return new GrIntroduceFieldSettings() {

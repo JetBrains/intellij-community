@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class NamedPackageSetReference extends PackageSetBase {
   private final String myName;
@@ -27,13 +29,13 @@ public class NamedPackageSetReference extends PackageSetBase {
   }
 
   @Override
-  public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     if (holder == null) return false;
     final NamedScope scope = holder.getScope(myName);
     if (scope != null) {
       final PackageSet packageSet = scope.getValue();
       if (packageSet != null) {
-        return packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, holder.getProject(), holder) : packageSet.contains(getPsiFile(file, holder.getProject()), holder);
+        return packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(file, project, holder) : packageSet.contains(getPsiFile(file, project), holder);
       }
     }
     return false;

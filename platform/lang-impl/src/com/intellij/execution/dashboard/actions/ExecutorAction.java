@@ -17,7 +17,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.content.Content;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +35,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
   protected ExecutorAction() {
   }
 
-  protected ExecutorAction(String text, String description, Icon icon) {
+  protected ExecutorAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 
@@ -56,7 +58,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
   private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {
     Project project = node.getProject();
     return canRun(node.getConfigurationSettings(),
-                  ExecutionTargetManager.getActiveTarget(project),
+                  null,
                   DumbService.isDumb(project));
   }
 
@@ -86,8 +88,16 @@ public abstract class ExecutorAction extends DumbAwareAction {
     if (!isValid(settings)) return false;
 
     ProgramRunner<?> runner = ProgramRunner.getRunner(executorId, configuration);
-    return runner != null && ExecutionTargetManager.canRun(configuration, target) &&
-          !ExecutionManager.getInstance(project).isStarting(executorId, runner.getRunnerId());
+    if (runner == null) return false;
+
+    if (target == null) {
+      target = findTarget(configuration);
+      if (target == null) return false;
+    }
+    else if (!ExecutionTargetManager.canRun(configuration, target)) {
+      return false;
+    }
+    return !ExecutionManager.getInstance(project).isStarting(executorId, runner.getRunnerId());
   }
 
   private static boolean isValid(RunnerAndConfigurationSettings settings) {
@@ -119,7 +129,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
   private void doActionPerformed(RunDashboardRunConfigurationNode node) {
     if (!canRun(node)) return;
 
-    run(node.getConfigurationSettings(), ExecutionTargetManager.getActiveTarget(node.getProject()), node.getDescriptor());
+    run(node.getConfigurationSettings(), null, node.getDescriptor());
   }
 
   private void run(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor) {
@@ -137,6 +147,10 @@ public abstract class ExecutorAction extends DumbAwareAction {
       }
     }
     else {
+      if (target == null) {
+        target = findTarget(configuration);
+        assert target != null : "No target for configuration of type " + configuration.getType().getDisplayName();
+      }
       ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
       ExecutionManager.getInstance(project).restartRunProfile(project, getExecutor(), target, settings, processHandler);
     }
@@ -145,4 +159,13 @@ public abstract class ExecutorAction extends DumbAwareAction {
   protected abstract Executor getExecutor();
 
   protected abstract void update(@NotNull AnActionEvent e, boolean running);
+
+  private static ExecutionTarget findTarget(RunConfiguration configuration) {
+    Project project = configuration.getProject();
+    ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
+    if (ExecutionTargetManager.canRun(configuration, target)) return target;
+
+    List<ExecutionTarget> targets = ExecutionTargetManager.getInstance(project).getTargetsFor(configuration);
+    return ContainerUtil.getFirstItem(targets);
+  }
 }

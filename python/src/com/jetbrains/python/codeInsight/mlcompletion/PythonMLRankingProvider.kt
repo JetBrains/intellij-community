@@ -1,21 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.mlcompletion
 
-import com.completion.ranker.model.python.MLCompletionModel
-import com.intellij.internal.ml.DecisionFunction
-import com.intellij.internal.ml.ModelMetadata
-import com.intellij.internal.ml.completion.CompletionRankingModelBase
-import com.intellij.internal.ml.completion.JarCompletionModelProvider
+import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
+import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
+import com.jetbrains.python.PyBundle
 
-class PythonMLRankingProvider : JarCompletionModelProvider("Python", "python_features") {
-  override fun createModel(metadata: ModelMetadata): DecisionFunction {
-    return object : CompletionRankingModelBase(metadata) {
-      override fun predict(features: DoubleArray?): Double = MLCompletionModel.makePredict(features)
-    }
-  }
+class PythonMLRankingProvider :
+  CatBoostJarCompletionModelProvider(PyBundle.message("settings.completion.ml.python.display.name"), "python_features", "python_model") {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("python", ignoreCase = true) == 0
 
   override fun isEnabledByDefault() = true
+
+  override fun getDecoratingPolicy(): DecoratingItemsPolicy = DecoratingItemsPolicy.Composite(
+    DecoratingItemsPolicy.ByAbsoluteThreshold(3.0),
+    DecoratingItemsPolicy.ByRelativeThreshold(2.0)
+  )
 }

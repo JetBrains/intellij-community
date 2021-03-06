@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -33,6 +19,7 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -41,7 +28,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -82,7 +68,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       myTablePane.setVisible(false);
     }
 
-    setTitle(GroovyInspectionBundle.message("dynamic.element"));
+    setTitle(GroovyBundle.message("dynamic.element"));
     setUpTypeComboBox(typeConstraints);
     setUpContainingClassComboBox();
     setUpStaticComboBox();
@@ -102,12 +88,12 @@ public abstract class DynamicDialog extends DialogWrapper {
   protected ValidationInfo doValidate() {
     final GrTypeElement typeElement = getEnteredTypeName();
     if (typeElement == null) {
-      return new ValidationInfo(GroovyInspectionBundle.message("no.type.specified"), myTypeComboBox);
+      return new ValidationInfo(GroovyBundle.message("no.type.specified"), myTypeComboBox);
     }
 
     final PsiType type = typeElement.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
-      return new ValidationInfo(GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()), myTypeComboBox);
+      return new ValidationInfo(GroovyBundle.message("unresolved.type.status", type.getPresentableText()), myTypeComboBox);
     }
     return null;
   }
@@ -227,15 +213,15 @@ public abstract class DynamicDialog extends DialogWrapper {
           }
 
           if (itemElement == null) {
-            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                       GroovyInspectionBundle.message("Undo.disable"));
+            Messages.showWarningDialog(myProject, GroovyBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyBundle.message("Undo.disable"));
             return;
           }
           final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
 
           if (classElement == null) {
-            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                       GroovyInspectionBundle.message("Undo.disable"));
+            Messages.showWarningDialog(myProject, GroovyBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyBundle.message("Undo.disable"));
             return;
           }
 
@@ -253,7 +239,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       });
 
       addElement(mySettings);
-    }, "Add dynamic element", null);
+    }, GroovyBundle.message("command.name.add.dynamic.member"), null);
   }
 
   private void removeElement(DItemElement itemElement) {
@@ -284,7 +270,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     return myTypeComboBox;
   }
 
-  protected void setUpTypeLabel(String typeLabelText) {
+  protected void setUpTypeLabel(@Nls String typeLabelText) {
     myTypeLabel.setText(typeLabelText);
   }
 }

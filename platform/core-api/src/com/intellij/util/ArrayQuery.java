@@ -2,14 +2,11 @@
 
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ArrayQuery<T> implements Query<T> {
   private final T[] myArray;
@@ -32,22 +29,5 @@ public class ArrayQuery<T> implements Query<T> {
   @Override
   public boolean forEach(@NotNull final Processor<? super T> consumer) {
     return ContainerUtil.process(myArray, consumer);
-  }
-
-  @NotNull
-  @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<? super T> consumer) {
-    return AsyncUtil.wrapBoolean(forEach(consumer));
-  }
-
-
-  @Override
-  public T @NotNull [] toArray(final T @NotNull [] a) {
-    return myArray;
-  }
-
-  @Override
-  public Iterator<T> iterator() {
-    return Arrays.asList(myArray).iterator();
   }
 }

@@ -41,8 +41,6 @@ import java.util.List;
 public class MorphAction extends AbstractGuiEditorAction {
   private static final Logger LOG = Logger.getInstance(MorphAction.class);
 
-  private final ComponentItem myLastMorphComponent = null;
-
   public MorphAction() {
     super(true);
   }
@@ -61,7 +59,7 @@ public class MorphAction extends AbstractGuiEditorAction {
       return true;
     };
 
-    PaletteListPopupStep step = new PaletteListPopupStep(editor, myLastMorphComponent, processor,
+    PaletteListPopupStep step = new PaletteListPopupStep(editor, null, processor,
                                                          UIDesignerBundle.message("morph.component.title"));
     step.hideNonAtomic();
     if (selection.size() == 1) {
@@ -72,7 +70,8 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   private static boolean morphComponent(final GuiEditor editor, final RadComponent oldComponent, ComponentItem targetItem) {
-    targetItem = InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem, "Morph to Non-Palette Component");
+    targetItem =
+      InsertComponentProcessor.replaceAnyComponentItem(editor, targetItem, UIDesignerBundle.message("morph.non.palette.component"));
     if (targetItem == null) {
       return false;
     }

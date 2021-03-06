@@ -68,7 +68,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     myUpdateQueue = new MergingUpdateQueue("HgRepositoryUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
     myUpdateConfigQueue = new MergingUpdateQueue("HgConfigUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
     if (!myProject.isDisposed()) {
-      myMessageBusConnection = myProject.getMessageBus().connect();
+      myMessageBusConnection = myProject.getMessageBus().connect(this);
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
     }
     else {

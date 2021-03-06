@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ListTableWithButtons;
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,10 +57,11 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (!AntConfiguration.getInstance(getProject()).isInitialized()) {
-      throw new RuntimeConfigurationException("Ant Configuration still haven't been initialized");
+      throw new RuntimeConfigurationException(AntBundle.message("dialog.message.ant.configuration.not.initialized"));
     }
     if (getTarget() == null)
-      throw new RuntimeConfigurationException("Target is not specified", "Missing parameters");
+      throw new RuntimeConfigurationException(AntBundle.message("dialog.message.target.not.specified"),
+                                              AntBundle.message("dialog.title.ant.configuration.missing.parameters"));
   }
 
   @Override
@@ -222,9 +225,10 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
       myTextField = new ExtendableTextField().addBrowseExtension(myAction, this);
 
       final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(LabeledComponent.create(myTextField, "Target name", BorderLayout.WEST), BorderLayout.NORTH);
+      panel.add(LabeledComponent.create(myTextField, AntBundle.message("label.ant.run.configuration.target.name"), BorderLayout.WEST), BorderLayout.NORTH);
 
-      final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), "Ant Properties");
+      String propertiesTableName = AntBundle.message("label.table.name.ant.properties");
+      final LabeledComponent<JComponent> tableComponent = LabeledComponent.create(myPropTable.getComponent(), propertiesTableName);
       tableComponent.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
       panel.add(tableComponent, BorderLayout.CENTER);
       return panel;
@@ -234,7 +238,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
   private static class PropertiesTable extends ListTableWithButtons<BuildFileProperty> {
     @Override
     protected ListTableModel createListModel() {
-      final ColumnInfo nameColumn = new TableColumn("Name") {
+      final ColumnInfo nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
         @Nullable
         @Override
         public String valueOf(BuildFileProperty property) {
@@ -246,7 +250,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyName(value);
         }
       };
-      final ColumnInfo valueColumn = new TableColumn("Value") {
+      final ColumnInfo valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
         @Nullable
         @Override
         public String valueOf(BuildFileProperty property) {
@@ -287,7 +291,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     }
 
     private abstract static class TableColumn extends ElementsColumnInfoBase<BuildFileProperty> {
-      TableColumn(final String name) {
+      TableColumn(final @NlsContexts.ColumnName String name) {
         super(name);
       }
 

@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Cache for {@link com.jetbrains.python.psi.impl.blockEvaluator.PyBlockEvaluator}.
+ * Cache for {@link PyBlockEvaluator}.
  * You may obtain one via {@link PyBlockEvaluator#getContext()} and pass to ctor:
- * {@link com.jetbrains.python.psi.impl.blockEvaluator.PyBlockEvaluator#PyBlockEvaluator(PyEvaluationContext)} to enable cache
+ * {@link PyBlockEvaluator#PyBlockEvaluator(PyEvaluationContext)} to enable cache
  *
  * @author Ilya.Kazakevich
  */

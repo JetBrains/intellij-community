@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.dataflow.map;
 
 import com.intellij.codeInsight.dataflow.SetUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -185,7 +186,7 @@ public class DFAMap<V> {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     if (this == ourEmptyMap){
       return "Empty Map";
     }

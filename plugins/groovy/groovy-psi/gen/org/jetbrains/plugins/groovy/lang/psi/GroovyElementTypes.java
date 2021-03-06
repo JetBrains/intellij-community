@@ -226,6 +226,7 @@ public interface GroovyElementTypes {
   IElementType KW_TRANSIENT = new GroovyElementType("transient");
   IElementType KW_TRUE = new GroovyElementType("true");
   IElementType KW_TRY = new GroovyElementType("try");
+  IElementType KW_VAR = new GroovyElementType("var");
   IElementType KW_VOID = new GroovyElementType("void");
   IElementType KW_VOLATILE = new GroovyElementType("volatile");
   IElementType KW_WHILE = new GroovyElementType("while");
@@ -285,6 +286,8 @@ public interface GroovyElementTypes {
   IElementType T_NEQ = new GroovyElementType("!=");
   IElementType T_NID = new GroovyElementType("!==");
   IElementType T_NOT = new GroovyElementType("!");
+  IElementType T_NOT_IN = new GroovyElementType("!in");
+  IElementType T_NOT_INSTANCEOF = new GroovyElementType("!instanceof");
   IElementType T_PLUS = new GroovyElementType("+");
   IElementType T_PLUS_ASSIGN = new GroovyElementType("+=");
   IElementType T_POW = new GroovyElementType("**");

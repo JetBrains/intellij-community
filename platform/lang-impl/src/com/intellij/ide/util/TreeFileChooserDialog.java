@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -25,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
@@ -40,9 +40,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +67,7 @@ import java.util.*;
 public final class TreeFileChooserDialog extends DialogWrapper implements TreeFileChooser {
   private Tree myTree;
   private PsiFile mySelectedFile = null;
+  @NotNull
   private final Project myProject;
   private BaseProjectTreeBuilder myBuilder;
   private TabbedPaneWrapper myTabbedPane;
@@ -369,7 +368,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     @Override
     public String @NotNull [] getNames(final boolean checkBoxState) {
       final String[] fileNames;
-      if (myFileType != null && myProject != null) {
+      if (myFileType != null) {
         GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
         Collection<VirtualFile> virtualFiles = FileTypeIndex.getFiles(myFileType, scope);
         fileNames = ContainerUtil.map2Array(virtualFiles, String.class, file -> file.getName());
@@ -377,10 +376,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       else {
         fileNames = FilenameIndex.getAllFilenames(myProject);
       }
-      final Set<String> array = new THashSet<>();
+      Set<String> array = new HashSet<>(fileNames.length);
       Collections.addAll(array, fileNames);
-
-      final String[] result = ArrayUtilRt.toStringArray(array);
+      String[] result = ArrayUtilRt.toStringArray(array);
       Arrays.sort(result);
       return result;
     }

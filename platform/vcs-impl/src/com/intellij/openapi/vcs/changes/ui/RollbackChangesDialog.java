@@ -15,7 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +23,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 
 public class RollbackChangesDialog extends DialogWrapper {
   public static final String DELETE_LOCALLY_ADDED_FILES_KEY = "delete.locally.added.files";
@@ -35,45 +37,62 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private final Runnable myListChangeListener;
-  private final String myOperationName;
+  private final @Nls String myOperationName;
 
-  public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
-    final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
+  public static void rollbackChanges(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
+    LocalChangesBrowser browser;
 
-    if (changes.isEmpty()) {
-      showNoChangesDialog(project);
-      return;
+    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
+    if (changeListManager.areChangeListsEnabled()) {
+      Collection<LocalChangeList> lists = changeListManager.getAffectedLists(changes);
+      browser = new LocalChangesBrowser.SelectedChangeLists(project, lists);
+    }
+    else {
+      browser = new LocalChangesBrowser.AllChanges(project);
+    }
+    browser.setIncludedChanges(changes);
+    browser.getViewer().resetTreeState(); // set initial selection by included changes
+
+    showRollbackDialog(project, browser);
+  }
+
+  public static void rollbackChanges(@NotNull Project project) {
+    LocalChangesBrowser browser;
+
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (changeListManager.areChangeListsEnabled()) {
+      List<LocalChangeList> lists = Collections.singletonList(changeListManager.getDefaultChangeList());
+      browser = new LocalChangesBrowser.SelectedChangeLists(project, lists);
+    }
+    else {
+      browser = new LocalChangesBrowser.AllChanges(project);
     }
 
-    final Set<LocalChangeList> lists = new THashSet<>();
-    lists.addAll(manager.getAffectedLists(changes));
-
-    new RollbackChangesDialog(project, new ArrayList<>(lists), new ArrayList<>(changes)).show();
+    showRollbackDialog(project, browser);
   }
 
   public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
-    List<Change> changes = new ArrayList<>(changeList.getChanges());
+    List<LocalChangeList> lists = Collections.singletonList(changeList);
+    LocalChangesBrowser browser = new LocalChangesBrowser.SelectedChangeLists(project, lists);
+    showRollbackDialog(project, browser);
+  }
 
-    if (changes.isEmpty()) {
-      showNoChangesDialog(project);
+  private static void showRollbackDialog(@NotNull Project project, @NotNull LocalChangesBrowser browser) {
+    if (browser.getAllChanges().isEmpty()) {
+      String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
+      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
+                                 VcsBundle.message("changes.action.rollback.nothing", operationName));
       return;
     }
 
-    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.emptyList()).show();
+    new RollbackChangesDialog(project, browser).show();
   }
 
-  private static void showNoChangesDialog(Project project) {
-    String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
-    Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                               VcsBundle.message("changes.action.rollback.nothing", operationName));
-  }
-
-  public RollbackChangesDialog(final Project project,
-                               final List<LocalChangeList> changeLists,
-                               final List<Change> changes) {
+  private RollbackChangesDialog(@NotNull Project project, @NotNull LocalChangesBrowser browser) {
     super(project, true);
 
     myProject = project;
+    myBrowser = browser;
     myInvokedFromModalContext = LaterInvocator.isInModalContext();
 
     myInfoCalculator = new ChangeInfoCalculator();
@@ -81,21 +100,16 @@ public class RollbackChangesDialog extends DialogWrapper {
     myListChangeListener = new Runnable() {
       @Override
       public void run() {
-        if (myBrowser != null) {
-          List<Change> allChanges = myBrowser.getAllChanges();
-          Collection<Change> includedChanges = myBrowser.getIncludedChanges();
+        List<Change> allChanges = myBrowser.getAllChanges();
+        Collection<Change> includedChanges = myBrowser.getIncludedChanges();
 
-          myInfoCalculator.update(allChanges, new ArrayList<>(includedChanges));
-          myCommitLegendPanel.update();
+        myInfoCalculator.update(allChanges, new ArrayList<>(includedChanges));
+        myCommitLegendPanel.update();
 
-          boolean hasNewFiles = ContainerUtil.exists(includedChanges, change -> change.getType() == Change.Type.NEW);
-          myDeleteLocallyAddedFiles.setEnabled(hasNewFiles);
-        }
+        boolean hasNewFiles = ContainerUtil.exists(includedChanges, change -> change.getType() == Change.Type.NEW);
+        myDeleteLocallyAddedFiles.setEnabled(hasNewFiles);
       }
     };
-    myBrowser = new LocalChangesBrowser(project);
-    myBrowser.setIncludedChanges(changes);
-    myBrowser.setChangeLists(changeLists);
     myBrowser.setInclusionChangedListener(myListChangeListener);
     Disposer.register(getDisposable(), myBrowser);
 
@@ -103,7 +117,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     setOKButtonText(operationName);
 
     myOperationName = UIUtil.removeMnemonic(operationName);
-    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
+    myBrowser.setToggleActionTitle(VcsBundle.message("changes.action.include.in.operation.name", StringUtil.toLowerCase(myOperationName)));
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
 
@@ -121,6 +135,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }

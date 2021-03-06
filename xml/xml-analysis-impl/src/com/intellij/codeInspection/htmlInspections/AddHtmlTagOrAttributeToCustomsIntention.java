@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -31,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddHtmlTagOrAttributeToCustomsIntention implements LocalQuickFix {
   private final String myName;
-  private final String myText;
+  private final @IntentionName String myText;
   private final Key<InspectionProfileEntry> myInspectionKey;
 
-  public AddHtmlTagOrAttributeToCustomsIntention(Key<InspectionProfileEntry> inspectionKey, String name, String text) {
+  public AddHtmlTagOrAttributeToCustomsIntention(Key<InspectionProfileEntry> inspectionKey, String name, @IntentionName String text) {
     myInspectionKey = inspectionKey;
     myName = name;
     myText = text;
@@ -49,7 +50,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("fix.html.family");
+    return XmlAnalysisBundle.message("html.quickfix.family");
   }
 
   @Override

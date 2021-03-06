@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormatterEx;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.ide.DataManager;
@@ -39,19 +40,16 @@ import java.util.List;
 
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
 
-public class JoinLinesHandler extends EditorActionHandler {
+public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
   private final EditorActionHandler myOriginalHandler;
 
   public JoinLinesHandler(EditorActionHandler originalHandler) {
-    super(true);
     myOriginalHandler = originalHandler;
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, final DataContext dataContext) {
-    assert caret != null;
-
+  public void doExecute(@NotNull final Editor editor, @NotNull Caret caret, final DataContext dataContext) {
     if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
     if (!(editor.getDocument() instanceof DocumentEx)) {
@@ -232,7 +230,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       return startLine - myLine;
     }
 
-    private void removeLineBreaks(int lineCount, List<RangeMarker> markers) {
+    private void removeLineBreaks(int lineCount, List<? super RangeMarker> markers) {
       for (int i = 0; i < lineCount; i++) {
         myIndicator.checkCanceled();
         myIndicator.setFraction(0.3 + 0.2 * i / lineCount);
@@ -261,7 +259,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       myManager.commitDocument(myDoc);
     }
 
-    private List<RangeMarker> processNonRawJoiners(List<RangeMarker> markers) {
+    private List<RangeMarker> processNonRawJoiners(List<? extends RangeMarker> markers) {
       List<RangeMarker> unprocessed = new ArrayList<>();
       for (int i = 0; i < markers.size(); i++) {
         myIndicator.checkCanceled();
@@ -300,7 +298,7 @@ public class JoinLinesHandler extends EditorActionHandler {
       return false;
     }
 
-    private void adjustWhiteSpace(List<RangeMarker> markers) {
+    private void adjustWhiteSpace(List<? extends RangeMarker> markers) {
       int size = markers.size();
       if (size == 0) return;
       int[] spacesToAdd = getSpacesToAdd(markers);
@@ -324,14 +322,14 @@ public class JoinLinesHandler extends EditorActionHandler {
       myManager.commitDocument(myDoc);
     }
 
-    private int[] getSpacesToAdd(List<RangeMarker> markers) {
+    private int[] getSpacesToAdd(List<? extends RangeMarker> markers) {
       int size = markers.size();
       int[] spacesToAdd = new int[size];
       Arrays.fill(spacesToAdd, -1);
       CharSequence text = myDoc.getCharsSequence();
       FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(myFile);
       CodeStyleSettings settings = CodeStyle.getSettings(myFile);
-      FormattingModel model = builder == null ? null : builder.createModel(myFile, settings);
+      FormattingModel model = builder == null ? null : builder.createModel(FormattingContext.create(myFile, settings));
       FormatterEx formatter = FormatterEx.getInstance();
       for (int i = 0; i < size; i++) {
         myIndicator.checkCanceled();

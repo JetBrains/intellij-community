@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.AppTopics;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +43,8 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +153,7 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    TIntHashSet lines = new TIntHashSet();
+    IntSet lines = new IntOpenHashSet();
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
@@ -172,7 +174,7 @@ public final class XLineBreakpointManager {
     WriteAction.run(() -> toRemove.forEach(manager::removeBreakpoint));
   }
 
-  public void breakpointChanged(final XLineBreakpointImpl breakpoint) {
+  public void breakpointChanged(XLineBreakpointImpl breakpoint) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       breakpoint.updateUI();
     }
@@ -252,12 +254,13 @@ public final class XLineBreakpointManager {
         return;
       }
 
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      final int line = EditorUtil.yToLogicalLineNoBlockInlays(editor, mouseEvent.getY());
       final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+      final int line = EditorUtil.yToLogicalLineNoBlockInlays(editor, mouseEvent.getY());
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (line >= 0 && line < document.getLineCount() && file != null) {
-        ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
+        ActionManagerEx.getInstanceEx()
+          .fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent(), ActionPlaces.EDITOR_GUTTER);
 
         XBreakpointUtil.toggleLineBreakpoint(myProject,
                                              XSourcePositionImpl.create(file, line),

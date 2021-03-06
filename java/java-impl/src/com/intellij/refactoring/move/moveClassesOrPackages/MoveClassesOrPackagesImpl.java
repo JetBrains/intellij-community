@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class MoveClassesOrPackagesImpl {
+public final class MoveClassesOrPackagesImpl {
   private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesImpl.class);
 
   public static void doMove(Project project, PsiElement[] adjustedElements, PsiElement initialTargetElement, MoveCallback moveCallback) {
@@ -125,7 +126,7 @@ public class MoveClassesOrPackagesImpl {
     final PsiDirectory[] directories = aPackage.getDirectories();
     final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
     if (directories.length > 1 || virtualFiles.length > 0) {
-      final StringBuffer message = new StringBuffer();
+      final @Nls StringBuffer message = new StringBuffer();
       RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, aPackage.getQualifiedName());
       if (directories.length > 1) {
         DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories);
@@ -136,8 +137,9 @@ public class MoveClassesOrPackagesImpl {
       }
       message.append("\n");
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
-      int ret =
-        Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
+      //noinspection HardCodedStringLiteral
+      String resultMessage = message.toString();
+      int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
       if (ret != Messages.YES) {
         return false;
       }

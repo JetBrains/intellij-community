@@ -145,18 +145,15 @@ def module_hash(mod_qname, mod_path):
     if mod_path:
         hash_ = physical_module_hash(mod_path)
     else:
-        hash_ = builtin_module_hash(mod_qname)
+        hash_ = builtin_module_hash()
     # Use shorter hashes in test data as it might affect developers on Windows
     if is_test_mode():
         return hash_[:10]
     return hash_
 
 
-def builtin_module_hash(mod_qname):
-    # Hash the content of interpreter executable, i.e. it will be the same for all built-in modules.
-    # Also, it's the same for a virtualenv interpreter and its base.
-    with fopen(sys.executable, 'rb') as f:
-        return sha256_digest(f)
+def builtin_module_hash():
+    return sha256_digest(sys.version.encode(encoding='utf-8'))
 
 
 def physical_module_hash(mod_path):
@@ -584,6 +581,24 @@ class SkeletonGenerator(object):
             raise
 
 
+@contextmanager
+def imported_names_collected():
+    imported_names = set()
+
+    class MyFinder(object):
+        # noinspection PyMethodMayBeStatic
+        def find_module(self, fullname, path=None):
+            imported_names.add(fullname)
+            return None
+
+    my_finder = MyFinder()
+    sys.meta_path.insert(0, my_finder)
+    try:
+        yield imported_names
+    finally:
+        sys.meta_path.remove(my_finder)
+
+
 def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     # type: (str, str, str, str) -> GenerationStatusId
 
@@ -594,32 +609,12 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
         delete(mod_cache_dir)
     mkdir(mod_cache_dir)
 
-    old_modules = list(sys.modules.keys())
-    imported_module_names = set()
-
-    class MyFinder:
-        # noinspection PyMethodMayBeStatic
-        def find_module(self, fullname, path=None):
-            if fullname != name:
-                imported_module_names.add(fullname)
-            return None
-
-    my_finder = None
-    if hasattr(sys, 'meta_path'):
-        my_finder = MyFinder()
-        sys.meta_path.insert(0, my_finder)
-    else:
-        imported_module_names = None
-
     create_failed_version_stamp(mod_cache_dir, name)
 
     action("importing")
-    __import__(name)  # sys.modules will fill up with what we want
-
-    if my_finder:
-        sys.meta_path.remove(my_finder)
-    if imported_module_names is None:
-        imported_module_names = set(sys.modules.keys()) - set(old_modules)
+    old_modules = list(sys.modules.keys())
+    with imported_names_collected() as imported_module_names:
+        __import__(name)  # sys.modules will fill up with what we want
 
     redo_module(name, mod_file_name, mod_cache_dir, output_dir)
     # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
@@ -629,7 +624,12 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     if redo_imports:
         initial_module_set = set(sys.modules)
         for m in list(sys.modules):
-            if m.startswith("pycharm_generator_utils"): continue
+            # Python 2 puts dummy None entries in sys.modules for imports of
+            # top-level modules made from inside packages unless absolute
+            # imports are explicitly enabled.
+            # See https://www.python.org/dev/peps/pep-0328/#relative-imports-and-indirection-entries-in-sys-modules
+            if not sys.modules[m] or m.startswith("generator3"):
+                continue
             action("looking at possible submodule %r", m)
             if m == name or m in old_modules or m in sys.builtin_module_names:
                 continue

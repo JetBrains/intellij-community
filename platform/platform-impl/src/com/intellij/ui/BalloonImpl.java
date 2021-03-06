@@ -69,7 +69,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   public static final Key<Boolean> FORCED_NO_SHADOW = Key.create("BALLOON_FORCED_NO_SHADOW");
 
   private static final JBValue DIALOG_ARC = new JBValue.Float(6);
-  public static final JBValue ARC = new JBValue.Float(3);
+  public static final JBValue ARC = new JBValue.UIInteger("ToolTip.arc", 4);
   private static final JBValue DIALOG_TOPBOTTOM_POINTER_WIDTH = new JBValue.Float(24);
   public static final JBValue DIALOG_POINTER_WIDTH = new JBValue.Float(17);
   private static final JBValue TOPBOTTOM_POINTER_WIDTH = new JBValue.Float(14);
@@ -108,6 +108,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   private ActionProvider myActionProvider;
   private List<ActionButton> myActionButtons;
+  private boolean invalidateShadow;
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
     @Override
@@ -253,7 +254,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private final int myPositionChangeYShift;
   private boolean myDialogMode;
   private IdeFocusManager myFocusManager;
-  private final String myTitle;
+  private @NlsContexts.PopupTitle String myTitle;
   private JLabel myTitleLabel;
 
   private boolean myAnimationEnabled = true;
@@ -342,7 +343,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                      int positionChangeXShift,
                      int positionChangeYShift,
                      boolean dialogMode,
-                     String title,
+                     @NlsContexts.PopupTitle String title,
                      Insets contentInsets,
                      boolean shadow,
                      boolean smallVariant,
@@ -612,7 +613,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
           // Set the accessible parent so that screen readers don't announce
           // a window context change -- the tooltip is "logically" hosted
           // inside the component (e.g. editor) it appears on top of.
-          AccessibleContextUtil.setParent((Component)myContent, myOriginalFocusOwner);
+          AccessibleContextUtil.setParent(myContent, myOriginalFocusOwner);
 
           // Set the focus to "myContent"
           myFocusManager.requestFocus(getContentToFocus(), true);
@@ -827,7 +828,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     RelativePoint newPosition = tracker.recalculateLocation(this);
 
     if (newPosition != null) {
-      myTargetPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
+      Point newPoint = myPosition.getShiftedPoint(newPosition.getPoint(myLayeredPane), myCalloutShift);
+      invalidateShadow = !Objects.equals(myTargetPoint, newPoint);
+      myTargetPoint = newPoint;
       myPosition.updateBounds(this);
     }
   }
@@ -1641,7 +1644,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     private final Consumer<? super MouseEvent> myListener;
     protected final BaseButtonBehavior myButton;
 
-    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<? super MouseEvent> listener) {
+    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @NlsContexts.Tooltip @Nullable String hint, @NotNull Consumer<? super MouseEvent> listener) {
       myIcon = icon;
       myHoverIcon = hoverIcon;
       myListener = listener;
@@ -1683,7 +1686,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
-  private class CloseButton extends ActionButton {
+  private final class CloseButton extends ActionButton {
     private CloseButton(@NotNull Consumer<? super MouseEvent> listener) {
       super(getCloseButton(), null, null, listener);
       setVisible(myEnableButtons);
@@ -1698,7 +1701,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
-  private class MyComponent extends HwFacadeJPanel implements ComponentWithMnemonics {
+  private final class MyComponent extends HwFacadeJPanel implements ComponentWithMnemonics {
 
     private BufferedImage myImage;
     private float myAlpha;
@@ -1949,8 +1952,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
     void _setBounds(@NotNull Rectangle bounds) {
       Rectangle currentBounds = getBounds();
-      if (!currentBounds.equals(bounds)) {
+      if (!currentBounds.equals(bounds) || invalidateShadow) {
         invalidateShadowImage();
+        invalidateShadow = false;
       }
 
       setBounds(bounds);
@@ -2110,8 +2114,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return myDisposed;
   }
 
+  public String getTitle() {
+    return myTitle;
+  }
+
   @Override
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.NotificationTitle String title) {
+    myTitle = title;
     myTitleLabel.setText(title);
   }
 

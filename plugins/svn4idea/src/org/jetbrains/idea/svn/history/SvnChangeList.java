@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -91,21 +91,13 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
                        @NotNull SvnRepositoryLocation location,
                        @NotNull LogEntry logEntry,
                        @NotNull Url repositoryRoot) {
-    this(vcs, location, logEntry, repositoryRoot.toDecodedString());
-  }
-
-  @Deprecated // Required for compatibility with external plugins.
-  public SvnChangeList(@NotNull SvnVcs vcs,
-                       @NotNull SvnRepositoryLocation location,
-                       @NotNull LogEntry logEntry,
-                       @NotNull String repositoryRoot) {
     myVcs = vcs;
     myLocation = location;
     setRevision(logEntry.getRevision());
     myAuthor = StringUtil.notNullize(logEntry.getAuthor());
     myDate = logEntry.getDate();
     myMessage = StringUtil.notNullize(logEntry.getMessage());
-    myRepositoryRoot = UriUtil.trimTrailingSlashes(repositoryRoot);
+    myRepositoryRoot = UriUtil.trimTrailingSlashes(repositoryRoot.toDecodedString());
 
     myCommonPathSearcher = new CommonPathSearcher();
 
@@ -319,7 +311,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   /**
    * needed to track in which changes non-local files live
    */
-  private class ChangesListCreationHelper {
+  private final class ChangesListCreationHelper {
     private final List<Change> myList;
     private final Map<String, Change> myPathToChangeMapping;
     private List<Change> myDetailedList;
@@ -555,7 +547,11 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private SvnLazyPropertyContentRevision createPropertyRevision(@NotNull FilePath filePath,
                                                                 @Nullable ContentRevision revision,
                                                                 @NotNull Url url) {
-    return revision == null ? null : new SvnLazyPropertyContentRevision(myVcs, filePath, revision.getRevisionNumber(), url);
+    if (revision == null) return null;
+
+    SvnRevisionNumber number = (SvnRevisionNumber)revision.getRevisionNumber();
+    Target target = Target.on(url, number.getRevision());
+    return new SvnLazyPropertyContentRevision(myVcs, filePath, number, target);
   }
 
   @Override

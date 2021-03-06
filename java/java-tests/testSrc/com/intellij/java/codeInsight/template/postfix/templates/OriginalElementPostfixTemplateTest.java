@@ -13,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -60,9 +61,8 @@ public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase 
   }
 
   private static class OriginalElementCondition implements JavaPostfixTemplateExpressionCondition {
-    @NotNull
     @Override
-    public String getPresentableName() {
+    public @NotNull @Nls String getPresentableName() {
       return "customCondition";
     }
 

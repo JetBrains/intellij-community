@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.chrome;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
@@ -8,13 +8,10 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public final class ChromeSettings extends BrowserSpecificSettings {
   public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
@@ -24,7 +21,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   private @Nullable String myCommandLineOptions;
   private @Nullable String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
-  private @NotNull Map<String, String> myEnvironmentVariables = new THashMap<>();
+  private @NotNull Map<String, String> myEnvironmentVariables = new HashMap<>();
 
   public ChromeSettings() {
   }
@@ -97,7 +94,7 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   @Override
   public ChromeSettings clone() {
     ChromeSettings clone = (ChromeSettings)super.clone();
-    clone.myEnvironmentVariables = new THashMap<>(myEnvironmentVariables);
+    clone.myEnvironmentVariables = new HashMap<>(myEnvironmentVariables);
     return clone;
   }
 

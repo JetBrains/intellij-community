@@ -60,7 +60,7 @@ public class RefreshLogAction extends RefreshAction {
     if (ui instanceof VcsLogUiEx) {
       VisiblePackRefresher refresher = ((VcsLogUiEx)ui).getRefresher();
       if (!refresher.isValid()) {
-        String message = "Trying to refresh invalid log tab '" + ui.getId() + "'."; // NON-NLS
+        String message = "Trying to refresh invalid log tab '" + ui.getId() + "'.";
         if (!logManager.getDataManager().getProgress().isRunning()) {
           LOG.error(message, collectDiagnosticInformation(e.getProject(), logManager));
         }
@@ -89,7 +89,7 @@ public class RefreshLogAction extends RefreshAction {
       if (toolWindow != null) {
         String contentDump = StringUtil.join(toolWindow.getContentManager().getContents(), content -> {
           if (content instanceof TabbedContent) {
-            return content.toString() + ", tabs=[" +
+            return content + ", tabs=[" +
                    StringUtil.join(((TabbedContent)content).getTabs(), pair -> pair.first, ", ") + "]";
           }
           return content.toString();

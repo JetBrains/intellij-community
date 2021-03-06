@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
@@ -10,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Base class for HTTP-based repositories functioning over Apache Commons HttpClient 3.1.
@@ -42,12 +43,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   protected static String encodeUrl(@NotNull String s) {
-    try {
-      return URLEncoder.encode(s, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
   protected HttpClient getHttpClient() {
@@ -150,7 +146,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
 
   @Override
   public void setPassword(String password) {
-    if (!password.equals(getPassword())) {
+    if (!Comparing.equal(password, getPassword())) {
       super.setPassword(password);
       reconfigureClient();
     }

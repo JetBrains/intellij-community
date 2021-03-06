@@ -5,7 +5,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   FontPreferences getFontPreferences();
   void setFontPreferences(@NotNull FontPreferences preferences);
 
+  @NlsSafe
   String getEditorFontName();
 
   void setEditorFontName(String fontName);
@@ -64,6 +67,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#getQuickDocFontSize()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default FontSize getQuickDocFontSize() { return FontSize.SMALL; }
 
   /**
@@ -71,6 +75,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * using {@link com.intellij.codeInsight.documentation.DocumentationComponent#setQuickDocFontSize(FontSize)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void setQuickDocFontSize(@NotNull FontSize fontSize) {}
 
   @NotNull
@@ -81,6 +86,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * to change fonts.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
@@ -89,6 +95,10 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * Sets line spacing. Note, that this method checks that {@code lineSpacing} is within bounds and could change it if it is
    * more than {@link com.intellij.application.options.EditorFontsConstants#getMaxEditorLineSpacing()} or less than
    * {@link com.intellij.application.options.EditorFontsConstants#getMinEditorLineSpacing()}
+   * <p>
+   * Currently, changing line spacing does not change the editor's scrolling position (in pixels), so the viewport's logical
+   * location can change as a result.
+   *
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setLineSpacing(float lineSpacing);
@@ -109,6 +119,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   default void setUseAppFontPreferencesInEditor() {}
   default boolean isUseAppFontPreferencesInEditor() {return false;}
 
+  @NlsSafe
   String getConsoleFontName();
 
   void setConsoleFontName(String fontName);

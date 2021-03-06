@@ -4,9 +4,8 @@ package com.intellij.slicer;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.execution.filters.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -14,17 +13,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -37,20 +40,22 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
 
   @Override
   public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
-                                              @NotNull ExceptionInfo info) {
-    Analysis analysis = getAnalysis(anchor, info);
-    return createAction(analysis);
+                                              @NotNull ExceptionInfo info,
+                                              @NotNull Supplier<List<StackLine>> nextFrames) {
+    AnalysisStartingPoint analysis = getAnalysis(anchor, info);
+    return createAction(analysis, nextFrames);
   }
 
   @Override
-  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor) {
-    Analysis analysis = getIntermediateRowAnalysis(anchor);
-    return createAction(analysis);
+  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor,
+                                                             @NotNull Supplier<List<StackLine>> nextFrames) {
+    AnalysisStartingPoint analysis = getIntermediateRowAnalysis(anchor);
+    return createAction(analysis, nextFrames);
   }
 
-  private static @Nullable Analysis getIntermediateRowAnalysis(@NotNull PsiElement anchor) {
+  private static @Nullable AnalysisStartingPoint getIntermediateRowAnalysis(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiExpression) {
-      return new Analysis(DfTypes.NULL, (PsiExpression)anchor);
+      return new AnalysisStartingPoint(DfTypes.NULL, (PsiExpression)anchor);
     }
     if (!(anchor instanceof PsiIdentifier)) return null;
     PsiReferenceExpression ref = tryCast(anchor.getParent(), PsiReferenceExpression.class);
@@ -70,23 +75,23 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiExpression arg = getArgFromContract(args, condition, ContractValue.nullValue(), true);
     if (arg != null) {
-      return Analysis.create(DfTypes.NULL, arg);
+      return AnalysisStartingPoint.create(DfTypes.NULL, arg);
     }
     arg = getArgFromContract(args, condition, ContractValue.nullValue(), false);
     if (arg != null) {
-      return Analysis.create(DfTypes.NOT_NULL_OBJECT, arg);
+      return AnalysisStartingPoint.create(DfTypes.NOT_NULL_OBJECT, arg);
     }
     arg = getArgFromContract(args, condition, ContractValue.booleanValue(true), true);
     if (arg != null) {
-      return fromCondition(arg);
+      return AnalysisStartingPoint.fromCondition(arg);
     }
     arg = getArgFromContract(args, condition, ContractValue.booleanValue(false), true);
     if (arg != null) {
-      return tryNegate(fromCondition(arg));
+      return AnalysisStartingPoint.tryNegate(AnalysisStartingPoint.fromCondition(arg));
     }
     return null;
   }
-  
+
   private static @Nullable PsiExpression getArgFromContract(
     PsiExpression[] args, ContractValue condition, ContractValue expectedValue, boolean equal) {
     int pos = condition.getArgumentComparedTo(expectedValue, equal).orElse(-1);
@@ -94,8 +99,8 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return args[pos];
   }
 
-  private @Nullable Analysis getAnalysis(@NotNull PsiElement anchor,
-                                         @NotNull ExceptionInfo info) {
+  private @Nullable AnalysisStartingPoint getAnalysis(@NotNull PsiElement anchor,
+                                                      @NotNull ExceptionInfo info) {
     if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW)) {
       PsiNewExpression exceptionConstructor = tryCast(anchor.getParent(), PsiNewExpression.class);
       if (exceptionConstructor != null && !exceptionConstructor.isArrayCreation()) {
@@ -111,42 +116,47 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     else if (info instanceof ArrayIndexOutOfBoundsExceptionInfo) {
       Integer index = ((ArrayIndexOutOfBoundsExceptionInfo)info).getIndex();
       if (index != null && anchor instanceof PsiExpression) {
-        return Analysis.create(DfTypes.intValue(index), (PsiExpression)anchor);
+        return AnalysisStartingPoint.create(DfTypes.intValue(index), (PsiExpression)anchor);
       }
     }
     else if (info instanceof ClassCastExceptionInfo) {
       return fromClassCastException(anchor, ((ClassCastExceptionInfo)info).getActualClass());
     }
     else if (info instanceof NullPointerExceptionInfo || info instanceof JetBrainsNotNullInstrumentationExceptionInfo) {
-      return Analysis.create(DfTypes.NULL, tryCast(anchor, PsiExpression.class));
+      return AnalysisStartingPoint.create(DfTypes.NULL, tryCast(anchor, PsiExpression.class));
     }
     else if (info instanceof NegativeArraySizeExceptionInfo) {
       Integer size = ((NegativeArraySizeExceptionInfo)info).getSuppliedSize();
       if (size != null && size < 0 && anchor instanceof PsiExpression) {
-        return Analysis.create(DfTypes.intValue(size), (PsiExpression)anchor);
+        return AnalysisStartingPoint.create(DfTypes.intValue(size), (PsiExpression)anchor);
       }
     }
     else if (info instanceof ArithmeticExceptionInfo) {
       return fromArithmeticException(anchor);
     }
-    return null;
-  }
-
-  private static Analysis fromArithmeticException(PsiElement anchor) {
-    if (anchor instanceof PsiExpression) {
-      PsiExpression divisor = (PsiExpression)anchor;
-      PsiType type = divisor.getType();
-      if (PsiType.LONG.equals(type)) {
-        return Analysis.create(DfTypes.longValue(0), divisor);
-      }
-      else if (TypeConversionUtil.isIntegralNumberType(type)) {
-        return Analysis.create(DfTypes.intValue(0), divisor);
+    else if (info instanceof ArrayCopyIndexOutOfBoundsExceptionInfo) {
+      if (anchor instanceof PsiExpression) {
+        return AnalysisStartingPoint.create(DfTypes.intValue(((ArrayCopyIndexOutOfBoundsExceptionInfo)info).getValue()), (PsiExpression)anchor);
       }
     }
     return null;
   }
 
-  private @Nullable static Analysis fromThrowStatement(PsiThrowStatement throwStatement) {
+  private static AnalysisStartingPoint fromArithmeticException(PsiElement anchor) {
+    if (anchor instanceof PsiExpression) {
+      PsiExpression divisor = (PsiExpression)anchor;
+      PsiType type = divisor.getType();
+      if (PsiType.LONG.equals(type)) {
+        return AnalysisStartingPoint.create(DfTypes.longValue(0), divisor);
+      }
+      else if (TypeConversionUtil.isIntegralNumberType(type)) {
+        return AnalysisStartingPoint.create(DfTypes.intValue(0), divisor);
+      }
+    }
+    return null;
+  }
+
+  private @Nullable static AnalysisStartingPoint fromThrowStatement(PsiThrowStatement throwStatement) {
     PsiElement parent = throwStatement.getParent();
     if (parent instanceof PsiCodeBlock) {
       PsiElement statement = throwStatement.getPrevSibling();
@@ -158,8 +168,8 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
           boolean elseExits =
             ifStatement.getElseBranch() != null && !ControlFlowUtils.statementMayCompleteNormally(ifStatement.getElseBranch());
           if (thenExits != elseExits) {
-            Analysis analysis = fromCondition(ifStatement.getCondition());
-            return thenExits ? tryNegate(analysis) : analysis;
+            AnalysisStartingPoint analysis = AnalysisStartingPoint.fromCondition(ifStatement.getCondition());
+            return thenExits ? AnalysisStartingPoint.tryNegate(analysis) : analysis;
           }
         }
         if (statement instanceof PsiSwitchLabelStatement) {
@@ -174,7 +184,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     }
     if (parent instanceof PsiIfStatement && PsiTreeUtil.isAncestor(((PsiIfStatement)parent).getThenBranch(), throwStatement, false)) {
       PsiExpression cond = PsiUtil.skipParenthesizedExprDown(((PsiIfStatement)parent).getCondition());
-      return fromCondition(cond);
+      return AnalysisStartingPoint.fromCondition(cond);
     }
     if (parent instanceof PsiSwitchLabeledRuleStatement) {
       return fromSwitchLabel((PsiSwitchLabeledRuleStatement)parent);
@@ -182,7 +192,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return null;
   }
 
-  private static @Nullable Analysis fromSwitchLabel(PsiSwitchLabelStatementBase label) {
+  private static @Nullable AnalysisStartingPoint fromSwitchLabel(PsiSwitchLabelStatementBase label) {
     PsiSwitchBlock block = label.getEnclosingSwitchBlock();
     if (block == null) return null;
     boolean hasDefault = false;
@@ -226,13 +236,13 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       labels = allLabels;
     }
     PsiExpression selector = block.getExpression();
-    Analysis result = null;
+    AnalysisStartingPoint result = null;
     for (PsiExpression labelValue : labels) {
-      DfType type = fromConstant(labelValue);
+      DfType type = AnalysisStartingPoint.fromConstant(labelValue);
       if (type == null) return null;
-      Analysis next = Analysis.create(type, selector);
+      AnalysisStartingPoint next = AnalysisStartingPoint.create(type, selector);
       if (hasDefault) {
-        next = tryNegate(next);
+        next = AnalysisStartingPoint.tryNegate(next);
       }
       if (next == null) return null;
       if (result == null) {
@@ -242,298 +252,98 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
         if (result == null) return null;
       }
     }
-    return result; 
+    return result;
   }
 
-  private @Nullable Analysis fromClassCastException(@NotNull PsiElement anchor, @Nullable String actualClass) {
+  private @Nullable AnalysisStartingPoint fromClassCastException(@NotNull PsiElement anchor, @Nullable String actualClass) {
     if (!(anchor instanceof PsiTypeElement)) return null;
     PsiTypeCastExpression castExpression = tryCast(anchor.getParent(), PsiTypeCastExpression.class);
     if (castExpression == null) return null;
-    PsiExpression ref = extractAnchor(castExpression.getOperand());
+    PsiExpression ref = AnalysisStartingPoint.extractAnchor(castExpression.getOperand());
     if (ref == null) return null;
     if (actualClass != null) {
-      // TODO: support arrays, primitive arrays, inner classes
-      PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(actualClass, GlobalSearchScope.allScope(myProject));
-      if (classes.length == 1) {
-        return new Analysis(
-          DfTypes.typedObject(JavaPsiFacade.getElementFactory(myProject).createType(classes[0]), Nullability.NOT_NULL), ref);
+      PsiType psiType = getPsiType(actualClass);
+      if (psiType != null) {
+        return new AnalysisStartingPoint(TypeConstraints.exact(psiType).asDfType().meet(DfTypes.NOT_NULL_OBJECT), ref);
       }
     }
     PsiType castType = castExpression.getType();
     if (castType != null) {
-      return tryNegate(new Analysis(DfTypes.typedObject(castType, Nullability.NULLABLE), ref));
+      return AnalysisStartingPoint.tryNegate(new AnalysisStartingPoint(DfTypes.typedObject(castType, Nullability.NULLABLE), ref));
+    }
+    return null;
+  }
+
+  private @Nullable PsiType getPsiType(String classCastExceptionType) {
+    int dim = 0;
+    while (classCastExceptionType.startsWith("[", dim)) {
+      dim++;
+    }
+    String className;
+    if (dim > 0) {
+      if (classCastExceptionType.startsWith("L", dim) && classCastExceptionType.endsWith(";")) {
+        className = classCastExceptionType.substring(dim + 1, classCastExceptionType.length() - 1);
+      } else {
+        if (classCastExceptionType.length() == dim + 1){
+          PsiType type = PsiPrimitiveType.fromJvmTypeDescriptor(classCastExceptionType.charAt(dim));
+          if (type != null) {
+            while (dim-- > 0) type = type.createArrayType();
+            return type;
+          }
+        }
+        return null;
+      }
+    } else {
+      className = classCastExceptionType;
+    }
+    PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(myProject), className, null, true);
+    if (psiClass != null) {
+      PsiType type = JavaPsiFacade.getElementFactory(myProject).createType(psiClass);
+      while (dim-- > 0) type = type.createArrayType();
+      return type;
     }
     return null;
   }
 
   @Nullable
-  private static Analysis fromAssertionError(@NotNull PsiElement anchor) {
+  private static AnalysisStartingPoint fromAssertionError(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiAssertStatement) {
-      return tryNegate(fromCondition(((PsiAssertStatement)anchor).getAssertCondition()));
+      return AnalysisStartingPoint.tryNegate(AnalysisStartingPoint.fromCondition(((PsiAssertStatement)anchor).getAssertCondition()));
     }
     return null;
   }
 
-  private @Nullable AnAction createAction(@Nullable Analysis analysis) {
+  private @Nullable AnAction createAction(@Nullable AnalysisStartingPoint analysis,
+                                          @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
     if (analysis == null) return null;
-    String text = getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
+    String text = DfaBasedFilter.getPresentationText(analysis.myDfType, analysis.myAnchor.getType());
     if (text.isEmpty()) return null;
-    return new AnAction(null, JavaBundle.message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        SliceAnalysisParams params = new SliceAnalysisParams();
-        params.dataFlowToThis = true;
-        params.scope = new AnalysisScope(myProject);
-        params.scope.setSearchInLibraries(true);
-        params.valueFilter = new JavaDfaSliceValueFilter(analysis.myDfType);
-        SliceManager.getInstance(myProject).createToolWindow(analysis.myAnchor, params);
-      }
-    };
+    return new DfaFromStacktraceAction(analysis, text, nextFramesSupplier);
   }
 
-  private static String getPresentationText(DfType type, @Nullable PsiType psiType) {
-    if (type instanceof DfIntegralType) {
-      // chop 'int' or 'long' prefix
-      return ((DfIntegralType)type).getRange().getPresentationText(psiType);
-    }
-    if (type instanceof DfConstantType) {
-      return type.toString();
-    }
-    if (type instanceof DfReferenceType) {
-      DfReferenceType stripped = ((DfReferenceType)type).dropNullability();
-      DfaNullability nullability = ((DfReferenceType)type).getNullability();
-      TypeConstraint constraint = ((DfReferenceType)type).getConstraint();
-      if (constraint.getPresentationText(psiType).isEmpty()) {
-        stripped = stripped.dropTypeConstraint();
-      }
-      String constraintText = stripped.toString();
-      if (nullability == DfaNullability.NOT_NULL) {
-        if (constraintText.isEmpty()) {
-          return "not-null";
-        }
-        return constraintText + " (not-null)";
-      }
-      else if (nullability != DfaNullability.NULL) {
-        if (constraintText.isEmpty()) {
-          return "";
-        }
-        return "null or " + constraintText;
-      }
-    }
-    return type.toString();
-  }
+  private final class DfaFromStacktraceAction extends AnAction {
+    private final @NotNull AnalysisStartingPoint myAnalysis;
+    private @NotNull final Supplier<List<StackLine>> myNextFramesSupplier;
 
-  private static @Nullable Analysis fromCondition(@Nullable PsiExpression cond) {
-    cond = PsiUtil.skipParenthesizedExprDown(cond);
-    if (cond == null) return null;
-    if (cond instanceof PsiPolyadicExpression) {
-      IElementType tokenType = ((PsiPolyadicExpression)cond).getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.ANDAND)) {
-        Analysis analysis = null;
-        for (PsiExpression operand : ((PsiPolyadicExpression)cond).getOperands()) {
-          Analysis next = fromCondition(operand);
-          if (next == null) return null;
-          if (analysis == null) {
-            analysis = next;
-          }
-          else {
-            analysis = analysis.tryMeet(next);
-            if (analysis == null) return null;
-          }
-        }
-        return analysis;
-      }
-      if (tokenType.equals(JavaTokenType.OROR)) {
-        Analysis analysis = null;
-        for (PsiExpression operand : ((PsiPolyadicExpression)cond).getOperands()) {
-          Analysis next = fromCondition(operand);
-          if (next == null) return null;
-          if (analysis == null) {
-            analysis = next;
-          }
-          else {
-            analysis = analysis.tryJoin(next);
-            if (analysis == null) return null;
-          }
-        }
-        return analysis;
-      }
-    }
-    if (cond instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binop = (PsiBinaryExpression)cond;
-      PsiExpression left = PsiUtil.skipParenthesizedExprDown(binop.getLOperand());
-      PsiExpression right = PsiUtil.skipParenthesizedExprDown(binop.getROperand());
-      Analysis analysis = fromBinOp(left, binop.getOperationTokenType(), right);
-      if (analysis != null) return analysis;
-      return fromBinOp(right, binop.getOperationTokenType(), left);
-    }
-    if (cond instanceof PsiInstanceOfExpression) {
-      PsiTypeElement checkType = ((PsiInstanceOfExpression)cond).getCheckType();
-      if (checkType == null) return null;
-      PsiExpression anchor = extractAnchor(((PsiInstanceOfExpression)cond).getOperand());
-      if (anchor != null) {
-        DfType typedObject = DfTypes.typedObject(checkType.getType(), Nullability.NOT_NULL);
-        return new Analysis(typedObject, anchor);
-      }
-    }
-    if (cond instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)cond;
-      if (MethodCallUtils.isEqualsCall(call)) {
-        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
-        PsiExpression argument = PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
-        if (qualifier != null && argument != null) {
-          DfType type = fromConstant(qualifier);
-          PsiExpression anchor = extractAnchor(argument);
-          if (type == null) {
-            type = fromConstant(argument);
-            anchor = extractAnchor(qualifier);
-          }
-          if (type != null && anchor != null) {
-            PsiType anchorType = anchor.getType();
-            if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfTypes.BOTTOM) return null;
-            return new Analysis(type, anchor);
-          }
-        }
-      }
-    }
-    if (BoolUtils.isNegation(cond)) {
-      Analysis negatedAnalysis = fromCondition(BoolUtils.getNegated(cond));
-      return tryNegate(negatedAnalysis);
-    }
-    PsiExpression anchor = extractAnchor(cond);
-    if (anchor != null) {
-      return new Analysis(DfTypes.TRUE, anchor);
-    }
-    return null;
-  }
-
-  private static @Nullable Analysis tryNegate(Analysis analysis) {
-    if (analysis == null) return null;
-    DfType type = analysis.myDfType.tryNegate();
-    if (type == null) return null;
-    NullabilityProblemKind.NullabilityProblem<?> problem = NullabilityProblemKind.fromContext(analysis.myAnchor, Collections.emptyMap());
-    if (problem != null && CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION.equals(problem.thrownException())) {
-      type = type.meet(DfTypes.NOT_NULL_OBJECT);
-    }
-    return new Analysis(type, analysis.myAnchor);
-  }
-
-  private static @Nullable DfType fromConstant(@NotNull PsiExpression constant) {
-    if (constant instanceof PsiClassObjectAccessExpression) {
-      PsiClassObjectAccessExpression classObject = (PsiClassObjectAccessExpression)constant;
-      PsiTypeElement operand = classObject.getOperand();
-      return DfTypes.constant(operand.getType(), classObject.getType());
-    }
-    if (constant instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)constant).resolve();
-      if (target instanceof PsiEnumConstant) {
-        return DfTypes.constant(target, Objects.requireNonNull(constant.getType()));
-      }
-    }
-    if (ExpressionUtils.isNullLiteral(constant)) {
-      return DfTypes.NULL;
-    }
-    Object value = ExpressionUtils.computeConstantExpression(constant);
-    if (value != null) {
-      return DfTypes.constant(value, Objects.requireNonNull(constant.getType()));
-    }
-    return null;
-  }
-
-  private static @Nullable Analysis fromBinOp(@Nullable PsiExpression target,
-                                              @NotNull IElementType type,
-                                              @Nullable PsiExpression constant) {
-    if (constant == null) return null;
-    DfType constantType = fromConstant(constant);
-    if (constantType == null) {
-      return null;
-    }
-    PsiExpression anchor = extractAnchor(target);
-    if (anchor != null) {
-      PsiType anchorType = anchor.getType();
-      if (anchorType == null || TypeUtils.isJavaLangString(anchorType)) return null;
-      if (anchorType.equals(PsiType.BYTE) || anchorType.equals(PsiType.CHAR) || anchorType.equals(PsiType.SHORT)) {
-        anchorType = PsiType.INT;
-      }
-      if (constantType == DfTypes.NULL || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(constantType) != DfTypes.BOTTOM) {
-        if (type.equals(JavaTokenType.EQEQ)) {
-          return new Analysis(constantType, anchor);
-        }
-        if (type.equals(JavaTokenType.NE)) {
-          return tryNegate(new Analysis(constantType, anchor));
-        }
-      }
-    }
-    RelationType relationType = RelationType.fromElementType(type);
-    if (relationType != null) {
-      LongRangeSet set = DfLongType.extractRange(constantType).fromRelation(relationType);
-      if (anchor == null) {
-        if (target instanceof PsiBinaryExpression) {
-          PsiBinaryExpression binOp = (PsiBinaryExpression)target;
-          IElementType tokenType = binOp.getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.PERC)) {
-            anchor = extractAnchor(binOp.getLOperand());
-            if (anchor != null) {
-              Object divisor = ExpressionUtils.computeConstantExpression(binOp.getROperand());
-              if (!(divisor instanceof Integer) && !(divisor instanceof Long)) return null;
-              set = LongRangeSet.fromRemainder(((Number)divisor).longValue(), set);
-            }
-          }
-        }
-        if (anchor == null) return null;
-      }
-      PsiType anchorType = anchor.getType();
-      if (PsiType.LONG.equals(anchorType)) {
-        return new Analysis(DfTypes.longRange(set), anchor);
-      }
-      if (PsiType.INT.equals(anchorType) ||
-          PsiType.SHORT.equals(anchorType) ||
-          PsiType.BYTE.equals(anchorType) ||
-          PsiType.CHAR.equals(anchorType)) {
-        set = set.intersect(Objects.requireNonNull(LongRangeSet.fromType(anchorType)));
-        return new Analysis(DfTypes.intRangeClamped(set), anchor);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiExpression extractAnchor(@Nullable PsiExpression target) {
-    target = PsiUtil.skipParenthesizedExprDown(target);
-    if (target instanceof PsiReferenceExpression || target instanceof PsiMethodCallExpression) {
-      return target;
-    }
-    return null;
-  }
-
-  private static class Analysis {
-    final DfType myDfType;
-    final PsiExpression myAnchor;
-
-    private Analysis(DfType type, PsiExpression anchor) {
-      myDfType = type;
-      myAnchor = anchor;
+    private DfaFromStacktraceAction(@NotNull AnalysisStartingPoint analysis,
+                                    String text,
+                                    @NotNull Supplier<List<StackLine>> nextFramesSupplier) {
+      super(null, JavaBundle
+        .message("action.dfa.from.stacktrace.text", analysis.myAnchor.getText(), text), null);
+      myAnalysis = analysis;
+      myNextFramesSupplier = nextFramesSupplier;
     }
 
-    private @Nullable Analysis tryMeet(@NotNull Analysis next) {
-      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(this.myAnchor, next.myAnchor)) return null;
-      DfType meet = this.myDfType.meet(next.myDfType);
-      if (meet == DfTypes.BOTTOM) return null;
-      return new Analysis(meet, this.myAnchor);
-    }
-
-    private @Nullable Analysis tryJoin(@NotNull Analysis next) {
-      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(this.myAnchor, next.myAnchor)) return null;
-      DfType meet = this.myDfType.join(next.myDfType);
-      if (meet == DfTypes.TOP) return null;
-      return new Analysis(meet, this.myAnchor);
-    }
-
-    private static @Nullable Analysis create(@NotNull DfType type, @Nullable PsiExpression anchor) {
-      anchor = extractAnchor(anchor);
-      if (anchor == null) return null;
-      if (DfTypes.typedObject(anchor.getType(), Nullability.UNKNOWN).meet(type) == DfTypes.BOTTOM) return null;
-      return new Analysis(type, anchor);
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      List<StackLine> nextFrames = myNextFramesSupplier.get();
+      StackFilter stackFilter = StackFilter.from(nextFrames);
+      SliceAnalysisParams params = new SliceAnalysisParams();
+      params.dataFlowToThis = true;
+      params.scope = new AnalysisScope(GlobalSearchScope.allScope(myProject), myProject);
+      params.scope.setSearchInLibraries(true);
+      params.valueFilter = new JavaValueFilter(new DfaBasedFilter(myAnalysis.myDfType), stackFilter);
+      SliceManager.getInstance(myProject).createToolWindow(myAnalysis.myAnchor, params);
     }
   }
 }

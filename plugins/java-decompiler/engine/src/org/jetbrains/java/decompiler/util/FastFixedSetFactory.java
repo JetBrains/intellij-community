@@ -1,10 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 public class FastFixedSetFactory<E> {
 
@@ -46,7 +43,7 @@ public class FastFixedSetFactory<E> {
     return colValuesInternal;
   }
 
-  public static class FastFixedSet<E> implements Iterable<E> {
+  public static final class FastFixedSet<E> implements Iterable<E> {
 
     private final FastFixedSetFactory<E> factory;
 
@@ -66,8 +63,7 @@ public class FastFixedSetFactory<E> {
       FastFixedSet<E> copy = new FastFixedSet<>(factory);
 
       int arrlength = data.length;
-      int[] cpdata = new int[arrlength];
-      System.arraycopy(data, 0, cpdata, 0, arrlength);
+      int[] cpdata = Arrays.copyOf(data, arrlength);
       copy.setData(cpdata);
 
       return copy;
@@ -242,7 +238,7 @@ public class FastFixedSetFactory<E> {
     }
   }
 
-  public static class FastFixedSetIterator<E> implements Iterator<E> {
+  public static final class FastFixedSetIterator<E> implements Iterator<E> {
 
     private final VBStyleCollection<int[], E> colValuesInternal;
     private final int[] data;

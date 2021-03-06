@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType;
 /**
  * Describes gitignore file type.
  */
-public class GitIgnoreFileType extends IgnoreFileType {
+public final class GitIgnoreFileType extends IgnoreFileType {
 
   public static final GitIgnoreFileType INSTANCE = new GitIgnoreFileType();
 

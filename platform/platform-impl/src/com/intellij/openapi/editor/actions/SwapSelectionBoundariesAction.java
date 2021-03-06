@@ -35,15 +35,9 @@ public class SwapSelectionBoundariesAction extends EditorAction {
     super(new Handler());
   }
   
-  private static class Handler extends EditorActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorActionHandler.ForEachCaret {
     @Override
-    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-      assert caret != null;
-      
+    public void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (!caret.hasSelection()) {
         return;
       }

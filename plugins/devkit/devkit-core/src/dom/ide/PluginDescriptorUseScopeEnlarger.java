@@ -11,10 +11,14 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -34,7 +38,7 @@ public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
         if (domElement instanceof ExtensionPoint ||
             domElement instanceof Extension ||
             domElement instanceof ActionOrGroup) {
-          return createAllPluginDescriptorFilesSearchScope(element);
+          return getAllPluginDescriptorFilesSearchScope(element);
         }
       }
     }
@@ -43,16 +47,21 @@ public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
         PsiUtil.isIdeaProject(element.getProject()) &&
         (((PsiClass)element).hasModifierProperty(PsiModifier.PUBLIC) ||
          ((PsiClass)element).hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
-      return createAllPluginDescriptorFilesSearchScope(element);
+      return getAllPluginDescriptorFilesSearchScope(element);
     }
     return null;
   }
 
-  private static SearchScope createAllPluginDescriptorFilesSearchScope(PsiElement element) {
-    final Project project = element.getProject();
-    final Collection<VirtualFile> pluginXmlFiles =
-      DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project,
-                                                    GlobalSearchScope.allScope(project));
-    return GlobalSearchScope.filesScope(project, pluginXmlFiles);
+  @NotNull
+  private static SearchScope getAllPluginDescriptorFilesSearchScope(PsiElement element) {
+    Project project = element.getProject();
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      Collection<VirtualFile> pluginXmlFiles =
+        DomService.getInstance().getDomFileCandidates(IdeaPlugin.class,
+                                                      GlobalSearchScope.allScope(project));
+
+      GlobalSearchScope scope = GlobalSearchScope.filesScope(project, pluginXmlFiles);
+      return new CachedValueProvider.Result<>(scope, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }

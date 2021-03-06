@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
@@ -20,8 +21,10 @@ interface StreamProvider {
    */
   val isExclusive: Boolean
 
+  @get:Deprecated("Export action is not disabled by StreamProviders anymore", ReplaceWith("false"))
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   val isDisableExportAction: Boolean
-    get() = enabled && isExclusive
+    get() = false
 
   /**
    * Called only on `write`

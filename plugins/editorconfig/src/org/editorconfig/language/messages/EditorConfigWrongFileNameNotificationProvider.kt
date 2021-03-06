@@ -16,7 +16,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import org.editorconfig.Utils
 import org.editorconfig.language.filetype.EditorConfigFileConstants
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 
 class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
@@ -32,7 +34,7 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provid
   }
 
   private fun buildPanel(editor: Editor, file: VirtualFile, project: Project): EditorNotificationPanel {
-    val result = EditorNotificationPanel()
+    val result = EditorNotificationPanel{ editor.colorsScheme }
 
     if (findEditorConfig(file) == null) {
       val rename = EditorConfigBundle["notification.action.rename"]
@@ -67,14 +69,14 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provid
       update(file, project)
     }
 
-    return result.text(EditorConfigBundle["notification.rename.message"])
+    return result.text(EditorConfigBundle.get("notification.rename.message"))
   }
 
   private fun findEditorConfig(file: VirtualFile) =
     runReadAction { file.parent.findChild(EditorConfigFileConstants.FILE_NAME) }
 
-  private fun error(message: String, project: Project) {
-    val notification = Notification("editorconfig", "EditorConfig", message, NotificationType.ERROR)
+  private fun error(@Nls message: String, project: Project) {
+    val notification = Notification("editorconfig", Utils.EDITOR_CONFIG_NAME, message, NotificationType.ERROR)
     Notifications.Bus.notify(notification, project)
   }
 

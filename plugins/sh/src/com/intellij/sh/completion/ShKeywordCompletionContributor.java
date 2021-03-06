@@ -31,7 +31,7 @@ public class ShKeywordCompletionContributor extends CompletionContributor implem
     return psiElement().andNot(psiElement().andOr(insideForClause(), insideIfDeclaration(), insideWhileDeclaration(),
         insideUntilDeclaration(), insideFunctionDefinition(), insideSelectDeclaration(), insideCaseDeclaration(),
         insideCondition(), insideArithmeticExpansions(), insideOldArithmeticExpansions(), insideParameterExpansion(),
-        insideRawString(), insideString(), insideComment()));
+        insideCommandSubstitution(), insideSubshellCommand(), insideRawString(), insideString(), insideComment()));
   }
 
   @NotNull

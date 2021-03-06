@@ -4,14 +4,13 @@ package com.intellij.grazie.ide.ui.grammar.tabs.rules.component.rules
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.SimpleTextAttributes
-import java.util.*
 
 @Suppress("EqualsOrHashCode")
-class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject) {
+internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject) {
   val nodeText: String
     get() = when (val meta = userObject) {
       is RuleWithLang -> meta.rule.description
-      is ComparableCategory -> meta.category.getName(meta.lang.jLanguage)
+      is ComparableCategory -> meta.category.name
       is Lang -> meta.nativeName
       else -> ""
     }
@@ -19,7 +18,7 @@ class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(userObject)
   val attrs: SimpleTextAttributes
     get() = if (userObject is RuleWithLang) SimpleTextAttributes.REGULAR_ATTRIBUTES else SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
 
-  fun resetMark(state: HashMap<String, RuleWithLang>): Boolean {
+  fun resetMark(state: Map<String, RuleWithLang>): Boolean {
     val meta = userObject
     if (meta is RuleWithLang) {
       isChecked = when (val rule = state[meta.rule.id]) {

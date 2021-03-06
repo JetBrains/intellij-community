@@ -4,7 +4,7 @@ package git4idea.rebase
 import com.intellij.vcs.log.VcsShortCommitDetails
 import git4idea.i18n.GitBundle
 
-class GitCommitFixupBySubjectAction : GitAutoSquashCommitAction() {
+internal class GitCommitFixupBySubjectAction : GitAutoSquashCommitAction() {
   override fun getCommitMessage(commit: VcsShortCommitDetails) = "fixup! ${commit.subject}"
-  override fun getFailureTitle() = GitBundle.getString("rebase.log.create.fixup.commit.action.failure.title")
+  override fun getFailureTitle() = GitBundle.message("rebase.log.create.fixup.commit.action.failure.title")
 }

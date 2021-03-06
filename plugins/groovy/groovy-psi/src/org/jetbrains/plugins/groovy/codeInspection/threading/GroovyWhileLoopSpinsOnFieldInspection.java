@@ -22,6 +22,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
@@ -44,14 +45,14 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "<code>#ref</code> loop spins on field #loc";
+    return GroovyBundle.message("inspection.message.ref.loop.spins.on.field");
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Only warn if loop is empty",
-        this, "ignoreNonEmtpyLoops");
+    return new SingleCheckboxOptionsPanel(GroovyBundle.message("checkbox.only.warn.if.loop.empty"),
+                                          this, "ignoreNonEmtpyLoops");
   }
 
   @NotNull

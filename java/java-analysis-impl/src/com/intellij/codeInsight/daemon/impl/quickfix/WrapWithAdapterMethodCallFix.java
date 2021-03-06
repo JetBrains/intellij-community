@@ -24,22 +24,27 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
+
+import static com.intellij.pom.java.LanguageLevel.JDK_11;
 
 public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   static class Wrapper extends ArgumentFixerActionFactory {
@@ -54,7 +59,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
      *                      It's allowed to check imprecisely (return true even if output type is not acceptable) as more
      *                      expensive type check will be performed automatically.
      */
-    Wrapper(String template, Predicate<? super PsiType> inTypeFilter, Predicate<? super PsiType> outTypeFilter) {
+    Wrapper(@NonNls String template, Predicate<? super PsiType> inTypeFilter, Predicate<? super PsiType> outTypeFilter) {
       myInTypeFilter = inTypeFilter;
       myOutTypeFilter = outTypeFilter;
       myTemplate = template;
@@ -111,7 +116,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     }
 
     @NotNull
-    private PsiExpression createReplacement(PsiElement context, String replacement) {
+    private PsiExpression createReplacement(PsiElement context, @NonNls String replacement) {
       return JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(
         myTemplate.replace("{0}", replacement), context);
     }
@@ -147,9 +152,12 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     new Wrapper("new java.io.File({0})",
                 inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
                 outType -> outType.equalsToText(CommonClassNames.JAVA_IO_FILE)),
+    new Wrapper("java.nio.file.Path.of({0})",
+                inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
+                outType -> outType.equalsToText("java.nio.file.Path") && isAppropriateLanguageLevel(outType, level -> level.isAtLeast(JDK_11))),
     new Wrapper("java.nio.file.Paths.get({0})",
                 inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
-                outType -> outType.equalsToText("java.nio.file.Path")),
+                outType -> outType.equalsToText("java.nio.file.Path") && isAppropriateLanguageLevel(outType, level -> level.isLessThan(JDK_11))),
     new Wrapper("java.util.Arrays.asList({0})",
                 inType -> inType instanceof PsiArrayType && ((PsiArrayType)inType).getComponentType() instanceof PsiClassType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
@@ -161,12 +169,16 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
     new Wrapper("java.util.Collections.singletonList({0})",
                 inType -> true,
-                outType -> outType instanceof PsiClassType &&
-                           ((PsiClassType)outType).rawType().equalsToText(CommonClassNames.JAVA_UTIL_LIST)),
+                outType -> PsiTypesUtil.classNameEquals(outType, CommonClassNames.JAVA_UTIL_LIST)),
     new Wrapper("java.util.Arrays.stream({0})",
                 inType -> inType instanceof PsiArrayType,
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM))
   };
+
+  private static boolean isAppropriateLanguageLevel(@NotNull PsiType psiType, @NotNull Predicate<? super LanguageLevel> level) {
+    if (!(psiType instanceof PsiClassType)) return true;
+    return level.test(((PsiClassType)psiType).getLanguageLevel());
+  }
 
   @SafeFieldForPreview
   @Nullable private final PsiType myType;

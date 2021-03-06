@@ -8,10 +8,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
 import git4idea.GitUtil;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
+import static git4idea.GitNotificationIdsHolder.TAG_DELETION_ROLLBACK_ERROR;
 import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
@@ -85,7 +87,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     String message = GitBundle.message("delete.tag.operation.deleted.tag", myTagName);
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null,
+                                                                         "git.tag.deleted");
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
       "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
 
@@ -116,11 +119,12 @@ class GitDeleteTagOperation extends GitBranchOperation {
     if (result.totalSuccess()) {
       Notification notification =
         STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
-          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null);
+          .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION, null, "git.tag.restored");
       myNotifier.notify(notification);
     }
     else {
-      myNotifier.notifyError(GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
+      myNotifier.notifyError(TAG_DELETION_ROLLBACK_ERROR,
+                             GitBundle.message("delete.tag.operation.error.during.rollback.of.tag.deletion"),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
@@ -132,7 +136,8 @@ class GitDeleteTagOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError(GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
+      myNotifier.notifyError(TAG_DELETION_ROLLBACK_ERROR,
+                             GitBundle.message("delete.tag.operation.could.not.restore.tag", bold(code(myTagName))),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
@@ -152,11 +157,13 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return GitBundle.message("delete.tag.operation.however.tag.deletion.has.succeeded.for.the.following", getSkippedRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("delete.tag.operation.you.may.rollback.not.to.let.tags.diverge", myTagName);
+    return new HtmlBuilder().append(GitBundle.message("delete.tag.operation.however.tag.deletion.has.succeeded.for.the.following",
+                                                      getSkippedRepositories().size()))
+      .br()
+      .appendRaw(successfulRepositoriesJoined())
+      .br()
+      .append(GitBundle.message("delete.tag.operation.you.may.rollback.not.to.let.tags.diverge", myTagName))
+      .toString();
   }
 
   @NotNull

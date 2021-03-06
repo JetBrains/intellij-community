@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.ide.ui.search.ConfigurableHit;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
@@ -207,8 +208,19 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     if (candidate == null && current != null) {
       myLastSelected = current;
     }
+    if (myFiltered != null) {
+      SettingsCounterUsagesCollector.SEARCH.log(getConfigurableClass(candidate), myFiltered.size(), text.length());
+    }
     SimpleNode node = !adjustSelection ? null : findNode(candidate);
     fireUpdate(node, adjustSelection, now);
+  }
+
+  @Nullable
+  private static Class<?> getConfigurableClass(Configurable candidate) {
+    if (candidate instanceof ConfigurableWrapper) {
+      return ((ConfigurableWrapper) candidate).getConfigurable().getClass();
+    }
+    return candidate != null ? candidate.getClass() : null;
   }
 
   private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {

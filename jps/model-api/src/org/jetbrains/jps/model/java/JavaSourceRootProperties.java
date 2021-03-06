@@ -1,34 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
-import java.util.Objects;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> implements JpsSimpleElement<JavaSourceRootProperties> {
+import java.util.Objects;
+
+public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> {
   private String myPackagePrefix = "";
   private boolean myForGeneratedSources;
 
-  /**
-   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String)} instead
-   */
-  @Deprecated
-  public JavaSourceRootProperties() {
-  }
-
-  /**
-   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String)} instead
-   */
-  @Deprecated
-  public JavaSourceRootProperties(@NotNull String packagePrefix) {
-    myPackagePrefix = packagePrefix;
-  }
-
-  /**
-   * @deprecated do not call this method directly, use {@link JpsJavaExtensionService#createSourceRootProperties(String, boolean)} instead
-   */
-  @Deprecated
+  @ApiStatus.Internal
   public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources) {
     myPackagePrefix = packagePrefix;
     myForGeneratedSources = forGeneratedSources;
@@ -72,24 +55,5 @@ public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootPrope
   public void applyChanges(@NotNull JavaSourceRootProperties modified) {
     setPackagePrefix(modified.myPackagePrefix);
     setForGeneratedSources(modified.myForGeneratedSources);
-  }
-
-  /**
-   * @deprecated use {@link #setPackagePrefix(String)} instead
-   */
-  @Deprecated
-  @Override
-  public void setData(@NotNull JavaSourceRootProperties data) {
-    applyChanges(data);
-  }
-
-  /**
-   * @deprecated use {@link #getPackagePrefix()} instead
-   */
-  @Deprecated
-  @NotNull
-  @Override
-  public JavaSourceRootProperties getData() {
-    return this;
   }
 }

@@ -15,11 +15,10 @@
  */
 package com.siyeh.ig.classmetrics;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -50,37 +49,13 @@ public class MethodCountInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final Component label = new JLabel(InspectionGadgetsBundle.message("method.count.limit.option"));
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(label, constraints);
-    constraints.gridx = 1;
-    constraints.weightx = 1.0;
-    constraints.insets.right = 0;
-    panel.add(valueField, constraints);
-
-    final CheckBox gettersSettersCheckBox = new CheckBox(InspectionGadgetsBundle.message("method.count.ignore.getters.setters.option"),
-      this, "ignoreGettersAndSetters");
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    constraints.anchor = GridBagConstraints.WEST;
-    panel.add(gettersSettersCheckBox, constraints);
-
-    final CheckBox overridingMethodCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), this, "ignoreOverridingMethods");
-
-    constraints.weighty = 1.0;
-    constraints.gridy = 2;
-    constraints.anchor = GridBagConstraints.NORTHWEST;
-    panel.add(overridingMethodCheckBox, constraints);
+    panel.addRow(label, valueField);
+    panel.addCheckbox(InspectionGadgetsBundle.message("method.count.ignore.getters.setters.option"), "ignoreGettersAndSetters");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
 
     return panel;
   }

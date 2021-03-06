@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +12,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
-public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
-  private static final ConcurrentMap<Class, EnumConverter> ourCache =
-    ConcurrentFactoryMap.createMap(key -> new EnumConverter(key));
+public final class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   private final Class<T> myType;
 
   private EnumConverter(final Class<T> aClass) {
@@ -42,7 +24,7 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   }
 
   public static <T extends Enum> EnumConverter<T>  createEnumConverter(Class<T> aClass) {
-    return ourCache.get(aClass);
+    return new EnumConverter(aClass);
   }
 
   private String getStringValue(final T anEnum) {
@@ -61,7 +43,7 @@ public class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return XmlDomBundle.message("error.unknown.enum.value.message", s);
+    return XmlDomBundle.message("dom.converter.unknown.enum.value", s);
   }
 
   @Override

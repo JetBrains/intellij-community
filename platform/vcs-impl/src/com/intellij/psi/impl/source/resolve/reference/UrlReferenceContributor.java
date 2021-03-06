@@ -14,7 +14,7 @@ public class UrlReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
 
-    registrar.registerReferenceProvider(new PsiElementPattern.Capture<PsiElement>(PsiElement.class) {
+    registrar.registerReferenceProvider(new PsiElementPattern.Capture<>(PsiElement.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return o instanceof PsiLiteralValue && ((PsiLiteralValue)o).getValue() instanceof String;

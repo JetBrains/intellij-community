@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -39,7 +40,7 @@ public class PyTypingTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Override
@@ -239,7 +240,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("Union[str, bytes]",
+    doTest("Union[Union[str, bytes], Any]",
            "from typing import AnyStr\n" +
            "\n" +
            "def foo(x: AnyStr) -> AnyStr:\n" +
@@ -446,9 +447,25 @@ public class PyTypingTest extends PyTestCase {
                          "        pass\n");
   }
 
+  // PY-42334
+  public void testStringLiteralInjectionForExplicitTypeAlias() {
+    doTestInjectedText("from typing import TypeAlias\n" +
+                       "\n" +
+                       "Alias: TypeAlias = 'any + <caret>text'",
+                       "any + text");
+  }
+
+  // PY-42334
+  public void testStringLiteralInjectionForExplicitTypeAliasUsingTypeComment() {
+    doTestInjectedText("from typing import TypeAlias\n" +
+                       "\n" +
+                       "Alias = 'any + <caret>text'  # type: TypeAlias",
+                       "any + text");
+  }
+
   // PY-22620
   public void testVariableTypeCommentInjectionTuple() {
-    doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> int",
                        "int, int");
   }
 
@@ -466,14 +483,14 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-22620
   public void testVariableTypeCommentInjectionParenthesisedTuple() {
-    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
+    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)",
                        "(int, int)");
   }
 
   // PY-22620
   public void testForTypeCommentInjectionTuple() {
     doTestInjectedText("for x, y in undefined():  # type: int,<caret> int\n" +
-                       "    pass", 
+                       "    pass",
                        "int, int");
   }
 
@@ -538,7 +555,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(expr: Type):\n" +
            "    pass\n");
   }
-  
+
   // PY-18254
   public void testFunctionTypeComment() {
     doTest("(x: int, args: Tuple[float, ...], kwargs: Dict[str, str]) -> List[bool]",
@@ -703,7 +720,7 @@ public class PyTypingTest extends PyTestCase {
            "\n" +
            "expr = f");
   }
-  
+
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",
@@ -1005,7 +1022,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type[MyClass]): \n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
     doTest("Type[T]",
@@ -1016,7 +1033,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type[T]):\n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testFunctionCreatesInstanceFromType() {
     doTest("int",
@@ -1051,7 +1068,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type):\n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testTypingTypeOfAnyMapsToBuiltinType() {
     doTest("type",
@@ -1069,7 +1086,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Tuple[Type[42], Type[], Type[unresolved]]):\n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testUnionOfClassObjectTypes() {
     doTest("Type[Union[int, str]]",
@@ -1491,6 +1508,52 @@ public class PyTypingTest extends PyTestCase {
     doTestNoInjectedText("from typing import Literal\n" +
                          "MyType = Literal[42, \"f<caret>oo\", True]\n" +
                          "a: MyType\n");
+
+    doTestNoInjectedText("from typing import Literal, TypeAlias\n" +
+                         "MyType: TypeAlias = Literal[42, \"f<caret>oo\", True]\n");
+  }
+
+  // PY-41847
+  public void testNoStringLiteralInjectionForTypingAnnotated() {
+    doTestNoInjectedText("from typing import Annotated\n" +
+                         "MyType = Annotated[str, \"f<caret>oo\", True]\n" +
+                         "a: MyType\n");
+
+    doTestNoInjectedText("from typing import Annotated\n" +
+                         "a: Annotated[int, \"f<caret>oo\", True]\n");
+
+    doTestInjectedText("from typing import Annotated\n" +
+                       "a: Annotated['Forward<caret>Reference', 'foo']",
+                       "ForwardReference");
+  }
+
+  // PY-41847
+  public void testTypingAnnotated() {
+    doTest("int",
+           "from typing import Annotated\n" +
+           "A = Annotated[int, 'Some constraint']\n" +
+           "expr: A");
+    doTest("int",
+           "from typing_extensions import Annotated\n" +
+           "expr: Annotated[int, 'Some constraint'] = '5'");
+    doMultiFileStubAwareTest("int",
+                             "from annotated import A\n" +
+                             "expr: A = 'str'");
+  }
+
+  // PY-35370
+  public void testAnyArgumentsCallableInTypeComment() {
+    doTestInjectedText("from typing import Callable\n" +
+                       "a = b  # type: Call<caret>able[..., int]",
+                       "Callable[..., int]");
+  }
+
+  // PY-42334
+  public void testExplicitTypeAliasItselfHasAnyType() {
+    doTest("Any",
+           "from typing import TypeAlias\n" +
+           "\n" +
+           "expr: TypeAlias = int\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {
@@ -1510,6 +1573,7 @@ public class PyTypingTest extends PyTestCase {
     assertFalse(files.isEmpty());
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
+    assertFalse(PsiTreeUtil.hasErrorElements(injected));
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

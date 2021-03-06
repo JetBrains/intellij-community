@@ -56,8 +56,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
       result = result.withPrefixMatcher(extractPrefix(parameters)).caseInsensitive();
       result.addAllElements(ContainerUtil.map(suggestions, (Function<CompletionItem, LookupElement>)item -> LookupElementBuilder.create(item, item.getOption())
         .withTypeText(item.getDescription(), true)
-        .withInsertHandler(INSERT_HANDLER)
-        .withBoldness(item.getStyleClass().equals("keyword"))));
+        .withInsertHandler(INSERT_HANDLER)));
     }
     catch (Exception ignored) {
       //noinspection InstanceofCatchParameter

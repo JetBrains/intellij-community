@@ -89,7 +89,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   public GrCodeReferenceElement getQualifier() {
-    return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+    return findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @Override

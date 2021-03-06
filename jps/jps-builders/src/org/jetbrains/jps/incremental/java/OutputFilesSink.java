@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -19,22 +21,24 @@ import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
 */
-class OutputFilesSink implements OutputFileConsumer {
+final class OutputFilesSink implements OutputFileConsumer {
   private static final Logger LOG = Logger.getInstance(OutputFilesSink.class);
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
   private final String myChunkName;
-  private final Set<File> mySuccessfullyCompiled = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> mySuccessfullyCompiled = FileCollectionFactory.createCanonicalFileSet();
 
   OutputFilesSink(CompileContext context,
                          ModuleLevelBuilder.OutputConsumer outputConsumer,
@@ -49,58 +53,70 @@ class OutputFilesSink implements OutputFileConsumer {
   @Override
   public void save(final @NotNull OutputFileObject fileObject) {
     final BinaryContent content = fileObject.getContent();
-    final File srcFile = fileObject.getSourceFile();
     boolean isTemp = false;
     final JavaFileObject.Kind outKind = fileObject.getKind();
+    final Collection<File> sourceFiles = ContainerUtil.collect(fileObject.getSourceFiles().iterator());
 
-    if (srcFile != null && content != null) {
-      final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-      final JavaSourceRootDescriptor rootDescriptor = myContext.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(myContext, srcFile);
+    if (!sourceFiles.isEmpty() && content != null) {
+      final List<String> sourcePaths = ContainerUtil.map(sourceFiles, f -> FileUtil.toSystemIndependentName(f.getPath()));
+      
+      JavaSourceRootDescriptor rootDescriptor = null;
+      for (File srcFile : sourceFiles) {
+        rootDescriptor = myContext.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(myContext, srcFile);
+        if (rootDescriptor != null) {
+          break;
+        }
+      }
+
       try {
         if (rootDescriptor != null) {
           isTemp = rootDescriptor.isTemp;
           if (!isTemp) {
             // first, handle [src->output] mapping and register paths for files_generated event
             if (outKind == JavaFileObject.Kind.CLASS) {
-              myOutputConsumer.registerCompiledClass(rootDescriptor.target, new CompiledClass(fileObject.getFile(), srcFile, fileObject.getClassName(), content)); // todo: avoid array copying?
+              myOutputConsumer.registerCompiledClass(rootDescriptor.target, new CompiledClass(fileObject.getFile(), sourceFiles, fileObject.getClassName(), content)); // todo: avoid array copying?
             }
             else {
-              myOutputConsumer.registerOutputFile(rootDescriptor.target, fileObject.getFile(), Collections.singleton(sourcePath));
+              myOutputConsumer.registerOutputFile(rootDescriptor.target, fileObject.getFile(), sourcePaths);
             }
           }
         }
         else {
           // was not able to determine the source root descriptor or the source root is excluded from compilation (e.g. for annotation processors)
           if (outKind == JavaFileObject.Kind.CLASS) {
-            myOutputConsumer.registerCompiledClass(null, new CompiledClass(fileObject.getFile(), srcFile, fileObject.getClassName(), content));
+            myOutputConsumer.registerCompiledClass(null, new CompiledClass(fileObject.getFile(), sourceFiles, fileObject.getClassName(), content));
           }
         }
       }
       catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, e));
+        myContext.processMessage(new CompilerMessage(JavaBuilder.getBuilderName(), e));
       }
 
       if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
         // register in mappings any non-temp class file
         try {
           final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePath, reader);
+          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader, fileObject.isGenerated());
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
-          final String message = "Class dependency information may be incomplete! Error parsing generated class " + fileObject.getFile().getPath();
-          LOG.info(message, e);
-          myContext.processMessage(new CompilerMessage(
-            JavaBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+          final String message = JpsBuildBundle.message(
+            "build.message.class.dependency.information.may.be.incomplete", fileObject.getFile().getPath()
           );
+          LOG.info(message, e);
+          for (String sourcePath : sourcePaths) {
+            myContext.processMessage(new CompilerMessage(
+              JavaBuilder.getBuilderName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath
+            ));
+          }
         }
       }
     }
 
     if (outKind == JavaFileObject.Kind.CLASS) {
-      myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
-      if (!isTemp && srcFile != null) {
-        mySuccessfullyCompiled.add(srcFile);
+      myContext.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.writing.classes.0", myChunkName)));
+      if (!isTemp && !sourceFiles.isEmpty()) {
+        mySuccessfullyCompiled.addAll(sourceFiles);
       }
     }
   }

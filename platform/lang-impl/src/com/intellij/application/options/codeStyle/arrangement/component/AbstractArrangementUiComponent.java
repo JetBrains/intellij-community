@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -17,57 +17,49 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractArrangementUiComponent implements ArrangementUiComponent {
-
-  @NotNull private final NotNullLazyValue<JComponent> myComponent = new NotNullLazyValue<JComponent>() {
-    @NotNull
-    @Override
-    protected JComponent compute() {
-      JPanel result = new JPanel(new GridBagLayout()) {
-        @Override
-        protected void paintComponent(Graphics g) {
-          Point point = UIUtil.getLocationOnScreen(this);
-          if (point != null) {
-            Rectangle bounds = getBounds();
-            myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
-          }
-          if (!myEnabled && g instanceof Graphics2D) {
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-          }
-          super.paintComponent(g);
+  @NotNull private final NotNullLazyValue<JComponent> myComponent = NotNullLazyValue.lazy(() -> {
+    JPanel result = new JPanel(new GridBagLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        Point point = UIUtil.getLocationOnScreen(this);
+        if (point != null) {
+          Rectangle bounds = getBounds();
+          myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
         }
+        if (!myEnabled && g instanceof Graphics2D) {
+          ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        }
+        super.paintComponent(g);
+      }
 
-        @Override
-        public boolean isFocusOwner() {
-          Component[] components = getComponents();
-          if (components != null) {
-            for (Component component : components) {
-              if (component.isFocusOwner()) {
-                return true;
-              }
+      @Override
+      public boolean isFocusOwner() {
+        Component[] components = getComponents();
+        if (components != null) {
+          for (Component component : components) {
+            if (component.isFocusOwner()) {
+              return true;
             }
           }
-          return false;
         }
+        return false;
+      }
 
-        @Override
-        public boolean requestFocusInWindow() {
-          if (getComponentCount() > 0) {
-            return getComponent(0).requestFocusInWindow();
-          }
-          else {
-            return super.requestFocusInWindow();
-          }
+      @Override
+      public boolean requestFocusInWindow() {
+        if (getComponentCount() > 0) {
+          return getComponent(0).requestFocusInWindow();
         }
-      };
-      result.setOpaque(false);
-      result.add(doGetUiComponent(), new GridBag().fillCell());
-      return result;
-    }
-  };
+        else {
+          return super.requestFocusInWindow();
+        }
+      }
+    };
+    result.setOpaque(false);
+    result.add(doGetUiComponent(), new GridBag().fillCell());
+    return result;
+  });
 
   @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
 

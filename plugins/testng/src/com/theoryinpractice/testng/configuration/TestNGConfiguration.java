@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
@@ -52,7 +53,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
 
-  private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
+  private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -73,7 +74,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     }
   };
 
-  private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<PsiClass>() {
+  private final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<>() {
     @Override
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -109,11 +110,6 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     this(null, project, new TestData(), TestNGConfigurationType.getInstance());
   }
 
-  @Deprecated
-  public TestNGConfiguration(@Nullable String name, @NotNull Project project, @NotNull ConfigurationFactory factory) {
-    this(name, project, new TestData(), factory);
-  }
-
   protected TestNGConfiguration(String s, Project project, TestData data, ConfigurationFactory factory) {
     super(s, new JavaRunConfigurationModule(project, false), factory);
     this.data = data;
@@ -146,14 +142,12 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
 
   @Override
   public String suggestedName() {
-    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    return testObject != null ? testObject.getGeneratedName() : null;
+    return TestNGTestObject.fromConfig(this).getGeneratedName();
   }
 
   @Override
   public String getActionName() {
-    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    return testObject != null ? testObject.getActionName() : null;
+    return TestNGTestObject.fromConfig(this).getActionName();
   }
 
   @Override
@@ -220,12 +214,15 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
    @Override
    @Nullable
    public String getAlternativeJrePath() {
-     return ALTERNATIVE_JRE_PATH;
+     return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) : null;
    }
 
    @Override
    public void setAlternativeJrePath(String path) {
-     this.ALTERNATIVE_JRE_PATH = path;
+     String collapsedPath = path != null ? new AlternativeJrePathConverter().toString(path) : null;
+     boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, collapsedPath);
+     this.ALTERNATIVE_JRE_PATH = collapsedPath;
+     ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
    }
 
   @Override
@@ -385,11 +382,11 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
-    DefaultJDOMExternalizer.writeExternal(getPersistantData(), element, new DifferenceFilter<TestData>(getPersistantData(), new TestData()) {
+    DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
+    DefaultJDOMExternalizer.write(getPersistantData(), element, new DifferenceFilter<>(getPersistantData(), new TestData()) {
       @Override
-      public boolean isAccept(@NotNull Field field) {
-        return "TEST_OBJECT".equals(field.getName()) || super.isAccept(field);
+      public boolean test(@NotNull Field field) {
+        return "TEST_OBJECT".equals(field.getName()) || super.test(field);
       }
     });
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());

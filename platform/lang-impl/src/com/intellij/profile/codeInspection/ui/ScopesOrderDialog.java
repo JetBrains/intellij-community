@@ -10,16 +10,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.profile.codeInspection.ui.table.ScopesOrderTable;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.EditableModel;
+import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,45 +23,48 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class ScopesOrderDialog extends DialogWrapper {
-  private final JList<String> myOptionsList = new JBList<>();
+  private final ScopesOrderTable myOptionsTable;
   private final InspectionProfileImpl myInspectionProfile;
   @NotNull
   private final Project myProject;
   private final JPanel myPanel;
-  private final MyModel myModel;
 
   ScopesOrderDialog(@NotNull final Component parent,
                     @NotNull InspectionProfileImpl inspectionProfile,
                     @NotNull Project project) {
     super(parent, true);
     myInspectionProfile = inspectionProfile;
+    myOptionsTable = new ScopesOrderTable();
     myProject = project;
-    myModel = new MyModel();
     reloadScopeList();
-    myOptionsList.setModel(myModel);
-    myOptionsList.setSelectedIndex(0);
 
-    final JPanel listPanel = ToolbarDecorator.createDecorator(myOptionsList).setMoveDownAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton anActionButton) {
-        ListUtil.moveSelectedItemsDown(myOptionsList);
-      }
-    }).setMoveUpAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton anActionButton) {
-        ListUtil.moveSelectedItemsUp(myOptionsList);
-      }
-    }).addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.edit.scopes"), AllIcons.Actions.Edit) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
-        reloadScopeList();
-      }
-    }).disableRemoveAction().disableAddAction().createPanel();
+    final JPanel listPanel = ToolbarDecorator.createDecorator(myOptionsTable)
+      .setMoveDownAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton anActionButton) {
+          myOptionsTable.moveDown();
+        }
+      })
+      .setMoveUpAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton anActionButton) {
+          myOptionsTable.moveUp();
+        }
+      })
+      .addExtraAction(new AnActionButton(CodeInsightBundle.messagePointer("action.AnActionButton.text.edit.scopes"), AllIcons.Actions.Edit) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
+          reloadScopeList();
+        }
+      })
+      .disableRemoveAction()
+      .disableAddAction()
+      .createPanel();
     final JLabel descr = new JLabel(AnalysisBundle.message("inspections.settings.scopes.order.help.label"));
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, descr);
     myPanel = new JPanel();
@@ -77,21 +76,17 @@ public class ScopesOrderDialog extends DialogWrapper {
   }
 
   private void reloadScopeList() {
-    myModel.removeAllElements();
-
-    final List<String> scopes = new ArrayList<>();
+    final List<NamedScope> scopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
       for (final NamedScope scope : holder.getScopes()) {
         if (!(scope instanceof NonProjectFilesScope)) {
-          scopes.add(scope.getName());
+          scopes.add(scope);
         }
       }
     }
-    scopes.remove(CustomScopesProviderEx.getAllScope().getName());
-    scopes.sort(new ScopeOrderComparator(myInspectionProfile));
-    for (String scopeName : scopes) {
-      myModel.addElement(scopeName);
-    }
+    scopes.remove(CustomScopesProviderEx.getAllScope());
+    scopes.sort(Comparator.comparing(namedScope -> namedScope.getScopeId(), new ScopeOrderComparator(myInspectionProfile)));
+    myOptionsTable.updateItems(scopes);
   }
 
   @Nullable
@@ -102,39 +97,16 @@ public class ScopesOrderDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final int size = myOptionsList.getModel().getSize();
-    final String[] newScopeOrder = new String[size];
+    final int size = myOptionsTable.getModel().getRowCount();
+    final List<String> newScopeOrder = new ArrayList<>();
     for (int i = 0; i < size; i++) {
-      final String scopeName = myOptionsList.getModel().getElementAt(i);
-      newScopeOrder[i] = scopeName;
+      final NamedScope namedScope = myOptionsTable.getScopeAt(i);
+      assert namedScope != null;
+      newScopeOrder.add(namedScope.getScopeId());
     }
-    if (!Arrays.equals(newScopeOrder, myInspectionProfile.getScopesOrder())) {
+    if (!newScopeOrder.equals(myInspectionProfile.getScopesOrder())) {
       myInspectionProfile.setScopesOrder(newScopeOrder);
     }
     super.doOKAction();
-  }
-
-  private static class MyModel extends DefaultListModel<String> implements EditableModel {
-    @Override
-    public void addRow() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void exchangeRows(int oldIndex, int newIndex) {
-      String scope1 = getElementAt(newIndex);
-      set(newIndex, getElementAt(oldIndex));
-      set(oldIndex, scope1);
-    }
-
-    @Override
-    public boolean canExchangeRows(int oldIndex, int newIndex) {
-      return true;
-    }
-
-    @Override
-    public void removeRow(int idx) {
-      throw new UnsupportedOperationException();
-    }
   }
 }

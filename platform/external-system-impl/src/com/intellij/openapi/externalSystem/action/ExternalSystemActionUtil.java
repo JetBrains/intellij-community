@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -40,7 +29,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemActionUtil {
+public final class ExternalSystemActionUtil {
 
   public static void executeAction(final String actionId, final InputEvent e) {
     executeAction(actionId, "", e);
@@ -50,13 +39,7 @@ public class ExternalSystemActionUtil {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
-      final Presentation presentation = new Presentation();
-      final AnActionEvent event =
-        new AnActionEvent(e, DataManager.getInstance().getDataContext(e.getComponent()), place, presentation, actionManager, 0);
-      action.update(event);
-      if (presentation.isEnabled()) {
-        action.actionPerformed(event);
-      }
+      ActionUtil.invokeAction(action, e.getComponent(), place, e, null);
     }
   }
 

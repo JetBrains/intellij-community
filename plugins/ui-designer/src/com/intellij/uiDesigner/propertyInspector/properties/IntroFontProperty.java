@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.lw.FontDescriptor;
@@ -11,19 +11,12 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.FontEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.FontRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
 import java.awt.*;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
 
 /**
  * @author yole
@@ -80,7 +73,7 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
     component.getDelegee().putClientProperty(CLIENT_PROPERTY_KEY_PREFIX + getName(), null);
   }
 
-  public static String descriptorToString(final FontDescriptor value) {
+  public static @NlsSafe String descriptorToString(final FontDescriptor value) {
     if (value == null) {
       return "";
     }
@@ -113,43 +106,5 @@ public class IntroFontProperty extends IntrospectedProperty<FontDescriptor> {
       return result;
     }
     return UIDesignerBundle.message("font.default");
-  }
-
-  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    try {
-      if (component.getParent() != null) {
-        Font componentFont = (Font) myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-        if (componentFont instanceof FontUIResource) {
-          final Constructor constructor = component.getClass().getConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
-          constructor.setAccessible(true);
-          JComponent newComponent = (JComponent)constructor.newInstance(ArrayUtilRt.EMPTY_OBJECT_ARRAY);
-          Font defaultFont = (Font) myReadMethod.invoke(newComponent, EMPTY_OBJECT_ARRAY);
-
-          if (defaultFont == componentFont) {
-            return;
-          }
-          UIDefaults defaults = UIManager.getDefaults();
-          Enumeration e = defaults.keys ();
-          while(e.hasMoreElements()) {
-            Object key = e.nextElement();
-            Object value = defaults.get(key);
-            if (key instanceof String && value == componentFont) {
-              setValue(radComponent, FontDescriptor.fromSwingFont((String) key));
-              return;
-            }
-          }
-        }
-        Font parentFont = (Font) myReadMethod.invoke(component.getParent(), EMPTY_OBJECT_ARRAY);
-        if (!Comparing.equal(componentFont, parentFont)) {
-          String fontName = componentFont.getName().equals(parentFont.getName()) ? null : componentFont.getName();
-          int fontStyle = componentFont.getStyle() == parentFont.getStyle() ? -1 : componentFont.getStyle();
-          int fontSize = componentFont.getSize() == parentFont.getSize() ? -1 : componentFont.getSize();
-          setValue(radComponent, new FontDescriptor(fontName, fontStyle, fontSize));
-        }
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
   }
 }

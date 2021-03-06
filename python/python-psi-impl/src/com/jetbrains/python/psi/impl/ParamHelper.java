@@ -16,11 +16,14 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +33,7 @@ import java.util.List;
 /**
  * Parameter-related things that should not belong directly to PyParameter.
  */
-public class ParamHelper {
+public final class ParamHelper {
 
   private ParamHelper() {
   }
@@ -109,13 +112,13 @@ public class ParamHelper {
 
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
-          result.append('/');
+          result.append(PySlashParameter.TEXT);
           if (!last) result.append(", ");
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          result.append('*');
+          result.append(PySingleStarParameter.TEXT);
           if (!last) result.append(", ");
         }
 
@@ -131,6 +134,66 @@ public class ParamHelper {
     return result.toString();
   }
 
+  @NotNull
+  public static String getNameInSignature(@NotNull PyCallableParameter parameter) {
+    final StringBuilder sb = new StringBuilder();
+
+    if (parameter.isPositionalContainer()) sb.append("*");
+    else if (parameter.isKeywordContainer()) sb.append("**");
+
+    final String name = parameter.getName();
+    sb.append(name != null ? name : "...");
+
+    return sb.toString();
+  }
+
+  @NotNull
+  public static String getNameInSignature(@NotNull PyNamedParameter parameter) {
+    final StringBuilder sb = new StringBuilder();
+
+    if (parameter.isPositionalContainer()) sb.append("*");
+    else if (parameter.isKeywordContainer()) sb.append("**");
+
+    final String name = parameter.getName();
+    sb.append(name != null ? name : "...");
+
+    return sb.toString();
+  }
+
+  /**
+   * @param defaultValue             string returned by {@link PyCallableParameter#getDefaultValueText()} or {@link PyParameter#getDefaultValueText()}.
+   * @param parameterRenderedAsTyped true if parameter is rendered with type annotation.
+   * @return equal sign (surrounded with spaces if {@code parameterRenderedAsTyped}) +
+   * {@code defaultValue} (with body escaped if it is a string literal)
+   */
+  @Nullable
+  @Contract("null, _->null")
+  public static String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
+    if (defaultValue == null) return null;
+
+    final StringBuilder sb = new StringBuilder();
+
+    // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
+    sb.append(parameterRenderedAsTyped ? " = " : "=");
+
+    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue);
+    if (quotes != null) {
+      final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
+      sb.append(quotes.getFirst());
+      StringUtil.escapeStringCharacters(value.length(), value, sb);
+      sb.append(quotes.getSecond());
+    }
+    else {
+      sb.append(defaultValue);
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * @param defaultValue expression returned by {@link PyCallableParameter#getDefaultValue()} or {@link PyParameter#getDefaultValue()}.
+   * @return {@code defaultValue} value surrounded by quotes if it is a multi-line string literal, {@code defaultValue} text otherwise.
+   */
   @Nullable
   public static String getDefaultValueText(@Nullable PyExpression defaultValue) {
     if (defaultValue instanceof PyStringLiteralExpression) {
@@ -141,6 +204,22 @@ public class ParamHelper {
     }
 
     return defaultValue == null ? null : defaultValue.getText();
+  }
+
+  public static boolean couldHaveDefaultValue(@NotNull String parameterName) {
+    return !parameterName.startsWith("*") && !parameterName.equals(PySlashParameter.TEXT);
+  }
+
+  public static boolean isSelfArgsKwargsCallable(@Nullable PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyCallable) {
+      final List<PyCallableParameter> parameters = ((PyCallable)element).getParameters(context);
+      return parameters.size() == 3 &&
+             parameters.get(0).isSelf() &&
+             parameters.get(1).isPositionalContainer() &&
+             parameters.get(2).isKeywordContainer();
+    }
+
+    return false;
   }
 
   public interface ParamWalker {

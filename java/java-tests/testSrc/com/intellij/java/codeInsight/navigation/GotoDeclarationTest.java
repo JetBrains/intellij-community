@@ -1,19 +1,4 @@
-
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.JavaTestUtil;
@@ -100,6 +85,21 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     assertTrue(item instanceof PsiClass && CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)item).getQualifiedName()));
   }
 
+  public void testToStringInAnonymous() {
+    configureFromFileText("A.java", "class A {{" +
+                                    "       final Object o = new Object() {\n" +
+                                    "            @Override\n" +
+                                    "            public String toString() {\n" +
+                                    "                return super.toString();\n" +
+                                    "            }\n" +
+                                    "        };\n" +
+                                    "        o.to<caret>String();\n }}");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertInstanceOf(element, PsiMethod.class);
+    PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+    assertInstanceOf(containingClass, PsiAnonymousClass.class);
+  }
+
   public void testArrayIndexNotCovered() {
     configureFromFileText("A.java", "class A {{ String[] arr; int index; arr[index]<caret>; }}");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
@@ -117,13 +117,5 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("A.java", "class A {{ String[] arr; arr<caret>");
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertNotNull("Unexpected null", element);
-  }
-
-  public void testGotoDeclarationOnEnumConstantDoesntNavigateToEnumClass() {
-    configureFromFileText("A.java", "enum A {<caret>G();}");
-    final PsiReference reference = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
-    assertNotNull(reference);
-    final Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(reference);
-    assertEmpty(candidates);
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
@@ -108,10 +109,34 @@ public class LightRecordField extends LightField implements LightRecordMember {
 
   @Override
   public @NotNull SearchScope getUseScope() {
-    return new LocalSearchScope(Objects.requireNonNull(getContainingClass()));
+    PsiClass aClass = Objects.requireNonNull(getContainingClass());
+    PsiClass containingClass = aClass.getContainingClass();
+    while (containingClass != null) {
+      aClass = containingClass;
+      containingClass = containingClass.getContainingClass();
+    }
+    return new LocalSearchScope(aClass);
   }
 
   private static boolean hasApplicableAnnotationTarget(PsiAnnotation annotation) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
   }
+
+  @Override
+  public void normalizeDeclaration() throws IncorrectOperationException {
+    // no-op
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof LightRecordField &&
+           myRecordComponent.equals(((LightRecordField)o).myRecordComponent);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRecordComponent);
+  }
+
 }

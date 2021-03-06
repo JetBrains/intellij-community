@@ -5,15 +5,18 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -28,7 +31,7 @@ public class CompletionAutoPopupTester {
     myFixture = fixture;
   }
 
-  public void runWithAutoPopupEnabled(Runnable r) {
+  public void runWithAutoPopupEnabled(@NotNull ThrowableRunnable<Throwable> r) throws Throwable {
     assert !ApplicationManager.getApplication().isDispatchThread();
     TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true);
     try {
@@ -36,7 +39,10 @@ public class CompletionAutoPopupTester {
     }
     finally {
       TestModeFlags.reset(CompletionAutoPopupHandler.ourTestingAutopopup);
-      ((DocumentEx)myFixture.getEditor().getDocument()).setModificationStamp(0);// to force possible autopopup handler's invokeLater cancel itself
+      Editor editor = myFixture.getEditor();
+      if (editor != null) {
+        ((DocumentEx)editor.getDocument()).setModificationStamp(0);// to force possible autopopup handler's invokeLater cancel itself
+      }
     }
   }
 

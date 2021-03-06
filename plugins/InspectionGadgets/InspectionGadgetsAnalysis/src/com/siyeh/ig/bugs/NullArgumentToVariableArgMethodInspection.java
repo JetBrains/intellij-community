@@ -27,6 +27,8 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @NotNull
@@ -79,8 +81,8 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
    * @return true iff {@code call} is varargs method call and {@code lastArgumentType} is {@code null} type or array type, 
    *              which is assignable from vararg parameter component type
    */
-  public static boolean isSuspiciousVararg(PsiCall call, PsiType lastArgumentType) {
-    return NullArgumentToVariableArgVisitor.getSuspiciousVarargType(call, lastArgumentType) != null;
+  public static boolean isSuspiciousVararg(PsiCall call, PsiType lastArgumentType, Supplier<? extends PsiMethod> methodSupplier) {
+    return NullArgumentToVariableArgVisitor.getSuspiciousVarargType(call, lastArgumentType, methodSupplier) != null;
   }
 
   private static class NullArgumentToVariableArgVisitor extends BaseInspectionVisitor {
@@ -97,7 +99,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       visitCall(call);
     }
 
-    private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type) {
+      private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
       final boolean checkArray;
       if (PsiType.NULL.equals(type)) {
         checkArray = false;
@@ -108,7 +110,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       else {
         return null;
       }
-      final PsiMethod method = call.resolveMethod();
+      final PsiMethod method = resolver.get();
       if (method == null) {
         return null;
       }
@@ -153,7 +155,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       final PsiExpression lastArgument = arguments[arguments.length - 1];
       final PsiType type = lastArgument.getType();
 
-      PsiArrayType arrayType = getSuspiciousVarargType(call, type);
+      PsiArrayType arrayType = getSuspiciousVarargType(call, type, call::resolveMethod);
       if (arrayType == null) {
         return;
       }

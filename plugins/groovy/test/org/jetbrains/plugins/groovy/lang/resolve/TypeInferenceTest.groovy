@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
@@ -361,6 +361,18 @@ def foo(Integer a) {
   }
 }
 ''', '[java.lang.Integer,java.lang.String]')
+  }
+
+  void 'test infer argument type from method 5 no recursion'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''\
+void usage(Collection<UnknownClass> x) {
+  while (unknownCondition) {
+    <caret>foo(x)
+  }
+}
+void foo(Collection<UnknownClass> list) {}
+''', 'void'
   }
 
   void testEmptyListOrListWithGenerics() {
@@ -882,7 +894,7 @@ def foo(List list) {
   while(true)
     lis<caret>t = [list]
 }
-''', 'java.util.List<java.util.List>')
+''', 'java.util.ArrayList<java.util.List>')
   }
 
   void testReturnNullWithGeneric() {
@@ -955,7 +967,7 @@ def foo() {
   }
 
   void testClassReference() {
-    doExprTest '[].class', "java.lang.Class<? extends java.util.List>"
+    doExprTest '[].class', "java.lang.Class<? extends java.util.ArrayList>"
     doExprTest '1.class', 'java.lang.Class<? extends java.lang.Integer>'
     doExprTest 'String.valueOf(1).class', 'java.lang.Class<? extends java.lang.String>'
     doExprTest '1.getClass()', 'java.lang.Class<? extends java.lang.Integer>'
@@ -975,10 +987,17 @@ def foo() {
   }
 
   void 'test list literal type'() {
-    doExprTest '[null]', 'java.util.List'
-    doExprTest '["foo", "bar"]', 'java.util.List<java.lang.String>'
-    doExprTest '["${foo}", "${bar}"]', 'java.util.List<groovy.lang.GString>'
-    doExprTest '[1, "a"]', 'java.util.List<java.io.Serializable>'
+    doExprTest '[null]', 'java.util.ArrayList'
+    doExprTest '["foo", "bar"]', 'java.util.ArrayList<java.lang.String>'
+    doExprTest '["${foo}", "${bar}"]', 'java.util.ArrayList<groovy.lang.GString>'
+    doExprTest '[1, "a"]', 'java.util.ArrayList<java.io.Serializable>'
+  }
+
+  void 'test list literal type @CS'() {
+    doCSExprTest '[null]', 'java.util.List'
+    doCSExprTest '["foo", "bar"]', 'java.util.List<java.lang.String>'
+    doCSExprTest '["${foo}", "${bar}"]', 'java.util.List<groovy.lang.GString>'
+    doCSExprTest '[1, "a"]', 'java.util.List<java.io.Serializable>'
   }
 
   void 'test map literal type'() {
@@ -994,8 +1013,8 @@ def foo() {
 
   void 'test recursive literal types'() {
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.util.List>"
-    doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.List<java.lang.Object>"
+    doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.ArrayList<java.lang.Object>"
+    doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.ArrayList<java.lang.Object>"
     doExprTest 'def foo() { [someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.util.LinkedHashMap>"
     doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()',
                "java.util.LinkedHashMap<java.lang.String, java.lang.Object>"
@@ -1008,8 +1027,8 @@ def foo() {
   }
 
   void 'test list with spread'() {
-    doExprTest 'def l = [1, 2]; [*l]', 'java.util.List<java.lang.Integer>'
-    doExprTest 'def l = [1, 2]; [*[*[*l]]]', 'java.util.List<java.lang.Integer>'
+    doExprTest 'def l = [1, 2]; [*l]', 'java.util.ArrayList<java.lang.Integer>'
+    doExprTest 'def l = [1, 2]; [*[*[*l]]]', 'java.util.ArrayList<java.lang.Integer>'
   }
 
   void 'test map spread dot access'() {
@@ -1040,7 +1059,7 @@ def bar() {
     def ll = func([[""]])
     l<caret>l
 }
-''', 'java.util.List<java.util.List<java.lang.String>>'
+''', 'java.util.ArrayList<java.util.ArrayList<java.lang.String>>'
   }
 
   void 'test generic tuple inference with type param 2'() {
@@ -1054,7 +1073,7 @@ def bar() {
     def ll = func([["", 1]])
     l<caret>l
 }
-''', 'java.util.List<java.util.List<java.io.Serializable>>'
+''', 'java.util.ArrayList<java.util.ArrayList<java.io.Serializable>>'
   }
 
   void 'test enum values() type'() {
@@ -1083,6 +1102,16 @@ class W {
 
   void "test don't start inference for method parameter type"() {
     doTest 'def bar(String ss) { <caret>ss }', 'java.lang.String'
+  }
+
+  void 'test closure param'() {
+    doTest '''\
+interface I { def foo(String s) }
+def bar(I i) {}
+bar { var ->
+  <caret>var
+}
+''', 'java.lang.String'
   }
 
   void 'test assignment in cycle independent on index'() {
@@ -1168,6 +1197,17 @@ while (u) {
   }
 }
 <caret>b
+''', null
+  }
+
+  void 'test no soe cyclic multi-assignment'() {
+    allowNestedContext(4, testRootDisposable)
+    doTest '''\
+def input = ""
+while (condition) {
+  def (name) = parseOption(input)
+  input = input.substring(<caret>name)
+}
 ''', null
   }
 
@@ -1276,5 +1316,698 @@ class C {
 }
 [new C()]*.field.las<caret>t()
 ''', JAVA_LANG_INTEGER
+  }
+
+  void 'test do type inference for variables from outer context'() {
+    doTest '''
+def foo(p) {
+  p = 1
+  def closure = {
+    <caret>p
+  }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test do type inference for outer variables with explicit type'() {
+    doTest '''
+def foo() {
+  Integer x = 1
+  def closure = {
+    <caret>x
+  }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test do type inference for outer final variables'() {
+    doTest '''
+def foo() {
+  final def x = "string"
+  def closure = { <caret>x }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test do type inference for outer effectively final variables'() {
+    doTest '''
+def foo() {
+  def x = "string"
+  def closure = { <caret>x }
+}
+''', JAVA_LANG_STRING
+  }
+
+  void 'test use outer context for closures passed to DGM'() {
+    doTest '''
+def foo() {
+  def x = 1
+  'q'.with {
+    <caret>x
+  }
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test use outer context in nested closures'() {
+    doTest '''
+def foo() {
+  def x = 1
+  'q'.with ({
+    def closure = { <caret>x }
+  })
+  x = ""
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test allow use of outer context for nested DGM closures'() {
+    doTest '''
+def foo(x) {
+  x = 1
+  def cl1 = 1.with { 2.with { <caret>x } }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test parenthesized expression'() {
+    doTest '''
+def foo(def p) {
+    def x = 1
+    1.with (({ <caret>x }))
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test assignment inside closure'() {
+    doTest '''
+  def foo() {
+    def x = 'q'
+    1.with {
+      x = 1
+    }
+    <caret>x
+  }
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test assignment inside closure 2'() {
+    doTest '''
+class A{}
+class B extends A{}
+class C extends A{}
+def foo() {
+  def x = null as C
+  [1].each {
+    x = null as B
+  }
+  <caret>x
+}
+''', "A"
+  }
+
+  void 'test no changes for null type inside closure'() {
+    doTest '''
+def foo() {
+  def x
+  [1].each {
+      x = 1
+  }
+  <caret>x
+}
+''', null
+  }
+
+  void 'test other statements inside closure'() {
+    doTest '''
+def method() {
+    def list = []
+
+    [1].each { bar ->
+        bar
+        <caret>list
+    }
+}''', "java.util.ArrayList"
+  }
+
+  void 'test use dfa results from conditional branch'() {
+    doTest '''
+def foo(def bar) {
+    if (bar instanceof String) {
+        10.with {
+            <caret>bar
+        }
+    }
+}''', JAVA_LANG_STRING
+  }
+
+  void 'test use method calls inside closure block'() {
+    doTest '''
+def test(def x, y) {
+    y = new A()
+    1.with {
+      y.cast(x)
+      <caret>x
+    }
+}
+
+class A {
+    void cast(Integer p) {}
+}
+''', JAVA_LANG_INTEGER
+  }
+
+
+  void 'test use method calls inside closure block 2'() {
+    doTest '''
+def test(def x, y) {
+    y = new A()
+    1.with {
+      2.with {
+        y.cast(x)
+        <caret>x
+      }
+    }
+}
+
+class A {
+    void cast(Integer p) {}
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test use method calls inside closure block 3'() {
+    doTest '''
+static def foo(x) {
+    1.with {
+        cast(x)
+        cast(x)
+        <caret>x
+    }
+}
+
+static def cast(Integer x) {}
+
+''', JAVA_LANG_INTEGER
+  }
+
+
+  void 'test deep nested interconnected variables'() {
+    doTest '''
+
+static def foo(x, y, z) {
+    1.with {
+        y = new A()
+        2.with {
+            y.foo(z)
+            3.with {
+                z.cast(x)
+                4.with {
+                    <caret>x
+                }
+            }
+        }
+    }
+}
+
+class A {
+    def foo(B x) {}
+}
+
+class B {
+    def cast(Integer x) {}
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test instanceof influence on nested closures'() {
+    doTest '''
+def test(def x) {
+    1.with {
+        if (x instanceof Integer) {
+            2.with {
+                <caret>x
+            }
+        }
+    }
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test assignment in nested closure'() {
+    doTest '''
+def foo() {
+    def y
+    1.with {
+        2.with {
+            y = 2
+        }
+    }
+    <caret>y
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test safe navigation'() {
+    doTest '''
+class A {}
+class B extends A{}
+class C extends A{}
+
+static def foo(x) {
+    def a = new B()
+    1?.with {
+        a = new C()
+    }
+    <caret>a
+}
+
+''', "A"
+  }
+
+  void 'test assignment inside unknown closure'() {
+    doTest '''
+def foo(x) {
+  def x = (Number)1
+  def cl = {
+    x = (String)1
+  }
+  <caret>x
+}
+''', "java.io.Serializable"
+  }
+
+  void 'test CS with shared variables'() {
+    doTest '''
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = 1
+    def cl = {
+      <caret>x
+    }
+  }
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test infer LUB for shared variables'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    x = new C()
+    def cl = {
+      x
+    }
+    <caret>x
+  }
+''', "A"
+  }
+
+  void 'test flow typing should not work for shared variables'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    <caret>x
+    def cl = {
+      x
+    }
+    x = new C()
+  }
+''', "A"
+  }
+
+  void 'test cyclic dependency for shared variables'() {
+    allowNestedContext(2, testRootDisposable)
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def y = new C()
+    x = y
+    y = x
+    <caret>x
+    def cl = {
+      x
+      y
+    }
+  }
+
+''', "A"
+  }
+
+
+  void 'test non-shared variable depends on shared one'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def z = x
+    <caret>z
+    def cl = { x }
+    x = new C()
+  }
+
+''', "B"
+  }
+
+  void 'test assignment to shared variable inside closure'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def cl = { x = new C() }
+    <caret>x
+  }
+
+''', "A"
+  }
+
+  void 'test assignment to shared variable inside closure with access from closure'() {
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def cl = { 
+      x = new C() 
+      <caret>x
+    }
+  }
+
+''', "A"
+  }
+
+  void 'test dependency on shared variable with assignment inside closure'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''
+  class A{}
+  class B extends A{}
+  class C extends A{}
+  
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = new B()
+    def cl = { x = new C() }
+    def z = x
+    <caret>z
+  }
+
+''', "B"
+  }
+
+  void 'test flow typing reachable through closure'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''
+  @groovy.transform.CompileStatic
+  def foo() {
+    def x = 1
+    def cl = {
+      def y = x
+      <caret>y
+    }
+    x = ""
+    cl()
+  }''', JAVA_LANG_INTEGER
+  }
+
+  void 'test assignment inside dangling closure flushes subsequent types'() {
+    doTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  def cl = {
+    x = new B()
+  }
+  x = new C()
+  <caret>x
+}''', "A"
+  }
+
+  void 'test assignment inside dangling closure affects unrelated flow'() {
+    doTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  if (false) {
+    def cl = {
+      x = new B()
+    }
+  }
+  if (false) {
+    x = new C()
+    <caret>x
+  }
+}''', "A"
+  }
+
+  void 'test assignment inside dangling closure does not change type in parallel flow'() {
+    doTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  if (false) {
+    def cl = {
+      x = new B()
+    }
+  } else {
+    x = new C()
+    <caret>x
+  }
+}''', "C"
+  }
+
+  void 'test assignment inside dangling closure does not change types before definition'() {
+    doTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  <caret>x
+  def cl = {
+    x = new B()
+  }
+}''', JAVA_LANG_INTEGER
+  }
+
+  void 'test two dangling closures flush type together'() {
+    doTest '''
+class A {}
+class D extends A{}
+class B extends D {}
+class C extends D {}
+
+def foo() {
+  def x = new B()
+  def cl = {
+    x = new A()
+  }
+  def cl2 = {
+    x = new C()
+  } 
+  <caret>x  
+}''', "A"
+  }
+
+
+  void 'test two assignments inside single dangling closure'() {
+    doTest '''
+class A {}
+class D extends A{}
+class B extends D {}
+class C extends D {}
+
+def foo() {
+  def x = 1
+  def cl = {
+    x = new A()
+    x = new C()
+  }
+  x = new B()
+  <caret>x  
+}''', "A"
+  }
+
+  void 'test assignment in nested dangling closure'() {
+    doTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = 1
+  def cl = {
+    def cl = {
+      x = new C()
+    }
+  }
+  x = new B()
+  <caret>x  
+}''', "A"
+  }
+
+  void 'test assignment in nested dangling closure 2'() {
+    doTest '''
+class A {}
+class B extends A {}
+class C extends A {}
+
+def foo() {
+  def x = new B()
+  def cl = {
+    def cl = {
+      x = new C()
+    }
+  }
+  <caret>x
+''', "A"
+  }
+
+  void 'test shadowed field'() {
+    doTest '''
+class A {
+
+    def counter = 200
+
+    def foo() {
+        1.with {
+            counter = "s"
+            def counter = new ArrayList<Integer>()
+        }
+        <caret>counter
+    }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test cyclic flow with closure'() {
+    allowNestedContext(2, testRootDisposable)
+    doTest '''
+def x
+for (def i = 0; i < 10; i++) {
+  1.with {
+    x = i
+    i++
+    <caret>x
+  }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test cycle with unknown closure'() {
+    allowNestedContext(2, testRootDisposable)
+    doTest '''
+static  bar(Closure cl) {}
+
+static def foo() {
+    for (def i = 0; i < 10; i = bar { i++ }) {
+      <caret>i
+    }
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test no SOE in operator usage with shared variable'() {
+    allowNestedContextOnce(testRootDisposable)
+    doTest '''
+@groovy.transform.CompileStatic
+private void checkResult(String expected) {
+  def offset = 0
+  actualParameterHints.each { it ->
+   offset += hintString
+  }
+  <caret>offset
+}
+''', JAVA_LANG_INTEGER
+  }
+
+  void 'test cache consistency for closures in cycle'() {
+    doTest '''
+private void foo(String expected) {
+  def b = [1, 2, 3]
+  for (a in b) {
+    1.with {
+      b = a
+    }
+  } 
+  <caret>b
+}
+''', JAVA_IO_SERIALIZABLE
+  }
+
+  void 'test cache consistency for closures in cycle 2'() {
+    allowNestedContext(4, testRootDisposable)
+    doTest '''
+interface J {}
+interface R extends J {}
+interface I extends J {}
+class A implements I {}
+class B implements I {
+  Iterator<R> iterator() {}
+}
+
+def foo() {
+  def b = new B()
+  for (a in b) {
+    1.with {
+      if (true) {
+        b = new A()
+      }
+    }
+    <caret>b
+    b = a
+  }
+}
+''', "J"
+  }
+
+  void 'test initial type influences DFA'() {
+    doTest '''
+interface I {}
+class A implements I {}
+class B implements I {}
+
+class C {
+  def x = new B()
+  
+  def foo() {
+    if (true) {
+      x = new A()
+    }
+    <caret>x
+  }
+}
+''', "[I,groovy.lang.GroovyObject]"
   }
 }

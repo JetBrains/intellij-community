@@ -39,7 +39,7 @@ public class ChooseOptionsForNewFileStepFixture extends AbstractWizardStepFixtur
   public String getLayoutName() {
     final JTextField textField = robot().finder().findByLabel("Layout Name:", JTextField.class, true);
     //noinspection ConstantConditions
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected String executeInEDT() throws Throwable {
         return textField.getText();

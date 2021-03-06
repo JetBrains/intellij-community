@@ -2,12 +2,17 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
+import java.util.ListIterator;
 
 public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   private static final Convertor<TreePath, String> TO_STRING = object -> {
@@ -15,6 +20,7 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     return node.toString();
   };
   private final Convertor<? super TreePath, String> myToStringConvertor;
+  protected boolean myCanExpand;
 
   public TreeTableSpeedSearch(TreeTable tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree);
@@ -25,6 +31,9 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     this(tree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
   }
 
+  public void setCanExpand(boolean canExpand) {
+    myCanExpand = canExpand;
+  }
 
   @Override
   protected boolean isSpeedSearchEnabled() {
@@ -34,7 +43,9 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   @Override
   protected void selectElement(Object element, String selectedText) {
     final TreePath treePath = (TreePath)element;
-    final int row = myComponent.getTree().getRowForPath(treePath);
+    TreeTableTree tree = myComponent.getTree();
+    if (myCanExpand) tree.expandPath(treePath.getParentPath());
+    int row = tree.getRowForPath(treePath);
     TableUtil.selectRows(myComponent, new int[] {
       myComponent.convertRowIndexToView(row)
     });
@@ -43,17 +54,27 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
 
   @Override
   protected int getSelectedIndex() {
+    if (myCanExpand) {
+      return allPaths().indexOf(Conditions.equalTo(myComponent.getTree().getSelectionPath()));
+    }
     int[] selectionRows = myComponent.getTree().getSelectionRows();
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
+  @NotNull
   @Override
-  protected Object @NotNull [] getAllElements() {
-    TreePath[] paths = new TreePath[myComponent.getTree().getRowCount()];
-    for(int i = 0; i < paths.length; i++){
-      paths[i] = myComponent.getTree().getPathForRow(i);
-    }
-    return paths;
+  protected final ListIterator<Object> getElementIterator(int startingViewIndex) {
+    return allPaths().addAllTo(new ArrayList<Object>()).listIterator(startingViewIndex);
+  }
+
+  @Override
+  protected final int getElementCount() {
+    return allPaths().size();
+  }
+
+  @NotNull
+  protected JBIterable<TreePath> allPaths() {
+    return TreeSpeedSearch.allPaths(getComponent().getTree(), myCanExpand);
   }
 
   @Override

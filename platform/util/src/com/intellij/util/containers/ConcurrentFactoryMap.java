@@ -195,7 +195,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * @return Concurrent factory map with weak keys, strong values
    */
   public static @NotNull <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<? super T, ? extends V> compute) {
-    return create(compute, ContainerUtil::createConcurrentWeakMap);
+    return create(compute, CollectionFactory::createConcurrentWeakMap);
   }
 
   private static class CollectionWrapper<K> extends AbstractCollection<K> {
@@ -252,7 +252,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
       }
     }
 
-    protected static class EntryWrapper<K, V> implements Entry<K, V> {
+    protected static final class EntryWrapper<K, V> implements Entry<K, V> {
       final Entry<? extends K, ? extends V> myEntry;
       private EntryWrapper(Entry<? extends K, ? extends V> entry) {
         myEntry = entry;

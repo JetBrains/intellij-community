@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <polygon fill="#7F8B91" fill-opacity=".5" fill-rule="evenodd" points="8 6.4 6.246 13 4.4 13 2 3 4.031 3 5.415 10 7.169 3 8.831 3 10.585 10 11.969 3 14 3 11.6 13 9.754 13"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="words">
+<path id="W" d="M14.5213 3.01418L11.6986 13H9.82624L8.01064 6.68794L6.19504 13H4.3227L1.5 3.01418H3.67021L5.3156 9.53901L7.14539 3H8.93262L10.7482 9.53901L12.4078 3.01418H14.5213Z" fill="#7F8B91" fill-opacity="0.5"/>
+</g>
 </svg>

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiCachedValueImpl;
+import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -74,7 +75,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       }
 
       final PsiElement element = getDeclarationImpl(decl, myElementPattern.getLocation());
-      
+
       return CachedValueProvider.Result.create(element, element.getContainingFile());
     });
   }
@@ -398,20 +399,31 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern;
   }
 
-  private static class RncLocationPsiElement extends FakePsiElement implements NavigationItem {
+  private static final class RncLocationPsiElement extends FakePsiElement implements NavigationItem, HtmlSymbolDeclaration {
     private final PsiFile myFile;
     private final int myStartOffset;
     private final int myColumn;
+    private final String myName;
+    private final Kind myKind;
 
     private RncLocationPsiElement(PsiFile file, int startOffset, int column) {
       myFile = file;
       myStartOffset = startOffset;
       myColumn = column;
+      PsiElement definition = getNavigationElement();
+      myName = definition.getText();
+      myKind = "element".equals(definition.getPrevSibling().getPrevSibling().getText()) ? Kind.ELEMENT : Kind.ATTRIBUTE;
     }
 
     @Override
     public String getName() {
-      return getNavigationElement().getText();
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public HtmlSymbolDeclaration.Kind getKind() {
+      return myKind;
     }
 
     @NotNull

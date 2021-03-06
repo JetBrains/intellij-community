@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.find.FindBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,12 +18,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
@@ -132,11 +132,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     final PsiElement[] refsToInline = PsiUtilCore.toPsiElementArray(refsToInlineList);
     PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, pattern);
 
-    final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, refsToInline, attributes, true, null);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, refsToInline, 
+                                                                    EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
     }
 
     return () -> {
@@ -247,24 +245,20 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final PsiElement[] refsToInline = PsiUtilCore.toPsiElementArray(refsToInlineList);
 
-    final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
-
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // TODO : check if initializer uses fieldNames that possibly will be hidden by other
       //       locals with the same names after inlining
       highlightManager.addOccurrenceHighlights(
         editor,
         refsToInline,
-        attributes, true, null
+        EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null
       );
     }
 
     if (refExpr != null && PsiUtil.isAccessedForReading(refExpr) && ArrayUtil.find(refsToInline, refExpr) < 0) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, refExpr);
       LOG.assertTrue(defs.length > 0);
-      highlightManager.addOccurrenceHighlights(editor, defs, attributes, true, null);
+      highlightManager.addOccurrenceHighlights(editor, defs, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -299,8 +293,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         isSameDefinition &= isSameDefinition(def, defToInline);
       }
       if (!isSameDefinition) {
-        highlightManager.addOccurrenceHighlights(editor, defs, writeAttributes, true, null);
-        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, attributes, true, null);
+        highlightManager.addOccurrenceHighlights(editor, defs, EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, true, null);
+        highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{ref}, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
         String message =
           RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
@@ -311,7 +305,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final PsiElement writeAccess = checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline, defToInline);
     if (writeAccess != null) {
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{writeAccess}, writeAttributes, true, null);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{writeAccess}, 
+                                                                    EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, true, null);
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(local), HelpID.INLINE_VARIABLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -408,19 +403,18 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   static void highlightOccurrences(@NotNull Project project,
                                    @Nullable Editor editor,
                                    @NotNull List<SmartPsiElementPointer<PsiExpression>> exprs) {
-    final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (editor != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       PsiExpression[] occurrences = ContainerUtil.map2Array(exprs, new PsiExpression[exprs.size()], SmartPsiElementPointer::getElement);
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, occurrences, attributes, true, null);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, occurrences, EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
       if (exprs.size() > 1) {
         Shortcut shortcut = KeymapUtil.getPrimaryShortcut("FindNext");
         String message;
         if (shortcut != null) {
-          message = "Press " + KeymapUtil.getShortcutText(shortcut) + " to go through " + exprs.size() + " inlined occurrences";
+          message =
+            JavaBundle.message("hint.text.press.to.go.through.inlined.occurrences", KeymapUtil.getShortcutText(shortcut), exprs.size());
         }
         else {
-          message = exprs.size() + " occurrences were inlined";
+          message = JavaBundle.message("hint.text.occurrences.were.inlined", exprs.size());
         }
         HintManagerImpl.getInstanceImpl().showInformationHint(editor, message, HintManager.UNDER);
       }
@@ -519,7 +513,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return getRefactoringName(element);
   }
 
-  private static String getRefactoringName(PsiElement variable) {
+  private static @NlsContexts.DialogTitle String getRefactoringName(PsiElement variable) {
     return variable instanceof PsiPatternVariable
                      ? JavaRefactoringBundle.message("inline.pattern.variable.title")
                      : RefactoringBundle.message("inline.variable.title");

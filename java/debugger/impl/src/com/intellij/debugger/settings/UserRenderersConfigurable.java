@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.ui.tree.render.CompoundTypeRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
@@ -178,7 +178,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   private class AddAction implements AnActionButtonRunnable {
     @Override
     public void run(AnActionButton button) {
-      NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundTypeRenderer.UNIQUE_ID);
+      NodeRenderer renderer = (NodeRenderer)NodeRendererSettings.getInstance().createRenderer(CompoundReferenceRenderer.UNIQUE_ID);
       renderer.setEnabled(true);
       addRenderer(renderer);
     }

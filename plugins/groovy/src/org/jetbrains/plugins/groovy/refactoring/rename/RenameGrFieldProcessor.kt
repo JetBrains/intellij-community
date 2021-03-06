@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename
 
 import com.intellij.psi.*
@@ -152,7 +152,7 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
 
       collisions.add(object : UnresolvableCollisionUsageInfo(resolved, refExpr) {
         override fun getDescription(): String = message(
-          "usage.will.be.overriden.by.method",
+          "usage.will.be.overridden.by.method",
           refExpr.parent.text,
           PsiFormatUtil.formatMethod(resolved, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME, PsiFormatUtilBase.SHOW_TYPE)
         )
@@ -172,14 +172,14 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
     if (getter is GrAccessorMethod) {
       val newGetter = PropertyUtilBase.findPropertyGetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true)
       if (newGetter != null && newGetter !is GrAccessorMethod) {
-        conflicts.putValue(newGetter, message("implicit.getter.will.by.overriden.by.method", field.name, newGetter.name))
+        conflicts.putValue(newGetter, message("implicit.getter.will.by.overridden.by.method", field.name, newGetter.name))
       }
     }
     val setter = GroovyPropertyUtils.findSetterForField(field)
     if (setter is GrAccessorMethod) {
       val newSetter = PropertyUtilBase.findPropertySetter(containingClass, newName, field.hasModifierProperty(PsiModifier.STATIC), true)
       if (newSetter != null && newSetter !is GrAccessorMethod) {
-        conflicts.putValue(newSetter, message("implicit.setter.will.by.overriden.by.method", field.name, newSetter.name))
+        conflicts.putValue(newSetter, message("implicit.setter.will.by.overridden.by.method", field.name, newSetter.name))
       }
     }
   }

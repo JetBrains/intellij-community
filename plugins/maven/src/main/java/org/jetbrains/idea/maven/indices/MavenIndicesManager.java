@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,6 +49,7 @@ public final class MavenIndicesManager implements Disposable {
   private static final String ELEMENT_DESCRIPTION = "description";
 
   private static final String LOCAL_REPOSITORY_ID = "local";
+  private final @NotNull Project myProject;
   private MavenServerDownloadListener myDownloadListener;
 
   public enum IndexUpdatingState {
@@ -63,13 +64,26 @@ public final class MavenIndicesManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
   private volatile MavenSearchIndex myUpdatingIndex;
-  private IndexFixer myIndexFixer = new IndexFixer();
+  private final IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
 
+  /**
+   * @deprecated use {@link MavenIndicesManager#getInstance(Project)}
+   */
+  @Deprecated
   public static MavenIndicesManager getInstance() {
-    return ServiceManager.getService(MavenIndicesManager.class);
+    // should not be used as it lead to plugin classloader leak on the plugin unload
+    return ProjectManager.getInstance().getDefaultProject().getService(MavenIndicesManager.class);
+  }
+
+  public static MavenIndicesManager getInstance(@NotNull Project project) {
+    return project.getService(MavenIndicesManager.class);
+  }
+
+  public MavenIndicesManager(@NotNull Project project) {
+    myProject = project;
   }
 
   @TestOnly
@@ -88,9 +102,7 @@ public final class MavenIndicesManager implements Disposable {
 
   private synchronized void ensureInitialized() {
     if (myIndices != null) return;
-
-    myIndexer = MavenServerManager.getInstance().createIndexer();
-
+    myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
     myDownloadListener = new MavenServerDownloadListener() {
       @Override
       public void artifactDownloaded(File file, String relativePath) {
@@ -128,7 +140,10 @@ public final class MavenIndicesManager implements Disposable {
 
   private synchronized void doShutdown() {
     if (myDownloadListener != null) {
-      MavenServerManager.getInstance().removeDownloadListener(myDownloadListener);
+      MavenServerManager mavenServerManager = MavenServerManager.getInstanceIfCreated();
+      if (mavenServerManager != null) {
+        mavenServerManager.removeDownloadListener(myDownloadListener);
+      }
       myDownloadListener = null;
     }
 
@@ -254,7 +269,7 @@ public final class MavenIndicesManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndices(project, toSchedule, fullUpdate, new MavenProgressIndicator(indicator,null));
+          doUpdateIndices(project, toSchedule, fullUpdate, new MavenProgressIndicator(project, indicator, null));
         }
         catch (MavenProcessCanceledException ignore) {
         }
@@ -337,10 +352,8 @@ public final class MavenIndicesManager implements Disposable {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
-    for (MavenSearchIndex index : myIndices.getIndices()) {
-      if (index instanceof MavenIndex) {
-        result.addAll(((MavenIndex)index).getArchetypes());
-      }
+    for (MavenIndex index : myIndices.getIndices()) {
+      result.addAll(index.getArchetypes());
     }
 
     for (MavenArchetypesProvider each : MavenArchetypesProvider.EP_NAME.getExtensionList()) {
@@ -431,7 +444,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
 
-  private class IndexFixer {
+  private final class IndexFixer {
     private final Set<String> indexedCache = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private final ConcurrentLinkedQueue<Pair<File, MavenIndex>> queueToAdd = new ConcurrentLinkedQueue<>();
     private final MergingUpdateQueue myMergingUpdateQueue;
@@ -450,7 +463,7 @@ public final class MavenIndicesManager implements Disposable {
 
       myMergingUpdateQueue.queue(Update.create(this, new AddToIndexRunnable()));
     }
-    
+
     private class AddToIndexRunnable implements Runnable {
 
       @Override

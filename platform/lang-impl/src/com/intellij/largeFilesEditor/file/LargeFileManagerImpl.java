@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.file;
 
 import com.google.common.collect.EvictingQueue;
@@ -181,12 +181,12 @@ public class LargeFileManagerImpl implements LargeFileManager {
     myFileChangeListeners.add(listener);
   }
 
-  private void onFileChanged() {
+  private void onFileChanged(boolean isLengthIncreased) {
     try {
       long pagesAmount = getPagesAmount();
       Page lastPage = getPage_wait(pagesAmount - 1);
       for (FileChangeListener listener : myFileChangeListeners) {
-        listener.onFileChanged(lastPage);
+        listener.onFileChanged(lastPage, isLengthIncreased);
       }
     }
     catch (IOException e) {
@@ -200,7 +200,7 @@ public class LargeFileManagerImpl implements LargeFileManager {
     alarm.addRequest(task, 10);
   }
 
-  private class FileChangesChecker implements Runnable {
+  private final class FileChangesChecker implements Runnable {
     private final Alarm alarm;
     private long prevFileSize;
 
@@ -227,10 +227,10 @@ public class LargeFileManagerImpl implements LargeFileManager {
         return;
       }
 
-      boolean isFileLengthChanged = refreshFileLength();
-      if (isFileLengthChanged) {
+      long deltaLength = refreshFileLength();
+      if (deltaLength != 0) {
         removeOutdatedPagesFromCash();
-        onFileChanged();
+        onFileChanged(deltaLength > 0);
       }
     }
 
@@ -251,13 +251,11 @@ public class LargeFileManagerImpl implements LargeFileManager {
       }
     }
 
-    private boolean refreshFileLength() throws IOException {
-      long size = fileAdapter.getFileSize();
-      if (size != prevFileSize) {
-        prevFileSize = size;
-        return true;
-      }
-      return false;
+    private long refreshFileLength() throws IOException {
+      long newSize = fileAdapter.getFileSize();
+      long delta = newSize - prevFileSize;
+      prevFileSize = newSize;
+      return delta;
     }
   }
 }

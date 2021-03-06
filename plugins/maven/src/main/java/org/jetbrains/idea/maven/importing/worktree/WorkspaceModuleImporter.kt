@@ -3,8 +3,10 @@ package org.jetbrains.idea.maven.importing.worktree
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.getInstance
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -21,16 +23,16 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertie
 class WorkspaceModuleImporter(private val project: Project,
                               private val mavenProject: MavenProject,
                               private val projectsTree: MavenProjectsTree,
-                              private val diff: TypedEntityStorageBuilder) {
+                              private val diff: WorkspaceEntityStorageBuilder) {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private lateinit var moduleEntity: ModuleEntity
   fun importModule() {
     val dependencies = collectDependencies();
     moduleEntity = diff.addModuleEntity(mavenProject.displayName, dependencies, MavenExternalSource.INSTANCE)
-    diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(), moduleEntity,
-                              MavenExternalSource.INSTANCE)
-    importFolders()
+    val contentRootEntity = diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(),
+                                                      moduleEntity)
+    importFolders(contentRootEntity)
     importLanguageLevel();
   }
 
@@ -91,8 +93,7 @@ class WorkspaceModuleImporter(private val project: Project,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES"),
-                          LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                          LibraryRootTypeId.COMPILED))
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(mavenProject.displayName)); //(ModuleId(moduleEntity.name))
 
@@ -130,16 +131,13 @@ class WorkspaceModuleImporter(private val project: Project,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES"),
-                          LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                          LibraryRootTypeId.COMPILED))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
-                  LibraryRootTypeId("JAVADOC"),
-                  LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                  JAVADOC_TYPE))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
-                  LibraryRootTypeId("SOURCES"),
-                  LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                  LibraryRootTypeId.SOURCES))
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId; //(ModuleId(moduleEntity.name))
 
@@ -148,7 +146,7 @@ class WorkspaceModuleImporter(private val project: Project,
                                  emptyList(), MavenExternalSource.INSTANCE)
   }
 
-  private fun importFolders() {
+  private fun importFolders(contentRootEntity: ContentRootEntity) {
     MavenFoldersImporter.getSourceFolders(mavenProject).forEach { entry ->
 
       val serializer = (JpsModelSerializerExtension.getExtensions()
@@ -156,13 +154,14 @@ class WorkspaceModuleImporter(private val project: Project,
         .firstOrNull { it.type == entry.value }) as? JpsModuleSourceRootPropertiesSerializer
                        ?: error("Module source root type ${entry}.value is not registered as JpsModelSerializerExtension")
 
-      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
+      val sourceRootEntity = diff.addSourceRootEntity(contentRootEntity,
+                                                      virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
                                                       entry.value.isForTests,
                                                       serializer.typeId,
                                                       MavenExternalSource.INSTANCE)
       when (entry.value) {
-        is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
-        is JavaResourceRootType -> diff.addJavaResourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
+        is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "")
+        is JavaResourceRootType -> diff.addJavaResourceRootEntity(sourceRootEntity, false, "")
         else -> TODO()
       }
     }
@@ -172,5 +171,9 @@ class WorkspaceModuleImporter(private val project: Project,
     if (MavenConstants.SCOPE_RUNTIME == mavenScope) return ModuleDependencyItem.DependencyScope.RUNTIME
     if (MavenConstants.SCOPE_TEST == mavenScope) return ModuleDependencyItem.DependencyScope.TEST
     return if (MavenConstants.SCOPE_PROVIDED == mavenScope) ModuleDependencyItem.DependencyScope.PROVIDED else ModuleDependencyItem.DependencyScope.COMPILE
+  }
+
+  companion object {
+    internal val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
   }
 }

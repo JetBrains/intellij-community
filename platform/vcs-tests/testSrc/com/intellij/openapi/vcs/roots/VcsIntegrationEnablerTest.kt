@@ -103,6 +103,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
     }
   }
 
+  @Suppress("UnresolvedPluginConfigReference")
   internal fun notification(content: String): Notification {
     return Notification("Test", "", content, NotificationType.INFORMATION)
   }
@@ -115,7 +116,7 @@ class VcsIntegrationEnablerTest : VcsRootBaseTest() {
 
     override fun initOrNotifyError(projectDir: VirtualFile): Boolean {
       val file = File(projectDir.path, DOT_MOCK)
-      VcsNotifier.getInstance(myProject).notifySuccess("Created mock repository in " + projectDir.presentableUrl)
+      VcsNotifier.getInstance(myProject).notifySuccess(null, "", "Created mock repository in " + projectDir.presentableUrl)
       return file.mkdir()
     }
   }

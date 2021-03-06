@@ -35,7 +35,6 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class FieldConflictsResolver {
-  //  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");
   private final GrCodeBlock myScope;
   private final PsiField myField;
   private final List<GrReferenceExpression> myReferenceExpressions;

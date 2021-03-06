@@ -16,6 +16,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
@@ -152,6 +153,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     if (name != null && PyUtil.getInitialUnderscores(name) == 0) {
       if (stub.getParentStub() instanceof PyFileStub) {
         sink.occurrence(PyVariableNameIndex.KEY, name);
+        sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
       }
     }
     for (CustomTargetExpressionStubType stubType : getExtensions()) {

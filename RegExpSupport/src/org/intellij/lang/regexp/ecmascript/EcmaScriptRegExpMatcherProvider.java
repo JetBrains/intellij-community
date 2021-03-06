@@ -5,15 +5,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralValue;
+import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.regexp.RegExpMatch;
 import org.intellij.lang.regexp.RegExpMatchResult;
 import org.intellij.lang.regexp.RegExpMatcherProvider;
-import org.jetbrains.annotations.NonNls;
+import org.intellij.lang.regexp.intention.CheckRegExpForm;
 import org.jetbrains.annotations.NotNull;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.SimpleBindings;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -41,13 +44,28 @@ public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
     }
     final ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
     try {
-      @NonNls @Language("Nashorn JS")
+      @Language("Nashorn JS")
       final String script =
-        "var a = \"" + StringUtil.escapeStringCharacters(sampleText) + "\".match(/" + StringUtil.escapeChar(regExp, '/') + "/" + modifiers + ");\n" +
-        "a !== null";
-      return (engine.eval(script) == Boolean.TRUE) ? RegExpMatchResult.MATCHES : RegExpMatchResult.NO_MATCH;
+        "var regexp = RegExp(\"" + StringUtil.escapeStringCharacters(regExp) + "\",'g" + modifiers + "');\n" +
+        "var str = \"" + StringUtil.escapeStringCharacters(sampleText) + "\";\n" +
+        "var match;\n" +
+        "\n" +
+        "var RegExpMatch = Java.type(\"org.intellij.lang.regexp.RegExpMatch\");\n" +
+        "var prev = null;\n" +
+        "while ((match = regexp.exec(str)) !== null) {\n" +
+        "  var r = new RegExpMatch(match.index, regexp.lastIndex);\n" +
+        "  if (r.equals(prev)) break;\n" +
+        "  prev = r;\n" +
+        "  result.add(r);\n" +
+        "}\n" +
+        "result";
+      final SimpleBindings bindings = new SimpleBindings();
+      bindings.put("result", new SmartList<>());
+      @SuppressWarnings("unchecked") final List<RegExpMatch> result = (List<RegExpMatch>)engine.eval(script, bindings);
+      CheckRegExpForm.setMatches(regExpFile, result);
+      return result.isEmpty() ? RegExpMatchResult.NO_MATCH : RegExpMatchResult.FOUND;
     }
-    catch (ScriptException e) {
+    catch (Exception e) {
       return RegExpMatchResult.BAD_REGEXP;
     }
   }

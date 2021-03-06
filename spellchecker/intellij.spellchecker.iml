@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
       <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -18,8 +19,36 @@
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
-    <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="module-library">
+      <library name="com.intellij.grazie:grazie-spellchecker:0.1.9" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.intellij.grazie:grazie-spellchecker:0.1.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.9/grazie-spellchecker-0.1.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/intellij/grazie/grazie-spellchecker/0.1.9/grazie-spellchecker-0.1.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="info.debatty:java-string-similarity:1.2.1" type="repository">
+        <properties maven-id="info.debatty:java-string-similarity:1.2.1">
+          <exclude>
+            <dependency maven-id="net.jcip:jcip-annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/1.2.1/java-string-similarity-1.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/info/debatty/java-string-similarity/1.2.1/java-string-similarity-1.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

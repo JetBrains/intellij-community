@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class WeakestTypeFinder {
+public final class WeakestTypeFinder {
 
   private WeakestTypeFinder() {}
 

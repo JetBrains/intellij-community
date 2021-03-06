@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.lang.java.JavaLanguage;
@@ -11,7 +12,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +36,12 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testTypeArgsFormatted() { doSingleTest(); }
   public void testInsideStaticInnerClass() { doSingleTest(); }
   public void testCreateFromEquals() { doSingleTest(); }
+  public void testCreateFromNestedPolyadic() { doSingleTest(); }
   public void testCreateFromEqualsToPrimitiveType() { doSingleTest(); }
   public void testInsideInterface() { doSingleTest(); }
   public void testReferenceInCall() { doSingleTest(); }
   public void testWithAlignment() {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
     try {
       settings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
@@ -73,6 +74,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testInnerGeneric() { doSingleTest(); }
 
   public void testInnerGenericArray() { doSingleTest(); }
+  
+  public void testFromUnfinishedAnonymousClass() { doSingleTest(); }
 
   protected void doSingleTest() {
     doSingleTest(getTestName(false) + ".java");

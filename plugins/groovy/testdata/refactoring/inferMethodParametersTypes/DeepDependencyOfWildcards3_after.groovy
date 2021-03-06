@@ -1,4 +1,4 @@
-def <T extends List<? extends X1>> void foo(List<T> a, T b) {
+def <T extends ArrayList<? extends X1>> void foo(ArrayList<T> a, T b) {
   a.add(b)
 }
 

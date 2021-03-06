@@ -51,7 +51,7 @@ public class PathRelativizerService {
     initialize(null, null, null);
   }
 
-  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
+  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<? extends JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
     myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));

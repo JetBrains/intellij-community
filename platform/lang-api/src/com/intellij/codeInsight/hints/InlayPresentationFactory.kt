@@ -61,7 +61,7 @@ interface InlayPresentationFactory {
     fun onHoverFinished()
   }
 
-  interface ClickListener {
+  fun interface ClickListener {
     fun onClick(event: MouseEvent, translated: Point)
   }
 
@@ -77,4 +77,7 @@ interface InlayPresentationFactory {
     val arcWidth: Int,
     val arcHeight: Int
   )
+
+  @Contract(pure = true)
+  fun smallScaledIcon(icon: Icon): InlayPresentation
 }

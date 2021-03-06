@@ -4,7 +4,7 @@ package com.intellij.ide.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.dataRules.*;
+import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.UserDataHolder;
@@ -28,7 +27,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,33 +38,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
-  private final ConcurrentMap<String, GetDataRule> myDataConstantToRuleMap = new ConcurrentHashMap<>();
+
+  private static final ThreadLocal<int[]> ourGetDataLevel = ThreadLocal.withInitial(() -> new int[1]);
 
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
 
   public DataManagerImpl() {
-    myDataConstantToRuleMap.put(PlatformDataKeys.COPY_PROVIDER.getName(), new CopyProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.CUT_PROVIDER.getName(), new CutProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
-    myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
-    myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
   private @Nullable Object getData(@NotNull String dataId, final Component focusedComponent) {
     GetDataRule rule = getDataRule(dataId);
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       for (Component c = focusedComponent; c != null; c = c.getParent()) {
-        final DataProvider dataProvider = getDataProviderEx(c);
+        DataProvider dataProvider = getDataProviderEx(c);
         if (dataProvider == null) continue;
         Object data = getDataFromProvider(dataProvider, dataId, null, rule);
         if (data != null) return data;
@@ -74,11 +65,13 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProvider(final @NotNull DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
     return getDataFromProvider(provider, dataId, alreadyComputedIds, getDataRule(dataId));
   }
 
-  private @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
+  @ApiStatus.Internal
+  public @Nullable Object getDataFromProvider(@NotNull DataProvider provider,
                                                @NotNull String dataId,
                                                @Nullable Set<String> alreadyComputedIds,
                                                @Nullable GetDataRule dataRule) {
@@ -86,12 +79,14 @@ public class DataManagerImpl extends DataManager {
     if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) {
       return null;
     }
+    int[] depth = ourGetDataLevel.get();
     try {
+      depth[0]++;
       Object data = provider.getData(dataId);
       if (data != null) return validated(data, dataId, provider);
 
       if (dataRule != null) {
-        final Set<String> ids = alreadyComputedIds == null ? new THashSet<>() : alreadyComputedIds;
+        final Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
         ids.add(dataId);
         data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
@@ -101,11 +96,12 @@ public class DataManagerImpl extends DataManager {
       return null;
     }
     finally {
+      depth[0]--;
       if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
 
-  public static @Nullable DataProvider getDataProviderEx(Object component) {
+  public static @Nullable DataProvider getDataProviderEx(@Nullable Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
@@ -117,29 +113,44 @@ public class DataManagerImpl extends DataManager {
       dataProvider = getDataProvider((JComponent)component);
     }
 
+    if (dataProvider instanceof BackgroundableDataProvider) {
+      dataProvider = ((BackgroundableDataProvider)dataProvider).createBackgroundDataProvider();
+    }
+
     return dataProvider;
   }
 
   public @Nullable GetDataRule getDataRule(@NotNull String dataId) {
-    GetDataRule rule = getRuleFromMap(dataId);
-    if (rule != null) {
-      return rule;
-    }
-
-    final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
-    if (plainRule != null) {
-      return dataProvider -> plainRule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
-    }
-
-    return null;
+    String uninjectedId = AnActionEvent.uninjectedId(dataId);
+    GetDataRule slowRule = dataProvider -> getSlowData(dataId, dataProvider);
+    List<GetDataRule> rules1 = myDataRuleCollector.forKey(dataId);
+    List<GetDataRule> rules2 = dataId.equals(uninjectedId) ? Collections.emptyList() : myDataRuleCollector.forKey(uninjectedId);
+    if (rules1.size() + rules2.size() == 0) return slowRule;
+    return dataProvider -> {
+      Object data = slowRule.getData(dataProvider);
+      if (data != null) return data;
+      for (GetDataRule rule : rules1) {
+        data = rule.getData(dataProvider);
+        if (data != null) return data;
+      }
+      for (GetDataRule rule : rules2) {
+        data = rule.getData(id -> dataProvider.getData(AnActionEvent.injectedId(id)));
+        if (data != null) return data;
+      }
+      return null;
+    };
   }
 
-  private @Nullable GetDataRule getRuleFromMap(@NotNull String dataId) {
-    GetDataRule rule = myDataConstantToRuleMap.get(dataId);
-    if (rule != null) {
-      return rule;
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
+    Iterable<DataProvider> asyncProviders = PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
+    if (asyncProviders == null) return null;
+    for (DataProvider provider : asyncProviders) {
+      Object data = provider.getData(dataId);
+      if (data != null) {
+        return data;
+      }
     }
-    return myDataRuleCollector.findSingle(dataId);
+    return null;
   }
 
   private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
@@ -156,6 +167,12 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext getDataContext(Component component) {
+    if (Registry.is("actionSystem.dataContextAssertions")) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (ourGetDataLevel.get()[0] > 0) {
+        LOG.error("DataContext shall not be created and queried inside another getData() call.");
+      }
+    }
     return new MyDataContext(component);
   }
 
@@ -192,22 +209,6 @@ public class DataManagerImpl extends DataManager {
     IdeFocusManager.getGlobalInstance()
                    .doWhenFocusSettlesDown(() -> result.setResult(getDataContext()), ModalityState.any());
     return result;
-  }
-
-  public @NotNull DataContext getDataContextTest(Component component) {
-    DataContext dataContext = getDataContext(component);
-
-    WindowManager windowManager = WindowManager.getInstance();
-    if (!(windowManager instanceof WindowManagerEx)) {
-      return dataContext;
-    }
-
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Component focusedComponent = ((WindowManagerEx)windowManager).getFocusedComponent(project);
-    if (focusedComponent != null) {
-      dataContext = getDataContext(focusedComponent);
-    }
-    return dataContext;
   }
 
   private static @Nullable Component getFocusedComponent() {
@@ -270,17 +271,16 @@ public class DataManagerImpl extends DataManager {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
-  public static @Nullable Editor validateEditor(Editor editor) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner instanceof JComponent) {
-      final JComponent jComponent = (JComponent)focusOwner;
+  public static @Nullable Editor validateEditor(Editor editor, Component contextComponent) {
+    if (contextComponent instanceof JComponent) {
+      final JComponent jComponent = (JComponent)contextComponent;
       if (jComponent.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null) return null;
     }
 
     return editor;
   }
 
-  private static class NullResult {
+  private static final class NullResult {
     public static final NullResult INSTANCE = new NullResult();
   }
 
@@ -294,9 +294,12 @@ public class DataManagerImpl extends DataManager {
 
   /**
    * todo make private in 2020
+   * @see DataManager#loadFromDataContext(DataContext, Key)
+   * @see DataManager#saveInDataContext(DataContext, Key, Object)
    * @deprecated use {@link DataManager#getDataContext(Component)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into
@@ -359,7 +362,7 @@ public class DataManagerImpl extends DataManager {
       }
       Object data = calcData(dataId, component);
       if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        return validateEditor((Editor)data);
+        return validateEditor((Editor)data, component);
       }
       return data;
     }

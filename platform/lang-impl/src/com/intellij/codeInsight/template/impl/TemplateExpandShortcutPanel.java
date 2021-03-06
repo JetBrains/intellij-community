@@ -12,6 +12,8 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
@@ -32,7 +34,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
   private final JComboBox<String> myExpandByCombo;
   private final HyperlinkLabel myOpenKeymapLabel;
 
-  public TemplateExpandShortcutPanel(@NotNull String label) {
+  public TemplateExpandShortcutPanel(@NotNull @NlsContexts.Label String label) {
     super(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.weighty = 0;
@@ -62,14 +64,16 @@ public class TemplateExpandShortcutPanel extends JPanel {
         myOpenKeymapLabel.setVisible(myExpandByCombo.getSelectedItem() == getCustom());
       }
     });
-    for (String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
+    for (@ListItem String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
       myExpandByCombo.addItem(s);
     }
-    myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", value -> {
+    myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", (@ListItem String value) -> {
       if (value == getCustom()) {
         Shortcut[] shortcuts = getCurrentCustomShortcuts();
         String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
-        return StringUtil.isEmpty(shortcutText) ? ApplicationBundle.message("custom.option") : "Custom (" + shortcutText + ")";
+        return StringUtil.isEmpty(shortcutText)
+               ? ApplicationBundle.message("custom.option")
+               : ApplicationBundle.message("custom.option.with.shortcut", shortcutText);
       }
       return value;
     }));
@@ -147,19 +151,19 @@ public class TemplateExpandShortcutPanel extends JPanel {
     myExpandByCombo.repaint();
   }
 
-  private static String getSpace() {
+  private static @ListItem String getSpace() {
     return CodeInsightBundle.message("template.shortcut.space");
   }
 
-  private static String getTab() {
+  private static @ListItem String getTab() {
     return CodeInsightBundle.message("template.shortcut.tab");
   }
 
-  private static String getEnter() {
+  private static @ListItem String getEnter() {
     return CodeInsightBundle.message("template.shortcut.enter");
   }
 
-  private static String getCustom() {
+  private static @ListItem String getCustom() {
     return CodeInsightBundle.message("template.shortcut.custom");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -144,6 +144,12 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             break;
           }
           catch (ProcessCanceledException ignored) {}
+          catch (CompletionException e) {
+            if (e.getCause() instanceof VMDisconnectedException) {
+              break;
+            }
+            reportCommandError(e);
+          }
           catch (RuntimeException e) {
             if(e.getCause() instanceof InterruptedException) {
               break;
@@ -159,16 +165,20 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     finally {
       // ensure that all scheduled events are processed
       if (threadRequest == getCurrentRequest()) {
-        for (E event : myEvents.clearQueue()) {
-          try {
-            processEvent(event);
-          }
-          catch (Throwable ignored) {
-          }
-        }
+        processRemaining();
       }
 
       LOG.debug("Request " + toString() + " exited");
+    }
+  }
+
+  public void processRemaining() {
+    for (E event : myEvents.clearQueue()) {
+      try {
+        processEvent(event);
+      }
+      catch (Throwable ignored) {
+      }
     }
   }
 

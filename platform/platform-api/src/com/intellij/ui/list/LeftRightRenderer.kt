@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.list
 
 import com.intellij.util.ui.JBUI
@@ -42,6 +42,10 @@ abstract class LeftRightRenderer<T> : ListCellRenderer<T> {
       add(mainComponent, BorderLayout.WEST)
       add(spacer, BorderLayout.CENTER)
       add(rightComponent, BorderLayout.EAST)
+      accessibleContext.accessibleName = listOfNotNull(
+        mainComponent.accessibleContext?.accessibleName,
+        rightComponent.accessibleContext?.accessibleName
+      ).joinToString(separator = " ")
     }
     return component
   }

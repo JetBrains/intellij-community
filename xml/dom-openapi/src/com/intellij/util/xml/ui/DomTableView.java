@@ -15,15 +15,15 @@
  */
 package com.intellij.util.xml.ui;
 
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,26 +31,28 @@ import java.util.List;
  * @author peter
  */
 public class DomTableView extends AbstractTableView<DomElement> {
-  private final List<TypeSafeDataProvider> myCustomDataProviders = new SmartList<>();
+  private final List<DataProvider> myCustomDataProviders = new SmartList<>();
 
   public DomTableView(final Project project) {
     super(project);
   }
 
-  public DomTableView(final Project project, final String emptyPaneText, final String helpID) {
+  public DomTableView(final Project project, final @Nls String emptyPaneText, final String helpID) {
     super(project, emptyPaneText, helpID);
   }
 
-  public void addCustomDataProvider(TypeSafeDataProvider provider) {
+  public void addCustomDataProvider(@NotNull DataProvider provider) {
     myCustomDataProviders.add(provider);
   }
 
+  @Nullable
   @Override
-  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-    super.calcData(key, sink);
-    for (final TypeSafeDataProvider customDataProvider : myCustomDataProviders) {
-      customDataProvider.calcData(key, sink);
+  public Object getData(@NotNull String dataId) {
+    for (DataProvider provider : myCustomDataProviders) {
+      Object data = provider.getData(dataId);
+      if (data != null) return data;
     }
+    return super.getData(dataId);
   }
 
   @Override

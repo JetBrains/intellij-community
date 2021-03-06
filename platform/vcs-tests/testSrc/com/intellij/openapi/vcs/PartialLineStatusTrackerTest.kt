@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.ex.Range
 
 class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
@@ -610,4 +611,20 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testZombieModification() {
+    testPartial("A_B_C_D_E_F") {
+      "E".replace("E1")
+
+      partialTracker.dropBaseRevision()
+
+      createChangeList_SetDefault("Test")
+      "B".replace("B2")
+      "E1".replace("E2")
+
+      partialTracker.setBaseRevision(parseInput("A_B_C_D_E1_F"))
+
+      range(0).assertChangeList("Test")
+      range(1).assertChangeList("Test")
+    }
+  }
 }

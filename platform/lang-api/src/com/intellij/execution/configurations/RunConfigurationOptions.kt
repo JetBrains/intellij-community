@@ -53,8 +53,11 @@ open class RunConfigurationOptions : BaseState(), FragmentedSettings {
   @get:OptionTag(tag = "target", valueAttribute = "name", nameAttribute = "")
   var remoteTarget by string()
 
-  @get:XCollection(propertyElementName = "selectedOptions", elementName = "option", valueAttributeName = "name")
-  override var selectedOptions by stringSet()
+  @get:OptionTag(tag = "projectPathOnTarget")
+  var projectPathOnTarget by string()
+
+  @get:XCollection(propertyElementName = "selectedOptions")
+  override var selectedOptions by list<FragmentedSettings.Option>();
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {

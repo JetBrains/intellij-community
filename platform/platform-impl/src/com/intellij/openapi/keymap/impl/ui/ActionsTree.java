@@ -1,19 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
-import static com.intellij.util.ui.UIUtil.useSafely;
-import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
-
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -23,19 +15,11 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
@@ -47,39 +31,21 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.accessibility.AccessibleContext;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JTree;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ActionsTree {
+import javax.accessibility.AccessibleContext;
+import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.util.List;
+import java.util.*;
+
+public final class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
   private static final Icon CLOSE_ICON = AllIcons.Nodes.Folder;
 
@@ -94,7 +60,7 @@ public class ActionsTree {
   private static final String ROOT = "ROOT";
 
   private String myFilter = null;
-  private @Nullable Condition<AnAction> myBaseFilter;
+  private Condition<? super AnAction> myBaseFilter;
 
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
 
@@ -165,6 +131,7 @@ public class ActionsTree {
       }
 
       @Nullable
+      @NlsActions.ActionDescription
       private String getDescription(@NotNull MouseEvent e) {
         TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         DefaultMutableTreeNode node = path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -189,7 +156,7 @@ public class ActionsTree {
     myKeymap = keymap;
   }
 
-  public void setBaseFilter(@Nullable Condition<AnAction> baseFilter) { myBaseFilter = baseFilter; }
+  public void setBaseFilter(@Nullable Condition<? super AnAction> baseFilter) { myBaseFilter = baseFilter; }
 
   public JComponent getComponent() {
     return myComponent;
@@ -232,7 +199,7 @@ public class ActionsTree {
     reset(myKeymap, currentQuickListIds, filter, null);
   }
 
-  private @Nullable Condition<AnAction> combineWithBaseFilter(@Nullable Condition<AnAction> actionFilter) {
+  private @Nullable Condition<? super AnAction> combineWithBaseFilter(@Nullable Condition<? super AnAction> actionFilter) {
     if (actionFilter != null)
       return myBaseFilter != null ? Conditions.and(myBaseFilter, actionFilter) : actionFilter;
     return myBaseFilter;
@@ -248,7 +215,8 @@ public class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Condition<AnAction> condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
+    Condition<? super AnAction>
+      condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
 
     if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()) {
@@ -543,7 +511,7 @@ public class ActionsTree {
       final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
       Icon icon = null;
       String text;
-      String actionId = null;
+      @NlsSafe String actionId = null;
       boolean bound = false;
       setToolTipText(null);
 
@@ -605,7 +573,7 @@ public class ActionsTree {
           icon = link.getIcon();
           setIcon(getEvenIcon(link.getIcon()));
           Rectangle treeVisibleRect = tree.getVisibleRect();
-          int rowX = getNodeRowX(tree, row);
+          int rowX = TreeUtil.getNodeRowX(tree, row);
           setupLinkDimensions(treeVisibleRect, rowX);
         }
         else {
@@ -636,13 +604,13 @@ public class ActionsTree {
           Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
           if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
-            String pluginName = myPluginNames.get(actionId);
+            @NlsSafe String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {
               Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();
               if (pluginName.equals(parentGroup.getName())) pluginName = null;
             }
             append("   ");
-            append(pluginName != null ? actionId +" (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+            append(pluginName != null ? actionId + " (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
           }
         }
       }
@@ -672,7 +640,7 @@ public class ActionsTree {
         super.doPaint(g);
       }
 
-      useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height),
+      UIUtil.useSafely(g.create(0, 0, myLinkOffset, g.getClipBounds().height),
                        textGraphics -> super.doPaint(textGraphics));
       g.translate(myLinkOffset, 0);
       myLink.setHeight(getHeight());
@@ -713,9 +681,9 @@ public class ActionsTree {
         String name = super.getAccessibleName();
 
         // Add shortcuts labels if available
-        String shortcutName = null;
+        @NlsSafe String shortcutName = null;
         TreePath path = myTree.getPathForRow(myRow);
-        if (path == null) return "unknown";
+        if (path == null) return KeyMapBundle.message("accessible.name.unknown");
         Object node = path.getLastPathComponent();
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();
@@ -727,7 +695,7 @@ public class ActionsTree {
               for (Shortcut shortcut : shortcuts) {
                 if (sb.length() > 0)
                   sb.append(", ");
-                sb.append("shortcut: ");
+                sb.append(KeyMapBundle.message("accessible.name.shortcut"));
                 sb.append(KeymapUtil.getShortcutText(shortcut));
               }
               if (sb.length() > 0) {

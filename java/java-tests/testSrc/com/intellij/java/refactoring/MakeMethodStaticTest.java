@@ -218,6 +218,8 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   public void testPreserveParametersAlignment() {
     doTest();
   }
+  
+  public void testReceiverParameter() { doTest(); }
 
   public void testDelegatePlace() {
     doTest(true, true);

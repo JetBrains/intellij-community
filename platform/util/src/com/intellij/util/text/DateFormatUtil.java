@@ -1,12 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.UtilBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -91,61 +89,73 @@ public final class DateFormatUtil {
     return ISO8601_FORMAT;
   }
 
+  @NlsSafe
   @NotNull
   public static String formatTime(@NotNull Date time) {
     return formatTime(time.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatTime(long time) {
     return getTimeFormat().format(time);
   }
 
+  @NlsSafe
   @NotNull
   public static String formatTimeWithSeconds(@NotNull Date time) {
     return formatTimeWithSeconds(time.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatTimeWithSeconds(long time) {
     return getTimeWithSecondsFormat().format(time);
   }
 
+  @NlsSafe
   @NotNull
   public static String formatDate(@NotNull Date time) {
     return formatDate(time.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatDate(long time) {
     return getDateFormat().format(time);
   }
 
+  @NlsSafe
   @NotNull
   public static String formatPrettyDate(@NotNull Date date) {
     return formatPrettyDate(date.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatPrettyDate(long time) {
     return doFormatPretty(time, false);
   }
 
+  @NlsSafe
   @NotNull
   public static String formatDateTime(Date date) {
     return formatDateTime(date.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatDateTime(long time) {
     return getDateTimeFormat().format(time);
   }
 
+  @NlsSafe
   @NotNull
   public static String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatPrettyDateTime(long time) {
     return doFormatPretty(time, true);
@@ -199,11 +209,13 @@ public final class DateFormatUtil {
     return Pair.create(formatTime ? DATE_TIME_FORMAT.format(time) : DATE_FORMAT.format(time), Boolean.FALSE);
   }
 
+  @NlsSafe
   @NotNull
   public static String formatFrequency(long time) {
     return UtilBundle.message("date.frequency", formatBetweenDates(time, 0));
   }
 
+  @NlsSafe
   @NotNull
   public static String formatBetweenDates(long d1, long d2) {
     long delta = Math.abs(d1 - d2);
@@ -239,11 +251,13 @@ public final class DateFormatUtil {
     return "";
   }
 
+  @NlsSafe
   @NotNull
   public static String formatAboutDialogDate(@NotNull Date date) {
     return formatAboutDialogDate(date.getTime());
   }
 
+  @NlsSafe
   @NotNull
   public static String formatAboutDialogDate(long time) {
     return ABOUT_DATE_FORMAT.format(time);
@@ -299,13 +313,13 @@ public final class DateFormatUtil {
   private static SyncDateFormat[] getDateTimeFormats() {
     DateFormat[] formats = null;
     try {
-      if (SystemInfo.isMac && JnaLoader.isLoaded()) {
+      if (SystemInfoRt.isMac && JnaLoader.isLoaded()) {
         formats = getMacFormats();
       }
-      else if (SystemInfo.isUnix) {
+      else if (SystemInfoRt.isUnix) {
         formats = getUnixFormats();
       }
-      else if (SystemInfo.isWin7OrNewer && JnaLoader.isLoaded() ) {
+      else if (SystemInfoRt.isWindows && JnaLoader.isLoaded() ) {
         formats = getWindowsFormats();
       }
     }

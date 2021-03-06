@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
@@ -19,7 +18,8 @@ import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,22 +52,6 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     }
     finally {
       super.tearDown();
-    }
-  }
-
-  @Override
-  protected void runTest() throws Throwable {
-    final Throwable[] throwable = {null};
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      try {
-        doRunTest();
-      }
-      catch (Throwable t) {
-        throwable[0] = t;
-      }
-    }, "", null);
-    if (throwable[0] != null) {
-      throw throwable[0];
     }
   }
 
@@ -113,7 +97,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     try {
       Collection<HighlightInfo> infos = doHighlighting();
 
-      data.checkResult(infos, getEditor().getDocument().getText(), filePath);
+      data.checkResult(getFile(), infos, getEditor().getDocument().getText(), filePath);
     }
     finally {
       PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
@@ -126,8 +110,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
       public HighlightTestInfo doTest() {
         String path = assertOneElement(filePaths);
         configureByFile(path);
-        ExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos,
-                                                                         getFile());
+        ExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
         if (checkSymbolNames) data.checkSymbolNames();
 
         checkHighlighting(data, composeLocalPath(path));
@@ -145,7 +128,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    TIntArrayList toIgnoreList = new TIntArrayList();
+    IntList toIgnoreList = new IntArrayList();
     if (!doFolding()) {
       toIgnoreList.add(Pass.UPDATE_FOLDING);
     }
@@ -153,7 +136,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
       toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
       toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
     }
-    int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : toIgnoreList.toNativeArray();
+    int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : toIgnoreList.toIntArray();
     Editor editor = getEditor();
     PsiFile file = getFile();
     if (editor instanceof EditorWindow) {

@@ -34,9 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Mikhail Golubev
@@ -46,7 +44,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.add.type.hint.for.variable.family");
+    return PyPsiBundle.message("INTN.NAME.add.type.hint.for.variable");
   }
 
   @Override
@@ -76,7 +74,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(project, file);
     final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
     // TODO filter out targets defined in stubs
-    return StreamEx.of(resolveReferenceAugAssignmentsAware(elementAtCaret, resolveContext))
+    return StreamEx.of(resolveReferenceAugAssignmentsAware(elementAtCaret, resolveContext, new HashSet<>()))
       .select(PyTargetExpression.class)
       .filter(target -> !index.isInLibraryClasses(target.getContainingFile().getVirtualFile()))
       .filter(target -> canBeAnnotated(target))
@@ -86,17 +84,21 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
 
   @NotNull
   private static StreamEx<PsiElement> resolveReferenceAugAssignmentsAware(@NotNull PyReferenceOwner element,
-                                                                          @NotNull PyResolveContext resolveContext) {
+                                                                          @NotNull PyResolveContext resolveContext,
+                                                                          @NotNull Set<PyReferenceOwner> alreadyVisited) {
+    alreadyVisited.add(element);
     return StreamEx.of(PyUtil.multiResolveTopPriority(element, resolveContext))
-                   .filter(resolved -> resolved instanceof PyTargetExpression || resolved != element)
-                   .flatMap(resolved -> expandResolveAugAssignments(resolved, resolveContext))
+                   .filter(resolved -> resolved instanceof PyTargetExpression || !alreadyVisited.contains(resolved))
+                   .flatMap(resolved -> expandResolveAugAssignments(resolved, resolveContext, alreadyVisited))
                    .distinct();
   }
 
   @NotNull
-  private static StreamEx<PsiElement> expandResolveAugAssignments(@NotNull PsiElement element, @NotNull PyResolveContext context) {
+  private static StreamEx<PsiElement> expandResolveAugAssignments(@NotNull PsiElement element,
+                                                                  @NotNull PyResolveContext context,
+                                                                  @NotNull Set<PyReferenceOwner> alreadyVisited) {
     if (element instanceof PyReferenceExpression && PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
-      return StreamEx.of(resolveReferenceAugAssignmentsAware((PyReferenceOwner)element, context));
+      return StreamEx.of(resolveReferenceAugAssignmentsAware((PyReferenceOwner)element, context, alreadyVisited));
     }
     return StreamEx.of(element);
   }

@@ -41,16 +41,15 @@
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
     <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
-    <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
 
-    <localInspection language="TEXT" displayName="Invalid property key in a UI form"
+    <localInspection language="TEXT" shortName="InvalidPropertyKeyForm" bundle="messages.UIDesignerBundle" key="inspection.invalid.property.in.form.title"
                      groupKey="form.inspections.group" alternativeId="UnresolvedPropertyKey" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.i18n.InvalidPropertyKeyFormInspection"/>
-    <localInspection language="TEXT" displayName="Typo in a UI form"
+    <localInspection language="TEXT" shortName="FormSpellChecking" bundle="messages.UIDesignerBundle" key="inspection.message.typo.in.word.title"
                      groupKey="form.inspections.group" alternativeId="SpellCheckingInspection" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
-    <localInspection language="TEXT" displayName="Hardcoded string literal in a UI form"
+    <localInspection language="TEXT" shortName="I18nForm" bundle="messages.UIDesignerBundle" key="inspection.i18n.message.in.form.title"
                      groupKey="form.inspections.group" alternativeId="HardCodedStringLiteral" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <localInspection language="TEXT" shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"
@@ -117,7 +116,7 @@
     <fileBasedIndex implementation="com.intellij.uiDesigner.binding.FormClassIndex"/>
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
-    <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
+    <compileServer.plugin classpath="jps/java-guiForms-jps.jar"/>
     <compilableFileTypesProvider implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
 
     <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
@@ -252,7 +251,6 @@
       <separator/>
       <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
       <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>
-      <action id="NewFormSnapshot" class="com.intellij.uiDesigner.snapShooter.CreateSnapShotAction"/>
 
       <add-to-group anchor="after" group-id="NewGroup" relative-to-action="NewFromTemplate"/>
     </group>

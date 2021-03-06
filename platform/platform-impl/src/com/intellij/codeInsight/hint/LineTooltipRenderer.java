@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GridBag;
@@ -21,9 +22,7 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -35,9 +34,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
   /**
@@ -48,7 +44,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
    * <br>
    * very nbsp; long nbsp; text nbsp; with nbsp; 'nbsp;' as spaces cannot be break
    */
-  @NonNls @Nullable protected String myText;
+  @Tooltip @Nullable protected String myText;
 
   //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
@@ -58,11 +54,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     void reload(boolean toExpand);
   }
 
-  public LineTooltipRenderer(@Nullable String text, Object @NotNull [] comparable) {
+  public LineTooltipRenderer(@Nullable @Tooltip String text, Object @NotNull [] comparable) {
     this(text, 0, comparable);
   }
 
-  public LineTooltipRenderer(@Nullable final String text, final int width, Object @NotNull [] comparable) {
+  public LineTooltipRenderer(@Nullable final @Tooltip String text, final int width, Object @NotNull [] comparable) {
     super(comparable);
     myCurrentWidth = width;
     myText = text;
@@ -76,7 +72,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                         boolean hasSeparators) {
     int leftBorder = 10;
     int rightBorder = 12;
-    class MyPanel extends JPanel implements WidthBasedLayout {
+    final class MyPanel extends JPanel implements WidthBasedLayout {
       private MyPanel() {
         super(new GridBagLayout());
       }
@@ -189,6 +185,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (myText == null) return null;
 
     //setup text
+    //noinspection HardCodedStringLiteral
     String tooltipPreText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     String dressedText = dressDescription(editor, tooltipPreText, myCurrentWidth > 0);
 
@@ -306,6 +303,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   // Java text components don't support specifying color for 'hr' tag, so we need to replace it with something else,
   // if we need a separator with custom color
   @NotNull
+  @Contract(pure = true)
   private static String colorizeSeparators(@NotNull String html) {
     String body = UIUtil.getHtmlBody(html);
     List<String> parts = StringUtil.split(body, UIUtil.BORDER_LINE, true, false);
@@ -454,12 +452,12 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  public LineTooltipRenderer createRenderer(@Nullable String text, int width) {
+  public LineTooltipRenderer createRenderer(@Tooltip @Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
   @NotNull
-  protected String dressDescription(@NotNull final Editor editor, @NotNull String tooltipText, boolean expanded) {
+  protected @Tooltip String dressDescription(@NotNull final Editor editor, @NotNull @Tooltip String tooltipText, boolean expanded) {
     return tooltipText;
   }
 
@@ -481,11 +479,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @Nullable
-  public String getText() {
+  public @Tooltip String getText() {
     return myText;
   }
 
-  private static class ReloadHintAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private static final class ReloadHintAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private final HintHint myHintHint;
     private final TooltipReloader myReloader;
     private final boolean myExpanded;

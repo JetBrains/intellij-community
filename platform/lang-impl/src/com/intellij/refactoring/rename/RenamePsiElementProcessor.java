@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -111,7 +112,7 @@ public abstract class RenamePsiElementProcessor {
    * @param allRenames the map (from element to its new name) into which all additional elements to be renamed should be stored.
    */
   public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
-    prepareRenaming(element, newName, allRenames, element.getUseScope());
+    prepareRenaming(element, newName, allRenames, PsiSearchHelper.getInstance(element.getProject()).getUseScope(element));
   }
 
   public void prepareRenaming(@NotNull PsiElement element,
@@ -125,6 +126,14 @@ public abstract class RenamePsiElementProcessor {
                                         @NotNull MultiMap<PsiElement, String> conflicts) {
   }
 
+  /**
+   * Entry point for finding conflicts.
+   *
+   * @param element primary element being renamed
+   * @param newName new name of primary element
+   * @param conflicts map to put conflicts
+   * @param allRenames other elements being renamed with their new names; not expected to be modified
+   */
   public void findExistingNameConflicts(@NotNull PsiElement element,
                                         @NotNull String newName,
                                         @NotNull MultiMap<PsiElement, String> conflicts,

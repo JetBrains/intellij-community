@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
@@ -22,9 +8,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.JBSplitter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class AppEditorFontPanel implements Disposable {
@@ -35,12 +25,25 @@ public class AppEditorFontPanel implements Disposable {
   @NotNull private final JPanel myTopPanel;
 
   public AppEditorFontPanel() {
-    myTopPanel = new JPanel(new BorderLayout(0,10));
+    myTopPanel = new JPanel(new BorderLayout());
+    JPanel restorePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    myTopPanel.add(restorePanel, BorderLayout.NORTH);
+
+    JPanel innerPanel = new JPanel(new BorderLayout());
+    innerPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0,0,0));
+    JBSplitter splitter = new JBSplitter(false, 0.3f);
     myPreviewScheme = createPreviewScheme();
     myOptionsPanel = new AppEditorFontOptionsPanel(myPreviewScheme);
-    myTopPanel.add(myOptionsPanel, BorderLayout.NORTH);
-    myPreview = new FontEditorPreview(()-> myPreviewScheme, true);
-    myTopPanel.add(myPreview.getPanel(), BorderLayout.CENTER);
+    myOptionsPanel.setBorder(JBUI.Borders.emptyLeft(5));
+    myPreview = new FontEditorPreview(()-> myPreviewScheme, true) {
+      @Override
+      protected Border getBorder() {
+        return JBUI.Borders.customLine(JBColor.border(), 0, 1, 0,1);
+      }
+    };
+    splitter.setFirstComponent(myOptionsPanel);
+    splitter.setSecondComponent(myPreview.getPanel());
+    innerPanel.add(splitter, BorderLayout.CENTER);
     myOptionsPanel.addListener(
       new ColorAndFontSettingsListener.Abstract() {
         @Override
@@ -49,6 +52,7 @@ public class AppEditorFontPanel implements Disposable {
         }
       }
     );
+    myTopPanel.add(innerPanel, BorderLayout.CENTER);
   }
 
   public void updatePreview() {

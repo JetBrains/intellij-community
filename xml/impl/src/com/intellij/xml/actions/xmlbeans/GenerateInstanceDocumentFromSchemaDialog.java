@@ -2,6 +2,7 @@
 package com.intellij.xml.actions.xmlbeans;
 
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -211,7 +212,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   }
 
   @Nullable
-  protected String doValidateWithData() {
+  protected @InspectionMessage String doValidateWithData() {
     String rootElementName = getElementName();
     if (rootElementName == null || rootElementName.length() == 0) {
       return XmlBundle.message("schema2.instance.no.valid.root.element.name.validation.error");

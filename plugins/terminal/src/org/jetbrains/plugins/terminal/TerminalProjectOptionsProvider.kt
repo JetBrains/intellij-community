@@ -2,63 +2,68 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.xmlb.annotations.Property
-import kotlin.reflect.KMutableProperty1
+import java.io.File
+import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
-@State(name = "TerminalProjectOptionsProvider", storages = [(Storage("terminal.xml"))])
+@State(name = "TerminalProjectNonSharedOptionsProvider", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
-  private val myState = State()
+  private val state = State()
 
-  override fun getState(): State? {
-    return myState
+  override fun getState(): State {
+    return state
   }
 
-  override fun loadState(state: State) {
-    myState.myStartingDirectory = state.myStartingDirectory
-    myState.envDataOptions = state.envDataOptions
+  override fun loadState(newState: State) {
+    state.startingDirectory = newState.startingDirectory
+    state.shellPath = newState.shellPath
+    state.envDataOptions = newState.envDataOptions
   }
 
   fun getEnvData(): EnvironmentVariablesData {
-    return myState.envDataOptions.get()
+    return state.envDataOptions.get()
   }
 
   fun setEnvData(envData: EnvironmentVariablesData) {
-    myState.envDataOptions.set(envData)
+    state.envDataOptions.set(envData)
   }
 
   class State {
-    var myStartingDirectory: String? = null
+    var startingDirectory: String? = null
+    var shellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
     var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
-  var startingDirectory: String? by ValueWithDefault(State::myStartingDirectory, myState) { defaultStartingDirectory }
+  var startingDirectory: String? by ValueWithDefault(state::startingDirectory) { defaultStartingDirectory }
 
   val defaultStartingDirectory: String?
     get() {
       var directory: String? = null
       for (customizer in LocalTerminalCustomizer.EP_NAME.extensions) {
         try {
-
-          if (directory == null) {
-            directory = customizer.getDefaultFolder(project)
+          directory = customizer.getDefaultFolder(project)
+          if (directory != null) {
+            break
           }
         }
         catch (e: Exception) {
           LOG.error("Exception during getting default folder", e)
         }
       }
-
-      return directory ?: getDefaultWorkingDirectory()
+      if (directory == null) {
+        directory = getDefaultWorkingDirectory()
+      }
+      return if (directory != null) FileUtil.toSystemDependentName(directory) else null
     }
 
   private fun getDefaultWorkingDirectory(): String? {
@@ -68,31 +73,84 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     return dir?.canonicalPath
   }
 
+  var shellPath: String
+    get() {
+      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
+      val shellPath = if (isProjectLevelShellPath(workingDirectoryLazy::value)) {
+        state.shellPath
+      }
+      else {
+        TerminalOptionsProvider.instance.shellPath
+      }
+      if (shellPath.isNullOrBlank()) {
+        return findDefaultShellPath(workingDirectoryLazy::value)
+      }
+      return shellPath
+    }
+    set(value) {
+      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
+      val valueToStore = Strings.nullize(value, findDefaultShellPath(workingDirectoryLazy::value))
+      if (isProjectLevelShellPath((workingDirectoryLazy::value))) {
+        state.shellPath = valueToStore
+      }
+      else {
+        TerminalOptionsProvider.instance.shellPath = valueToStore
+      }
+    }
+
+  private fun isProjectLevelShellPath(workingDirectory: () -> String?): Boolean {
+    return SystemInfo.isWindows && findWslDistribution(workingDirectory()) != null
+  }
+
+  fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
+
+  private fun findDefaultShellPath(workingDirectory: () -> String?): String {
+    if (SystemInfo.isWindows) {
+      val wslDistribution = findWslDistribution(workingDirectory())
+      if (wslDistribution != null) {
+        return "wsl.exe --distribution $wslDistribution"
+      }
+    }
+    val shell = System.getenv("SHELL")
+    if (shell != null && File(shell).canExecute()) {
+      return shell
+    }
+    if (SystemInfo.isUnix) {
+      val bashPath = "/bin/bash"
+      if (File(bashPath).exists()) {
+        return bashPath
+      }
+      return "/bin/sh"
+    }
+    return "cmd.exe"
+  }
+
+  private fun findWslDistribution(directory: String?): String? {
+    if (directory == null) return null
+    val prefix = "\\\\wsl$\\"
+    if (!directory.startsWith(prefix)) return null
+    val endInd = directory.indexOf('\\', prefix.length)
+    return if (endInd >= 0) directory.substring(prefix.length, endInd) else null
+  }
+
   companion object {
     private val LOG = Logger.getInstance(TerminalProjectOptionsProvider::class.java)
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
-      val provider = ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
-      val appEnvData = TerminalOptionsProvider.instance.getEnvData()
-      if (provider.getEnvData() == EnvironmentVariablesData.DEFAULT && appEnvData != EnvironmentVariablesData.DEFAULT) {
-        provider.setEnvData(appEnvData)
-        TerminalOptionsProvider.instance.setEnvData(EnvironmentVariablesData.DEFAULT)
-      }
-      return provider
+      return project.getService(TerminalProjectOptionsProvider::class.java)
     }
   }
 
 }
 
-// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a receiver for
-// to property to apply
-class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S, val default: () -> String?) {
-  operator fun getValue(thisRef: Any?, property: KProperty<*>): String? {
-    return if (prop.get(state) !== null) prop.get(state) else default()
+class ValueWithDefault<T : String?>(val prop: KMutableProperty0<T?>, val default: () -> T) {
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    val value : T? = prop.get()
+    return if (value !== null) value else default()
   }
 
-  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String?) {
-    prop.set(state, if (value == default() || value.isNullOrEmpty()) null else value)
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    prop.set(if (value == default() || value.isNullOrEmpty()) null else value)
   }
 }

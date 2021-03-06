@@ -16,15 +16,16 @@
 
 package com.intellij.refactoring.classMembers;
 
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -63,17 +64,12 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     return myDependenciesToDependentMap.get(member);
   }
 
-  public String getElementTooltip(T element) {
+  public @NlsContexts.Tooltip String getElementTooltip(T element) {
     final Set<? extends T> dependencies = getDependenciesOf(element);
     if(dependencies == null || dependencies.size() == 0) return null;
 
-    ArrayList<String> strings = new ArrayList<>();
-    for (T dep : dependencies) {
-      strings.add(dep.getName());
-    }
-
-    if(strings.isEmpty()) return null;
-    return RefactoringBundle.message("used.by.0", StringUtil.join(strings, ", "));
+    String strings = dependencies.stream().map(NavigationItem::getName).collect(NlsMessages.joiningAnd());
+    return RefactoringBundle.message("used.by.0", strings);
   }
 
 

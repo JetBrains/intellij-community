@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 public class PropertiesSplitter extends BaseSplitter {
   private static final PropertiesSplitter INSTANCE = new PropertiesSplitter();
-  
+
   public static PropertiesSplitter getInstance() {
     return INSTANCE;
   }

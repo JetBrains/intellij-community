@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
+  // this logger is for low-level focus-related requests (performed by JDK and our custom low-level mechanisms)
+  public static final Logger FOCUS_REQUESTS_LOG = Logger.getInstance("Focus requests");
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
@@ -49,6 +51,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private final Set<FurtherRequestor> myValidFurtherRequestors = new HashSet<>();
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Set<ActionCallback> myTypeAheadRequestors = new HashSet<>();
   private boolean myTypeaheadEnabled = true;
 
@@ -67,11 +70,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
-    IdeEventQueue.getInstance().addDispatcher(e -> {
+    UIUtil.addAwtListener(e -> {
       if (e instanceof FocusEvent) {
         final FocusEvent fe = (FocusEvent)e;
         final Component c = fe.getComponent();
-        if (c instanceof Window || c == null) return false;
+        if (c instanceof Window || c == null) return;
 
         Component parent = ComponentUtil.findUltimateParent(c);
         if (parent instanceof IdeFrame) {
@@ -88,15 +91,20 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
           }
         }
       }
-
-      return false;
-    }, this);
+    }, AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK,this);
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", event -> {
       Object value = event.getNewValue();
       if (value instanceof IdeFrame) {
         LOG.assertTrue(value instanceof Window);
         myLastFocusedFrame = (IdeFrame)value;
+      }
+      else {
+        Window window = getLastFocusedIdeWindow();
+        if (window != null && !window.isVisible()) {
+          // it is need to forget about the closed window
+          myLastFocusedFrame = null;
+        }
       }
     });
   }
@@ -115,14 +123,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    if (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing.active.window.checks")) {
-      logFocusRequest(c, project, false);
-      c.requestFocus();
-    }
-    else {
-      logFocusRequest(c, project, true);
-      c.requestFocusInWindow();
-    }
+    logFocusRequest(c, project, true);
+    c.requestFocusInWindow();
     return ActionCallback.DONE;
   }
 
@@ -167,7 +169,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   }
 
   @Override
-  public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+  public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
     myQueue.executeWhenAllFocusEventsLeftTheQueue(runnable);
   }
 
@@ -187,18 +189,20 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     immediate.set(false);
   }
 
-
   @Override
   public void setTypeaheadEnabled(boolean enabled) {
     myTypeaheadEnabled = enabled;
   }
 
   private boolean isTypeaheadEnabled() {
-    return Registry.is("actionSystem.fixLostTyping") && myTypeaheadEnabled;
+    return myTypeaheadEnabled && Registry.is("actionSystem.fixLostTyping");
   }
+
   @Override
   public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
-    if (!isTypeaheadEnabled()) return;
+    if (!isTypeaheadEnabled()) {
+      return;
+    }
 
     final long currentTime = System.currentTimeMillis();
     final ActionCallback done;
@@ -233,7 +237,8 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
                                                 IdeEventQueue.getInstance().runnablesWaitingForFocusChangeState();
                                        }
                                      },
-                                     true).doWhenProcessed(() -> myTypeAheadRequestors.remove(done)));
+                                     true)
+                  .doWhenProcessed(() -> myTypeAheadRequestors.remove(done)));
   }
 
   @DirtyUI
@@ -250,7 +255,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       result = myLastFocusedAtDeactivation.get(frame);
     }
     else if (myRunContext != null) {
-      result = (Component)myRunContext.getData(PlatformDataKeys.CONTEXT_COMPONENT.getName());
+      result = myRunContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     }
 
     if (result == null) {
@@ -304,9 +309,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   public void toFront(JComponent c) {
     assertDispatchThread();
 
-    if (c == null) return;
+    if (c == null) {
+      return;
+    }
 
-    final Window window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, (Component)c);
+    Window window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, (Component)c);
     if (window != null && window.isShowing()) {
       doWhenFocusSettlesDown(() -> {
         if (ApplicationManager.getApplication().isActive()) {
@@ -321,7 +328,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
-  private static class FurtherRequestor implements FocusRequestor {
+  private static final class FurtherRequestor implements FocusRequestor {
     private final IdeFocusManager myManager;
     private final Expirable myExpirable;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
@@ -339,7 +346,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     @NotNull
     @Override
     public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-      final ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
+      ActionCallback result = isExpired() ? ActionCallback.REJECTED : myManager.requestFocus(c, forced);
       result.doWhenProcessed(() -> Disposer.dispose(this));
       return result;
     }
@@ -347,7 +354,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     private boolean isExpired() {
       return myExpirable.isExpired() || myDisposed;
     }
-
 
     @Override
     public void dispose() {
@@ -389,62 +395,63 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public Component getFocusedDescendantFor(@NotNull Component comp) {
-    final Component focused = getFocusOwner();
-    if (focused == null) return null;
+    Component focused = getFocusOwner();
+    if (focused == null) {
+      return null;
+    }
 
-    if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
+    if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) {
+      return focused;
+    }
 
     List<JBPopup> popups = AbstractPopup.getChildPopups(comp);
     for (JBPopup each : popups) {
-      if (each.isFocused()) return focused;
+      if (each.isFocused()) {
+        return focused;
+      }
     }
 
     return null;
   }
 
-  @NotNull
   @Override
-  public ActionCallback requestDefaultFocus(boolean forced) {
+  public @NotNull ActionCallback requestDefaultFocus(boolean forced) {
     Component toFocus = null;
     IdeFrame lastFocusedFrame = myLastFocusedFrame;
-    if (lastFocusedFrame != null) {
+    if (lastFocusedFrame == null) {
+      for (Window window : Window.getWindows()) {
+        if (window instanceof RootPaneContainer && ((RootPaneContainer)window).getRootPane() != null && window.isActive()) {
+          Component toFocusOptional = getFocusTargetFor(((RootPaneContainer)window).getRootPane());
+          if (toFocusOptional != null) {
+            toFocus = toFocusOptional;
+          }
+          break;
+        }
+      }
+    }
+    else {
       LOG.assertTrue(lastFocusedFrame instanceof Window);
       toFocus = myLastFocused.get(lastFocusedFrame);
       if (toFocus == null || !toFocus.isShowing()) {
         toFocus = getFocusTargetFor(lastFocusedFrame.getComponent());
       }
     }
-    else {
-      Optional<Component> toFocusOptional = Arrays.stream(Window.getWindows()).
-        filter(window -> window instanceof RootPaneContainer).
-        filter(window -> ((RootPaneContainer)window).getRootPane() != null).
-        filter(window -> window.isActive()).
-        findFirst().
-        map(w -> getFocusTargetFor(((RootPaneContainer)w).getRootPane()));
-
-      if (toFocusOptional.isPresent()) {
-        toFocus = toFocusOptional.get();
-      }
-    }
 
     if (toFocus != null) {
       return requestFocusInProject(toFocus, null);
     }
-
-
     return ActionCallback.DONE;
   }
 
   @Override
   public boolean isFocusTransferEnabled() {
-    if (Registry.is("focus.fix.lost.cursor")) {
-      return true;
-    }
-    return ApplicationManager.getApplication().isActive() || !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive");
+    return Registry.is("focus.fix.lost.cursor", false) ||
+           ApplicationManager.getApplication().isActive() ||
+           !Registry.is("actionSystem.suspendFocusTransferIfApplicationInactive", true);
   }
 
   private static void assertDispatchThread() {
-    if (Registry.is("actionSystem.assertFocusAccessFromEdt")) {
+    if (Registry.is("actionSystem.assertFocusAccessFromEdt", true)) {
       EDT.assertIsEdt();
     }
   }

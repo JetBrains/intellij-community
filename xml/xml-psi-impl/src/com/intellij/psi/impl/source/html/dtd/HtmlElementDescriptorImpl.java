@@ -15,11 +15,14 @@
  */
 package com.intellij.psi.impl.source.html.dtd;
 
+import com.intellij.documentation.mdn.MdnDocumentationKt;
+import com.intellij.documentation.mdn.MdnSymbolDocumentation;
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -30,11 +33,18 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.Set;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 /**
  * @author Maxim.Mossienko
  */
 public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
+  private final Set<String> ourHtml4DeprecatedTags = ContainerUtil.newHashSet("applet", "basefont", "center", "dir",
+                                                                              "font", "frame", "frameset", "isindex", "menu",
+                                                                              "noframes", "s", "strike", "u", "xmp");
+
   private final XmlElementDescriptor myDelegate;
   private final boolean myRelaxed;
   private final boolean myCaseSensitive;
@@ -62,7 +72,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     XmlElementDescriptor[] temp = new XmlElementDescriptor[elementsDescriptors.length];
 
     for (int i = 0; i < elementsDescriptors.length; i++) {
-      temp[i] = new HtmlElementDescriptorImpl( elementsDescriptors[i], myRelaxed, myCaseSensitive );
+      temp[i] = new HtmlElementDescriptorImpl(elementsDescriptors[i], myRelaxed, myCaseSensitive);
     }
     return temp;
   }
@@ -94,7 +104,6 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
           xmlElementDescriptor = bodyDescriptor.getElementDescriptor(element, contextTag);
         }
       }
-
     }
     if (xmlElementDescriptor == null && myRelaxed) {
       xmlElementDescriptor = RelaxedHtmlFromSchemaElementDescriptor.getRelaxedDescriptor(this, element);
@@ -130,14 +139,15 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   @Override
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final XmlTag context) {
-    String caseSensitiveAttributeName =  toLowerCaseIfNeeded(attributeName);
+    String caseSensitiveAttributeName = toLowerCaseIfNeeded(attributeName);
     XmlAttributeDescriptor descriptor = super.getAttributeDescriptor(caseSensitiveAttributeName, context);
     if (descriptor == null) descriptor = RelaxedHtmlFromSchemaElementDescriptor.getAttributeDescriptorFromFacelets(attributeName, context);
-    
+
     if (descriptor == null) {
       String prefix = XmlUtil.findPrefixByQualifiedName(attributeName);
-      
-      if ("xml".equals(prefix)) { // todo this is not technically correct dtd document references namespaces but we should handle it at least for xml stuff
+
+      if ("xml".equals(
+        prefix)) { // todo this is not technically correct dtd document references namespaces but we should handle it at least for xml stuff
         XmlNSDescriptor nsdescriptor = context.getNSDescriptor(XmlUtil.XML_NAMESPACE_URI, true);
         if (nsdescriptor instanceof XmlNSDescriptorImpl) {
           descriptor = ((XmlNSDescriptorImpl)nsdescriptor).getAttribute(
@@ -218,7 +228,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   XmlElementDescriptor getDelegate() {
     return myDelegate;
   }
-  
+
   @Override
   public String toString() {
     return myDelegate.toString();
@@ -228,8 +238,19 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
     return myCaseSensitive;
   }
 
+  public boolean isDeprecated() {
+    boolean html4Deprecated = ourHtml4DeprecatedTags.contains(myDelegate.getName());
+    MdnSymbolDocumentation documentation = doIfNotNull(
+      myDelegate.getDeclaration(), declaration -> MdnDocumentationKt.getHtmlMdnDocumentation(declaration, null));
+    boolean deprecatedInHtml5 = documentation != null && documentation.isDeprecated();
+    if (!html4Deprecated && !deprecatedInHtml5) {
+      return false;
+    }
+    boolean inHtml5 = HtmlUtil.isHtml5Schema(getNSDescriptor());
+    return inHtml5 && deprecatedInHtml5 || !inHtml5 && html4Deprecated;
+  }
+
   private String toLowerCaseIfNeeded(String name) {
     return isCaseSensitive() ? name : StringUtil.toLowerCase(name);
   }
-
 }

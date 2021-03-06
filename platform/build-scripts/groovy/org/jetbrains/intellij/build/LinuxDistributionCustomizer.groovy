@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
+import java.nio.file.Path
+
 @CompileStatic
 abstract class LinuxDistributionCustomizer {
   /**
@@ -26,9 +28,14 @@ abstract class LinuxDistributionCustomizer {
   boolean includeX86Files = true
 
   /**
-   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced
+   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced.
    */
   boolean buildTarGzWithoutBundledJre = true
+
+  /**
+   * If {@code true}, the only *-no-jbr.tar.gz will be produced, no other binaries for Linux will be built.
+   */
+  boolean buildOnlyBareTarGz = false
 
   /**
    * Set both properties if a .snap package should be produced.
@@ -49,5 +56,5 @@ abstract class LinuxDistributionCustomizer {
    * Override this method to copy additional files to Linux distribution of the product.
    * @param targetDirectory contents of this directory will be packed into .tar.gz archive under {@link #getRootDirectoryName(ApplicationInfoProperties, String)}
    */
-  void copyAdditionalFiles(BuildContext context, String targetDirectory) {}
+  void copyAdditionalFiles(BuildContext context, Path targetDir) {}
 }

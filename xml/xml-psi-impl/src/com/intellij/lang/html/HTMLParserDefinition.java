@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.html;
 
+import com.intellij.html.embedding.HtmlCustomEmbeddedContentTokenType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -29,7 +30,7 @@ public class HTMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return XmlElementType.HTML_FILE;
   }
 
@@ -64,6 +65,9 @@ public class HTMLParserDefinition implements ParserDefinition {
       //noinspection rawtypes
       return ((XmlStubBasedElementType)node.getElementType()).createPsi(node);
     }
+    if (node.getElementType() instanceof HtmlCustomEmbeddedContentTokenType) {
+      return ((HtmlCustomEmbeddedContentTokenType)node.getElementType()).createPsi(node);
+    }
     if (node.getElementType() == XmlElementType.HTML_EMBEDDED_CONTENT) {
       return new HtmlEmbeddedContentImpl(node);
     }
@@ -71,13 +75,12 @@ public class HTMLParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new HtmlFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    final Lexer lexer = createLexer(left.getPsi().getProject());
-    return XMLParserDefinition.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return XMLParserDefinition.canStickTokensTogether(left, right);
   }
 }

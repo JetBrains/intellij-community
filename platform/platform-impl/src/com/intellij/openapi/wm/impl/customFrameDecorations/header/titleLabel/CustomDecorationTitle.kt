@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ui.JBUI
@@ -14,7 +15,8 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class CustomDecorationTitle(val frame: JFrame, private val onBoundsChanged: () -> Unit) {
+internal class CustomDecorationTitle(val frame: JFrame): CustomHeaderTitle {
+  override var onBoundsChanged: (() -> Unit)? = null
   private var mySelectedEditorFilePath: CustomDecorationPath? = null
   private var active = false
 
@@ -67,22 +69,22 @@ class CustomDecorationTitle(val frame: JFrame, private val onBoundsChanged: () -
   }
 
   private fun createCustomDecoration(it: Project) {
-    val title = CustomDecorationPath(frame, onBoundsChanged)
+    val title = CustomDecorationPath.createInstance(frame)
+    title.onBoundsChanged = onBoundsChanged
     title.project = it
 
     pane.remove(titleLabel)
-    pane.add(title.getView(), "growx, wmin 0")
+    pane.add(title.view, "growx, wmin 0")
     mySelectedEditorFilePath = title
     title.setActive(active)
 
     frame.removePropertyChangeListener(titleChangeListener)
   }
 
-  fun getView(): JComponent {
-    return pane
-  }
+  override val view: JComponent
+    get() = pane
 
-  fun setActive(value: Boolean) {
+  override fun setActive(value: Boolean) {
     active = value
 
     val color = if (value) JBUI.CurrentTheme.CustomFrameDecorations.titlePaneInfoForeground() else JBUI.CurrentTheme.CustomFrameDecorations.titlePaneInactiveInfoForeground()
@@ -91,5 +93,5 @@ class CustomDecorationTitle(val frame: JFrame, private val onBoundsChanged: () -
     mySelectedEditorFilePath?.setActive(value)
   }
 
-  fun getListenerBounds(): List<RelativeRectangle> = mySelectedEditorFilePath?.getListenerBounds() ?: emptyList()
+  override fun getBoundList(): List<RelativeRectangle> = mySelectedEditorFilePath?.getBoundList() ?: emptyList()
 }

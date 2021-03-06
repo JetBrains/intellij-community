@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -24,6 +25,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Objects.requireNonNull;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATED;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REPO_CREATION_ERROR;
 
 /**
  * Action for initializing a Mercurial repository.
@@ -72,8 +75,7 @@ public class HgInit extends DumbAwareAction {
 
     boolean finalNeedToCreateRepo = needToCreateRepo;
     VirtualFile finalMapRoot = mapRoot;
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () ->
-    {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
       if (!finalNeedToCreateRepo || createRepository(requireNonNull(myProject), selectedRoot)) {
         updateDirectoryMappings(finalMapRoot);
       }
@@ -94,15 +96,18 @@ public class HgInit extends DumbAwareAction {
   public static boolean createRepository(@NotNull Project project, @NotNull final VirtualFile selectedRoot) {
     HgCommandResult result = new HgInitCommand(project).execute(selectedRoot.getPath());
     if (!HgErrorUtil.hasErrorsInCommandExecution(result)) {
-      VcsNotifier.getInstance(project).notifySuccess(HgBundle.message("hg4idea.init.created.notification.title"),
-                                                     HgBundle.message("hg4idea.init.created.notification.description",
-                                                                      selectedRoot.getPresentableUrl()));
+      VcsNotifier.getInstance(project)
+        .notifySuccess(REPO_CREATED,
+                       HgBundle.message("hg4idea.init.created.notification.title"),
+                       HgBundle.message("hg4idea.init.created.notification.description", selectedRoot.getPresentableUrl()));
       return true;
     }
     else {
       new HgCommandResultNotifier(project.isDefault() ? null : project)
-        .notifyError(result, HgBundle.message("hg4idea.init.error.title"), HgBundle.message("hg4idea.init.error.description",
-                                                                                            selectedRoot.getPresentableUrl()));
+        .notifyError(REPO_CREATION_ERROR,
+                     result,
+                     HgBundle.message("hg4idea.init.error.title"),
+                     HgBundle.message("hg4idea.init.error.description", selectedRoot.getPresentableUrl()));
       return false;
     }
   }

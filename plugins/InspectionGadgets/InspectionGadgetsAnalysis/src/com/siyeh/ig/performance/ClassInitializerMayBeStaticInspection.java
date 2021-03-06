@@ -19,6 +19,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -68,7 +69,8 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
       }
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) &&
-          !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+          !containingClass.hasModifierProperty(PsiModifier.STATIC) &&
+          !HighlightingFeature.INNER_STATICS.isAvailable(containingClass)) {
         return;
       }
 

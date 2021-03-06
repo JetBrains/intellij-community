@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +27,7 @@ import java.util.Objects;
  * @author yole
  */
 public class FormLayoutColumnProperties implements CustomPropertiesPanel {
-  private static final Map<String, String> UNITS_MAP;
+  private static final Map<String, @Nls String> UNITS_MAP;
   static {
     UNITS_MAP = new LinkedHashMap<>();
     UNITS_MAP.put("px", UIDesignerBundle.message("unit.pixels"));
@@ -250,12 +252,14 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private static void showConstantSize(final ConstantSize size, final JComboBox unitsCombo, final JSpinner spinner) {
     double value = size.getValue();
     ConstantSize.Unit unit = size.getUnit();
+    @NlsSafe String item;
     if (unit.equals(ConstantSize.DIALOG_UNITS_X) || unit.equals(ConstantSize.DIALOG_UNITS_Y)) {
-      unitsCombo.setSelectedItem("dlu");
+      item = "dlu";
     }
     else {
-      unitsCombo.setSelectedItem(unit.abbreviation());
+      item = unit.abbreviation();
     }
+    unitsCombo.setSelectedItem(item);
 
     spinner.setModel(new SpinnerNumberModel(0.0, 0.0, Double.MAX_VALUE, 1.0));
     spinner.setValue(value);

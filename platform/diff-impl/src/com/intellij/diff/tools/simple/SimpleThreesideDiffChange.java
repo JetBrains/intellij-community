@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.tools.util.base.DiffViewerBase;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.diff.DiffBundle;
@@ -24,7 +25,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +59,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     reinstallHighlighters();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void reinstallHighlighters() {
     destroyHighlighters();
     installHighlighters();
@@ -112,6 +116,8 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   public void markInvalid() {
     myIsValid = false;
+
+    destroyOperations();
   }
 
   //
@@ -134,6 +140,30 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
   // Modification
   //
 
+  static @NotNull @Nls String getApplyActionText(@NotNull DiffViewerBase viewer,
+                                                 @NotNull ThreeSide sourceSide,
+                                                 @NotNull ThreeSide modifiedSide) {
+    Key<@Nls String> key = null;
+    if (sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.LEFT) {
+      key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_LEFT_ACTION_TEXT;
+    }
+    else if (sourceSide == ThreeSide.BASE && modifiedSide == ThreeSide.RIGHT) {
+      key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT;
+    }
+    else if (sourceSide == ThreeSide.LEFT && modifiedSide == ThreeSide.BASE) {
+      key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT;
+    }
+    else if (sourceSide == ThreeSide.RIGHT && modifiedSide == ThreeSide.BASE) {
+      key = DiffUserDataKeysEx.VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT;
+    }
+    if (key != null) {
+      String customValue = DiffUtil.getUserData(viewer.getRequest(), viewer.getContext(), key);
+      if (customValue != null) return customValue;
+    }
+
+    return DiffBundle.message("action.presentation.diff.accept.text");
+  }
+
   @NotNull
   private DiffGutterOperation createAcceptOperation(@NotNull ThreeSide sourceSide, @NotNull ThreeSide modifiedSide) {
     EditorEx editor = myViewer.getEditor(sourceSide);
@@ -147,7 +177,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
                           modifiedSide != ThreeSide.BASE && isChange(modifiedSide);
       if (!isChanged) return null;
 
-      String text = DiffBundle.message("action.presentation.diff.accept.text");
+      String text = getApplyActionText(myViewer, sourceSide, modifiedSide);
       Side arrowDirection = Side.fromLeft(sourceSide == ThreeSide.LEFT ||
                                           modifiedSide == ThreeSide.RIGHT);
       Icon icon = DiffUtil.getArrowIcon(arrowDirection);
@@ -159,7 +189,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   private GutterIconRenderer createIconRenderer(@NotNull final ThreeSide sourceSide,
                                                 @NotNull final ThreeSide modifiedSide,
-                                                @NotNull final String tooltipText,
+                                                @NotNull final @NlsContexts.Tooltip String tooltipText,
                                                 @NotNull final Icon icon,
                                                 @NotNull final Runnable perform) {
     return new DiffGutterRenderer(icon, tooltipText) {

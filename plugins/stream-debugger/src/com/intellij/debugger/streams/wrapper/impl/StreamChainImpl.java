@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +58,8 @@ public class StreamChainImpl implements StreamChain {
     return myTerminator;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull @NlsSafe String getText() {
     final Iterator<StreamCall> iterator = StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator).iterator();
     final StringBuilder builder = new StringBuilder();
     builder.append(myQualifierExpression.getText()).append("\n").append(".");
@@ -76,9 +76,9 @@ public class StreamChainImpl implements StreamChain {
     return builder.toString();
   }
 
-  @NotNull
+
   @Override
-  public String getCompactText() {
+  public @NotNull @NlsSafe String getCompactText() {
     final StringBuilder builder = new StringBuilder();
     builder.append(myQualifierExpression.getText().replaceAll("\\s+", ""));
     for (final StreamCall call : StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator)) {

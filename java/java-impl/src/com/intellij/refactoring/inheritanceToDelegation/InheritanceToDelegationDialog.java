@@ -43,7 +43,6 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private JCheckBox myCbGenerateGetter;
   private MemberSelectionPanel myMemberSelectionPanel;
   private JComboBox myClassCombo;
-  private final Project myProject;
   private MyClassComboItemListener myClassComboItemListener;
   private NameSuggestionsField.DataChanged myDataChangedListener;
 
@@ -52,7 +51,6 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
                                        PsiClass[] superClasses,
                                        HashMap<PsiClass,Collection<MemberInfo>> basesToMemberInfos) {
     super(project, true);
-    myProject = project;
     myClass = aClass;
     mySuperClasses = superClasses;
     myBasesToMemberInfos = basesToMemberInfos;
@@ -98,12 +96,13 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     final String fieldName = getFieldName();
     final PsiNameHelper helper = PsiNameHelper.getInstance(myProject);
     if (!helper.isIdentifier(fieldName)){
-      throw new ConfigurationException("\'" + fieldName + "\' is invalid field name for delegation");
+      throw new ConfigurationException(JavaRefactoringBundle.message("replace.inheritance.with.delegation.invalid.field", fieldName));
     }
     if (myInnerClassNameField != null) {
       final String className = myInnerClassNameField.getEnteredName();
       if (!helper.isIdentifier(className)) {
-        throw new ConfigurationException("\'" + className + "\' is invalid inner class name");
+        throw new ConfigurationException(JavaRefactoringBundle.message("replace.inheritance.with.delegation.invalid.inner.class",
+                                                                       fieldName));
       }
     }
   }
@@ -231,7 +230,8 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.insets = JBUI.insets(4, 0, 4, 4);
 
-    myMemberSelectionPanel = new MemberSelectionPanel(JavaRefactoringBundle.message("delegate.members"), Collections.emptyList(), null);
+    String delegatePanelTitle = "replace.inheritance.with.delegation.delegate.members.title";
+    myMemberSelectionPanel = new MemberSelectionPanel(JavaRefactoringBundle.message(delegatePanelTitle), Collections.emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);
     MyMemberInfoModel memberInfoModel = new InheritanceToDelegationDialog.MyMemberInfoModel();
     myMemberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);

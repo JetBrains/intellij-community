@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.Document;
@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -16,18 +17,27 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.util.Objects;
 
 public class LocalFilePath implements FilePath {
-  @NotNull private final String myPath;
+  @NotNull
+  @SystemIndependent
+  private final String myPath;
   private final boolean myIsDirectory;
   private VirtualFile myCachedFile;
 
   public LocalFilePath(@NotNull String path, boolean isDirectory) {
     myPath = FileUtil.toCanonicalPath(path);
     myIsDirectory = isDirectory;
+  }
+
+  public LocalFilePath(@NotNull Path path, boolean isDirectory) {
+    this(path.toAbsolutePath().toString(), isDirectory);
   }
 
   private LocalFilePath(@NotNull String path, boolean isDirectory,
@@ -43,15 +53,25 @@ public class LocalFilePath implements FilePath {
 
     LocalFilePath path = (LocalFilePath)o;
 
-    if (myIsDirectory != path.myIsDirectory) return false;
-    if (!FileUtil.PATH_HASHING_STRATEGY.equals(myPath, path.myPath)) return false;
-
-    return true;
+    if (myIsDirectory != path.myIsDirectory) {
+      return false;
+    }
+    if (myPath.equals(path.myPath)) {
+      return true;
+    }
+    if (!myPath.equalsIgnoreCase(path.myPath)) {
+      return false;
+    }
+    // make sure to not query (expensive) getVirtualFile() until it's absolutely necessary, e.g. we encountered two file paths differ by case only
+    VirtualFile file = getVirtualFile();
+    VirtualFile oFile = path.getVirtualFile();
+    if (file == null && oFile == null) return !SystemInfo.isFileSystemCaseSensitive;
+    return Objects.equals(file, oFile);
   }
 
   @Override
   public int hashCode() {
-    int result = FileUtil.PATH_HASHING_STRATEGY.computeHashCode(myPath);
+    int result = Strings.stringHashCodeInsensitive(myPath);
     result = 31 * result + (myIsDirectory ? 1 : 0);
     return result;
   }
@@ -92,7 +112,9 @@ public class LocalFilePath implements FilePath {
   @Nullable
   public VirtualFile getVirtualFile() {
     VirtualFile cachedFile = myCachedFile;
-    if (cachedFile == null || !cachedFile.isValid() || !FileUtil.PATH_HASHING_STRATEGY.equals(cachedFile.getPath(), myPath)) {
+    if (cachedFile == null ||
+        !cachedFile.isValid() ||
+        !(cachedFile.isCaseSensitive() ? cachedFile.getPath().equals(myPath) : cachedFile.getPath().equalsIgnoreCase(myPath))) {
       myCachedFile = cachedFile = LocalFileSystem.getInstance().findFileByPath(myPath);
     }
     return cachedFile;

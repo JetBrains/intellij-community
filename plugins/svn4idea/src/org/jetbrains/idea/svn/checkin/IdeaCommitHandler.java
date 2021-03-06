@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ReadAction;
@@ -55,7 +55,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
   public void committedRevision(long revNum) {
     if (myProgress == null) return;
     myProgress.checkCanceled();
-    myProgress.setText2(SvnBundle.message("status.text.comitted.revision", revNum));
+    myProgress.setText2(SvnBundle.message("status.text.committed.revision", revNum));
   }
 
   @Override

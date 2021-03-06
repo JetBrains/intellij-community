@@ -4,6 +4,7 @@ package com.intellij.find;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,5 +26,5 @@ public interface FindInProjectSettings {
   String @NotNull [] getRecentReplaceStrings();
 
   @NotNull
-  List<String> getRecentDirectories();
+  List<@NlsSafe String> getRecentDirectories();
 }

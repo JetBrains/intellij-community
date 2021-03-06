@@ -22,15 +22,18 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
+ * @noinspection resource
  */
 public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
 
   public void testCorrectClose() {
+    // No highlighting because str was closed and we have ignoreResourcesWithClose option set
+    //noinspection EmptyTryBlock
     doTest("import java.io.*;" +
            "class X {" +
-           "    public void m() throws IOException {" +
+           "    public static void m() throws IOException {" +
            "        FileInputStream str;" +
-           "        str = new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"bar\");" +
+           "        str = new FileInputStream(\"bar\");" +
            "        try {" +
            "        } finally {" +
            "            str.close();" +
@@ -42,10 +45,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testEscape() {
     doTest("import java.io.*;" +
            "class X {" +
-           "  void m() throws IOException {" +
+           "  static void m() throws IOException {" +
            "    n(new FileInputStream(\"file.name\"));" +
            "  }" +
-           "  void n(Closeable c) {" +
+           "  static void n(Closeable c) {" +
            "    System.out.println(c);" +
            "  }" +
            "}");
@@ -57,10 +60,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     myFixture.enableInspections(inspection);
     doTest("import java.io.*;" +
            "class X {" +
-           "  void m() throws IOException {" +
+           "  static void m() throws IOException {" +
            "    n(new /*'FileInputStream' used without 'try'-with-resources statement*/FileInputStream/**/(\"file.name\"));" +
            "  }" +
-           "  void n(Closeable c) {" +
+           "  static void n(Closeable c) {" +
            "    System.out.println(c);" +
            "  }" +
            "}");
@@ -69,7 +72,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testEscape3() {
     doTest("import java.io.*;" +
            "class X {" +
-           "  void m() throws IOException {" +
+           "  static void m() throws IOException {" +
            "    System.out.println(new FileInputStream(\"file.name\"));" +
            "  }" +
            "}");
@@ -79,7 +82,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     mockSql();
     doTest("import java.sql.*;\n" +
            "class X {\n" +
-           "  void m(Driver driver) throws SQLException {\n" +
+           "  static void m(Driver driver) throws SQLException {\n" +
            "    try (Connection connection = driver.connect(\"jdbc\", null);\n" +
            "      PreparedStatement statement = connection.prepareStatement(\"SELECT *\");\n" +
            "      ResultSet resultSet = statement.executeQuery()) {\n" +
@@ -109,7 +112,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     mockSql();
     doTest("import java.sql.*;" +
            "class X {" +
-           "  void m(Driver driver) throws SQLException {" +
+           "  static void m(Driver driver) throws SQLException {" +
            "    driver./*'Connection' used without 'try'-with-resources statement*/connect/**/(\"jdbc\", null);" +
            "  }" +
            "}");
@@ -117,7 +120,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
 
   public void testSystemOut() {
     doTest("class X {" +
-           "  void m(String s) {" +
+           "  static void m(String s) {" +
            "    System.out.printf(\"asdf %s\", s);" +
            "    System.err.format(\"asdf %s\", s);" +
            "  }" +
@@ -132,7 +135,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "  }" +
            "  class Y implements java.io.Closeable {" +
            "    Y(String s) {}" +
-           "    public void close() throws java.io.IOException {}" +
+           "    @Override public void close() throws java.io.IOException {}" +
            "  }" +
            "  interface Z<T, R> {\n" +
            "    R apply(T t);" +
@@ -143,7 +146,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testFormatter() {
     doTest("import java.util.*;" +
            "class TryWithResourcesFalsePositiveForFormatterFormat {" +
-           "    public void useFormatter( Formatter output ) {" +
+           "    public static void useFormatter( Formatter output ) {" +
            "        output.format( \"Hello, world!%n\" );" +
            "    }" +
            "}");
@@ -161,7 +164,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   public void testScanner() {
     doTest("import java.util.Scanner;" +
            "class A {" +
-           "    void a() throws java.io.IOException {" +
+           "    static void a() throws java.io.IOException {" +
            "        try (Scanner scanner = new Scanner(\"\").useDelimiter(\"\\\\A\")) {" +
            "            String sconf = scanner.next();" +
            "            System.out.println(sconf);" +
@@ -172,6 +175,7 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
   public void testTernary() {
+    //noinspection EmptyTryBlock
     doTest("import java.io.*;\n" +
            "\n" +
            "class X {\n" +
@@ -247,9 +251,354 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "}");
   }
 
+  public void testCallThenClose() {
+    // No highlighting because str was closed and we have ignoreResourcesWithClose option set
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  @Override\n" +
+           "  public void close() {}\n" +
+           "  static native X makeX();\n" +
+           "}\n" +
+           "class Other {\n" +
+           "  private static void example() {\n" +
+           "    final X x = X.makeX();\n" +
+           "    x.close();\n" +
+           "  }\n" +
+           "}");
+  }
+
+
+  public void testLambdaReturnsResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  @Override\n" +
+           "  public void close() {}\n" +
+           "\n" +
+           "  private static void example() {\n" +
+           "    consume(() -> new X());\n" +
+           "  " +
+           "}\n" +
+           "  \n" +
+           "  interface Consumer {" +
+           " X use();" +
+           "}\n" +
+           "  private static native X getX();\n" +
+           "  private static native void consume(Consumer x);\n" +
+           "}");
+  }
+
+  public void testLambdaNotReturnsResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  @Override\n" +
+           "  public void close() {}\n" +
+           "\n" +
+           "  private static void example() {\n" +
+           "    consume(() -> new <warning descr=\"'X' used without 'try'-with-resources statement\">X</warning>());\n" +
+           "  " +
+           "}\n" +
+           "  \n" +
+           "  interface Runnable {" +
+           " void run();" +
+           "}\n" +
+           "  private static native X getX();\n" +
+           "  private static native void consume(Runnable x);\n" +
+           "}");
+  }
+
+
+  public void testResourcePassedToConstructorOfResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  X(X other) {}\n" +
+           "  X() {}\n" +
+           "  @Override public void close() {}\n" +
+           "  private static void example(X other) {\n" +
+           "    new X(other);\n" +
+           "  " +
+           "}\n" +
+           "}");
+  }
+
+  public void testCreatedResourcePassedToConstructor() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  X(X other) {}\n" +
+           "  X() {}\n" +
+           "  @Override public void close() {}\n" +
+           "  private static void example(X other) {\n" +
+           "    new X(new X());\n" +
+           "  " +
+           "}\n" +
+           "}");
+  }
+
+  public void testCreatedResourcePassedToConstructorAsVar() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  X(X other) {}\n" +
+           "  X() {}\n" +
+           "  @Override public void close() {}\n" +
+           "  private static void example(X other) {\n" +
+           "    X resource = new X();\n" +
+           "    new X(resource);\n" +
+           "  " +
+           "}\n" +
+           "}");
+  }
+
+  public void testResourceAssigned() {
+    doTest(
+      "class X implements AutoCloseable {\n" +
+      "  @Override public void close() {}\n" +
+      "  private static X example(boolean cond, X other) {\n" +
+           "    X x;\n" +
+      "    if (cond) {\n" +
+      "      x = new X();\n" +
+      "    " +
+      "} else {\n" +
+      "      x = other;\n" +
+      "    " +
+      "}\n" +
+      "    return x;\n" +
+      "  " +
+      "}\n" +
+           "}");
+  }
+
+  public void testResourceObjectMethodReturnsAnotherResource() {
+    // Expect error in case when it happens inside the resource itself
+    doTest(
+      "class X implements AutoCloseable {\n" +
+      "  @Override public void close() {}\n" +
+      "  private static void example() {\n" +
+      "    <warning descr=\"'X' used without 'try'-with-resources statement\">createPossiblyDependantResource</warning>();\n" +
+      "  " +
+      "}\n" +
+      "  private static X createPossiblyDependantResource() { return null; }\n" +
+      "}");
+  }
+
+  public void testResourceEscapesToConstructor() {
+    doTest(
+      "class X implements AutoCloseable {\n" +
+      "  @Override public void close() {}\n" +
+      "  private static void example() {\n" +
+      "    X x = createX();\n" +
+      "    if (x != null) {\n" +
+      "      new EscapeTo(10, x);\n" +
+      "    " +
+      "}\n" +
+      "  }\n" +
+      "  native static X createX();\n" +
+      "}\n" +
+      "class EscapeTo {\n" +
+      "  X x;\n" +
+      " " +
+      " EscapeTo(int y, X x) {" +
+      "this.x = x;" +
+      "}\n" +
+      "  native void doStuff();\n" +
+      "}");
+  }
+
+  public void testIgnoredStreamPassedAsArgumentToNonIgnored() {
+    doTest(
+      "import java.io.ByteArrayOutputStream;\n" +
+      "import java.io.IOException;\n" +
+      "import java.io.ObjectOutputStream;\n" +
+      "\n" +
+      "class Test{\n" +
+      "  void test() throws IOException {\n" +
+      "    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();\n" +
+      "    ObjectOutputStream oos;\n" +
+      "    oos = new ObjectOutputStream(outputStream);\n" +
+      "  }\n" +
+      "}");
+  }
+
+  public void testConstructorClosesResource() {
+    doTest(
+      "import java.io.ByteArrayOutputStream;\n" +
+      "import java.io.IOException;\n" +
+      "import java.io.ObjectOutputStream;\n" +
+      "\n" +
+      "class Test{\n" +
+      "  Test(AutoCloseable ac){}\n" +
+      "  " +
+      "void test(){\n" +
+      "    AC ac = new AC();\n" +
+      "    new Test(ac);\n" +
+      "  }\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testResourceClosed() {
+    doTest(
+      "class Test{\n" +
+      "  " +
+      "void test(){\n" +
+      "    AC ac = ACHolder.makeAc();\n" +
+      "    useAc(new ACHolder(ac));\n" +
+      "  }\n" +
+      "  void useAc(ACHolder holder) {}\n" +
+      "}\n" +
+      "class ACHolder {\n" +
+      "  private final AC ac;\n" +
+      "  public static AC makeAc() { return null;}\n" +
+      "  ACHolder(AC ac) {this.ac = ac;" +
+      "}\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testGetMethodNotConsideredAsResource() {
+    doTest(
+      "class Test{\n" +
+      "  " +
+      "void test(){\n" +
+      "    getAc();\n" +
+      "  }\n" +
+      "  AC getAc() {return null;}\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testBuilderMustNotBeTriggered() {
+    doTest(
+      "class Test{\n" +
+      "  " +
+      "void test(){\n" +
+      "    AC ac = makeAc();\n" +
+      "    ac" +
+      ".use();\n" +
+      "    ac.close();\n" +
+      "  }\n" +
+      "  AC makeAc() {return null;}\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  AC use() {return this; }\n" +
+      "  " +
+      "@Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testFieldInitializationAsEscape() {
+    doTest(
+      "class AC implements AutoCloseable {\n" +
+      "  AC ac = new AC();\n" +
+      "  @Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testTryAsReference() {
+    doTest(
+      "class AC implements AutoCloseable {\n" +
+      "  void test(boolean condition) {\n" +
+      "    AC ac = condition ? new AC() : null;\n" +
+      "    if (ac == null) return;\n" +
+      "    try (AC ac1 = ac) {\n" +
+      "      ac1.test(false);\n" +
+      "    " +
+      "}\n" +
+      "  }\n" +
+      "  @Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void testClose() {
+    doTest(
+      "class AC implements AutoCloseable {\n" +
+      "  void test() {\n" +
+      "    final AC ac = new AC();\n" +
+      "    try {\n" +
+      "      work();\n" +
+      "    " +
+      "} finally {\n" +
+      "      ac.close();\n" +
+      "    " +
+      "}\n" +
+      "  " +
+      "}\n" +
+      "  native void work();\n" +
+      "  @Override" +
+      " public void close(){" +
+      "}\n" +
+      "}");
+  }
+
+  public void test232779() {
+    doTest(
+      "class AutoCloseableSample {\n" +
+      "  public OAuth2AccessToken authenticateOAuth(String code) {\n" +
+      "    OAuth20Service service = <warning descr=\"'OAuth20Service' used without 'try'-with-resources statement\">makeOAuth2Service</warning>();\n" +
+      "    try {\n" +
+      "      return service.getAccessToken(code);\n" +
+      "    }\n" +
+      "    catch (RuntimeException e) {\n" +
+      "      return null;\n" +
+      "    }\n" +
+      "  }\n" +
+      "\n" +
+      "  native OAuth20Service makeOAuth2Service();\n" +
+      "\n" +
+      "  private static class OAuth2AccessToken {}\n" +
+      "\n" +
+      "  private static class OAuth20Service implements AutoCloseable {\n" +
+      "    native public OAuth2AccessToken getAccessToken(String code);\n" +
+      "    @Override public void close() {}\n" +
+      "  }\n" +
+      "}");
+  }
+
+  public void testOnlyLastBuilderCallInConsidered() {
+    doTest(
+      "class AutoCloseableSample {\n" +
+      "  void test() {\n" +
+      "    final AC res = new AC().withX(10).withX(12);\n" +
+      "    res.close();\n" +
+      "  }\n" +
+      "}\n" +
+      "class AC implements AutoCloseable {\n" +
+      "  native AC withX(int x);\n" +
+      "  @Override public void close(){" +
+      "}\n" +
+      "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
-    return new AutoCloseableResourceInspection();
+    AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
+    inspection.ignoreConstructorMethodReferences = false;
+    return inspection;
   }
 
   @Override

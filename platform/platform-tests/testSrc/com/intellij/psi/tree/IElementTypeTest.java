@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
@@ -11,7 +11,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.*;
@@ -28,7 +27,7 @@ public class IElementTypeTest extends BasePlatformTestCase {
     List<LanguageExtensionPoint> extensions = Extensions.getRootArea().<LanguageExtensionPoint>getExtensionPoint(LanguageParserDefinitions.INSTANCE.getName()).getExtensionList();
     LOG.debug("ParserDefinitions: " + extensions.size());
 
-    THashMap<Language, String> languageMap = new THashMap<>();
+    Map<Language, String> languageMap = new HashMap<>();
     languageMap.put(Language.ANY, "platform");
     final TObjectIntHashMap<String> map = new TObjectIntHashMap<>();
     for (LanguageExtensionPoint e : extensions) {

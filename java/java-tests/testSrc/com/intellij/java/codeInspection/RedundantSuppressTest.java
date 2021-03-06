@@ -2,7 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
@@ -19,7 +20,6 @@ import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
-import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -45,7 +45,7 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
-      protected @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
+      protected @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(PsiElement psiElement, @NotNull InspectionProfile profile) {
         return myInspectionToolWrappers;
       }
     });

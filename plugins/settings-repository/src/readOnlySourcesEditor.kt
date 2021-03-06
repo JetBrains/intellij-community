@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,13 +11,13 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.Function
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
-import gnu.trove.THashSet
 import org.jetbrains.settingsRepository.git.asProgressMonitor
 import org.jetbrains.settingsRepository.git.cloneBare
 import kotlin.properties.Delegates.notNull
@@ -45,15 +45,16 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
     override fun getItemClass() = ReadonlySource::class.java
 
-    override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
+    override fun edit(item: ReadonlySource, mutator: Function<in ReadonlySource, out ReadonlySource>, isAdd: Boolean) {
       var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
-        row("URL:") {
-          urlField = textFieldWithBrowseButton("Choose Local Git Repository", fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
+        row(IcsBundle.message("readonly.sources.configuration.url.label")) {
+          urlField = textFieldWithBrowseButton(IcsBundle.message("readonly.sources.configuration.repository.chooser"),
+                                               fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
         }
       }
 
-      dialog(title = "Add read-only source", panel = panel, focusedComponent = urlField) {
+      dialog(title = IcsBundle.message("readonly.sources.configuration.add.source"), panel = panel, focusedComponent = urlField) {
         val url = urlField.text.nullize(true)
         validateUrl(url, null)?.let {
           return@dialog listOf(ValidationInfo(it))
@@ -72,19 +73,19 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
     override fun isUseDialogToAdd() = true
   }
 
-  val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
+  val editor = TableModelEditor(COLUMNS, itemEditor, IcsBundle.message("readonly.sources.configuration.no.sources.configured"))
   editor.reset(if (ApplicationManager.getApplication().isUnitTestMode) emptyList() else icsManager.settings.readOnlySources)
   return object : ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified
 
     override fun apply(settings: IcsSettings) {
       val oldList = settings.readOnlySources
-      val toDelete = THashSet<String>(oldList.size)
+      val toDelete = CollectionFactory.createSmallMemoryFootprintSet<String>(oldList.size)
       for (oldSource in oldList) {
         ContainerUtil.addIfNotNull(toDelete, oldSource.path)
       }
 
-      val toCheckout = THashSet<ReadonlySource>()
+      val toCheckout = CollectionFactory.createSmallMemoryFootprintSet<ReadonlySource>()
 
       val newList = editor.apply()
       for (newSource in newList) {
@@ -94,7 +95,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         }
       }
 
-      if (toDelete.isEmpty && toCheckout.isEmpty) {
+      if (toDelete.isEmpty() && toCheckout.isEmpty()) {
         return
       }
 
@@ -104,7 +105,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         val root = icsManager.readOnlySourcesManager.rootDir
 
         if (toDelete.isNotEmpty()) {
-          indicator.text = "Deleting old repositories"
+          indicator.text = icsMessage("progress.deleting.old.repositories")
           for (path in toDelete) {
             indicator.checkCanceled()
             LOG.runAndLogException {
@@ -118,7 +119,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
           for (source in toCheckout) {
             indicator.checkCanceled()
             LOG.runAndLogException {
-              indicator.text = "Cloning ${source.url!!.trimMiddle(255)}"
+              indicator.text = icsMessage("progress.cloning.repository", source.url!!.trimMiddle(255))
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {
                 dir.delete()

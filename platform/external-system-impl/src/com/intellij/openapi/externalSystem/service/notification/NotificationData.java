@@ -5,6 +5,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.pom.NonNavigatable;
@@ -23,8 +25,8 @@ import java.util.Map;
  */
 public class NotificationData implements Disposable {
 
-  @NotNull private String myTitle;
-  @NotNull private String myMessage;
+  @NotNull private @NotificationTitle String myTitle;
+  @NotNull private @NotificationContent String myMessage;
   @NotNull private NotificationCategory myNotificationCategory;
   @NotNull private final NotificationSource myNotificationSource;
   @NotNull private final NotificationListener myListener;
@@ -37,15 +39,15 @@ public class NotificationData implements Disposable {
 
   private final Map<String, NotificationListener> myListenerMap;
 
-  public NotificationData(@NotNull String title,
-                          @NotNull String message,
+  public NotificationData(@NotNull @NotificationTitle String title,
+                          @NotNull @NotificationContent String message,
                           @NotNull NotificationCategory notificationCategory,
                           @NotNull NotificationSource notificationSource) {
     this(title, message, notificationCategory, notificationSource, null, -1, -1, false);
   }
 
-  public NotificationData(@NotNull String title,
-                          @NotNull String message,
+  public NotificationData(@NotNull @NotificationTitle String title,
+                          @NotNull @NotificationContent String message,
                           @NotNull NotificationCategory notificationCategory,
                           @NotNull NotificationSource notificationSource,
                           @Nullable String filePath,
@@ -75,20 +77,20 @@ public class NotificationData implements Disposable {
   }
 
   @NotNull
-  public String getTitle() {
+  public @NotificationTitle String getTitle() {
     return myTitle;
   }
 
-  public void setTitle(@NotNull String title) {
+  public void setTitle(@NotNull @NotificationTitle String title) {
     myTitle = title;
   }
 
   @NotNull
-  public String getMessage() {
+  public @NotificationContent String getMessage() {
     return myMessage;
   }
 
-  public void setMessage(@NotNull String message) {
+  public void setMessage(@NotNull @NotificationContent String message) {
     myMessage = message;
   }
 
@@ -167,6 +169,8 @@ public class NotificationData implements Disposable {
             public void navigate(boolean requestFocus) {
               NotificationListener listener = myListenerMap.get(id);
               if (listener != null) {
+                // Notification here used only to be able to call 'NotificationListener.hyperlinkUpdate'
+                //noinspection UnresolvedPluginConfigReference
                 listener.hyperlinkUpdate(new Notification("", null, NotificationType.INFORMATION),
                                          IJSwingUtilities.createHyperlinkEvent(id, listener));
               }

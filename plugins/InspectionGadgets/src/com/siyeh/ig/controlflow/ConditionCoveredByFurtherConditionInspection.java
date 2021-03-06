@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -79,7 +78,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         PsiExpression operand = operands.get(index);
         dependencies = minimizeDependencies(context, operand, and, dependencies);
         if (dependencies.isEmpty()) continue;
-        String operandText = PsiExpressionTrimRenderer.render(operand);
+        PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(operand);
+        if (stripped == null) continue;
+        String operandText = PsiExpressionTrimRenderer.render(stripped);
         String description =
           InspectionGadgetsBundle.message("inspection.condition.covered.by.further.condition.descr",
                                           operandText, dependencies.size(), PsiExpressionTrimRenderer
@@ -165,7 +166,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     Map<PsiExpression, ThreeState> values = new HashMap<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override
-      protected boolean checkNotNullable(DfaMemoryState state,
+      protected ThreeState checkNotNullable(DfaMemoryState state,
                                          @NotNull DfaValue value,
                                          @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
         if (value instanceof DfaVariableValue) {
@@ -174,7 +175,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
             state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
           }
         }
-        return true;
+        return ThreeState.YES;
       }
 
       @Override
@@ -187,7 +188,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         ThreeState old = values.get(expression);
         if (old == ThreeState.UNSURE) return;
         ThreeState result = ThreeState.UNSURE;
-        Boolean bool = DfConstantType.getConstantOfType(state.getDfType(value), Boolean.class);
+        Boolean bool = state.getDfType(value).getConstantOfType(Boolean.class);
         if (bool != null) {
           result = ThreeState.fromBoolean(bool);
         }

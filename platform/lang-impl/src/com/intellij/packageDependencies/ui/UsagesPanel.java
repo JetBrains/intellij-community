@@ -95,7 +95,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
     }
   }
 
-  private static JComponent createLabel(String text) {
+  private static JComponent createLabel(@Nls String text) {
     JLabel label = new JLabel(text);
     label.setHorizontalAlignment(SwingConstants.CENTER);
     return label;

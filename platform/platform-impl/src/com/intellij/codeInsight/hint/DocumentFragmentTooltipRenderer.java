@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author cdr
- */
 public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
   private final DocumentFragment myDocumentFragment;
 
@@ -63,6 +60,6 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     if (endOffset < startOffset) return null;
 
     TextRange textRange = new TextRange(startOffset, endOffset);
-    return EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true, true);
+    return EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true, true);
   }
 }

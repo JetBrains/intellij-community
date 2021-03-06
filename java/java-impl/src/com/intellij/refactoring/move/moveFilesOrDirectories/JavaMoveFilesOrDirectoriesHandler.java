@@ -41,7 +41,7 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     if (elements.length > 1) {
       elements = preprocess(elements);
     }
-    return super.canMove(elements, targetContainer, reference);
+    return super.canMove(elements, targetContainer, null);
   }
 
   @Override

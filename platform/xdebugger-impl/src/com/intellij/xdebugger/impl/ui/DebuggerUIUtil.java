@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -28,6 +30,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -48,7 +51,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -85,17 +87,6 @@ public final class DebuggerUIUtil {
 
   public static void invokeLater(Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(runnable);
-  }
-
-  @Deprecated
-  public static RelativePoint calcPopupLocation(@NotNull Editor editor, final int line) {
-    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-
-    final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    if (!visibleArea.contains(p)) {
-      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
-    }
-    return new RelativePoint(editor.getContentComponent(), p);
   }
 
   @Nullable
@@ -140,6 +131,11 @@ public final class DebuggerUIUtil {
   public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
     EditorTextField textArea = new TextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
     textArea.setBackground(HintUtil.getInformationColor());
+
+    textArea.addSettingsProvider(e -> {
+      e.getScrollPane().setBorder(JBUI.Borders.empty());
+      e.getScrollPane().setViewportBorder(JBUI.Borders.empty());
+    });
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
     evaluator.startEvaluation(callback);
@@ -239,7 +235,7 @@ public final class DebuggerUIUtil {
       }
     });
 
-    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
         if (removedBreakpoint.equals(breakpoint)) {
@@ -435,15 +431,9 @@ public final class DebuggerUIUtil {
   }
 
   @NotNull
-  public static String getSelectionShortcutsAdText(String... actionNames) {
-    return getShortcutsAdText("ad.extra.selection.shortcut", actionNames);
-  }
-
-  @NotNull
-  public static String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key, String... actionNames) {
-    String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
-      .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
-    return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);
+  public static @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
+    String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().collect(NlsMessages.joiningOr());
+    return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message("ad.extra.selection.shortcut", text);
   }
 
   @Nullable
@@ -469,9 +459,11 @@ public final class DebuggerUIUtil {
     modifier.setValue(text, new XValueModifier.XModificationCallback() {
       @Override
       public void valueModified() {
-        if (tree.isDetached()) {
-          AppUIUtil.invokeOnEdt(() -> tree.rebuildAndRestore(treeState));
-        }
+        AppUIUtil.invokeOnEdt(() -> {
+          if (tree.isDetached()) {
+            tree.rebuildAndRestore(treeState);
+          }
+        });
         XDebuggerUtilImpl.rebuildAllSessionsViews(project);
       }
 

@@ -2,12 +2,13 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.CliResult;
+import com.intellij.idea.SocketLock;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   private final String myCommandName;
   private final int[] myArgsCount;
 
-  protected ApplicationStarterBase(@NotNull String commandName, int... possibleArgumentsCount) {
+  protected ApplicationStarterBase(@NotNull @NonNls String commandName, int... possibleArgumentsCount) {
     myCommandName = commandName;
     myArgsCount = possibleArgumentsCount;
   }
@@ -47,19 +48,17 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   @Override
   public Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
-      });
+      String title = ApplicationBundle.message("app.command.exec.error.title", getCommandName());
+      ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(getUsageMessage(), title, Messages.getInformationIcon()));
       return CliResult.error(1, getUsageMessage());
     }
     try {
       return processCommand(args, currentDirectory);
     }
     catch (Exception e) {
-      String message = String.format("Error executing %s: %s", getCommandName(), e.getMessage());
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Messages.showMessageDialog(message, StringUtil.toTitleCase(getCommandName()), Messages.getErrorIcon());
-      });
+      String title = ApplicationBundle.message("app.command.exec.error.title", getCommandName());
+      String message = ApplicationBundle.message("app.command.exec.error", getCommandName(), e.getMessage());
+      ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(message, title, Messages.getErrorIcon()));
       return CliResult.error(1, message);
     }
   }
@@ -75,7 +74,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     if (document != null) FileDocumentManager.getInstance().saveDocument(document);
   }
 
-  private boolean checkArguments(@NotNull List<String> args) {
+  protected boolean checkArguments(@NotNull List<String> args) {
     return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
   }
 
@@ -98,7 +97,8 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     try {
       int exitCode;
       try {
-        Future<CliResult> commandFuture = processCommand(args, null);
+        String currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
+        Future<CliResult> commandFuture = processCommand(args, currentDirectory);
         CliResult result = commandFuture.get();
         if (result.message != null) {
           System.out.println(result.message);

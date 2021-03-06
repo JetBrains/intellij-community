@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -19,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +38,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor;
 
-  private volatile String myInferenceError;
+  private volatile @NlsContexts.DetailedDescription String myInferenceError;
   private volatile boolean myApplicabilityError;
 
   private final LanguageLevel myLanguageLevel;
@@ -106,9 +109,17 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
+    return getPertinentApplicabilityLevel(null);
+  }
+
+  /**
+   * @param map reuse substitutor from conflict resolver cache when available
+   */
+  @ApplicabilityLevelConstant
+  public int getPertinentApplicabilityLevel(@Nullable Map<MethodCandidateInfo, PsiSubstitutor> map) {
     int result = myPertinentApplicabilityLevel;
     if (result == 0) {
-      myPertinentApplicabilityLevel = result = getPertinentApplicabilityLevelInner();
+      myPertinentApplicabilityLevel = result = getPertinentApplicabilityLevelInner(() -> map != null ? map.get(this) : getSubstitutor(false));
     }
     return result;
   }
@@ -117,7 +128,7 @@ public class MethodCandidateInfo extends CandidateInfo{
    * 15.12.2.2 Identify Matching Arity Methods Applicable by Strict Invocation
    */
   @ApplicabilityLevelConstant
-  private int getPertinentApplicabilityLevelInner() {
+  private int getPertinentApplicabilityLevelInner(Supplier<PsiSubstitutor> substitutorSupplier) {
     if (myArgumentList == null || !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return getApplicabilityLevel();
     }
@@ -126,7 +137,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
     if (isToInferApplicability()) {
       //ensure applicability check is performed
-      getSubstitutor(false);
+      substitutorSupplier.get();
 
       //already performed checks, so if inference failed, error message should be saved
       if (myApplicabilityError || isPotentiallyCompatible() != ThreeState.YES) {
@@ -135,7 +146,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
     }
 
-    final PsiSubstitutor substitutor = getSubstitutor(false);
+    final PsiSubstitutor substitutor = substitutorSupplier.get();
     final Computable<Integer> computable = () -> computeWithKnownTargetType(() -> {
       //arg types are calculated here without additional constraints:
       //non-pertinent to applicability arguments of arguments would be skipped
@@ -328,7 +339,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
-  
+
   @NotNull
   public PsiSubstitutor getSubstitutorFromQualifier() {
     return super.getSubstitutor();
@@ -351,10 +362,10 @@ public class MethodCandidateInfo extends CandidateInfo{
         RecursionGuard.StackStamp stackStamp = RecursionManager.markStack();
 
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
-        if (!stackStamp.mayCacheNow() ||
-            isOverloadCheck() ||
+        if (isOverloadCheck() ||
             !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-            myArgumentList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(myArgumentList.getParent())
+            myArgumentList != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(myArgumentList.getParent()) ||
+            !stackStamp.mayCacheNow()
         ) {
           return inferredSubstitutor;
         }
@@ -492,7 +503,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   /**
    * Should be invoked on the top level call expression candidate only
    */
-  public void setApplicabilityError(@NotNull String applicabilityError) {
+  public void setApplicabilityError(@NotNull @NlsContexts.DetailedDescription String applicabilityError) {
     boolean overloadCheck = isOverloadCheck();
     if (!overloadCheck) {
       myInferenceError = applicabilityError;
@@ -506,7 +517,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     myApplicabilityError = true;
   }
 
-  public String getInferenceErrorMessage() {
+  public @NlsContexts.DetailedDescription String getInferenceErrorMessage() {
     getSubstitutor();
     return myInferenceError;
   }
@@ -515,7 +526,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myInferenceError;
   }
 
-  public static class ApplicabilityLevel {
+  public static final class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;
     public static final int FIXED_ARITY = 3;

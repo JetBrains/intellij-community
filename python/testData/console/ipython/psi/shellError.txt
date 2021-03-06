@@ -5,7 +5,7 @@ PyFile:shellError.py
     PsiErrorElement:End of statement expected
       <empty list>
   PsiElement(Py:PLING)('!')
-  PsiErrorElement:Identifier expected.
+  PsiErrorElement:Identifier expected
     <empty list>
   PsiErrorElement:Statement expected, found Py:PLING
     <empty list>

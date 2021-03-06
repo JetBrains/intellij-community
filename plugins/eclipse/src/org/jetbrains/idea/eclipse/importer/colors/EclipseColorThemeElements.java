@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.eclipse.importer.colors;
 
+import org.jetbrains.annotations.NonNls;
+
+@NonNls
 public interface EclipseColorThemeElements {
   String BACKGROUND_SUFFIX = "background";
   

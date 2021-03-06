@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class IndentsPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Override
@@ -15,8 +16,9 @@ final class IndentsPassFactory implements TextEditorHighlightingPassFactory, Tex
   }
 
   @Override
-  @NotNull
+  @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+    if (!IndentsPassFilterUtils.shouldRunIndentsPass(editor)) return null;
     return new IndentsPass(file.getProject(), editor, file);
   }
 }

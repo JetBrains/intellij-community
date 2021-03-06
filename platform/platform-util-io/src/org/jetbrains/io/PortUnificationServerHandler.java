@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.compression.ZlibCodecFactory;
@@ -28,35 +28,31 @@ final class PortUnificationServerHandler extends Decoder {
   // https://github.com/kaikramer/keystore-explorer (use cert.cet as cert ext template)
   // keytool -genkey -keyalg EC -keysize 256 -alias selfsigned -keystore cert.jks -storepass jetbrains -validity 10000 -ext 'san=dns:localhost,dns:*.localhost,dns:*.dev,dns:*.local'
   @SuppressWarnings("SpellCheckingInspection")
-  private static final AtomicNotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = new AtomicNotNullLazyValue<SslContext>() {
-    @NotNull
-    @Override
-    protected SslContext compute() {
-      String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
-      if (algorithm == null) {
-        algorithm = "SunX509";
-      }
-
-      try {
-        KeyStore ks = KeyStore.getInstance("JCEKS");
-        char[] password = "jb".toCharArray();
-        String keyStoreResourceName = "cert.jceks";
-        InputStream keyStoreData = getClass().getResourceAsStream(keyStoreResourceName);
-        if (keyStoreData == null) {
-          throw new RuntimeException("Cannot find " + keyStoreResourceName);
-        }
-
-        ks.load(keyStoreData, password);
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm);
-        keyManagerFactory.init(ks, password);
-        return SslContextBuilder.forServer(keyManagerFactory)
-          .build();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+  private static final NotNullLazyValue<SslContext> SSL_SERVER_CONTEXT = NotNullLazyValue.atomicLazy(() -> {
+    String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
+    if (algorithm == null) {
+      algorithm = "SunX509";
     }
-  };
+
+    try {
+      KeyStore ks = KeyStore.getInstance("JCEKS");
+      char[] password = "jb".toCharArray(); //NON-NLS
+      String keyStoreResourceName = "cert.jceks";
+      InputStream keyStoreData = PortUnificationServerHandler.class.getResourceAsStream(keyStoreResourceName);
+      if (keyStoreData == null) {
+        throw new RuntimeException("Cannot find " + keyStoreResourceName);
+      }
+
+      ks.load(keyStoreData, password);
+      KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm);
+      keyManagerFactory.init(ks, password);
+      return SslContextBuilder.forServer(keyManagerFactory)
+        .build();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  });
 
   private final boolean detectSsl;
   private final boolean detectGzip;
@@ -99,14 +95,14 @@ final class PortUnificationServerHandler extends Decoder {
       else if (isHttp(magic1, magic2)) {
         NettyUtil.addHttpServerCodec(pipeline);
         pipeline.addLast("delegatingHttpHandler", delegatingHttpRequestHandler);
-        final Logger logger = Logger.getInstance(BuiltInServer.class);
+        Logger logger = Logger.getInstance(BuiltInServer.class);
         if (logger.isDebugEnabled()) {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
               if (message instanceof HttpResponse) {
                 HttpResponse response = (HttpResponse)message;
-                logger.debug("OUT HTTP: " + response.toString());
+                logger.debug("OUT HTTP: " + response);
               }
               super.write(context, message, promise);
             }

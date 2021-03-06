@@ -18,6 +18,7 @@ package com.siyeh.ig.security;
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -28,7 +29,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
       Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class"));
   }
 
   @Override
@@ -103,7 +103,7 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(field.getInitializer());
+      final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(field.getInitializer());
       if (ExpressionUtils.isNullLiteral(initializer)) {
         return true;
       }

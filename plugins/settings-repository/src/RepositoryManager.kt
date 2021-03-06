@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.progress.ProgressIndicator
-import gnu.trove.THashSet
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.containers.CollectionFactory
 import java.io.InputStream
 import java.util.*
 
@@ -16,6 +17,7 @@ interface RepositoryManager {
 
   fun isRepositoryExists(): Boolean
 
+  @NlsSafe
   fun getUpstream(): String?
 
   fun hasUpstream(): Boolean
@@ -81,8 +83,8 @@ internal data class ImmutableUpdateResult(override val changed: Collection<Strin
 }
 
 internal class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
-  override val changed = THashSet(changed)
-  override val deleted = THashSet(deleted)
+  override val changed = CollectionFactory.createSmallMemoryFootprintSet(changed)
+  override val deleted = CollectionFactory.createSmallMemoryFootprintSet(deleted)
 
   fun add(result: UpdateResult?): MutableUpdateResult {
     if (result != null) {

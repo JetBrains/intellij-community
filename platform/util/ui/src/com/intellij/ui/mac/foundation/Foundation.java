@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ImageLoader;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 
@@ -21,12 +23,15 @@ import java.util.*;
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 @NonNls
-public class Foundation {
+public final class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
+  private static final Function myObjcMsgSend;
 
   static {
     assert JnaLoader.isLoaded() : "JNA library is not available";
     myFoundationLibrary = Native.load("Foundation", FoundationLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));
+    NativeLibrary nativeLibrary = ((Library.Handler)Proxy.getInvocationHandler(myFoundationLibrary)).getNativeLibrary();
+    myObjcMsgSend = nativeLibrary.getFunction("objc_msgSend");
   }
 
   public static void init() { /* fake method to init foundation */ }
@@ -48,29 +53,58 @@ public class Foundation {
     return myFoundationLibrary.sel_registerName(s);
   }
 
-  public static ID invoke(final ID id, final Pointer selector, Object... args) {
-    return myFoundationLibrary.objc_msgSend(id, selector, args);
+  private static Object @NotNull [] prepInvoke(ID id, Pointer selector, Object[] args) {
+    Object[] invokArgs = new Object[args.length + 2];
+    invokArgs[0] = id;
+    invokArgs[1] = selector;
+    System.arraycopy(args, 0, invokArgs, 2, args.length);
+    return invokArgs;
+  }
+
+  public static @NotNull ID invoke(final ID id, final Pointer selector, Object... args) {
+    // objc_msgSend is called with the calling convention of the target method
+    // on x86_64 this does not make a difference, but arm64 uses a different calling convention for varargs
+    // it is therefore important to not call objc_msgSend as a vararg function
+    return new ID(myObjcMsgSend.invokeLong(prepInvoke(id, selector, args)));
+  }
+
+  /**
+   * Invokes the given vararg selector.
+   * Expects `NSArray arrayWithObjects:(id), ...` like signature, i.e. exactly one fixed argument, followed by varargs.
+   */
+  public static ID invokeVarArg(final ID id, final Pointer selector, Object... args) {
+    // c functions and objc methods have at least 1 fixed argument, we therefore need to separate out the first argument
+    return myFoundationLibrary.objc_msgSend(id, selector, args[0], Arrays.copyOfRange(args, 1, args.length));
   }
 
   public static ID invoke(final String cls, final String selector, Object... args) {
     return invoke(getObjcClass(cls), createSelector(selector), args);
   }
 
+  public static ID invokeVarArg(final String cls, final String selector, Object... args) {
+    return invokeVarArg(getObjcClass(cls), createSelector(selector), args);
+  }
+
   public static ID safeInvoke(final String stringCls, final String stringSelector, Object... args) {
     ID cls = getObjcClass(stringCls);
     Pointer selector = createSelector(stringSelector);
-    if (invoke(cls, "respondsToSelector:", selector).intValue() == 0) {
+    if (!invoke(cls, "respondsToSelector:", selector).booleanValue()) {
       throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, stringCls));
     }
     return invoke(cls, selector, args);
   }
 
-  public static ID invoke(final ID id, final String selector, Object... args) {
+  public static @NotNull ID invoke(final ID id, final String selector, Object... args) {
     return invoke(id, createSelector(selector), args);
   }
 
-  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args); }
-  public static double invoke_fpret(ID receiver, String selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, createSelector(selector), args); }
+  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) {
+    return myObjcMsgSend.invokeDouble(prepInvoke(receiver, selector, args));
+  }
+
+  public static double invoke_fpret(ID receiver, String selector, Object... args) {
+    return invoke_fpret(receiver, createSelector(selector), args);
+  }
 
   public static boolean isNil(ID id) {
     return id == null || ID.NIL.equals(id);
@@ -78,7 +112,7 @@ public class Foundation {
 
   public static ID safeInvoke(final ID id, final String stringSelector, Object... args) {
     Pointer selector = createSelector(stringSelector);
-    if (!id.equals(ID.NIL) && invoke(id, "respondsToSelector:", selector).intValue() == 0) {
+    if (!id.equals(ID.NIL) && !invoke(id, "respondsToSelector:", selector).booleanValue()) {
       throw new RuntimeException(String.format("Missing selector %s for %s", stringSelector, toStringViaUTF8(invoke(id, "description"))));
     }
     return invoke(id, selector, args);
@@ -124,11 +158,13 @@ public class Foundation {
   @Nullable
   public static String stringFromSelector(Pointer selector) {
     ID id = myFoundationLibrary.NSStringFromSelector(selector);
-    if (id.intValue() > 0) {
-      return toStringViaUTF8(id);
+    return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
     }
 
-    return null;
+  @Nullable
+  public static String stringFromClass(ID aClass) {
+    ID id = myFoundationLibrary.NSStringFromClass(aClass);
+    return ID.NIL.equals(id) ? null : toStringViaUTF8(id);
   }
 
   public static Pointer getClass(Pointer clazz) {
@@ -151,7 +187,7 @@ public class Foundation {
     final ID workspace = invoke("NSWorkspace", "sharedWorkspace");
     final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), nsString(path));
 
-    return result.intValue() == 1;
+    return result.booleanValue();
   }
 
   public static boolean isPackageAtPath(@NotNull final File file) {
@@ -159,7 +195,7 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  private static class NSString {
+  private static final class NSString {
     private static final ID nsStringCls = getObjcClass("NSString");
     private static final Pointer stringSel = createSelector("string");
     private static final Pointer allocSel = createSelector("alloc");
@@ -175,7 +211,7 @@ public class Foundation {
         return invoke(nsStringCls, stringSel);
       }
 
-      byte[] utf16Bytes = s.getBytes(CharsetToolkit.UTF_16LE_CHARSET);
+      byte[] utf16Bytes = s.getBytes(StandardCharsets.UTF_16LE);
       return invoke(invoke(invoke(nsStringCls, allocSel),
                            initWithBytesLengthEncodingSel, utf16Bytes, utf16Bytes.length, nsEncodingUTF16LE),
                     autoreleaseSel);
@@ -197,7 +233,7 @@ public class Foundation {
 
   @Nullable
   public static String toStringViaUTF8(ID cfString) {
-    if (cfString.intValue() == 0) return null;
+    if (ID.NIL.equals(cfString)) return null;
 
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
     int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul
@@ -208,8 +244,7 @@ public class Foundation {
     return Native.toString(buffer);
   }
 
-  @Nullable
-  public static String getNSErrorText(@Nullable ID error) {
+  public static @NlsSafe @Nullable String getNSErrorText(@Nullable ID error) {
     if (error == null || error.byteValue() == 0) return null;
 
     String description = toStringViaUTF8(invoke(error, "localizedDescription"));
@@ -260,11 +295,11 @@ public class Foundation {
   }
 
   public static ID autorelease(ID id){
-    return Foundation.invoke(id, "autorelease");
+    return invoke(id, "autorelease");
   }
 
   public static boolean isMainThread() {
-    return invoke("NSThread", "isMainThread").intValue() > 0;
+    return invoke("NSThread", "isMainThread").booleanValue();
   }
 
   private static Callback ourRunnableCallback;
@@ -438,8 +473,7 @@ public class Foundation {
       return data.getByteArray(0, length());
     }
 
-    @NotNull
-    public Image createImageFromBytes() {
+    public @NotNull Image createImageFromBytes() {
       return ImageLoader.loadFromBytes(bytes());
     }
   }
@@ -555,8 +589,8 @@ public class Foundation {
   }
 
   public static ID createDict(final String @NotNull [] keys, final Object @NotNull [] values) {
-    final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
-    final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
+    final ID nsKeys = invokeVarArg("NSArray", "arrayWithObjects:", convertTypes(keys));
+    final ID nsData = invokeVarArg("NSArray", "arrayWithObjects:", convertTypes(values));
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
   }
 
@@ -572,11 +606,12 @@ public class Foundation {
     return new ID(pointerType.getPointer().getLong(0));
   }
 
-  private static Object[] convertTypes(Object @NotNull [] v) {
-    final Object[] result = new Object[v.length];
+  public static Object[] convertTypes(Object @NotNull [] v) {
+    final Object[] result = new Object[v.length + 1];
     for (int i = 0; i < v.length; i++) {
       result[i] = convertType(v[i]);
     }
+    result[v.length] = ID.NIL;
     return result;
   }
 

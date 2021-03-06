@@ -31,7 +31,7 @@ import java.util.Objects;
 public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("ant-properties");
   private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN =
-    new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.name.column.name")) {
+    new ColumnInfo<>(AntBundle.message("edit.ant.properties.name.column.name")) {
       @Override
       public String valueOf(BuildFileProperty buildFileProperty) {
         return buildFileProperty.getPropertyName();
@@ -48,7 +48,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     };
   private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN =
-    new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.value.column.name")) {
+    new ColumnInfo<>(AntBundle.message("edit.ant.properties.value.column.name")) {
       @Override
       public boolean isCellEditable(BuildFileProperty buildFileProperty) {
         return USER_PROPERTY_CONDITION.value(buildFileProperty);
@@ -158,10 +158,10 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private void updatePanel() {
     if (myTarget != null) {
-      myRunTargetCheckBox.setText("Run Ant target '" + myTarget.getName() + "'");
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.named.ant.target", myTarget.getDisplayName()));
     }
     else {
-      myRunTargetCheckBox.setText("Run Ant target <none>");
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.unknown.ant.target"));
     }
     final boolean enabled = myTarget != null && myRunTargetCheckBox.isSelected();
     UIUtil.setEnabled(myPropertiesPanel, enabled, true);
@@ -169,7 +169,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   @Override
   public String getTabName() {
-    return myPostProcessing ? POST_PROCESSING_TAB : PRE_PROCESSING_TAB;
+    return myPostProcessing ? POST_PROCESSING_TAB_POINTER.get() : PRE_PROCESSING_TAB_POINTER.get();
   }
 
   @Override

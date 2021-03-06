@@ -1,7 +1,8 @@
 <html>
 <body>
-<p>Report meta annotations which are used by frameworks by reflection but their retention policy is not RUNTIME.
-  If retention policy is missed, then default retention policy 'CLASS' would be used, which means that annotations by default are not visible at runtime</p>
+Reports meta annotations which are used via reflection by frameworks, but their retention policy is not RUNTIME.
+If a retention policy is not specified, then the default retention policy 'CLASS' will be used.
+Such annotations will not be visible at runtime.
 <!-- tooltip end -->
 <p><small>New in 2017.2</small></p>
 </body>

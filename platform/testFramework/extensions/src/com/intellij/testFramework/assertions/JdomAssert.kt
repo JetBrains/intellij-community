@@ -26,9 +26,6 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
     return this
   }
 
-  @Deprecated("isEqualTo(file: Path)", ReplaceWith("isEqualTo(file.toPath())"))
-  fun isEqualTo(file: File) = isEqualTo(file.toPath())
-
   fun isEqualTo(file: Path): JdomAssert {
     isNotNull
 

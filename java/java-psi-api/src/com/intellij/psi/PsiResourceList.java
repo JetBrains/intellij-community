@@ -7,5 +7,9 @@ package com.intellij.psi;
  * @see PsiTryStatement#getResourceList()
  */
 public interface PsiResourceList extends PsiElement, Iterable<PsiResourceListElement> {
+  /**
+   * @return number of PsiResourceListElement children 
+   * (unlike method name suggests, not only resource variables, but also resource expressions)
+   */
   int getResourceVariablesCount();
 }

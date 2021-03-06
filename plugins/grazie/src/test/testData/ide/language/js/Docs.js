@@ -29,14 +29,14 @@ class ExampleClassWithNoTypos {
 }
 
 /**
- * It is <warning descr="ARTICLE_MISSING">friend</warning> there
+ * It is friend there
  *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
  */
 class ExampleClassWithTypos {
     /**
      * Creates an empty group
-     * @param  {String} name the name which group
+     * @param  {String} name the <warning descr="COMMA_WHICH">name which</warning> group
      */
     constructor(name) {
         /** @private */

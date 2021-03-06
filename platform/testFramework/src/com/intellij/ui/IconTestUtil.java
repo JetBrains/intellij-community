@@ -15,7 +15,7 @@ import java.text.AttributedCharacterIterator;
 import java.util.Collections;
 import java.util.List;
 
-public class IconTestUtil {
+public final class IconTestUtil {
   @Nullable
   public static String getIconPath(Icon icon) {
     icon = unwrapRetrievableIcon(icon);

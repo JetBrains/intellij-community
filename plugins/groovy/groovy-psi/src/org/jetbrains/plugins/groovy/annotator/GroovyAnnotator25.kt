@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 import org.jetbrains.plugins.groovy.transformations.immutable.isImmutable
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectAllParamsFromNamedVariantMethod
@@ -52,7 +52,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   private fun checkRequiredNamedArguments(callExpression: GrCallExpression) {
-    if (!PsiUtil.isCompileStatic(callExpression)) return
+    if (!isCompileStatic(callExpression)) return
     val namedArguments = callExpression.namedArguments.mapNotNull { it.labelName }.toSet()
     if (namedArguments.isEmpty()) return
 

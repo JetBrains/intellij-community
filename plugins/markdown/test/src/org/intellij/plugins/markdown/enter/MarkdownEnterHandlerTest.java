@@ -38,6 +38,10 @@ public class MarkdownEnterHandlerTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testQuoteInListAfterFirstLine() {
+    doTest();
+  }
+
   public void testQuoteInListWithSpace() {
     doTest();
   }

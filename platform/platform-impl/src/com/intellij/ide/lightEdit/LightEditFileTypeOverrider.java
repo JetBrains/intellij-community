@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeOverrider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
+import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class LightEditFileTypeOverrider implements FileTypeOverrider {
   static void markUnknownFileTypeAsPlainText(@NotNull VirtualFile file) {
     if (file.getFileType() == FileTypes.UNKNOWN) {
       file.putUserData(KEY, Boolean.TRUE);
-      CachedFileType.clearCache(); // refresh com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.getFileType
+      FileContentUtilCore.reparseFiles(file);
     }
   }
 }

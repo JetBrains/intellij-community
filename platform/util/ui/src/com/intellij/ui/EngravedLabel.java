@@ -1,11 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.ui;
 
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,7 +10,7 @@ import java.awt.*;
 public class EngravedLabel extends JLabel {
   private Color myShadowColor = EngravedTextGraphics.SHADOW_COLOR;
 
-  public EngravedLabel(String text) {
+  public EngravedLabel(@Nls String text) {
     super(text);
     setOpaque(false);
   }

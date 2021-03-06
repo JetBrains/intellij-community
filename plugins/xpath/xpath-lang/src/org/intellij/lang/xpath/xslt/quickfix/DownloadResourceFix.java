@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.net.IOExceptionDialog;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -42,7 +43,7 @@ public class DownloadResourceFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Download External Resource";
+    return XPathBundle.message("intention.family.name.download.external.resource");
   }
 
   @Override
@@ -69,9 +70,11 @@ public class DownloadResourceFix implements LocalQuickFix {
 
     while (tryAgain) {
       tryAgain = false;
-      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Downloading Resource", true, project)) {
+      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+                                                                            XPathBundle.message("progress.title.downloading.resource"), true, project)) {
         if (ex[0] != null) {
-          tryAgain = IOExceptionDialog.showErrorDialog("Error during Download", "Error downloading " + ex[0].getLocation());
+          tryAgain = IOExceptionDialog.showErrorDialog(XPathBundle.message("dialog.title.error.during.download"),
+                                                       XPathBundle.message("text.error.downloading", ex[0].getLocation()));
           ex[0] = null;
         }
         else {

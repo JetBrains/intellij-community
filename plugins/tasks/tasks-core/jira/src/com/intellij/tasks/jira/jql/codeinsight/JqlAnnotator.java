@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.jira.jql.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class JqlAnnotator implements Annotator {
       public void visitEmptyValue(JqlEmptyValue emptyValue) {
         JqlSimpleClause clause = PsiTreeUtil.getParentOfType(emptyValue, JqlSimpleClause.class);
         if (clause != null && !isEmptyClause(clause)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, String.format("Not expecting '%s' here", emptyValue.getText())).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, String.format(TaskBundle.message("inspection.message.not.expecting.s.here"), emptyValue.getText())).create();
         }
       }
 
@@ -41,7 +42,7 @@ public class JqlAnnotator implements Annotator {
       public void visitJqlList(JqlList list) {
         JqlSimpleClause clause = PsiTreeUtil.getParentOfType(list, JqlSimpleClause.class);
         if (clause != null && !isListClause(clause)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Not expecting list of values here").create();
+          holder.newAnnotation(HighlightSeverity.ERROR, TaskBundle.message("inspection.message.not.expecting.list.values.here")).create();
         }
       }
 
@@ -60,12 +61,12 @@ public class JqlAnnotator implements Annotator {
         }
         boolean hasListOperand = operandIsListLiteral || operandIsListFunction;
         if (isListClause(clause) && !hasListOperand) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Expecting list of values here").range(operand).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, TaskBundle.message("inspection.message.expecting.list.values.here")).range(operand).create();
         }
 
         boolean hasEmptyOperand = operand instanceof JqlEmptyValue;
         if (isEmptyClause(clause) && !hasEmptyOperand) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Expecting 'empty' or 'null' here").range(operand).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, TaskBundle.message("inspection.message.expecting.empty.or.null.here")).range(operand).create();
         }
       }
 

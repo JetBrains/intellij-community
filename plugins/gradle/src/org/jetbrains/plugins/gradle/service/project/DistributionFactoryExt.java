@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -36,15 +36,10 @@ import static org.gradle.internal.FileUtils.hasExtension;
 /**
  * @author Vladislav.Soroka
  */
-public class DistributionFactoryExt extends DistributionFactory {
+public final class DistributionFactoryExt extends DistributionFactory {
 
   private DistributionFactoryExt() {
     super(Time.clock());
-  }
-
-  @Deprecated
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
-    setWrappedDistribution(connector, wrapperPropertyFile, gradleUserHome, null);
   }
 
   public static void setWrappedDistribution(GradleConnector connector,
@@ -123,11 +118,11 @@ public class DistributionFactoryExt extends DistributionFactory {
       File[] files = libDir.listFiles(file -> hasExtension(file, ".jar"));
       // Make sure file order is always consistent
       Arrays.sort(files);
-      return new DefaultClassPath(files);
+      return DefaultClassPath.of(files);
     }
   }
 
-  private static class ZippedDistribution implements Distribution {
+  private static final class ZippedDistribution implements Distribution {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
     private final File distributionBaseDir;

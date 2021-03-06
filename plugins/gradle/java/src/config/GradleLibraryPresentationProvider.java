@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
@@ -30,7 +30,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
   GradleLibraryPresentationProvider() {
     super(GRADLE_KIND);
 
-    myLibraryManager = ServiceManager.getService(GradleInstallationManager.class);
+    myLibraryManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
   }
 
   @NotNull
@@ -75,7 +75,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return GradleConstants.GRADLE_NAME;
+    return GradleConstants.GRADLE_NAME; //NON-NLS GRADLE_NAME
   }
 
   @Override
@@ -92,6 +92,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
   }
 
   @Nullable
+  @NlsSafe
   private static String getGradleVersion(VirtualFile[] libraryFiles) {
     for (VirtualFile file : libraryFiles) {
       final String version = getGradleJarVersion(file);

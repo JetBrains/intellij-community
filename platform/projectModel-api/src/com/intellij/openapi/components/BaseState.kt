@@ -14,12 +14,13 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 
-private val LOG = logger<BaseState>()
+internal val LOG = logger<BaseState>()
 
 private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java, BaseState::class.java.classLoader).first()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
+    @JvmStatic
     // should be part of class and not file level to access private field of class
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
@@ -74,10 +75,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    */
   protected fun <T : Charset> property(initialValue: T) = addProperty(factory.obj(initialValue))
 
-  // Enum is an immutable, so, it is safe to use it as default value.
-  @Deprecated(message = "Use [enum] instead", replaceWith = ReplaceWith("enum(defaultValue)"), level = DeprecationLevel.ERROR)
-  protected fun <T : Enum<*>> property(defaultValue: T) = addProperty(factory.obj(defaultValue))
-
   protected inline fun <reified T : Enum<*>> enum(defaultValue: T): StoredPropertyBase<T> {
     @Suppress("UNCHECKED_CAST")
     return doEnum(defaultValue, T::class.java) as StoredPropertyBase<T>
@@ -96,12 +93,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(null))
 
   protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map<K, V>(LinkedHashMap()))
-
-  @Deprecated(level = DeprecationLevel.ERROR, message = "Use map", replaceWith = ReplaceWith("map()"))
-  protected fun <K : Any, V: Any> map(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(value))
-
-  @Deprecated(level = DeprecationLevel.ERROR, message = "Use string", replaceWith = ReplaceWith("string(defaultValue)"))
-  protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
@@ -130,6 +121,11 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   @ApiStatus.Internal
   fun intIncrementModificationCount() {
     MOD_COUNT_UPDATER.incrementAndGet(this)
+  }
+
+  @ApiStatus.Internal
+  fun addModificationCount(delta: Long) {
+    MOD_COUNT_UPDATER.addAndGet(this, delta)
   }
 
   override fun accepts(accessor: Accessor, bean: Any): Boolean {

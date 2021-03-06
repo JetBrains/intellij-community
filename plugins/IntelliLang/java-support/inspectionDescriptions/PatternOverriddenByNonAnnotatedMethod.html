@@ -1,26 +1,9 @@
 <html>
 <body>
-<table>
-  <tr>
-    <td valign="top">
-
-      <p>
-        This inspecton Checks whether a method without any <code>@Pattern</code> or derived annotation overrides an annotated
-        method from its base classes. This is not necessary for the error-highlighting inside the editor, however the
-        runtime-check instrumentation doesn't pick up annotations from base-class methods.
-      </p>
-
-      <p>
-        A QuickFix is provided to add an annotation that matches the one from the base-class method. This ensures the
-        runtime-check instrumentation works correctly.
-      </p>
-    </td>
-  </tr>
-  <tr>
-    <td height="20">
-      <font face="verdana" size="-2"><p id="footer">Powered by IntelliLang</p></font>
-    </td>
-  </tr>
-</table>
+Reports when a method without any <code>@Pattern</code> annotation overrides a <code>@Pattern</code> annotated method.
+This does not prevent error-highlighting inside the editor, however the overriding method will not be checked at runtime.
+<p>
+A quick fix is provided to add a <code>@Pattern</code> annotation that matches the one from the superclass method. This ensures the
+runtime-check instrumentation works correctly.
 </body>
 </html>

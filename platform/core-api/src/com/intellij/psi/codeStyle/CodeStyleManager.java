@@ -137,11 +137,11 @@ public abstract class CodeStyleManager  {
    * @param ranges   ranges to process
    * @throws IncorrectOperationException  if the file to reformat is read-only.
    */
-  public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException;
+  public abstract void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException;
 
   public abstract void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info) throws IncorrectOperationException;
 
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) throws IncorrectOperationException {
     List<TextRange> rangesList = new ArrayList<>(ranges);
     reformatTextWithContext(file, new ChangedRangesInfo(rangesList, null));
   }
@@ -345,5 +345,9 @@ public abstract class CodeStyleManager  {
   @NotNull
   public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
     return DocCommentSettings.DEFAULTS;
+  }
+
+  public void scheduleReformatWhenSettingsComputed(final @NotNull PsiFile file) {
+    throw new UnsupportedOperationException();
   }
 }

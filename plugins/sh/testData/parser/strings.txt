@@ -468,7 +468,10 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(param_separator)('@!-+')
+        PsiElement(param_separator)('@')
+        PsiElement(word)('!')
+        PsiElement(param_separator)('-')
+        PsiElement(word)('+')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST

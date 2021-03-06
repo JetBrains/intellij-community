@@ -8,9 +8,12 @@ class DisabledMethodIf {
   @Test
   void testShouldBeExecuted() {
   }
-
   @Test
-  @DisabledIf("2==2")
+  @DisabledIf("foo")
   void testDisabledMethod() {
+  }
+
+  boolean foo() {
+    return true;
   }
 }

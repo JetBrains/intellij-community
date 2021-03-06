@@ -3,8 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,85 +11,92 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 final class ProgressSlidePainter {
-  private static final int PREFETCH_BUFFER_SIZE = 5;
-  private final BlockingQueue<Slide> myPrefetchQueue = new ArrayBlockingQueue<>(PREFETCH_BUFFER_SIZE);
-  private boolean isFinish;
-  private Slide nextSlide = null;
+  private static final int PREFETCH_PARALLEL_COUNT = 4;
+  private static final int PREFETCH_BUFFER_SIZE = 15;
+
   private final List<ProgressSlide> myProgressSlides;
 
-  private static class Slide {
+  private final AtomicReferenceArray<Slide> myPrefetchedSlides;
+  private final AtomicInteger myPrefetchSlideIndex;
+  private volatile int myNextSlideIndex = 0;
+
+  private static final class Slide {
+    private static final Slide Empty = new Slide(0, null);
+
     public final double progress;
     public final Image image;
-    public final boolean isLastSlide;
 
-    Slide(double progress, Image image, boolean isLastSlide) {
+    public boolean isEmpty() {
+      return Empty.equals(this);
+    }
+
+    Slide(double progress, Image image) {
       this.progress = progress;
       this.image = image;
-      this.isLastSlide = isLastSlide;
     }
   }
 
   ProgressSlidePainter(@NotNull ApplicationInfoEx appInfo) {
     myProgressSlides = appInfo.getProgressSlides();
     myProgressSlides.sort(Comparator.comparing(it -> it.progressRation));
+    myPrefetchedSlides = new AtomicReferenceArray<>(myProgressSlides.size());
+    myPrefetchSlideIndex = new AtomicInteger(0);
   }
 
   public void startPreloading() {
-    AppExecutorUtil.getAppExecutorService().execute(() -> {
-      for (int i = 0; i < myProgressSlides.size(); i++) {
-        ProgressSlide slide = myProgressSlides.get(i);
-        try {
-          Image image = ImageLoader.loadFromUrl(slide.url, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
+    var executorService = AppExecutorUtil.getAppExecutorService();
+    for (int i = 0; i < PREFETCH_PARALLEL_COUNT; i++) {
+      executorService.execute(() -> {
+        while (true) {
+          int slideIndex = myPrefetchSlideIndex.getAndIncrement();
+          if (slideIndex >= myProgressSlides.size()) return;
+
+          while (slideIndex > myNextSlideIndex + PREFETCH_BUFFER_SIZE)
+            Thread.onSpinWait();
+
+          var slide = myProgressSlides.get(slideIndex);
+          var image = Splash.doLoadImage(slide.url);
           if (image == null) {
-            throw new IllegalStateException("Cannot load slide by url: " + slide.url);
+            Logger.getInstance(ProgressSlidePainter.class).error("Cannot load slide by url: " + slide.url);
+            myPrefetchedSlides.set(slideIndex, Slide.Empty);
+            continue;
           }
-          myPrefetchQueue.put(new Slide(slide.progressRation, image, i == myProgressSlides.size() - 1));
+          myPrefetchedSlides.compareAndSet(slideIndex, null, new Slide(slide.progressRation, image));
         }
-        catch (InterruptedException e) {
-          return;
-        }
-      }
-    });
+      });
+    }
   }
 
   public void paintSlides(@NotNull Graphics g, double currentProgress) {
-    if (isFinish || (nextSlide != null && nextSlide.progress > currentProgress)) {
-      return;
-    }
-
-    if (nextSlide != null) {
-      StartupUiUtil.drawImage(g, nextSlide.image, 0, 0, null);
-      if (nextSlide.isLastSlide) {
-        isFinish = true;
-        nextSlide = null;
-        return;
-      }
-    }
-
-    Slide newSlide;
     do {
-      try {
-        newSlide = myPrefetchQueue.take();
-      }
-      catch (InterruptedException e) {
+      int index = myNextSlideIndex;
+      if (index >= myPrefetchedSlides.length())
+        return;
+
+      var newSlide = myPrefetchedSlides.get(index);
+      if (newSlide == null || newSlide.isEmpty()) {
+        if (myProgressSlides.get(index).progressRation <= currentProgress) {
+          next(index);
+          continue;
+        }
         return;
       }
+
       if (newSlide.progress <= currentProgress) {
         StartupUiUtil.drawImage(g, newSlide.image, 0, 0, null);
-        if (newSlide.isLastSlide) {
-          nextSlide = null;
-          isFinish = true;
-        }
-      }
-      else {
-        nextSlide = newSlide;
-        break;
-      }
+        next(index);
+      } else return;
     }
-    while (!newSlide.isLastSlide);
+    while (true);
+  }
+
+  private void next(int index) {
+    myPrefetchedSlides.set(index, Slide.Empty);
+    //noinspection NonAtomicOperationOnVolatileField
+    myNextSlideIndex++;
   }
 }

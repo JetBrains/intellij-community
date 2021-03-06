@@ -15,6 +15,7 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditorListener;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +179,7 @@ public final class InplaceEditingLayer extends JComponent{
     myInplaceEditorComponent.setBounds(
       myPreferredBounds.x,
       myPreferredBounds.y + (myPreferredBounds.height - prefSize.height)/2,
-      Math.min(Math.max(prefSize.width, myPreferredBounds.width), getWidth() - myPreferredBounds.x),
+      MathUtil.clamp(prefSize.width, myPreferredBounds.width, getWidth() - myPreferredBounds.x),
       prefSize.height
     );
 

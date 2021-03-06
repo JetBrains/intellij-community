@@ -12,8 +12,9 @@ import java.util.Objects;
 
 /**
  * Represents {@link DataIndexer} which behaviour can be extended by some kind of extension points.
- *
- * @see IdIndex, StubUpdatingIndex as an examples
+ * <p>
+ * See {@link com.intellij.psi.impl.cache.impl.id.IdIndex}, {@link com.intellij.psi.stubs.StubUpdatingIndex} as examples.
+ * </p>
  */
 @ApiStatus.Experimental
 public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> extends DataIndexer<K, V, FileContent> {
@@ -21,8 +22,8 @@ public interface CompositeDataIndexer<K, V, SubIndexerType, SubIndexerVersion> e
    * Calculates sub-indexer type which will be used by indexing algorithm.
    * Usually SubIndexerType it's some extension which build index for a given file.
    *
-   * @see CompositeDataIndexer#map(FileContent, Object)
    * @return null if file is not acceptable for indexing
+   * @see CompositeDataIndexer#map(FileContent, Object)
    */
   @Nullable
   SubIndexerType calculateSubIndexer(@NotNull IndexedFile file);

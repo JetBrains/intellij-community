@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -9,27 +9,23 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+  
 
   @Override
   protected String getBasePath() {
@@ -52,7 +48,7 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package test; public class A {}");
     PsiClass aClass = myFixture.addClass("public class test {}");
     doTest();
-    assertNull(ReferencesSearch.search(aClass).findFirst());
+    assertNull(ProgressManager.getInstance().runProcess(() -> ReferencesSearch.search(aClass).findFirst(), new EmptyProgressIndicator()));
   }
 
   public void testPackageNameAsClassFQName() {
@@ -199,6 +195,18 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package a; public class Base {" +
                        "private Base() {}\n" +
                        "protected Base(int... i) {}\n" +
+                       "}");
+    doTest();
+  }
+
+  public void testDiamondsWithAnonymousProtectedConstructor() {
+    myFixture.addClass("package a; public class Base<T> { protected Base() {}}");
+    doTest();
+  }
+  
+  public void testDiamondsWithProtectedCallInConstruction() {
+    myFixture.addClass("package a; public class Base { " +
+                       " protected String createString() {return null;}" +
                        "}");
     doTest();
   }

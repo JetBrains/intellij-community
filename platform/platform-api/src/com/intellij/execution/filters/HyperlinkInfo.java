@@ -16,9 +16,10 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public interface HyperlinkInfo {
-  void navigate(Project project);
+  void navigate(@NotNull Project project);
 
   default boolean includeInOccurenceNavigation() {
     return true;

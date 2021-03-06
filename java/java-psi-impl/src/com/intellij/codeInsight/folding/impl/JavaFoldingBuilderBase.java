@@ -199,7 +199,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                        @NotNull Document document,
                                        @NotNull Set<? super PsiElement> processedComments) {
     final FoldingDescriptor commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
-                                                                                        CustomFoldingBuilder::isCustomRegionElement,
+                                                                                        element -> isCustomRegionElement(element),
                                                                                         isCollapseCommentByDefault(comment));
     if (commentDescriptor != null) list.add(commentDescriptor);
   }
@@ -232,7 +232,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     PsiTypeElement typeElement = expression.getTypeElement();
     if (typeElement == null) return;
     if (!typeElement.isInferredType()) return;
+    if (expression.getType() instanceof PsiCapturedWildcardType) return;
     String presentableText = expression.getType().getPresentableText();
+    if (presentableText.length() > 25) return;
     list.add(new FoldingDescriptor(typeElement.getNode(), typeElement.getTextRange(), null, presentableText, true, Collections.emptySet()));
   }
 
@@ -344,10 +346,6 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (range.equals(fileRange)) return;
 
     LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= fileRange.getEndOffset());
-    // PSI element text ranges may be invalid because of reparse exception (see, for example, IDEA-10617)
-    if (range.getStartOffset() < 0 || range.getEndOffset() > fileRange.getEndOffset()) {
-      return;
-    }
 
     if (!allowOneLiners) {
       int startLine = document.getLineNumber(range.getStartOffset());

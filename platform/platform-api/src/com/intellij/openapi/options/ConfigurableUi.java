@@ -23,4 +23,9 @@ public interface ConfigurableUi<S> {
   default JComponent getPreferredFocusedComponent() {
     return null;
   }
+
+  @Nullable
+  default Runnable enableSearch(String option) {
+    return null;
+  }
 }

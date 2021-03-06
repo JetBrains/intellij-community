@@ -3,9 +3,11 @@ package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.UIUtil
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -136,7 +138,7 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
 class RunningThreadExecutionStackView(vm: Vm) : ScriptExecutionStack(vm, vm.presentableName, AllIcons.Debugger.ThreadRunning) {
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {
     // add dependency to DebuggerBundle?
-    container?.errorOccurred("Frames not available for unsuspended thread")
+    container?.errorOccurred(XDebuggerBundle.message("debugger.frames.dialog.message.not.available.for.unsuspended"))
   }
 
   override fun getTopFrame(): XStackFrame? = null
@@ -148,7 +150,9 @@ class InactiveAtBreakpointExecutionStackView(vm: Vm) : ScriptExecutionStack(vm, 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {}
 }
 
-abstract class ScriptExecutionStack(val vm: Vm, displayName: String, icon: javax.swing.Icon): XExecutionStack(displayName, icon) {
+abstract class ScriptExecutionStack(val vm: Vm, @NlsContexts.ListItem displayName : String, icon: javax.swing.Icon)
+  : XExecutionStack(displayName, icon) {
+
   override fun hashCode(): Int {
     return vm.hashCode()
   }
@@ -165,7 +169,7 @@ class ExecutionStackView(val suspendContext: SuspendContext<*>,
                          internal val viewSupport: DebuggerViewSupport,
                          private val topFrameScript: Script?,
                          private val topFrameSourceInfo: SourceInfo? = null,
-                         displayName: String = "",
+                         @NlsContexts.ListItem displayName: String = "",
                          isCurrent: Boolean = true)
   : ScriptExecutionStack(suspendContext.vm, displayName, getThreadIcon(isCurrent)) {
 
@@ -232,7 +236,7 @@ private val ASYNC_HEADER_ATTRIBUTES = SimpleTextAttributes(SimpleTextAttributes.
 
 private class AsyncFramesHeader(val asyncFunctionName: String) : XStackFrame(), XDebuggerFramesList.ItemWithCustomBackgroundColor {
   override fun customizePresentation(component: ColoredTextContainer) {
-    component.append("Async call from $asyncFunctionName", ASYNC_HEADER_ATTRIBUTES)
+    component.append(XDebuggerBundle.message("debugger.frames.label.async.call.from.function", asyncFunctionName), ASYNC_HEADER_ATTRIBUTES)
   }
 
   override fun getBackgroundColor(): Color? = null

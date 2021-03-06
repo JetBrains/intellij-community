@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.ui.playback.commands.TypeCommand;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActionMacro {
+public final class ActionMacro {
   private String myName;
 
   private final ArrayList<ActionDescriptor> myActions = new ArrayList<>();
@@ -48,6 +49,7 @@ public class ActionMacro {
     myName = name;
   }
 
+  @NlsSafe
   public String getName() {
     return myName;
   }

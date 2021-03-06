@@ -5,6 +5,5 @@ SHELL_SCRIPT
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
         PsiElement(param_separator)('#')
-        PsiWhiteSpace(' ')
-        PsiElement(word)('a')
+        PsiElement(word)(' a')
         PsiElement(})('}')

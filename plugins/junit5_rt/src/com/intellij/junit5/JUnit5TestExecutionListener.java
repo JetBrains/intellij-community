@@ -82,6 +82,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     StringBuilder builder = new StringBuilder();
     builder.append("timestamp = ").append(entry.getTimestamp());
     entry.getKeyValuePairs().forEach((key, value) -> builder.append(", ").append(key).append(" = ").append(value));
+    builder.append("\n");
     myPrintStream.println("##teamcity[testStdOut" + idAndName(testIdentifier) + " out = '" + escapeName(builder.toString()) + "']");
   }
 
@@ -205,7 +206,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                              "' nodeId='" + escapeName(getId(testIdentifier)) +
                              "' parentNodeId='" + escapeName(parentId) + "' ";
           testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
-          myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
+          myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
         }
 
         final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
@@ -231,11 +232,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private void testStarted(TestIdentifier testIdentifier) {
-    myPrintStream.println("\n##teamcity[testStarted" + idAndName(testIdentifier) + " " + getLocationHint(testIdentifier) + "]");
+    myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " " + getLocationHint(testIdentifier) + "]");
   }
   
   private void testFinished(TestIdentifier testIdentifier, long duration) {
-    myPrintStream.println("\n##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration='" + duration + "'" : "") + "]");
+    myPrintStream.println("##teamcity[testFinished" + idAndName(testIdentifier) + (duration > 0 ? " duration='" + duration + "'" : "") + "]");
   }
 
   private void testFailure(TestIdentifier testIdentifier,
@@ -296,7 +297,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
     }
     finally {
-      myPrintStream.println("\n" + MapSerializerUtil.asString(messageName, attrs));
+      myPrintStream.println(MapSerializerUtil.asString(messageName, attrs));
     }
   }
 
@@ -356,8 +357,17 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static String getMetainfo(TestIdentifier root) {
     return root.getSource()
-      .filter(testSource -> testSource instanceof MethodSource)
-      .map(testSource -> " metainfo='" + ((MethodSource)testSource).getMethodParameterTypes() + "'")
+      .map(testSource -> {
+        if (testSource instanceof MethodSource) {
+          return " metainfo='" + ((MethodSource)testSource).getMethodParameterTypes() + "'";
+        }
+        if (testSource instanceof ClassSource) {
+          return ((ClassSource)testSource).getPosition()
+            .map(position -> " metainfo='" + position.getLine() + ":" + position.getColumn() + "'")
+            .orElse(NO_LOCATION_HINT);
+        }
+        return NO_LOCATION_HINT;
+      })
       .orElse(NO_LOCATION_HINT);
   }
   

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +19,7 @@ import java.util.*;
 /**
  * @author lesya
  */
-public class ColorSettingsUtil {
+public final class ColorSettingsUtil {
   private ColorSettingsUtil() {
   }
 
@@ -73,7 +74,7 @@ public class ColorSettingsUtil {
   }
 
   @NotNull
-  private static String toDisplayName(@NotNull TextAttributesKey attributesKey) {
+  private static @NlsContexts.AttributeDescriptor String toDisplayName(@NotNull TextAttributesKey attributesKey) {
     return OptionsBundle.message(
       "options.java.attribute.descriptor.errors.group",
       StringUtil.capitalize(StringUtil.toLowerCase(attributesKey.getExternalName()).replaceAll("_", " ")));

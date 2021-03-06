@@ -181,7 +181,7 @@ public class LibraryDataNodeSubstitutor {
       final ExternalSourceDirectorySet directorySet = pair.second.getSources().get(sourceTypePair.second);
       if (directorySet != null) {
         for (File file : directorySet.getSrcDirs()) {
-          libraryData.addPath(LibraryPathType.SOURCE, file.getAbsolutePath());
+          libraryData.addPath(LibraryPathType.SOURCE, file.getPath());
         }
       }
     }

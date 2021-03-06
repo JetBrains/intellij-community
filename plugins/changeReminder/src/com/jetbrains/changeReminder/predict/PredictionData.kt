@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.predict
 
 import com.intellij.openapi.vcs.FilePath
@@ -13,10 +13,9 @@ internal sealed class PredictionData(val predictionToDisplay: Collection<Virtual
   enum class EmptyPredictionReason {
     SERVICE_INIT,
     TOO_MANY_FILES,
-    DATA_MANAGER_REMOVED,
+    TRAVERSER_INVALID,
     REQUIREMENTS_NOT_MET,
-    DATA_PACK_IS_NOT_FULL,
-    DATA_PACK_CHANGED,
+    GRAPH_CHANGED,
     EXCEPTION_THROWN,
     CALCULATION_CANCELED,
     UNEXPECTED_REASON;

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssertionErrorInfo extends ExceptionInfo {
   AssertionErrorInfo(int offset, String message) {
-    super(offset, "java.lang.ArrayStoreException", message);
+    super(offset, "java.lang.AssertionError", message);
   }
 
   @Override

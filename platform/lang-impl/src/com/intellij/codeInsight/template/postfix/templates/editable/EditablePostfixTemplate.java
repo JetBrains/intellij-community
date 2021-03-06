@@ -77,7 +77,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
 
     IntroduceTargetChooser.showChooser(
       editor, expressions,
-      new Pass<PsiElement>() {
+      new Pass<>() {
         @Override
         public void pass(@NotNull final PsiElement e) {
           prepareAndExpandForChooseExpression(e, editor);

@@ -38,6 +38,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider"
+                    interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Python"

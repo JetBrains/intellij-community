@@ -25,7 +25,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +81,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression reference = expression.getMethodExpression();
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(reference.getQualifierExpression());
+      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
       if (qualifier == null) {
         return;
       }

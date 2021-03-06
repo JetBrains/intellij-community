@@ -2,17 +2,15 @@
 package com.intellij.java.codeInsight.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 
@@ -20,9 +18,6 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author cdr
- */
 public class ControlFlowTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/psi/controlFlow";
 
@@ -50,10 +45,7 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     String result = controlFlow.toString().trim();
 
     final String expectedFullPath = StringUtil.trimEnd(file.getPath(),".java") + ".txt";
-    VirtualFile expectedFile = LocalFileSystem.getInstance().findFileByPath(expectedFullPath);
-    String expected = LoadTextUtil.loadText(expectedFile).toString().trim();
-    expected = expected.replaceAll("\r","");
-    assertEquals("Text mismatch (in file "+expectedFullPath+"):\n",expected, result);
+    assertSameLinesWithFile(expectedFullPath, result);
   }
 
   private void doAllTests() throws Exception {
@@ -83,7 +75,7 @@ public class ControlFlowTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("a.java", text);
     final PsiCodeBlock body = ((PsiJavaFile)getFile()).getClasses()[0].getMethods()[0].getBody();
     ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, new LocalsControlFlowPolicy(body), false);
-    IntArrayList exitPoints = new IntArrayList();
+    IntList exitPoints = new IntArrayList();
     ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize() -1 , exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
     assertEquals(1, exitPoints.size());
   }

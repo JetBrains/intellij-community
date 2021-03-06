@@ -143,7 +143,7 @@ public class RichTextControlBuilder {
         rowComponents.clear();
       }
       else {
-        final JLabel label = new JLabel(s);
+        final JLabel label = new JLabel(s); // NON-NLS
         label.setForeground(myForegroundColor);
         label.setBackground(myBackgroundColor);
         label.setFont(myFont);

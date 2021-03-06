@@ -15,11 +15,13 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -93,7 +95,7 @@ public abstract class AntDomPropertyDefiningElement extends AntDomElement implem
     return Collections.emptyList();
   }
 
-  protected String calcPropertyValue(String propertyName) {
+  protected @NlsSafe String calcPropertyValue(@NonNls String propertyName) {
     return ""; // some non-null value; actual value can be determined at runtime only
   }
 }

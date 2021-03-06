@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -54,6 +41,12 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
   protected abstract Set<String> getUnknownActions();
 
   protected abstract Set<String> getBoundActions();
+
+  protected abstract Collection<String> getConflictSafeGroups();
+
+  protected String getGroupForUnknownAction(@NotNull String actionId) {
+    return null;
+  }
 
   protected static Map<String, Map<String, List<String>>> parseKnownDuplicates(Map<String, String[][]> duplicates) {
     HashMap<String, Map<String, List<String>>> result = new HashMap<>();
@@ -265,7 +258,7 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
   }
 
   @NotNull
-  private static Map<String, Map<Shortcut, List<String>>> collectActualDuplicatedShortcuts() {
+  private Map<String, Map<Shortcut, List<String>>> collectActualDuplicatedShortcuts() {
     Map<String, Map<Shortcut, List<String>>> result = new HashMap<>();
 
     KeymapManagerEx km = KeymapManagerEx.getInstanceEx();
@@ -279,6 +272,8 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
 
       for (String actionId : keymap.getActionIds()) {
         if (boundActions.contains(actionId)) continue;
+        if (isConflictSafeAction(actionId)) continue;
+
 
         for (Shortcut shortcut : keymap.getShortcuts(actionId)) {
           List<String> actionList = map.computeIfAbsent(shortcut, key -> new ArrayList<>());
@@ -349,6 +344,21 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
     return result;
   }
 
+  private boolean isConflictSafeAction(String actionId) {
+    Collection<String> ids = ((ActionManagerImpl)ActionManager.getInstance()).getParentGroupIds(actionId);
+    for (String groupId : ids) {
+      if (getConflictSafeGroups().contains(groupId) || isConflictSafeAction(groupId)) {
+        return true;
+      }
+    }
+    if (ids.isEmpty()) {
+      String group = getGroupForUnknownAction(actionId);
+      if (group != null && getConflictSafeGroups().contains(group)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   @NotNull
   private static Shortcut parseShortcut(@NotNull String s) {
@@ -437,7 +447,6 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
       }
     }
   }
-
 
   public void testBoundActions() {
     StringBuilder failMessage = new StringBuilder();

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public class PsiClassUtil {
+public final class PsiClassUtil {
   private PsiClassUtil() { }
 
   public static boolean isRunnableClass(PsiClass aClass, boolean mustBePublic) {

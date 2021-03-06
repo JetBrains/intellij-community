@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.autotest;
 
 import com.intellij.AppTopics;
@@ -22,8 +22,9 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,27 +32,41 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.IntConsumer;
+import java.util.function.Predicate;
 
-public class DelayedDocumentWatcher implements AutoTestWatcher {
-
+public final class DelayedDocumentWatcher implements AutoTestWatcher {
   // All instance fields should be accessed in EDT
   private final Project myProject;
   private final int myDelayMillis;
-  private final Consumer<? super Integer> myModificationStampConsumer;
-  private final Condition<? super VirtualFile> myChangedFileFilter;
+  private final IntConsumer myModificationStampConsumer;
+  private final Predicate<? super VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
 
   private Disposable myDisposable;
   private SingleAlarm myAlarm;
-  private final Set<VirtualFile> myChangedFiles = new THashSet<>();
+  // reduce memory usage
+  private final Set<VirtualFile> myChangedFiles = CollectionFactory.createSmallMemoryFootprintSet();
   private boolean myDocumentSavingInProgress = false;
   private MessageBusConnection myConnection;
   private int myModificationStamp = 0;
 
+  /**
+   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, IntConsumer, Predicate)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
                                 @NotNull Consumer<? super Integer> modificationStampConsumer,
                                 @Nullable Condition<? super VirtualFile> changedFileFilter) {
+    this(project, delayMillis, (IntConsumer)it -> modificationStampConsumer.consume(it), it -> changedFileFilter.value(it));
+  }
+
+  public DelayedDocumentWatcher(@NotNull Project project,
+                                int delayMillis,
+                                @NotNull IntConsumer modificationStampConsumer,
+                                @Nullable Predicate<? super VirtualFile> changedFileFilter) {
     myProject = project;
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
@@ -127,7 +142,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
         if (ProjectUtil.isProjectOrWorkspaceFile(file)) {
           return;
         }
-        if (myChangedFileFilter != null && !myChangedFileFilter.value(file)) {
+        if (myChangedFileFilter != null && !myChangedFileFilter.test(file)) {
           return;
         }
 
@@ -163,7 +178,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
           return;
         }
         myChangedFiles.clear();
-        myModificationStampConsumer.consume(myModificationStamp);
+        myModificationStampConsumer.accept(myModificationStamp);
       });
     }
   }

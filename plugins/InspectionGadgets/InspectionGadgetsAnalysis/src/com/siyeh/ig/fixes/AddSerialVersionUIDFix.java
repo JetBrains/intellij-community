@@ -15,11 +15,15 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
@@ -37,8 +41,25 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     assert aClass != null;
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
     final long serialVersionUID = SerialVersionUIDBuilder.computeDefaultSUID(aClass);
-    final PsiField field =
-      elementFactory.createFieldFromText("private static final long serialVersionUID = " + serialVersionUID + "L;", aClass);
+    final PsiField field = elementFactory.createFieldFromText(generateSerialVersionUIDFieldText(serialVersionUID), aClass);
+    if (PsiUtil.isLanguageLevel14OrHigher(field)) {
+      annotateFieldWithSerial(field);
+    }
     aClass.add(field);
+  }
+
+  @NonNls
+  public static String generateSerialVersionUIDFieldText(long serialVersionUID) {
+    return "private static final long serialVersionUID = " + serialVersionUID + "L;";
+  }
+
+  public static void annotateFieldWithSerial(@NotNull PsiField field) {
+    PsiModifierList modifierList = field.getModifierList();
+    if (modifierList == null) return;
+    PsiAnnotation annotation = AddAnnotationPsiFix
+      .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_IO_SERIAL, PsiNameValuePair.EMPTY_ARRAY, modifierList);
+    if (annotation != null) {
+      JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(annotation);
+    }
   }
 }

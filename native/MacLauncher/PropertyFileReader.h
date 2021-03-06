@@ -1,9 +1,4 @@
-//
-// Created by max on 11/6/12.
-//
-// To change the template use AppCode | Preferences | File Templates.
-//
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #import <Foundation/Foundation.h>
 

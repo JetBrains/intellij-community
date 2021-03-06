@@ -6,9 +6,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,11 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/refactoring/inheritanceToDelegation/";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15;
   }
 
   public void testSimpleInsertion() {
@@ -112,6 +119,10 @@ public class InheritanceToDelegationTest extends LightMultiFileTestCase {
 
   public void testTypeParametersSubstitution() {
      doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
+  }
+
+  public void testSealedParent() {
+    doTest(createPerformAction("B", "myDelegate", "MyA", "A", new int[]{}, ArrayUtilRt.EMPTY_STRING_ARRAY, true, false));
   }
 
   private ThrowableRunnable<Exception> createPerformAction(

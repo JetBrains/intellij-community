@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author ven
  */
@@ -28,9 +30,11 @@ public class RenameFileAction extends AnAction {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     String place = e.getPlace();
-    boolean enabled = file != null &&
-                      (enabledInProjectView(file) || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) &&
-                      place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
+    boolean enabled =
+      file != null && file.isWritable()
+      && Objects.nonNull(file.getVirtualFile()) && !(file.getVirtualFile().getFileSystem().isReadOnly())
+      && (enabledInProjectView(file) || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place))
+      && place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setEnabledAndVisible(enabled);
   }
 

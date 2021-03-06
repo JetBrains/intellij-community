@@ -6,6 +6,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.filters.ExpandProperties;
 import org.gradle.api.Transformer;
 import org.gradle.util.ConfigureUtil;
+import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -72,8 +73,8 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
       if (!FilterReader.class.isAssignableFrom(clazz)) {
         myContext.processMessage(
           new CompilerMessage(
-            GradleResourcesBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING,
-            String.format("Error - Invalid filter specification for %s. It should extend java.io.FilterReader.", filter.filterType), null)
+            GradleJpsBundle.message("gradle.resources.compiler"), BuildMessage.Kind.WARNING,
+            GradleJpsBundle.message("error.invalid.filter.should.extend", filter.filterType), null)
         );
       }
       Constructor constructor = clazz.getConstructor(Reader.class);
@@ -95,8 +96,8 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
     }
     catch (Throwable th) {
       myContext.processMessage(new CompilerMessage(
-                                 GradleResourcesBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING,
-                                 String.format("Error - Failed to apply filter(%s): %s", filter.filterType, th.getMessage()), null)
+        GradleJpsBundle.message("gradle.resources.compiler"), BuildMessage.Kind.WARNING,
+        GradleJpsBundle.message("error.failed.to.apply.filter", filter.filterType, th.getMessage()), null)
       );
     }
     return original;

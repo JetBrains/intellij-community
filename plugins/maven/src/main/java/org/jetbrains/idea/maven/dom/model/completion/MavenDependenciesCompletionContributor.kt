@@ -11,7 +11,7 @@ import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.function.Consumer
 
 
-open class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
+class MavenDependenciesCompletionContributor : MavenCoordinateCompletionContributor("dependency") {
 
   override fun find(service: DependencySearchService,
                     coordinates: MavenDomShortArtifactCoordinates,

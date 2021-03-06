@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class PyConsoleUtil {
+public final class PyConsoleUtil {
   public static final String ORDINARY_PROMPT = ">>>";
   public static final String INPUT_PROMPT = ">?";
   public static final String INDENT_PROMPT = "...";
@@ -244,8 +244,7 @@ public class PyConsoleUtil {
   }
 
   private static AnActionEvent createActionEvent(@NotNull AnActionEvent e, PythonConsoleView consoleView) {
-    final ConsoleDataContext dataContext = new ConsoleDataContext(e.getDataContext(), consoleView);
-    return new AnActionEvent(e.getInputEvent(), dataContext, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
+    return e.withDataContext(new ConsoleDataContext(e.getDataContext(), consoleView));
   }
 
   public static AnAction createPrintAction(PythonConsoleView consoleView) {

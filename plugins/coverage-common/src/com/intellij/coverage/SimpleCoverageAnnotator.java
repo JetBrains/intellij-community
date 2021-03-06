@@ -16,6 +16,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
     final String filesCoverageInfo = getFilesCoverageInformationString(coverageInfo);
     if (filesCoverageInfo != null) {
-      final StringBuilder builder = new StringBuilder();
+      final @Nls StringBuilder builder = new StringBuilder();
       builder.append(filesCoverageInfo);
       final String linesCoverageInfo = getLinesCoverageInformationString(coverageInfo);
       if (linesCoverageInfo != null) {
@@ -85,9 +86,12 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return null;
   }
 
-  // SimpleCoverageAnnotator doesn't require normalized file paths any more
-  // so now coverage report should work w/o usage of this method
+  /**
+   * @deprecated SimpleCoverageAnnotator doesn't require normalized file paths any more
+   * so now coverage report should work w/o usage of this method
+  */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String getFilePath(final String filePath) {
     return normalizeFilePath(filePath);
   }
@@ -260,11 +264,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return true;
   }
 
-  public void annotate(@NotNull final VirtualFile contentRoot,
-                       @NotNull final CoverageSuitesBundle suite,
-                       final @NotNull CoverageDataManager dataManager, @NotNull final ProjectData data,
-                       final Project project,
-                       final Annotator annotator) {
+  protected void annotate(@NotNull final VirtualFile contentRoot,
+                          @NotNull final CoverageSuitesBundle suite,
+                          final @NotNull CoverageDataManager dataManager, @NotNull final ProjectData data,
+                          final Project project,
+                          final Annotator annotator) {
     if (!contentRoot.isValid()) {
       return;
     }
@@ -398,7 +402,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  protected String getLinesCoverageInformationString(@NotNull final FileCoverageInfo info) {
+  protected @Nls String getLinesCoverageInformationString(@NotNull final FileCoverageInfo info) {
     return CoverageBundle.message("coverage.view.text.lines.covered", calcCoveragePercentage(info));
   }
 
@@ -406,7 +410,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return calcPercent(info.coveredLineCount, info.totalLineCount);
   }
 
-  private static int calcPercent(final int covered, final int total) {
+  protected static int calcPercent(final int covered, final int total) {
     return total != 0 ? (int)((double)covered / total * 100) : 100;
   }
 

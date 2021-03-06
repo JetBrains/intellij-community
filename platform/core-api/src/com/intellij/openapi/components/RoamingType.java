@@ -30,10 +30,4 @@ public enum RoamingType {
    * Default, shared.
    */
   DEFAULT,
-
-  /**
-   * @deprecated Use {@link #PER_OS} instead
-   */
-  @Deprecated
-  PER_PLATFORM,
 }

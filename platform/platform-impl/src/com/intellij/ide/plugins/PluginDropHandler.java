@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
@@ -11,28 +11,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
-public class PluginDropHandler extends CustomFileDropHandler {
+public final class PluginDropHandler extends CustomFileDropHandler {
   @Override
   public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {
-    File file = getFile(t);
-    if (file == null) return false;
-    String path = file.getPath();
+    Path file = getFile(t);
+    if (file == null) {
+      return false;
+    }
+    String path = file.toString();
     return FileUtilRt.extensionEquals(path, "jar") ||
            FileUtilRt.extensionEquals(path, "zip");
   }
 
   @Override
   public boolean handleDrop(@NotNull Transferable t, @Nullable Editor editor, Project project) {
-    File file = getFile(t);
-    if (file == null) return false;
-    return PluginInstaller.install(new InstalledPluginsTableModel(), file, PluginInstallCallbackDataKt::installPluginFromCallbackData, null);
+    Path file = getFile(t);
+    if (file == null) {
+      return false;
+    }
+    return PluginInstaller.installFromDisk(
+      new InstalledPluginsTableModel(project),
+      file,
+      PluginInstallCallbackDataKt::installPluginFromCallbackData,
+      null
+    );
   }
 
-  @Nullable
-  private static File getFile(@NotNull Transferable t) {
+  private static @Nullable Path getFile(@NotNull Transferable t) {
     List<File> list = FileCopyPasteUtil.getFileList(t);
-    return list == null || list.size() != 1 ? null : list.get(0);
+    return list == null || list.size() != 1 ? null : list.get(0).toPath();
   }
 }

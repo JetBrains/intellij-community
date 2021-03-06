@@ -204,6 +204,10 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, null);
   }
 
+  public Inlay addBlockInlay(int offset, boolean showAbove, boolean relatesToPrecedingText) {
+    return EditorTestUtil.addBlockInlay(getEditor(), offset, relatesToPrecedingText, showAbove, 0, null);
+  }
+
   public Inlay addBlockInlay(int offset, boolean showAbove, int widthInPixels, int heightInPixels) {
     return EditorTestUtil.addBlockInlay(getEditor(), offset, false, showAbove, widthInPixels, heightInPixels);
   }

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ public class AppInspectionProfilesVisibleTreeState implements PersistentStateCom
   private final VisibleTreeStateComponent myComponent = new VisibleTreeStateComponent();
 
   public static AppInspectionProfilesVisibleTreeState getInstance() {
-    return ServiceManager.getService(AppInspectionProfilesVisibleTreeState.class);
+    return ApplicationManager.getApplication().getService(AppInspectionProfilesVisibleTreeState.class);
   }
 
   @Override

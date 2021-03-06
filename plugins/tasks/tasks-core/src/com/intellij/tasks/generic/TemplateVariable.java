@@ -1,5 +1,7 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public class TemplateVariable {
   private String myName = "";
   private String myValue = "";
-  private String myDescription = "";
+  private @NlsContexts.Tooltip String myDescription = "";
   private boolean myReadOnly;
   private boolean myHidden;
   private boolean myShownOnFirstTab;
@@ -59,22 +61,22 @@ public class TemplateVariable {
   }
 
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
   @NotNull
-  public String getValue() {
+  public @NlsSafe String getValue() {
     return myValue;
   }
 
   // TODO: actually not used in UI
   @NotNull
-  public String getDescription() {
+  public @NlsContexts.Tooltip String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@NotNull @NonNls String description) {
+  public void setDescription(@NotNull @NlsContexts.Tooltip String description) {
     myDescription = description;
   }
 

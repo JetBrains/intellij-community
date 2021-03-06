@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,7 +112,7 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
 
   @Override
   @Nullable
-  public TerminalHandler addTerminal(@NotNull final String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
+  public TerminalHandler addTerminal(@NotNull final @Nls String presentableName, InputStream terminalOutput, OutputStream terminalInput) {
     synchronized (myLogsDisposed) {
       if (myLogsDisposed.get()) {
         return null;
@@ -143,6 +144,9 @@ public class DeploymentLogManagerImpl implements DeploymentLogManager {
     myChangeListener.run();
   }
 
+  /*
+    FIXME: memory leak. We need to remove closed handlers
+   */
   @NotNull
   public List<LoggingHandlerBase> getAdditionalLoggingHandlers() {
     List<LoggingHandlerBase> result;

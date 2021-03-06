@@ -7,10 +7,11 @@ class NlsIndirect {
     void test(boolean flag, String input) {
         String s = <warning descr="Hardcoded string literal: \"foo\"">"foo"</warning> + <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>;
         use(s);
-        s = "bar";
+        s = <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>;
+        // "bar" is actually ok as passed to NonNls but we assume that the same local cannot be reused in both Nls and NonNls contexts.
         useOk(s);
         
-        String s1 = flag ? input : <warning descr="Hardcoded string literal: \"baz\"">"baz"</warning>;
+        String s1 = flag ? <warning descr="Reference to non-localized string is used where localized string is expected">input</warning> : <warning descr="Hardcoded string literal: \"baz\"">"baz"</warning>;
         if (Math.random() > 0.5) {
             use(s1);
         } else {

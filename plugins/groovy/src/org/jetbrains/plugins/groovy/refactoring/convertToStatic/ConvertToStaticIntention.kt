@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic
 
 import com.intellij.openapi.editor.Editor
@@ -10,9 +10,9 @@ import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager.checkForPass
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.checkForPass
+import org.jetbrains.plugins.groovy.lang.psi.util.getCompileStaticAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.util.isCompileStatic
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle
 
 class ConvertToStaticIntention : Intention() {
@@ -27,7 +27,7 @@ class ConvertToStaticIntention : Intention() {
 
   private fun isCSAnnotated(element: PsiElement): Boolean {
     if (element !is GrMember) return false
-    val annotation = GroovyPsiManager.getCompileStaticAnnotation(element) ?: return false
+    val annotation = getCompileStaticAnnotation(element) ?: return false
     return checkForPass(annotation)
   }
 
@@ -38,7 +38,7 @@ class ConvertToStaticIntention : Intention() {
   }
 
   override fun getElementPredicate(): PsiElementPredicate = PsiElementPredicate {
-    if (!PsiUtil.isCompileStatic(it)) return@PsiElementPredicate false
+    if (!isCompileStatic(it)) return@PsiElementPredicate false
     val checker = TypeChecker()
     it.accept(GroovyPsiElementVisitor(checker))
     if (checker.fixes.isNotEmpty()) return@PsiElementPredicate true

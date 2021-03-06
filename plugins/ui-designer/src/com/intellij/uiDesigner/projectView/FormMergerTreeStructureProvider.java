@@ -11,20 +11,20 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class FormMergerTreeStructureProvider implements TreeStructureProvider {
+public final class FormMergerTreeStructureProvider implements TreeStructureProvider {
   private final Project myProject;
 
   public FormMergerTreeStructureProvider(Project project) {
@@ -34,25 +34,29 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
-    if (parent.getValue() instanceof Form) return children;
+    if (parent.getValue() instanceof Form) {
+      return children;
+    }
 
     // Optimization. Check if there are any forms at all.
     boolean formsFound = false;
-    for (AbstractTreeNode node : children) {
+    for (AbstractTreeNode<?> node : children) {
       if (node.getValue() instanceof PsiFile) {
         PsiFile file = (PsiFile)node.getValue();
-        if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) {
+        if (file.getFileType() == GuiFormFileType.INSTANCE) {
           formsFound = true;
           break;
         }
       }
     }
 
-    if (!formsFound) return children;
+    if (!formsFound) {
+      return children;
+    }
 
     Collection<AbstractTreeNode<?>> result = new LinkedHashSet<>(children);
-    ProjectViewNode[] copy = children.toArray(new ProjectViewNode[0]);
-    for (ProjectViewNode element : copy) {
+    ProjectViewNode<?>[] copy = children.toArray(new ProjectViewNode[0]);
+    for (ProjectViewNode<?> element : copy) {
       PsiClass psiClass = null;
       if (element.getValue() instanceof PsiClass) {
         psiClass = (PsiClass)element.getValue();
@@ -85,7 +89,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
-      for(AbstractTreeNode node: selected) {
+      for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form) {
           result.add((Form) node.getValue());
         }
@@ -95,7 +99,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       }
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for(AbstractTreeNode node: selected) {
+      for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form) {
           return new MyDeleteProvider(selected);
         }
@@ -105,8 +109,8 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   }
 
   private static Collection<PsiFile> convertToFiles(Collection<BasePsiNode<? extends PsiElement>> formNodes) {
-    ArrayList<PsiFile> psiFiles = new ArrayList<>();
-    for (AbstractTreeNode treeNode : formNodes) {
+    List<PsiFile> psiFiles = new ArrayList<>();
+    for (AbstractTreeNode<?> treeNode : formNodes) {
       psiFiles.add((PsiFile)treeNode.getValue());
     }
     return psiFiles;
@@ -114,19 +118,20 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
   private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode<?>> children, List<PsiFile> forms) {
     if (children.isEmpty() || forms.isEmpty()) return Collections.emptyList();
-    ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<>();
-    HashSet<PsiFile> psiFiles = new HashSet<>(forms);
-    for (final AbstractTreeNode child : children) {
+    List<BasePsiNode<? extends PsiElement>> result = new ArrayList<>();
+    Set<PsiFile> psiFiles = new HashSet<>(forms);
+    for (final AbstractTreeNode<?> child : children) {
       if (child instanceof BasePsiNode) {
         BasePsiNode<? extends PsiElement> treeNode = (BasePsiNode<? extends PsiElement>)child;
-        //noinspection SuspiciousMethodCalls
-        if (psiFiles.contains(treeNode.getValue())) result.add(treeNode);
+        if (psiFiles.contains(treeNode.getValue())) {
+          result.add(treeNode);
+        }
       }
     }
     return result;
   }
 
-  private static class MyDeleteProvider implements DeleteProvider {
+  private static final class MyDeleteProvider implements DeleteProvider {
     private final PsiElement[] myElements;
 
     MyDeleteProvider(final Collection<AbstractTreeNode<?>> selected) {
@@ -146,7 +151,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
     private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode<?>> selected) {
       Set<PsiElement> result = new HashSet<>();
-      for(AbstractTreeNode node: selected) {
+      for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form) {
           Form form = (Form)node.getValue();
           result.add(form.getClassToBind());

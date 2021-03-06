@@ -586,4 +586,113 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
       "    }\n" +
       "}");
   }
+
+  public void testIdea235221() {
+    doTextTest(
+      "java",
+
+      "package test;\n" +
+      "\n" +
+      "public class Crush {\n" +
+      "    void crush() {\n" +
+      "        assertThat()\n" +
+      "                /* Then */\n" +
+      "        .isNotNull()<caret>\n" +
+      "    }\n" +
+      "}",
+
+      "package test;\n" +
+      "\n" +
+      "public class Crush {\n" +
+      "    void crush() {\n" +
+      "        assertThat()\n" +
+      "                /* Then */\n" +
+      "        .isNotNull()\n" +
+      "                <caret>\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea192807() {
+    doTextTest(
+      "java",
+
+      "class MyTest\n" +
+      "{\n" +
+      "    private void foo() { String a = \"a\";<caret> String b = \"b\";}\n" +
+      "}",
+
+      "class MyTest\n" +
+      "{\n" +
+      "    private void foo() { String a = \"a\";\n" +
+      "        <caret>String b = \"b\";}\n" +
+      "}"
+    );
+  }
+
+  public void testIdea188397() {
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        System.out.println(\"Hello World!\");}<caret>\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        System.out.println(\"Hello World!\");}\n" +
+      "    <caret>\n" +
+      "}"
+    );
+  }
+
+  public void testIdea163806() {
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    /**\n" +
+      "     * Something<br><caret>\n" +
+      "     */\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    /**\n" +
+      "     * Something<br>\n" +
+      "     * <caret>\n" +
+      "     */\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea205999() {
+    doTextTest(
+      "java",
+
+      "public class Test {\n" +
+      "    void foo(String a, String b, String c)\n" +
+      "    {\n" +
+      "        if(true) \n" +
+      "        {}\n" +
+      "        else<caret>{}\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    void foo(String a, String b, String c)\n" +
+      "    {\n" +
+      "        if(true) \n" +
+      "        {}\n" +
+      "        else\n" +
+      "        <caret>{}\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

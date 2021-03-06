@@ -9,18 +9,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.LanguageSubstitutors;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 public final class LanguageUtil {
   private LanguageUtil() {
@@ -30,9 +27,25 @@ public final class LanguageUtil {
     (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
 
   public static @Nullable Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
-    Language language = getFileLanguage(file);
-    if (language == null) return null;
-    return LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
+    return getLanguageForPsi(project, file, null);
+  }
+
+  public static @Nullable Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file, @Nullable FileType fileType) {
+    if (file == null) return null;
+    // a copy-paste of getFileLanguage(file)
+    Language explicit = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getLanguage() : null;
+    Language fileLanguage = explicit != null ? explicit : getFileTypeLanguage(fileType != null ? fileType : file.getFileType());
+
+    if (fileLanguage == null) return null;
+    // run generic file-level substitutors, e.g. for scratches
+    for (LanguageSubstitutor substitutor : LanguageSubstitutors.getInstance().forKey(Language.ANY)) {
+      Language language = substitutor.getLanguage(file, project);
+      if (language != null && language != Language.ANY) {
+        fileLanguage = language;
+        break;
+      }
+    }
+    return LanguageSubstitutors.getInstance().substituteLanguage(fileLanguage, file, project);
   }
 
   public static @Nullable Language getFileLanguage(@Nullable VirtualFile file) {
@@ -102,6 +115,10 @@ public final class LanguageUtil {
     return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null;
   }
 
+  public static @NotNull List<Language> getInjectableLanguages() {
+    return getLanguages((lang) -> isInjectableLanguage(lang));
+  }
+
   public static boolean isFileLanguage(@NotNull Language language) {
     if (language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
     if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) return false;
@@ -111,10 +128,14 @@ public final class LanguageUtil {
   }
 
   public static @NotNull List<Language> getFileLanguages() {
+    return getLanguages((lang) -> isFileLanguage(lang));
+  }
+
+  public static @NotNull List<Language> getLanguages(Function<? super Language, Boolean> filter) {
     LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
     List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {
-      if (!isFileLanguage(language)) continue;
+      if (!filter.apply(language)) continue;
       result.add(language);
     }
     result.sort(LANGUAGE_COMPARATOR);
@@ -152,7 +173,7 @@ public final class LanguageUtil {
       result = Collections.emptySet();
     }
     else {
-      result = new THashSet<>();
+      result = new HashSet<>();
       MetaLanguage.EP_NAME.forEachExtensionSafe(metaLanguage -> {
         if (metaLanguage.matchesLanguage(language)) {
           result.add(metaLanguage);

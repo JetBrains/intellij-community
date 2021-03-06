@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.function.Supplier;
 
-public class EmmetPreviewUtil {
+public final class EmmetPreviewUtil {
   private EmmetPreviewUtil() {
   }
 
@@ -88,7 +88,7 @@ public class EmmetPreviewUtil {
     final PsiFile copy = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), templateText);
     VirtualFile vFile = copy.getVirtualFile();
     if (vFile != null) {
-      vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+      UndoUtil.disableUndoFor(vFile);
     }
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> CodeStyleManager.getInstance(file.getProject()).reformat(copy)));
     return copy.getText();

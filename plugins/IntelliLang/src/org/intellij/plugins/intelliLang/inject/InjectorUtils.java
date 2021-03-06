@@ -11,10 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -28,7 +25,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.TIntArrayList;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -163,6 +159,7 @@ public final class InjectorUtils {
 
   @Nullable
   public static LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
+    if (TemporaryPlacesRegistry.SUPPORT_ID.equals(id)) return new TemporaryLanguageInjectionSupport();
     for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
       if (id.equals(support.getId())) return support;
     }
@@ -246,14 +243,6 @@ public final class InjectorUtils {
 
   public static <T> void putInjectedFileUserData(@NotNull PsiElement element, @NotNull Language language, @NotNull Key<T> key, @Nullable T value) {
     InjectedLanguageUtil.putInjectedFileUserData(element, language, key, value);
-  }
-
-  /**
-   * @deprecated use {@link InjectorUtils#putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
-   */
-  @Deprecated
-  public static <T> void putInjectedFileUserData(@NotNull MultiHostRegistrar registrar, @NotNull Key<T> key, T value) {
-    InjectedLanguageUtil.putInjectedFileUserData(registrar, key, value);
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -347,7 +336,6 @@ public final class InjectorUtils {
   private static TreeMap<TextRange,CommentInjectionData> calcInjections(@NotNull PsiFile file) {
     final TreeMap<TextRange, CommentInjectionData> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
 
-    TIntArrayList ints = new TIntArrayList();
     StringSearcher searcher = new StringSearcher("language=", true, true, false);
     CharSequence contents = file.getViewProvider().getContents();
     final char[] contentsArray = CharArrayUtil.fromSequenceWithoutCopying(contents);
@@ -357,7 +345,6 @@ public final class InjectorUtils {
     for (int idx = searcher.scan(contents, contentsArray, s0, s1);
          idx != -1;
          idx = searcher.scan(contents, contentsArray, idx + 1, s1)) {
-      ints.add(idx);
       PsiComment element = PsiTreeUtil.findElementOfClassAtOffset(file, idx, PsiComment.class, false);
       if (element != null) {
         String str = ElementManipulators.getValueText(element).trim();
@@ -385,7 +372,7 @@ public final class InjectorUtils {
 
   @NotNull
   private static Supplier<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
-    return new Supplier<PsiElement>() {
+    return new Supplier<>() {
       PsiElement e = element;
 
       @Nullable
@@ -428,6 +415,7 @@ public final class InjectorUtils {
       return ObjectUtils.notNull(myMap.get("language"), "");
     }
 
+    @NlsSafe
     @NotNull
     public String getDisplayName() {
       return myDisplayName;

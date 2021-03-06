@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -66,9 +67,7 @@ public class SFormsFastMapDirect {
         int[] arrnext = next[i];
 
         @SuppressWarnings("unchecked") FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
-        int[] arrnextnew = new int[length];
-
-        System.arraycopy(arrnext, 0, arrnextnew, 0, length);
+        int[] arrnextnew = Arrays.copyOf(arrnext, length);
 
         mapelements[i] = arrnew;
         mapnext[i] = arrnextnew;
@@ -343,7 +342,7 @@ public class SFormsFastMapDirect {
         if (ent != null) {
           final int key = i == 0 ? ikey : (i == 1 ? ikey + VarExprent.STACK_BASE : -ikey);
 
-          list.add(new Entry<Integer, FastSparseSet<Integer>>() {
+          list.add(new Entry<>() {
 
             private final Integer var = key;
             private final FastSparseSet<Integer> val = ent;

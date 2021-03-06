@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,11 +15,12 @@ import java.awt.datatransfer.FlavorMap;
 import java.awt.datatransfer.SystemFlavorMap;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FileCopyPasteUtil {
+public final class FileCopyPasteUtil {
   private static final Logger LOG = Logger.getInstance(FileCopyPasteUtil.class);
 
   private FileCopyPasteUtil() { }
@@ -79,12 +80,29 @@ public class FileCopyPasteUtil {
     return false;
   }
 
-  @Nullable
-  public static List<File> getFileList(@NotNull final Transferable transferable) {
+  public static @Nullable List<File> getFileList(@NotNull Transferable transferable) {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-        @SuppressWarnings({"unchecked"}) List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        return ContainerUtil.filter(fileList, file -> !StringUtil.isEmptyOrSpaces(file.getPath()));
+        @SuppressWarnings("unchecked")
+        List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        return ContainerUtil.filter(fileList, file -> !Strings.isEmptyOrSpaces(file.getPath()));
+      }
+      else {
+        List<Path> files = LinuxDragAndDropSupport.getFiles(transferable);
+        return files == null ? null : ContainerUtil.map(files, it -> it.toFile());
+      }
+    }
+    catch (Exception ignore) { }
+
+    return null;
+  }
+
+  public static @Nullable List<Path> getFiles(@NotNull Transferable transferable) {
+    try {
+      if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+        @SuppressWarnings("unchecked")
+        List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        return ContainerUtil.mapNotNull(fileList, file -> Strings.isEmptyOrSpaces(file.getPath()) ? null : file.toPath());
       }
       else {
         return LinuxDragAndDropSupport.getFiles(transferable);
@@ -95,8 +113,7 @@ public class FileCopyPasteUtil {
     return null;
   }
 
-  @NotNull
-  public static List<File> getFileListFromAttachedObject(Object attached) {
+  public static @NotNull List<File> getFileListFromAttachedObject(Object attached) {
     List<File> result;
     if (attached instanceof TransferableWrapper) {
       result = ((TransferableWrapper)attached).asFileList();
@@ -110,8 +127,7 @@ public class FileCopyPasteUtil {
     return result == null ? Collections.emptyList() : result;
   }
 
-  @NotNull
-  public static List<VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
+  public static @NotNull List<VirtualFile> getVirtualFileListFromAttachedObject(Object attached) {
     List<VirtualFile> result;
     List<File> fileList = getFileListFromAttachedObject(attached);
     if (fileList.isEmpty()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.ide.DataManager;
@@ -90,7 +90,9 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
       }
     }
 
-    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myRepositoriesList).disableUpDownActions();
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myRepositoriesList)
+      .disableUpDownActions()
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN);
 
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
@@ -114,7 +116,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
         }
 
         JBPopupFactory.getInstance()
-          .createActionGroupPopup("Add Server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
+          .createActionGroupPopup(TaskBundle.message("popup.title.add.server"), group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(
           anActionButton.getPreferredPopupPoint());
       }
@@ -202,7 +204,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myRepositoriesList;
   }
 

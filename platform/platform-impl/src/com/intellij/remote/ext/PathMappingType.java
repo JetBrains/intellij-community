@@ -1,40 +1,30 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ext;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
-public class PathMappingType {
-  public static final PathMappingType REPLICATED_FOLDER = new PathMappingType(AllIcons.Ide.Readonly, "Shared folders from Vagrantfile:");
-  public static final PathMappingType DEPLOYMENT = new PathMappingType(AllIcons.Ide.Readonly, "From deployment configuration:");
+/**
+ * @apiNote platform expects that every instance of this class is unique
+ */
+public final class PathMappingType {
+  public static final PathMappingType REPLICATED_FOLDER = new PathMappingType(AllIcons.Ide.Readonly,
+                                                                              IdeBundle
+                                                                                .messagePointer("tooltip.shared.folders.from.vagrantfile"));
+  public static final PathMappingType DEPLOYMENT = new PathMappingType(AllIcons.Ide.Readonly,
+                                                                       IdeBundle.messagePointer("tooltip.from.deployment.configuration"));
 
   @Nullable private final Icon myIcon;
-  @Nullable private final String myTooltip;
+  private final @Nullable Supplier<@NlsContexts.Tooltip @Nullable String> myTooltipPointer;
 
-  public PathMappingType() {
-    myIcon = null;
-    myTooltip = null;
-  }
-
-  public PathMappingType(@Nullable Icon icon, @Nullable String tooltip) {
+  public PathMappingType(@Nullable Icon icon, @Nullable Supplier<@NlsContexts.Tooltip @Nullable String> tooltipPointer) {
     myIcon = icon;
-    myTooltip = tooltip;
+    myTooltipPointer = tooltipPointer;
   }
 
   @Nullable
@@ -42,25 +32,9 @@ public class PathMappingType {
     return myIcon;
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   public String getTooltip() {
-    return myTooltip;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    PathMappingType type = (PathMappingType)o;
-
-    if (myTooltip != null ? !myTooltip.equals(type.myTooltip) : type.myTooltip != null) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return myTooltip != null ? myTooltip.hashCode() : 0;
+    return myTooltipPointer == null ? null : myTooltipPointer.get();
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,7 +81,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
     comboBox.setMaximumRowCount(8);
 
-    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<ComboBox<String>>() {
+    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<>() {
       @Override
       public String getText(ComboBox comboBox) {
         return comboBox.getEditor().getItem().toString();
@@ -108,7 +109,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     myCallback = callback;
   }
 
-  public void setRecentDirectories(@NotNull List<String> recentDirectories) {
+  public void setRecentDirectories(@NotNull List<@NlsSafe String> recentDirectories) {
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     myUpdating = true;
     try {
@@ -125,11 +126,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     final String url = directory.getPresentableUrl();
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     comboBox.getEditor().setItem(url);
-    setDirectory(url);
-  }
-
-  private void setDirectory(String path) {
-    myDirectoryComboBox.getChildComponent().setSelectedItem(path);
+    myDirectoryComboBox.getChildComponent().setSelectedItem(url);
   }
 
   @Nullable

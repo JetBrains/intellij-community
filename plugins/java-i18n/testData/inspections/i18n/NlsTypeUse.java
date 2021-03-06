@@ -14,6 +14,9 @@ interface AnnotatedSam {
 }
 
 class NlsTypeUse {
+    List<@Nls String> NlsConst = Arrays.asList(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>, <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>);
+    List<String> NonNlsConst = Arrays.asList("foo", "bar");
+    
     native void foo(AnnotatedSam str);
     native void foo2(Supplier<@Nls String> str);
     native void foo3(Supplier<String> str);

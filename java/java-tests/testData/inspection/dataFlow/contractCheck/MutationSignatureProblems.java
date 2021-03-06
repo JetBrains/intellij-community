@@ -17,7 +17,7 @@ class Test {
   @Contract(mutates = <warning descr="Reference to parameter #3 is invalid">"param3"</warning>)
   public static void test2(List<String> list) {}
 
-  @Contract(mutates = <warning descr="Invalid token: blahblahblah; supported are 'this', 'param1', 'param2', etc.">"blahblahblah"</warning>)
+  @Contract(mutates = <warning descr="Invalid token: blahblahblah; supported are 'this', 'param1', 'param2', and so on.">"blahblahblah"</warning>)
   public static void test3(List<String> list) {}
 
   @Contract(mutates = "param")

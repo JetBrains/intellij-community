@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class JavaOverridingMethodUtil {
+public final class JavaOverridingMethodUtil {
   private static final int MAX_OVERRIDDEN_METHOD_SEARCH = 20;
 
   /**

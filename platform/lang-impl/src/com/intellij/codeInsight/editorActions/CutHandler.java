@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
+import com.intellij.openapi.editor.actions.DocumentGuardedTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -90,7 +91,7 @@ public class CutHandler extends EditorWriteActionHandler {
         TextRange range = it.next();
         editor.getCaretModel().moveToOffset(range.getStartOffset());
         selectionModel.removeSelection();
-        editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+        DocumentGuardedTextUtil.deleteString(editor.getDocument(), range.getStartOffset(), range.getEndOffset());
       });
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }

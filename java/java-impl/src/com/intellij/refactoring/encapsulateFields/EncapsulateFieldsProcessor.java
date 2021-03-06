@@ -93,9 +93,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
-    FieldDescriptor[] fields = new FieldDescriptor[myFieldDescriptors.length];
-    System.arraycopy(myFieldDescriptors, 0, fields, 0, myFieldDescriptors.length);
-    return new EncapsulateFieldsViewDescriptor(fields);
+    return new EncapsulateFieldsViewDescriptor(myFieldDescriptors.clone());
   }
 
   @Override
@@ -144,10 +142,10 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
             final boolean isGetter = !PsiUtil.isAccessedForWriting((PsiExpression)place);
             for (PsiMethod overridden : isGetter ? getters : setters) {
               if (InheritanceUtil.isInheritorOrSelf(myClass, ancestor, true)) {
-                conflicts.putValue(overridden, "There is already a " +
-                                               RefactoringUIUtil.getDescription(overridden, true) +
-                                               " which would hide generated " +
-                                               (isGetter ? "getter" : "setter") + " for " + place.getText());
+                String accessorExistsMessage = JavaRefactoringBundle.message("encapsulate.fields.existed.accessor.hides.generated",
+                                                                             RefactoringUIUtil.getDescription(overridden, true),
+                                                                             place.getText());
+                conflicts.putValue(overridden, accessorExistsMessage);
                 break;
               }
             }
@@ -162,7 +160,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
       if (element != null) {
         PsiElement parent = element.getParent();
         if (PsiUtil.isIncrementDecrementOperation(parent) && !(parent.getParent() instanceof PsiExpressionStatement)) {
-          conflicts.putValue(parent, "Unable to proceed with postfix/prefix expression when it's result type is used");
+          conflicts.putValue(parent, JavaRefactoringBundle.message("encapsulate.fields.expression.type.is.used"));
         }
       }
     }
@@ -217,7 +215,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
                 }
 
                 if (InheritanceUtil.isInheritorOrSelf(inheritor, myClass, true)) {
-                  conflicts.putValue(existing, "There is already a " + RefactoringUIUtil.getDescription(existing, true) + " which would be hidden by generated " + (isGetter ? "getter" : "setter"));
+                  String accessorExistsMessage = JavaRefactoringBundle.message("encapsulate.fields.existed.accessor.hidden",
+                                                                               RefactoringUIUtil.getDescription(existing, true), isGetter);
+                  conflicts.putValue(existing, accessorExistsMessage);
                   break;
                 }
               }
@@ -235,7 +235,6 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       for (final PsiReference reference : ReferencesSearch.search(fieldDescriptor.getField())) {
         final PsiElement element = reference.getElement();
-        if (element == null) continue;
 
         final EncapsulateFieldHelper helper = EncapsulateFieldHelper.getHelper(element.getLanguage());
         if (helper != null) {

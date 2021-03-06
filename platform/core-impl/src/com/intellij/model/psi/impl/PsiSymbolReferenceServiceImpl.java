@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl;
 
 import com.intellij.model.psi.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -32,11 +31,17 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
     );
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public @NotNull <T extends PsiSymbolReference> Collection<T> getReferences(@NotNull PsiElement host, @NotNull Class<T> referenceClass) {
+    return (Collection<T>)getReferences(host, PsiSymbolReferenceHints.referenceClassHint(referenceClass));
+  }
+
   @Override
   public @NotNull List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
     List<PsiSymbolReference> result = ContainerUtil.newArrayList(element.getOwnReferences());
-    if (element instanceof PsiExternalReferenceHost) {
-      result.addAll(getExternalReferences((PsiExternalReferenceHost)element, hints));
+    if (result.isEmpty() && element instanceof PsiExternalReferenceHost) {
+      result.addAll(doGetExternalReferences((PsiExternalReferenceHost)element, hints));
     }
     return applyHints(result, hints);
   }
@@ -44,11 +49,23 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   @Override
   public @NotNull Collection<? extends PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost element,
                                                                                  @NotNull PsiSymbolReferenceHints hints) {
-    LanguageReferenceProviders languageReferenceProviders = ReferenceProviders.byLanguage(element.getLanguage());
-    List<PsiSymbolReferenceProvider> providers = languageReferenceProviders.getProviders(element);
+    return applyHints(doGetExternalReferences(element, hints), hints);
+  }
+
+  private static @NotNull List<PsiSymbolReference> doGetExternalReferences(@NotNull PsiExternalReferenceHost element,
+                                                                           @NotNull PsiSymbolReferenceHints hints) {
+    List<PsiSymbolReferenceProviderBean> beans = ReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.getClass());
+    if (beans.isEmpty()) {
+      return Collections.emptyList();
+    }
+    Class<? extends PsiSymbolReference> requiredReferenceClass = hints.getReferenceClass();
     List<PsiSymbolReference> result = new SmartList<>();
-    for (PsiSymbolReferenceProvider provider : providers) {
-      result.addAll(provider.getReferences(element, hints));
+    for (PsiSymbolReferenceProviderBean bean : beans) {
+      if (requiredReferenceClass == PsiSymbolReference.class // top required
+          || bean.anyReferenceClass // bottom provided
+          || requiredReferenceClass.isAssignableFrom(bean.getReferenceClass())) {
+        result.addAll(bean.getInstance().getReferences(element, hints));
+      }
     }
     return result;
   }
@@ -59,9 +76,15 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
       return references;
     }
     List<PsiSymbolReference> result = references;
-    Integer offsetInElement = hints.getOffsetInElement();
-    if (offsetInElement != null) {
-      result = ContainerUtil.filter(result, it -> ReferenceRange.containsOffsetInElement(it, offsetInElement));
+
+    Class<? extends PsiSymbolReference> referenceClass = hints.getReferenceClass();
+    if (referenceClass != PsiSymbolReference.class) {
+      result = ContainerUtil.filterIsInstance(result, referenceClass);
+    }
+
+    int offsetInElement = hints.getOffsetInElement();
+    if (offsetInElement >= 0) {
+      result = ContainerUtil.filter(result, it -> it.getRangeInElement().containsOffset(offsetInElement));
     }
     // consider checking SymbolReference.resolvesTo(target) here if all needed
     return result;

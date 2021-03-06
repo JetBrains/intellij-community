@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author vlan
  */
-public class PyABCUtil {
+public final class PyABCUtil {
   private PyABCUtil() {
   }
 
@@ -78,7 +78,7 @@ public class PyABCUtil {
       return isSized && hasIter && isContainer;
     }
     if (PyNames.ABC_MUTABLE_SET.equals(superClassName)) {
-      return isSized && hasIter && isContainer && 
+      return isSized && hasIter && isContainer &&
              hasMethod(subClass, "discard", inherited, context) &&
              hasMethod(subClass, "add", inherited, context);
     }
@@ -126,15 +126,7 @@ public class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
-      for (PyType m : unionType.getMembers()) {
-        if (m != null) {
-          if (isSubtype(m, superClassName, context)) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
     }
     return false;
   }

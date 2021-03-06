@@ -52,7 +52,7 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
     }
     options.isSkipPackageStatements = false;
     options.isSkipImportStatements = false;
-    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.package.started", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(myPsiElement.getProject(), EVENT_LOG_GROUP, "find.package.started", createFeatureUsageData(options));
   }
 
   @Override

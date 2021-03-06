@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.dialogs.browser;
 
@@ -14,7 +14,6 @@ import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
@@ -27,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
 
@@ -49,7 +49,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     myURL = url;
     myRootURL = rootURL;
     myProject = project;
-    setTitle(SvnBundle.message("diff.options.title"));
+    setTitle(message("diff.options.title"));
     mySourceUrlLabel.setText(myURL.toDecodedString());
     myBrowser.setRepositoryURL(myRootURL, false);
     myBrowser.addChangeListener(e -> update());
@@ -57,7 +57,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     myUnifiedDiffButton.addActionListener(this);
     init();
     myFileBrowser.addActionListener(e -> {
-      File f = selectFile("Patch File", "Select file to store unified diff");
+      File f = selectFile();
       if (f != null) {
         if (f.exists() && f.isDirectory()) {
           f = new File(f, DEFAULT_PATCH_NAME);
@@ -123,17 +123,17 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   private void update() {
     RepositoryTreeNode baseNode = myBrowser.getSelectedNode();
     if (baseNode == null) {
-      myErrorLabel.setText(SvnBundle.message("diff.options.no.url.error"));
+      myErrorLabel.setText(message("diff.options.no.url.error"));
       getOKAction().setEnabled(false);
       return;
     }
     if (myURL.equals(getTargetURL())) {
-      myErrorLabel.setText(SvnBundle.message("diff.options.same.url.error"));
+      myErrorLabel.setText(message("diff.options.same.url.error"));
       getOKAction().setEnabled(false);
       return;
     }
     if (myUnifiedDiffButton.isSelected() && (myFileBrowser.getText().length() == 0 || getTargetFile().getParentFile() == null)) {
-      myErrorLabel.setText(SvnBundle.message("diff.options.no.patch.file.error"));
+      myErrorLabel.setText(message("diff.options.no.patch.file.error"));
       getOKAction().setEnabled(false);
       return;
     }
@@ -147,11 +147,11 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
   }
 
   @Nullable
-  private File selectFile(String title, String description) {
+  private File selectFile() {
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
-    fcd.setTitle(title);
-    fcd.setDescription(description);
+    fcd.setTitle(message("dialog.title.save.unified.diff"));
+    fcd.setDescription(message("label.select.file.to.save.unified.diff"));
     fcd.setHideIgnored(false);
     VirtualFile file = FileChooser.chooseFile(fcd, myBrowser, myProject, null);
     if (file == null) {

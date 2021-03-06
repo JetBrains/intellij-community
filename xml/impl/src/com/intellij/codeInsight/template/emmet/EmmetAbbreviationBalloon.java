@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.LinkLabel;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -24,6 +26,9 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.function.Supplier;
+
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 public class EmmetAbbreviationBalloon {
   private final String myAbbreviationsHistoryKey;
@@ -167,19 +172,21 @@ public class EmmetAbbreviationBalloon {
 
   public static class EmmetContextHelp {
     @NotNull
-    private final String myDescription;
+    private final Supplier<@Tooltip String> myDescription;
 
     @Nullable
-    private String myLinkText = null;
+    private Supplier<@LinkLabel String> myLinkText = null;
 
     @Nullable
     private String myLinkUrl = null;
 
-    public EmmetContextHelp(@NotNull String description) {
+    public EmmetContextHelp(@NotNull Supplier<@Tooltip String> description) {
       myDescription = description;
     }
 
-    public EmmetContextHelp(@NotNull String description, @NotNull String linkText, @NotNull String linkUrl) {
+    public EmmetContextHelp(@NotNull Supplier<@Tooltip String> description,
+                            @NotNull Supplier<@LinkLabel String> linkText,
+                            @NotNull String linkUrl) {
       myDescription = description;
       myLinkText = linkText;
       myLinkUrl = linkUrl;
@@ -187,10 +194,12 @@ public class EmmetAbbreviationBalloon {
 
     @NotNull
     public ContextHelpLabel createHelpLabel() {
-      if (StringUtil.isEmpty(myLinkText) || StringUtil.isEmpty(myLinkUrl)) {
-        return ContextHelpLabel.create(myDescription);
+      String linkText = doIfNotNull(myLinkText, Supplier::get);
+      String description = myDescription.get();
+      if (StringUtil.isEmpty(linkText) || StringUtil.isEmpty(myLinkUrl)) {
+        return ContextHelpLabel.create(description);
       }
-      return ContextHelpLabel.createWithLink(null, myDescription, myLinkText, () -> BrowserUtil.browse(myLinkUrl));
+      return ContextHelpLabel.createWithLink(null, description, linkText, () -> BrowserUtil.browse(myLinkUrl));
     }
   }
 

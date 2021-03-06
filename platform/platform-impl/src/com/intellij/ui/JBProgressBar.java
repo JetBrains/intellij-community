@@ -23,6 +23,6 @@ import javax.swing.*;
  * @deprecated use {@link JProgressBar}
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class JBProgressBar extends JProgressBar {
 }

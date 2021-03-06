@@ -13,17 +13,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author cdr
- */
 class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   private final FoldingModelEx myDelegate;
   private final DocumentWindow myDocumentWindow;
@@ -70,13 +67,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   @Override
   public FoldRegion @NotNull [] getAllFoldRegions() {
     FoldRegion[] all = myDelegate.getAllFoldRegions();
-    List<FoldRegion> result = new ArrayList<>();
-    for (FoldRegion region : all) {
-      FoldingRegionWindow window = getWindowRegion(region);
-      if (window != null) {
-        result.add(window);
-      }
-    }
+    List<FoldRegion> result = getWindowRegions(Arrays.asList(all));
     return result.toArray(FoldRegion.EMPTY_ARRAY);
   }
 
@@ -160,12 +151,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   @Override
   public List<FoldRegion> getGroupedRegions(FoldingGroup group) {
     List<FoldRegion> hostRegions = myDelegate.getGroupedRegions(group);
-    List<FoldRegion> result = new ArrayList<>();
-    for (FoldRegion hostRegion : hostRegions) {
-      FoldingRegionWindow window = getWindowRegion(hostRegion);
-      if (window != null) result.add(window);
-    }
-    return result;
+    return getWindowRegions(hostRegions);
   }
 
   @Override
@@ -184,5 +170,24 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   @Override
   public long getModificationCount() {
     return myDelegate instanceof ModificationTracker ? ((ModificationTracker)myDelegate).getModificationCount() : 0;
+  }
+
+  @Override
+  public @NotNull List<FoldRegion> getRegionsOverlappingWith(int startOffset, int endOffset) {
+    int hostStart = myDocumentWindow.injectedToHost(startOffset);
+    int hostEnd = myDocumentWindow.injectedToHost(endOffset);
+    List<FoldRegion> hostRegions = myDelegate.getRegionsOverlappingWith(hostStart, hostEnd);
+    return getWindowRegions(hostRegions);
+  }
+
+  private @NotNull List<FoldRegion> getWindowRegions(@NotNull List<FoldRegion> hostRegions) {
+    List<FoldRegion> result = new ArrayList<>();
+    hostRegions.forEach(hr -> {
+      FoldingRegionWindow wr = getWindowRegion(hr);
+      if (wr != null) {
+        result.add(wr);
+      }
+    });
+    return result;
   }
 }

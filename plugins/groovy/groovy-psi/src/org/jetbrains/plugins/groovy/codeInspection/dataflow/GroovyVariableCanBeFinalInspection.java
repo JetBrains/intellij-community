@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -21,10 +7,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -41,8 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collection;
 import java.util.List;
 
-public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
-
+public final class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBase {
   private static final Function<ProblemDescriptor, PsiModifierList> ID_MODIFIER_LIST_PROVIDER =
     descriptor -> {
       final PsiElement identifier = descriptor.getPsiElement();
@@ -60,7 +44,7 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
       ((GrParameter)variable).getDeclarationScope() instanceof GrClosableBlock
     );
 
-    final String tooltip = GroovyInspectionBundle.message(
+    final String tooltip = GroovyBundle.message(
       isParameterTooltip ? "parameter.can.be.final.tooltip" : "variable.can.be.final.tooltip",
       variable.getName()
     );
@@ -95,22 +79,20 @@ public class GroovyVariableCanBeFinalInspection extends GroovyLocalInspectionBas
   @Override
   public void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
-    final DFAEngine<TObjectIntHashMap<GrVariable>> engine = new DFAEngine<>(
+    final DFAEngine<Object2IntMap<GrVariable>> engine = new DFAEngine<>(
       flow,
       new WritesCounterDFAInstance(),
       new WritesCounterSemilattice<>()
     );
-    final List<TObjectIntHashMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null || dfaResult.isEmpty()) return;
+    List<Object2IntMap<GrVariable>> dfaResult = engine.performDFAWithTimeout();
+    if (dfaResult == null || dfaResult.isEmpty()) {
+      return;
+    }
 
-    dfaResult.get(dfaResult.size() - 1).forEachEntry(new TObjectIntProcedure<GrVariable>() {
-      @Override
-      public boolean execute(GrVariable variable, int writesCount) {
-        if (writesCount == 1) {
-          process(owner, variable, problemsHolder);
-        }
-        return true;
+    for (Object2IntMap.Entry<GrVariable> entry : dfaResult.get(dfaResult.size() - 1).object2IntEntrySet()) {
+      if (entry.getIntValue() == 1) {
+        process(owner, entry.getKey(), problemsHolder);
       }
-    });
+    }
   }
 }

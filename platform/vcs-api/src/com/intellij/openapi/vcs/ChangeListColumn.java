@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,8 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingLong;
 
 public abstract class ChangeListColumn<T extends ChangeList> {
-  public abstract String getTitle();
+  public abstract @NlsContexts.ColumnName String getTitle();
+
   public abstract Object getValue(T changeList);
 
   @Nullable
@@ -40,7 +42,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
 
   // TODO: CompositeCommittedChangesProvider.getColumns() needs to be updated if new standard columns are added 
 
-  public static final ChangeListColumn<CommittedChangeList> DATE = new ChangeListColumn<CommittedChangeList>() {
+  public static final ChangeListColumn<CommittedChangeList> DATE = new ChangeListColumn<>() {
     @Override
     @NotNull
     public String getTitle() {
@@ -62,7 +64,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
   };
 
-  public static final ChangeListColumn<CommittedChangeList> NAME = new ChangeListColumn<CommittedChangeList>() {
+  public static final ChangeListColumn<CommittedChangeList> NAME = new ChangeListColumn<>() {
     @Override
     @NotNull
     public String getTitle() {
@@ -84,7 +86,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
   public static final ChangeListColumn<CommittedChangeList> NUMBER =
     new ChangeListNumberColumn(message("column.name.revision.list.number"));
 
-  public static final ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<CommittedChangeList>() {
+  public static final ChangeListColumn<CommittedChangeList> DESCRIPTION = new ChangeListColumn<>() {
     @Override
     @NotNull
     public String getTitle() {
@@ -109,9 +111,9 @@ public abstract class ChangeListColumn<T extends ChangeList> {
   }
 
   public static class ChangeListNumberColumn extends ChangeListColumn<CommittedChangeList> {
-    private final String myTitle;
+    private final @NlsContexts.ColumnName String myTitle;
 
-    public ChangeListNumberColumn(String title) {
+    public ChangeListNumberColumn(@NlsContexts.ColumnName String title) {
       myTitle = title;
     }
 

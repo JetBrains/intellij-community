@@ -282,7 +282,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
                               p -> p.hasDefaultValue() || p instanceof PyNamedParameter && ((PyNamedParameter)p).isKeywordContainer());
   }
 
-  private static class Usages {
+  private static final class Usages {
 
     private final boolean hasMoreReferences;
 
@@ -306,7 +306,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     }
   }
 
-  private static class DefaultValue {
+  private static final class DefaultValue {
 
     private final boolean unableToHasDefaultValue;
 

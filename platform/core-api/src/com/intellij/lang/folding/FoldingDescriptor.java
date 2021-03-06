@@ -21,8 +21,6 @@ import java.util.Set;
  * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker},
  * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}),
  * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass).
- *
- * @author max
  * @see FoldingBuilder
  */
 public class FoldingDescriptor {
@@ -178,12 +176,19 @@ public class FoldingDescriptor {
                            @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
     assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
-    if (neverExpands && group != null) throw new IllegalArgumentException("'Never-expanding' region cannot be part of a group");
+    if (neverExpands && group != null) {
+      throw new IllegalArgumentException("'Never-expanding' region cannot be part of a group");
+    }
     myElement = node;
     myRange = range;
     myGroup = group;
     myDependencies = dependencies;
-    assert !myDependencies.contains(null);
+    try {
+      assert dependencies.isEmpty() || !dependencies.contains(null);
+    }
+    catch (NullPointerException ignored) {
+      // ImmutableCollections doesn't support null elements
+    }
     myPlaceholderText = placeholderText;
     setFlag(FLAG_NEVER_EXPANDS, neverExpands);
     if (collapsedByDefault != null) {

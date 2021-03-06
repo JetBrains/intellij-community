@@ -2,28 +2,25 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ide.plugins.newui.VerticalLayout
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.timeline.TimelineComponent
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
-import java.awt.Dimension
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.Graphics
 import java.awt.Graphics2D
-import javax.swing.JPanel
 import javax.swing.ListModel
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
 
-class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
-                            private val itemComponentFactory: GHPRTimelineItemComponentFactory)
-  : JPanel(VerticalLayout(UI.scale(20))), ComponentWithEmptyText {
-
-  private val emptyText = object : StatusText(this) {
-    override fun isStatusVisible() = model.size == 0
-  }
+class GHPRTimelineComponent(private val detailsModel: SingleValueModel<GHPullRequestShort>,
+                            model: ListModel<GHPRTimelineItem>,
+                            itemComponentFactory: GHPRTimelineItemComponentFactory)
+  : TimelineComponent<GHPRTimelineItem>(model, itemComponentFactory, itemComponentFactory.createComponent(detailsModel.value)) {
 
   private val timeLineColor = JBColor(ColorUtil.fromHex("#F2F2F2"), ColorUtil.fromHex("#3E3E3E"))
   private val timeLineValues = JBValue.JBValueGroup()
@@ -32,34 +29,11 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
   private val timeLineX = timeLineValues.value(20f / 2 - 1)
 
   init {
-    isOpaque = false
     border = JBUI.Borders.emptyTop(6)
 
-    model.addListDataListener(object : ListDataListener {
-      override fun intervalRemoved(e: ListDataEvent) {
-        for (i in e.index1 downTo e.index0) {
-          remove(i)
-        }
-        revalidate()
-        repaint()
-      }
-
-      override fun intervalAdded(e: ListDataEvent) {
-        for (i in e.index0..e.index1) {
-          add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
-        }
-        revalidate()
-        repaint()
-      }
-
-      override fun contentsChanged(e: ListDataEvent) {
-        validate()
-        repaint()
-      }
-    })
-
-    for (i in 0 until model.size) {
-      add(itemComponentFactory.createComponent(model.getElementAt(i)), VerticalLayout.FILL_HORIZONTAL, i)
+    detailsModel.addValueChangedListener {
+      remove(0)
+      add(itemComponentFactory.createComponent(detailsModel.value), VerticalLayout.FILL_HORIZONTAL, 0)
     }
   }
 
@@ -68,7 +42,7 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
     // paint time LINE
     // painted from bottom to top
     synchronized(treeLock) {
-      val lastIdx = componentCount - 1
+      val lastIdx = components.indexOfLast { it.isVisible }
       if (lastIdx < 0) return
       val lastComp = getComponent(lastIdx) as? Item ?: return
       var yEnd = computeYEnd(lastComp)
@@ -77,8 +51,8 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
       g.color = timeLineColor
       val x = timeLineX.float.toDouble()
 
-      for (i in componentCount - 2 downTo 0) {
-        val comp = getComponent(i) as? Item ?: continue
+      for (i in lastIdx - 1 downTo 0) {
+        val comp = getComponent(i).takeIf { it.isVisible } as? Item ?: continue
         val yStart = computeYStart(comp)
         if (yStart >= yEnd) continue
         LinePainter2D.paint(g, x, yStart.toDouble(), x, yEnd.toDouble(), LinePainter2D.StrokeType.INSIDE, timeLineWidth.float.toDouble())
@@ -92,22 +66,4 @@ class GHPRTimelineComponent(private val model: ListModel<GHPRTimelineItem>,
                                           timeLineGap.get()
 
   private fun computeYEnd(item: Item) = item.y + (item.marker.y + item.marker.insets.top) - timeLineGap.get()
-
-  override fun getEmptyText() = emptyText
-
-  override fun getPreferredSize(): Dimension? {
-    if (model.size == 0 && !StringUtil.isEmpty(emptyText.text)) {
-      val s = emptyText.preferredSize
-      JBInsets.addTo(s, insets)
-      return s
-    }
-    else {
-      return super.getPreferredSize()
-    }
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    emptyText.paint(this, g)
-  }
 }

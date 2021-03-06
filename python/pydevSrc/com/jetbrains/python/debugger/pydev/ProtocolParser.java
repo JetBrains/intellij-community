@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class ProtocolParser {
+public final class ProtocolParser {
 
   private ProtocolParser() {
   }
@@ -369,7 +369,8 @@ public class ProtocolParser {
     }
 
     if (rows <= 0 || cols <= 0) {
-      throw new PyDebuggerException("Array xml: bad rows or columns number: (" + rows + ", " + cols + ")");
+      return null;
+      //throw new PyDebuggerException("Array xml: bad rows or columns number: (" + rows + ", " + cols + ")");
     }
     Object[][] values = new Object[rows][cols];
 

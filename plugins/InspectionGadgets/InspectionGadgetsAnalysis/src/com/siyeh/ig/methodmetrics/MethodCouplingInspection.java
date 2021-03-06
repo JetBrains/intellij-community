@@ -15,14 +15,13 @@
  */
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class MethodCouplingInspection extends MethodMetricInspection {
 
@@ -61,45 +60,16 @@ public class MethodCouplingInspection extends MethodMetricInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final String configurationLabel = getConfigurationLabel();
     final JLabel label = new JLabel(configurationLabel);
 
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.NONE;
-    panel.add(label, constraints);
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.NORTHWEST;
-    constraints.fill = GridBagConstraints.NONE;
-    panel.add(valueField, constraints);
+    panel.addRow(label, valueField);
+    panel.addCheckbox(InspectionGadgetsBundle.message("include.java.system.classes.option"), "m_includeJavaClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("include.library.classes.option"), "m_includeLibraryClasses");
 
-    final CheckBox arrayCheckBox = new CheckBox(
-      InspectionGadgetsBundle.message(
-        "include.java.system.classes.option"),
-      this, "m_includeJavaClasses");
-    final CheckBox objectCheckBox = new CheckBox(
-      InspectionGadgetsBundle.message(
-        "include.library.classes.option"),
-      this, "m_includeLibraryClasses");
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(arrayCheckBox, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.gridwidth = 2;
-    constraints.weighty = 1.0;
-    panel.add(objectCheckBox, constraints);
     return panel;
   }
 

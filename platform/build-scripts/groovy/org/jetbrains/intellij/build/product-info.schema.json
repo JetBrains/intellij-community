@@ -68,6 +68,23 @@
           }
         }
       }
+    },
+    "customProperties": {
+      "description": "Array of arbitrary key-value pairs",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "value"],
+        "minItems": 0,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

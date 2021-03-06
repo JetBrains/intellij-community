@@ -16,6 +16,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class HotSwapProgress {
   private final Project myProject;
@@ -34,7 +35,7 @@ public abstract class HotSwapProgress {
 
   public abstract void setText(String text);
 
-  public abstract void setTitle(String title);
+  public abstract void setTitle(@NotNull String title);
 
   public abstract void setFraction(double v);
 

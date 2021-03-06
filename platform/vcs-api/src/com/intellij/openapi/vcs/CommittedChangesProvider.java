@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
    * @deprecated use {@link #getLocationFor(FilePath)}
    */
   @SuppressWarnings("unused")
-  @Deprecated // Required for compatibility with external plugins.
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   default RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
     return getLocationFor(root);

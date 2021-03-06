@@ -1,5 +1,6 @@
 package com.intellij.util.ui.classpath;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jdom.Element;
@@ -17,7 +18,7 @@ import java.io.IOException;
 public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String LEVEL_ATTRIBUTE = "level";
-  private final String myLibraryName;
+  @NlsSafe private final String myLibraryName;
 
   public GlobalLibraryReferenceElement(@NotNull String libraryName) {
     myLibraryName = libraryName;

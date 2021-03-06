@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -35,13 +36,14 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public @NotNull Disposable addLogWindow(@NotNull VcsLogWindow window) {
-    LOG.assertTrue(!ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId())),
-                   "Log window with id '" + window.getId() + "' was already added.");
+    if (ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId()))) {
+      throw new CannotAddVcsLogWindowException("Log window with id '" + window.getId() + "' was already added.");
+    }
 
     myLogWindows.add(window);
     refresherActivated(window.getRefresher(), true);
     return () -> {
-      LOG.debug("Removing disposed log window " + window.toString());
+      LOG.debug("Removing disposed log window " + window);
       myLogWindows.remove(window);
     };
   }
@@ -122,8 +124,9 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
     }
 
     @Override
+    @NonNls
     public String toString() {
-      return "VcsLogWindow '" + myId + "'"; // NON-NLS
+      return "VcsLogWindow '" + myId + "'";
     }
   }
 }

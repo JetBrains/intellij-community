@@ -19,6 +19,8 @@ import com.google.common.base.Preconditions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.BorderTitle;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.containers.MultiMap;
@@ -34,7 +36,7 @@ import java.awt.*;
 import java.util.Collection;
 
 /**
- * {@link com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedView} implementation on swing.
+ * {@link MembersBasedView} implementation on swing.
  * Consists of {@link #myTopPanel} and {@link #myCenterPanel}. Children must fill them in constructor.
  * Presenter is stored in {@link #myPresenter}.
  * Panel with members in {@link #myPyMemberSelectionPanel}
@@ -78,7 +80,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
    * @param title           window title
    * @param supportAbstract supports "abstract" column?
    */
-  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final String title,
+  protected MembersBasedViewSwingImpl(@NotNull final Project project, @NotNull final P presenter, @NotNull final @BorderTitle String title,
                                       final boolean supportAbstract) {
     super(project, true);
     myTopPanel = new JPanel(new BorderLayout());
@@ -99,7 +101,7 @@ public abstract class MembersBasedViewSwingImpl<P extends MembersBasedPresenter,
   }
 
   @Override
-  public void showError(@NotNull final String message) {
+  public void showError(@NotNull final @DialogMessage String message) {
     Messages.showErrorDialog(getContentPane(), message);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class DebuggerContextUtil {
+public final class DebuggerContextUtil {
   public static void setStackFrame(final DebuggerStateManager manager, final StackFrameProxyImpl stackFrame) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebuggerContextImpl context = manager.getContext();
@@ -41,6 +41,7 @@ public class DebuggerContextUtil {
             SuspendManagerUtil.findContextByThread(session.getProcess().getSuspendManager(), stackFrame.threadProxy());
           final DebuggerContextImpl newContext =
             DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
+          newContext.initCaches();
           DebuggerInvocationUtil.swingInvokeLater(session.getProject(), () -> {
             manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
             SourceCodeChecker.checkSource(newContext);
@@ -94,7 +95,8 @@ public class DebuggerContextUtil {
                 if (line > bestLine && line < breakPointLine) {
                   bestLine = line;
                   bestOffset = range.getStartOffset();
-                } else if (line == breakPointLine) {
+                }
+                else if (line == breakPointLine) {
                   bestOffset = range.getStartOffset();
                   break;
                 }

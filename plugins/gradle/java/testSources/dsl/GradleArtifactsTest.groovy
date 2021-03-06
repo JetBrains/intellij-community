@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
@@ -24,25 +24,17 @@ class GradleArtifactsTest extends GradleHighlightingBaseTest implements ResolveT
   @Test
   void artifactsTest() {
     importProject("apply plugin: 'java'")
-    new RunAll().append {
-      'closure delegate'()
-    } append {
-      'member'()
-    } append {
-      'unresolved reference'()
-    } append {
-      'unresolved configuration reference'()
-    } append {
-      'invalid artifact addition'()
-    } append {
-      'artifact addition'()
-    } append {
-      'configurable artifact addition'()
-    } append {
-      'configuration delegate'()
-    } append {
-      'configuration delegate method setter'()
-    } run()
+    new RunAll(
+      { 'closure delegate'() },
+      { 'member'() },
+      { 'unresolved reference'() },
+      { 'unresolved configuration reference'() },
+      { 'invalid artifact addition'() },
+      { 'artifact addition'() },
+      { 'configurable artifact addition'() },
+      { 'configuration delegate'() },
+      { 'configuration delegate method setter'() }
+    ).run()
   }
 
   void 'closure delegate'() {

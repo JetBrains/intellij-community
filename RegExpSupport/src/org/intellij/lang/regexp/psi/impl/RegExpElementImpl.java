@@ -58,9 +58,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         }
     }
 
-    public void accept(RegExpElementVisitor visitor) {
-        visitor.visitRegExpElement(this);
-    }
+    public abstract void accept(RegExpElementVisitor visitor);
 
     @Override
     public PsiElement replace(@NotNull PsiElement psiElement) throws IncorrectOperationException {

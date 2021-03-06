@@ -15,6 +15,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.branch.HgBranchManager;
 import org.zmlx.hg4idea.branch.HgBranchType;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -130,8 +131,8 @@ public class HgRefManager implements VcsLogRefManager {
       }
     }
 
-    if (!branches.isEmpty()) result.add(new SimpleRefGroup("Branches", branches, false));
-    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup("Bookmarks", bookmarks, false));
+    if (!branches.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.branches"), branches, false));
+    if (!bookmarks.isEmpty()) result.add(new SimpleRefGroup(HgBundle.message("hg.ref.group.name.bookmarks"), bookmarks, false));
 
     return result;
   }

@@ -46,7 +46,7 @@
             <properties/>
             <border type="empty"/>
             <children>
-              <grid id="153e3" layout-manager="GridLayoutManager" row-count="7" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="153e3" layout-manager="GridLayoutManager" row-count="8" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="10" left="10" bottom="10" right="10"/>
                 <constraints/>
                 <properties/>
@@ -84,7 +84,7 @@
                   </component>
                   <vspacer id="15d8d">
                     <constraints>
-                      <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+                      <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
                         <preferred-size width="-1" height="100"/>
                       </grid>
                     </constraints>
@@ -92,7 +92,7 @@
                   <grid id="2466a" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="30" vgap="-1">
                     <margin top="10" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                     <border type="none"/>
@@ -143,6 +143,12 @@
                       </component>
                     </children>
                   </grid>
+                  <component id="4abe1" class="com.intellij.ui.components.JBCheckBox" binding="myUnixLineSeparator">
+                    <constraints>
+                      <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                  </component>
                 </children>
               </grid>
             </children>
@@ -203,7 +209,7 @@
                       <text resource-bundle="messages/ShBundle" key="sh.invalid.path"/>
                     </properties>
                   </component>
-                  <component id="84c43" class="com.intellij.ui.components.labels.ActionLink" binding="myShfmtDownloadLink" custom-create="true">
+                  <component id="84c43" class="com.intellij.ui.components.ActionLink" binding="myShfmtDownloadLink" custom-create="true">
                     <constraints/>
                     <properties>
                       <horizontalTextPosition value="0"/>

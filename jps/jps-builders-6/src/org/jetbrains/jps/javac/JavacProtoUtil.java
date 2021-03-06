@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
@@ -18,8 +18,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavacProtoUtil {
-
+public final class JavacProtoUtil {
   public static JavacRemoteProto.Message.Request createCancelRequest() {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.CANCEL).build();
   }
@@ -28,13 +27,13 @@ public class JavacProtoUtil {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.SHUTDOWN).build();
   }
 
-  public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options,
-                                                                          Collection<? extends File> files,
-                                                                          Collection<? extends File> classpath,
-                                                                          Collection<? extends File> platformCp,
+  public static JavacRemoteProto.Message.Request createCompilationRequest(Iterable<String> options,
+                                                                          Iterable<? extends File> files,
+                                                                          Iterable<? extends File> classpath,
+                                                                          Iterable<? extends File> platformCp,
                                                                           ModulePath modulePath,
-                                                                          Collection<? extends File> upgradeModulePath,
-                                                                          Collection<? extends File> sourcePath,
+                                                                          Iterable<? extends File> upgradeModulePath,
+                                                                          Iterable<? extends File> sourcePath,
                                                                           Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
@@ -79,6 +78,8 @@ public class JavacProtoUtil {
 
     msgBuilder.setKind(convertKind(fileObject.getKind()));
     msgBuilder.setFilePath(FileUtilRt.toSystemIndependentName(fileObject.getFile().getPath()));
+    msgBuilder.setIsGenerated(fileObject.isGenerated());
+
     final BinaryContent content = fileObject.getContent();
     if (content != null) {
       msgBuilder.setContent(ByteString.copyFrom(content.getBuffer(), content.getOffset(), content.getLength()));
@@ -95,9 +96,8 @@ public class JavacProtoUtil {
     if (relativePath != null) {
       msgBuilder.setRelativePath(relativePath);
     }
-    final URI srcUri = fileObject.getSourceUri();
-    if (srcUri != null) {
-      msgBuilder.setSourceUri(srcUri.toString());
+    for (URI uri : fileObject.getSourceUris()) {
+      msgBuilder.addSourceUri(uri.toString());
     }
     final JavaFileManager.Location location = fileObject.getLocation();
     if (location != null) {
@@ -112,6 +112,7 @@ public class JavacProtoUtil {
   public static JavacRemoteProto.Message.Response createCustomDataResponse(String pluginId, String dataName, byte[] data) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
       .setKind(JavacRemoteProto.Message.Response.OutputObject.Kind.OTHER)
+      .setIsGenerated(false)
       .setFilePath(pluginId)
       .setClassName(dataName)
       .setContent(ByteString.copyFrom(data))
@@ -124,7 +125,7 @@ public class JavacProtoUtil {
 
   public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
     final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
-      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
+      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setIsGenerated(false).setFilePath(FileUtilRt.toSystemIndependentName(srcFile.getPath())).build();
 
     final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
     builder.setResponseType(JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED).setOutputObject(outObjMsg);

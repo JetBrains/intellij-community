@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -40,7 +41,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Pavel.Dolgov
  */
-public class JavaReflectionCompletionContributor extends CompletionContributor {
+public class JavaReflectionCompletionContributor extends CompletionContributor implements DumbAware {
   private static final String CONSTRUCTOR = "getConstructor";
   private static final String DECLARED_CONSTRUCTOR = "getDeclaredConstructor";
   private static final String ANNOTATION = "getAnnotation";
@@ -50,7 +51,7 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
   private static final String ANNOTATED_ELEMENT = "java.lang.reflect.AnnotatedElement";
 
   private static final Set<String> DECLARED_NAMES =
-    ContainerUtil.immutableSet(DECLARED_CONSTRUCTOR, DECLARED_ANNOTATION, DECLARED_ANNOTATIONS_BY_TYPE);
+    Set.of(DECLARED_CONSTRUCTOR, DECLARED_ANNOTATION, DECLARED_ANNOTATIONS_BY_TYPE);
   private static final ElementPattern<? extends PsiElement> CONSTRUCTOR_ARGUMENTS = psiElement(PsiExpressionList.class)
     .withParent(psiExpression().methodCall(
       psiMethod()
@@ -92,6 +93,9 @@ public class JavaReflectionCompletionContributor extends CompletionContributor {
     }
     else if (BEGINNING_OF_CONSTRUCTOR_ARGUMENTS.accepts(position)) {
       addVariants(position, (psiClass, isDeclared) -> addConstructorParameterTypes(psiClass, isDeclared, result));
+    }
+    else if (JavaReflectionReferenceContributor.Holder.CLASS_PATTERN.accepts(position.getParent())) {
+      JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), result);
     }
   }
 

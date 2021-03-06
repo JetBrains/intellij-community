@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
-public class VariableAccessUtils {
+public final class VariableAccessUtils {
 
   private VariableAccessUtils() {}
 
@@ -109,23 +110,51 @@ public class VariableAccessUtils {
     return variableIsAssigned(variable, context);
   }
 
+  /**
+   * Returns true if the specified variable is assigned in the specified context.
+   * @param variable  the variable to check
+   * @param context  the context to check for assignments
+   * @return true, if the specified variable was assigned in the specified context, false otherwise
+   */
   public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
-    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, true);
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable);
     context.accept(visitor);
     return visitor.isAssigned();
   }
 
-  public static boolean variableIsAssigned(
-    @NotNull PsiVariable variable, @Nullable PsiElement context,
-    boolean recurseIntoClasses) {
+  /**
+   * Returns true if the specified variable is assigned in the specified context.
+   * Certain assignment can be excluded from consideration using the skipFilter.
+   * @param variable  the variable to check
+   * @param skipFilter  when the predicate evaluates to true, then the assignment is ignored
+   * @param context  the context to check for assignments
+   * @return true, if the variable was assigned and the right hand side expression was not filtered out, false otherwise
+   */
+  public static boolean variableIsAssigned(@NotNull PsiVariable variable, @NotNull Predicate<? super PsiAssignmentExpression> skipFilter,
+                                           @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
-    final VariableAssignedVisitor visitor =
-      new VariableAssignedVisitor(variable, recurseIntoClasses);
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, skipFilter, true);
+    context.accept(visitor);
+    return visitor.isAssigned();
+  }
+
+  /**
+   * Returns true if the specified variable is assigned in the specified context.
+   * @param variable  the variable to check
+   * @param context  the context to check for assignments
+   * @param recurseIntoClasses
+   * @return true, if the specified variable was assigned in the specified context, false otherwise
+   */
+  public static boolean variableIsAssigned(@NotNull PsiVariable variable, @Nullable PsiElement context, boolean recurseIntoClasses) {
+    if (context == null) {
+      return false;
+    }
+    final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable, recurseIntoClasses);
     context.accept(visitor);
     return visitor.isAssigned();
   }
@@ -254,7 +283,7 @@ public class VariableAccessUtils {
     });
     return result;
   }
-  
+
   @Contract("_, null -> false")
   public static boolean variableIsUsed(@NotNull PsiVariable variable,
                                        @Nullable PsiElement context) {
@@ -276,7 +305,7 @@ public class VariableAccessUtils {
     final PsiExpressionStatement expressionStatement =
       (PsiExpressionStatement)statement;
     PsiExpression expression = expressionStatement.getExpression();
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiUnaryExpression) {
       final PsiUnaryExpression unaryExpression =
         (PsiUnaryExpression)expression;
@@ -297,7 +326,7 @@ public class VariableAccessUtils {
         return false;
       }
       PsiExpression rhs = assignmentExpression.getRExpression();
-      rhs = ParenthesesUtils.stripParentheses(rhs);
+      rhs = PsiUtil.skipParenthesizedExprDown(rhs);
       if (tokenType == JavaTokenType.EQ) {
         if (!(rhs instanceof PsiBinaryExpression)) {
           return false;
@@ -404,7 +433,7 @@ public class VariableAccessUtils {
    * Check if local variable has the same behavior as its initializer.
    */
   public static boolean isLocalVariableCopy(@NotNull PsiLocalVariable variable) {
-    return isLocalVariableCopy(variable, ParenthesesUtils.stripParentheses(variable.getInitializer()));
+    return isLocalVariableCopy(variable, PsiUtil.skipParenthesizedExprDown(variable.getInitializer()));
   }
 
   /**
@@ -489,6 +518,27 @@ public class VariableAccessUtils {
     return !TypeConversionUtil.boxingConversionApplicable(variableType, initializationType);
   }
 
+  /**
+   * @param statement statement to scan
+   * @return list of variables declared inside given element that could conflict with other declarations on statement level.
+   * I.e. all local and pattern declarations declared inside, except declarations from the local/anonymous classes.
+   */
+  public static List<PsiVariable> findDeclaredVariables(@NotNull PsiStatement statement) {
+    List<PsiVariable> variables = new ArrayList<>();
+    statement.accept(new JavaRecursiveElementWalkingVisitor() {
+
+      @Override
+      public void visitClass(final PsiClass aClass) {}
+
+      @Override
+      public void visitVariable(PsiVariable variable) {
+        variables.add(variable);
+        super.visitVariable(variable);
+      }
+    });
+    return variables;
+  }
+
   private static boolean isFinalChain(PsiReferenceExpression reference) {
     while (true) {
       PsiElement element = reference.resolve();
@@ -523,10 +573,10 @@ public class VariableAccessUtils {
   public static boolean canUseAsNonFinal(PsiLocalVariable var) {
     if (var == null) return false;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-    return block != null && ReferencesSearch.search(var).allMatch(ref -> {
-      PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
-      return context == null || PsiTreeUtil.isAncestor(context, block, false);
-    });
+    return block != null &&
+           getVariableReferences(var, block).stream()
+             .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
+             .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
   }
 
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {

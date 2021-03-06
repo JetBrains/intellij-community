@@ -7,15 +7,21 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.DefaultExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.NaturalComparator
 import javax.swing.Icon
 
 class ProjectRefreshAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val projectTracker = ExternalSystemProjectTracker.getInstance(project)
-    projectTracker.scheduleProjectRefresh()
+    val projectNotificationAware = ProjectNotificationAware.getInstance(project)
+    val systemIds = projectNotificationAware.getSystemIds()
+    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
+      val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+      projectTracker.scheduleProjectRefresh()
+    }
   }
 
   override fun update(e: AnActionEvent) {
@@ -30,22 +36,15 @@ class ProjectRefreshAction : DumbAwareAction() {
     e.presentation.isEnabled = notificationAware.isNotificationVisible()
   }
 
+  @NlsActions.ActionText
   private fun getNotificationText(systemIds: Set<ProjectSystemId>): String {
-    val systemsPresentation = systemIds.joinToString { it.readableName }
+    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.text", systemsPresentation)
   }
 
-  private fun List<String>.naturalJoin(): String {
-    if (size == 0) return ""
-    if (size == 1) return first()
-    val leading = dropLast(1).joinToString(", ")
-    return ExternalSystemBundle.message("external.system.reload.notification.action.reload.and.conjunction", leading, last())
-  }
-
+  @NlsActions.ActionDescription
   private fun getNotificationDescription(systemIds: Set<ProjectSystemId>): String {
-    val systemsPresentation = systemIds.map { it.readableName }
-      .sortedWith(NaturalComparator.INSTANCE)
-      .naturalJoin()
+    val systemsPresentation = ExternalSystemUtil.naturalJoinSystemIds(systemIds)
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     return ExternalSystemBundle.message("external.system.reload.notification.action.reload.description", systemsPresentation, productName)
   }

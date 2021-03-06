@@ -20,7 +20,6 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,11 +29,6 @@ public class CastToLeftSideTypeMacro extends Macro {
   @Override
   public String getName() {
     return "castToLeftSideType";
-  }
-
-  @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.cast.to.left.side.type");
   }
 
   @Override

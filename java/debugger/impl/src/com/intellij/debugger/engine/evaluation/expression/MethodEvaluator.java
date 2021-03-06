@@ -6,27 +6,24 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.Patches;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
-import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.impl.ClassLoadingUtils;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.intellij.rt.debugger.DefaultMethodInvoker;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MethodEvaluator implements Evaluator {
@@ -36,7 +33,6 @@ public class MethodEvaluator implements Evaluator {
   private final String myMethodName;
   private final Evaluator[] myArgumentEvaluators;
   private final Evaluator myObjectEvaluator;
-  private final boolean myCheckDefaultInterfaceMethod;
   private final boolean myMustBeVararg;
 
   public MethodEvaluator(Evaluator objectEvaluator,
@@ -44,7 +40,7 @@ public class MethodEvaluator implements Evaluator {
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators) {
-    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false, false);
+    this(objectEvaluator, className, methodName, signature, argumentEvaluators, false);
   }
 
   public MethodEvaluator(Evaluator objectEvaluator,
@@ -52,14 +48,12 @@ public class MethodEvaluator implements Evaluator {
                          String methodName,
                          JVMName signature,
                          Evaluator[] argumentEvaluators,
-                         boolean checkDefaultInterfaceMethod,
                          boolean mustBeVararg) {
     myObjectEvaluator = DisableGC.create(objectEvaluator);
     myClassName = className;
     myMethodName = methodName;
     myMethodSignature = signature;
     myArgumentEvaluators = argumentEvaluators;
-    myCheckDefaultInterfaceMethod = checkDefaultInterfaceMethod;
     myMustBeVararg = mustBeVararg;
   }
 
@@ -122,7 +116,7 @@ public class MethodEvaluator implements Evaluator {
           jdiMethod = matchingMethods.get(0);
         }
         else if (matchingMethods.size() > 1) {
-          jdiMethod = matchingMethods.stream().filter(m -> matchArgs(m, args)).findFirst().orElse(null);
+          jdiMethod = ContainerUtil.find(matchingMethods, m -> matchArgs(m, args));
         }
       }
       if (jdiMethod == null) {
@@ -161,15 +155,6 @@ public class MethodEvaluator implements Evaluator {
 
       if (requiresSuperObject) {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
-      }
-      // fix for default methods in interfaces, see IDEA-124066
-      if (Patches.JDK_BUG_ID_8042123 && myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
-        try {
-          return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
-        }
-        catch (EvaluateException e) {
-          LOG.info(e);
-        }
       }
       return debugProcess.invokeMethod(context, objRef, jdiMethod, args);
     }
@@ -230,22 +215,6 @@ public class MethodEvaluator implements Evaluator {
 
   private static boolean isInvokableType(Object type) {
     return type instanceof ClassType || type instanceof InterfaceType;
-  }
-
-  // only methods without arguments for now
-  private static Value invokeDefaultMethod(DebugProcess debugProcess, EvaluationContext evaluationContext,
-                                           Value obj, String name)
-    throws EvaluateException {
-    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class, evaluationContext);
-
-    if (invokerClass != null) {
-      Method method = DebuggerUtils.findMethod(invokerClass, "invoke", null);
-      if (method != null) {
-        return debugProcess.invokeMethod(evaluationContext, invokerClass, method,
-               Arrays.asList(obj, ((VirtualMachineProxyImpl)debugProcess.getVirtualMachineProxy()).mirrorOf(name)));
-      }
-    }
-    return null;
   }
 
   @Override

@@ -10,7 +10,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author Konstantin Bulenkov
@@ -18,14 +20,14 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertToJBBorderQuickFix implements LocalQuickFix {
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return "Convert to JBUI.Borders.empty(...)";
+    return DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.family.name");
   }
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiCall newExpression = (PsiCall)descriptor.getPsiElement();
     PsiExpressionList list = newExpression.getArgumentList();
-    String text;
+    @NonNls String text;
     if (list != null && list.getExpressionCount() == 4) {
       String top = list.getExpressions()[0].getText();
       String left = list.getExpressions()[1].getText();
@@ -85,9 +87,11 @@ public class ConvertToJBBorderQuickFix implements LocalQuickFix {
     PsiExpression[] params = expression.getArgumentList().getExpressions();
     if (params.length == 1) {
       return params[0].textMatches("0");
-    } else if (params.length == 2) {
+    }
+    else if (params.length == 2) {
       return areSame(params);
-    } else if (params.length == 4) {
+    }
+    else if (params.length == 4) {
       if (areSame(params) || (areSame(params[0], params[2]) && areSame(params[1], params[3]))) {
         return true;
       }

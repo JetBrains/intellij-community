@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -20,6 +21,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +45,7 @@ public class InferenceSession {
   private final PsiManager myManager;
   private int myConstraintIdx;
   
-  private List<String> myErrorMessages;
+  private List<@Nls String> myErrorMessages;
   
   private boolean myErased;
 
@@ -157,6 +159,9 @@ public class InferenceSession {
 
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
+          if (method != null && PsiUtil.isRawSubstitutor(method, mySiteSubstitutor)) {
+            parameterType = TypeConversionUtil.erasure(parameterType);
+          }
           LOG.assertTrue(parameterType != null);
           if (!ignoreLambdaConstraintTree(args[i])) {
             addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
@@ -875,7 +880,7 @@ public class InferenceSession {
 
   public boolean collectDependencies(@Nullable PsiType type,
                                      @Nullable final Set<? super InferenceVariable> dependencies) {
-    return collectDependencies(type, dependencies, classType -> getInferenceVariable(classType));
+    return collectDependencies(type, dependencies, this::getInferenceVariable);
   }
 
   public static boolean collectDependencies(@Nullable PsiType type,
@@ -1200,7 +1205,7 @@ public class InferenceSession {
           }
         }
         if (conflictingConjunctsMessage != null) {
-          registerIncompatibleErrorMessage("Type parameter " + var.getParameter().getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
+          registerIncompatibleErrorMessage(JavaPsiBundle.message("error.type.parameter.has.incompatible.upper.bounds", var.getParameter().getName(), conflictingConjunctsMessage));
           return PsiType.NULL;
         }
       }
@@ -1224,10 +1229,11 @@ public class InferenceSession {
       }
     }
     if (type == PsiType.NULL) {
-      registerIncompatibleErrorMessage("Incompatible upper bounds: " + StringUtil.join(var.getBounds(InferenceBound.UPPER), bound -> {
-        final PsiType substituted = substituteNonProperBound(bound, substitutor);
-        return getPresentableText(substituted != null ? substituted : bound);
-      }, ", "));
+      registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.upper.bounds", StringUtil.join(var.getBounds(InferenceBound.UPPER), bound -> {
+          final PsiType substituted = substituteNonProperBound(bound, substitutor);
+          return getPresentableText(substituted != null ? substituted : bound);
+        }, ", ")));
     }
     return type;
   }
@@ -1239,7 +1245,7 @@ public class InferenceSession {
       .anyMatch(lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
   }
 
-  private static String getConjunctsConflict(PsiIntersectionType type) {
+  private static @Nls String getConjunctsConflict(PsiIntersectionType type) {
     PsiType[] conjuncts = type.getConjuncts();
     for (int i = 0; i < conjuncts.length; i++) {
       PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);
@@ -1251,7 +1257,7 @@ public class InferenceSession {
                 TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)conjuncts[i], conjuncts[i1]) ||
               conjuncts[i] instanceof PsiCapturedWildcardType &&
                 oppositeConjunct != null && !oppositeConjunct.isInterface() && !(oppositeConjunct instanceof PsiTypeParameter)) {
-            return conjuncts[i].getPresentableText() + " and " + conjuncts[i1].getPresentableText();
+            return JavaPsiBundle.message("conflicting.conjuncts", conjuncts[i].getPresentableText(), conjuncts[i1].getPresentableText());
           }
         }
       }
@@ -1264,15 +1270,20 @@ public class InferenceSession {
     return substituted != null ? substituted.getPresentableText() : null;
   }
 
-  public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
+  public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, @Nls String incompatibleTypesMessage) {
     variables = new ArrayList<>(variables);
     ((ArrayList<InferenceVariable>)variables).sort((v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
     final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
-    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + 
-                                     (variablesEnumeration.isEmpty() ? "" : " ") + "exist so that " + incompatibleTypesMessage);
+    if (variablesEnumeration.isEmpty()) {
+      registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.no.type.variable", incompatibleTypesMessage));
+    }
+    else {
+      registerIncompatibleErrorMessage(
+        JavaPsiBundle.message("error.incompatible.type.no.type.variable.0", variablesEnumeration, incompatibleTypesMessage));
+    }
   }
   
-  public void registerIncompatibleErrorMessage(@NotNull String incompatibleBoundsMessage) {
+  public void registerIncompatibleErrorMessage(@NotNull @Nls String incompatibleBoundsMessage) {
     if (myErrorMessages == null) {
       myErrorMessages = new ArrayList<>();
     }
@@ -1281,19 +1292,20 @@ public class InferenceSession {
     }
   }
 
-  private String incompatibleBoundsMessage(final InferenceVariable var,
-                                                  final PsiSubstitutor substitutor,
-                                                  final InferenceBound lowBound,
-                                                  final String lowBoundName,
-                                                  final InferenceBound upperBound,
-                                                  final String upperBoundName) {
+  private @Nls String incompatibleBoundsMessage(final InferenceVariable var,
+                                                final PsiSubstitutor substitutor,
+                                                final InferenceBound lowBound,
+                                                final String lowBoundName,
+                                                final InferenceBound upperBound,
+                                                final String upperBoundName) {
     final Function<PsiType, String> typePresentation = type -> {
       final PsiType substituted = substituteNonProperBound(type, substitutor);
       return getPresentableText(substituted != null ? substituted : type);
     };
-    return "inference variable " + var.getParameter().getName() + " has incompatible bounds:\n " + 
-           lowBoundName  + ": " + StringUtil.join(var.getBounds(lowBound), typePresentation, ", ") + "\n" + 
-           upperBoundName + ": " + StringUtil.join(var.getBounds(upperBound), typePresentation, ", ");
+    return JavaPsiBundle.message("error.inference.variable.has.incompatible.bounds", 
+                                 var.getParameter().getName(), lowBoundName, 
+                                 StringUtil.join(var.getBounds(lowBound), typePresentation, ", "), upperBoundName, 
+                                 StringUtil.join(var.getBounds(upperBound), typePresentation, ", "));
   }
 
   private PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
@@ -1965,7 +1977,7 @@ public class InferenceSession {
     return null;
   }
 
-  public List<String> getIncompatibleErrorMessages() {
+  public List<@Nls String> getIncompatibleErrorMessages() {
     return myErrorMessages;
   }
 

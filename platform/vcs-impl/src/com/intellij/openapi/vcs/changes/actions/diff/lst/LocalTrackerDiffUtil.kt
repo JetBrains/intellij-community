@@ -14,20 +14,23 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.CalledWithWriteLock
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
@@ -174,16 +177,12 @@ object LocalTrackerDiffUtil {
   private class MyTrackerListener(private val viewer: DiffViewerBase)
     : PartialLocalLineStatusTracker.ListenerAdapter() {
 
-    override fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {
-      viewer.scheduleRediff()
-    }
+    override fun onBecomingValid(tracker: PartialLocalLineStatusTracker) = scheduleRediff()
+    override fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) = scheduleRediff()
+    override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) = scheduleRediff()
 
-    override fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {
-      viewer.scheduleRediff()
-    }
-
-    override fun onExcludedFromCommitChange(tracker: PartialLocalLineStatusTracker) {
-      viewer.scheduleRediff()
+    private fun scheduleRediff() {
+      runInEdt { viewer.scheduleRediff() }
     }
   }
 
@@ -227,7 +226,7 @@ object LocalTrackerDiffUtil {
     override fun getText(changes: List<LocalTrackerChange>): String {
       if (changes.isNotEmpty() && changes.all { !it.isFromActiveChangelist }) {
         val shortChangeListName = StringUtil.trimMiddle(provider.localRequest.changelistName, 40)
-        return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName))
+        return VcsBundle.message("changes.move.to.changelist", StringUtil.escapeMnemonics(shortChangeListName))
       }
       else {
         return ActionsBundle.message("action.ChangesView.Move.text")
@@ -260,7 +259,8 @@ object LocalTrackerDiffUtil {
 
     override fun getText(changes: List<LocalTrackerChange>): String {
       val hasExcluded = changes.any { it.isExcludedFromCommit }
-      return if (changes.isNotEmpty() && !hasExcluded) "Exclude Lines from Commit" else "Include Lines into Commit"
+      return if (changes.isNotEmpty() && !hasExcluded) VcsBundle.message("changes.exclude.lines.from.commit")
+      else VcsBundle.message("changes.include.lines.into.commit")
     }
 
     override fun doPerform(e: AnActionEvent,
@@ -340,14 +340,14 @@ object LocalTrackerDiffUtil {
       }
     }
 
-    protected open fun getText(changes: List<LocalTrackerChange>): String {
+    protected open fun getText(changes: List<LocalTrackerChange>): @Nls String {
       return templatePresentation.text
     }
 
     protected val LocalTrackerChange.isFromActiveChangelist get() = changelistId == activeChangelistId
     protected val activeChangelistId get() = provider.localRequest.changelistId
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract fun doPerform(e: AnActionEvent,
                                      tracker: PartialLocalLineStatusTracker,
                                      changes: List<LocalTrackerChange>)

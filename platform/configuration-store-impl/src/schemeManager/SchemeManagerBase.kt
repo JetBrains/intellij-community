@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeProcessor
-import com.intellij.openapi.options.SchemesManager
 
-abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val processor: SchemeProcessor<T, MUTABLE_SCHEME>) : SchemesManager<T>() {
+abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val processor: SchemeProcessor<T, MUTABLE_SCHEME>) : SchemeManager<T>() {
   /**
    * Schemes can be lazy loaded, so, client should be able to set current scheme by name, not only by instance.
    */

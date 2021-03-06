@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.util.Map;
  * @deprecated Use {@link EditorScrollingPositionKeeper} instead.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class CaretVisualPositionKeeper {
   private final Map<Editor, Integer> myCaretRelativeVerticalPositions = new HashMap<>();
 

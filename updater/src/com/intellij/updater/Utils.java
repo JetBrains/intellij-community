@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -14,10 +14,14 @@ public class Utils {
   public static final boolean IS_WINDOWS = OS_NAME.startsWith("windows");
   public static final boolean IS_MAC = OS_NAME.startsWith("mac");
 
-  private static final long REQUIRED_FREE_SPACE = 2_000_000_000L;
+  private static final long REQUIRED_FREE_SPACE = Long.getLong("idea.required.space", 2_000_000_000L);
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
-  private static final byte[] BUFFER = new byte[BUFFER_SIZE];
+
+  private static final CopyOption[] COPY_STANDARD = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
+  private static final CopyOption[] COPY_REPLACE = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING};
+
+  private static final boolean WIN_UNPRIVILEGED = IS_WINDOWS && Boolean.getBoolean("idea.unprivileged.process");
 
   private static File myTempDir;
 
@@ -25,25 +29,22 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  public static String findDirectory(long requiredFreeSpace) {
-    String dir = System.getProperty("idea.updater.log");
-    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
-      dir = System.getProperty("java.io.tmpdir");
-      if (!isValidDir(dir, requiredFreeSpace)) {
-        dir = System.getProperty("user.home");
-      }
-    }
-    return dir;
-  }
-
-  private static boolean isValidDir(String path, long space) {
-    File dir = new File(path);
-    return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
-  }
-
-  public static File getTempFile(String name) throws IOException {
+  public synchronized static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
+      String path = System.getProperty("java.io.tmpdir");
+      if (path == null) throw new IllegalArgumentException("System property `java.io.tmpdir` is not defined");
+
+      Path dir = Paths.get(path);
+      if (!Files.isDirectory(dir)) throw new IOException("Not a directory: " + dir);
+
+      if (REQUIRED_FREE_SPACE > 0) {
+        FileStore fs = Files.getFileStore(dir);
+        if (fs.getUsableSpace() < REQUIRED_FREE_SPACE) {
+          throw new IOException("Not enough free space on '" + fs + "' (" + (REQUIRED_FREE_SPACE / 1_000_000) + " MB required");
+        }
+      }
+
+      myTempDir = Files.createTempDirectory(dir, "idea.updater.files.").toFile();
       Runner.logger().info("created a working directory: " + myTempDir);
     }
 
@@ -56,7 +57,7 @@ public class Utils {
     return myTempFile;
   }
 
-  public static void cleanup() throws IOException {
+  public synchronized static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
     Runner.logger().info("deleted a working directory: " + myTempDir.getPath());
@@ -83,14 +84,20 @@ public class Utils {
   }
 
   private static void tryDelete(Path path) throws IOException {
+    IOException lastError = null;
+
     for (int i = 0; i < 10; i++) {
       try {
-        if (Files.deleteIfExists(path) || !Files.exists(path)) {
-          Runner.logger().info("deleted: " + path);
-          return;
-        }
+        Files.delete(path);
+        Runner.logger().info("deleted: " + path);
+        return;
+      }
+      catch (NoSuchFileException e) {
+        Runner.logger().info("already deleted: " + path);
+        return;
       }
       catch (AccessDeniedException e) {
+        lastError = e;
         try {
           DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
           if (view != null && view.readAttributes().isReadOnly()) {
@@ -100,12 +107,14 @@ public class Utils {
         }
         catch (IOException ignore) { }
       }
-      catch (IOException ignore) { }
+      catch (IOException e) {
+        lastError = e;
+      }
 
       pause(10);
     }
 
-    throw new IOException("Cannot delete: " + path);
+    throw new IOException("Cannot delete: " + path, lastError);
   }
 
   public static boolean isExecutable(File file) {
@@ -140,22 +149,25 @@ public class Utils {
   public static void copy(File from, File to, boolean overwrite) throws IOException {
     Runner.logger().info(from + (overwrite ? " over " : " into ") + to);
 
-    if (Files.isDirectory(from.toPath(), LinkOption.NOFOLLOW_LINKS)) {
-      Files.createDirectories(to.toPath());
+    Path src = from.toPath(), dst = to.toPath();
+    BasicFileAttributes attrs = Files.readAttributes(src, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+    if (attrs.isDirectory()) {
+      Files.createDirectories(dst);
+    }
+    else if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
+      if (overwrite) Files.deleteIfExists(dst);
+      Files.createDirectories(dst.getParent());
+      Files.createSymbolicLink(dst, Files.readSymbolicLink(src));
     }
     else {
-      Files.createDirectories(to.toPath().getParent());
-      CopyOption[] options =
-        overwrite ? new CopyOption[]{LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING} :
-                    new CopyOption[]{LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
-      Files.copy(from.toPath(), to.toPath(), options);
+      Files.createDirectories(dst.getParent());
+      Files.copy(src, dst, overwrite ? COPY_REPLACE : COPY_STANDARD);
     }
   }
 
   public static void copyDirectory(Path from, Path to) throws IOException {
     Runner.logger().info(from + " into " + to);
 
-    CopyOption[] options = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
     Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -171,7 +183,12 @@ public class Utils {
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path copy = to.resolve(from.relativize(file));
         Runner.logger().info("  " + file + " into " + copy);
-        Files.copy(file, copy, options);
+        if (WIN_UNPRIVILEGED && attrs.isSymbolicLink()) {
+          Files.createSymbolicLink(copy, Files.readSymbolicLink(file));
+        }
+        else {
+          Files.copy(file, copy, COPY_STANDARD);
+        }
         return FileVisitResult.CONTINUE;
       }
     });
@@ -220,10 +237,11 @@ public class Utils {
   }
 
   public static void copyStream(InputStream from, OutputStream to) throws IOException {
+    byte[] buffer = new byte[BUFFER_SIZE];
     while (true) {
-      int read = from.read(BUFFER);
+      int read = from.read(buffer);
       if (read < 0) break;
-      to.write(BUFFER, 0, read);
+      to.write(buffer, 0, read);
     }
   }
 
@@ -239,14 +257,14 @@ public class Utils {
 
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
-    if (entry == null) throw new IOException("Entry " + entryPath + " not found");
+    if (entry == null) throw new FileNotFoundException("Entry " + entryPath + " not found");
     Runner.logger().info("entryPath: " + entryPath);
     return entry;
   }
 
   public static InputStream findEntryInputStreamForEntry(ZipFile zipFile, ZipEntry entry) throws IOException {
     if (entry.isDirectory()) return null;
-    // There is a bug in some JVM implementations where for a directory "X/" in a zipfile, if we do
+    // There is a bug in some JVM implementations where for a directory "X/" in a .zip file, if we do
     // "zip.getEntry("X/").isDirectory()" returns true, but if we do "zip.getEntry("X").isDirectory()" is false.
     // getEntry for "name" falls back to finding "X/", so here we make sure this didn't happen.
     if (zipFile.getEntry(entry.getName() + "/") != null) return null;
@@ -281,7 +299,7 @@ public class Utils {
     return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
   }
 
-  private static class NormalizedZipInputStream extends InputStream {
+  private static final class NormalizedZipInputStream extends InputStream {
     private final ZipFile myZip;
     private final List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;
@@ -337,7 +355,6 @@ public class Utils {
     @Override
     @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
     public synchronized void writeTo(OutputStream out) throws IOException {
-      //noinspection UnnecessarilyQualifiedStaticUsage
       Utils.writeBytes(buf, count, out);
     }
   }

@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.vcs.log.Hash;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -144,6 +145,7 @@ public class HgRepoInfo {
                         myLocalTags, mySubrepos, myMQApplied, myMqNames);
   }
 
+  @NonNls
   @Override
   @NotNull
   public String toString() {

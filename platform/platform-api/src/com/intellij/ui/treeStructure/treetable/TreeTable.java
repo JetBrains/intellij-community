@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure.treetable;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -35,7 +34,6 @@ import java.util.*;
  * @author Scott Violet
  */
 public class TreeTable extends JBTable {
-  private static final Logger LOG = Logger.getInstance(TreeTable.class);
   /** A subclass of JTree. */
   private TreeTableTree myTree;
   private TreeTableModel myTableModel;
@@ -58,6 +56,7 @@ public class TreeTable extends JBTable {
     private final Action action;
 
     private TreeAction(@NotNull String tableActionId, @NotNull String treeActionId) {
+      //noinspection HardCodedStringLiteral
       super(tableActionId + " -> " + treeActionId);
       actionId = treeActionId;
       ActionMap map = getActionMap();
@@ -255,7 +254,7 @@ public class TreeTable extends JBTable {
           if (min != -1 && max != -1) {
             for (int counter = min; counter <= max; counter++) {
               if (listSelectionModel.isSelectedIndex(counter)) {
-                selectedRows.add(new Integer(counter));
+                selectedRows.add(Integer.valueOf(counter));
               }
             }
           }
@@ -263,8 +262,7 @@ public class TreeTable extends JBTable {
           super.resetRowSelection();
 
           listSelectionModel.clearSelection();
-          for (final Object selectedRow : selectedRows) {
-            Integer row = (Integer)selectedRow;
+          for (final Integer row : selectedRows) {
             listSelectionModel.addSelectionInterval(row.intValue(), row.intValue());
           }
         }
@@ -325,7 +323,7 @@ public class TreeTable extends JBTable {
 
     /**
      * Class responsible for calling updateSelectedPathsFromSelectedRows
-     * when the selection of the list changse.
+     * when the selection of the list change.
      */
     class ListSelectionHandler implements ListSelectionListener {
       @Override
@@ -360,7 +358,7 @@ public class TreeTable extends JBTable {
       // Some LAFs, for example, Aqua under MAC OS X
       // expand tree node by MOUSE_RELEASED event. Unfortunately,
       // it's not possible to find easy way to wedge in table's
-      // event sequense. Therefore we send "synthetic" release event.
+      // event sequence. Therefore we send "synthetic" release event.
       if (newEvent.getID()==MouseEvent.MOUSE_PRESSED) {
         MouseEvent newME2 = new MouseEvent(
           myTree,

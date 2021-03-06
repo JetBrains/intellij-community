@@ -2,10 +2,13 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -115,6 +118,9 @@ public abstract class SingleRowLayout extends TabLayout {
 
       data.position = getStrategy().getStartPosition(data) - getScrollOffset();
 
+      layoutTitle(data);
+      data.position += myTabs.isHorizontalTabs() ? data.titleRect.width : data.titleRect.height;
+
       layoutLabels(data);
 
       layoutMoreButton(data);
@@ -159,6 +165,10 @@ public abstract class SingleRowLayout extends TabLayout {
     data.vToolbar =
       new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
+  }
+
+  protected void layoutTitle(SingleRowPassInfo data) {
+    data.titleRect = getStrategy().getTitleRect(data);
   }
 
   protected void layoutMoreButton(SingleRowPassInfo data) {
@@ -284,5 +294,11 @@ public abstract class SingleRowLayout extends TabLayout {
     }
 
     return result;
+  }
+
+  @Override
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public int getDropSideFor(@NotNull Point point) {
+    return TabsUtil.getDropSideFor(point, myTabs);
   }
 }

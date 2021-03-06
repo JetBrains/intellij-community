@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -22,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -182,7 +184,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     setOKActionEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getEnteredName()));
   }
 
-  private String getTypeLabel() {
+  private @Nls String getTypeLabel() {
     return myWillBeDeclaredStatic ?
            JavaRefactoringBundle.message("introduce.field.static.field.of.type") :
            JavaRefactoringBundle.message("introduce.field.field.of.type");
@@ -273,7 +275,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myNameField.getFocusableComponent();
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("introduce.field.title");
   }
 }

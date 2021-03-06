@@ -89,4 +89,9 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
   protected String valueToString(@NotNull List<String> value) {
     return toCommaSeparatedString(value);
   }
+
+  @Override
+  public boolean isEmptyListAllowed() {
+    return false;
+  }
 }

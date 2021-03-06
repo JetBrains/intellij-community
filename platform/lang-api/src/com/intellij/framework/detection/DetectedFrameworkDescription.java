@@ -26,7 +26,7 @@ import java.util.Collection;
 /**
  * Describes the detected framework
  *
- * @see FrameworkDetector#detect(java.util.Collection, FrameworkDetectionContext)
+ * @see FrameworkDetector#detect(Collection, FrameworkDetectionContext)
  */
 public abstract class DetectedFrameworkDescription {
   /**

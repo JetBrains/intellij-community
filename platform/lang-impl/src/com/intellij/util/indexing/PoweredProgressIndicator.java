@@ -5,7 +5,7 @@ import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-class PoweredProgressIndicator extends DelegatingProgressIndicator {
+final class PoweredProgressIndicator extends DelegatingProgressIndicator {
   private final double myPower;
 
   static ProgressIndicator wrap(@NotNull ProgressIndicator indicator, double power) {

@@ -16,6 +16,7 @@ import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.FSDirectory
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.NonNls
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -26,6 +27,7 @@ class HelpSearch {
 
   companion object {
     val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+    @NonNls
     val PREFIX = "/search/"
     val NOT_FOUND = "[]"
 
@@ -83,7 +85,8 @@ class HelpSearch {
         finally {
           indexDirectory?.close()
           reader?.close()
-          for (f in indexDir.toFile().listFiles()) f.delete()
+          val tempFiles = indexDir.toFile().listFiles()
+          tempFiles?.forEach { it.delete() }
           Files.delete(indexDir)
         }
       return NOT_FOUND

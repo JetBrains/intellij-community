@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * Queue with a limited number of tasks, and with higher priority for new tasks, than for older ones.
  */
 public class SequentialLimitedLifoExecutor<Task> implements Disposable {
+  private static final Logger LOG = Logger.getInstance(SequentialLimitedLifoExecutor.class);
 
   private final int myMaxTasks;
   @NotNull private final ThrowableConsumer<? super Task, ? extends Throwable> myLoadProcess;
@@ -64,7 +66,7 @@ public class SequentialLimitedLifoExecutor<Task> implements Disposable {
         throw e;
       }
       catch (Throwable e) {
-        throw new RuntimeException(e); // todo
+        LOG.error(e);
       }
     }
   }

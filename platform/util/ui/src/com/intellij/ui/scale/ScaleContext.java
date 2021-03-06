@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -10,8 +10,8 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.function.Function;
 
-import static com.intellij.ui.scale.DerivedScaleType.DEV_SCALE;
-import static com.intellij.ui.scale.ScaleType.USR_SCALE;
+import static com.intellij.ui.scale.DerivedScaleType.*;
+import static com.intellij.ui.scale.ScaleType.*;
 
 /**
  * Extends {@link UserScaleContext} with the system scale, and is thus used for raster-based painting.
@@ -24,7 +24,7 @@ import static com.intellij.ui.scale.ScaleType.USR_SCALE;
  */
 @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
 public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { // extends BaseScaleContext for backward compatibility
-  protected Scale sysScale = ScaleType.SYS_SCALE.of(JBUIScale.sysScale());
+  protected Scale sysScale = SYS_SCALE.of(JBUIScale.sysScale());
 
   @Nullable
   protected WeakReference<Component> compRef;
@@ -43,7 +43,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @NotNull
   public static ScaleContext createIdentity() {
-    return create(USR_SCALE.of(1), ScaleType.SYS_SCALE.of(1));
+    return create(USR_SCALE.of(1), SYS_SCALE.of(1));
   }
 
   /**
@@ -61,7 +61,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @NotNull
   public static ScaleContext create(@Nullable Component comp) {
-    final ScaleContext ctx = new ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(comp)));
+    final ScaleContext ctx = new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(comp)));
     if (comp != null) ctx.compRef = new WeakReference<>(comp);
     return ctx;
   }
@@ -71,7 +71,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @NotNull
   public static ScaleContext create(@Nullable GraphicsConfiguration gc) {
-    return new ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(gc)));
+    return new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(gc)));
   }
 
   /**
@@ -79,7 +79,7 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @NotNull
   public static ScaleContext create(Graphics2D g) {
-    return new ScaleContext(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(g)));
+    return new ScaleContext(SYS_SCALE.of(JBUIScale.sysScale(g)));
   }
 
   /**
@@ -118,8 +118,15 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @Override
   public double getScale(@NotNull ScaleType type) {
-    if (type == ScaleType.SYS_SCALE) return sysScale.value;
+    if (type == SYS_SCALE) return sysScale.value;
     return super.getScale(type);
+  }
+
+  @Override
+  @NotNull
+  protected Scale getScaleObject(@NotNull ScaleType type) {
+    if (type == SYS_SCALE) return sysScale;
+    return super.getScaleObject(type);
   }
 
   /**
@@ -144,8 +151,10 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   public boolean update() {
     boolean updated = setScale(USR_SCALE.of(JBUIScale.scale(1f)));
     if (compRef != null) {
-      Component comp = compRef.get();
-      if (comp != null) updated = setScale(ScaleType.SYS_SCALE.of(JBUIScale.sysScale(comp))) || updated;
+      Component component = compRef.get();
+      if (component != null) {
+        updated = setScale(SYS_SCALE.of(JBUIScale.sysScale(component.getGraphicsConfiguration()))) || updated;
+      }
     }
     return onUpdated(updated);
   }
@@ -156,9 +165,11 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
    */
   @Override
   public boolean setScale(@NotNull Scale scale) {
-    if (isScaleOverridden(scale)) return false;
+    if (isScaleOverridden(scale)) {
+      return false;
+    }
 
-    if (scale.type == ScaleType.SYS_SCALE) {
+    if (scale.type == SYS_SCALE) {
       boolean updated = !sysScale.equals(scale);
       sysScale = scale;
       return onUpdated(updated);
@@ -167,12 +178,16 @@ public class ScaleContext extends /*UserScaleContext*/JBUI.BaseScaleContext { //
   }
 
   @Override
-  protected <T extends UserScaleContext> boolean updateAll(@NotNull T ctx) {
-    boolean updated = super.updateAll(ctx);
-    if (!(ctx instanceof ScaleContext)) return updated;
-    ScaleContext context = (ScaleContext)ctx;
+  protected <T extends UserScaleContext> boolean updateAll(@NotNull T scaleContext) {
+    boolean updated = super.updateAll(scaleContext);
+    if (!(scaleContext instanceof ScaleContext)) {
+      return updated;
+    }
+    ScaleContext context = (ScaleContext)scaleContext;
 
-    if (compRef != null) compRef.clear();
+    if (compRef != null) {
+      compRef.clear();
+    }
     compRef = context.compRef;
 
     return setScale(context.sysScale) || updated;

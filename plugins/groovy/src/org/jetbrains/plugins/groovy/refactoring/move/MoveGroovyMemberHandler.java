@@ -324,7 +324,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
                                                    RefactoringUIUtil.getDescription(member, false),
                                                    visibility,
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
-        conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(member, StringUtil.capitalize(message));
       }
     }
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -16,7 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyAccessibilityInspection extends GroovySuppressableInspectionTool implements UnfairLocalInspectionTool {
+public class GroovyAccessibilityInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
+
   private static final String SHORT_NAME = "GroovyAccessibility";
 
   public static boolean isInspectionEnabled(GroovyFileBase file, Project project) {
@@ -41,7 +43,6 @@ public class GroovyAccessibilityInspection extends GroovySuppressableInspectionT
   }
 
   public static boolean isSuppressed(PsiElement ref) {
-    return isElementToolSuppressedIn(ref, SHORT_NAME);
+    return GroovySuppressableInspectionTool.isElementToolSuppressedIn(ref, SHORT_NAME);
   }
-
 }

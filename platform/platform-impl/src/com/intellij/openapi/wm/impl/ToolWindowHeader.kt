@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.ui.UISettingsListener
@@ -16,7 +17,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
-import com.intellij.ui.popup.util.PopupState
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.*
@@ -50,7 +51,7 @@ abstract class ToolWindowHeader internal constructor(
 
   init {
     @Suppress("LeakingThis")
-    AccessibleContextUtil.setName(this, "Tool Window Header")
+    AccessibleContextUtil.setName(this, IdeBundle.message("toolwindow.header.accessible.name"))
     westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
     westPanel.isOpaque = false
     westPanel.add(contentUi.tabComponent, CC().growY())
@@ -92,7 +93,7 @@ abstract class ToolWindowHeader internal constructor(
     westPanel.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          toolWindow.fireActivated()
+          toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
         }
       }
     )
@@ -107,14 +108,14 @@ abstract class ToolWindowHeader internal constructor(
 
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             if (e.isAltDown) {
-              toolWindow.fireHidden()
+              toolWindow.fireHidden(ToolWindowEventSource.ToolWindowHeaderAltClick)
             }
             else {
-              toolWindow.fireHiddenSide()
+              toolWindow.fireHiddenSide(ToolWindowEventSource.ToolWindowHeader)
             }
           }
           else {
-            toolWindow.fireActivated()
+            toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
           }
         }
       }
@@ -251,7 +252,7 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   private inner class ShowOptionsAction : DumbAwareAction() {
-    val myPopupState = PopupState()
+    val myPopupState = PopupState.forPopupMenu()
     override fun actionPerformed(e: AnActionEvent) {
       if (myPopupState.isRecentlyHidden) return // do not show new popup
       val inputEvent = e.inputEvent
@@ -262,7 +263,7 @@ abstract class ToolWindowHeader internal constructor(
         x = inputEvent.x
         y = inputEvent.y
       }
-      popupMenu.component.addPopupMenuListener(myPopupState)
+      myPopupState.prepareToShow(popupMenu.component)
       popupMenu.component.show(inputEvent.component, x, y)
     }
 
@@ -281,7 +282,7 @@ abstract class ToolWindowHeader internal constructor(
     }
 
     init {
-      ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID)
+      ActionUtil.copyFrom(this, InternalDecoratorImpl.HIDE_ACTIVE_WINDOW_ACTION_ID)
       templatePresentation.icon = AllIcons.General.HideToolWindow
       templatePresentation.setText { UIBundle.message("tool.window.hide.action.name") }
     }

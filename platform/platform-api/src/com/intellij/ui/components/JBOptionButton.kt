@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.Weighted
+import com.intellij.ui.UIBundle
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -43,7 +45,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
       firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, optionTooltipText)
     }
 
-  var isOkToProcessDefaultMnemonics = true
+  var isOkToProcessDefaultMnemonics = false
 
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
 
@@ -64,6 +66,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   fun closePopup() = getUI().closePopup()
 
   @Deprecated("Use setOptions(Action[]) instead", ReplaceWith("setOptions(options)"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun updateOptions(options: Array<Action>?) {
     this.options = options
   }
@@ -105,12 +108,14 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   companion object {
     const val PROP_OPTIONS = "OptionActions"
     const val PROP_OPTION_TOOLTIP = "OptionTooltip"
+    const val PLACE = "ActionPlace"
 
     @JvmStatic
     fun getDefaultShowPopupShortcut() = DEFAULT_SHOW_POPUP_SHORTCUT
 
     @JvmStatic
-    fun getDefaultTooltip() = "Show drop-down menu (${getFirstKeyboardShortcutText(getDefaultShowPopupShortcut())})"
+    fun getDefaultTooltip() = UIBundle.message("option.button.tooltip.shortcut.text",
+                                               getFirstKeyboardShortcutText(getDefaultShowPopupShortcut()))
   }
 }
 

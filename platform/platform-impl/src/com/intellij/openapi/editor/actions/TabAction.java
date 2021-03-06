@@ -39,16 +39,9 @@ public class TabAction extends EditorAction {
     setInjectedContext(true);
   }
 
-  public static class Handler extends EditorWriteActionHandler {
-    public Handler() {
-      super(true);
-    }
-
+  public static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
-    public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (caret == null) {
-        caret = editor.getCaretModel().getPrimaryCaret();
-      }
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.EDIT_COMMAND_GROUP);
       CommandProcessor.getInstance().setCurrentCommandName(EditorBundle.message("typing.command.name"));
       Project project = CommonDataKeys.PROJECT.getData(dataContext);

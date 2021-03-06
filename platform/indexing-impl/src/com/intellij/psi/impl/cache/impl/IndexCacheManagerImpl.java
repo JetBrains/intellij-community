@@ -2,7 +2,6 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -12,8 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -22,12 +20,12 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class IndexCacheManagerImpl implements CacheManager{
+public class IndexCacheManagerImpl implements CacheManager {
+  @NotNull
   private final Project myProject;
 
   public IndexCacheManagerImpl(@NotNull Project project) {
@@ -35,7 +33,10 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  public PsiFile @NotNull [] getFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public PsiFile @NotNull [] getFilesWithWord(@NotNull String word,
+                                              short occurenceMask,
+                                              @NotNull GlobalSearchScope scope,
+                                              boolean caseSensitively) {
     if (myProject.isDefault()) {
       return PsiFile.EMPTY_ARRAY;
     }
@@ -47,61 +48,70 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   @Override
-  public VirtualFile @NotNull [] getVirtualFilesWithWord(@NotNull final String word, final short occurenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
+  public VirtualFile @NotNull [] getVirtualFilesWithWord(@NotNull String word,
+                                                         short occurenceMask,
+                                                         @NotNull GlobalSearchScope scope,
+                                                         boolean caseSensitively) {
     if (myProject.isDefault()) {
       return VirtualFile.EMPTY_ARRAY;
     }
 
-    final List<VirtualFile> result = new ArrayList<>(5);
+    List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
       collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
-    }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
+    });
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  // IMPORTANT!!!
-  // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
-  // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
-  // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
-  private boolean collectVirtualFilesWithWord(@NotNull final String word,
-                                              final short occurrenceMask,
-                                              @NotNull final GlobalSearchScope scope,
-                                              final boolean caseSensitively,
-                                              @NotNull final Processor<? super VirtualFile> fileProcessor) {
+  @Override
+  public boolean processVirtualFilesWithAllWords(@NotNull Collection<String> words,
+                                                 short occurenceMask,
+                                                 @NotNull GlobalSearchScope scope,
+                                                 boolean caseSensitively,
+                                                 @NotNull Processor<? super VirtualFile> processor) {
     if (myProject.isDefault()) {
       return true;
     }
+    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurenceMask);
+
+    if (PsiSearchHelperImpl.LOG.isTraceEnabled()) {
+      PsiSearchHelperImpl.LOG.trace("searching for words " + words + " in " + scope);
+    }
 
     try {
-      return ReadAction.compute(() -> FileBasedIndex.getInstance()
-        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, (file, value) -> {
-          ProgressIndicatorProvider.checkCanceled();
-          final int mask = value.intValue();
-          if ((mask & occurrenceMask) != 0) {
-            if (!fileProcessor.process(file)) return false;
-          }
-          return true;
-        }, scope));
+      return FileBasedIndex.getInstance().processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
     }
     catch (IndexNotReadyException e) {
       throw new ProcessCanceledException();
     }
   }
 
+  // IMPORTANT!!!
+  // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
+  // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
+  // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
+  private void collectVirtualFilesWithWord(@NotNull String word,
+                                           short occurrenceMask,
+                                           @NotNull GlobalSearchScope scope,
+                                           boolean caseSensitively,
+                                           @NotNull Processor<? super VirtualFile> fileProcessor) {
+    processVirtualFilesWithAllWords(Collections.singleton(word), occurrenceMask, scope, caseSensitively, fileProcessor);
+  }
+
   @Override
-  public boolean processFilesWithWord(@NotNull final Processor<? super PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
-    final List<VirtualFile> result = new ArrayList<>(5);
+  public boolean processFilesWithWord(@NotNull Processor<? super PsiFile> psiFileProcessor, @NotNull String word, short occurrenceMask, @NotNull GlobalSearchScope scope, boolean caseSensitively) {
+    List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     collectVirtualFilesWithWord(word, occurrenceMask, scope, caseSensitively, processor);
     if (result.isEmpty()) return true;
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
+    Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
         if (virtualFile.isValid()) {
-          final PsiFile psiFile = psiManager.findFile(virtualFile);
+          PsiFile psiFile = psiManager.findFile(virtualFile);
           return psiFile == null || psiFileProcessor.process(psiFile);
         }
         return true;

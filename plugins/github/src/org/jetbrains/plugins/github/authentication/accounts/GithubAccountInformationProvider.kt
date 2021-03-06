@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.authentication.accounts
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInBackground
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
@@ -21,7 +21,7 @@ class GithubAccountInformationProvider {
     .expireAfterAccess(30, TimeUnit.MINUTES)
     .build<GithubAccount, GithubAuthenticatedUser>()
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(IOException::class)
   fun getInformation(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, account: GithubAccount): GithubAuthenticatedUser {
     return informationCache.get(account) { executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server)) }

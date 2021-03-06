@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.ExecutionBundle;
@@ -79,10 +79,11 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
   public void onFirstRun(@NotNull ConfigurationFromContext fromContext,
                          @NotNull ConfigurationContext context,
                          @NotNull Runnable performRunnable) {
+    Runnable runnableWithCheck = addCheckForTemplateParams(fromContext, context, performRunnable);
     ConfigurationData configurationData = extractConfigurationData(context);
     if (configurationData == null) {
       LOG.warn("Cannot extract configuration data from context, uses raw run configuration");
-      performRunnable.run();
+      runnableWithCheck.run();
       return;
     }
     String locationName = String.format("'%s'", configurationData.module.getName());
@@ -93,11 +94,11 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
       Function1<VirtualFile, String> createFilter = (e) -> createTestWildcardFilter(/*hasSuffix=*/false);
       if (!applyTestConfiguration(settings, context.getModule(), tasks, configurationData.sources, it -> it, createFilter)) {
         LOG.warn("Cannot apply package test configuration, uses raw run configuration");
-        performRunnable.run();
+        runnableWithCheck.run();
         return;
       }
       configuration.setName(suggestName(configurationData.module));
-      performRunnable.run();
+      runnableWithCheck.run();
     });
   }
 
@@ -135,7 +136,7 @@ public final class AllInDirectoryGradleConfigurationProducer extends GradleTestR
     return ExecutionBundle.message("test.in.scope.presentable.text", module.getName());
   }
 
-  private static class ConfigurationData {
+  private static final class ConfigurationData {
     public final @NotNull Module module;
     public final @NotNull PsiElement sourceElement;
     public final @NotNull List<VirtualFile> sources;

@@ -76,7 +76,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
-    final ArrayList<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
+    final ArrayList<Debugger.Variable> variables = new ArrayList<>();
     final Enumeration[] variableNames = myElement.getVariableNames();
 
     this.addVariables(myElement, variables, variableNames[0], true);
@@ -205,7 +205,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
           return new MyValue(v.asString(), com.icl.saxon.expr.Value.STRING);
         }
 
-        final List<Node> list = new ArrayList<Node>();
+        final List<Node> list = new ArrayList<>();
         final NodeEnumeration nodeEnumeration = ((NodeSetValue)v).enumerate();
         while (nodeEnumeration.hasMoreElements()) {
           final NodeInfo node = nodeEnumeration.nextElement();

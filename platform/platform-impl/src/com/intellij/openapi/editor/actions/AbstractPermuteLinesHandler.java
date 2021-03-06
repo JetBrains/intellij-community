@@ -39,8 +39,10 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     int caretOffsetInLine = 0;
     if (!hasSelection) {
       int caretLine = caret.getLogicalPosition().line;
-      caretLineContent = lines[caretLine - startLine];
-      caretOffsetInLine = caret.getOffset() - document.getLineStartOffset(caretLine);
+      if (caretLine <= endLine) {
+        caretLineContent = lines[caretLine - startLine];
+        caretOffsetInLine = caret.getOffset() - document.getLineStartOffset(caretLine);
+      }
     }
     permute(lines);
     String newContent = String.join("\n", lines);
@@ -52,7 +54,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
       caret.moveToOffset(selectionEnd);
       caret.setSelection(toReplaceStart, selectionEnd);
     }
-    else {
+    else if (caretLineContent != null) {
       for (int i = 0; i < lineCount; i++) {
         if (lines[i] == caretLineContent) {
           caret.moveToOffset(document.getLineStartOffset(startLine + i) + caretOffsetInLine);

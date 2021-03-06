@@ -30,7 +30,8 @@ import com.intellij.updater.Utils;
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
 
 import java.io.*;
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -67,8 +68,8 @@ public class JBDiff {
   }
 
   private static void split(int[] I, int[] V, int initStart, int initLen, int h) {
-    Stack<Integer> startStack = new Stack<>();
-    Stack<Integer> lenStack = new Stack<>();
+    Deque<Integer> startStack = new ArrayDeque<>();
+    Deque<Integer> lenStack = new ArrayDeque<>();
     startStack.push(initStart);
     lenStack.push(initLen);
     while (!startStack.isEmpty()) {
@@ -223,7 +224,7 @@ public class JBDiff {
    * Count the number of bytes that match in oldBuf (starting at offset oldOffset) and newBuf (starting at offset newOffset).
    */
   private static int matchLen(byte[] oldBuf, int oldOffset, byte[] newBuf, int newOffset) {
-    int end = min(oldBuf.length - oldOffset, newBuf.length - newOffset);
+    int end = Math.min(oldBuf.length - oldOffset, newBuf.length - newOffset);
     for (int i = 0; i < end; i++) {
       if (oldBuf[oldOffset + i] != newBuf[newOffset + i]) {
         return i;
@@ -435,10 +436,6 @@ public class JBDiff {
 
   private static class IntByRef {
     public int value;
-  }
-
-  private static int min(int x, int y) {
-    return x < y ? x : y;
   }
 
   private static void swap(int[] array, int i, int j) {

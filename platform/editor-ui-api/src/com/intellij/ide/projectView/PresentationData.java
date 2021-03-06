@@ -23,13 +23,14 @@ import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +47,10 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   private Icon myIcon;
 
-  private String myLocationString;
-  private String myPresentableText;
+  private @NlsSafe String myLocationString;
+  private @NlsSafe String myPresentableText;
 
-  private String myTooltip;
+  private @Tooltip String myTooltip;
   private TextAttributesKey myAttributesKey;
 
   private Color myForcedTextForeground;
@@ -59,8 +60,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   private boolean mySeparatorAbove = false;
 
   private boolean myChanged;
-  private String myLocationPrefix;
-  private String myLocationSuffix;
+  private @NlsSafe String myLocationPrefix;
+  private @NlsSafe String myLocationSuffix;
 
   /**
    * Creates an instance with the specified parameters.
@@ -73,21 +74,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *                        in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
-  public PresentationData(String presentableText, String locationString, Icon icon,
+  public PresentationData(@NlsSafe String presentableText, @NlsSafe String locationString, Icon icon,
                           @Nullable TextAttributesKey attributesKey) {
     myIcon = icon;
     myLocationString = locationString;
     myPresentableText = presentableText;
     myAttributesKey = attributesKey;
-  }
-
-  /**
-   * @deprecated Use {@link #PresentationData(String, String, Icon, TextAttributesKey)} instead.
-   */
-  @Deprecated
-  public PresentationData(@Nls String presentableText, String locationString, Icon openIcon, Icon closedIcon,
-                          @Nullable TextAttributesKey attributesKey) {
-    this(presentableText, locationString, closedIcon, attributesKey);
   }
 
 
@@ -132,7 +124,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param locationString the location of the object.
    */
 
-  public void setLocationString(String locationString) {
+  public void setLocationString(@NlsSafe String locationString) {
     myLocationString = locationString;
   }
 
@@ -141,7 +133,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *
    * @param presentableText the name of the object.
    */
-  public void setPresentableText(@Nls String presentableText) {
+  public void setPresentableText(@NlsSafe String presentableText) {
     myPresentableText = presentableText;
   }
 
@@ -153,6 +145,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *             in a non-tree view.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setClosedIcon(Icon closedIcon) {
     setIcon(closedIcon);
   }
@@ -165,6 +158,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *             Sets the icon shown for the node when it is expanded in the tree.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenIcon(Icon openIcon) {
   }
 
@@ -177,6 +171,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    */
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void setIcons(Icon icon) {
     setIcon(icon);
   }
@@ -222,7 +217,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myAttributesKey = attributesKey;
   }
 
-  public String getTooltip() {
+  public @Tooltip String getTooltip() {
     return myTooltip;
   }
 

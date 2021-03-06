@@ -11,7 +11,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,7 @@ import java.lang.reflect.Type;
 public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
 
   public DefaultAddAction() {
-    super(XmlDomBundle.messagePointer("action.add"));
+    super(XmlDomBundle.messagePointer("dom.action.add"));
   }
 
   public DefaultAddAction(@NlsActions.ActionText String text) {

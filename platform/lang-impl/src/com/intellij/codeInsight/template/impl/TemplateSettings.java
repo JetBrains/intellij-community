@@ -1,28 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
@@ -42,22 +44,23 @@ import java.util.*;
 @State(
   name = "TemplateSettings",
   storages = @Storage("templates.xml"),
-  additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
+  additionalExportDirectory = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public final class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
+  private static final ExtensionPointName<DefaultLiveTemplateEP> EP_NAME = new ExtensionPointName<>("com.intellij.defaultLiveTemplates");
 
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
   @NonNls private static final String GROUP = "group";
   @NonNls public static final String TEMPLATE = "template";
 
-  public static final char SPACE_CHAR = ' ';
-  public static final char TAB_CHAR = '\t';
-  public static final char ENTER_CHAR = '\n';
-  public static final char DEFAULT_CHAR = 'D';
-  public static final char CUSTOM_CHAR = 'C';
-  public static final char NONE_CHAR = 'N';
+  public static final char SPACE_CHAR = TemplateConstants.SPACE_CHAR;
+  public static final char TAB_CHAR = TemplateConstants.TAB_CHAR;
+  public static final char ENTER_CHAR = TemplateConstants.ENTER_CHAR;
+  public static final char DEFAULT_CHAR = TemplateConstants.DEFAULT_CHAR;
+  public static final char CUSTOM_CHAR = TemplateConstants.CUSTOM_CHAR;
+  public static final char NONE_CHAR = TemplateConstants.NONE_CHAR;
 
   @NonNls private static final String SPACE = "SPACE";
   @NonNls private static final String TAB = "TAB";
@@ -75,7 +78,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   @NonNls private static final String DEFAULT_VALUE = "defaultValue";
   @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  @NonNls static final String CONTEXT = "context";
+  @NonNls static final String CONTEXT = TemplateConstants.CONTEXT;
   @NonNls private static final String TO_REFORMAT = "toReformat";
   @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
   @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
@@ -86,7 +89,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
 
-  static final String TEMPLATES_DIR_PATH = "templates";
+  @NonNls static final String TEMPLATES_DIR_PATH = "templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
@@ -283,8 +286,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       }
     }, ApplicationManager.getApplication());
 
-    DefaultLiveTemplateEP.EP_NAME.addChangeListener(mySchemeManager::reload,
-                                                    ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(mySchemeManager::reload, ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -297,16 +299,16 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   public static TemplateSettings getInstance() {
-    return ServiceManager.getService(TemplateSettings.class);
+    return ApplicationManager.getApplication().getService(TemplateSettings.class);
   }
 
-  private boolean differsFromDefault(TemplateImpl t) {
+  boolean differsFromDefault(@NotNull TemplateImpl t) {
     TemplateImpl def = getDefaultTemplate(t);
     return def == null || !t.equals(def) || !t.contextsEqual(def);
   }
 
   @Nullable
-  public TemplateImpl getDefaultTemplate(TemplateImpl t) {
+  public TemplateImpl getDefaultTemplate(@NotNull TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
@@ -455,7 +457,12 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   @NotNull
-  private static TemplateImpl createTemplate(@NotNull String key, String string, @NotNull String group, String description, @Nullable String shortcut, String id) {
+  private static TemplateImpl createTemplate(@NotNull @NlsSafe String key,
+                                             @NlsSafe String string,
+                                             @NotNull @NonNls String group,
+                                             @NlsContexts.DetailedDescription String description,
+                                             @Nullable @NlsSafe String shortcut,
+                                             @NonNls String id) {
     TemplateImpl template = new TemplateImpl(key, string, group, false);
     template.setId(id);
     template.setDescription(description);
@@ -484,13 +491,21 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         loadDefaultLiveTemplatesFromProvider(provider);
       }
 
-      for (DefaultLiveTemplateEP ep : DefaultLiveTemplateEP.EP_NAME.getExtensionList()) {
-        String file = ep.getFile();
-        if (file == null) continue;
-        ClassLoader pluginClassLoader = ep.getPluginDescriptor().getPluginClassLoader();
-        readDefTemplate(pluginClassLoader, file, !ep.getHidden(), pluginClassLoader,
-                        PluginInfoDetectorKt.getPluginInfoByDescriptor(ep.getPluginDescriptor()));
-      }
+      EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
+        String file = ep.file;
+        if (file == null) {
+          return;
+        }
+
+        try {
+          ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+          readDefTemplate(file, !ep.hidden, pluginClassLoader,
+                          PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+        }
+        catch (Exception e) {
+          LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
+        }
+      });
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -500,16 +515,16 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException, IOException {
+  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException {
     for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-      readDefTemplate(provider, defTemplate, true, provider.getClass().getClassLoader(),
+      readDefTemplate(defTemplate, true, provider.getClass().getClassLoader(),
                       PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
     }
     try {
       String[] hidden = provider.getHiddenLiveTemplateFiles();
       if (hidden != null) {
         for (String s : hidden) {
-          readDefTemplate(provider, s, false, provider.getClass().getClassLoader(),
+          readDefTemplate(s, false, provider.getClass().getClassLoader(),
                           PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
         }
       }
@@ -518,24 +533,43 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  private void readDefTemplate(@NotNull Object requestor,
-                               @NotNull String defTemplate,
-                               boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException, InvalidDataException, IOException {
-    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(requestor, defTemplate);
-    if (inputStream == null) {
-      LOG.error("Unable to find template resource: " + defTemplate +
-                "; classLoader: " + loader +
-                "; plugin: " + info);
+  private void readDefTemplate(@NotNull String defTemplate,
+                               boolean registerTemplate,
+                               @NotNull ClassLoader loader,
+                               PluginInfo info) throws JDOMException {
+    Element element;
+    try {
+      InputStream stream;
+      if (defTemplate.startsWith("/")) {
+        stream = loader.getResourceAsStream(appendExt(defTemplate.substring(1)));
+      }
+      else {
+        stream = loader.getResourceAsStream(appendExt(defTemplate));
+      }
+      if (stream == null) {
+        stream = loader.getResourceAsStream(appendExt("idea/" + defTemplate));
+        if (stream == null) {
+          LOG.error("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+          return;
+        }
+        else {
+          LOG.error("Do not rely on implicit `idea/` prefix: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info);
+        }
+      }
+      element = JDOMUtil.load(stream);
+    }
+    catch (IOException e) {
+      LOG.error("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e);
       return;
     }
-    Element element = JDOMUtil.load(inputStream);
+
     TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
     if (defGroup != null) {
       for (TemplateImpl template : defGroup.getElements()) {
         String key = template.getKey();
         String groupName = template.getGroupName();
-        if (StringUtil.isNotEmpty(key) && StringUtil.isNotEmpty(groupName)) {
-          myPredefinedTemplates.put(Pair.create(key, groupName), info);
+        if (Strings.isNotEmpty(key) && Strings.isNotEmpty(groupName)) {
+          myPredefinedTemplates.put(new Pair<>(key, groupName), info);
         }
       }
 
@@ -546,6 +580,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         }
       }
     }
+  }
+
+  private static String appendExt(@NotNull String head) {
+    return head.endsWith(FileStorageCoreUtil.DEFAULT_EXT) ? head : head + FileStorageCoreUtil.DEFAULT_EXT;
   }
 
   @Nullable
@@ -565,7 +603,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
 
     String groupName = element.getAttributeValue(GROUP);
-    if (StringUtil.isEmpty(groupName)) {
+    if (Strings.isEmpty(groupName)) {
       groupName = defGroupName;
     }
 
@@ -647,7 +685,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       description = bundle.getString(key);
     }
     else {
-      description = element.getAttributeValue(DESCRIPTION);
+      description = element.getAttributeValue(DESCRIPTION); //NON-NLS
     }
 
     String shortcut = element.getAttributeValue(SHORTCUT);

@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -26,26 +28,26 @@ public class TagComponent extends LinkComponent {
     setBorder(JBUI.Borders.empty(1, 8));
   }
 
-  public TagComponent(@NotNull String name) {
+  public TagComponent(@NotNull @Nls String name) {
     this();
     setText(name);
   }
 
   @Override
-  public void setText(@NotNull String name) {
+  public void setText(@NotNull @Nls String name) {
     String tooltip = null;
     myColor = BACKGROUND;
 
-    if ("EAP".equals(name)) {
+    if (Tags.EAP.name().equals(name)) {
       myColor = EAP_BACKGROUND;
-      tooltip = "The EAP version does not guarantee the stability\nand availability of the plugin.";
+      tooltip = IdeBundle.message("tooltip.eap.plugin.version");
     }
-    else if ("Trial".equals(name) || "Purchased".equals(name)) {
+    else if (Tags.Trial.name().equals(name) || Tags.Purchased.name().equals(name)) {
       myColor = TRIAL_BACKGROUND;
     }
-    else if ("Paid".equals(name)) {
+    else if (Tags.Paid.name().equals(name)) {
       myColor = PAID_BACKGROUND;
-      tooltip = "Activate the plugin license after installation or use the 30-day trial.";
+      tooltip = IdeBundle.message("tooltip.paid.plugin");
     }
 
     super.setText(name);

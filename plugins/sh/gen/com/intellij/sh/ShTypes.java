@@ -69,6 +69,7 @@ public interface ShTypes {
   IElementType MUL_EXPRESSION = new ShCompositeElementType("MUL_EXPRESSION");
   IElementType NUMBER = new ShCompositeElementType("NUMBER");
   IElementType OLD_ARITHMETIC_EXPANSION = new ShCompositeElementType("OLD_ARITHMETIC_EXPANSION");
+  IElementType PARENTHESES_BLOCK = new ShCompositeElementType("PARENTHESES_BLOCK");
   IElementType PARENTHESES_CONDITION = new ShCompositeElementType("PARENTHESES_CONDITION");
   IElementType PARENTHESES_EXPRESSION = new ShCompositeElementType("PARENTHESES_EXPRESSION");
   IElementType PATTERN = new ShCompositeElementType("PATTERN");
@@ -77,6 +78,8 @@ public interface ShTypes {
   IElementType PRE_EXPRESSION = new ShCompositeElementType("PRE_EXPRESSION");
   IElementType PROCESS_SUBSTITUTION = new ShCompositeElementType("PROCESS_SUBSTITUTION");
   IElementType REDIRECTION = new ShCompositeElementType("REDIRECTION");
+  IElementType REGEX_CONDITION = new ShCompositeElementType("REGEX_CONDITION");
+  IElementType REGEX_PATTERN = new ShCompositeElementType("REGEX_PATTERN");
   IElementType SELECT_COMMAND = new ShCompositeElementType("SELECT_COMMAND");
   IElementType SHELL_COMMAND = new ShCompositeElementType("SHELL_COMMAND");
   IElementType SHELL_PARAMETER_EXPANSION = new ShCompositeElementType("SHELL_PARAMETER_EXPANSION");
@@ -364,6 +367,9 @@ public interface ShTypes {
       else if (type == OLD_ARITHMETIC_EXPANSION) {
         return new ShOldArithmeticExpansionImpl(node);
       }
+      else if (type == PARENTHESES_BLOCK) {
+        return new ShParenthesesBlockImpl(node);
+      }
       else if (type == PARENTHESES_CONDITION) {
         return new ShParenthesesConditionImpl(node);
       }
@@ -387,6 +393,12 @@ public interface ShTypes {
       }
       else if (type == REDIRECTION) {
         return new ShRedirectionImpl(node);
+      }
+      else if (type == REGEX_CONDITION) {
+        return new ShRegexConditionImpl(node);
+      }
+      else if (type == REGEX_PATTERN) {
+        return new ShRegexPatternImpl(node);
       }
       else if (type == SELECT_COMMAND) {
         return new ShSelectCommandImpl(node);

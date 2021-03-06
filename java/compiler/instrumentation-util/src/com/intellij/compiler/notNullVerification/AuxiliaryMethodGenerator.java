@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.notNullVerification;
 
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassVisitor;
+import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
-/**
- * @author peter
- */
-class AuxiliaryMethodGenerator {
+final class AuxiliaryMethodGenerator {
   private static final String STRING_CLASS_NAME = "java/lang/String";
   private static final String OBJECT_CLASS_NAME = "java/lang/Object";
   private static final String CONSTRUCTOR_NAME = "<init>";
@@ -192,7 +192,6 @@ class AuxiliaryMethodGenerator {
   }
 
   private abstract class SwitchGenerator<T> {
-
     void generateSwitch(MethodVisitor mv) {
       Label[] labels = getCaseLabels();
       if (labels == null) {

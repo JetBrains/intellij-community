@@ -815,4 +815,20 @@ class A {
 '''
     }
   }
+
+  @Test
+  void 'import collision in Java after class rename'() {
+    def usage = fixture.addFileToProject 'Usage.java', '''
+import java.util.*;
+
+class C implements List, p.MyList {}
+'''
+    fixture.addFileToProject "p/intentionallyNonClassName.groovy", "package p; class MyList {}"
+    fixture.renameElement(fixture.findClass('p.MyList'), 'List')
+    assert usage.text == '''
+import java.util.*;
+
+class C implements List, p.List {}
+'''
+  }
 }

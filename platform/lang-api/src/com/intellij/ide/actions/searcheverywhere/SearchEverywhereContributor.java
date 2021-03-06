@@ -31,6 +31,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   String getGroupName();
 
   @NotNull
+  @Nls
   default String getFullGroupName() {
     return getGroupName();
   }
@@ -59,6 +60,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   }
 
   @Nullable
+  @Nls
   default String getAdvertisement() { return null; }
 
   @NotNull

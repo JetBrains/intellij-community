@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
@@ -27,7 +13,6 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,19 +20,19 @@ import java.util.Map;
 
 public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = {
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword1"), CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword2"), CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword3"), CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.keyword4"), CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.number"), CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.string"), CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.line.comment"), CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.block.comment"), CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.valid.string.escape"), CustomHighlighterColors.CUSTOM_VALID_STRING_ESCAPE),
-    new AttributesDescriptor(OptionsBundle.message("options.custom.attribute.descriptor.invalid.string.escape"), CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword1"), CustomHighlighterColors.CUSTOM_KEYWORD1_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword2"), CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword3"), CustomHighlighterColors.CUSTOM_KEYWORD3_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.keyword4"), CustomHighlighterColors.CUSTOM_KEYWORD4_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.number"), CustomHighlighterColors.CUSTOM_NUMBER_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.string"), CustomHighlighterColors.CUSTOM_STRING_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.line.comment"), CustomHighlighterColors.CUSTOM_LINE_COMMENT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.block.comment"), CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.valid.string.escape"), CustomHighlighterColors.CUSTOM_VALID_STRING_ESCAPE),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.invalid.string.escape"), CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE),
   };
 
-  @NonNls private static final SyntaxTable SYNTAX_TABLE = new SyntaxTable();
+  private static final SyntaxTable SYNTAX_TABLE = new SyntaxTable();
   static {
     SYNTAX_TABLE.setLineComment("#");
     SYNTAX_TABLE.setStartComment("/*");
@@ -66,8 +51,7 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return OptionsBundle.message("options.custom.display.name");
   }
 
@@ -87,14 +71,12 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return new CustomFileHighlighter(SYNTAX_TABLE);
   }
 
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return "# Line comment\n"
            + "aKeyword1 variable = 123;\n"
            + "anotherKeyword1 someString = \"SomeString\";\n"

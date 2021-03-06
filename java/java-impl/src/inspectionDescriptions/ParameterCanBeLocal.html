@@ -1,8 +1,24 @@
 <html>
 <body>
-
-This inspection searches for redundant method parameters that can be replaced with local variables.
+Reports redundant method parameters that can be replaced with local variables.
 If all local usages of a parameter are preceded by assignments to that parameter, the
 parameter can be removed and its usages replaced with local variables.
+There is no sense to have such parameter as values passed to it are overwritten.
+Usually the problem appears as a result of refactoring.
+
+<p>For example:</p>
+<pre><code>
+  void test(int p) {
+    p = 1;
+    System.out.print(p);
+  }
+</code></pre>
+<p>will be replaced with</p>
+<pre><code>
+  void test(int p) {
+    p = 1;
+    System.out.print(p);
+  }
+</code></pre>
 </body>
 </html>

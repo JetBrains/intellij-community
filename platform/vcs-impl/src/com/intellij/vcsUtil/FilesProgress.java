@@ -18,18 +18,19 @@ package com.intellij.vcsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 
 /**
  * @author irengrig
  */
 public class FilesProgress {
   private final double myTotal;
-  private final String myPrefix;
+  private final @Nls String myPrefix;
   private final ProgressIndicator myProgressIndicator;
   private int myCnt;
   private boolean myInText2;
 
-  public FilesProgress(double total, final String prefix) {
+  public FilesProgress(double total, @Nls String prefix) {
     myTotal = total;
     myPrefix = prefix;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -49,9 +50,10 @@ public class FilesProgress {
     ++ myCnt;
   }
 
+  @Nls
   private static String getFileDescriptionForProgress(final VirtualFile file) {
     final VirtualFile parent = file.getParent();
-    return file.getName() + " (" + (parent == null ? file.getPath() : parent.getPath()) + ")";
+    return file.getName() + " (" + (parent == null ? file.getPresentableUrl() : parent.getPresentableUrl()) + ")";
   }
 
   public void setInText2(boolean inText2) {

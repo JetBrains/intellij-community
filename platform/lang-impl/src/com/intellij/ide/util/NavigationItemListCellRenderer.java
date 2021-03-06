@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
@@ -10,6 +11,7 @@ import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -98,7 +100,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
       if (value instanceof PsiElement && !((PsiElement)value).isValid()) {
         setIcon(IconUtil.getEmptyIcon(false));
-        append("Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
+        append(LangBundle.message("label.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
       else if (value instanceof NavigationItem) {
         NavigationItem item = (NavigationItem)value;
@@ -107,11 +109,17 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           item.toString() + ", class " + item.getClass().getName();
         String name = presentation.getPresentableText();
         assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
-                                     item.toString() + ", class " + item.getClass().getName();
+                             item + ", class " + item.getClass().getName();
         Color color = list.getForeground();
-        boolean isProblemFile = item instanceof PsiElement
-                                && WolfTheProblemSolver.getInstance(((PsiElement)item).getProject())
-                                   .isProblemFile(PsiUtilCore.getVirtualFile((PsiElement)item));
+        boolean isProblemFile;
+        if (item instanceof PsiElement) {
+          Project project = ((PsiElement)item).getProject();
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)item);
+          isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+        }
+        else {
+          isProblemFile = false;
+        }
 
         PsiElement psiElement = getPsiElement(item);
 
@@ -119,7 +127,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
           Project project = psiElement.getProject();
 
           VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-          isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+          isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
           Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
           if (fileColor != null) {
@@ -152,7 +160,8 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       }
       else {
         setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
+        @NlsSafe String text = value == null ? "" : value.toString();
+        append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground(true) : bgColor);

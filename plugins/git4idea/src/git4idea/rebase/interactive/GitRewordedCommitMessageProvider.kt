@@ -9,7 +9,8 @@ import git4idea.rebase.GitRebaseUtils
 
 @State(
   name = "GitRewordedCommitMessages",
-  storages = [Storage(file = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)]
+  storages = [Storage(file = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)],
+  reportStatistic = false
 )
 internal class GitRewordedCommitMessageProvider :
   SimplePersistentStateComponent<GitRewordedCommitMessagesInfo>(GitRewordedCommitMessagesInfo()) {

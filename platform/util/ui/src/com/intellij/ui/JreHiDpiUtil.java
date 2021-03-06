@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleType;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import sun.java2d.SunGraphicsEnvironment;
 
 import java.awt.*;
 import java.lang.reflect.Method;
@@ -19,7 +17,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class JreHiDpiUtil {
   private static final AtomicReference<Boolean> jreHiDPI = new AtomicReference<>();
-  private static volatile boolean jreHiDPI_earlierVersion;
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the graphics configuration represents a HiDPI device.
@@ -45,45 +42,43 @@ public final class JreHiDpiUtil {
    */
   public static boolean isJreHiDPIEnabled() {
     Boolean value = jreHiDPI.get();
-    if (value == null) {
-      synchronized (jreHiDPI) {
-        value = jreHiDPI.get();
-        if (value == null) {
-          value = false;
-          if (SystemProperties.getBooleanProperty("hidpi", true)) {
-            jreHiDPI_earlierVersion = true;
-            if (SystemInfo.isJetBrainsJvm) {
+    if (value != null) {
+      return value;
+    }
+
+    synchronized (jreHiDPI) {
+      value = jreHiDPI.get();
+      if (value != null) {
+        return value;
+      }
+
+      value = false;
+      if (SystemProperties.getBooleanProperty("hidpi", true)) {
+        if (SystemInfo.isJetBrainsJvm) {
+          try {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            Class<?> sunGraphicsEnvironmentClass = Class.forName("sun.java2d.SunGraphicsEnvironment");
+            if (sunGraphicsEnvironmentClass.isInstance(ge)) {
               try {
-                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                if (ge instanceof SunGraphicsEnvironment) {
-                  Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleEnabled");
-                  value = m != null && (Boolean)m.invoke(ge);
-                  jreHiDPI_earlierVersion = false;
-                }
+                Method method = sunGraphicsEnvironmentClass.getDeclaredMethod("isUIScaleEnabled");
+                method.setAccessible(true);
+                value = (Boolean)method.invoke(ge);
               }
-              catch (Throwable ignore) {
+              catch (NoSuchMethodException e) {
+                value = false;
               }
-            }
-            if (SystemInfo.isMac) {
-              value = true;
             }
           }
-          jreHiDPI.set(value);
+          catch (Throwable ignore) {
+          }
+        }
+        if (SystemInfoRt.isMac) {
+          value = true;
         }
       }
+      jreHiDPI.set(value);
     }
     return value;
-  }
-
-  /**
-   * Indicates earlier JBSDK version, not containing HiDPI changes.
-   * On macOS such JBSDK supports jreHiDPI, but it's not capable to provide device scale
-   * via GraphicsDevice transform matrix (the scale should be retrieved via DetectRetinaKit).
-   */
-  @ApiStatus.Internal
-  public static boolean isJreHiDPI_earlierVersion() {
-    isJreHiDPIEnabled();
-    return jreHiDPI_earlierVersion;
   }
 
   @TestOnly

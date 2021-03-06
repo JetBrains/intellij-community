@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DiffTree<OT, NT> {
+public final class DiffTree<OT, NT> {
   private static final int CHANGE_PARENT_VERSUS_CHILDREN_THRESHOLD = 20;
 
   private final FlyweightCapableTreeStructure<OT> myOldTree;

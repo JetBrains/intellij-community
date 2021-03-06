@@ -18,7 +18,9 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Supplier;
@@ -26,7 +28,10 @@ import java.util.function.Supplier;
 public abstract class LayoutTreeActionBase extends DumbAwareAction {
   protected final ArtifactEditorEx myArtifactEditor;
 
-  protected LayoutTreeActionBase(String text, String description, Icon icon, ArtifactEditorEx artifactEditor) {
+  protected LayoutTreeActionBase(@Nullable @NlsActions.ActionText String text,
+                                 @Nullable @NlsActions.ActionDescription String description,
+                                 @Nullable Icon icon,
+                                 @NotNull ArtifactEditorEx artifactEditor) {
     super(text, description, icon);
     myArtifactEditor = artifactEditor;
   }

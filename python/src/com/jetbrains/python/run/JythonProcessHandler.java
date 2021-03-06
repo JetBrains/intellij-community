@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jetbrains.annotations.NotNull;
 
-public class JythonProcessHandler extends PythonProcessHandler {
+public final class JythonProcessHandler extends PythonProcessHandler {
   private JythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
   }

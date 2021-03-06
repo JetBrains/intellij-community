@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.ArrayUtil;
@@ -20,7 +20,7 @@ import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPe
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
 import static org.jetbrains.jps.incremental.storage.MurmurHashingService.*;
 
-public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements TimestampStorage<FileStamp> {
+public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements StampsStorage<FileStamp> {
   private final FileTimestampStorage myTimestampStorage;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetsState myTargetsState;
@@ -163,7 +163,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     myTimestampStorage.close();
   }
 
-  static class HashStampPerTarget {
+  static final class HashStampPerTarget {
     public final int targetId;
     public final byte[] hash;
 
@@ -173,7 +173,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     }
   }
 
-  static class FileStamp implements StampsStorage.Stamp {
+  static final class FileStamp implements StampsStorage.Stamp {
     static FileStamp EMPTY = new FileStamp(new byte[]{}, -1L);
 
     private final byte[] myBytes;

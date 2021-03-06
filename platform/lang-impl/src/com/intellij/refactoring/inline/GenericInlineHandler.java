@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -7,12 +6,16 @@ import com.intellij.find.FindBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -28,13 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author ven
  */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-public class GenericInlineHandler {
-
+public final class GenericInlineHandler {
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
 
   public static boolean invoke(final PsiElement element, @Nullable Editor editor, final InlineHandler languageSpecific) {
@@ -44,16 +47,17 @@ public class GenericInlineHandler {
       return settings != null;
     }
 
+    Project project = element.getProject();
+
     final Collection<? extends PsiReference> allReferences;
 
     if (settings.isOnlyOneReferenceToInline()) {
       allReferences = Collections.singleton(invocationReference);
     }
     else {
-      final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<>();
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> usagesRef.set(ReferencesSearch.search(element).findAll()),
-                                                                        FindBundle.message("find.usages.progress.title"), false, element.getProject());
-      allReferences = usagesRef.get();
+      allReferences = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReferencesSearch.search(element).findAll(),
+        FindBundle.message("find.usages.progress.title"), true, project);
     }
 
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -63,7 +67,6 @@ public class GenericInlineHandler {
       collectConflicts(reference, element, inliners, conflicts);
     }
 
-    final Project project = element.getProject();
     if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return true;
 
     HashSet<PsiElement> elements = new HashSet<>();
@@ -78,8 +81,9 @@ public class GenericInlineHandler {
       return true;
     }
     String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
+    String commandName = RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>"));
     WriteCommandAction.runWriteCommandAction(
-      project, RefactoringBundle.message("inline.command", StringUtil.notNullize(subj, "<nameless>")), null, () -> {
+      project, commandName, null, () -> {
         final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
 
 
@@ -88,12 +92,22 @@ public class GenericInlineHandler {
           usages[i] = new UsageInfo(references[i]);
         }
 
-        for (UsageInfo usage : usages) {
-          inlineReference(usage, element, inliners);
-        }
+        Consumer<ProgressIndicator> perform = indicator -> {
+          for (int i = 0; i < usages.length; i++) {
+            indicator.setFraction((double) i / usages.length);
+            inlineReference(usages[i], element, inliners);
+          }
 
-        if (!settings.isOnlyOneReferenceToInline()) {
-          languageSpecific.removeDefinition(element, settings);
+          if (!settings.isOnlyOneReferenceToInline()) {
+            languageSpecific.removeDefinition(element, settings);
+          }
+        };
+
+        if (Registry.is("run.refactorings.under.progress")) {
+          ((ApplicationImpl)ApplicationManager.getApplication())
+            .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
+        } else {
+          perform.accept(new EmptyProgressIndicator());
         }
       });
     return true;
@@ -159,10 +173,10 @@ public class GenericInlineHandler {
     for (PsiReference ref : refs) {
       collectConflicts(ref, elementToInline, inliners, conflicts);
     }
-    
+
     return inliners;
   }
-  
+
   public static void collectConflicts(final PsiReference reference,
                                       final PsiElement element,
                                       final Map<Language, InlineHandler.Inliner> inliners,

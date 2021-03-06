@@ -60,7 +60,7 @@ public class XmlEnumeratedValueReference extends PsiReferenceBase<XmlElement> im
   public String getUnresolvedMessagePattern() {
     String name = getElement() instanceof XmlTag ? "tag" : "attribute";
     return myDescriptor.isFixed()
-           ? XmlPsiBundle.message("should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
-           : XmlPsiBundle.message("wrong.value", name);
+           ? XmlPsiBundle.message("xml.inspections.should.have.fixed.value", StringUtil.capitalize(name), myDescriptor.getDefaultValue())
+           : XmlPsiBundle.message("xml.inspections.wrong.value", name);
   }
 }

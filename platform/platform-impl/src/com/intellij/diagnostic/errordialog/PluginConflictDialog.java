@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -8,6 +8,8 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -68,7 +70,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  private static @NlsContexts.Label String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);
@@ -165,20 +167,19 @@ public class PluginConflictDialog extends DialogWrapper {
 
     final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
     if (pluginDescriptor == null) {
+      //noinspection HardCodedStringLiteral
       panel.add(new JBLabel(plugin.getIdString()), BorderLayout.CENTER);
       return panel;
     }
 
-    final StringBuilder sb = new StringBuilder("<html>");
-    if (addUseWord) {
-      sb.append("Use ");
-    }
-    sb.append(pluginDescriptor.getName());
-    if (pluginDescriptor.getVendor() != null) {
-      sb.append(" by ").append(pluginDescriptor.getVendor());
-    }
-    sb.append("</html>");
-    panel.add(new JBLabel(sb.toString()));
+    HtmlBuilder message = new HtmlBuilder();
+    String vendor = pluginDescriptor.getVendor();
+    message.append(DiagnosticBundle.message("plugin.conflict.use.by.vendor.label",
+                                            addUseWord ? 0 : 1,
+                                            pluginDescriptor.getName(),
+                                            vendor != null ? 0 : 1,
+                                            vendor));
+    panel.add(new JBLabel(message.wrapWithHtmlBody().toString()));
     return panel;
   }
 
@@ -229,7 +230,7 @@ public class PluginConflictDialog extends DialogWrapper {
     }
 
     @NotNull
-    private String getButtonText() {
+    private @NlsContexts.Button String getButtonText() {
       if (myIsConflictWithPlatform) {
         return DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
       }

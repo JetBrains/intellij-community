@@ -17,6 +17,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Negates predicate
@@ -24,12 +25,12 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 public final class NotPredicate extends MatchPredicate {
   private final MatchPredicate myPredicate;
 
-  public NotPredicate(final MatchPredicate predicate) {
+  public NotPredicate(@NotNull MatchPredicate predicate) {
     myPredicate = predicate;
   }
 
   @Override
-  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
+  public boolean match(@NotNull PsiElement matchedNode, int start, int end, @NotNull MatchContext context) {
     return !myPredicate.match(matchedNode, start, end, context);
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.lexer.ShLexer;
 import com.intellij.sh.psi.ShFunctionDefinition;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class ShFindUsagesProvider implements FindUsagesProvider {
   @NotNull
   @Override
   public String getType(@NotNull PsiElement element) {
-    return "function";
+    return ShBundle.message("find.usages.type.function");
   }
 
   @NotNull

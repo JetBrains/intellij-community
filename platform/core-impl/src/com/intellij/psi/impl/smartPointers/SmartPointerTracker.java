@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
@@ -30,7 +31,10 @@ class SmartPointerTracker {
   private boolean mySorted;
 
   static {
-    LowMemoryWatcher.register(() -> processQueue(), ApplicationManager.getApplication());
+    Application application = ApplicationManager.getApplication();
+    if (!application.isDisposed()) {
+      LowMemoryWatcher.register(() -> processQueue(), application);
+    }
   }
 
   synchronized void addReference(@NotNull SmartPsiElementPointerImpl<?> pointer) {
@@ -211,7 +215,7 @@ class SmartPointerTracker {
     return size;
   }
 
-  static class PointerReference extends WeakReference<SmartPsiElementPointerImpl<?>> {
+  static final class PointerReference extends WeakReference<SmartPsiElementPointerImpl<?>> {
     @NotNull final SmartPointerTracker tracker;
     private int index = -2;
 

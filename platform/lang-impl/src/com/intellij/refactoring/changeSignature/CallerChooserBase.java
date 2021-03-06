@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -23,13 +9,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -44,7 +31,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +55,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private Editor myCalleeEditor;
   private final boolean myInitDone;
   private final String myFileName;
+  private final Collection<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   protected MemberNodeBase<M> createTreeNodeFor(M method, HashSet<M> called, Runnable cancelCallback) {
     throw new UnsupportedOperationException();
@@ -75,15 +63,17 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
+  @NlsContexts.Label
   protected String getEmptyCalleeText() {
     return "";
   }
 
+  @NlsContexts.Label
   protected String getEmptyCallerText() {
     return "";
   }
 
-  public CallerChooserBase(M method, Project project, @NlsContexts.DialogTitle String title, Tree previousTree, String fileName, Consumer<? super Set<M>> callback) {
+  public CallerChooserBase(M method, Project project, @NlsContexts.DialogTitle String title, Tree previousTree, @NlsSafe String fileName, Consumer<? super Set<M>> callback) {
     super(true);
     myMethod = method;
     myProject = project;
@@ -157,15 +147,17 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final PsiElement callee = parentNode != null ? parentNode.getElementToSearch() : null;
     if (caller != null && caller.isPhysical() && callee != null) {
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
-      EditorColorsManager colorManager = EditorColorsManager.getInstance();
-      TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+      for (RangeHighlighter r : myHighlighters) {
+        highlighter.removeSegmentHighlighter(myCallerEditor, r);
+      }
+      myHighlighters.clear();
       int start = getStartOffset(caller);
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
       for (PsiElement element : findElementsToHighlight(caller, callee)) {
         TextRange textRange = element.getTextRange();
         textRange = injectedLanguageManager.injectedToHost(element, textRange);
-        highlighter.addRangeHighlight(myCallerEditor, textRange.getStartOffset() - start,
-                                      textRange.getEndOffset() - start, attributes, false, null);
+        highlighter.addRangeHighlight(myCallerEditor, textRange.getStartOffset() - start, textRange.getEndOffset() - start, 
+                                      EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, false, myHighlighters);
       }
     }
   }
@@ -198,9 +190,12 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final PsiFile file = method.getContainingFile();
     Document document = file != null ? PsiDocumentManager.getInstance(myProject).getDocument(file) : null;
     if (document != null) {
-      final int start = document.getLineStartOffset(document.getLineNumber(method.getTextRange().getStartOffset()));
-      final int end = document.getLineEndOffset(document.getLineNumber(method.getTextRange().getEndOffset()));
-      return document.getText().substring(start, end);
+      TextRange textRange = method.getTextRange();
+      if (textRange != null) {
+        final int start = document.getLineStartOffset(document.getLineNumber(textRange.getStartOffset()));
+        final int end = document.getLineEndOffset(document.getLineNumber(textRange.getEndOffset()));
+        return document.getText().substring(start, end);
+      }
     }
     return "";
   }
@@ -220,14 +215,20 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                                                   false));
     splitter.setFirstComponent(callerComponent);
     final JComponent calleeComponent = myCalleeEditor.getComponent();
-    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("caller.chooser.callee.method"),
+    calleeComponent.setBorder(IdeBorderFactory.createTitledBorder(getCalleeEditorTitle(),
                                                                   false));
     splitter.setSecondComponent(calleeComponent);
     splitter.setBorder(IdeBorderFactory.createRoundedBorder());
     return splitter;
   }
 
-  private Editor createEditor() {
+  @NotNull
+  @Nls
+  protected String getCalleeEditorTitle() {
+    return RefactoringBundle.message("caller.chooser.callee.method");
+  }
+
+  protected Editor createEditor() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     final Document document = editorFactory.createDocument("");
     final Editor editor = editorFactory.createViewer(document, myProject);
@@ -257,7 +258,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
                                     int row,
                                     boolean hasFocus) {
         if (value instanceof MemberNodeBase) {
-          ((MemberNodeBase)value).customizeRenderer(getTextRenderer());
+          ((MemberNodeBase<?>)value).customizeRenderer(getTextRenderer());
         }
       }
     };

@@ -26,6 +26,9 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.TAG_CREATION_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.TAG_CREATION_FAILED;
+
 public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
 
   public void execute(@NotNull final Project project,
@@ -40,14 +43,16 @@ public class HgCreateTagAction extends HgAbstractGlobalSingleRepoAction {
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
               new HgCommandResultNotifier(project)
-                .notifyError(result, HgBundle.message("hg4idea.branch.creation.error"),
+                .notifyError(TAG_CREATION_ERROR,
+                             result,
+                             HgBundle.message("hg4idea.branch.creation.error"),
                              HgBundle.message("action.hg4idea.CreateTag.error.msg", dialog.getTagName()));
             }
           }
         });
       }
       catch (HgCommandException e) {
-        HgErrorUtil.handleException(project, e);
+        HgErrorUtil.handleException(project, TAG_CREATION_FAILED, e);
       }
     }
   }

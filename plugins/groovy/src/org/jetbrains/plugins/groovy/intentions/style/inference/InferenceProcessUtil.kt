@@ -1,18 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
 import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.types.JvmType
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -25,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.forbidInteriorReturnTypeInference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 
@@ -76,7 +84,7 @@ fun GroovyPsiElementFactory.createProperTypeParameter(name: String, superType: P
 
   val extendsBound =
     if (filteredSupertypes.isNotEmpty()) {
-      " extends ${filteredSupertypes.joinToString("&") { it.getCanonicalText(true) }}"
+      " extends ${filteredSupertypes.joinToString("&") { it.getCanonicalText(false) }}"
     }
     else {
       ""
@@ -89,7 +97,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
   val manager = resolve()?.manager ?: return this
   val factory = GroovyPsiElementFactory.getInstance(manager.project)
   return accept(object : PsiTypeMapper() {
-    override fun visitClassType(classType: PsiClassType): PsiType? {
+    override fun visitClassType(classType: PsiClassType): PsiType {
       val mappedParameters = classType.parameters.map {
         val accepted = it.accept(this)
         when {
@@ -119,7 +127,7 @@ fun PsiType?.isClosureTypeDeep(): Boolean {
 tailrec fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
   if (recursionDepth == 0) {
     return type.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType): PsiType? {
+      override fun visitClassType(classType: PsiClassType): PsiType {
         return classType.rawType()
       }
     })
@@ -203,8 +211,8 @@ private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
   return getContainingClassesMutable(startClass)
 }
 
-private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int> {
-  val text = method.containingFile.text
+private fun buildVirtualEnvironmentForMethod(method: GrMethod, newTypeParameterListText: String?, omitBody: Boolean): Pair<String, Int>? {
+  val text = method.containingFile?.takeIf { it is GroovyFile }?.text ?: return null
   val containingClasses = getContainingClasses(method.containingClass)
   val classRepresentations = mutableListOf<String>()
   val fieldRepresentations = mutableListOf<String>()
@@ -217,28 +225,59 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int
   val header = classRepresentations.zip(fieldRepresentations)
     .joinToString("") { (classDef, fields) -> "$classDef {\n $fields \n " }
   val footer = " } ".repeat(containingClasses.size)
-  return header + method.text + footer to (header.length)
-}
-
-fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
-  val (fileText, offset) = buildVirtualEnvironmentForMethod(method)
-  val factory = GroovyPsiElementFactory.getInstance(method.project)
-  val newFile = factory.createGroovyFile(fileText, false, method)
-  val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
-  if (newMethod.hasTypeParameters()) {
-    if (typeParameterList != null) {
-      newMethod.typeParameterList!!.replace(typeParameterList)
-    }
+  val methodText = if (omitBody) {
+    method.text?.removeSuffix(method.block?.text ?: "")
   }
   else {
-    if (typeParameterList != null) {
-      newMethod.addAfter(typeParameterList, newMethod.firstChild)
+    method.text
+  } ?: return null
+  val resultMethodText = insertTypeParameterList(method, methodText, newTypeParameterListText)
+  return header + resultMethodText + footer to (header.length)
+}
+
+@Suppress("UnnecessaryVariable")
+private fun insertTypeParameterList(method: GrMethod, methodText: String, newTypeParameterListText: String?): String {
+  val methodStartOffset: Int = method.startOffset
+  val typeParameterList: TextRange? = method.typeParameterList?.textRange?.takeIf { !it.isEmpty }
+  val resultMethodText =
+    if (typeParameterList != null && newTypeParameterListText != null) {
+      val startOffset = typeParameterList.startOffset - methodStartOffset
+      val erasedText = methodText.removeRange(startOffset, typeParameterList.endOffset - methodStartOffset)
+      erasedText.insert(startOffset, newTypeParameterListText)
+    }
+    else if (typeParameterList == null) {
+      var curtext = methodText
+      val insertionOffset = if (method.modifierList.modifierFlags == 0) {
+        curtext = "def $curtext"
+        3
+      }
+      else {
+        method.firstChild.endOffset - methodStartOffset
+      }
+      val actualTypeParameterListText = newTypeParameterListText ?: "<>"
+      curtext.insert(insertionOffset, actualTypeParameterListText)
     }
     else {
-      newMethod.addAfter(factory.createTypeParameterList(), newMethod.firstChild)
+      methodText
     }
-  }
-  return newMethod
+  return resultMethodText
+}
+
+private fun String.insert(position: Int, content: String): String {
+  return "${take(position)}$content${drop(position)}"
+}
+
+fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null, omitBody: Boolean = false): SmartPsiElementPointer<GrMethod>? {
+  val (fileText, offset) = buildVirtualEnvironmentForMethod(method, typeParameterList?.text, omitBody) ?: return null
+  val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val newFile = factory.createGroovyFile(fileText, false, method)
+  val virtualMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
+  disableInteriorReturnTypeInference(virtualMethod)
+  return SmartPointerManager.createPointer(virtualMethod)
+}
+
+private fun disableInteriorReturnTypeInference(virtualMethod: GrMethod) {
+  virtualMethod.putUserData(forbidInteriorReturnTypeInference, Unit)
 }
 
 fun convertToGroovyMethod(method: PsiMethod): GrMethod? {
@@ -277,10 +316,10 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitIntersectionType(intersectionType: PsiIntersectionType): PsiType? {
-      return compress(intersectionType.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
+      return compress(intersectionType.conjuncts.filterNotNull().mapNotNull { it.accept(this) })
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType? {
+    override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType {
       val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
         wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)
@@ -356,9 +395,21 @@ private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
 @Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
-      null -> method
-      method.containingFile -> method
-      is GroovyFileBase -> locateMethod(originalFile, method) ?: method
-      else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
-    }
+    null -> method
+    method.containingFile -> method
+    is GroovyFileBase -> locateMethod(originalFile, method) ?: method
+    else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
+  }
+}
+
+private fun getFileScope(method: GrMethod): SearchScope? {
+  val originalMethod = getOriginalMethod(method)
+  return originalMethod.containingFile?.let { LocalSearchScope(arrayOf(it), null, true) }
+}
+
+fun getSearchScope(method: GrMethod, shouldUseReducedScope: Boolean): SearchScope? = if (shouldUseReducedScope) {
+  getFileScope(method)
+}
+else {
+  GlobalSearchScope.allScope(method.project)
 }

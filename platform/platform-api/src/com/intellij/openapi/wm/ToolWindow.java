@@ -6,8 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,14 +23,13 @@ import java.util.List;
 /**
  * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
  *
+ * @see #getContentManager() to add new tabs into the toolwindow.
  * @see ToolWindowEP
  */
 public interface ToolWindow extends BusyObject {
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
-  @NonNls
-  @NotNull
-  String getId();
+  @NonNls @NotNull String getId();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -78,6 +80,15 @@ public interface ToolWindow extends BusyObject {
    */
   @NotNull
   ToolWindowAnchor getAnchor();
+
+  boolean isVisibleOnLargeStripe();
+
+  void setVisibleOnLargeStripe(boolean visible);
+
+  @NotNull
+  ToolWindowAnchor getLargeStripeAnchor();
+
+  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor);
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -133,24 +144,22 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window title. Returns {@code null} if window has no title.
    */
-  @Nullable
-  String getTitle();
+  @NlsContexts.TabTitle @Nullable String getTitle();
 
   /**
    * Sets new window title.
    */
-  void setTitle(String title);
+  void setTitle(@NlsContexts.TabTitle String title);
 
   /**
    * @return Window stripe button text.
    */
-  @NotNull
-  String getStripeTitle();
+  @NlsContexts.TabTitle @NotNull String getStripeTitle();
 
   /**
    * Sets new window stripe button text.
    */
-  void setStripeTitle(@NotNull String title);
+  void setStripeTitle(@NlsContexts.TabTitle @NotNull String title);
 
   /**
    * @return Whether the window is available or not.
@@ -177,6 +186,8 @@ public interface ToolWindow extends BusyObject {
   void installWatcher(ContentManager contentManager);
 
   /**
+   * Callers should not add new components into hierarchy using this method. Use {@link #getContentManager()}.
+   *
    * @return component which represents window content.
    */
   @NotNull
@@ -224,9 +235,15 @@ public interface ToolWindow extends BusyObject {
    * @deprecated Not used anymore.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default ActionCallback getActivation() {
     return ActionCallback.DONE;
   }
 
   void setTitleActions(@NotNull List<AnAction> actions);
+
+  @Nullable
+  default StatusText getEmptyText() {
+    return null;
+  }
 }

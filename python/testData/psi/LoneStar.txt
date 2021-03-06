@@ -8,6 +8,6 @@ PyFile:LoneStar.py
     PyParenthesizedExpression
       PsiElement(Py:LPAR)('(')
       PsiElement(Py:MULT)('*')
-      PsiErrorElement:expression expected
+      PsiErrorElement:Expression expected
         <empty list>
       PsiElement(Py:RPAR)(')')

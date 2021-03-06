@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +18,7 @@ import java.util.Collection;
  */
 public class JBLoadingPanel extends JPanel {
   private final JPanel myPanel;
-  final LoadingDecorator myDecorator;
+  private final LoadingDecorator myDecorator;
   private final Collection<JBLoadingPanelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent) {
@@ -43,14 +26,7 @@ public class JBLoadingPanel extends JPanel {
   }
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull Disposable parent, int startDelayMs) {
-    this(manager, panel -> new LoadingDecorator(panel, parent, startDelayMs) {
-      @Override
-      protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
-        final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
-        customizeStatusText(text);
-        return panel;
-      }
-    });
+    this(manager, panel -> new LoadingDecorator(panel, parent, startDelayMs));
   }
 
   public JBLoadingPanel(@Nullable LayoutManager manager, @NotNull NotNullFunction<? super JPanel, ? extends LoadingDecorator> createLoadingDecorator) {
@@ -73,13 +49,7 @@ public class JBLoadingPanel extends JPanel {
     }
   }
 
-  public static void customizeStatusText(JLabel text) {
-    Font font = text.getFont();
-    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
-    text.setForeground(ColorUtil.toAlpha(UIUtil.getLabelForeground(), 150));
-  }
-
-  public void setLoadingText(String text) {
+  public void setLoadingText(@Nls String text) {
     myDecorator.setLoadingText(text);
   }
 
@@ -125,7 +95,6 @@ public class JBLoadingPanel extends JPanel {
 
   @Override
   public void add(Component comp, Object constraints) {
-
     myPanel.add(comp, constraints);
   }
 

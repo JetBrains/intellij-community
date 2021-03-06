@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
@@ -21,7 +22,7 @@ import java.util.Map;
 public class AntRenameProcessor extends RenamePsiElementProcessor{
 
   @Override
-  public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull PsiElement element, @NotNull @NlsSafe String newName, @NotNull Map<PsiElement, String> allRenames) {
     final AntDomElement antElement = convertToAntDomElement(element);
     String propName = null;
     if (antElement instanceof AntDomProperty) {

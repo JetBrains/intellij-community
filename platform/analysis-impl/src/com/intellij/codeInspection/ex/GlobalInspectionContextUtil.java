@@ -8,9 +8,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class GlobalInspectionContextUtil {
+public final class GlobalInspectionContextUtil {
   public static RefElement retrieveRefElement(@NotNull PsiElement element, @NotNull GlobalInspectionContext globalContext) {
     PsiFile elementFile = element.getContainingFile();
     RefElement refElement = globalContext.getRefManager().getReference(elementFile);
@@ -25,6 +26,7 @@ public class GlobalInspectionContextUtil {
    * @deprecated use {@link #canRunInspections(Project, boolean, Runnable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static boolean canRunInspections(@NotNull Project project, final boolean online) {
     return canRunInspections(project, online, () -> { });
   }

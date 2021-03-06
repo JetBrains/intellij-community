@@ -24,8 +24,15 @@
   <item name='org.jdom.Attribute Attribute(java.lang.String, java.lang.String, org.jdom.Namespace) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='org.jdom.Attribute java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.jdom.Attribute java.lang.String getValue()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='org.jdom.Attribute org.jdom.Attribute setName(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Attribute org.jdom.Attribute setValue(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -59,8 +66,12 @@
   </item>
   <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, java.lang.String) 0'>
@@ -69,7 +80,13 @@
   <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, java.lang.String) 1'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, org.jdom.Namespace)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, org.jdom.Namespace) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, org.jdom.Namespace, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String, org.jdom.Namespace, java.lang.String) 0'>
@@ -90,10 +107,16 @@
   <item name='org.jdom.Element java.lang.String getChildTextNormalize(java.lang.String, org.jdom.Namespace) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='org.jdom.Element java.lang.String getChildTextTrim(java.lang.String)'>
+    <annotation name='com.intellij.openapi.util.NlsSafe'/>
+  </item>
   <item name='org.jdom.Element java.lang.String getChildTextTrim(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.lang.String getChildTextTrim(java.lang.String, org.jdom.Namespace) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.jdom.Element java.lang.String getName()'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.jdom.Element java.util.List&lt;org.jdom.Content&gt; getContent()'>

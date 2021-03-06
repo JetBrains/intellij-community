@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -110,7 +110,7 @@ public class SvnRevisionPanel extends JPanel {
 
     final Revision result = Revision.parse(myRevisionField.getText());
     if (!result.isValid()) {
-      throw new ConfigurationException(message("invalid.svn.revision.error.message", myRevisionField.getText()));
+      throw new ConfigurationException(message("error.invalid.svn.revision", myRevisionField.getText()));
     }
 
     return result;

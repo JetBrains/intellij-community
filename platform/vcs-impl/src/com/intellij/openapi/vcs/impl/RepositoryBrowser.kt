@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.VcsActions
@@ -33,9 +34,9 @@ import java.io.File
 import javax.swing.Icon
 import javax.swing.JPanel
 
-const val TOOLWINDOW_ID = "Repositories"
+const val TOOLWINDOW_ID: String = "Repositories" // NON-NLS
 
-fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, title: String) {
+fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
   val toolWindowManager = ToolWindowManager.getInstance(project)
   val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager, project)
 

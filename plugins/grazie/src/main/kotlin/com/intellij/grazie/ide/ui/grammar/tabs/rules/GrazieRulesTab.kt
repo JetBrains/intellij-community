@@ -12,7 +12,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
 
-class GrazieRulesTab : GrazieUIComponent.Delegating, Disposable {
+internal class GrazieRulesTab : GrazieUIComponent.Delegating, Disposable {
   private val description = GrazieDescriptionComponent()
 
   override val impl = GrazieTreeComponent(description.listener)

@@ -92,8 +92,8 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       int caretOffset,
-                                      Ref<Boolean> indented,
-                                      final List<FoldingTransferableData> values) {
+                                      Ref<? super Boolean> indented,
+                                      final List<? extends FoldingTransferableData> values) {
     assert values.size() == 1;
     final FoldingTransferableData value = values.get(0);
     if (value.getData().length == 0) return;
@@ -104,7 +104,8 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
 
     Runnable operation = () -> {
       for (FoldingData data : value.getData()) {
-        FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
+        FoldRegion region =
+          foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
         if (region != null) {
           region.setExpanded(data.isExpanded);
         }
@@ -113,5 +114,10 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     int verticalPositionBefore = editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
     editor.getFoldingModel().runBatchFoldingOperation(operation);
     EditorUtil.runWithAnimationDisabled(editor, () -> editor.getScrollingModel().scrollVertically(verticalPositionBefore));
+  }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
   }
 }

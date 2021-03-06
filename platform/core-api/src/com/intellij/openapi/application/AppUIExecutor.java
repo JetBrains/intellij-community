@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,5 +85,6 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
   @NotNull
   @Contract(pure=true)
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   AppUIExecutor inTransaction(@NotNull Disposable parentDisposable);
 }

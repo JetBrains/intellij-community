@@ -58,6 +58,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
 
     myFixture.addClass("package org.assertj.core.api; public class Assertions { " +
                        "public static <T> Assert<?, T> assertThat(Object actual) {}\n" +
+                       "public static <T> Assert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}\n" +
                        "public static <T> Assert<?, T> assertThat(boolean actual) {}\n" +
                        "}");
     myFixture.addClass("package org.assertj.core.api; public class Assert<S extends Assert<S, A>, A> {" +
@@ -67,6 +68,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "public S isNotEmpty() {}" +
                        "public S isEmpty() {}" +
                        "public S isPresent() {}" +
+                       "public S map(java.util.function.Function<String, Object> mapper) {}" +
                        "}");
 
     checkHighlighting();
@@ -160,6 +162,10 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
   
   public void testHardcodedContractNotNullOverride() {
+    checkHighlighting();
+  }
+
+  public void testArraysEqualsPure() {
     checkHighlighting();
   }
 

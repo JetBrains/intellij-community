@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.util.containers.Stack
@@ -12,6 +12,8 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
+import java.util.function.Supplier
+
 @CompileStatic
 class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger
@@ -23,6 +25,55 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<LogMessage> delayedMessages = []
   private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
   private final Stack<String> blockNames = new Stack<>()
+
+  @Override
+  String getName() {
+    return ""
+  }
+
+  @Override
+  boolean isLoggable(System.Logger.Level level) {
+    return level.severity > System.Logger.Level.TRACE.severity
+  }
+
+  @Override
+  void log(System.Logger.Level level, ResourceBundle bundle, String message, Throwable thrown) {
+    if (level == System.Logger.Level.INFO) {
+      assert thrown == null
+      info(message)
+    }
+    else if (level == System.Logger.Level.ERROR) {
+      error(message, thrown)
+    }
+    else if (level == System.Logger.Level.WARNING) {
+      assert thrown == null
+      warning(message)
+    }
+    else {
+      assert thrown == null
+      debug(message)
+    }
+  }
+
+  @Override
+  void log(System.Logger.Level level, ResourceBundle bundle, String message, Object... params) {
+    log(level, null, message, null as Throwable)
+  }
+
+  @Override
+  void log(System.Logger.Level level, String message, Object... params) {
+    log(level, null, message, null as Throwable)
+  }
+
+  @Override
+  void log(System.Logger.Level level, String message) {
+    log(level, null, message, null as Throwable)
+  }
+
+  @Override
+  void log(System.Logger.Level level, String message, Throwable thrown) {
+    log(level, null, message, thrown)
+  }
 
   static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"
@@ -128,12 +179,12 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  <V> V block(String blockName, Closure<V> body) {
+  <V> V block(String blockName, Supplier<V> body) {
     long start = System.currentTimeMillis()
     try {
       blockNames.push(blockName)
       processMessage(new LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      def result = body()
+      V result = body.get()
       long elapsedTime = System.currentTimeMillis() - start
       debug("${blockNames.join(" > ")} finished in ${elapsedTime}ms")
       return result

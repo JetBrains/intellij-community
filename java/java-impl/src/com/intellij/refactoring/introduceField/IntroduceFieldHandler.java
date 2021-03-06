@@ -19,6 +19,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -219,7 +220,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     }
   }
 
-  public static String getRefactoringNameText() {
+  public static @NlsContexts.DialogTitle String getRefactoringNameText() {
     return RefactoringBundle.message("introduce.field.title");
   }
 }

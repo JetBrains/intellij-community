@@ -44,10 +44,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -56,10 +53,10 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,22 +169,22 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Update
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void reloadRequest() {
     updateRequest(true);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest() {
     updateRequest(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest(boolean force) {
     updateRequest(force, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
   @NotNull
@@ -299,12 +296,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @Nullable private ApplyData myQueuedApplyRequest;
 
-  @CalledInAwt
+  @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     applyRequest(request, force, scrollToChangePolicy, false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myIterationState = IterationState.NONE;
@@ -326,7 +323,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
 
@@ -342,11 +339,11 @@ public abstract class DiffRequestProcessor implements Disposable {
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
-      myActiveRequest.onAssigned(false);
-      myActiveRequest = request;
-      myActiveRequest.onAssigned(true);
-
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        onAssigned(myActiveRequest, false);
+        myActiveRequest = request;
+        onAssigned(myActiveRequest, true);
+
         try {
           myState = createState();
           try {
@@ -366,13 +363,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     });
   }
 
-  protected void setWindowTitle(@NotNull String title) {
+  protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
   }
 
   protected void onAfterNavigate() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
@@ -459,7 +456,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
-      myActiveRequest.onAssigned(false);
+      onAssigned(myActiveRequest, false);
 
       myState = EmptyState.INSTANCE;
       myActiveRequest = NoDiffRequest.INSTANCE;
@@ -512,13 +509,18 @@ public abstract class DiffRequestProcessor implements Disposable {
     ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
+  @NotNull
+  public ActionToolbar getToolbar() {
+    return myToolbar;
+  }
+
   protected void buildActionPopup(@Nullable List<? extends AnAction> viewerActions) {
     collectPopupActions(viewerActions);
 
     DiffUtil.registerAction(new ShowActionGroupPopupAction(), myMainPanel);
   }
 
-  private void setTitle(@Nullable String title) {
+  private void setTitle(@Nullable @NlsContexts.DialogTitle String title) {
     if (getContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE) == Boolean.TRUE) return;
     if (title == null) title = DiffBundle.message("diff.files.dialog.title");
     setWindowTitle(title);
@@ -547,9 +549,25 @@ public abstract class DiffRequestProcessor implements Disposable {
     return myProject;
   }
 
+  @Nullable
+  public DiffRequest getActiveRequest() {
+    return myActiveRequest;
+  }
+
   @NotNull
   public DiffContext getContext() {
     return myContext;
+  }
+
+  @Nullable
+  public DiffViewer getActiveViewer() {
+    if (myState instanceof DefaultState) {
+      return ((DefaultState)myState).myViewer;
+    }
+    if (myState instanceof WrapperState) {
+      return ((WrapperState)myState).myViewer;
+    }
+    return null;
   }
 
   @NotNull
@@ -631,7 +649,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class DiffToolToggleAction extends AnAction implements DumbAware {
+  private final class DiffToolToggleAction extends AnAction implements DumbAware {
     @NotNull private final DiffTool myDiffTool;
 
     private DiffToolToggleAction(@NotNull DiffTool tool) {
@@ -648,7 +666,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      DiffUsageTriggerCollector.trigger("toggle.diff.tool", myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+      DiffUsageTriggerCollector.trigger(e.getProject(), "toggle.diff.tool", myDiffTool, myContext.getUserData(DiffUserDataKeys.PLACE));
       moveToolOnTop(myDiffTool);
 
       updateRequest(true);
@@ -682,30 +700,34 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private IterationState myIterationState = IterationState.NONE;
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean hasNextChange(boolean fromUpdate) {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean hasPrevChange(boolean fromUpdate) {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void goToNextChange(boolean fromDifferences) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void goToPrevChange(boolean fromDifferences) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean isNavigationEnabled() {
     return false;
   }
 
   protected class MyNextDifferenceAction extends NextDifferenceAction {
+
+    public MyNextDifferenceAction() {
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -749,6 +771,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
+
+    public MyPrevDifferenceAction() {
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -932,6 +958,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   protected class MyOpenInEditorAction extends OpenInEditorAction {
+
+    public MyOpenInEditorAction() {
+    }
+
     @Override
     protected void onAfterEditorOpened() {
       onAfterNavigate();
@@ -1118,15 +1148,24 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
+  private static void onAssigned(@NotNull DiffRequest request, boolean isAssigned) {
+    try {
+      request.onAssigned(isAssigned);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
   //
   // States
   //
 
   private interface ViewerState {
-    @CalledInAwt
+    @RequiresEdt
     void init();
 
-    @CalledInAwt
+    @RequiresEdt
     void destroy();
 
     @Nullable
@@ -1187,7 +1226,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
 
@@ -1196,9 +1235,14 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
-      Disposer.dispose(myViewer);
+      try {
+        Disposer.dispose(myViewer);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Nullable
@@ -1230,7 +1274,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1247,9 +1291,14 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
-      Disposer.dispose(myViewer);
+      try {
+        Disposer.dispose(myViewer);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Nullable
@@ -1287,7 +1336,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myWrapperViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1325,10 +1374,15 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
-      Disposer.dispose(myViewer);
-      Disposer.dispose(myWrapperViewer);
+      try {
+        Disposer.dispose(myViewer);
+        Disposer.dispose(myWrapperViewer);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
     }
 
     @Nullable

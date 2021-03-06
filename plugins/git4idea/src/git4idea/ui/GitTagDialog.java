@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +33,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static git4idea.GitNotificationIdsHolder.TAG_NOT_CREATED;
+import static git4idea.GitNotificationIdsHolder.TAG_CREATED;
+
 public class GitTagDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitTagDialog.class);
@@ -57,8 +60,8 @@ public class GitTagDialog extends DialogWrapper {
 
   public GitTagDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
-    setTitle(GitBundle.getString("tag.title"));
-    setOKButtonText(GitBundle.getString("tag.button"));
+    setTitle(GitBundle.message("tag.title"));
+    setOKButtonText(GitBundle.message("tag.button"));
     myProject = project;
     myNotifier = VcsNotifier.getInstance(myProject);
     myGit = Git.getInstance();
@@ -110,8 +113,10 @@ public class GitTagDialog extends DialogWrapper {
         }
       }
       catch (IOException ex) {
-        myNotifier.notifyError(GitBundle.message("git.tag.could.not.create.tag"),
-                               GitBundle.message("tag.error.creating.message.file.message", ex.toString()));
+        myNotifier.notifyError(TAG_NOT_CREATED,
+                               GitBundle.message("git.tag.could.not.create.tag"),
+                               GitBundle.message("tag.error.creating.message.file.message", ex.toString())
+        );
         return;
       }
     }
@@ -138,11 +143,16 @@ public class GitTagDialog extends DialogWrapper {
 
       GitCommandResult result = myGit.runCommand(h);
       if (result.success()) {
-        myNotifier.notifySuccess(myTagNameTextField.getText(),
-                                 GitBundle.message("git.tag.created.tag.successfully", myTagNameTextField.getText()));
+        myNotifier.notifySuccess(TAG_CREATED,
+                                 myTagNameTextField.getText(),
+                                 GitBundle.message("git.tag.created.tag.successfully", myTagNameTextField.getText())
+        );
       }
       else {
-        myNotifier.notifyError(GitBundle.message("git.tag.could.not.create.tag"), result.getErrorOutputAsHtmlString(), true);
+        myNotifier.notifyError(TAG_NOT_CREATED,
+                               GitBundle.message("git.tag.could.not.create.tag"),
+                               result.getErrorOutputAsHtmlString(),
+                               true);
       }
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
@@ -166,7 +176,7 @@ public class GitTagDialog extends DialogWrapper {
     if (myExistingTags.contains(text)) {
       myForceCheckBox.setEnabled(true);
       if (!myForceCheckBox.isSelected()) {
-        setErrorText(GitBundle.getString("tag.error.tag.exists"));
+        setErrorText(GitBundle.message("tag.error.tag.exists"));
         setOKActionEnabled(false);
         return;
       }
@@ -176,7 +186,7 @@ public class GitTagDialog extends DialogWrapper {
       myForceCheckBox.setSelected(false);
     }
     if (myCommitTextFieldValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("tag.error.invalid.commit"));
+      setErrorText(GitBundle.message("tag.error.invalid.commit"));
       setOKActionEnabled(false);
       return;
     }
@@ -195,12 +205,12 @@ public class GitTagDialog extends DialogWrapper {
     try {
       myExistingTags.addAll(ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> GitBranchUtil.getAllTags(myProject, getGitRoot()),
-        GitBundle.getString("tag.getting.existing.tags"),
+        GitBundle.message("tag.getting.existing.tags"),
         false,
         myProject));
     }
     catch (VcsException e) {
-      GitUIUtil.showOperationError(myProject, GitBundle.getString("tag.getting.existing.tags"), e.getMessage());
+      GitUIUtil.showOperationError(myProject, GitBundle.message("tag.getting.existing.tags"), e.getMessage());
       throw new ProcessCanceledException();
     }
   }

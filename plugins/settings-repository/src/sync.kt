@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
@@ -13,11 +13,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
-import com.intellij.util.messages.MessageBus
-import gnu.trove.THashSet
+import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
+import org.jetbrains.annotations.PropertyKey
 import java.util.*
 
 internal class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
@@ -27,7 +27,9 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   private suspend fun runSyncTask(onAppExit: Boolean, project: Project?, task: suspend (indicator: ProgressIndicator) -> Unit) {
     icsManager.runInAutoCommitDisabledMode {
       if (!onAppExit) {
-        ApplicationManager.getApplication()!!.saveSettings()
+        runInAutoSaveDisabledMode {
+          saveSettings(ApplicationManager.getApplication(), false)
+        }
       }
 
       try {
@@ -134,12 +136,10 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
       }
 
       if (updateResult != null) {
-        restartApplication = runBlocking {
-          val app = ApplicationManager.getApplication()
-          updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult!!, app.messageBus,
-                                           reloadAllSchemes = syncType == SyncType.OVERWRITE_LOCAL)
+        val app = ApplicationManager.getApplication()
+        restartApplication = updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult!!,
+                                                              reloadAllSchemes = syncType == SyncType.OVERWRITE_LOCAL)
 
-        }
       }
     }
 
@@ -176,25 +176,17 @@ internal fun updateCloudSchemes(icsManager: IcsManager, indicator: ProgressIndic
 }
 
 
-internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
-  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
+internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
+                                                      store: ComponentStoreImpl,
+                                                      updateResult: UpdateResult,
+                                                      reloadAllSchemes: Boolean = false): Boolean {
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed,
+                                                                                                   updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
   icsManager.schemeManagerFactory.value.process {
-    if (reloadAllSchemes) {
+    if (reloadAllSchemes || shouldReloadSchemeManager(it, updateResult.changed.plus(updateResult.deleted))) {
       schemeManagersToReload.add(it)
-    }
-    else {
-      for (path in updateResult.changed) {
-        if (it.fileSpec == toIdeaPath(path)) {
-          schemeManagersToReload.add(it)
-        }
-      }
-      for (path in updateResult.deleted) {
-        if (it.fileSpec == toIdeaPath(path)) {
-          schemeManagersToReload.add(it)
-        }
-      }
     }
   }
 
@@ -216,14 +208,21 @@ internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, st
     }
 
     val notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-    val changedStorageSet = THashSet<StateStorage>(changed)
+    val changedStorageSet = CollectionFactory.createSmallMemoryFootprintSet<StateStorage>(changed)
     changedStorageSet.addAll(deleted)
-    runBatchUpdate(messageBus) {
-      store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
-    }
+    store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
     return@withContext !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
   }
 }
+
+private fun shouldReloadSchemeManager(schemeManager: SchemeManagerImpl<*, *>, pathsToCheck: Collection<String>): Boolean {
+  return pathsToCheck.any {
+    val path = toIdeaPath(it)
+    val fileSpec = schemeManager.fileSpec
+    fileSpec == path || path.startsWith("$fileSpec/")
+  }
+}
+
 
 private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
   for (stateStorage in stateStorages) {
@@ -236,10 +235,10 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
   }
 }
 
-enum class SyncType(val messageKey: String) {
-  MERGE("Merge"),
-  OVERWRITE_LOCAL("ResetToTheirs"),
-  OVERWRITE_REMOTE("ResetToMy")
+enum class SyncType(@PropertyKey(resourceBundle = BUNDLE) val messageKey: String) {
+  MERGE("action.MergeSettings.text"),
+  OVERWRITE_LOCAL("action.ResetToTheirsSettings.text"),
+  OVERWRITE_REMOTE("action.ResetToMySettings.text")
 }
 
 class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.message, cause)

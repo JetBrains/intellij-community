@@ -43,7 +43,7 @@ class NamePredicate extends NotNullPredicate<PyElement> {
   }
 
   /**
-   * Checks if collection has {@link com.jetbrains.python.psi.PyElement} with name equals to name of provided element.
+   * Checks if collection has {@link PyElement} with name equals to name of provided element.
    * If element has no name -- returns false any way.
    * @param needle element to take name from
    * @param stock collection elements to search between

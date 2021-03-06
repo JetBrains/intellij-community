@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.openapi.progress.ProgressManager;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
@@ -15,8 +15,7 @@ import java.util.function.Predicate;
 import static com.intellij.lang.jvm.util.JvmUtil.resolveClass;
 import static com.intellij.lang.jvm.util.JvmUtil.resolveClasses;
 
-public class JvmHierarchyUtil {
-
+public final class JvmHierarchyUtil {
   private JvmHierarchyUtil() {}
 
   public static boolean testSupers(@NotNull JvmClass start, boolean skipStart, @NotNull Predicate<? super JvmClass> predicate) {
@@ -54,7 +53,7 @@ public class JvmHierarchyUtil {
       queue.offer(start);
     }
 
-    final Set<JvmClass> visited = new THashSet<>();
+    final Set<JvmClass> visited = new HashSet<>();
     while (!queue.isEmpty()) {
       ProgressManager.checkCanceled();
 

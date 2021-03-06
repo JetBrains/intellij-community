@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
@@ -329,9 +330,10 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
       else {
         if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
-          final PsiReferenceExpression ref = elementFactory.createReferenceExpression(containingClass);
-          addAfter(ref, null);
+          PsiDocComment fromText = JavaPsiFacade.getElementFactory(containingClass.getProject())
+            .createDocCommentFromText("/**{@link " + containingClass.getQualifiedName() + "#" + newName + "}*/");
+          PsiDocMethodOrFieldRef methodOrFieldRefFromText = PsiTreeUtil.findChildOfType(fromText, PsiDocMethodOrFieldRef.class);
+          addAfter(Objects.requireNonNull(methodOrFieldRefFromText).getFirstChild(), null);
         }
       }
 

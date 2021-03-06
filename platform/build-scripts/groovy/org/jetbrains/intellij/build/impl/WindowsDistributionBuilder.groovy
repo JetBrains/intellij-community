@@ -1,27 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileFilters
 import com.intellij.openapi.util.io.FileUtil
-import groovy.xml.XmlUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
-class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
-  private final WindowsDistributionCustomizer customizer
-  private final File ideaProperties
-  private final File patchedApplicationInfo
-  private final String icoPath
+import java.nio.file.*
 
-  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties, File patchedApplicationInfo) {
+@CompileStatic
+final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
+  private final WindowsDistributionCustomizer customizer
+  private final Path ideaProperties
+  private final Path patchedApplicationInfo
+  private final Path icoFile
+
+  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, Path ideaProperties, Path patchedApplicationInfo) {
     super(buildContext)
     this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
     this.ideaProperties = ideaProperties
-    icoPath = (buildContext.applicationInfo.isEAP ? customizer.icoPathForEAP : null) ?: customizer.icoPath
+
+    String icoPath = (buildContext.applicationInfo.isEAP ? customizer.icoPathForEAP : null) ?: customizer.icoPath
+    icoFile = icoPath == null ? null : Paths.get(icoPath)
   }
 
   @Override
@@ -30,9 +42,13 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  void copyFilesForOsDistribution(String winDistPath) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  void copyFilesForOsDistribution(@NotNull Path winDistPath, JvmArchitecture arch = null) {
+    Path distBinDir = winDistPath.resolve("bin")
+    Files.createDirectories(distBinDir)
+
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    buildContext.ant.copy(todir: "$winDistPath/bin") {
+    buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
           exclude(name: "breakgen*")
@@ -41,53 +57,99 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     BuildTasksImpl.unpackPty4jNative(buildContext, winDistPath, "win")
     BuildTasksImpl.generateBuildTxt(buildContext, winDistPath)
+    BuildTasksImpl.copyDistFiles(buildContext, winDistPath)
 
-    buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
-    buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
+    Files.writeString(distBinDir.resolve(ideaProperties.fileName), StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
 
-    if (icoPath != null) {
-      buildContext.ant.copy(file: icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
+    if (icoFile != null) {
+      Files.copy(icoFile, distBinDir.resolve("${buildContext.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
     }
     if (customizer.includeBatchLaunchers) {
-      generateScripts(winDistPath)
+      generateScripts(distBinDir)
     }
-    List<JvmArchitecture> architectures = customizer.include32BitLauncher ? JvmArchitecture.values() : [JvmArchitecture.x64]
-    generateVMOptions(winDistPath, architectures)
-    architectures.each {
-      buildWinLauncher(it, winDistPath)
+    List<JvmArchitecture> architectures = customizer.include32BitLauncher ? List.of(JvmArchitecture.x32, JvmArchitecture.x64) : List.of(JvmArchitecture.x64)
+    generateVMOptions(distBinDir, architectures)
+    for (JvmArchitecture architecture : architectures) {
+      buildWinLauncher(architecture, winDistPath)
     }
-    customizer.copyAdditionalFiles(buildContext, winDistPath)
-    List<String> extensions = ["exe", "dll"]
-    for (String extension : extensions) {
-      new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension(extension))?.each {
+    customizer.copyAdditionalFiles(buildContext, winDistPath.toString())
+    for (String extension : ["exe", "dll"]) {
+      distBinDir.toFile().listFiles(FileFilters.filesWithExtension(extension))?.each {
         buildContext.signExeFile(it.absolutePath)
       }
     }
   }
 
   @Override
-  void buildArtifacts(String winDistPath) {
+  void buildArtifacts(@NotNull Path winDistPath) {
+    copyFilesForOsDistribution(winDistPath)
     if (customizer.include32BitLauncher) {
-      buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
+      buildContext.executeStep("Packaging x86 JRE for $OsFamily.WINDOWS", BuildOptions.WINDOWS_JRE_FOR_X86_STEP) {
+        buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
+      }
     }
 
-    def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
+    String zipPath = null, exePath = null
+    Path jreDir = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
+    if (jreDir != null) {
+      Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
+      try {
+        BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
+      }
+      catch (NoSuchFileException ignore) {
+        buildContext.messages.error(
+          "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
+          "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
+          "If DLL was relocated to another place, please correct the path in this code.")
+      }
+    }
+
     if (customizer.buildZipArchive) {
-      buildWinZip([jreDirectoryPath], ".win", winDistPath)
+      List<Path> jreDirectoryPaths = customizer.zipArchiveWithBundledJre ? [jreDir] : []
+      zipPath = buildWinZip(jreDirectoryPaths, ".win", winDistPath)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
-      generateProductJson(productJsonDir, jreDirectoryPath != null)
-      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
+      Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
+      generateProductJson(productJsonDir, jreDir != null)
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath.toString(), jreDir.toString()], [])
+      exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir)
         .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
+    }
+
+    if (buildContext.options.isInDevelopmentMode || zipPath == null || exePath == null) {
+      return
+    }
+
+    if (!SystemInfoRt.isLinux) {
+      buildContext.messages.warning("Comparing .zip and .exe is not supported on ${SystemInfoRt.OS_NAME}")
+      return
+    }
+
+    buildContext.messages.info("Comparing ${new File(zipPath).name} vs. ${new File(exePath).name} ...")
+
+    Path tempZip = Files.createTempDirectory(buildContext.paths.tempDir, "zip-")
+    Path tempExe = Files.createTempDirectory(buildContext.paths.tempDir, "exe-")
+    try {
+      BuildHelper.runProcess(buildContext, List.of("unzip", "-qq", zipPath), tempZip)
+      BuildHelper.runProcess(buildContext, List.of("7z", "x", "-bd", exePath), tempExe)
+      //noinspection SpellCheckingInspection
+      FileUtil.delete(tempExe.resolve("\$PLUGINSDIR"))
+
+      BuildHelper.runProcess(buildContext, List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
+    }
+    finally {
+      FileUtil.delete(tempZip)
+      FileUtil.delete(tempExe)
     }
   }
 
-  private void generateScripts(String winDistPath) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void generateScripts(@NotNull Path distBinDir) {
     String fullName = buildContext.applicationInfo.productName
-    String vmOptionsFileName = "${buildContext.productProperties.baseFileName}%BITS%.exe"
+    String baseName = buildContext.productProperties.baseFileName
+    String scriptName = "${baseName}.bat"
+    String vmOptionsFileName = "${baseName}%BITS%.exe"
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"
     classPath += buildContext.bootClassPathJarNames[1..-1].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\$it" }.join("\n")
@@ -95,8 +157,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nSET CLASS_PATH=%CLASS_PATH%;%JDK%\\lib\\tools.jar"
     }
 
-    def batName = "${buildContext.productProperties.baseFileName}.bat"
-    buildContext.ant.copy(todir: "$winDistPath/bin") {
+    buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/win/scripts")
 
       filterset(begintoken: "@@", endtoken: "@@") {
@@ -108,73 +169,77 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
-        filter(token: "script_name", value: batName)
+        filter(token: "script_name", value: scriptName)
+        filter(token: "base_name", value: baseName)
       }
     }
 
-    buildContext.ant.move(file: "$winDistPath/bin/executable-template.bat", tofile: "$winDistPath/bin/$batName")
-
+    Files.move(distBinDir.resolve("executable-template.bat"), distBinDir.resolve(scriptName))
     String inspectScript = buildContext.productProperties.inspectCommandName
     if (inspectScript != "inspect") {
-      String targetPath = "$winDistPath/bin/${inspectScript}.bat"
-      buildContext.ant.move(file: "$winDistPath/bin/inspect.bat", tofile: targetPath)
+      Path targetPath = distBinDir.resolve("${inspectScript}.bat")
+      Files.move(distBinDir.resolve("inspect.bat"), targetPath)
       buildContext.patchInspectScript(targetPath)
     }
 
-
-    buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
+    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.bat", eol: "dos")
   }
 
-  private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void generateVMOptions(@NotNull Path distBinDir, Collection<JvmArchitecture> architectures) {
     architectures.each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
-      new File(winDistPath, "bin/$fileName").text = vmOptions.join("\n") + "\n"
+      Files.writeString(distBinDir.resolve(fileName), vmOptions.join('\n') + '\n')
     }
 
-    buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.vmoptions", eol: "dos")
+    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.vmoptions", eol: "dos")
   }
 
-  private void buildWinLauncher(JvmArchitecture arch, String winDistPath) {
+  @CompileStatic(TypeCheckingMode.SKIP)
+  private void buildWinLauncher(JvmArchitecture arch, Path winDistPath) {
     buildContext.messages.block("Build Windows executable ${arch.name()}") {
-      String exeFileName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}.exe"
-      def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
+      def executableBaseName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}"
+      Path launcherPropertiesPath = buildContext.paths.tempDir.resolve("launcher${arch.fileSuffix}.properties")
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
-      def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
-      String vmOptions = "$buildContext.additionalJvmArguments -Dide.native.launcher=true -Didea.paths.selector=${buildContext.systemSelector}".trim()
+      String vmOptions = (buildContext.additionalJvmArguments +
+                          " -Dide.native.launcher=true" +
+                          " -Didea.vendor.name=${buildContext.applicationInfo.shortCompanyName}" +
+                          " -Didea.paths.selector=${buildContext.systemSelector}").trim()
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
 
+      assert (arch in [JvmArchitecture.x32, JvmArchitecture.x64])
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
-      File icoFilesDirectory = new File(buildContext.paths.temp, "win-launcher-ico")
-      File appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
-      new File(launcherPropertiesPath).text = """
+      Path icoFilesDirectory = buildContext.paths.tempDir.resolve("win-launcher-ico")
+      Path appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
+      Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
         IDS_APP_TITLE=$productName Launcher
         IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${buildContext.applicationInfo.shortCompanyName}\\\\${buildContext.systemSelector}
-        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
-        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
+        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
+        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
         IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
         IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
         IDS_VM_OPTIONS=${vmOptions}
-        IDS_CLASSPATH_LIBS=${classPath}""".stripIndent().trim()
+        IDS_CLASSPATH_LIBS=${classPath}""".stripIndent().trim())
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"
-      def outputPath = "$winDistPath/bin/$exeFileName"
-      def resourceModules = [buildContext.findApplicationInfoModule(), buildContext.findModule("intellij.platform.icons")]
+      Path outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
+      List<JpsModule> resourceModules = List.of(buildContext.findApplicationInfoModule(), buildContext.findModule("intellij.platform.icons"))
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
-        arg(value: appInfoForLauncher.absolutePath)
-        arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
-        arg(value: launcherPropertiesPath)
-        arg(value: outputPath)
+        arg(value: appInfoForLauncher.toString())
+        arg(value: "$communityHome/native/WinLauncher/resource.h")
+        arg(value: launcherPropertiesPath.toString())
+        arg(value: outputPath.toString())
         classpath {
           pathelement(location: "$communityHome/build/lib/launcher-generator.jar")
           ["Guava", "JDOM", "commons-imaging"].each {
@@ -188,7 +253,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
           buildContext.productProperties.brandingResourcePaths.each {
             pathelement(location: it)
           }
-          pathelement(location: icoFilesDirectory.absolutePath)
+          pathelement(location: icoFilesDirectory.toString())
         }
       }
     }
@@ -198,50 +263,49 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
    * Generates ApplicationInfo.xml file for launcher generator which contains link to proper *.ico file.
    * //todo[nik] pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
    */
-  File generateApplicationInfoForLauncher(File applicationInfoFile, File icoFilesDirectory) {
-    FileUtil.createDirectory(icoFilesDirectory)
-    if (icoPath == null) {
-      return applicationInfoFile
+  private Path generateApplicationInfoForLauncher(@NotNull Path appInfoFile, @NotNull Path icoFilesDirectory) {
+    if (icoFile == null) {
+      return appInfoFile
     }
 
-    def icoFile = new File(icoPath)
-    buildContext.ant.copy(file: icoPath, todir: icoFilesDirectory.absolutePath)
-    def root = new XmlParser().parse(applicationInfoFile)
-    def iconNode = root.icon.first()
-    iconNode.@ico = icoFile.name
-    def patchedFile = new File(buildContext.paths.temp, "win-launcher-application-info.xml")
-    patchedFile.withWriter {
-      XmlUtil.serialize(root, it)
-    }
+    Files.createDirectories(icoFilesDirectory)
+    Files.copy(icoFile, icoFilesDirectory.resolve(icoFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+    Element root = JDOMUtil.load(appInfoFile)
+    // do not use getChild - maybe null due to namespace
+    Element iconElement = (Element)root.getContent().stream()
+      .filter({ it instanceof Element && ((Element)it).getName() == "icon" })
+      .findFirst()
+      .orElseThrow({ new RuntimeException("`icon` element not found in $appInfoFile:\n${Files.readString(appInfoFile)}") })
+
+    iconElement.setAttribute("ico", icoFile.fileName.toString())
+    Path patchedFile = buildContext.paths.tempDir.resolve("win-launcher-application-info.xml")
+    JDOMUtil.write(root, patchedFile)
     return patchedFile
   }
 
-  private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
-    buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
-      def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      def targetPath = "${buildContext.paths.artifacts}/${baseName}${zipNameSuffix}.zip"
-      def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths
-      buildContext.messages.progress("Building Windows $targetPath archive")
-      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
+  private String buildWinZip(List<Path> jreDirectoryPaths, String zipNameSuffix, Path winDistPath) {
+    return buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
+      String baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+      Path targetFile = Paths.get(buildContext.paths.artifacts, "${baseName}${zipNameSuffix}.zip")
+      buildContext.messages.progress("Building Windows $targetFile archive")
+      Path productJsonDir = Paths.get(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix")
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
-      dirs += [productJsonDir]
-      buildContext.ant.zip(zipfile: targetPath) {
-        dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix)
-        }
-      }
 
-      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
-      buildContext.notifyArtifactBuilt(targetPath)
+      String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
+      List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
+      BuildHelper.zip(buildContext, targetFile, dirs, zipPrefix)
+      ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
+      buildContext.notifyArtifactWasBuilt(targetFile)
+      return targetFile
     }
   }
 
-  private void generateProductJson(String targetDir, boolean isJreIncluded) {
-    def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
-    def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
-    def javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
+  private void generateProductJson(@NotNull Path targetDir, boolean isJreIncluded) {
+    String launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
+    String vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
+    String javaExecutablePath = isJreIncluded ? "jbr/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
       .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }
+

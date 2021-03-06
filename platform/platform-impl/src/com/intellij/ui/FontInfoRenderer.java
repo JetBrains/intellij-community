@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +14,7 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean focused) {
     Font font = list.getFont();
-    String text = value == null ? "" : value.toString();
+    @NlsSafe String text = value == null ? "" : value.toString();
     append(text);
     if (value instanceof FontInfo) {
       FontInfo info = (FontInfo)value;
@@ -22,7 +24,7 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
         setFont(f);
       }
       else {
-        append("  Non-latin", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append("  " + IdeBundle.message("font.info.renderer.non.latin"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
   }

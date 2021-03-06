@@ -1,10 +1,9 @@
 package org.jetbrains.plugins.textmate;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
@@ -20,7 +19,7 @@ public abstract class TextMateService {
   protected static final Logger LOG = Logger.getInstance(TextMateService.class);
 
   public static TextMateService getInstance() {
-    return ServiceManager.getService(TextMateService.class);
+    return ApplicationManager.getApplication().getService(TextMateService.class);
   }
 
   /**
@@ -41,21 +40,12 @@ public abstract class TextMateService {
    */
   public abstract void reloadEnabledBundles();
 
-  /**
-   * @deprecated use {@link #reloadEnabledBundles()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public void registerEnabledBundles(boolean builtin) {
-    reloadEnabledBundles();
-  }
-
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByExtension(@Nullable CharSequence extension);
 
   @Nullable
   public abstract TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor);
-  
+
   @NotNull
   public abstract SnippetsRegistry getSnippetsRegistry();
 
@@ -66,7 +56,7 @@ public abstract class TextMateService {
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);
 
   /**
-   * @return custom highlighting colors defined inside bundles (not in themes). 
+   * @return custom highlighting colors defined inside bundles (not in themes).
    * Note that background color in text attributes is stored in raw format and isn't merged with default background.
    */
   @NotNull

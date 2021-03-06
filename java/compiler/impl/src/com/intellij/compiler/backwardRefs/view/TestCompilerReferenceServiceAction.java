@@ -22,12 +22,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TestCompilerReferenceServiceAction extends AnAction {
-  public TestCompilerReferenceServiceAction(String text) {
+  public TestCompilerReferenceServiceAction(@NlsActions.ActionText String text) {
     super(text);
   }
 

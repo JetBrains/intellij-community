@@ -74,7 +74,7 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
                              @NotNull Condition<Object> expired) {
     if (!unResolvedHashes.isEmpty()) {
       myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
-        MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
+        MultiMap<String, CommitId> resolvedHashes = new MultiMap<>();
 
         Set<String> fullHashes = new HashSet<>(ContainerUtil.filter(unResolvedHashes, h -> h.length() == VcsLogUtil.FULL_HASH_LENGTH));
         for (String fullHash : fullHashes) {
@@ -90,13 +90,12 @@ public class VcsLogCommitDetailsListPanel extends CommitDetailsListPanel<CommitP
 
         if (!unResolvedHashes.isEmpty()) {
           myLogData.getStorage().iterateCommits(commitId -> {
-
             for (String hashString : unResolvedHashes) {
               if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
                 resolvedHashes.putValue(hashString, commitId);
               }
             }
-            return false;
+            return true;
           });
         }
 

@@ -29,18 +29,14 @@ public class SmartEnterAction extends EditorAction {
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler {
-    Handler() {
-      super(true);
-    }
-
+  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, caret, dataContext);
     }
 
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, caret, dataContext);

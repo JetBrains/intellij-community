@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -34,6 +35,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +50,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   private Document myDocument;
   private Commenter myCommenter;
   private CommenterDataHolder mySelfManagedCommenterData;
-  private String myWarning;
+  private @NlsContexts.HintText String myWarning;
   private RangeMarker myWarningLocation;
 
   @Override
@@ -123,7 +125,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         int selectionEnd = myCaret.getSelectionEnd();
         if (commenter instanceof IndentedCommenter) {
           final Boolean value = ((IndentedCommenter)commenter).forceIndentedBlockComment();
-          if (value == Boolean.TRUE) {
+          if (value == Boolean.FALSE) {
             selectionStart = myDocument.getLineStartOffset(myDocument.getLineNumber(selectionStart));
             selectionEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(selectionEnd));
           }
@@ -135,7 +137,7 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         int caretOffset = myCaret.getOffset();
         if (commenter instanceof IndentedCommenter) {
           final Boolean value = ((IndentedCommenter)commenter).forceIndentedBlockComment();
-          if (value == Boolean.TRUE) {
+          if (value == Boolean.FALSE) {
             final int lineNumber = myDocument.getLineNumber(caretOffset);
             final int start = myDocument.getLineStartOffset(lineNumber);
             final int end = myDocument.getLineEndOffset(lineNumber);
@@ -403,7 +405,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
       if (endOffset == myDocument.getTextLength() || endOffset > 0 && chars.charAt(endOffset - 1) == '\n') {
         CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFile);
         String space;
-        if (!settings.BLOCK_COMMENT_AT_FIRST_COLUMN) {
+        Boolean forced = commenter instanceof IndentedCommenter ? ((IndentedCommenter)commenter).forceIndentedBlockComment() : null;
+        if ((forced == null && !settings.BLOCK_COMMENT_AT_FIRST_COLUMN) || forced == Boolean.TRUE) {
           int line1 = myEditor.offsetToLogicalPosition(startOffset).line;
           int line2 = myEditor.offsetToLogicalPosition(endOffset - 1).line;
           IndentData minIndent = CommentUtil.getMinLineIndent(myDocument, line1, line2, myFile);
@@ -498,11 +501,11 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
     }
   }
 
-  private TextRange insertNestedComments(int startOffset,
-                                         int endOffset,
-                                         String commentPrefix,
-                                         String commentSuffix,
-                                         Commenter commenter) {
+  private @Nullable TextRange insertNestedComments(int startOffset,
+                                                   int endOffset,
+                                                   String commentPrefix,
+                                                   String commentSuffix,
+                                                   Commenter commenter) {
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
       return selfManagingCommenter.insertBlockComment(
@@ -515,8 +518,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
 
     String normalizedPrefix = commentPrefix.trim();
     String normalizedSuffix = commentSuffix.trim();
-    IntArrayList nestedCommentPrefixes = new IntArrayList();
-    IntArrayList nestedCommentSuffixes = new IntArrayList();
+    IntList nestedCommentPrefixes = new IntArrayList();
+    IntList nestedCommentSuffixes = new IntArrayList();
     String commentedPrefix = commenter.getCommentedBlockCommentPrefix();
     String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
     CharSequence chars = myDocument.getCharsSequence();
@@ -619,8 +622,8 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
 
   static void commentNestedComments(@NotNull Document document, TextRange range, Commenter commenter) {
     final int offset = range.getStartOffset();
-    final IntArrayList toReplaceWithComments = new IntArrayList();
-    final IntArrayList prefixes = new IntArrayList();
+    final IntList toReplaceWithComments = new IntArrayList();
+    final IntList prefixes = new IntArrayList();
 
     final String text = document.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
     final String commentedPrefix = commenter.getCommentedBlockCommentPrefix();

@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -15,14 +16,14 @@ import javax.swing.*;
  * @author yole
 */
 public class SdkListCellRenderer extends ColoredListCellRenderer<Sdk> {
-  private final String myNullText;
+  private final @NlsContexts.Label String myNullText;
   private final boolean myShowHomePath;
 
-  public SdkListCellRenderer(@NotNull String nullText) {
+  public SdkListCellRenderer(@NotNull @NlsContexts.Label String nullText) {
     this(nullText, false);
   }
 
-  public SdkListCellRenderer(@NotNull String nullText, boolean showHomePath) {
+  public SdkListCellRenderer(@NotNull @NlsContexts.Label String nullText, boolean showHomePath) {
     myNullText = nullText;
     myShowHomePath = showHomePath;
   }

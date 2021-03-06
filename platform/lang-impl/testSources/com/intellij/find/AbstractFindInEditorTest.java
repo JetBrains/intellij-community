@@ -2,15 +2,23 @@
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.text.JTextComponent;
 
 public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    HeadlessDataManager.fallbackToProductionDataManager(getTestRootDisposable());
+  }
+
   protected void setTextToFind(String text) {
     EditorSearchSession editorSearchSession = getEditorSearchComponent();
     assertNotNull(editorSearchSession);
@@ -18,7 +26,7 @@ public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
     assertNotNull(searchField);
     for (int i = 0; i <= text.length(); i++) {
       searchField.setText(text.substring(0, i)); // emulate typing chars one by one
-      IdeEventQueue.getInstance().flushQueue();
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 
@@ -68,7 +76,7 @@ public abstract class AbstractFindInEditorTest extends BasePlatformTestCase {
   }
 
   protected void executeHeaderAction(AnAction action) {
-    DataContext context = new DataManagerImpl.MyDataContext(getEditorSearchComponent().getComponent());
+    DataContext context = DataManager.getInstance().getDataContext(getEditorSearchComponent().getComponent());
     AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_TOOLBAR, null, context);
     action.beforeActionPerformedUpdate(e);
     if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {

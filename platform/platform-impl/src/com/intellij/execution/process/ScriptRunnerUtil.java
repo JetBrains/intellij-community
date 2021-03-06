@@ -157,7 +157,7 @@ public final class ScriptRunnerUtil {
     public final StringBuilder myFilteredOutput;
     public final StringBuffer myMergedOutput;
 
-    private ScriptOutput(Condition<? super Key> scriptOutputType) {
+    public ScriptOutput(Condition<? super Key> scriptOutputType) {
       myScriptOutputType = scriptOutputType;
       myFilteredOutput = new StringBuilder();
       myMergedOutput = new StringBuffer();

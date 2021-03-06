@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -53,8 +53,9 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static char toLowerCase(char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') return a;
-    if (a <= 'Z') return (char)(a + ('a' - 'A'));
+    if (a <= 'z') {
+      return a >= 'A' && a <= 'Z' ? (char)(a + ('a' - 'A')) : a;
+    }
     return Character.toLowerCase(a);
   }
 
@@ -252,9 +253,14 @@ public class StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWithIgnoreCase(@NotNull String str, @NotNull String prefix) {
+    return startsWithIgnoreCase(str, 0, prefix);
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWithIgnoreCase(@NotNull String str, int startOffset, @NotNull String prefix) {
     int stringLength = str.length();
     int prefixLength = prefix.length();
-    return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
+    return stringLength >= prefixLength && str.regionMatches(true, startOffset, prefix, 0, prefixLength);
   }
 
   @Contract(pure = true)
@@ -383,5 +389,37 @@ public class StringUtilRt {
   public static String unquoteString(@NotNull String s, char quotationChar) {
     boolean quoted = s.length() > 1 && quotationChar == s.charAt(0) && quotationChar == s.charAt(s.length() - 1);
     return quoted ? s.substring(1, s.length() - 1) : s;
+  }
+
+  @Contract(pure = true)
+  public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
+    int l1 = text.length();
+    int l2 = prefix.length();
+    if (l1 < l2) return false;
+
+    for (int i = 0; i < l2; i++) {
+      if (text.charAt(i) != prefix.charAt(i)) return false;
+    }
+
+    return true;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
+    return stringHashCodeInsensitive(chars, 0, chars.length());
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
+    return stringHashCodeInsensitive(chars, from, to, 0);
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
+    int h = prefixHash;
+    for (int off = from; off < to; off++) {
+      h = 31 * h + toLowerCase(chars.charAt(off));
+    }
+    return h;
   }
 }

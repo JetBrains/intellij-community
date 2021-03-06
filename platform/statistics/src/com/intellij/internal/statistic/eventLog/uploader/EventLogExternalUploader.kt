@@ -1,17 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.uploader
 
+import com.google.gson.Gson
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType.*
+import com.intellij.internal.statistic.uploader.EventLogUploaderOptions
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
 import com.intellij.internal.statistic.uploader.events.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ArrayUtil
-import com.intellij.util.io.exists
+import org.jetbrains.annotations.NotNull
 import java.io.File
-import java.lang.Exception
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 object EventLogExternalUploader {
@@ -34,7 +39,9 @@ object EventLogExternalUploader {
               EventLogSystemLogger.logStartingExternalSend(recorderId, event.timestamp)
             }
             is ExternalUploadSendEvent -> {
-              EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true)
+              val files = event.successfullySentFiles
+              val errors = event.errors
+              EventLogSystemLogger.logFilesSend(recorderId, event.total, event.succeed, event.failed, true, files, errors)
             }
             is ExternalUploadFinishedEvent -> {
               EventLogSystemLogger.logFinishedExternalSend(recorderId, event.error, event.timestamp)
@@ -60,7 +67,8 @@ object EventLogExternalUploader {
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val device = DeviceConfiguration(EventLogConfiguration.deviceId, EventLogConfiguration.bucket)
+    val config = EventLogConfiguration.getOrCreate(recorderId)
+    val device = DeviceConfiguration(config.deviceId, config.bucket)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
       val command = prepareUploadCommand(device, recorder, application)
@@ -84,11 +92,13 @@ object EventLogExternalUploader {
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes(
-      "kotlin-stdlib", "gson", "commons-logging", "log4j.jar", "httpclient", "httpcore", "httpmime", "jdom.jar", "annotations.jar"
-    )
+    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging", "http-client")
 
-    val libPaths = libs.map { it.path }
+    val libPaths = libs.map { it.path }.toMutableList()
+    libPaths.add(findLibraryByClass(NotNull::class.java))
+    libPaths.add(findLibraryByClass(org.apache.log4j.Logger::class.java))
+    libPaths.add(findLibraryByClass(Gson::class.java))
+    libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
     val classpath = joinAsClasspath(libPaths, uploader)
 
     val args = arrayListOf<String>()
@@ -107,7 +117,8 @@ object EventLogExternalUploader {
     addArgument(args, BUCKET_OPTION, device.bucket.toString())
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
-    addArgument(args, USER_AGENT_OPTION, applicationInfo.userAgent)
+    addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
+    addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
 
     if (applicationInfo.isInternal) {
       args += INTERNAL_OPTION
@@ -115,6 +126,10 @@ object EventLogExternalUploader {
 
     if (applicationInfo.isTest) {
       args += TEST_OPTION
+    }
+
+    if (applicationInfo.isEAP) {
+      args += EAP_OPTION
     }
     return ArrayUtil.toStringArray(args)
   }
@@ -126,32 +141,41 @@ object EventLogExternalUploader {
 
   private fun logsToSend(recorder: EventLogRecorderConfig): List<String> {
     val dir = recorder.getLogFilesProvider().getLogFilesDir()
-    if (dir != null && dir.exists()) {
+    if (dir != null && Files.exists(dir)) {
       return dir.toFile().listFiles()?.take(5)?.map { it.absolutePath } ?: emptyList()
     }
     return emptyList()
   }
 
-  private fun joinAsClasspath(libCopies: List<String>, uploaderCopy: File): String {
+  private fun joinAsClasspath(libCopies: List<String>, uploaderCopy: Path): String {
     if (libCopies.isEmpty()) {
-      return uploaderCopy.path
+      return uploaderCopy.toString()
     }
     val libClassPath = libCopies.joinToString(separator = File.pathSeparator)
-    return "$libClassPath${File.pathSeparator}${uploaderCopy.path}"
+    return "$libClassPath${File.pathSeparator}$uploaderCopy"
   }
 
-  private fun findUploader(): File {
-    val uploader = File(PathManager.getLibPath(), "platform-statistics-uploader.jar")
-    if (uploader.exists() && !uploader.isDirectory) {
-      return uploader
+  private fun findUploader(): Path {
+    val uploader = if (PluginManagerCore.isRunningFromSources()) {
+      Paths.get(PathManager.getHomePath(), "out/artifacts/statistics-uploader.jar")
+    }
+    else {
+      PathManager.getJarForClass(EventLogUploaderOptions::class.java)
     }
 
-    //consider local debug IDE case
-    val localBuild = File(PathManager.getHomePath(), "out/artifacts/statistics-uploader.jar")
-    if (localBuild.exists() && !localBuild.isDirectory) {
-      return localBuild
+    if (uploader == null || !Files.isRegularFile(uploader)) {
+      throw EventLogUploadException("Cannot find uploader jar", NO_UPLOADER)
     }
-    throw EventLogUploadException("Cannot find uploader jar", NO_UPLOADER)
+    return uploader
+  }
+
+  private fun findLibraryByClass(clazz: Class<*>): String {
+    val library = PathManager.getJarForClass(clazz)
+
+    if (library == null || !Files.isRegularFile(library)) {
+      throw EventLogUploadException("Cannot find jar for $clazz", NO_UPLOADER)
+    }
+    return library.toString()
   }
 
   private fun findJavaHome(): String {

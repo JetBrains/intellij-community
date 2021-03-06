@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -43,7 +43,7 @@ import java.util.*;
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBasedTextAttributes;
 
-public class SeverityEditorDialog extends DialogWrapper {
+public final class SeverityEditorDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(SeverityEditorDialog.class);
 
   private final JPanel myPanel;
@@ -104,7 +104,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         }
       }
     });
-    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> attrs.getSeverity().getName());
+    TreeUIHelper.getInstance().installListSpeedSearch(myOptionsList, attrs -> StringUtil.toUpperCase(attrs.getSeverity().getDisplayName()));
     myOptionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JPanel leftPanel = ToolbarDecorator.createDecorator(myOptionsList)

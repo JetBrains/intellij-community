@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
@@ -7,11 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.style.ConditionalModel;
 import com.siyeh.ig.style.IfConditionalModel;
@@ -93,7 +93,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
 
   @Nullable
   private static PsiBinaryExpression getCondition(@Nullable PsiExpression expression) {
-    PsiBinaryExpression condition = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    PsiBinaryExpression condition = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
     if (condition == null) return null;
     IElementType tokenType = condition.getOperationTokenType();
     if (JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType) ||
@@ -103,7 +103,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     return null;
   }
 
-  private static class ReplaceWithMinMaxFix implements LocalQuickFix {
+  private static final class ReplaceWithMinMaxFix implements LocalQuickFix {
 
     private final boolean myUseMathMin;
 

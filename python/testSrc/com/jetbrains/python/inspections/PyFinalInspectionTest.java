@@ -232,8 +232,8 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
   // PY-34945
   public void testOuterMostFinal() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> doTestByText("from typing_extensions import Final\n" +
+      LanguageLevel.getLatest(),
+      () -> doTestByText("from typing_extensions import Final, TypeAlias\n" +
                          "\n" +
                          "a1: Final[int] = 10\n" +
                          "b1: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]] = []\n" +
@@ -245,7 +245,12 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
                          "b3: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>] = []\n" +
                          "\n" +
                          "a4 = 10  # type: Final\n" +
-                         "b4 = []  # type: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>]")
+                         "b4 = []  # type: List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>]\n" +
+                         "\n" +
+                         "A1: TypeAlias = List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]]\n" +
+                         "A2: TypeAlias = 'List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]]'\n" +
+                         "A3 = List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]]  # type: TypeAlias\n" +
+                         "A4 = 'List[<warning descr=\"'Final' could only be used as the outermost type\">Final</warning>[int]]'  # type: TypeAlias")
     );
   }
 
@@ -604,11 +609,11 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON35,
       () -> doTestByText("from typing_extensions import Final\n" +
                          "\n" +
-                         "def foo1() <warning descr=\"'Final' could not be used in annotation for function return value\">-> Final[int]</warning>:\n" +
+                         "def foo1() <warning descr=\"'Final' could not be used in annotation for a function return value\">-> Final[int]</warning>:\n" +
                          "    pass\n" +
                          "\n" +
                          "def foo2():\n" +
-                         "    <warning descr=\"'Final' could not be used in annotation for function return value\"># type: () -> Final[int]</warning>\n" +
+                         "    <warning descr=\"'Final' could not be used in annotation for a function return value\"># type: () -> Final[int]</warning>\n" +
                          "    pass")
     );
   }

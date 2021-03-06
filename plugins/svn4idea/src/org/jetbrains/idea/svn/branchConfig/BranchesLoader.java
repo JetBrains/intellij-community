@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -18,6 +17,9 @@ import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class BranchesLoader implements Runnable {
   @NotNull private final Project myProject;
@@ -68,7 +70,7 @@ public class BranchesLoader implements Runnable {
   private void showError(Exception e) {
     // already logged inside
     if (InfoReliability.setByUser.equals(myInfoReliability)) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Branches load error: " + e.getMessage(), MessageType.ERROR);
+      showOverChangesView(myProject, message("notification.content.branches.load.error", e.getMessage()), MessageType.ERROR);
     }
   }
 

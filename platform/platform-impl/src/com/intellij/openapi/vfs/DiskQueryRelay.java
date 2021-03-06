@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +19,7 @@ import java.util.function.Function;
  */
 @ApiStatus.Internal
 public final class DiskQueryRelay<Param, Result> {
-  private final @NotNull Function<? super Param, ? extends Result> myFunction;
+  private final Function<? super Param, ? extends Result> myFunction;
 
   /**
    * We remember the submitted tasks in "myTasks" until they're finished, to avoid creating many-many similar threads
@@ -31,11 +32,12 @@ public final class DiskQueryRelay<Param, Result> {
   }
 
   public Result accessDiskWithCheckCanceled(@NotNull Param arg) {
-    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (indicator == null) {
       return myFunction.apply(arg);
     }
 
-    Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> ProcessIOExecutorService.INSTANCE.submit(() -> {
       try {
         return myFunction.apply(eachArg);
       }
@@ -47,6 +49,6 @@ public final class DiskQueryRelay<Param, Result> {
       // maybe it was very fast and completed before being put into a map
       myTasks.remove(arg, future);
     }
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
   }
 }

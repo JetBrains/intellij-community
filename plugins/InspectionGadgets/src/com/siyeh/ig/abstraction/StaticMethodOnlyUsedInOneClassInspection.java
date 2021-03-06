@@ -177,6 +177,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
               @Override
               public boolean process(PsiReference reference) {
                 final PsiClass containingClass = ClassUtils.getContainingClass(reference.getElement());
+                if (containingClass == null) return false;
                 if (problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
                   if (containingClass != ref.get()) {
                     problemDescriptionsProcessor.ignoreElement(refEntity);
@@ -373,7 +374,8 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       @NotNull
       @Override
       public DataContext enhanceDataContext(DataContext context) {
-        return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), myUsageClass.getElement(), context);
+        PsiClass element = myUsageClass.getElement();
+        return element == null ? context : SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT, element, context);
       }
     }
 

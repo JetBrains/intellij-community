@@ -1265,15 +1265,14 @@ PsiJavaFile:TypeAnnotations.java
                   <empty list>
             PsiWhiteSpace(' ')
             PsiTypeElement:Document [][]
-              PsiTypeElement:Document []
-                PsiTypeElement:Document
-                  PsiJavaCodeReferenceElement:Document
-                    PsiIdentifier:Document('Document')
-                    PsiReferenceParameterList
-                      <empty list>
-                PsiWhiteSpace(' ')
-                PsiJavaToken:LBRACKET('[')
-                PsiJavaToken:RBRACKET(']')
+              PsiTypeElement:Document
+                PsiJavaCodeReferenceElement:Document
+                  PsiIdentifier:Document('Document')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiWhiteSpace(' ')
+              PsiJavaToken:LBRACKET('[')
+              PsiJavaToken:RBRACKET(']')
               PsiJavaToken:LBRACKET('[')
               PsiJavaToken:RBRACKET(']')
             PsiWhiteSpace(' ')
@@ -1317,24 +1316,23 @@ PsiJavaFile:TypeAnnotations.java
             PsiModifierList:
               <empty list>
             PsiTypeElement:Document @Readonly [][]
-              PsiTypeElement:Document @Readonly []
-                PsiTypeElement:Document
-                  PsiJavaCodeReferenceElement:Document
-                    PsiIdentifier:Document('Document')
-                    PsiReferenceParameterList
-                      <empty list>
-                PsiWhiteSpace(' ')
-                PsiAnnotation
-                  PsiJavaToken:AT('@')
-                  PsiJavaCodeReferenceElement:Readonly
-                    PsiIdentifier:Readonly('Readonly')
-                    PsiReferenceParameterList
-                      <empty list>
-                  PsiAnnotationParameterList
+              PsiTypeElement:Document
+                PsiJavaCodeReferenceElement:Document
+                  PsiIdentifier:Document('Document')
+                  PsiReferenceParameterList
                     <empty list>
-                PsiWhiteSpace(' ')
-                PsiJavaToken:LBRACKET('[')
-                PsiJavaToken:RBRACKET(']')
+              PsiWhiteSpace(' ')
+              PsiAnnotation
+                PsiJavaToken:AT('@')
+                PsiJavaCodeReferenceElement:Readonly
+                  PsiIdentifier:Readonly('Readonly')
+                  PsiReferenceParameterList
+                    <empty list>
+                PsiAnnotationParameterList
+                  <empty list>
+              PsiWhiteSpace(' ')
+              PsiJavaToken:LBRACKET('[')
+              PsiJavaToken:RBRACKET(']')
               PsiJavaToken:LBRACKET('[')
               PsiJavaToken:RBRACKET(']')
             PsiWhiteSpace(' ')
@@ -1378,14 +1376,13 @@ PsiJavaFile:TypeAnnotations.java
             PsiModifierList:
               <empty list>
             PsiTypeElement:Document[] @Readonly []
-              PsiTypeElement:Document[]
-                PsiTypeElement:Document
-                  PsiJavaCodeReferenceElement:Document
-                    PsiIdentifier:Document('Document')
-                    PsiReferenceParameterList
-                      <empty list>
-                PsiJavaToken:LBRACKET('[')
-                PsiJavaToken:RBRACKET(']')
+              PsiTypeElement:Document
+                PsiJavaCodeReferenceElement:Document
+                  PsiIdentifier:Document('Document')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:LBRACKET('[')
+              PsiJavaToken:RBRACKET(']')
               PsiWhiteSpace(' ')
               PsiAnnotation
                 PsiJavaToken:AT('@')

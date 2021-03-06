@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -40,7 +41,8 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       final boolean assignable = TypeConversionUtil.isAssignable(myT, myS);
       if (!assignable) {
-        session.registerIncompatibleErrorMessage("Incompatible types: " + session.getPresentableText(myS) + " is not convertible to " + session.getPresentableText(myT));
+        session.registerIncompatibleErrorMessage(
+          JavaPsiBundle.message("error.incompatible.type.not.convertible", session.getPresentableText(myS), session.getPresentableText(myT)));
       }
       return assignable;
     }
@@ -107,7 +109,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
         for (PsiType bound : ((InferenceVariable)tClass).getBounds(InferenceBound.UPPER)) {
           if (!session.isProperType(bound)) {
             PsiClass boundClass = PsiUtil.resolveClassInClassTypeOnly(bound);
-            if (boundClass != null && InheritanceUtil.isInheritorOrSelf(boundClass, sClass, true)) {
+            if (InheritanceUtil.isInheritorOrSelf(boundClass, sClass, true)) {
               return true;
             }
           }

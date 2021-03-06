@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -23,12 +23,12 @@ public final class ToolManager extends BaseToolManager<Tool> {
   }
 
   public static ToolManager getInstance() {
-    return ServiceManager.getService(ToolManager.class);
+    return ApplicationManager.getApplication().getService(ToolManager.class);
   }
 
   @Override
   protected SchemeProcessor<ToolsGroup<Tool>, ToolsGroup<Tool>> createProcessor() {
-    return new ToolsProcessor<Tool>() {
+    return new ToolsProcessor<>() {
       @Override
       protected ToolsGroup<Tool> createToolsGroup(String groupName) {
         return new ToolsGroup<>(groupName);

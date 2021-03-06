@@ -6,16 +6,16 @@ import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
 import com.intellij.grazie.grammar.strategy.StrategyUtils
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.elementType
 import org.jetbrains.yaml.YAMLTokenTypes.*
 
 class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
-  private val YAML_LITERAL_TYPES = setOf(TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT)
-
   override fun isMyContextRoot(element: PsiElement) = getContextRootTextDomain(element) != TextDomain.NON_TEXT
 
   override fun getContextRootTextDomain(root: PsiElement) = when (root.node.elementType) {
     COMMENT -> TextDomain.COMMENTS
-    in YAML_LITERAL_TYPES -> TextDomain.LITERALS
+    TEXT, SCALAR_STRING, SCALAR_DSTRING, SCALAR_LIST, SCALAR_TEXT -> TextDomain.LITERALS
     else -> TextDomain.NON_TEXT
   }
 
@@ -29,5 +29,14 @@ class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   override fun getStealthyRanges(root: PsiElement, text: CharSequence) = when (root) {
     is PsiCommentImpl -> StrategyUtils.indentIndexes(text, setOf(' ', '\t', '#'))
     else -> StrategyUtils.emptyLinkedSet()
+  }
+
+  override fun getWhiteSpaceTokens() = TokenSet.create(WHITESPACE, INDENT, EOL)
+
+  override fun getRootsChain(root: PsiElement): List<PsiElement> {
+    return if (root.elementType == COMMENT) {
+      StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root, setOf(COMMENT)).toList()
+    }
+    else super.getRootsChain(root)
   }
 }

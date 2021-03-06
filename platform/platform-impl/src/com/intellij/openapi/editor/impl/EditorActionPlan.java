@@ -44,7 +44,7 @@ class EditorActionPlan implements ActionPlan {
 
   @Override
   public void replace(int begin, int end, String s) {
-    myText = myText.delete(begin, end).insert(begin, s);
+    myText = myText.replace(begin, end, s);
     myReplacements.add(new Replacement(begin, end, s));
     if (myCaretOffset == end) {
       myCaretOffset += s.length() - (end - begin);

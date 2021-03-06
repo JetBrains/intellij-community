@@ -5,11 +5,13 @@ package com.intellij.tasks.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.xmlb.annotations.*;
 import icons.TasksIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,20 +25,20 @@ import java.util.List;
  * @author Dmitry Avdeev
 */
 @Tag("task")
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings("UnusedDeclaration")
 public class LocalTaskImpl extends LocalTask {
 
   @NonNls public static final String DEFAULT_TASK_ID = "Default";
 
   private String myId = "";
-  private String mySummary = "";
-  private String myDescription = null;
+  private @Nls String mySummary = "";
+  private @Nls String myDescription = null;
   private Comment[] myComments = Comment.EMPTY_ARRAY;
   private boolean myClosed = false;
   private Date myCreated;
   private Date myUpdated;
   private TaskType myType = TaskType.OTHER;
-  private String myPresentableName;
+  private @NlsContexts.Label String myPresentableName;
   private String myCustomIcon = null;
 
   private String myProject = null;
@@ -59,7 +61,7 @@ public class LocalTaskImpl extends LocalTask {
   public LocalTaskImpl() {
   }
 
-  public LocalTaskImpl(@NotNull String id, @NotNull String summary) {
+  public LocalTaskImpl(@NotNull String id, @NotNull @Nls String summary) {
     myId = id;
     mySummary = summary;
   }
@@ -158,7 +160,7 @@ public class LocalTaskImpl extends LocalTask {
     myId = id;
   }
 
-  public void setSummary(String summary) {
+  public void setSummary(@Nls String summary) {
     mySummary = summary;
   }
 

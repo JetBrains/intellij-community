@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public interface TestOperationDescriptor extends OperationDescriptor {
+
   @Nullable
   String getSuiteName();
 

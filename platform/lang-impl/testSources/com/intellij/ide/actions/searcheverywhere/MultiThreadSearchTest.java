@@ -30,7 +30,7 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
     Collection<Scenario> scenarios = createMultithreadScenarios();
     SearchResultsCollector collector = new SearchResultsCollector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultiThreadSearcher searcher = new MultiThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
+    SESearcher searcher = new GroupedResultsSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
       ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "tst");
@@ -191,7 +191,7 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
   }
 
   private static SearchEverywhereContributor<Object> createTestContributor(String id, int fixedPriority, String... items) {
-    return new SearchEverywhereContributor<Object>() {
+    return new SearchEverywhereContributor<>() {
       @NotNull
       @Override
       public String getSearchProviderId() {
@@ -262,7 +262,7 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
     }
   }
 
-  private static class SearchResultsCollector implements MultiThreadSearcher.Listener {
+  private static class SearchResultsCollector implements SESearcher.Listener {
 
     private final Map<String, List<String>> myMap = new ConcurrentHashMap<>();
     private final AtomicBoolean myFinished = new AtomicBoolean(false);

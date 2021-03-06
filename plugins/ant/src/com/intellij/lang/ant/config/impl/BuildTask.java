@@ -18,6 +18,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.config.AntBuildTargetBase;
 import com.intellij.lang.ant.dom.AntDomElement;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.xml.DomTarget;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public final class BuildTask {
   public static final BuildTask[] EMPTY_ARRAY = new BuildTask[0];
   private final AntBuildTargetBase myTarget;
-  private final String myName;
+  private final @NlsSafe String myName;
   private final int myOffset;
 
   public BuildTask(final AntBuildTargetBase target, final AntDomElement task) {
@@ -41,7 +42,7 @@ public final class BuildTask {
     }
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

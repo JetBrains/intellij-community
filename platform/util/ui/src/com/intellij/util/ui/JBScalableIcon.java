@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -16,7 +16,7 @@ import static com.intellij.ui.scale.ScaleType.*;
  *
  * @author tav
  */
-public abstract class JBScalableIcon extends UserScaleContextSupport implements ScalableIcon {
+public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScaleContext> implements ScalableIcon {
   private final Scaler myScaler = new Scaler() {
     @Override
     protected double currentScale() {
@@ -27,10 +27,15 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
   private boolean autoUpdateScaleContext = true;
 
   public JBScalableIcon() {
+    super(UserScaleContext.create());
   }
 
   protected JBScalableIcon(@NotNull JBScalableIcon icon) {
     this();
+    updateContextFrom(icon);
+  }
+
+  protected final void updateContextFrom(@NotNull JBScalableIcon icon) {
     updateScaleContext(icon.getScaleContext());
     myScaler.update(icon.myScaler);
     autoUpdateScaleContext = icon.autoUpdateScaleContext;
@@ -47,19 +52,23 @@ public abstract class JBScalableIcon extends UserScaleContextSupport implements 
   /**
    * The pre-scaled state of the icon indicates whether the initial size of the icon
    * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
-   * then there're two approaches to deal with it:
-   * 1) scale its initial size right away and store;
-   * 2) scale its initial size every time it's requested.
-   * The 2nd approach is preferable because of the the following. Scaling of the icon may
+   * then there are two approaches to deal with it:
+   * <ol>
+   * <li>scale its initial size right away and store</li>
+   * <li>scale its initial size every time it's requested</li>
+   * </ol>
+   * <p>
+   * The 2nd approach is preferable because of the following. Scaling of the icon may
    * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
    * factors and then rounding (the size is integer, the scale factors are not) gives more
    * accurate result than rounding and then scaling.
    * <p>
    * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
-   * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
-   * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+   * {@code Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35}
+   * <br/>
+   * {@code Math.round(15 * USR_SCALE * OBJ_SCALE) = 34}
    * <p>
-   * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+   * Thus, {@code JBUI.scale(MyIcon.create(w, h))} is preferable to {@code MyIcon.create(JBUI.scale(w), JBUI.scale(h))}.
    * Here [w, h] is "raw" unscaled size.
    *
    * @param preScaled whether the icon is pre-scaled

@@ -1,15 +1,27 @@
 <html>
 <body>
-Reports the double-checked locking construct. For a
-discussion of double-checked locking and why it is unsafe, see
-<a href = "http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html
-">http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html</a>
+Reports <a href="https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html">double-checked locking</a>.
+Double-checked locking is an (incorrect) way to initialize a field on demand in a thread-safe manner, while avoiding the cost of synchronization.
+Unfortunately it does not work and is not thread-safe. Read the linked article above for an explanation of the problem.
+<p>
+Example of incorrect double checked locking:
+<pre><code>
+  class Foo {
+    private Helper helper = null;
+    public Helper getHelper() {
+      if (helper == null)
+        synchronized(this) {
+          if (helper == null) helper = new Helper();
+        }
+        return helper;
+      }
+    }
+    // other functions and members...
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to ignore double-checked locking on <b>volatile</b> fields. Using
-a <b>volatile</b> field for double-checked locking works correctly on virtual machines which
-implement the Java Memory Model.
-<p>
-
+a <b>volatile</b> field for double-checked locking works correctly on JDK 1.5 and newer.
 </body>
 </html>

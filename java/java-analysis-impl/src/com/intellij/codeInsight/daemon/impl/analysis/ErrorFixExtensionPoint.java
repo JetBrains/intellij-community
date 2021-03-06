@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -20,11 +23,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.codeInsight.daemon.JavaErrorBundle.BUNDLE;
-
-public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<ErrorFixExtensionPoint> ERROR_FIX_EXTENSION_POINT =
-    ExtensionPointName.create("com.intellij.java.error.fix");
+public final class ErrorFixExtensionPoint implements PluginAware {
+  private static final ExtensionPointName<ErrorFixExtensionPoint> ERROR_FIX_EXTENSION_POINT =
+    new ExtensionPointName<>("com.intellij.java.error.fix");
 
   @Attribute("errorCode")
   public String errorCode;
@@ -32,18 +33,21 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  IntentionAction instantiate(PsiElement context) {
+  private transient PluginDescriptor pluginDescriptor;
+
+  private IntentionAction instantiate(PsiElement context) {
     try {
-      return findExtensionClass(implementationClass).asSubclass(IntentionAction.class).getConstructor(PsiElement.class).newInstance(context);
+      return ApplicationManager.getApplication().loadClass(implementationClass, pluginDescriptor)
+        .asSubclass(IntentionAction.class).getConstructor(PsiElement.class).newInstance(context);
     }
     catch (InvocationTargetException e) {
       if(e.getCause() instanceof ProcessCanceledException) {
         throw ((ProcessCanceledException)e.getCause());
       }
-      throw new PluginException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e.getCause(), getPluginId());
+      throw new PluginException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e.getCause(), pluginDescriptor.getPluginId());
     }
-    catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
-      throw new PluginException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e, getPluginId());
+    catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+      throw new PluginException("Error instantiating quick-fix " + implementationClass + " (error code: " + errorCode + ")", e, pluginDescriptor.getPluginId());
     }
   }
 
@@ -51,6 +55,11 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
 
   static {
     ERROR_FIX_EXTENSION_POINT.addChangeListener(() -> ourCodeToFix = null, null);
+  }
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
   }
 
   @NotNull
@@ -66,7 +75,7 @@ public class ErrorFixExtensionPoint extends AbstractExtensionPointBean {
   @Nullable
   public static HighlightInfo registerFixes(@Nullable HighlightInfo info,
                                             @NotNull PsiElement context,
-                                            @NotNull @PropertyKey(resourceBundle = BUNDLE) String code) {
+                                            @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String code) {
     if (info == null) return null;
     List<ErrorFixExtensionPoint> fixes = getCodeToFixMap().get(code);
     for (ErrorFixExtensionPoint fix : fixes) {

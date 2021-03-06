@@ -26,8 +26,8 @@ fun SMTestProxy.calculateAndReturnMagnitude(): TestStateInfo.Magnitude {
 
     when {
       hasTerminated -> setTerminated()
-      hasErrorChildren -> setTestFailed(TestStateInfo.Magnitude.ERROR_INDEX.title, null, true)
-      hasFailedChildren -> setTestFailed(TestStateInfo.Magnitude.FAILED_INDEX.title, null, false)
+      hasErrorChildren -> setTestFailed("", null, true) // No text is provided because we do not want it to be duplicated for each node
+      hasFailedChildren -> setTestFailed("", null, false)
       hasSkippedChildren && !hasPassedChildren -> setTestIgnored(null, null)
       else -> setFinished()
     }

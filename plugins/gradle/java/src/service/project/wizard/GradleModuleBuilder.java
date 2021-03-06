@@ -4,16 +4,18 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Override {@link AbstractGradleModuleBuilder} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+// TODO: See TODOs in AbstractGradleModuleBuilder
 public class GradleModuleBuilder extends AbstractGradleModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    setWizardContext(wizardContext);
     return new ModuleWizardStep[]{new GradleModuleWizardStep(this, wizardContext)};
   }
 }

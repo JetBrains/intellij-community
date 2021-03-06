@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   public T getRepositoryForRoot(@Nullable VirtualFile root) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRoot(root));
   }
@@ -58,7 +58,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   public T getRepositoryForFile(@NotNull VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
@@ -71,7 +71,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   public T getRepositoryForFile(@NotNull FilePath file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
   }
@@ -98,7 +98,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @CalledInBackground
+  @RequiresBackgroundThread
   public void updateRepository(@Nullable VirtualFile root) {
     T repo = getRepositoryForRoot(root);
     if (repo != null) {

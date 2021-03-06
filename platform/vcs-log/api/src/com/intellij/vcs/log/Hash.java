@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ public interface Hash {
    * Returns the String representation of this hash.
    */
   @NotNull
+  @NlsSafe
   String asString();
 
   /**
@@ -29,5 +31,6 @@ public interface Hash {
    * <p>Usually (e.g. it is default for Git) the short hash is 7 symbols long.</p>
    */
   @NotNull
+  @NlsSafe
   String toShortString();
 }

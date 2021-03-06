@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.analysis;
 
@@ -29,8 +29,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +67,7 @@ public class AnalysisScope {
   private Set<VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
+  private boolean myAnalyzeInjectedCode = true;
 
   public AnalysisScope(@NotNull Project project) {
     myProject = project;
@@ -149,6 +150,10 @@ public class AnalysisScope {
     myIncludeTestSource = includeTestSource;
   }
 
+  public void setAnalyzeInjectedCode(boolean analyzeInjectedCode) {
+    myAnalyzeInjectedCode = analyzeInjectedCode;
+  }
+
   @NotNull
   protected PsiElementVisitor createFileSearcher(@NotNull Collection<? super VirtualFile> addTo) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -160,7 +165,7 @@ public class AnalysisScope {
       public void visitFile(@NotNull PsiFile file) {
         if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile != null && !isFilteredOut(virtualFile) && shouldHighlightFile(file)) {
+          if (virtualFile != null && !isFilteredOut(virtualFile)) {
             addTo.add(virtualFile);
           }
         }
@@ -224,8 +229,10 @@ public class AnalysisScope {
       case MODULES:
       case MODULE:
       case CUSTOM:
+        long timeStamp = System.currentTimeMillis();
         accept(createFileSearcher(fileSet));
         fileSet.freeze();
+        LOG.info("Scanning scope took " + (System.currentTimeMillis() - timeStamp) + " ms");
         break;
       case VIRTUAL_FILES:
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -295,9 +302,9 @@ public class AnalysisScope {
       return true;
     }
     if (myScope instanceof LocalSearchScope) {
-      final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
-      final Set<VirtualFile> files = new THashSet<>();
-      for (final PsiElement element : psiElements) {
+      PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+      Set<VirtualFile> files = new HashSet<>();
+      for (PsiElement element : psiElements) {
         VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(element));
         if (file != null && files.add(file)) {
           if (!processor.process(file)) return false;
@@ -342,8 +349,9 @@ public class AnalysisScope {
     return fileOrDir -> {
       final boolean isInScope = ReadAction.compute(() -> {
         if (isFilteredOut(fileOrDir)) return false;
+        if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
         if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
-        return searchScope == null || searchScope.contains(fileOrDir);
+        return true;
       });
       return !isInScope || processor.process(fileOrDir);
     };
@@ -452,7 +460,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     switch (myType) {
       case CUSTOM:
         return myScope.getDisplayName();
@@ -481,7 +489,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  public String getShortenName(){
+  public @Nls String getShortenName(){
     switch (myType) {
       case CUSTOM:
         return myScope.getDisplayName();
@@ -708,6 +716,10 @@ public class AnalysisScope {
 
   public boolean isIncludeTestSource() {
     return myIncludeTestSource;
+  }
+
+  public boolean isAnalyzeInjectedCode() {
+    return myAnalyzeInjectedCode;
   }
 
   public void setFilter(@NotNull GlobalSearchScope filter) {

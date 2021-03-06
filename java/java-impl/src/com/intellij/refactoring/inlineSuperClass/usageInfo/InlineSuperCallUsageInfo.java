@@ -16,17 +16,19 @@
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.inline.ReferencedElementsCollector;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineSuperCallUsageInfo extends FixableUsageInfo {
@@ -77,7 +79,7 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
 
   @Override
   public String getConflictMessage() {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
     final PsiElement element = getElement();
     if (element instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
@@ -92,7 +94,7 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
           }
         }, conflicts);
         if (InlineMethodProcessor.checkBadReturns(superConstructor) && !InlineUtil.allUsagesAreTailCalls(superConstructor)) {
-          conflicts.putValue(superConstructor, CommonRefactoringUtil.capitalize(RefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", "") + " of super constructor"));
+          conflicts.putValue(superConstructor, JavaRefactoringBundle.message("inline.super.no.return.in.super.ctor"));
         }
       }
     }

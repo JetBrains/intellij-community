@@ -16,19 +16,19 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
@@ -40,10 +40,10 @@ public class CompositeElement extends TreeElement {
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper;
+  private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement>
+    myWrapperUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
-  private static final AtomicFieldUpdater<CompositeElement, PsiElement> ourPsiUpdater =
-    AtomicFieldUpdater.forFieldOfType(CompositeElement.class, PsiElement.class);
 
   public CompositeElement(@NotNull IElementType type) {
     super(type);
@@ -101,7 +101,7 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  private static String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
+  private static @NonNls String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
     return "psiFile: " + psiFile +
            "; psiFile.getViewProvider(): " + psiFile.getViewProvider() +
            "; psiFile.isPhysical(): " + psiFile.isPhysical() +
@@ -209,7 +209,7 @@ public class CompositeElement extends TreeElement {
   @Override
   @NotNull
   public String getText() {
-    return StringFactory.createShared(textToCharArray());
+    return new String(textToCharArray());
   }
 
   @NotNull
@@ -690,7 +690,7 @@ public class CompositeElement extends TreeElement {
     if (wrapper != null) return wrapper;
 
     wrapper = createPsiNoLock();
-    return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : Objects.requireNonNull(myWrapper);
+    return myWrapperUpdater.compareAndSet(this, null, wrapper) ? wrapper : Objects.requireNonNull(myWrapper);
   }
 
   @Override
@@ -718,6 +718,43 @@ public class CompositeElement extends TreeElement {
 
   void clearPsi() {
     myWrapper = null;
+  }
+
+  @Override
+  public final void applyInsertOnReparse(@NotNull ASTNode newChild, ASTNode anchor) {
+    TreeElement newTreeElement = (TreeElement) newChild;
+    newTreeElement.rawRemove();
+    if (anchor != null) {
+      TreeElement anchorTreeElement = (TreeElement) anchor;
+      anchorTreeElement.rawInsertAfterMe(newTreeElement);
+    }
+    else {
+      TreeElement firstChildNode = getFirstChildNode();
+      if (firstChildNode != null) {
+        firstChildNode.rawInsertBeforeMe(newTreeElement);
+      }
+      else {
+        rawAddChildren(newTreeElement);
+      }
+    }
+
+    newTreeElement.clearCaches();
+    subtreeChanged();
+  }
+
+  @Override
+  public final void applyDeleteOnReparse(@NotNull ASTNode oldChild) {
+    ((TreeElement) oldChild).rawRemove();
+    subtreeChanged();
+  }
+
+  @Override
+  public final void applyReplaceFileOnReparse(@NotNull PsiFile psiFile, @NotNull FileASTNode newNode) {
+    if (getFirstChildNode() != null) rawRemoveAllChildren();
+    final ASTNode firstChildNode = newNode.getFirstChildNode();
+    if (firstChildNode != null) rawAddChildren((TreeElement)firstChildNode);
+    ((PsiFileImpl) psiFile).calcTreeElement().setCharTable(newNode.getCharTable());
+    subtreeChanged();
   }
 
   public final void rawAddChildren(@NotNull TreeElement first) {

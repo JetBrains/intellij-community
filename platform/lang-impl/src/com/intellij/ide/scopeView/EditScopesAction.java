@@ -5,7 +5,10 @@ package com.intellij.ide.scopeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -22,7 +25,7 @@ public final class EditScopesAction extends AnAction implements DumbAware {
         AbstractProjectViewPane pane = view.getCurrentProjectViewPane();
         if (pane instanceof ScopeViewPane) {
           NamedScopeFilter filter = ((ScopeViewPane)pane).getFilter(pane.getSubId());
-          if (filter != null) configurable.selectNodeInTree(filter.getScope().getName());
+          if (filter != null) configurable.selectNodeInTree(filter.getScope().getScopeId());
         }
       });
     }

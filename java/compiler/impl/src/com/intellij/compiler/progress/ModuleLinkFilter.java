@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ModuleLinkFilter implements Filter {
 
-  private Project myProject;
+  private final Project myProject;
   private static final String TESTS_PREFIX = "tests of "; //NON-NLS
 
   public ModuleLinkFilter(Project project) {
@@ -31,7 +31,7 @@ public class ModuleLinkFilter implements Filter {
     int lineStart = entireLength - line.length();
     return new Result(lineStart + start + 1 + (isTests ? TESTS_PREFIX.length() : 0), lineStart + end, new HyperlinkInfo() {
       @Override
-      public void navigate(Project project) {
+      public void navigate(@NotNull Project project) {
         if (project.isDisposed()) return;
         Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleName);
         if (module == null || module.isDisposed()) return;

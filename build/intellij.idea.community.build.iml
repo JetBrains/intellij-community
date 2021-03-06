@@ -8,6 +8,8 @@
       <excludeFolder url="file://$MODULE_DIR$/dependencies/build" />
       <excludeFolder url="file://$MODULE_DIR$/jdk" />
       <excludeFolder url="file://$MODULE_DIR$/restApiDocGenerator/node_modules" />
+      <excludeFolder url="file://$MODULE_DIR$/protobuf/cache" />
+      <excludeFolder url="file://$MODULE_DIR$/protobuf/bin" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

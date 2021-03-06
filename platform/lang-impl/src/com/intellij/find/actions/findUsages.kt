@@ -1,20 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
 
 import com.intellij.find.FindSettings
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.UsageHandler
-import com.intellij.find.usages.UsageOptions
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
-import com.intellij.find.usages.impl.buildQuery
+import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
 import com.intellij.psi.impl.search.runSearch
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewContentManager
@@ -22,8 +22,7 @@ import com.intellij.usages.UsageSearcher
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.UsageViewPresentation
 import org.jetbrains.annotations.ApiStatus
-
-internal val LOG: Logger = Logger.getInstance("#com.intellij.find.actions")
+import org.jetbrains.annotations.Nls
 
 fun findUsages(showDialog: Boolean, project: Project, selectedScope: SearchScope, target: SearchTarget) {
   findUsages(showDialog, project, target, target.usageHandler, selectedScope)
@@ -49,7 +48,7 @@ private fun <O> findUsages(showDialog: Boolean,
                            allOptions: AllSearchOptions<O>) {
   if (showDialog) {
     val canReuseTab = canReuseTab(project)
-    val dialog = UsageOptionsDialog(project, target.displayString, handler, allOptions, canReuseTab)
+    val dialog = UsageOptionsDialog(project, target.displayString, handler, allOptions, target.showScopeChooser(), canReuseTab)
     if (!dialog.showAndGet()) {
       // cancelled
       return
@@ -62,7 +61,7 @@ private fun <O> findUsages(showDialog: Boolean,
 }
 
 internal fun <O> findUsages(project: Project, target: SearchTarget, handler: UsageHandler<O>, allOptions: AllSearchOptions<O>) {
-  val query = buildQuery(project, target, handler, allOptions)
+  val query = buildUsageViewQuery(project, target, handler, allOptions)
   val factory = Factory {
     UsageSearcher {
       runSearch(project, query, it)
@@ -95,8 +94,13 @@ private fun canReuseTab(project: Project): Boolean {
   }
 }
 
-internal val SearchTarget.displayString: String? get() = presentation.presentableText
+internal val SearchTarget.displayString: String get() = presentation.presentableText
 
+@Nls(capitalization = Nls.Capitalization.Title)
 internal fun <O> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {
   return getSearchString(allOptions.options, allOptions.customOptions)
+}
+
+internal fun SearchTarget.showScopeChooser(): Boolean {
+  return maximalSearchScope !is LocalSearchScope
 }

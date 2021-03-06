@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -23,8 +24,9 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +36,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * The base class for a version control system integrated with IDEA.
+ * The base class for a version control system.
  *
  * @see ProjectLevelVcsManager
  */
@@ -50,9 +52,7 @@ public abstract class AbstractVcs extends StartedActivated {
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
 
-  public AbstractVcs(@NotNull Project project, final String name) {
-    super(project);
-
+  public AbstractVcs(@NotNull Project project, @NonNls String name) {
     myProject = project;
     myName = name;
     myKey = new VcsKey(myName);
@@ -64,7 +64,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @Override
-  protected void shutdown() throws VcsException {
+  protected void shutdown() {
   }
 
   @Override
@@ -84,8 +84,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * Returns the name of the VCS as it should be displayed in the UI.
    * @see #getShortName()
    */
+  @Nls
   @NotNull
-  @NonNls
   public abstract String getDisplayName();
 
   /**
@@ -93,12 +93,55 @@ public abstract class AbstractVcs extends StartedActivated {
    * (e.g. it can be "SVN" for Subversion or "Hg" for Mercurial).<br/><br/>
    * By default returns the same as {@link #getDisplayName()}.
    */
+  @Nls
   @NotNull
   public String getShortName() {
     return getDisplayName();
   }
 
-  public abstract Configurable getConfigurable();
+  /**
+   * Returns the short or abbreviated name of this VCS, with mnemonic, which name can be used in menus and action names.
+   * (e.g. it can be "_SVN" for Subversion or "_Hg" for Mercurial).<br/><br/>
+   * Returns generic "VC_S" by default.
+   */
+  @Nls
+  @NotNull
+  public String getShortNameWithMnemonic() {
+    return VcsBundle.message("vcs.generic.name.with.mnemonic");
+  }
+
+  /**
+   * Allows to hide 'VCS' action group in 'Main Menu'.
+   * Takes effect for projects that have configured mappings for this VCS only.
+   *
+   * @return true if 'VCS' group should be hidden.
+   */
+  public boolean isWithCustomMenu() {
+    return false;
+  }
+
+  /**
+   * Allows to hide 'Local Changes' toolwindow tab, as well as disable changelists.
+   * Takes effect for projects that have configured mappings for this VCS only.
+   *
+   * @return true if 'Local Changes' tab should be hidden.
+   */
+  public boolean isWithCustomLocalChanges() {
+    return false;
+  }
+
+  /**
+   * @return Custom value for {@link com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction} action text.
+   */
+  @NlsActions.ActionText
+  @Nullable
+  public String getCompareWithTheSameVersionActionName() {
+    return null;
+  }
+
+  public Configurable getConfigurable() {
+    return null;
+  }
 
   @Nullable
   public TransactionProvider getTransactionProvider() {
@@ -214,9 +257,9 @@ public abstract class AbstractVcs extends StartedActivated {
    * @return true if the corresponding file exists in the repository, false otherwise.
    */
   public boolean fileExistsInVcs(FilePath path) {
-    final VirtualFile virtualFile = path.getVirtualFile();
+    VirtualFile virtualFile = path.getVirtualFile();
     if (virtualFile != null) {
-      final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+      FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
       return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED;
     }
     return true;
@@ -226,7 +269,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
    * By default it sets up a single mapping {@code <Project> -> selected VCS}.
    */
-  @CalledInAwt
+  @RequiresEdt
   public void enableIntegration() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
@@ -243,7 +286,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
    * (in particular, the VCS can show a confirmation to the user by itself)
    */
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
     return ThreeState.UNSURE;
@@ -255,13 +298,11 @@ public abstract class AbstractVcs extends StartedActivated {
 
   public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull FilePath path) {
     VirtualFile file = path.getVirtualFile();
-
     return file == null || fileInVcsByFileStatus(project, file);
   }
 
   public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull VirtualFile file) {
     FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
-
     return status != FileStatus.UNKNOWN && status != FileStatus.ADDED && status != FileStatus.IGNORED;
   }
 
@@ -323,23 +364,22 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
-  @Nullable
-  public CommittedChangesProvider getCommittedChangesProvider() {
+  public @Nullable CommittedChangesProvider<? extends CommittedChangeList, ?> getCommittedChangesProvider() {
     return null;
   }
 
   @Nullable
-  public final CachingCommittedChangesProvider getCachingCommittedChangesProvider() {
-    CommittedChangesProvider provider = getCommittedChangesProvider();
+  public final CachingCommittedChangesProvider<? extends CommittedChangeList, ?> getCachingCommittedChangesProvider() {
+    CommittedChangesProvider<? extends CommittedChangeList, ?> provider = getCommittedChangesProvider();
     if (provider instanceof CachingCommittedChangesProvider) {
-      return (CachingCommittedChangesProvider)provider;
+      return (CachingCommittedChangesProvider<? extends CommittedChangeList, ?>)provider;
     }
     return null;
   }
 
   /**
    * For some version controls (like Git) the revision parsing is dependent
-   * on the the specific repository instance since the the revision number
+   * on the specific repository instance since the the revision number
    * returned from this method is later used for comparison information.
    * By default, this method invokes {@link #parseRevisionNumber(String)}.
    * The client code should invoke this method, if it expect ordering information
@@ -362,6 +402,7 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * @return null if does not support revision parsing
    */
+  @NonNls
   @Nullable
   public String getRevisionPattern() {
     return null;
@@ -469,7 +510,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return myProject;
   }
 
-  protected static VcsKey createKey(final String name) {
+  protected static VcsKey createKey(@NonNls String name) {
     return new VcsKey(name);
   }
 
@@ -550,8 +591,9 @@ public abstract class AbstractVcs extends StartedActivated {
   @Nullable
   public CommittedChangeList loadRevisions(VirtualFile vf, @NotNull VcsRevisionNumber number) {
     return VcsSynchronousProgressWrapper.compute(() -> {
-      final Pair<CommittedChangeList, FilePath> pair = getCommittedChangesProvider().getOneList(vf, number);
-      return pair != null ? pair.getFirst() : null;
+      CommittedChangesProvider<? extends CommittedChangeList, ?> provider = getCommittedChangesProvider();
+      Pair<? extends CommittedChangeList, FilePath> pair = provider == null ? null : provider.getOneList(vf, number);
+      return pair == null ? null : pair.getFirst();
     }, getProject(), VcsBundle.message("title.load.revision.contents"));
   }
 

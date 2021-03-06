@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+// this class is used in bootstrap - please use only JDK API
 
 /**
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
@@ -97,17 +99,15 @@ public final class JavaVersion implements Comparable<JavaVersion> {
   /**
    * @return feature version string, e.g. <b>1.8</b> or <b>11</b>
    */
-  @NotNull
-  public String toFeatureString() {
-    return formatVersionTo( true, true);
+  public @NotNull String toFeatureString() {
+    return formatVersionTo(true, true);
   }
 
   /**
    * @return feature, minor and update components of the version string, e.g.
    * <b>1.8.0_242</b> or <b>11.0.5</b>
    */
-  @NotNull
-  public String toFeatureMinorUpdateString() {
+  public @NotNull String toFeatureMinorUpdateString() {
     return formatVersionTo(false, true);
   }
 
@@ -116,12 +116,8 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     return formatVersionTo(false, false);
   }
 
-  @NotNull
-  @SuppressWarnings("HardCodedStringLiteral")
-  private String formatVersionTo(boolean upToFeature,
-                                 boolean upToUpdate) {
+  private String formatVersionTo(boolean upToFeature, boolean upToUpdate) {
     StringBuilder sb = new StringBuilder();
-
     if (feature > 8) {
       sb.append(feature);
       if (!upToFeature) {
@@ -187,7 +183,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
   /**
    * Attempts to use Runtime.version() method available since Java 9.
    */
-  @SuppressWarnings("JavaReflectionMemberAccess")
+  @ReviseWhenPortedToJDK("9")
   private static @Nullable JavaVersion rtVersion() {
     try {
       Object version = Runtime.class.getMethod("version").invoke(null);
@@ -231,8 +227,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     }
 
     // partitioning
-    List<String> separators = new ArrayList<>();
-    List<String> numbers = new ArrayList<>();
+    List<String> numbers = new ArrayList<>(), separators = new ArrayList<>();
     int length = str.length(), p = 0;
     boolean number = false;
     while (p < length) {
@@ -259,9 +254,9 @@ public final class JavaVersion implements Comparable<JavaVersion> {
           }
           if (p < separators.size()) {
             String s = separators.get(p);
-            if (StringUtil.startsWithChar(s, '-')) {
+            if (s != null && s.length() != 0 && s.charAt(0) == '-') {
               ea = startsWithWord(s, "-ea") || startsWithWord(s, "-internal");
-              if (p < numbers.size() && StringUtil.endsWithChar(s, '+')) {
+              if (p < numbers.size() && s.charAt(s.length() - 1) == '+') {
                 build = Integer.parseInt(numbers.get(p));
               }
               p++;
@@ -282,7 +277,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
                 update = Integer.parseInt(numbers.get(3));
                 if (separators.size() > 4) {
                   String s = separators.get(4);
-                  if (StringUtil.startsWithChar(s, '-')) {
+                  if (s != null && s.length() != 0 && s.charAt(0) == '-') {
                     ea = startsWithWord(s, "-ea") || startsWithWord(s, "-internal");
                   }
                   p = 4;

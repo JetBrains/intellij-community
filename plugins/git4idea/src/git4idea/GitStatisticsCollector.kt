@@ -1,34 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.io.URLUtil
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.config.GitVcsSettings
+import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
+import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
-import java.util.*
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "git.configuration"
-  override fun getVersion(): Int = 2
+  override fun getVersion(): Int = 4
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = HashSet<MetricEvent>()
 
     val repositoryManager = GitUtil.getRepositoryManager(project)
     val repositories = repositoryManager.repositories
-
-    val appSettings = GitVcsApplicationSettings.getInstance()
-    val defaultAppSettings = GitVcsApplicationSettings()
 
     val settings = GitVcsSettings.getInstance(project)
     val defaultSettings = GitVcsSettings()
@@ -39,9 +41,14 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, "push.autoupdate")
     addBoolIfDiffers(set, settings, defaultSettings, { it.shouldUpdateAllRootsIfPushRejected() }, "push.update.all.roots")
-    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isAutoCommitOnCherryPick }, "cherrypick.autocommit")
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, "warn.about.crlf")
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, "warn.about.detached")
+
+    val appSettings = GitVcsApplicationSettings.getInstance()
+    val defaultAppSettings = GitVcsApplicationSettings()
+
+    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isAutoCommitOnCherryPick }, "cherrypick.autocommit")
+    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, "staging.area.enabled")
 
     val version = GitVcs.getInstance(project).version
     set.add(newMetric("executable", FeatureUsageData().addData("version", version.presentation).addData("type", version.type.name)))
@@ -54,7 +61,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       metric.data.addData("remote_branches", branches.remoteBranches.size)
       metric.data.addData("remotes", repository.remotes.size)
 
-      val remoteTypes = HashMultiset.create<String>(repository.remotes.mapNotNull { getRemoteServerType(it) })
+      val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
         metric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
@@ -62,9 +69,23 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       set.add(metric)
     }
 
+    addCommitTemplateMetrics(project, repositories, set)
+
     addGitLogMetrics(project, set)
 
     return set
+  }
+
+  private fun addCommitTemplateMetrics(project: Project, repositories: List<GitRepository>, set: java.util.HashSet<MetricEvent>) {
+    if (repositories.isEmpty()) return
+
+    val templatesCount = project.service<GitCommitTemplateTracker>().templatesCount()
+    if (templatesCount == 0) return
+
+    val metric = newMetric("commit_template")
+    metric.data.addData("count", templatesCount)
+    metric.data.addData("multiple_root", repositories.size > 1)
+    set.add(metric)
   }
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
@@ -72,14 +93,16 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     val ui = projectLog.mainLogUi ?: return
 
     addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, "showGitBranchesInLog")
+    addPropertyMetricIfDiffers(metrics, ui, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, "updateBranchesFilterInLogOnSelection")
   }
 
   private fun addPropertyMetricIfDiffers(metrics: MutableSet<MetricEvent>,
                                          ui: VcsLogUiImpl,
-                                         property: VcsLogProjectTabsProperties.CustomBooleanTabProperty,
+                                         property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
                                          eventId: String) {
+    val defaultValue = (property as? VcsLogProjectTabsProperties.CustomBooleanTabProperty)?.defaultValue(ui.id)
+                       ?: (property as? VcsLogApplicationSettings.CustomBooleanProperty)?.defaultValue() ?: return
     val properties = ui.properties
-    val defaultValue = property.defaultValue(ui.id)
     val value = if (properties.exists(property)) properties[property] else defaultValue
 
     if (!Comparing.equal(value, defaultValue)) {

@@ -10,5 +10,5 @@ REGEXP_FILE
                 PsiElement(CARET)('^')
               RegExpQuantifierImpl: <*>
                 PsiElement(STAR)('*')
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:')' expected
           <empty list>

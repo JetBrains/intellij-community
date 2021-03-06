@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -85,6 +86,7 @@ public final class HgChange {
     return Objects.hash(beforeFile, afterFile, status);
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("HgChange#%s %s => %s", status, beforeFile, afterFile);

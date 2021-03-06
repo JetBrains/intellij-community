@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
@@ -18,6 +19,8 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
@@ -35,7 +38,8 @@ import java.util.Optional;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
-public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<GotoActionModel.MatchedValue> {
+public class ActionSearchEverywhereContributor implements WeightedSearchEverywhereContributor<GotoActionModel.MatchedValue>,
+                                                          LightEditCompatible {
 
   private static final Logger LOG = Logger.getInstance(ActionSearchEverywhereContributor.class);
 
@@ -62,10 +66,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @Override
   public String getAdvertisement() {
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
-    String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
-    return "Press " + altEnter + " to assign a shortcut";
+    @NlsSafe String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);
+    return IdeBundle.message("press.0.to.assign.a.shortcut", altEnter);
   }
 
+  @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
     return IdeBundle.message("checkbox.disabled.included");
   }
@@ -81,9 +86,10 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
-  public void fetchElements(@NotNull String pattern,
-                            @NotNull ProgressIndicator progressIndicator,
-                            @NotNull Processor<? super GotoActionModel.MatchedValue> consumer) {
+  public void fetchWeightedElements(@NotNull String pattern,
+                                    @NotNull ProgressIndicator progressIndicator,
+                                    @NotNull Processor<? super FoundItemDescriptor<GotoActionModel.MatchedValue>> consumer) {
+
     if (StringUtil.isEmptyOrSpaces(pattern)) {
       return;
     }
@@ -102,7 +108,8 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         return true;
       }
 
-      return consumer.process(element);
+      FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
+      return consumer.process(descriptor);
     });
   }
 
@@ -174,6 +181,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
       final BooleanOptionDescription option = (BooleanOptionDescription)selected;
       if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
         myModel.clearActions();           // release references to plugin actions so that the plugin can be unloaded successfully
+        myProvider.clearIntentions();
       }
       option.setOptionState(!option.isOptionEnabled());
       if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
@@ -182,7 +190,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
       return false;
     }
 
-    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get());
+    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers);
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper)selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
@@ -226,6 +234,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         initEvent.getProject(),
         initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
+    }
+
+    @Override
+    public @NotNull SearchEverywhereTabDescriptor getTab() {
+      return SearchEverywhereTabDescriptor.IDE;
     }
   }
 }

@@ -2,10 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.SearchableOptionContributor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -64,6 +61,7 @@ public interface SearchableConfigurable extends Configurable {
      *             (a provider usually does not instantiate a configurable and related classes)
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     default boolean isVisible() {
       return true;
     }

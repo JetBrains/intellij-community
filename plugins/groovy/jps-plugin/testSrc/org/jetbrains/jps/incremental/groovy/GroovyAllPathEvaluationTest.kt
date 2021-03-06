@@ -42,11 +42,19 @@ class GroovyAllPathEvaluationTest {
                                               "/lib/groovy-all-2.4.17.jar"))
     assertEquals("/lib/groovy-all-2.4.17.jar",
                  evalPathForParentClassloader("/lib/groovy-all-2.4.17.jar",
-                                              "/lib/groovy-jps-plugin.jar",
-                                              "/lib/groovy-rt-constants.jar",
-                                              "/lib/groovy_rt.jar"))
+                                              "/lib/groovy-jps.jar",
+                                              "/lib/groovy-constants-rt.jar",
+                                              "/lib/groovy-rt.jar"))
+  }
+
+  @Test
+  fun `groovy jar is OK since 2_5 because it does not need jars from other artifacts to compile`() {
+    assertEquals("/lib/groovy-2.5.11.jar", evalPathForParentClassloader(
+      "/lib/groovy-2.5.11.jar",
+      "/lib/groovy-test-2.5.11.jar"
+    ))
   }
 
   private fun evalPathForParentClassloader(vararg classpath: String) =
-    InProcessGroovyc.evaluatePathToGroovyAllForParentClassloader(classpath.toList())
+    InProcessGroovyc.evaluatePathToGroovyJarForParentClassloader(classpath.toList())
 }

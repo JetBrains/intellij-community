@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.options.Configurable;
@@ -20,10 +20,10 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.field;
 import static org.junit.Assert.assertNotNull;
 
-public class IdeSettingsDialogFixture extends IdeaDialogFixture<SettingsDialog> {
+public final class IdeSettingsDialogFixture extends IdeaDialogFixture<SettingsDialog> {
   @NotNull
   public static IdeSettingsDialogFixture find(@NotNull Robot robot) {
-    return new IdeSettingsDialogFixture(robot, find(robot, SettingsDialog.class, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    return new IdeSettingsDialogFixture(robot, find(robot, SettingsDialog.class, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         String expectedTitle = SystemInfo.isMac ? "Preferences" : "Settings";

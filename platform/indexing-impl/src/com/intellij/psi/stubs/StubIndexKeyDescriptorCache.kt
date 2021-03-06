@@ -2,20 +2,18 @@
 package com.intellij.psi.stubs
 
 import com.intellij.util.io.KeyDescriptor
-import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.Hash
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 @ApiStatus.Internal
 object StubIndexKeyDescriptorCache {
-  private val cache: MutableMap<StubIndexKey<*, *>, Pair<TObjectHashingStrategy<*>, KeyDescriptor<*>>>
+  private val cache: MutableMap<StubIndexKey<*, *>, Pair<Hash.Strategy<*>, KeyDescriptor<*>>>
     = ConcurrentHashMap()
 
   @Suppress("UNCHECKED_CAST")
-  fun <K> getKeyHashingStrategy(indexKey: StubIndexKey<K, *>): TObjectHashingStrategy<K> {
-    return getOrCache(indexKey).first as TObjectHashingStrategy<K>
-  }
+  fun <K> getKeyHashingStrategy(indexKey: StubIndexKey<K, *>) = getOrCache(indexKey).first as Hash.Strategy<K>
 
   @Suppress("UNCHECKED_CAST")
   fun <K> getKeyDescriptor(indexKey: StubIndexKey<K, *>): KeyDescriptor<K> {
@@ -26,7 +24,7 @@ object StubIndexKeyDescriptorCache {
     cache.clear()
   }
 
-  private fun <K> getOrCache(indexKey: StubIndexKey<K, *>): Pair<TObjectHashingStrategy<*>, KeyDescriptor<*>> {
+  private fun <K> getOrCache(indexKey: StubIndexKey<K, *>): Pair<Hash.Strategy<*>, KeyDescriptor<*>> {
     return cache.computeIfAbsent(indexKey) {
       val descriptor = indexKey.findExtension().keyDescriptor
       return@computeIfAbsent Pair(StubKeyHashingStrategy(descriptor), descriptor)
@@ -39,8 +37,8 @@ object StubIndexKeyDescriptorCache {
   }
 }
 
-private class StubKeyHashingStrategy<K>(private val descriptor: KeyDescriptor<K>): TObjectHashingStrategy<K> {
-  override fun equals(o1: K, o2: K): Boolean = descriptor.isEqual(o1, o2)
+private class StubKeyHashingStrategy<K>(private val descriptor: KeyDescriptor<K>): Hash.Strategy<K> {
+  override fun equals(o1: K, o2: K) = o1 == o2 || (o1 != null && o2 != null && descriptor.isEqual(o1, o2))
 
-  override fun computeHashCode(`object`: K): Int = descriptor.getHashCode(`object`)
+  override fun hashCode(o: K) = if (o == null) 0 else descriptor.getHashCode(o)
 }

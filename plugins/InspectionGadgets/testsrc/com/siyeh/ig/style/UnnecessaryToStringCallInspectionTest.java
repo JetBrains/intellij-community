@@ -10,10 +10,16 @@ public class UnnecessaryToStringCallInspectionTest extends LightJavaInspectionTe
     doTest();
   }
 
+  public void testUnnecessaryToStringNotNullOnly() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryToStringCallInspection();
+    UnnecessaryToStringCallInspection inspection = new UnnecessaryToStringCallInspection();
+    inspection.notNullQualifierOnly = getTestName(false).contains("NotNullOnly");
+    return inspection;
   }
 
   @Override

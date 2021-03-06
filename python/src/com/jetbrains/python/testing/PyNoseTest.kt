@@ -16,8 +16,8 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 class PyNoseTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
-    PyTestSharedForm.create(configuration, PyTestSharedForm.CustomOption(
-      PyNoseTestConfiguration::regexPattern.name, PyRunTargetVariant.PATH)))
+    PyTestSharedForm.create(configuration, PyTestCustomOption(
+      PyNoseTestConfiguration::regexPattern, PyRunTargetVariant.PATH)))
 
 class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyNoseTestConfiguration>(configuration, environment) {
@@ -28,7 +28,7 @@ class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, env
 class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
   PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST)),
   PyTestConfigurationWithCustomSymbol {
-  @ConfigField
+  @ConfigField("runcfg.nosetests.config.regexPattern")
   var regexPattern: String = ""
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =

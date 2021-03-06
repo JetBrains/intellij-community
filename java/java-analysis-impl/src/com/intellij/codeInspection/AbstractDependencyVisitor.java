@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
@@ -365,6 +366,7 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
     if (signature != null) new SignatureReader(signature).acceptType(mySignatureVisitor);
   }
 
+  @NlsSafe
   public String getCurrentClassName() {
     return myCurrentClassName;
   }

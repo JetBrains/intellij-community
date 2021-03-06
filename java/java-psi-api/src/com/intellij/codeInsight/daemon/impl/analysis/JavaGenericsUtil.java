@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
-public class JavaGenericsUtil {
+public final class JavaGenericsUtil {
   public static boolean isReifiableType(PsiType type) {
     if (type instanceof PsiArrayType) {
       return isReifiableType(((PsiArrayType)type).getComponentType());
@@ -46,7 +46,6 @@ public class JavaGenericsUtil {
         return true;
       }
 
-      assert parameters.length == 0;
       final PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
       final PsiClass aClass = resolved.getElement();
       if (aClass instanceof PsiTypeParameter) {
@@ -256,6 +255,11 @@ public class JavaGenericsUtil {
     return false;
   }
 
+  /**
+   * @param expression expression used as for-each loop {@linkplain PsiForeachStatement#getIteratedValue() iterated value}.
+   * @return type of elements; the for-each loop {@linkplain PsiForeachStatement#getIterationParameter() iteration parameter} 
+   * must be assignable from this type. Returns null if the supplied expression type cannot be used as for-each loop iterated value.  
+   */
   @Nullable
   public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     return getCollectionItemType(expression.getType(), expression.getResolveScope());

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,36 +36,36 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
-    super(IdeBundle.messagePointer("remove.byte.order.mark"));
+    super(IdeBundle.messagePointer("remove.BOM"));
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    String fromWhere = computeFromWhere(files);
+    boolean enabled = fromWhere != null;
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
+    e.getPresentation().setDescription(IdeBundle.messagePointer("remove.byte.order.mark.from", fromWhere));
+  }
+
+  private static String computeFromWhere(VirtualFile[] files) {
     if (files == null || files.length == 0) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+      return null;
     }
 
-    boolean enabled = false;
-    String fromWhere = files[0].getName();
+    String fromWhere = null;
     for (VirtualFile file : files) {
       if (file.isDirectory()) {  // Accurate calculation is very costly especially in presence of excluded directories!
-        enabled = true;
-        fromWhere = "all files in " + file.getName() + " (recursively)" + (files.length == 1 ? "" : " and others");
+        fromWhere = "all files in '" + file.getName() + "' directory (recursively)" + (files.length == 1 ? "" : " and others");
         break;
       }
       else if (file.getBOM() != null) {
-        enabled = true;
         fromWhere = file.getName() + (files.length == 1 ? "" : " and others");
         break;
       }
     }
-
-    e.getPresentation().setEnabled(enabled);
-    e.getPresentation().setVisible(enabled || ActionPlaces.isMainMenuOrActionSearch(e.getPlace()));
-    String finalFromWhere = fromWhere;
-    e.getPresentation().setDescription(IdeBundle.messagePointer("remove.byte.order.mark.from", finalFromWhere));
+    return fromWhere;
   }
 
   @Override
@@ -76,7 +77,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     List<VirtualFile> filesToProcess = getFilesWithBom(files);
     if (filesToProcess.isEmpty()) return;
     List<VirtualFile> filesUnableToProcess = new ArrayList<>();
-    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.byte.order.mark"), true, () -> false) {
+    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.BOM"), true, () -> false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
@@ -84,7 +85,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           ProgressManager.checkCanceled();
           VirtualFile virtualFile = filesToProcess.get(i);
           indicator.setFraction(i*1.0/filesToProcess.size());
-          indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPath(), 40));
+          indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPresentableUrl(), 40));
           byte[] bom = virtualFile.getBOM();
           if (virtualFile instanceof NewVirtualFile && bom != null) {
             if (isBOMMandatory(virtualFile) ) {
@@ -97,8 +98,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
         }
 
         if (!filesUnableToProcess.isEmpty()) {
-          String title = IdeBundle.message("notification.title.was.unable.to.remove.bom.in", filesUnableToProcess.size(),
-                                           StringUtil.pluralize("file", filesUnableToProcess.size()));
+          String title = IdeBundle.message("notification.title.was.unable.to.remove.bom.in", filesUnableToProcess.size());
           String msg = IdeBundle.message("notification.content.mandatory.bom.br", filesUnableToProcess.size(),
                                          StringUtil.join(filesUnableToProcess, VirtualFile::getName, "<br/>    "));
           Notifications.Bus.notify(new Notification(
@@ -118,8 +118,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     NewVirtualFile file = (NewVirtualFile)virtualFile;
     try {
       byte[] bytes = file.contentsToByteArray();
-      byte[] contentWithStrippedBom = new byte[bytes.length - bom.length];
-      System.arraycopy(bytes, bom.length, contentWithStrippedBom, 0, contentWithStrippedBom.length);
+      byte[] contentWithStrippedBom = Arrays.copyOfRange(bytes, bom.length, bytes.length);
       WriteAction.runAndWait(() -> file.setBinaryContent(contentWithStrippedBom));
     }
     catch (IOException ex) {
@@ -138,20 +137,16 @@ public class RemoveBomAction extends AnAction implements DumbAware {
   private static List<VirtualFile> getFilesWithBom(VirtualFile @NotNull [] roots) {
     List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile root : roots) {
-      getFilesWithBom(root, result);
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (!file.isDirectory() && file.getBOM() != null) {
+            result.add(file);
+          }
+          return true;
+        }
+      });
     }
     return result;
-  }
-
-  private static void getFilesWithBom(@NotNull VirtualFile root, @NotNull final List<? super VirtualFile> result) {
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory() && file.getBOM() != null) {
-          result.add(file);
-        }
-        return true;
-      }
-    });
   }
 }

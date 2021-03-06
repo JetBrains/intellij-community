@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ModuleChooserUtil")
 
 package org.jetbrains.plugins.groovy.util
@@ -55,8 +55,6 @@ private fun createSelectModulePopupStep(project: Project, modules: List<Module>,
 
   return step
 }
-
-fun formatModuleVersion(module: Module, version: String): String = "${module.name} (${version})"
 
 fun filterGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): List<Module> {
   return modules.filter(isGroovyCompatibleModule(condition.toPredicate()))

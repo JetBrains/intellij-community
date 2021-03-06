@@ -6,22 +6,22 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.PathUtil;
-import java.io.File;
-import java.util.List;
-import java.util.Objects;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.io.File;
+import java.util.List;
+import java.util.Objects;
 
 public class FirefoxSettingsConfigurable implements Configurable {
   private static final FileChooserDescriptor PROFILES_INI_CHOOSER_DESCRIPTOR = createProfilesIniChooserDescriptor();
@@ -31,8 +31,8 @@ public class FirefoxSettingsConfigurable implements Configurable {
   private TextFieldWithBrowseButton myProfilesIniPathField;
   private final FirefoxSettings mySettings;
   private String myLastProfilesIniPath;
-  private String myDefaultProfilesIniPath;
-  private String defaultProfile;
+  private @NlsSafe String myDefaultProfilesIniPath;
+  private @NlsSafe String defaultProfile;
 
   public FirefoxSettingsConfigurable(FirefoxSettings settings) {
     mySettings = settings;
@@ -89,7 +89,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
     myDefaultProfilesIniPath = defaultFile != null ? defaultFile.getAbsolutePath() : "";
 
     String path = mySettings.getProfilesIniPath();
-    myProfilesIniPathField.setText(path != null ? FileUtilRt.toSystemDependentName(path) : myDefaultProfilesIniPath);
+    myProfilesIniPathField.setText(path != null ? FileUtil.toSystemDependentName(path) : myDefaultProfilesIniPath);
     updateProfilesList();
 
     String profile = mySettings.getProfile();

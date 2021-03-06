@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypesProvider;
@@ -10,9 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,25 +20,16 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author peter
  */
-class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> {
+final class MethodReturnTypeProvider {
   protected static final ElementPattern<PsiElement> IN_METHOD_RETURN_TYPE =
     psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMethod.class)
       .andNot(JavaKeywordCompletion.AFTER_DOT);
 
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull final CompletionResultSet result) {
-    addProbableReturnTypes(parameters, result);
-
-  }
-
-  static void addProbableReturnTypes(@NotNull CompletionParameters parameters, final Consumer<? super LookupElement> consumer) {
-    final PsiElement position = parameters.getPosition();
+  static void addProbableReturnTypes(@NotNull PsiElement position, Consumer<? super LookupElement> consumer) {
     PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class);
     assert method != null;
 
-    final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<PsiType>() {
+    final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<>() {
       private final Set<PsiType> myProcessed = new HashSet<>();
 
       @Override

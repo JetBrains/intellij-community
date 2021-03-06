@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.icons.AllIcons
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -28,6 +30,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     offset: Int
   ) {
     val project = hostFile.project
+    if (LightEdit.owns(project)) return
     val refactoringProvider = SuggestedRefactoringProviderImpl.getInstance(project)
     var state = refactoringProvider.state
     if (state == null) return
@@ -94,11 +97,11 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     // we don't add into it if it's empty to keep the color of the bulb
     val collectionToAdd = intentions.errorFixesToShow.takeIf { it.isNotEmpty() }
                           ?: intentions.inspectionFixesToShow
-    collectionToAdd.add(0, HighlightInfo.IntentionActionDescriptor(intention, icon))
+    collectionToAdd.add(0, HighlightInfo.IntentionActionDescriptor(intention, null, null, icon, null, null, null))
   }
 
   private class MyIntention(
-    private val text: String,
+    @IntentionName private val text: String,
     private val showReviewBalloon: Boolean
   ) : IntentionAction, PriorityAction {
     override fun getPriority() = PriorityAction.Priority.TOP

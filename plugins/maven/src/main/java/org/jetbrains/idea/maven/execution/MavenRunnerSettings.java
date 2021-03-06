@@ -1,35 +1,21 @@
-/* ==========================================================================
- * Copyright 2006 Mevenide Team
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- * =========================================================================
- */
-
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
-import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MavenRunnerSettings implements Cloneable {
+  public MavenRunnerSettings() {}
 
   @NonNls public static final String USE_INTERNAL_JAVA = ExternalSystemJdkUtil.USE_INTERNAL_JAVA;
   @NonNls public static final String USE_PROJECT_JDK = ExternalSystemJdkUtil.USE_PROJECT_JDK;
@@ -45,7 +31,7 @@ public class MavenRunnerSettings implements Cloneable {
   private Map<String, String> environmentProperties = new HashMap<>();
   private boolean passParentEnv = true;
 
-  private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
   public boolean isDelegateBuildToMaven() {
     return delegateBuildToMaven;
@@ -64,14 +50,16 @@ public class MavenRunnerSettings implements Cloneable {
   }
 
   @NotNull
+  @NlsSafe
   public String getJreName() {
     return jreName;
   }
 
+  /**
+   * @param jreName null means set default value
+   */
   public void setJreName(@Nullable String jreName) {
-    if (jreName != null) {
-      this.jreName = jreName;
-    }
+    this.jreName = Objects.requireNonNullElse(jreName, USE_PROJECT_JDK);
   }
 
   @NotNull
@@ -123,8 +111,16 @@ public class MavenRunnerSettings implements Cloneable {
     this.passParentEnv = passParentEnv;
   }
 
+  /**
+   * @deprecated use #addListener(Listener, Disposable)
+   */
+  @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);
+  }
+
+  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
+    myListeners.add(l, disposable);
   }
 
   public void removeListener(Listener l) {
@@ -176,7 +172,7 @@ public class MavenRunnerSettings implements Cloneable {
     try {
       final MavenRunnerSettings clone = (MavenRunnerSettings)super.clone();
       clone.mavenProperties = cloneMap(mavenProperties);
-      clone.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+      clone.myListeners = new DisposableWrapperList<>();
       clone.environmentProperties = new HashMap<>(environmentProperties);
       return clone;
     }

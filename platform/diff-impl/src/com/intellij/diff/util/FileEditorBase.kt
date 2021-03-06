@@ -2,15 +2,23 @@
 package com.intellij.diff.util
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorLocation
-import com.intellij.openapi.fileEditor.FileEditorState
-import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.ui.docking.impl.DockManagerImpl
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 
 abstract class FileEditorBase : UserDataHolderBase(), FileEditor {
+
+  init {
+    configureDefaults()
+  }
+
+  private fun configureDefaults() {
+    putUserData(FileEditorManager.USE_MAIN_WINDOW, true)
+    putUserData(DockManagerImpl.SHOW_NORTH_PANEL, false)
+  }
+
   protected val propertyChangeSupport = PropertyChangeSupport(this)
 
   override fun dispose() {}

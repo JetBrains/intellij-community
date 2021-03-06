@@ -17,19 +17,20 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class TextResult implements Result{
-  private final String myText;
+  private final @NlsSafe String myText;
 
-  public TextResult(@NotNull String text) {
+  public TextResult(@NotNull @NlsSafe String text) {
     myText = text;
   }
 
   @NotNull
-  public String getText() {
+  public @NlsSafe String getText() {
     return myText;
   }
 

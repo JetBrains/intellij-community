@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.vcs.log.graph.TestGraphBuilder
@@ -6,15 +6,16 @@ import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import gnu.trove.TIntHashSet
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.test.assertEquals
 
 class GraphUtilTests {
   private fun assertCorrespondingParent(startNode: Int, endNode: Int, expectedParent: Int, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
     val actualParent = LinearGraphUtils.asLiteLinearGraph(graph).getCorrespondingParent(startNode, endNode, BitSetFlags(graph.nodesCount()))
-    assertEquals(expectedParent, actualParent,
-                 "Incorrect parent found when walking from ${startNode} to ${endNode} in ${graph.asString(true)}")
+    assertThat(actualParent)
+      .describedAs("Incorrect parent found when walking from ${startNode} to ${endNode} in ${graph.asString(true)}")
+      .isEqualTo(expectedParent)
   }
 
   @Test
@@ -53,8 +54,9 @@ class GraphUtilTests {
   private fun assertSubgraphDifference(node1: Int, node2: Int, expectedDifference: TIntHashSet, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
     val actualDifference = graph.subgraphDifference(node1, node2)
-    assertEquals(expectedDifference, actualDifference,
-                 "Incorrect subgraph difference calculated between ${node1} to ${node2} in ${graph.asString(true)}")
+    assertThat(actualDifference)
+      .describedAs("Incorrect subgraph difference calculated between ${node1} to ${node2} in ${graph.asString(true)}")
+      .isEqualTo(expectedDifference)
   }
 
   /*
@@ -179,8 +181,9 @@ class GraphUtilTests {
                                    otherHeads: TIntHashSet, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
     val actualExclusiveNodes = graph.exclusiveNodes(node) { n -> otherHeads.contains(n) }
-    assertEquals(expectedExclusiveNodes, actualExclusiveNodes,
-                 "Incorrect exclusive nodes for ${node} ${graph.asString(true)}")
+    assertThat(actualExclusiveNodes)
+      .describedAs("Incorrect exclusive nodes for ${node} ${graph.asString(true)}")
+      .isEqualTo(expectedExclusiveNodes)
   }
 
   /*

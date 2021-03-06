@@ -25,14 +25,15 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.CalledInAwt
+import git4idea.i18n.GitBundle
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
 
-  @CalledInAwt
+  @RequiresEdt
   fun showMergeWindow(project: Project,
                       file: VirtualFile?,
                       lock: BackgroundableActionLock,
@@ -114,7 +115,7 @@ object MergeConflictResolveUtil {
       MergeUtil.reportProjectFileChangeIfNeeded(project, file)
 
       if (result != MergeResult.CANCEL) {
-        runBackgroundableTask("Finishing Conflict Resolve", project, false) {
+        runBackgroundableTask(GitBundle.message("progress.finishing.conflict.resolve"), project, false) {
           resolver.onConflictResolved(result)
         }
       }
@@ -138,9 +139,9 @@ object MergeConflictResolveUtil {
     override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
       val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
       val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN)
-      panel.setText("Merge conflicts resolve in progress.")
-      panel.createActionLabel("Focus Window") { UIUtil.toFront(wrapper.window) }
-      panel.createActionLabel("Cancel Resolve") { wrapper.close() }
+      panel.setText(GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress"))
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) { UIUtil.toFront(wrapper.window) }
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) { wrapper.close() }
       return panel
     }
   }

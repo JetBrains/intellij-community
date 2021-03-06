@@ -19,5 +19,11 @@
     <artifactId>${ARTIFACT_ID}</artifactId>
     <version>${VERSION}</version>
 
+#if (${SHOULD_SET_LANG_LEVEL})
+    <properties>
+        <maven.compiler.source>${COMPILER_LEVEL_SOURCE}</maven.compiler.source>
+        <maven.compiler.target>${COMPILER_LEVEL_TARGET}</maven.compiler.target>
+    </properties>
+#end
     ${END}
 </project>

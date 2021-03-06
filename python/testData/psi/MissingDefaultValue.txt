@@ -8,7 +8,7 @@ PyFile:MissingDefaultValue.py
       PyNamedParameter('a')
         PsiElement(Py:IDENTIFIER)('a')
         PsiElement(Py:EQ)('=')
-        PsiErrorElement:expression expected
+        PsiErrorElement:Expression expected
           <empty list>
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')

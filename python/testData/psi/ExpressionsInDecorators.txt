@@ -1,0 +1,89 @@
+PyFile:ExpressionsInDecorators.py
+  PyFunction('say_whee')
+    PyDecoratorList
+      PyDecorator: @x[0]
+        PsiElement(Py:AT)('@')
+        PySubscriptionExpression
+          PyReferenceExpression: x
+            PsiElement(Py:IDENTIFIER)('x')
+          PsiElement(Py:LBRACKET)('[')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('0')
+          PsiElement(Py:RBRACKET)(']')
+      PsiWhiteSpace('\n')
+      PyDecorator: @y:=x[0]
+        PsiElement(Py:AT)('@')
+        PyAssignmentExpression
+          PyTargetExpression: y
+            PsiElement(Py:IDENTIFIER)('y')
+          PsiElement(Py:COLONEQ)(':=')
+          PySubscriptionExpression
+            PyReferenceExpression: x
+              PsiElement(Py:IDENTIFIER)('x')
+            PsiElement(Py:LBRACKET)('[')
+            PyNumericLiteralExpression
+              PsiElement(Py:INTEGER_LITERAL)('0')
+            PsiElement(Py:RBRACKET)(']')
+      PsiWhiteSpace('\n')
+      PyDecorator: @my_decorator
+        PsiElement(Py:AT)('@')
+        PyReferenceExpression: my_decorator
+          PsiElement(Py:IDENTIFIER)('my_decorator')
+    PsiWhiteSpace('\n')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('say_whee')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyExpressionStatement
+        PyCallExpression: print
+          PyReferenceExpression: print
+            PsiElement(Py:IDENTIFIER)('print')
+          PyArgumentList
+            PsiElement(Py:LPAR)('(')
+            PyStringLiteralExpression: Whee!
+              PsiElement(Py:SINGLE_QUOTED_STRING)('"Whee!"')
+            PsiElement(Py:RPAR)(')')
+  PsiWhiteSpace('\n\n\n')
+  PyFunction('null')
+    PyDecoratorList
+      PyDecorator: @y
+        PsiElement(Py:AT)('@')
+        PyReferenceExpression: y
+          PsiElement(Py:IDENTIFIER)('y')
+        PsiErrorElement:Statement break expected
+          <empty list>
+    PyParameterList
+      <empty list>
+    PyStatementList
+      <empty list>
+  PsiElement(Py:COMMA)(',')
+  PsiErrorElement:Statement expected, found Py:COMMA
+    <empty list>
+  PyExpressionStatement
+    PyReferenceExpression: x
+      PsiElement(Py:IDENTIFIER)('x')
+  PsiWhiteSpace('\n')
+  PyFunction('say_whee2')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('say_whee2')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyExpressionStatement
+        PyCallExpression: print
+          PyReferenceExpression: print
+            PsiElement(Py:IDENTIFIER)('print')
+          PyArgumentList
+            PsiElement(Py:LPAR)('(')
+            PyStringLiteralExpression: Whee!
+              PsiElement(Py:SINGLE_QUOTED_STRING)('"Whee!"')
+            PsiElement(Py:RPAR)(')')

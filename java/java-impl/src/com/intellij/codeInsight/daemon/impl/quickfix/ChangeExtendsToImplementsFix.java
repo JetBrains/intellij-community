@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiKeyword;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * changes 'class a extends b' to 'class a implements b' or vice versa
  */
 public class ChangeExtendsToImplementsFix extends ExtendsListFix {
-  private final String myName;
+  private final @IntentionName String myName;
 
   public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);

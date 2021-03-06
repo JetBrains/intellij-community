@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.ProgressManagerQueue;
@@ -67,11 +66,16 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private final CachesHolder myCachesHolder;
   private final RepositoryLocationCache myLocationCache;
 
-  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
-                                                                                    CommittedChangesListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>(CommittedChangesListener.class, Topic.BroadcastDirection.NONE);
 
   public static CommittedChangesCache getInstance(Project project) {
     return project.getService(CommittedChangesCache.class);
+  }
+
+  @Nullable
+  public static CommittedChangesCache getInstanceIfCreated(Project project) {
+    return project.getServiceIfCreated(CommittedChangesCache.class);
   }
 
   public CommittedChangesCache(@NotNull Project project) {
@@ -81,6 +85,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       @Override
       public void directoryMappingChanged() {
         myLocationCache.reset();
+        myCachesHolder.reset();
         refreshAllCachesAsync(false, true);
         refreshIncomingChangesAsync();
         myTaskQueue.run(() -> {
@@ -117,10 +122,6 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
   }
 
-  public MessageBus getMessageBus() {
-    return myProject.getMessageBus();
-  }
-
   @Override
   public void loadState(@NotNull CommittedChangesCacheState state) {
     super.loadState(state);
@@ -140,7 +141,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return true;
   }
 
-  private class MyProjectChangesLoader implements Runnable {
+  private final class MyProjectChangesLoader implements Runnable {
     private final ChangeBrowserSettings mySettings;
     private final int myMaxCount;
     private final boolean myCacheOnly;
@@ -557,7 +558,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return result;
   }
 
-  private static class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
+  private static final class IncomingListsZipper extends VcsCommittedListsZipperAdapter {
     private final VcsCommittedListsZipper myVcsZipper;
 
     private IncomingListsZipper(final VcsCommittedListsZipper vcsZipper) {
@@ -952,7 +953,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     void receivedError(VcsException ex);
   }
 
-  private static class MyRefreshRunnable implements Runnable {
+  private static final class MyRefreshRunnable implements Runnable {
     private CommittedChangesCache myCache;
 
     private MyRefreshRunnable(final CommittedChangesCache cache) {

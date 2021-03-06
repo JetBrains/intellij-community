@@ -1,9 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.Pair;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -22,18 +20,18 @@ public final class GraphGenerator<Node> implements Graph<Node> {
 
   private GraphGenerator(@NotNull InboundSemiGraph<Node> graph) {
     myGraph = graph;
-    myOuts = new THashMap<>();
+    myOuts = new HashMap<>();
     buildOuts();
   }
 
   private void buildOuts() {
-    Set<Pair<Node, Node>> edges = new THashSet<>();
+    Set<Pair<Node, Node>> edges = new HashSet<>();
     for (Node node : myGraph.getNodes()) {
       Iterator<Node> inIt = myGraph.getIn(node);
       while (inIt.hasNext()) {
         Node inNode = inIt.next();
 
-        if (!edges.add(Pair.create(inNode, node))) {
+        if (!edges.add(new Pair<>(inNode, node))) {
           // Duplicate edge
           continue;
         }

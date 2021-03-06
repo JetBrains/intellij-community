@@ -30,10 +30,14 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void registerExtension(@NotNull T extension, @NotNull LoadingOrder order);
 
   @TestOnly
   void registerExtension(@NotNull T extension, @NotNull Disposable parentDisposable);
+
+  @TestOnly
+  void registerExtension(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor, @NotNull Disposable parentDisposable);
 
   /**
    * Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions}
@@ -59,6 +63,7 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default @Nullable T getExtension() {
     // method is deprecated and not used, ignore not efficient implementation
     return ContainerUtil.getFirstItem(getExtensionList());
@@ -68,6 +73,7 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default boolean hasExtension(@NotNull T extension) {
     // method is deprecated and used only by one external plugin, ignore not efficient implementation
     return ContainerUtil.containsIdentity(getExtensionList(), extension);
@@ -83,6 +89,7 @@ public interface ExtensionPoint<@NotNull T> {
    * @deprecated Use another solution to unregister not applicable extension, because this method instantiates all extensions.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void unregisterExtensions(@NotNull Predicate<? super T> extension);
 
   /**
@@ -102,18 +109,13 @@ public interface ExtensionPoint<@NotNull T> {
    */
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
-  /**
-   * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
-   */
-  @Deprecated
-  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
-
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link ExtensionPointName#addChangeListener(Runnable, Disposable)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   /**

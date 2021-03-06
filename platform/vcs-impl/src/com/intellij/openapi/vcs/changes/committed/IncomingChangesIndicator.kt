@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.icons.AllIcons
@@ -53,7 +53,7 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
     if (!isIncomingChangesAvailable) return null
 
     return if (incomingChangesCount > 0) message("incoming.changes.indicator.tooltip", incomingChangesCount)
-    else "No incoming changelists available"
+    else message("changes.no.incoming.changelists.available")
   }
 
   override fun getClickConsumer(): Consumer<MouseEvent> =
@@ -65,14 +65,13 @@ private class IncomingChangesIndicator(private val project: Project) : StatusBar
   override fun install(statusBar: StatusBar) {
     this.statusBar = statusBar
 
-    project.messageBus.connect(this).apply {
-      subscribe(COMMITTED_TOPIC, object : CommittedChangesListener {
-        override fun incomingChangesUpdated(receivedChanges: List<CommittedChangeList>?) = refresh()
-        override fun changesCleared() = refresh()
-      })
-      subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refresh() })
-      subscribe(VCS_CONFIGURATION_CHANGED_IN_PLUGIN, VcsListener { refresh() })
-    }
+    val busConnection = project.messageBus.connect(this)
+    busConnection.subscribe(COMMITTED_TOPIC, object : CommittedChangesListener {
+      override fun incomingChangesUpdated(receivedChanges: List<CommittedChangeList>?) = refresh()
+      override fun changesCleared() = refresh()
+    })
+    busConnection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refresh() })
+    busConnection.subscribe(VCS_CONFIGURATION_CHANGED_IN_PLUGIN, VcsListener { refresh() })
   }
 
   override fun dispose() {

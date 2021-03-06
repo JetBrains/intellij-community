@@ -27,7 +27,7 @@ public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<Hg
   protected Set<FilePath> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
     Set<FilePath> ignored = new HashSet<>();
     ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
-                     .getFilePaths(repository.getRoot(), paths != null ? new ArrayList<FilePath>(paths) : null));
+                     .getFilePaths(repository.getRoot(), paths != null ? new ArrayList<>(paths) : null));
     return ignored;
   }
 

@@ -20,5 +20,5 @@ class CC extends C {
   public void f3(@Nullable C p) {}
   public void f4(@Nullable C p) {}
 
-  <warning descr="Cannot annotate with both @Nullable and @NotNull">@Nullable</warning> <warning descr="Cannot annotate with both @Nullable and @NotNull">@NotNull</warning> String f() { return null;}
+  <warning descr="Cannot annotate with both @Nullable and @NotNull">@Nullable</warning> <warning descr="Cannot annotate with both @NotNull and @Nullable">@NotNull</warning> String f() { return null;}
 }

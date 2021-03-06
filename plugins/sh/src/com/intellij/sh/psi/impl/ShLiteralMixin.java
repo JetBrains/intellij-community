@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
-import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShLiteral;
 import com.intellij.sh.psi.ShString;
 import com.intellij.util.IncorrectOperationException;
@@ -19,17 +18,12 @@ abstract class ShLiteralMixin extends ShSimpleCommandElementImpl implements ShLi
 
   @Override
   public String getName() {
-    if (this instanceof ShString || this.getWord() != null) {
-      return ShSupport.getInstance().getName(this);
-    }
     return null;
   }
 
   @Override
   public @Nullable PsiElement getNameIdentifier() {
-    return this instanceof ShString || this.getWord() != null
-           ? ShSupport.getInstance().getNameIdentifier(this)
-           : null;
+    return null;
   }
 
   @Override

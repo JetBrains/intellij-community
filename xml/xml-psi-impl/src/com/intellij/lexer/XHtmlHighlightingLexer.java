@@ -15,7 +15,9 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import org.jetbrains.annotations.NotNull;
 
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   public XHtmlHighlightingLexer() {
@@ -23,11 +25,16 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {
-    super(baseLexer,false, FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
+    super(baseLexer, false, FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
   }
 
   @Override
   protected boolean isHtmlTagState(int state) {
     return state == __XmlLexer.TAG || state == __XmlLexer.END_TAG;
+  }
+
+  @Override
+  protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
+    return !(provider instanceof HtmlRawTextTagContentProvider);
   }
 }

@@ -7,6 +7,8 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -30,7 +32,7 @@ public final class PathMacroTable extends JBTable {
   private static final int VALUE_COLUMN = 1;
 
   private final List<Couple<String>> myMacros = new ArrayList<>();
-  private static final Comparator<Couple<String>> MACRO_COMPARATOR = Comparator.comparing(pair -> pair.getFirst());
+  private static final Comparator<Pair<String, String>> MACRO_COMPARATOR = Pair.comparingByFirst();
 
   private final Collection<String> myUndefinedMacroNames;
 
@@ -40,6 +42,7 @@ public final class PathMacroTable extends JBTable {
 
   public PathMacroTable(Collection<String> undefinedMacroNames) {
     myUndefinedMacroNames = undefinedMacroNames;
+    setShowGrid(false);
     setModel(myTableModel);
     TableColumn column = getColumnModel().getColumn(NAME_COLUMN);
     column.setCellRenderer(new DefaultTableCellRenderer() {
@@ -220,9 +223,9 @@ public final class PathMacroTable extends JBTable {
   }
 
   private final class AddValidator implements PathMacroEditor.Validator {
-    private final String myTitle;
+    private final @NlsContexts.DialogTitle String myTitle;
 
-    AddValidator(String title) {
+    AddValidator(@NlsContexts.DialogTitle String title) {
       myTitle = title;
     }
 

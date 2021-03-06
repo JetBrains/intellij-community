@@ -10,10 +10,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -57,6 +54,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
    * @deprecated use {@link #addScopeListener(ScopeListener, Disposable)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addScopeListener(@NotNull ScopeListener scopeListener) {
     myScopeListeners.add(scopeListener);
   }
@@ -103,7 +101,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @Nullable
-  public static NamedScope getScope(@NotNull Project project, String scopeName) {
+  public static NamedScope getScope(@NotNull Project project,  @NonNls String scopeName) {
     for (NamedScopesHolder holder : getAllNamedScopeHolders(project)) {
       NamedScope scope = holder.getScope(scopeName);
       if (scope != null) {
@@ -121,10 +119,10 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @Contract("_,_,!null -> !null")
-  public static NamedScopesHolder getHolder(Project project, String scopeName, NamedScopesHolder defaultHolder) {
+  public static NamedScopesHolder getHolder(Project project, String scopeId, NamedScopesHolder defaultHolder) {
     NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
     for (NamedScopesHolder holder : holders) {
-      NamedScope scope = holder.getScope(scopeName);
+      NamedScope scope = holder.getScope(scopeId);
       if (scope != null) {
         return holder;
       }
@@ -135,7 +133,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   @NotNull
   private static Element writeScope(@NotNull NamedScope scope) {
     Element setElement = new Element(SCOPE_TAG);
-    setElement.setAttribute(NAME_ATT, scope.getName());
+    setElement.setAttribute(NAME_ATT, scope.getScopeId());
     PackageSet packageSet = scope.getValue();
     setElement.setAttribute(PATTERN_ATT, packageSet != null ? packageSet.getText() : "");
     return setElement;
@@ -177,12 +175,12 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @Nullable
-  public NamedScope getScope(@Nullable String name) {
-    if (name == null) return null;
+  public NamedScope getScope(@Nullable @NonNls String scopeId) {
+    if (scopeId == null) return null;
     for (NamedScope scope : myScopes) {
-      if (name.equals(scope.getName())) return scope;
+      if (scopeId.equals(scope.getScopeId())) return scope;
     }
-    return getPredefinedScope(name);
+    return getPredefinedScope(scopeId);
   }
 
   @NotNull
@@ -202,6 +200,6 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
 
   @NotNull
   public final NamedScope createScope(@NotNull String name, @Nullable PackageSet value) {
-    return new NamedScope(name, getIcon(), value);
+    return new NamedScope(name, () -> name, getIcon(), value);
   }
 }

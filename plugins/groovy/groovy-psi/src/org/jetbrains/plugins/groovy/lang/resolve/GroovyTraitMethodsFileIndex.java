@@ -1,10 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -22,17 +19,19 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.stubs.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
+import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.Contract;
+import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.ByteArraySequenceExternalizer;
 
-import java.io.ByteArrayInputStream;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.psi.impl.compiled.ClsFileImpl.EMPTY_ATTRIBUTES;
@@ -40,28 +39,15 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 
 public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtension<ByteArraySequence> {
-
   private static final Logger LOG = Logger.getInstance(GroovyTraitMethodsFileIndex.class);
-
   private static final ID<Integer, ByteArraySequence> INDEX_ID = ID.create("groovy.trait.methods");
-  private static final String HELPER_SUFFIX = "$Trait$Helper.class";
+  private static final @NonNls String HELPER_SUFFIX = "$Trait$Helper.class";
 
-  private final InputFilter myFilter;
-  private final SingleEntryIndexer<ByteArraySequence> myIndexer;
+  @NotNull
+  private final StubTreeSerializer myStubTreeSerializer;
 
   public GroovyTraitMethodsFileIndex() {
-    myFilter = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
-      }
-    };
-    myIndexer = new SingleEntryIndexer<ByteArraySequence>(false) {
-      @Override
-      protected ByteArraySequence computeValue(@NotNull FileContent inputData) {
-        return serialize(index(inputData.getFile(), inputData.getContent()));
-      }
-    };
+    myStubTreeSerializer = new ShareableStubTreeSerializer();
   }
 
   @NotNull
@@ -72,33 +58,54 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
 
   @Override
   public int getVersion() {
-    return ClassFileStubBuilder.STUB_VERSION + 2;
+    return ClassFileStubBuilder.STUB_VERSION + 6;
   }
 
   @NotNull
   @Override
   public InputFilter getInputFilter() {
-    return myFilter;
+    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return StringUtil.endsWith(file.getNameSequence(), HELPER_SUFFIX);
+      }
+    };
   }
 
   @NotNull
   @Override
   public SingleEntryIndexer<ByteArraySequence> getIndexer() {
-    return myIndexer;
+    return new SingleEntryIndexer<>(false) {
+      @Override
+      protected ByteArraySequence computeValue(@NotNull FileContent inputData) {
+        @Nullable PsiJavaFileStub stub = index(inputData.getFile(), inputData.getContent());
+        if (stub == null) return null;
+        BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
+        myStubTreeSerializer.serialize(stub, buffer);
+        return buffer.toByteArraySequence();
+      }
+    };
   }
 
   @NotNull
   @Override
   public DataExternalizer<ByteArraySequence> getValueExternalizer() {
-    return ByteArraySequenceExternalizer.INSTANCE;
-  }
+    return new DataExternalizer<>() {
+      @Override
+      public void save(@NotNull DataOutput out, ByteArraySequence value) throws IOException {
+        int length = value.length();
+        DataInputOutputUtil.writeINT(out, length);
+        out.write(value.getInternalBuffer(), value.getOffset(), length);
+      }
 
-  @Contract("null -> null")
-  private static ByteArraySequence serialize(@Nullable PsiJavaFileStub stub) {
-    if (stub == null) return null;
-    BufferExposingByteArrayOutputStream buffer = new BufferExposingByteArrayOutputStream();
-    ApplicationManager.getApplication().runReadAction(() -> SerializationManagerEx.getInstanceEx().serialize(stub, buffer));
-    return buffer.toByteArraySequence();
+      @Override
+      public ByteArraySequence read(@NotNull DataInput in) throws IOException {
+        int length = DataInputOutputUtil.readINT(in);
+        byte[] buf = new byte[length];
+        in.readFully(buf);
+        return ByteArraySequence.create(buf);
+      }
+    };
   }
 
   @Nullable
@@ -174,14 +181,16 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
     if (helperFile == null) return Collections.emptyList();
 
-    Map<Integer, ByteArraySequence> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, helperFile, trait.getProject());
-    ByteArraySequence byteSequence = ContainerUtil.getFirstItem(data.values());
+    ByteArraySequence byteSequence = FileBasedIndex.getInstance().getSingleEntryIndexData(INDEX_ID, helperFile, trait.getProject());
+    if (byteSequence == null) return Collections.emptyList();
 
-    SerializationManagerEx manager = SerializationManagerEx.getInstanceEx();
+    GroovyTraitMethodsFileIndex indexEx = FileBasedIndexExtension.EXTENSION_POINT_NAME.findExtension(GroovyTraitMethodsFileIndex.class);
+    StubTreeSerializer serializer = Objects.requireNonNull(indexEx).myStubTreeSerializer;
+
     List<PsiMethod> result = new ArrayList<>();
     Stub root;
     try {
-      root = manager.deserialize(new ByteArrayInputStream(byteSequence.getBytes()));
+      root = serializer.deserialize(byteSequence.toInputStream());
       ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)psiFile);
     }
     catch (SerializerNotFoundException e) {

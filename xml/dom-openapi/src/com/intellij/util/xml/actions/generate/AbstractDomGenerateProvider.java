@@ -3,12 +3,16 @@ package com.intellij.util.xml.actions.generate;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +26,30 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
 
   @Nullable private final String myMappingId;
 
-  public AbstractDomGenerateProvider(final String description, final Class<T> aClass) {
+  /**
+   * @deprecated Provide both action description and text, as they have different capitalization rules.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public AbstractDomGenerateProvider(@Nls final String description, final Class<T> aClass) {
     this(description, aClass, null);
   }
 
-  public AbstractDomGenerateProvider(final String description, final Class<T> aClass, @Nullable String mappingId) {
-    super(description, aClass);
+  /**
+   * @deprecated Provide both action description and text, as they have different capitalization rules.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public AbstractDomGenerateProvider(@Nls final String description, final Class<T> aClass, @Nullable String mappingId) {
+    this(description, description, aClass, mappingId);
+  }
+
+  public AbstractDomGenerateProvider(@ActionText String text, @ActionDescription String description, final Class<T> aClass) {
+    this(text, description, aClass, null);
+  }
+
+  public AbstractDomGenerateProvider(@ActionText String text, @ActionDescription String description, final Class<T> aClass, @Nullable String mappingId) {
+    super(text, description, aClass);
     myMappingId = mappingId;
   }
 

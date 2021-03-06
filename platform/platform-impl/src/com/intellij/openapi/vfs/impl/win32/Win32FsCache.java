@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.win32;
 
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FastUtilHashingStrategies;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,19 +23,18 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-class Win32FsCache {
+final class Win32FsCache {
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
-  private Reference<TIntObjectHashMap<Map<String, FileAttributes>>> myCache;
+  private Reference<Int2ObjectMap<Map<String, FileAttributes>>> myCache;
 
   void clearCache() {
     myCache = null;
   }
 
-  @NotNull
-  private TIntObjectHashMap<Map<String, FileAttributes>> getMap() {
-    TIntObjectHashMap<Map<String, FileAttributes>> map = com.intellij.reference.SoftReference.dereference(myCache);
+  private @NotNull Int2ObjectMap<Map<String, FileAttributes>> getMap() {
+    Int2ObjectMap<Map<String, FileAttributes>> map = com.intellij.reference.SoftReference.dereference(myCache);
     if (map == null) {
-      map = new TIntObjectHashMap<>();
+      map = new Int2ObjectOpenHashMap<>();
       myCache = new SoftReference<>(map);
     }
     return map;
@@ -47,11 +48,11 @@ class Win32FsCache {
     }
 
     String[] names = new String[fileInfo.length];
-    TIntObjectHashMap<Map<String, FileAttributes>> map = getMap();
+    Int2ObjectMap<Map<String, FileAttributes>> map = getMap();
     int parentId = ((VirtualFileWithId)file).getId();
     Map<String, FileAttributes> nestedMap = map.get(parentId);
     if (nestedMap == null) {
-      nestedMap = new THashMap<>(fileInfo.length, FileUtil.PATH_HASHING_STRATEGY);
+      nestedMap = CollectionFactory.createFilePathMap(fileInfo.length, file.isCaseSensitive());
       map.put(parentId, nestedMap);
     }
     for (int i = 0, length = fileInfo.length; i < length; i++) {
@@ -67,7 +68,7 @@ class Win32FsCache {
   FileAttributes getAttributes(@NotNull VirtualFile file) {
     VirtualFile parent = file.getParent();
     int parentId = parent instanceof VirtualFileWithId ? ((VirtualFileWithId)parent).getId() : -((VirtualFileWithId)file).getId();
-    TIntObjectHashMap<Map<String, FileAttributes>> map = getMap();
+    Int2ObjectMap<Map<String, FileAttributes>> map = getMap();
     Map<String, FileAttributes> nestedMap = map.get(parentId);
     String name = file.getName();
     FileAttributes attributes = nestedMap != null ? nestedMap.get(name) : null;
@@ -82,7 +83,7 @@ class Win32FsCache {
       }
       attributes = info.toFileAttributes();
       if (nestedMap == null) {
-        nestedMap = new IncompleteChildrenMap<>(FileUtil.PATH_HASHING_STRATEGY);
+        nestedMap = new IncompleteChildrenMap<>();
         map.put(parentId, nestedMap);
       }
       nestedMap.put(name, attributes);
@@ -90,9 +91,9 @@ class Win32FsCache {
     return attributes;
   }
 
-  private static class IncompleteChildrenMap<K, V> extends THashMap<K,V> {
-    IncompleteChildrenMap(@NotNull TObjectHashingStrategy<K> strategy) {
-      super(strategy);
+  private static final class IncompleteChildrenMap<V> extends Object2ObjectOpenCustomHashMap<String, V> {
+    IncompleteChildrenMap() {
+      super(FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isFileSystemCaseSensitive));
     }
   }
 }

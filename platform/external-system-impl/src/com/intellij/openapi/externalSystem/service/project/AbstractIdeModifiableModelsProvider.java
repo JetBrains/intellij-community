@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -41,29 +40,24 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath;
-
 public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProviderImpl implements IdeModifiableModelsProvider {
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
 
-  private ModifiableModuleModel myModifiableModuleModel;
-  private final Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
-  private final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
-  private final Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
-  private final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
-  private final ClassMap<ModifiableModel> myModifiableModels = new ClassMap<>();
+  protected ModifiableModuleModel myModifiableModuleModel;
+  protected final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<>();
+  protected final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new HashMap<>();
+  protected final Map<Module, String> myProductionModulesForTestModules = new HashMap<>();
+  protected final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
+  protected final ClassMap<ModifiableModel> myModifiableModels = new ClassMap<>();
   @Nullable
   private ModifiableWorkspace myModifiableWorkspace;
-  private final MyUserDataHolderBase myUserData;
+  protected final MyUserDataHolderBase myUserData;
   private volatile boolean myDisposed;
 
   public AbstractIdeModifiableModelsProvider(@NotNull Project project) {
@@ -146,7 +140,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }
     assert imlName != null : "Too many duplicated module names";
 
-    String filePath = toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + imlName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    String filePath = ExternalSystemApiUtil.toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + imlName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return newModule(filePath, moduleData.getModuleTypeId());
   }
 
@@ -162,7 +156,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   public Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable.ModifiableModel libraryTable = getModifiableProjectLibrariesModel();
     for (Library ideLibrary: libraryTable.getLibraries()) {
-      if (isRelated(ideLibrary, libraryData)) return ideLibrary;
+      if (ExternalSystemApiUtil.isRelated(ideLibrary, libraryData)) return ideLibrary;
     }
     return null;
   }
@@ -279,7 +273,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   private Graph<Module> getModuleGraph() {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<Module> getNodes() {
@@ -295,7 +289,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }));
   }
 
-  private static class MyUserDataHolderBase extends UserDataHolderBase {
+  protected static class MyUserDataHolderBase extends UserDataHolderBase {
     void clear() {
       clearUserData();
     }
@@ -444,14 +438,14 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return workspace == null ? null : workspace.findModule(publicationId);
   }
 
-  private void updateSubstitutions() {
+  protected void updateSubstitutions() {
     ModifiableWorkspace workspace = getModifiableWorkspace();
     if (workspace == null) return;
 
     final List<String> oldModules = ContainerUtil.map(ModuleManager.getInstance(myProject).getModules(), module -> module.getName());
     final List<String> newModules = ContainerUtil.map(myModifiableModuleModel.getModules(), module -> module.getName());
 
-    final Collection<String> removedModules = new THashSet<>(oldModules);
+    final Collection<String> removedModules = new HashSet<>(oldModules);
     removedModules.removeAll(newModules);
 
 

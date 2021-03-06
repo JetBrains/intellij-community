@@ -41,6 +41,11 @@ public class ImportTest extends IncrementalTestCase {
     doTestBuild(1).assertFailed();
   }
 
+  public void testStaticImportConstantFieldChanged() {
+    setupInitialProject();
+    doTestBuild(1).assertSuccessful();
+  }
+
   public void testUnusedStaticImportFieldBecameNonstatic() {
     setupInitialProject();
     setupModules();

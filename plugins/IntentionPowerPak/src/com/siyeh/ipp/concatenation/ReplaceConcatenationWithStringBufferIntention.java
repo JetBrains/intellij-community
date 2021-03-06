@@ -21,7 +21,6 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -145,7 +144,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       }
     }
     else {
-      final PsiExpression strippedExpression = ParenthesesUtils.stripParentheses(expression);
+      final PsiExpression strippedExpression = PsiUtil.skipParenthesizedExprDown(expression);
       result.append(".append(");
       if (strippedExpression != null) {
         result.append(commentTracker.text(strippedExpression));

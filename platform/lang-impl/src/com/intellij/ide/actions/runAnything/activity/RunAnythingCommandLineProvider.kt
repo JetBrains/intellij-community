@@ -21,7 +21,7 @@ abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<St
   private fun getHelpCommands() = listOf(helpCommand) + getHelpCommandAliases()
 
   override fun findMatchingValue(dataContext: DataContext, pattern: String) =
-    if (getHelpCommands().any { pattern.startsWith(it) }) getCommand(pattern) else null
+    if (extractLeadingHelpPrefix(pattern) != null) getCommand(pattern) else null
 
   private fun extractLeadingHelpPrefix(commandLine: String): Pair<String, String>? {
     for (helpCommand in getHelpCommands()) {

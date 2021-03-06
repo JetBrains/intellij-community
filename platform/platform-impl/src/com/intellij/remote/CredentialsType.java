@@ -12,12 +12,11 @@ import com.intellij.remote.ext.UnknownTypeRemoteCredentialHandler;
 import org.jetbrains.annotations.Nls;
 
 public abstract class CredentialsType<T> {
-
-  public static final ExtensionPointName<CredentialsType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remote.credentialsType");
+  public static final ExtensionPointName<CredentialsType<?>> EP_NAME = new ExtensionPointName<>("com.intellij.remote.credentialsType");
 
   public static final Key<UnknownCredentialsHolder> UNKNOWN_CREDENTIALS = Key.create("UNKNOWN_CREDENTIALS");
 
-  public static final CredentialsType<UnknownCredentialsHolder> UNKNOWN = new CredentialsType<UnknownCredentialsHolder>(
+  public static final CredentialsType<UnknownCredentialsHolder> UNKNOWN = new CredentialsType<>(
     IdeBundle.message("credentials.type.filetype.description.unknown"), "") {
     @Override
     public Key<UnknownCredentialsHolder> getCredentialsKey() {
@@ -35,7 +34,7 @@ public abstract class CredentialsType<T> {
     }
   };
 
-  private final String myName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myName;
   private final String myPrefix;
 
   protected CredentialsType(@Nls(capitalization = Nls.Capitalization.Title) String name, String prefix) {
@@ -43,7 +42,7 @@ public abstract class CredentialsType<T> {
     myPrefix = prefix;
   }
 
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
     return myName;
   }
 

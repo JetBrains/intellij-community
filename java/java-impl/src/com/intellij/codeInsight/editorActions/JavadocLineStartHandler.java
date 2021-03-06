@@ -14,9 +14,8 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class JavadocLineStartHandler extends EditorActionHandler {
+public class JavadocLineStartHandler extends EditorActionHandler.ForEachCaret {
   private static final String WHITESPACE = " \t";
   
   private final EditorActionHandler myOriginalHandler;
@@ -27,14 +26,12 @@ public class JavadocLineStartHandler extends EditorActionHandler {
   }
 
   JavadocLineStartHandler(EditorActionHandler originalHandler, boolean withSelection) {
-    super(true);
     myOriginalHandler = originalHandler;
     myWithSelection = withSelection;
   }
 
   @Override
-  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    assert caret != null;
+  protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     Project project = editor.getProject();
     if (project != null && EditorSettingsExternalizable.getInstance().isSmartHome()) {
       Document document = editor.getDocument();

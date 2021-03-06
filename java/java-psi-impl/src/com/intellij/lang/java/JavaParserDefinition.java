@@ -45,14 +45,8 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return JAVA_FILE;
-  }
-
-  @NotNull
-  @Override
-  public TokenSet getWhitespaceTokens() {
-    return TokenSet.WHITE_SPACE;
   }
 
   @NotNull
@@ -85,19 +79,19 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(final FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(final @NotNull FileViewProvider viewProvider) {
     return new PsiJavaFileImpl(viewProvider);
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     if (right.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN ||
         left.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN) {
       return SpaceRequirements.MUST_NOT;
     }
 
     PsiFile containingFile = left.getTreeParent().getPsi().getContainingFile();
-    LanguageLevel level = containingFile instanceof PsiJavaFile? ((PsiJavaFile)containingFile).getLanguageLevel() : LanguageLevel.HIGHEST;
+    LanguageLevel level = containingFile instanceof PsiJavaFile ? ((PsiJavaFile)containingFile).getLanguageLevel() : LanguageLevel.HIGHEST;
     Lexer lexer = createLexer(level);
     SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
     if (left.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {

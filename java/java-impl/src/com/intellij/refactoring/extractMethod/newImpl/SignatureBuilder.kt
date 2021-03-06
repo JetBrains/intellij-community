@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -35,7 +36,7 @@ class SignatureBuilder(private val project: Project) {
       factory.createConstructor("methodName", context)
     }
 
-    annotations.forEach { annotation -> method.modifierList.add(annotation) }
+    copyNotPresentAnnotations(annotations, method)
 
     JavaCodeStyleManager.getInstance(method.project).shortenClassReferences(method)
 
@@ -76,11 +77,24 @@ class SignatureBuilder(private val project: Project) {
     }
 
     inputParameters.forEach { inputParameter ->
-      val modifierList = parameterList.parameters.find { it.name == inputParameter.name }?.modifierList
-      inputParameter.annotations.forEach { annotation -> modifierList?.add(annotation) }
+      val parameter = parameterList.parameters.find { it.name == inputParameter.name }
+      if (parameter != null) {
+        copyNotPresentAnnotations(inputParameter.annotations, parameter)
+      }
     }
 
     return parameterList
+  }
+
+  private fun copyNotPresentAnnotations(annotations: List<PsiAnnotation>,
+                                        modifierListOwner: PsiModifierListOwner) {
+    val modifierList = modifierListOwner.modifierList
+    annotations.forEach { annotation ->
+      val qualifiedName = annotation.qualifiedName
+      if (qualifiedName != null && !AnnotationUtil.isAnnotated(modifierListOwner, qualifiedName, AnnotationUtil.CHECK_TYPE)) {
+        modifierList?.add(annotation)
+      }
+    }
   }
 
   private fun isInsideAnonymousOrLocal(element: PsiElement, scope: List<PsiElement>): Boolean {

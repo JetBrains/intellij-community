@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,11 +63,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
     String searchString = filterControlSymbols(pattern);
     boolean preferStartMatches = !searchString.startsWith("*");
-    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
-    if (preferStartMatches) {
-      builder = builder.preferringStartMatches();
-    }
-    MinusculeMatcher matcher = builder.build();
+    MinusculeMatcher matcher = createMatcher(searchString, preferStartMatches);
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
@@ -83,7 +80,8 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
                      .distinct()
                      .map(vf -> {
                        PsiFile f = psiManager.findFile(vf);
-                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(vf.getName()));
+                       String name = vf.getName();
+                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
                      })
                      .filter(file -> file != null)
                      .collect(Collectors.toList())
@@ -91,6 +89,14 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
         ContainerUtil.process(res, consumer);
       }, progressIndicator);
+  }
+
+  private static MinusculeMatcher createMatcher(String searchString, boolean preferStartMatches) {
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
+    if (preferStartMatches) {
+      builder = builder.preferringStartMatches();
+    }
+    return builder.build();
   }
 
   @Override
@@ -101,5 +107,10 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @Override
   public boolean isShownInSeparateTab() {
     return false;
+  }
+
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return null;
   }
 }

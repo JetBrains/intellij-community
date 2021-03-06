@@ -28,6 +28,14 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   }
 
   @Override
+  protected boolean isHidden(AnActionEvent event) {
+    if (!PauseAction.isPauseResumeMerged()) {
+      return super.isHidden(event);
+    }
+    return super.isHidden(event) || !isEnabled(event);
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (!performWithHandler(e)) {
       Project project = getEventProject(e);

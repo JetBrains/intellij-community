@@ -8,7 +8,7 @@ import com.intellij.lang.Language;
  * Any language that supported via TextMate bundle.
  * Instance should created at once and must be used for all languages.
  */
-public class TextMateLanguage extends Language {
+public final class TextMateLanguage extends Language {
   public static final TextMateLanguage LANGUAGE = new TextMateLanguage();
 
   private TextMateLanguage() {

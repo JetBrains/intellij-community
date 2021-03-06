@@ -81,7 +81,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
 
   @Override
   public Iterator<DistinctPair> iterator() {
-    return new Iterator<DistinctPair>() {
+    return new Iterator<>() {
       final TLongIterator iterator = myData.iterator();
 
       @Override

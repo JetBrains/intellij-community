@@ -19,6 +19,8 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -26,10 +28,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class CreateResourceBundleDialogComponent {
+public final class CreateResourceBundleDialogComponent {
   private final static Logger LOG = Logger.getInstance(CreateResourceBundleDialogComponent.class);
 
   private static final Comparator<Locale> LOCALE_COMPARATOR = (l1, l2) -> {
@@ -66,13 +66,13 @@ public class CreateResourceBundleDialogComponent {
   private JPanel myResourceBundleNamePanel;
   private JCheckBox myUseXMLBasedPropertiesCheckBox;
   private CollectionListModel<Locale> myLocalesModel;
-  private final Map<Locale, String> myLocaleSuffixes; // java.util.Locale is case insensitive
+  private final Map<Locale, @NlsSafe String> myLocaleSuffixes; // java.util.Locale is case insensitive
 
   public CreateResourceBundleDialogComponent(@NotNull Project project, PsiDirectory directory, ResourceBundle resourceBundle) {
     myProject = project;
     myDirectory = directory;
     myResourceBundle = resourceBundle;
-    myLocaleSuffixes = new THashMap<>();
+    myLocaleSuffixes = new HashMap<>();
     if (resourceBundle != null) {
       myResourceBundleNamePanel.setVisible(false);
       myUseXMLBasedPropertiesCheckBox.setVisible(false);
@@ -102,7 +102,9 @@ public class CreateResourceBundleDialogComponent {
       myComponent = new CreateResourceBundleDialogComponent(project, myDirectory, resourceBundle);
       init();
       initValidation();
-      setTitle(resourceBundle == null ? "Create Resource Bundle" : "Add Locales to Resource Bundle " + resourceBundle.getBaseName());
+      setTitle(resourceBundle == null ? PropertiesBundle.message("create.resource.bundle.action.text")
+                                      : PropertiesBundle
+                 .message("create.resource.bundle.add.locales.to.resource.bundle.title", resourceBundle.getBaseName()));
     }
 
     @Override
@@ -122,10 +124,11 @@ public class CreateResourceBundleDialogComponent {
     protected ValidationInfo doValidate() {
       for (String fileName : myComponent.getFileNamesToCreate()) {
         if (!PathUtil.isValidFileName(fileName)) {
-          return new ValidationInfo(String.format("File name for properties file '%s' is invalid", fileName));
+          return new ValidationInfo(
+            PropertiesBundle.message("create.resource.bundle.file.name.for.properties.file.0.is.invalid.error", fileName));
         } else {
           if (myDirectory.findFile(fileName) != null) {
-            return new ValidationInfo(String.format("File with name '%s' already exist", fileName));
+            return new ValidationInfo(PropertiesBundle.message("create.resource.bundle.file.with.name.0.already.exist.error", fileName));
           }
         }
       }
@@ -182,8 +185,8 @@ public class CreateResourceBundleDialogComponent {
                                    .getOrDefault(locale, locale.toString()))) + suffix);
   }
 
-  private void combineToResourceBundleIfNeeded(Collection<PsiFile> files) {
-    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, (NotNullFunction<PsiFile, PropertiesFile>)dom -> {
+  private void combineToResourceBundleIfNeeded(Collection<? extends PsiFile> files) {
+    Collection<PropertiesFile> createdFiles = ContainerUtil.map(files, dom -> {
       final PropertiesFile file = PropertiesImplUtil.getPropertiesFile(dom);
       LOG.assertTrue(file != null, dom.getName());
       return file;
@@ -224,14 +227,14 @@ public class CreateResourceBundleDialogComponent {
     return myResourceBundle == null ? myResourceBundleBaseNameTextField.getText() : myResourceBundle.getBaseName();
   }
 
-  private String canCreateAllFilesForAllLocales() {
+  private @NlsContexts.DialogMessage String canCreateAllFilesForAllLocales() {
     final String name = getBaseName();
     if (name.isEmpty()) {
-      return "Base name is empty";
+      return PropertiesBundle.message("create.resource.bundle.base.name.is.empty.error");
     }
     final Set<String> files = getFileNamesToCreate();
     if (files.isEmpty()) {
-      return "No locales added";
+      return PropertiesBundle.message("create.resource.bundle.no.locales.added.error");
     }
     for (PsiElement element : myDirectory.getChildren()) {
       if (element instanceof PsiFile) {
@@ -239,7 +242,7 @@ public class CreateResourceBundleDialogComponent {
           PropertiesFile propertiesFile = (PropertiesFile)element;
           final String propertiesFileName = propertiesFile.getName();
           if (files.contains(propertiesFileName)) {
-            return "Some of files already exist";
+            return PropertiesBundle.message("create.resource.bundle.some.of.files.already.exist.error");
           }
         }
       }
@@ -264,7 +267,7 @@ public class CreateResourceBundleDialogComponent {
       return Collections.emptyMap();
     }
     final String[] splitRawLocales = rawLocales.split(",");
-    final Map<Locale, String> locales = new THashMap<>(splitRawLocales.length);
+    final Map<Locale, String> locales = new HashMap<>(splitRawLocales.length);
 
     for (String rawLocale : splitRawLocales) {
       final Pair<Locale, String> localeAndSuffix = PropertiesUtil.getLocaleAndTrimmedSuffix("_" + rawLocale + ".properties");
@@ -286,7 +289,8 @@ public class CreateResourceBundleDialogComponent {
       .disableRemoveAction()
       .disableUpDownActions()
       .createPanel();
-    myProjectExistLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Project locales", false));
+    myProjectExistLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      PropertiesBundle.message("create.resource.bundle.project.locales.title"), false));
 
     final JBList localesToAddList = new JBList();
 
@@ -299,7 +303,7 @@ public class CreateResourceBundleDialogComponent {
       locales = Collections.emptyList();
       restrictedLocales = ContainerUtil.map(myResourceBundle.getPropertiesFiles(), PropertiesFile::getLocale);
     }
-    myLocalesModel = new CollectionListModel<Locale>(locales) {
+    myLocalesModel = new CollectionListModel<>(locales) {
       @Override
       public void add(@NotNull List<? extends Locale> elements) {
         final List<Locale> currentItems = getItems();
@@ -333,7 +337,7 @@ public class CreateResourceBundleDialogComponent {
             @Nullable
             @Override
             public String getErrorText(String inputString) {
-              return checkInput(inputString) ? null : "Invalid locales";
+              return checkInput(inputString) ? null : PropertiesBundle.message("create.resource.bundle.invalid.locales.error.text");
             }
 
             @Override
@@ -353,9 +357,10 @@ public class CreateResourceBundleDialogComponent {
           myLocalesModel.add(new ArrayList<>(locales.keySet()));
         }
       }
-    }).setAddActionName("Add locales by suffix")
+    }).setAddActionName(PropertiesBundle.message("create.resource.bundle.add.locales.by.suffix.action.text"))
       .disableUpDownActions().createPanel();
-    myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Locales to add", false));
+    myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      PropertiesBundle.message("create.resource.bundle.locales.to.add.chooser.title"), false));
 
     myAddLocaleFromExistButton = new JButton(AllIcons.Actions.Forward);
     new ClickListener(){
@@ -384,7 +389,7 @@ public class CreateResourceBundleDialogComponent {
     });
     myAddLocaleFromExistButton.setEnabled(false);
 
-    myAddAllButton = new JButton("Add All");
+    myAddAllButton = new JButton(PropertiesBundle.message("create.resource.bundle.add.all.btn.text"));
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -398,12 +403,13 @@ public class CreateResourceBundleDialogComponent {
 
   @NotNull
   private ColoredListCellRenderer<Locale> getLocaleRenderer() {
-    return new ColoredListCellRenderer<Locale>() {
+    return new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
         if (PropertiesUtil.DEFAULT_LOCALE == locale) {
-          append("Default locale");
-        } else {
+          append(PropertiesBundle.message("create.resource.bundle.default.locale.presentation"));
+        }
+        else {
           append(myLocaleSuffixes.getOrDefault(locale, locale.toString()));
           append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
@@ -411,7 +417,7 @@ public class CreateResourceBundleDialogComponent {
     };
   }
 
-  private class MyExistLocalesListModel extends AbstractListModel {
+  private final class MyExistLocalesListModel extends AbstractListModel {
     private final List<Locale> myLocales;
 
     private MyExistLocalesListModel() {

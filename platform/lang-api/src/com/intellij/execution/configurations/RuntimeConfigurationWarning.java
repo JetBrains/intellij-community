@@ -2,15 +2,22 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.options.ConfigurationQuickFix;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
 public class RuntimeConfigurationWarning extends RuntimeConfigurationException {
   public RuntimeConfigurationWarning(@DialogMessage String message) {
-    this(message, null);
+    super(message, ExecutionBundle.message("warning.common.title"));
   }
 
-  public RuntimeConfigurationWarning(@DialogMessage String message, final Runnable quickFix) {
+  public RuntimeConfigurationWarning(@DialogMessage String message, @Nullable ConfigurationQuickFix quickFix) {
+    super(message, ExecutionBundle.message("warning.common.title"));
+    setQuickFix(quickFix);
+  }
+
+  public RuntimeConfigurationWarning(@DialogMessage String message, @Nullable Runnable quickFix) {
     super(message, ExecutionBundle.message("warning.common.title"));
     setQuickFix(quickFix);
   }

@@ -1,34 +1,95 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
-import com.intellij.openapi.fileTypes.FileType
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.atomic.AtomicReference
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 
-class IndexingJobStatistics {
-  private val timeBucketSize = 1024
+/**
+ * Accumulates indexing statistics for a set of indexable files.
+ *
+ * This class is not thread-safe. It must be synchronized by the clients.
+ */
+class IndexingJobStatistics(private val project: Project, val fileSetName: String) {
 
-  val timesPerIndexer: ConcurrentMap<String /* ID.name() */, MaxNTimeBucket> = ConcurrentHashMap()
-  val timesPerFileType: ConcurrentMap<String /* File type name */, MaxNTimeBucket> = ConcurrentHashMap()
-  val numberOfFilesPerFileType: ConcurrentMap<String /* File type name */, Int> = ConcurrentHashMap()
-  val contentLoadingTime = AtomicReference<MaxNTimeBucket>()
-  val indexingTime = AtomicReference<MaxNTimeBucket>()
+  var totalIndexingTime: TimeNano = 0
 
-  fun addFileStatistics(fileStatistics: FileIndexingStatistics, fileType: FileType) {
-    fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
-      timesPerIndexer.computeIfAbsent(indexId.name) { MaxNTimeBucket(timeBucketSize, time) }.addTime(time)
+  var numberOfIndexedFiles: Int = 0
+
+  var numberOfFilesFullyIndexedByExtensions: Int = 0
+
+  var numberOfTooLargeForIndexingFiles: Int = 0
+
+  val statsPerIndexer = hashMapOf<String /* ID.name() */, StatsPerIndexer>()
+
+  val statsPerFileType = hashMapOf<String /* File type name */, StatsPerFileType>()
+
+  val indexedFiles = arrayListOf<IndexedFile>()
+
+  data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
+
+  data class StatsPerIndexer(
+    val indexingTime: TimeStats,
+    var numberOfFiles: Int,
+    var numberOfFilesIndexedByExtensions: Int,
+    var totalBytes: BytesNumber
+  )
+
+  data class StatsPerFileType(
+    val indexingTime: TimeStats,
+    val contentLoadingTime: TimeStats,
+    var numberOfFiles: Int,
+    var totalBytes: BytesNumber
+  )
+
+  fun addFileStatistics(
+    file: VirtualFile,
+    fileStatistics: FileIndexingStatistics,
+    contentLoadingTime: Long,
+    fileSize: Long
+  ) {
+    numberOfIndexedFiles++
+    if (fileStatistics.wasFullyIndexedByExtensions) {
+      numberOfFilesFullyIndexedByExtensions++
     }
-    val fileTypeName = fileType.name
-    numberOfFilesPerFileType.compute(fileTypeName) { _, currentNumber -> (currentNumber ?: 0) + 1 }
-    timesPerFileType.computeIfAbsent(fileTypeName) { MaxNTimeBucket(timeBucketSize, fileStatistics.totalTime) }.addTime(fileStatistics.totalTime)
+    (fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes).forEach { (indexId, time) ->
+      val stats = statsPerIndexer.getOrPut(indexId.name) {
+        StatsPerIndexer(TimeStats(), 0, 0, 0)
+      }
+      stats.indexingTime.addTime(time)
+      stats.numberOfFiles++
+      if (indexId in fileStatistics.indexesProvidedByExtensions) {
+        stats.numberOfFilesIndexedByExtensions++
+      }
+      stats.totalBytes += fileSize
+    }
+    val fileTypeName = fileStatistics.fileType.name
+    val stats = statsPerFileType.getOrPut(fileTypeName) {
+      StatsPerFileType(TimeStats(), TimeStats(), 0, 0)
+    }
+    stats.contentLoadingTime.addTime(contentLoadingTime)
+    stats.indexingTime.addTime(fileStatistics.indexingTime)
+    stats.totalBytes += fileSize
+    stats.numberOfFiles++
+    if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+      indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
+    }
   }
 
-  fun addIndexingTime(nanoTime: TimeNano) {
-    indexingTime.updateAndGet { bucket -> bucket ?: MaxNTimeBucket(timeBucketSize, nanoTime) }.addTime(nanoTime)
+  fun addTooLargeForIndexingFile(file: VirtualFile) {
+    numberOfIndexedFiles++
+    numberOfTooLargeForIndexingFiles++
+    if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
+      indexedFiles += IndexedFile(getIndexedFilePath(file), false)
+    }
   }
 
-  fun addContentLoadingTime(nanoTime: TimeNano) {
-    contentLoadingTime.updateAndGet { bucket -> bucket ?: MaxNTimeBucket(timeBucketSize, nanoTime) }.addTime(nanoTime)
+  private fun getIndexedFilePath(file: VirtualFile): PortableFilePath = try {
+    PortableFilePaths.getPortableFilePath(file, project)
   }
+  catch (e: Exception) {
+    PortableFilePath.AbsolutePath(file.url)
+  }
+
 }

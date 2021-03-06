@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -36,7 +37,7 @@ import java.util.List;
  * @author Vassiliy Kudryashov
  */
 public class RunConfigurationBeforeRunProvider
-extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> {
+  extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> implements DumbAware {
   public static final Key<RunConfigurableBeforeRunTask> ID = Key.create("RunConfigurationTask");
 
   private static final Logger LOG = Logger.getInstance(RunConfigurationBeforeRunProvider.class);
@@ -59,21 +60,25 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   public Icon getTaskIcon(RunConfigurableBeforeRunTask task) {
-    if (task.getSettings() == null)
-      return null;
+    if (task.getSettings() == null) return null;
     return ProgramRunnerUtil.getConfigurationIcon(task.getSettings(), false);
   }
 
   @Override
   public String getName() {
-    return ExecutionBundle.message("before.launch.run.another.configuration");
+    return ExecutionBundle.message("before.launch.run.another.configuration.title");
   }
 
   @Override
   public String getDescription(RunConfigurableBeforeRunTask task) {
     Pair<RunnerAndConfigurationSettings, ExecutionTarget> settingsWithTarget = task.getSettingsWithTarget();
-    if (settingsWithTarget == null) {
-      return ExecutionBundle.message("before.launch.run.another.configuration");
+    if (settingsWithTarget.first == null) {
+      if (task.myTypeNameTarget.getName() == null) {
+        return ExecutionBundle.message("before.launch.run.another.configuration");
+      }
+      else {
+        return ExecutionBundle.message("before.launch.run.certain.configuration", task.myTypeNameTarget.getName());
+      }
     }
     else {
       String text = ConfigurationSelectionUtil.getDisplayText(settingsWithTarget.first.getConfiguration(), settingsWithTarget.second);
@@ -127,10 +132,11 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     List<RunnerAndConfigurationSettings> configurations = new ArrayList<>(RunManagerImpl.getInstanceImpl(project).getAllSettings());
     String executorId = DefaultRunExecutor.getRunExecutorInstance().getId();
-    for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext();) {
+    for (Iterator<RunnerAndConfigurationSettings> iterator = configurations.iterator(); iterator.hasNext(); ) {
       RunnerAndConfigurationSettings settings = iterator.next();
-      ProgramRunner<?> runner = ProgramRunner.getRunner(executorId, settings.getConfiguration());
-      if (runner == null || settings.getConfiguration() == runConfiguration) {
+      if (settings.getConfiguration() == runConfiguration ||
+          !settings.getType().isManaged() ||
+          ProgramRunner.getRunner(executorId, settings.getConfiguration()) == null) {
         iterator.remove();
       }
     }
@@ -156,7 +162,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
                              @NotNull final ExecutionEnvironment env,
                              @NotNull RunConfigurableBeforeRunTask task) {
     Pair<RunnerAndConfigurationSettings, ExecutionTarget> settings = task.getSettingsWithTarget();
-    if (settings == null) {
+    if (settings.first == null) {
       return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken
     }
     return doExecuteTask(env, settings.first, settings.second);
@@ -196,6 +202,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     final ExecutionEnvironment environment = builder.target(effectiveTarget).build();
     environment.setExecutionId(env.getExecutionId());
+    env.copyUserDataTo(environment);
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
       return false;
@@ -251,7 +258,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
           targetDone.up();
           LOG.error(e);
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.defaultModalityState());
     }
     catch (Exception e) {
       LOG.error(e);
@@ -272,9 +279,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   public class RunConfigurableBeforeRunTask extends BeforeRunTask<RunConfigurableBeforeRunTask> {
-    private @Nullable TypeNameTarget myTypeNameTarget;
+    private final TypeNameTarget myTypeNameTarget = new TypeNameTarget();
 
-    private @Nullable Pair</*@NotNull*/RunnerAndConfigurationSettings, /*@Nullable*/ExecutionTarget> mySettingsWithTarget;
+    private Pair<@Nullable RunnerAndConfigurationSettings, @Nullable ExecutionTarget> mySettingsWithTarget;
 
     RunConfigurableBeforeRunTask() {
       super(ID);
@@ -283,12 +290,14 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     @Override
     public void writeExternal(@NotNull Element element) {
       super.writeExternal(element);
-      if (myTypeNameTarget != null) {
+      if (myTypeNameTarget.getName() != null) {
         element.setAttribute("run_configuration_name", myTypeNameTarget.getName());
+      }
+      if (myTypeNameTarget.getType() != null) {
         element.setAttribute("run_configuration_type", myTypeNameTarget.getType());
-        if (myTypeNameTarget.getTargetId() != null) {
-          element.setAttribute("run_configuration_target", myTypeNameTarget.getTargetId());
-        }
+      }
+      if (myTypeNameTarget.getTargetId() != null) {
+        element.setAttribute("run_configuration_target", myTypeNameTarget.getTargetId());
       }
     }
 
@@ -296,10 +305,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     public void readExternal(@NotNull Element element) {
       super.readExternal(element);
 
-      String name = element.getAttributeValue("run_configuration_name");
-      String type = element.getAttributeValue("run_configuration_type");
-      String targetId = element.getAttributeValue("run_configuration_target");
-      if (name != null && type != null) myTypeNameTarget = new TypeNameTarget(type, name, targetId);
+      myTypeNameTarget.setName(element.getAttributeValue("run_configuration_name"));
+      myTypeNameTarget.setType(element.getAttributeValue("run_configuration_type"));
+      myTypeNameTarget.setTargetId(element.getAttributeValue("run_configuration_target"));
 
       mySettingsWithTarget = null;
     }
@@ -311,30 +319,44 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         return mySettingsWithTarget.first == settings;
       }
 
-      return myTypeNameTarget != null
-             && settings.getType().getId().equals(myTypeNameTarget.getType())
-             && settings.getName().equals(myTypeNameTarget.getName());
+      return settings.getType().getId().equals(myTypeNameTarget.getType()) &&
+             settings.getName().equals(myTypeNameTarget.getName());
     }
 
-    void init() {
+    private void init() {
       if (mySettingsWithTarget != null) {
         return;
       }
 
-      if (myTypeNameTarget != null) {
-        RunnerAndConfigurationSettings settings = RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(
-          myTypeNameTarget.getType(), myTypeNameTarget.getName());
-        ExecutionTarget target = ((ExecutionTargetManagerImpl)ExecutionTargetManager.getInstance(myProject)).findTargetByIdFor(
-          settings != null ? settings.getConfiguration() : null, myTypeNameTarget.getTargetId());
+      String type = myTypeNameTarget.getType();
+      String name = myTypeNameTarget.getName();
+      String targetId = myTypeNameTarget.getTargetId();
+      RunnerAndConfigurationSettings settings = type != null && name != null
+                                                ? RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(type, name)
+                                                : null;
+      ExecutionTarget target = targetId != null && settings != null
+                               ? ((ExecutionTargetManagerImpl)ExecutionTargetManager.getInstance(myProject))
+                                 .findTargetByIdFor(settings.getConfiguration(), targetId)
+                               : null;
 
-        setSettingsWithTarget(settings, target);
-      }
+      mySettingsWithTarget = Pair.create(settings, target);
     }
 
     public void setSettingsWithTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget target) {
-      mySettingsWithTarget = settings == null ? null : Pair.create(settings, target);
-      myTypeNameTarget = settings == null ? null : new TypeNameTarget(settings.getType().getId(), settings.getName(),
-                                                                      target == null ? null : target.getId());
+      if (settings == null) {
+        mySettingsWithTarget = Pair.empty();
+
+        myTypeNameTarget.setName(null);
+        myTypeNameTarget.setType(null);
+        myTypeNameTarget.setTargetId(null);
+      }
+      else {
+        mySettingsWithTarget = Pair.create(settings, target);
+
+        myTypeNameTarget.setName(settings.getName());
+        myTypeNameTarget.setType(settings.getType().getId());
+        myTypeNameTarget.setTargetId(target != null ? target.getId() : null);
+      }
     }
 
     @Nullable
@@ -342,8 +364,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       return Pair.getFirst(getSettingsWithTarget());
     }
 
-    @Nullable
-    public Pair</*NotNull*/ RunnerAndConfigurationSettings, /*Nullable*/ExecutionTarget> getSettingsWithTarget() {
+    private @NotNull Pair<@Nullable RunnerAndConfigurationSettings, @Nullable ExecutionTarget> getSettingsWithTarget() {
       init();
       return mySettingsWithTarget;
     }
@@ -362,7 +383,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     @Override
     public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (myTypeNameTarget != null ? myTypeNameTarget.hashCode() : 0);
+      result = 31 * result + myTypeNameTarget.hashCode();
       return result;
     }
   }

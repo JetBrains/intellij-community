@@ -25,6 +25,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class PathMacroManagerTest {
@@ -57,12 +60,17 @@ public class PathMacroManagerTest {
     };
   }
 
-  private MockModule createModule(String basePath) {
+  private MockModule createModule(@NotNull String basePath) {
     MockProject project = createProject(basePath);
     return new MockModule(project) {
       @Override
-      public @NotNull String getModuleFilePath() {
-        return project.getBasePath() + "/module/module.iml";
+      public @NotNull Path getModuleNioFile() {
+        return Paths.get(project.getBasePath()).resolve("module/module.iml");
+      }
+
+      @Override
+      public @SystemIndependent @NotNull String getModuleFilePath() {
+        return basePath + "/module/module.iml";
       }
     };
   }
@@ -109,7 +117,7 @@ public class PathMacroManagerTest {
     ReplacePathToMacroMap map = new ProjectPathMacroManager(createProject("/home/user/foo")).getReplacePathMap();
     String src = "-Dfoo=/home/user/foo/bar/home -Dbar=\"/home/user\"";
     String dst = "-Dfoo=$PROJECT_DIR$/bar/home -Dbar=\"$PROJECT_DIR$/..\"";
-    assertThat(map.substituteRecursively(src, true)).isEqualTo(dst);
+    assertThat(map.substituteRecursively(src, true).toString()).isEqualTo(dst);
   }
 
   @Test

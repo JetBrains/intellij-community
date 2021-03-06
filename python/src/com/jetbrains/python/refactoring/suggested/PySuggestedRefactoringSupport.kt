@@ -5,18 +5,56 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.util.hasErrorElementInRange
 import com.intellij.refactoring.suggested.*
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyParameter
+import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiUtil
 
 class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
-  override fun isDeclaration(psiElement: PsiElement): Boolean {
-    return psiElement is PsiNameIdentifierOwner &&
-           !PyiUtil.isOverload(psiElement, TypeEvalContext.codeAnalysis(psiElement.project, psiElement.containingFile))
+  companion object {
+    internal fun isAvailableForChangeSignature(element: PsiElement): Boolean {
+      return element is PyFunction &&
+             element.name.let { it != null && PyNames.isIdentifier(it) } &&
+             element.property == null &&
+             !shouldBeSuppressed(element)
+    }
+
+    internal fun defaultValue(parameter: SuggestedRefactoringSupport.Parameter): String? {
+      return (parameter.additionalData as? ParameterData)?.defaultValue
+    }
+
+    internal fun isAvailableForRename(element: PsiElement): Boolean {
+      return element is PsiNameIdentifierOwner &&
+             element.name.let { it != null && PyNames.isIdentifier(it) } &&
+             (element !is PyParameter || containingFunction(element).let { it != null && !isAvailableForChangeSignature(it) }) &&
+             !shouldBeSuppressed(element)
+    }
+
+    private fun shouldBeSuppressed(element: PsiElement): Boolean {
+      if (PyiUtil.isInsideStub(element)) return true
+      if (element is PyElement && PyiUtil.getPythonStub(element) != null) return true
+      if (PyiUtil.isOverload(element, TypeEvalContext.codeAnalysis(element.project, element.containingFile))) return true
+
+      return false
+    }
+
+    private fun containingFunction(parameter: PyParameter): PyFunction? {
+      return (parameter.parent as? PyParameterList)?.containingFunction
+    }
   }
 
-  override fun signatureRange(declaration: PsiElement): TextRange? = nameRange(declaration)
+  override fun isDeclaration(psiElement: PsiElement): Boolean = findSupport(psiElement) != null
+
+  override fun signatureRange(declaration: PsiElement): TextRange? = findSupport(declaration)!!.signatureRange(declaration)?.takeIf {
+    !declaration.containingFile.hasErrorElementInRange(it)
+  }
 
   override fun importsRange(psiFile: PsiFile): TextRange? = null
 
@@ -26,15 +64,41 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   override fun isIdentifierPart(c: Char): Boolean = isIdentifierStart(c) || Character.isDigit(c)
 
-  override val stateChanges: SuggestedRefactoringStateChanges
-    get() = SuggestedRefactoringStateChanges.RenameOnly(this)
+  override val stateChanges: SuggestedRefactoringStateChanges = PySuggestedRefactoringStateChanges(this)
 
-  override val availability: SuggestedRefactoringAvailability
-    get() = SuggestedRefactoringAvailability.RenameOnly(this)
+  override val availability: SuggestedRefactoringAvailability = PySuggestedRefactoringAvailability(this)
 
-  override val ui: SuggestedRefactoringUI
-    get() = SuggestedRefactoringUI.RenameOnly
+  override val ui: SuggestedRefactoringUI = PySuggestedRefactoringUI
 
-  override val execution: SuggestedRefactoringExecution
-    get() = SuggestedRefactoringExecution.RenameOnly(this)
+  override val execution: SuggestedRefactoringExecution = PySuggestedRefactoringExecution(this)
+
+  internal data class ParameterData(val defaultValue: String?) : SuggestedRefactoringSupport.ParameterAdditionalData
+
+  private fun findSupport(declaration: PsiElement): SupportInternal? {
+    return sequenceOf(ChangeSignatureSupport, RenameSupport(this)).firstOrNull { it.isApplicable(declaration) }
+  }
+
+  private interface SupportInternal {
+
+    fun isApplicable(element: PsiElement): Boolean
+    fun signatureRange(declaration: PsiElement): TextRange?
+  }
+
+  private object ChangeSignatureSupport : SupportInternal {
+
+    override fun isApplicable(element: PsiElement): Boolean = isAvailableForChangeSignature(element)
+
+    override fun signatureRange(declaration: PsiElement): TextRange? {
+      declaration as PyFunction
+      val name = declaration.nameIdentifier ?: return null
+      val colon = declaration.node.findChildByType(PyTokenTypes.COLON) ?: return null
+      return TextRange.create(name.startOffset, colon.startOffset)
+    }
+  }
+
+  private class RenameSupport(private val mainSupport: PySuggestedRefactoringSupport) : SupportInternal {
+
+    override fun isApplicable(element: PsiElement): Boolean = isAvailableForRename(element)
+    override fun signatureRange(declaration: PsiElement): TextRange? = mainSupport.nameRange(declaration)
+  }
 }

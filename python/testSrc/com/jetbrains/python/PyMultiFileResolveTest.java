@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
@@ -16,6 +17,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -90,7 +93,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testCustomPackageIdentifier() {
-    PyCustomPackageIdentifier.EP_NAME.getPoint(null).registerExtension(new PyCustomPackageIdentifier() {
+    PyCustomPackageIdentifier.EP_NAME.getPoint().registerExtension(new PyCustomPackageIdentifier() {
       @Override
       public boolean isPackage(PsiDirectory directory) {
         return true;
@@ -491,6 +494,21 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     doTestResolveInNamespacePackage(getTestName(true));
   }
 
+  // PY-39748
+  public void testPkgResourcesNamespaceWithDocstring() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-39748
+  public void testTryExceptNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
+  // PY-39748
+  public void testTryExceptMultilineNamespace() {
+    doTestResolveInNamespacePackage(getTestName(true));
+  }
+
   private void doTestResolveInNamespacePackage(String namespace) {
     myFixture.copyDirectoryToProject(namespace, "");
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
@@ -515,7 +533,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
       final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
       PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
-      PyImportResolver.EP_NAME.getPoint(null).registerExtension(foreignResolver, getTestRootDisposable());
+      PyImportResolver.EP_NAME.getPoint().registerExtension(foreignResolver, getTestRootDisposable());
 
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
@@ -610,6 +628,18 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
       runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
         assertResolvesTo(PyFunction.class, "func");
+      });
+    });
+  }
+
+  // PY-45541
+  public void testCanonicalNameOfNumpyNdarray() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        PyClass ndarrayClass = PyClassNameIndex.findClass("numpy.core._multiarray_umath.ndarray", myFixture.getProject());
+        QualifiedName canonicalImportPath = QualifiedNameFinder.findCanonicalImportPath(ndarrayClass, null);
+        assertEquals(QualifiedName.fromDottedString("numpy"), canonicalImportPath);
       });
     });
   }

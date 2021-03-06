@@ -23,8 +23,11 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
   private int myWidth;
   private int myHeight;
 
+  /**
+   * @use {@link com.intellij.ui.icons.RowIcon.Alignment instead}
+   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public enum Alignment {TOP, CENTER, BOTTOM}
 
   private final Icon @NotNull [] myIcons;
@@ -39,8 +42,11 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     this(iconCount, com.intellij.ui.icons.RowIcon.Alignment.TOP);
   }
 
+  /**
+   * @deprecated use {@link #RowIcon(int, com.intellij.ui.icons.RowIcon.Alignment)} instead
+   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public RowIcon(int iconCount, Alignment alignment) {
     com.intellij.ui.icons.RowIcon.Alignment a = null;
     if (alignment == Alignment.TOP) {

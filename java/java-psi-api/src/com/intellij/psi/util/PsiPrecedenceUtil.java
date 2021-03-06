@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PsiPrecedenceUtil {
+public final class PsiPrecedenceUtil {
   public static final int PARENTHESIZED_PRECEDENCE = 0;
   public static final int LITERAL_PRECEDENCE = 0;
   public static final int METHOD_CALL_PRECEDENCE = 1;
@@ -170,7 +170,7 @@ public class PsiPrecedenceUtil {
     return child == null || areParenthesesNeeded(child, (PsiExpression)parent, ignoreClarifyingParentheses);
   }
 
-  public static boolean areParenthesesNeeded(PsiExpression expression, 
+  public static boolean areParenthesesNeeded(PsiExpression expression,
                                              PsiExpression parentExpression,
                                              boolean ignoreClarifyingParentheses) {
     if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayInitializerExpression) {
@@ -211,16 +211,13 @@ public class PsiPrecedenceUtil {
       if (childType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
           !PsiTreeUtil.isAncestor(parentPolyadicExpression.getOperands()[0], childPolyadicExpression, true)) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
-        for (PsiExpression operand : operands) {
-          if (!childType.equals(operand.getType())) {
-            return true;
-          }
-        }
+        return !childType.equals(operands[0].getType()) && !childType.equals(operands[1].getType());
       }
       else if (childType.equals(PsiType.BOOLEAN)) {
         final PsiExpression[] operands = childPolyadicExpression.getOperands();
         for (PsiExpression operand : operands) {
-          if (!PsiType.BOOLEAN.equals(operand.getType())) {
+          PsiType operandType = operand.getType();
+          if (operandType != null && !PsiType.BOOLEAN.equals(operandType)) {
             return true;
           }
         }
@@ -267,7 +264,9 @@ public class PsiPrecedenceUtil {
       return precedence1 >= precedence2 || !isCommutativeOperator(newOperatorToken);
     }
     else {
-      return rhs instanceof PsiConditionalExpression;
+      return rhs instanceof PsiConditionalExpression ||
+             rhs instanceof PsiAssignmentExpression ||
+             rhs instanceof PsiInstanceOfExpression;
     }
   }
 }

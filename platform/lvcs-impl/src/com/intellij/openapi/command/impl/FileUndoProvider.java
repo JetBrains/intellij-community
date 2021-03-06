@@ -45,12 +45,13 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     myProject = project;
     if (myProject == null) return;
 
-    LocalHistoryImpl localHistory = LocalHistoryImpl.getInstanceImpl();
-    myLocalHistory = localHistory.getFacade();
-    myGateway = localHistory.getGateway();
+    @NotNull LocalHistory localHistory = LocalHistory.getInstance();
+    if (!(localHistory instanceof LocalHistoryImpl)) return;
+    myLocalHistory = ((LocalHistoryImpl)localHistory).getFacade();
+    myGateway = ((LocalHistoryImpl)localHistory).getGateway();
     if (myLocalHistory == null || myGateway == null) return; // local history was not initialized (e.g. in headless environment)
 
-    localHistory.addVFSListenerAfterLocalHistoryOne(this, project);
+    ((LocalHistoryImpl)localHistory).addVFSListenerAfterLocalHistoryOne(this, project);
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {
       @Override
       public void changeAdded(Change c) {
@@ -156,7 +157,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private static boolean isUndoable(@NotNull VFileEvent e, @NotNull VirtualFile file) {
-    return !e.isFromRefresh() || file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
+    return !e.isFromRefresh() || UndoUtil.isForceUndoFlagSet(file);
   }
 
   private void registerUndoableAction(@NotNull VirtualFile file) {

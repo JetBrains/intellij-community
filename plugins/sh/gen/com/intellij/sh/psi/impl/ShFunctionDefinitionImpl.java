@@ -20,6 +20,7 @@ public class ShFunctionDefinitionImpl extends ShFunctionDefinitionMixin implemen
     visitor.visitFunctionDefinition(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
@@ -29,6 +30,12 @@ public class ShFunctionDefinitionImpl extends ShFunctionDefinitionMixin implemen
   @Nullable
   public ShBlock getBlock() {
     return findChildByClass(ShBlock.class);
+  }
+
+  @Override
+  @Nullable
+  public ShParenthesesBlock getParenthesesBlock() {
+    return findChildByClass(ShParenthesesBlock.class);
   }
 
   @Override

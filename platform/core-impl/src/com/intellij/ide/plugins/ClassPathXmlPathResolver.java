@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,20 +24,23 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
     this.classLoader = classLoader;
   }
 
-  @NotNull
   @Override
-  public List<String> createNewStack(@Nullable Path base) {
-    List<String> stack = new ArrayList<>(2);
+  public boolean isFlat() {
+    return true;
+  }
+
+  @Override
+  public @NotNull List<String> createNewStack(@Nullable Path base) {
+    List<@NonNls String> stack = new ArrayList<>(2);
     stack.add("META-INF");
     return stack;
   }
 
-  @NotNull
   @Override
-  public Element resolvePath(@NotNull List<String> bases,
-                             @NotNull String relativePath,
-                             @Nullable String base,
-                             @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
+  public @NotNull Element loadXIncludeReference(@NotNull List<String> bases,
+                                                @NotNull String relativePath,
+                                                @Nullable String base,
+                                                @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
     String path;
     if (relativePath.charAt(0) != '/') {
       if (base == null) {
@@ -67,9 +70,9 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
     }
   }
 
-  @NotNull
   @Override
-  public Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException {
+  public @NotNull Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
+    throws IOException, JDOMException {
     String path;
     if (relativePath.charAt(0) == '/') {
       path = relativePath.substring(1);
@@ -79,7 +82,8 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
         PluginManagerCore.getLogger().error("Do not use prefix ./: " + relativePath);
         relativePath = relativePath.substring(2);
       }
-      path = "META-INF/" + relativePath;
+
+      path = relativePath.startsWith("intellij.") ? relativePath : "META-INF/" + relativePath;
     }
 
     InputStream stream = classLoader.getResourceAsStream(path);

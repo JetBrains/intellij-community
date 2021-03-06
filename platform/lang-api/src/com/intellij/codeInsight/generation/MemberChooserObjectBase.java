@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -15,14 +16,14 @@ import javax.swing.*;
  * @author peter
 */
 public class MemberChooserObjectBase implements MemberChooserObject {
-  private final String myText;
+  private final @NlsContexts.Label String myText;
   private final Icon myIcon;
 
-  public MemberChooserObjectBase(@Nullable final String text) {
+  public MemberChooserObjectBase(@Nullable final @NlsContexts.Label String text) {
     this(text, null);
   }
 
-  public MemberChooserObjectBase(@Nullable final String text, @Nullable final Icon icon) {
+  public MemberChooserObjectBase(@Nullable final @NlsContexts.Label String text, @Nullable final Icon icon) {
     myText = StringUtil.notNullize(text);
     myIcon = icon;
   }

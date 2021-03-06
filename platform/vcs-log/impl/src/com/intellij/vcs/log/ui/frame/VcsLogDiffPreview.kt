@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -15,22 +16,38 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.CommonUiProperties
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
+import kotlin.math.roundToInt
 
 private fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
-                                      parent: Disposable,
-                                      showDiffPreview: (Boolean) -> Unit) {
+                                              parent: Disposable,
+                                              showDiffPreview: (Boolean) -> Unit) =
+  onBooleanPropertyChange(uiProperties, CommonUiProperties.SHOW_DIFF_PREVIEW, parent, showDiffPreview)
+
+
+private fun toggleDiffPreviewOrientationOnPropertyChange(uiProperties: VcsLogUiProperties,
+                                                         parent: Disposable,
+                                                         changeShowDiffPreviewOrientation: (Boolean) -> Unit) =
+  onBooleanPropertyChange(uiProperties, MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT, parent, changeShowDiffPreviewOrientation)
+
+
+private fun onBooleanPropertyChange(uiProperties: VcsLogUiProperties,
+                                    property: VcsLogUiProperty<Boolean>,
+                                    parent: Disposable,
+                                    onPropertyChangeAction: (Boolean) -> Unit) {
   val propertiesChangeListener: PropertiesChangeListener = object : PropertiesChangeListener {
-    override fun <T> onPropertyChanged(property: VcsLogUiProperty<T>) {
-      if (CommonUiProperties.SHOW_DIFF_PREVIEW == property) {
-        showDiffPreview(uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW))
+    override fun <T> onPropertyChanged(p: VcsLogUiProperty<T>) {
+      if (property == p) {
+        onPropertyChangeAction(uiProperties.get(property))
       }
     }
   }
@@ -50,10 +67,10 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
     get() = previewDiffSplitter
 
   init {
-    previewDiffSplitter.setHonorComponentsMinimumSize(false)
     previewDiffSplitter.firstComponent = mainComponent
 
-    toggleDiffPreviewOnPropertyChange(uiProperties, previewDiff, this::showDiffPreview)
+    toggleDiffPreviewOnPropertyChange(uiProperties, previewDiff, ::showDiffPreview)
+    toggleDiffPreviewOrientationOnPropertyChange(uiProperties, previewDiff, ::changeDiffPreviewOrientation)
     invokeLater { showDiffPreview(uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) }
   }
 
@@ -61,7 +78,17 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
 
   private fun showDiffPreview(state: Boolean) {
     previewDiffSplitter.secondComponent = if (state) previewDiff.component else null
+    previewDiffSplitter.secondComponent?.let {
+      val defaultMinimumSize = it.minimumSize
+      val actionButtonSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
+      it.minimumSize = JBUI.size(defaultMinimumSize.width.coerceAtMost((actionButtonSize.width * 1.5f).roundToInt()),
+                                 defaultMinimumSize.height.coerceAtMost((actionButtonSize.height * 1.5f).roundToInt()))
+    }
     updatePreview(state)
+  }
+
+  private fun changeDiffPreviewOrientation(bottom: Boolean) {
+    previewDiffSplitter.orientation = bottom
   }
 }
 
@@ -127,5 +154,9 @@ private fun openPreviewInEditor(project: Project, diffPreviewProvider: DiffPrevi
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true) }, false)
   }
-  EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false, escapeHandler)
+
+  val editors = EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false)
+  for (editor in editors) {
+    EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
+  }
 }

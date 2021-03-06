@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
@@ -26,70 +27,38 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-/**
- * Class is not final since it is overridden in Upsource
- */
-public class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
+public final class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
+  private final @NotNull NotNullComputable<byte[]> myContentComputable;
   private Charset myCharset;
   private byte[] myContent;
   private CharSequence myContentAsText;
-  private final long myStamp;
-  private byte[] myFileContentHash;
+  private byte[] myIndexedFileHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, long documentStamp) {
-    this(file, contentAsText, null, documentStamp, false);
-  }
-
-  public FileContentImpl(@NotNull final VirtualFile file, final byte @NotNull [] content) {
-    this(file, null, content, -1, true);
-  }
-
   private FileContentImpl(@NotNull VirtualFile file,
-                          CharSequence contentAsText,
-                          byte[] content,
-                          long stamp,
+                          @NotNull FileType fileType,
+                          @Nullable CharSequence contentAsText,
+                          @NotNull NotNullComputable<byte[]> contentComputable,
                           boolean physicalContent) {
-    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content), null);
+    super(file, fileType, null);
     myContentAsText = contentAsText;
-    myContent = content;
-    myStamp = stamp;
+    myContentComputable = contentComputable;
     myPhysicalContent = physicalContent;
   }
 
   private static final Key<PsiFile> CACHED_PSI = Key.create("cached psi from content");
 
-  @NotNull
-  @Override
-  public PsiFile getPsiFile() {
-    return getPsiFileForPsiDependentIndex();
-  }
-
-  @NotNull
-  private PsiFile getFileFromText() {
-    PsiFile psi = getUserData(IndexingDataKeys.PSI_FILE);
-
-    if (psi == null) {
-      psi = getUserData(CACHED_PSI);
-    }
-
-    if (psi == null) {
-      psi = createFileFromText(getContentAsText());
-      psi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
-      putUserData(CACHED_PSI, psi);
-    }
-    return psi;
-  }
+  private static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
 
   @Override
   @NotNull
   public LighterAST getLighterAST() {
-    LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
+    LighterAST lighterAST = getUserData(LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFile().getNode();
       lighterAST = myLighterASTShouldBeThreadSafe ? new TreeBackedLighterAST(node) : node.getLighterAST();
-      putUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY, lighterAST);
+      putUserData(LIGHTER_AST_NODE_KEY, lighterAST);
     }
     return lighterAST;
   }
@@ -102,17 +71,17 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     myLighterASTShouldBeThreadSafe = true;
   }
 
-  public PsiFile createFileFromText(@NotNull CharSequence text) {
+  private PsiFile createFileFromText(@NotNull CharSequence text) {
     Project project = getProject();
     if (project == null) {
       project = DefaultProjectFactory.getInstance().getDefaultProject();
     }
-    FileType fileType = getFileTypeWithoutSubstitution();
+    FileType fileType = getFileTypeWithoutSubstitution(this);
     if (!(fileType instanceof LanguageFileType)) {
-      throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass()  + "." +
+      throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass() + "." +
                                "\nPlease use a proper FileBasedIndexExtension#getInputFilter() implementation for the caller index");
     }
-    return createFileFromText(project, text, (LanguageFileType)fileType, myFile, myFileName);
+    return createFileFromText(project, text, (LanguageFileType)fileType, myFile, getFileName());
   }
 
   @NotNull
@@ -120,7 +89,9 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
                                            @NotNull VirtualFile file, @NotNull String fileName) {
     final Language language = fileType.getLanguage();
     final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(fileName, substitutedLanguage, text, false, false, false, file);
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
+      fileName, substitutedLanguage, text, false, false, false, file
+    );
     if (psiFile == null) {
       throw new IllegalStateException("psiFile is null. language = " + language.getID() +
                                       ", substitutedLanguage = " + substitutedLanguage.getID());
@@ -128,41 +99,38 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return psiFile;
   }
 
-  public static class IllegalDataException extends RuntimeException {
-    IllegalDataException(final String message) {
-      super(message);
-    }
+  public static @NotNull FileContent createByContent(@NotNull VirtualFile file, byte @NotNull [] content) {
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file, content);
+    return new FileContentImpl(file, fileType, null, () -> content, true);
   }
 
-  public static FileContent createByFile(@NotNull VirtualFile file) throws IOException {
+  public static @NotNull FileContent createByContent(@NotNull VirtualFile file,
+                                                         @NotNull NotNullComputable<byte[]> contentComputable) {
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
+    return new FileContentImpl(file, fileType, null, contentComputable, true);
+  }
+
+  public static @NotNull FileContent createByFile(@NotNull VirtualFile file) throws IOException {
     return createByFile(file, null);
   }
 
-  public static FileContent createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
-    FileContentImpl content = new FileContentImpl(file, file.contentsToByteArray());
+  public static @NotNull FileContent createByFile(@NotNull VirtualFile file, @Nullable Project project) throws IOException {
+    FileContentImpl content = (FileContentImpl)createByContent(file, file.contentsToByteArray(false));
     if (project != null) {
       content.setProject(project);
     }
     return content;
   }
 
-  @ApiStatus.Internal
-  @NotNull
-  public FileType getFileTypeWithoutSubstitution() {
-    FileType fileType = getFileType();
-    return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile getFile() {
-    return myFile;
-  }
-
-  @NotNull
-  @Override
-  public String getFileName() {
-    return myFileName;
+  public static @NotNull FileContent createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText) {
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
+    return new FileContentImpl(file,
+                               fileType,
+                               contentAsText,
+                               () -> {
+                                 throw new IllegalStateException("Content must be converted from 'contentAsText'");
+                               },
+                               false);
   }
 
   @NotNull
@@ -174,40 +142,49 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return charset;
   }
 
-  public long getStamp() {
-    return myStamp;
-  }
-
   public boolean isPhysicalContent() {
     return myPhysicalContent;
   }
 
   @Override
   public byte @NotNull [] getContent() {
-    byte[] content = myContent;
-    if (content == null) {
-      myContent = content = myContentAsText.toString().getBytes(getCharset());
+    if (myContent == null) {
+      if (myContentAsText != null) {
+        myContent = myContentAsText.toString().getBytes(getCharset());
+      } else {
+        myContent = myContentComputable.compute();
+        FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
+        if (!unsubstitutedFileType.isBinary()) {
+          // Normalize line-separators for textual files to ensure
+          // consistency of getContent() and getContentAsText(): both must return \n.
+          // It calls getContent() internally and assigns the myContent to null.
+          myContent = getContentAsText().toString().getBytes(getCharset());
+        }
+      }
     }
-    return content;
+    return myContent;
   }
 
   @NotNull
   @Override
   public CharSequence getContentAsText() {
-    FileType unsubstitutedFileType = getFileTypeWithoutSubstitution();
+    FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
     if (unsubstitutedFileType.isBinary()) {
-      throw new IllegalDataException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
+      throw new UnsupportedOperationException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
     final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
-    if (content != null) {
-      return content;
+    try {
+      if (content != null) {
+        return content;
+      }
+      if (myContentAsText == null) {
+        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile);
+      }
+      return myContentAsText;
+    } finally {
+      // Help GC. Indexes expect either getContent() or getContentAsText().
+      myContent = null;
     }
-    CharSequence contentAsText = myContentAsText;
-    if (contentAsText == null) {
-      myContentAsText = contentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myFile);
-      myContent = null; // help gc, indices are expected to use bytes or chars but not both
-    }
-    return contentAsText;
   }
 
   @Override
@@ -215,25 +192,20 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return "FileContentImpl(" + getFileName() + ")";
   }
 
-  public byte @Nullable [] getHash() {
+  public byte @Nullable [] getIndexedFileHash() {
     if (!myPhysicalContent) {
       throw new IllegalStateException("Hashes are allowed only while physical changes indexing");
     }
-    return myFileContentHash;
+    return myIndexedFileHash;
   }
 
-  public void setHashes(byte @NotNull [] fileContentHash) {
-    myFileContentHash = fileContentHash;
+  public void setIndexedFileHash(byte @NotNull [] fileContentHash) {
+    myIndexedFileHash = fileContentHash;
   }
 
-  /**
-   * @deprecated use {@link FileContent#getPsiFile()}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Override
   @NotNull
-  public PsiFile getPsiFileForPsiDependentIndex() {
-    PsiFile psi = null;
+  public PsiFile getPsiFile() {
     if (!myPhysicalContent) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
 
@@ -242,20 +214,29 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
         if (psiDocumentManager.isUncommited(document)) {
           PsiFile existingPsi = psiDocumentManager.getPsiFile(document);
           if (existingPsi != null) {
-            psi = existingPsi;
+            return existingPsi;
           }
         }
       }
     }
-    if (psi == null) {
-      psi = getFileFromText();
+    PsiFile explicitPsi = getUserData(IndexingDataKeys.PSI_FILE);
+    if (explicitPsi != null) {
+      return explicitPsi;
     }
-    return psi;
+    PsiFile cachedPsi = getUserData(CACHED_PSI);
+    if (cachedPsi != null) {
+      return cachedPsi;
+    }
+    PsiFile createdPsi = createFileFromText(getContentAsText());
+    createdPsi.putUserData(IndexingDataKeys.VIRTUAL_FILE, getFile());
+    putUserData(CACHED_PSI, createdPsi);
+    return createdPsi;
   }
 
-  @Override
-  public Project getProject() {
-    Project project = super.getProject();
-    return project != null ? project : getUserData(IndexingDataKeys.PROJECT);
+  @ApiStatus.Internal
+  @NotNull
+  public static FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
+    FileType fileType = indexedFile.getFileType();
+    return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }
 }

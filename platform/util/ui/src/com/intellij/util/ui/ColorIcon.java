@@ -15,13 +15,19 @@ import static java.lang.Math.ceil;
 public class ColorIcon extends EmptyIcon {
   private final Color myColor;
   private final boolean myBorder;
-  private final int myColorSize;
+  private final int myColorWidth;
+  private final int myColorHeight;
+
+  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, final boolean border) {
+    super(width, height);
+    myColor = color;
+    myColorWidth = colorWidth;
+    myColorHeight = colorHeight;
+    myBorder = border;
+  }
 
   public ColorIcon(int size, int colorSize, @NotNull Color color, final boolean border) {
-    super(size, size);
-    myColor = color;
-    myColorSize = colorSize;
-    myBorder = border;
+    this(size, size, colorSize, colorSize, color, border);
   }
 
   public ColorIcon(int size, @NotNull Color color, final boolean border) {
@@ -36,7 +42,8 @@ public class ColorIcon extends EmptyIcon {
     super(icon);
     myColor = icon.myColor;
     myBorder = icon.myBorder;
-    myColorSize = icon.myColorSize;
+    myColorWidth = icon.myColorWidth;
+    myColorHeight = icon.myColorHeight;
   }
 
   @NotNull
@@ -55,20 +62,25 @@ public class ColorIcon extends EmptyIcon {
     final int iconHeight = getIconHeight();
     g.setColor(getIconColor());
 
-    final int size = getColorSize();
-    final int x = i + (iconWidth - size) / 2;
-    final int y = j + (iconHeight - size) / 2;
+    final int width = getColorWidth();
+    final int height = getColorHeight();
+    final int x = i + (iconWidth - width) / 2;
+    final int y = j + (iconHeight - height) / 2;
 
-    g.fillRect(x, y, size, size);
+    g.fillRect(x, y, width, height);
 
     if (myBorder) {
       g.setColor(Gray.x00.withAlpha(40));
-      g.drawRect(x, y, size, size);
+      g.drawRect(x, y, width, height);
     }
   }
 
-  private int getColorSize() {
-    return (int)ceil(scaleVal(myColorSize));
+  private int getColorWidth() {
+    return (int)ceil(scaleVal(myColorWidth));
+  }
+
+  private int getColorHeight() {
+    return (int)ceil(scaleVal(myColorHeight));
   }
 
   @Override
@@ -80,7 +92,8 @@ public class ColorIcon extends EmptyIcon {
     ColorIcon icon = (ColorIcon)o;
 
     if (myBorder != icon.myBorder) return false;
-    if (myColorSize != icon.myColorSize) return false;
+    if (myColorWidth != icon.myColorWidth) return false;
+    if (myColorHeight != icon.myColorHeight) return false;
     if (!Objects.equals(myColor, icon.myColor)) return false;
 
     return true;
@@ -91,7 +104,8 @@ public class ColorIcon extends EmptyIcon {
     int result = super.hashCode();
     result = 31 * result + (myColor != null ? myColor.hashCode() : 0);
     result = 31 * result + (myBorder ? 1 : 0);
-    result = 31 * result + myColorSize;
+    result = 31 * result + myColorWidth;
+    result = 31 * result + myColorHeight;
     return result;
   }
 }

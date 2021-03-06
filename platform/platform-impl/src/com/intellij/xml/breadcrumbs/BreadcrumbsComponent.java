@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.containers.ContainerUtil;
@@ -532,7 +533,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
 
     @Nullable
-    public String getTooltipText() {
+    public @NlsContexts.Tooltip String getTooltipText() {
       final BreadcrumbsItem element = getItem();
       if (element != null) {
         return element.getTooltip();
@@ -684,7 +685,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
       final int w = fm.stringWidth(s);
-      return new Dimension(w > maxWidth ? maxWidth : w, fm.getHeight());
+      return new Dimension(Math.min(w, maxWidth), fm.getHeight());
     }
 
   }
@@ -742,7 +743,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     @NotNull
     Dimension getSize(@NotNull @NonNls final String s, @NotNull final FontMetrics fm, final int maxWidth) {
       final int width = fm.stringWidth(s) + ROUND_VALUE * 2;
-      return new Dimension(width > maxWidth ? maxWidth : width, fm.getHeight() + 4);
+      return new Dimension(Math.min(width, maxWidth), fm.getHeight() + 4);
     }
   }
 }

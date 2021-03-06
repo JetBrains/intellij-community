@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.render;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,6 @@ import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
-import java.awt.Container;
 import java.awt.Rectangle;
 import java.util.Collection;
 
@@ -34,12 +34,11 @@ public final class RenderingHelper {
   public RenderingHelper(@NotNull JComponent component) {
     myViewBounds = new Rectangle(component.getWidth(), component.getHeight());
     myHintIndex = getExpandableHintIndex(component);
-    Container parent = component.getParent();
-    if (parent instanceof JViewport) {
-      myViewBounds.setBounds(-component.getX(), -component.getY(), parent.getWidth(), parent.getHeight());
-      parent = parent.getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
+    JViewport viewport = ComponentUtil.getViewport(component);
+    if (viewport != null) {
+      myViewBounds.setBounds(-component.getX(), -component.getY(), viewport.getWidth(), viewport.getHeight());
+      JScrollPane pane = ComponentUtil.getScrollPane(viewport);
+      if (pane != null) {
         JScrollBar hsb = pane.getHorizontalScrollBar();
         if (hsb != null && hsb.isVisible()) {
           myShrinkingDisabled = isClientPropertyFalse(component, SHRINK_LONG_RENDERER, false);

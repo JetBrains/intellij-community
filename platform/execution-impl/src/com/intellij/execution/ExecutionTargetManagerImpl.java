@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +232,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     List<ExecutionTargetProvider> providers = ExecutionTargetProvider.EXTENSION_NAME.getExtensionList();
     LinkedHashSet<ExecutionTarget> result = new LinkedHashSet<>();
 
-    Set<ExecutionTarget> specifiedTargets = new THashSet<>();
+    Set<ExecutionTarget> specifiedTargets = new HashSet<>();
     doWithEachNonCompoundWithSpecifiedTarget(configuration, (subConfiguration, executionTarget) -> {
       for (ExecutionTargetProvider eachTargetProvider : providers) {
         List<ExecutionTarget> supportedTargets = eachTargetProvider.getTargets(myProject, subConfiguration);
@@ -259,7 +258,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   }
 
   private boolean doWithEachNonCompoundWithSpecifiedTarget(@NotNull RunConfiguration configuration, @NotNull BiPredicate<? super RunConfiguration, ? super ExecutionTarget> action) {
-    Set<RunConfiguration> recursionGuard = new THashSet<>();
+    Set<RunConfiguration> recursionGuard = new HashSet<>();
     LinkedList<Pair<RunConfiguration, ExecutionTarget>> toProcess = new LinkedList<>();
     toProcess.add(Pair.create(configuration, null));
 

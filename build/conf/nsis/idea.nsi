@@ -1,5 +1,3 @@
-!verbose 2
-
 Unicode true
 ManifestDPIAware true
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
@@ -44,8 +42,6 @@ Var productDir
 Var silentMode
 Var pathEnvVar
 Var requiredDiskSpace
-Var bundledJavaPath
-Var regenerationSharedArchive
 
 ; position of controls for Uninstall Old Installations dialog
 Var control_fields
@@ -566,9 +562,7 @@ FunctionEnd
 ; languages
 ;------------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
-;!insertmacro MUI_LANGUAGE "Japanese"
 !include "idea_en.nsi"
-;!include "idea_jp.nsi"
 
 !ifdef LICENSE_FILE
 LicenseLangString myLicenseData ${LANG_ENGLISH} "${LICENSE_FILE}.txt"
@@ -619,7 +613,7 @@ Function silentConfigReader
   ${LogText} "  config file: $R1"
 
   ${ConfigRead} "$R1" "mode=" $R0
-  IfErrors no_silent_config
+  IfErrors bad_silent_config
   ${LogText} "  mode: $R0"
   StrCpy $silentMode "user"
   IfErrors launcher_32
@@ -658,17 +652,10 @@ update_context_menu:
 download_jbr_x86:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
-  IfErrors regeneration_shared_archive
+  IfErrors associations
   ${LogText} "  download x86 runtime: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
-
-regeneration_shared_archive:
-  ClearErrors
-  ${ConfigRead} "$R1" "regenerationSharedArchive=" $R3
-  IfErrors associations
-  ${LogText} "  regenerationSharedArchive: $R3"
-  StrCpy $regenerationSharedArchive $R3
 
 associations:
   ClearErrors
@@ -692,6 +679,11 @@ update_settings:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   goto done
 no_silent_config:
+  ${LogText} "  config file was not provided"
+  ${LogText} "  defaulting to admin mode"
+  StrCpy $silentMode "admin"
+  goto done
+bad_silent_config:
   Call IncorrectSilentInstallParameters
 done:
 FunctionEnd
@@ -1132,7 +1124,7 @@ skip_backup:
 command_exists:
   StrCpy $1 "$R5\DefaultIcon"
   StrCpy $2 ""
-  StrCpy $3 " $productLauncher,0"
+  StrCpy $3 "$productLauncher,0"
   Call OMWriteRegStr
   StrCpy $1 "$R5\shell\open\command"
   StrCpy $2 ""
@@ -1359,27 +1351,11 @@ skip_ipr:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  ; Regenerating the Shared Archive
-  ; https://docs.oracle.com/en/java/javase/11/vm/class-data-sharing.html
-  IfSilent 0 regeneration_shared_archive
-  StrCmp $regenerationSharedArchive "1" 0 skip_regeneration_shared_archive
-regeneration_shared_archive:
-  StrCpy $bundledJavaPath "$INSTDIR\jbr\bin\javaw.exe"
-  IfFileExists $bundledJavaPath do_regeneration_shared_archive 0
-  StrCpy $bundledJavaPath "$INSTDIR\jre64\bin\javaw.exe"
-  IfFileExists $bundledJavaPath 0 skip_regeneration_shared_archive
-do_regeneration_shared_archive:
-  ${LogText} ""
-  ${LogText} "Regenerating the Shared Archive using $bundledJavaPath"
-  ExecDos::exec /NOUNLOAD /ASYNC '"$bundledJavaPath" -Xshare:dump'
-
-skip_regeneration_shared_archive:
   SetOutPath $INSTDIR\bin
 ; set the current time for installation files under $INSTDIR\bin
   ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
   ${If} $0 == "1"
-    ;ExecCmd::exec 'icacls "$INSTDIR" /grant %username%:F /T >"$INSTDIR"\installation_log.txt 2>"$INSTDIR"\installation_error.txt'
     AccessControl::GrantOnFile \
       "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
     AccessControl::GrantOnFile \

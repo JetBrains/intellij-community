@@ -9,7 +9,7 @@ object ThrowingTransformation : AstTransformationSupport {
 
   @JvmStatic
   fun disableTransformations(parentDisposable: Disposable) {
-    AstTransformationSupport.EP_NAME.getPoint(null).registerExtension(this, parentDisposable)
+    AstTransformationSupport.EP_NAME.getPoint().registerExtension(this, parentDisposable)
   }
 
   override fun applyTransformation(context: TransformationContext): Nothing {

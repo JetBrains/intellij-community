@@ -11,14 +11,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,25 +91,17 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDocumentChange(@NotNull DocumentEvent event) {
     scheduleRediff();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeDocumentChange(@NotNull DocumentEvent event) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onFileChange(@NotNull VirtualFile file) {
     scheduleRediff();
-  }
-
-  /**
-   * @deprecated See {@link #onFileChange(VirtualFile)}
-   */
-  @Deprecated
-  protected void onFileChange(@NotNull VirtualFileEvent event) {
-    onFileChange(event.getFile());
   }
 }

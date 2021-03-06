@@ -15,11 +15,22 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface PlaceHolder<Place> extends PlaceProvider<Place> {
-  void setPlace(@NotNull Place place);
+public interface PlaceHolder extends PlaceProvider {
+  void setPlace(@NonNls @NotNull String place);
+
+  /**
+   * @deprecated this method is temporary added to keep compatibility with code which was compiled against the old version of {@link PlaceHolder}
+   * with generic parameter and therefore refers to the method with parameter type {@code Object} in its bytecode. This method isn't supposed to
+   * be used directly.
+   */
+  @Deprecated
+  default void setPlace(Object place) {
+    setPlace((String)place);
+  }
 }

@@ -40,10 +40,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
@@ -99,7 +97,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @Override
       protected void navigate(@NotNull CommitId commit) {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          ui.jumpToCommit(commit.getHash(), commit.getRoot());
+          ui.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
         });
       }
     };
@@ -114,14 +112,20 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
-    JBPanel tablePanel = new JBPanel(new BorderLayout());
+    JComponent actionsToolbar = createActionsToolbar();
+    JBPanel tablePanel = new JBPanel(new BorderLayout()) {
+      @Override
+      public Dimension getMinimumSize() {
+        return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), actionsToolbar);
+      }
+    };
     tablePanel.add(myDetailsSplitter, BorderLayout.CENTER);
-    tablePanel.add(createActionsToolbar(), BorderLayout.WEST);
+    tablePanel.add(actionsToolbar, BorderLayout.WEST);
 
     setLayout(new BorderLayout());
     if (withDiffPreview) {
-      add(new FrameDiffPreview<FileHistoryDiffProcessor>(createDiffPreview(false), myProperties, tablePanel,
-                                                         "vcs.history.diff.splitter.proportion", false, 0.7f) {
+      add(new FrameDiffPreview<>(createDiffPreview(false), myProperties, tablePanel,
+                                 "vcs.history.diff.splitter.proportion", false, 0.7f) {
 
         @Override
         public void updatePreview(boolean state) {
@@ -182,14 +186,16 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
-                                                      o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
+                                                      o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()) ||
+                                                           Disposer.isDisposed(diffPreview));
     };
     myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
     Disposer.register(diffPreview, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
 
     TableModelListener modelListener = e -> {
       if (e.getColumn() < 0) {
-        diffPreview.updatePreview(diffPreview.getComponent().isShowing());
+        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+                                                        o -> Disposer.isDisposed(diffPreview));
       }
     };
     myGraphTable.getModel().addTableModelListener(modelListener);
@@ -228,6 +234,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
       })
       .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
+      .ifEq(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS).thenGet(() -> Collections.singleton(myRoot))
       .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
       .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myFileHistoryModel.getDiffHandler())
       .orNull();

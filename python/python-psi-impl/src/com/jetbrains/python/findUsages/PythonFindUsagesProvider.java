@@ -3,6 +3,7 @@ package com.jetbrains.python.findUsages;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -96,29 +97,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
   @Override
   @NotNull
   public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
-    if (element instanceof PyNamedParameter) {
-      StringBuilder result = new StringBuilder(((PyNamedParameter)element).getName());
-      final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-      if (function != null) {
-        result.append(" of ");
-        appendFunctionDescription(result, function);
-      }
-      return result.toString();
-    }
-    if (element instanceof PyFunction) {
-      StringBuilder result = new StringBuilder();
-      appendFunctionDescription(result, (PyFunction)element);
-      return result.toString();
-    }
     return getDescriptiveName(element);
-  }
-
-  private static void appendFunctionDescription(StringBuilder result, PyFunction function) {
-    result.append(function.getName()).append("()");
-    final PyClass containingClass = function.getContainingClass();
-    if (containingClass != null) {
-      result.append(" of class ").append(containingClass.getName());
-    }
   }
 
   @Override
@@ -134,6 +113,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
    * @return text (if found) or null
    */
   @Nullable
+  @NlsSafe
   private static String tryFindMagicLiteralString(@NotNull final PsiElement element, final boolean obtainValue) {
     if (element instanceof PyStringLiteralExpression) {
       final PyMagicLiteralExtensionPoint point = PyMagicLiteralTools.getPoint((PyStringLiteralExpression)element);

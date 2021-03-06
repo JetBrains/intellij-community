@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.Parameterized;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +34,7 @@ import java.util.List;
  * @author yole
  */
 public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -50,8 +50,8 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     if (fileNames.isEmpty()) {
       Notification notification = new Notification(
         "testdata",
-        "Found no test data files",
-        "Cannot find test data files for class",
+        DevKitBundle.message("testdata.notification.no.test.datafiles.title"),
+        DevKitBundle.message("testdata.notification.no.test.datafiles.content"),
         NotificationType.INFORMATION);
       Notifications.Bus.notify(notification, project);
     } else {
@@ -120,7 +120,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     if (!(value instanceof UClassLiteralExpression)) return null;
     UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
     PsiType type = classLiteralExpression.getType();
-    return type != null && type.equalsToText(Parameterized.class.getName()) ? uClass.getJavaPsi() : null;
+    return type != null && type.equalsToText(TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
   }
 
   @Nullable

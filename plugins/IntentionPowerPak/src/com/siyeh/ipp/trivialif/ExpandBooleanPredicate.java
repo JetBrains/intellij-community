@@ -53,6 +53,9 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+    if (expressionStatement.getParent() instanceof PsiSwitchLabeledRuleStatement) {
+      return false;
+    }
     final PsiExpression expression = expressionStatement.getExpression();
     if (!(expression instanceof PsiAssignmentExpression)) {
       return false;

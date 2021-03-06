@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -150,16 +151,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   private void updateRunModuleMode() {
     boolean mode = (getModuleNameText() + ":").equals(myTargetComboBox.getText());
-    checkTargetComboConsistency(mode);
     setModuleModeInternal(mode);
-  }
-
-  private void checkTargetComboConsistency(boolean mode) {
-    String item = myTargetComboBox.getText();
-    assert item != null;
-    if (mode && !StringUtil.toLowerCase(item).contains("module")) {
-      throw new IllegalArgumentException("This option should refer to a module");
-    }
   }
 
   private void emulateTerminalEnabled(boolean flag) {
@@ -250,6 +242,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     return PyBundle.message("runcfg.labels.module.name");
   }
 
+  @Nls public static String getCustomNameText() {
+    return PyBundle.message("runcfg.labels.custom.name");
+  }
+
   @Override
   @NotNull
   public String getInputFile() {
@@ -283,8 +279,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public void setModuleMode(boolean moduleMode) {
     setTargetComboBoxValue(moduleMode ? getModuleNameText() : getScriptPathText());
-    updateRunModuleMode();
-    checkTargetComboConsistency(moduleMode);
+    setModuleModeInternal(moduleMode);
   }
 
   private void setModuleModeInternal(boolean moduleMode) {
@@ -298,7 +293,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myTargetComboBox = new MyComboBox();
   }
 
-  private void setTargetComboBoxValue(String text) {
+  private void setTargetComboBoxValue(@NlsContexts.Label String text) {
     myTargetComboBox.setText(text + ":");
   }
 
@@ -310,9 +305,9 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
         @Override
         public void mouseClicked(MouseEvent e) {
           JBPopupFactory.getInstance().createListPopup(
-            new BaseListPopupStep<String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
+            new BaseListPopupStep<@Nls String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
-              public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+              public PopupStep onChosen(@Nls String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);
                 updateRunModuleMode();
                 return FINAL_CHOICE;

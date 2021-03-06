@@ -4,6 +4,7 @@ package com.intellij.patterns;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -58,7 +59,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
   }
 
   @NotNull
-  public Self afterLeaf(final String @NotNull ... withText) {
+  public Self afterLeaf(@NlsSafe final String @NotNull ... withText) {
     return afterLeaf(psiElement().withText(StandardPatterns.string().oneOf(withText)));
   }
 
@@ -68,7 +69,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
   }
 
   @NotNull
-  public Self beforeLeaf(final String @NotNull ... withText) {
+  public Self beforeLeaf(@NlsSafe final String @NotNull ... withText) {
     return beforeLeaf(psiElement().withText(StandardPatterns.string().oneOf(withText)));
   }
 
@@ -246,7 +247,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<Integer, ProcessingContext> integerProcessingContextPairProcessor) {
+                                   PairProcessor<? super Integer, ? super ProcessingContext> integerProcessingContextPairProcessor) {
         return integerProcessingContextPairProcessor.process(t.getTextLength(), context);
       }
     });
@@ -278,7 +279,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
       @Override
       public boolean processValues(T t,
                                    ProcessingContext context,
-                                   PairProcessor<String, ProcessingContext> processor) {
+                                   PairProcessor<? super String, ? super ProcessingContext> processor) {
         return processor.process(t.getText(), context);
       }
     };

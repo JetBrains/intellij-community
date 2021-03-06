@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -59,16 +60,16 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
         val name = PluginManagerCore.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
 
         var totalCost = 0L
-        costMap.forEachValue {
-          totalCost += it
-          true
+        val iterator = costMap.values.iterator()
+        while (iterator.hasNext()) {
+          totalCost += iterator.nextLong()
         }
 
-        val ids = costMap.keys()
+        val ids = costMap.keys.toMutableList()
         ids.sort()
         val costDetails = StringBuilder()
         for (id in ids) {
-          costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap[id as String]))
+          costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap.getLong(id)))
           costDetails.append('\n')
         }
 
@@ -76,14 +77,14 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
       }
       .sortedByDescending { it.cost }
 
-    val pluginColumn = object : ColumnInfo<PluginStartupCostEntry, String>("Plugin") {
+    val pluginColumn = object : ColumnInfo<PluginStartupCostEntry, String>(IdeBundle.message("column.name.plugin")) {
       override fun valueOf(item: PluginStartupCostEntry) =
         item.pluginName + (if (item.pluginId in pluginsToDisable) " (will be disabled)" else "")
     }
-    val costColumn = object : ColumnInfo<PluginStartupCostEntry, Int>("Startup Time (ms)") {
+    val costColumn = object : ColumnInfo<PluginStartupCostEntry, Int>(IdeBundle.message("column.name.startup.time.ms")) {
       override fun valueOf(item: PluginStartupCostEntry) = TimeUnit.NANOSECONDS.toMillis(item.cost).toInt()
     }
-    val costDetailsColumn = object : ColumnInfo<PluginStartupCostEntry, String>("Cost Details") {
+    val costDetailsColumn = object : ColumnInfo<PluginStartupCostEntry, String>(IdeBundle.message("column.name.cost.details")) {
       override fun valueOf(item: PluginStartupCostEntry) = item.costDetails
     }
 
@@ -103,7 +104,7 @@ class PluginStartupCostDialog(private val project: Project) : DialogWrapper(proj
   }
 
   override fun createLeftSideActions(): Array<Action> {
-    val disableAction = object : AbstractAction("Disable Selected Plugins") {
+    val disableAction = object : AbstractAction(IdeBundle.message("button.disable.selected.plugins")) {
       override fun actionPerformed(e: ActionEvent?) {
         for (costEntry in table.selectedObjects) {
           pluginsToDisable.add(costEntry.pluginId)

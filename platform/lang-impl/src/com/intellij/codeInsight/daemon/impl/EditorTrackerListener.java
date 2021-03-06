@@ -12,5 +12,5 @@ public interface EditorTrackerListener extends EventListener{
   @Topic.ProjectLevel
   Topic<EditorTrackerListener> TOPIC = new Topic<>(EditorTrackerListener.class, Topic.BroadcastDirection.NONE);
 
-  void activeEditorsChanged(@NotNull List<Editor> activeEditors);
+  void activeEditorsChanged(@NotNull List<? extends Editor> activeEditors);
 }

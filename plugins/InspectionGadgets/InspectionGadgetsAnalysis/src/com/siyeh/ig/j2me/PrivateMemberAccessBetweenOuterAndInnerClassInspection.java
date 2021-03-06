@@ -75,7 +75,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
     return new MakePackagePrivateFix(elementName, false);
   }
 
-  private static class MakePackagePrivateFix extends InspectionGadgetsFix {
+  private static final class MakePackagePrivateFix extends InspectionGadgetsFix {
 
     private final String elementName;
     private final boolean constructor;

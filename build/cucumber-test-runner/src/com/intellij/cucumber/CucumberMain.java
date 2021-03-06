@@ -1,45 +1,26 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cucumber;
 
 import com.intellij.TestCaseLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
 import cucumber.runtime.io.MultiLoader;
 import cucumber.runtime.io.Resource;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Dennis.Ushakov
- */
-public class CucumberMain {
+public final class CucumberMain {
   private static final Logger LOG = Logger.getInstance(CucumberMain.class);
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -50,14 +31,31 @@ public class CucumberMain {
     int exitStatus;
     try {
       ClassLoader original = Thread.currentThread().getContextClassLoader();
-      List<@NotNull URL> urls = ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator), CucumberMain::fileToEncodedURL);
-      UrlClassLoader loader = UrlClassLoader.build().urls(
-        urls).parent(original.getParent()).allowLock().useCache()
+      List<Path> files = new ArrayList<>();
+      for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+        if (!path.isEmpty()) {
+          files.add(Path.of(path));
+        }
+      }
+      UrlClassLoader loader = UrlClassLoader.build().files(files).parent(original.getParent())
+        .useCache()
         .usePersistentClasspathIndexForLocalClassDirectories()
-        .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
-        .autoAssignUrlsWithProtectionDomain().get();
+        .autoAssignUrlsWithProtectionDomain()
+        .get();
       Thread.currentThread().setContextClassLoader(loader);
-      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class).invoke(null, args, loader);
+      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName())
+        .getMethod("run", String[].class, ClassLoader.class)
+        .invoke(null, args, loader);
+    }
+    catch (InvocationTargetException e) {
+      LOG.warn(e);
+      var targetException = e.getTargetException();
+      if (targetException instanceof AssertionError) {
+        exitStatus = 0;
+      }
+      else {
+        exitStatus = 1;
+      }
     }
     catch (Throwable e) {
       LOG.warn(e);
@@ -66,38 +64,30 @@ public class CucumberMain {
     System.exit(exitStatus);
   }
 
-  public static URL fileToEncodedURL(String path) {
-    try {
-      return new File(path).toURI().toURL();
-    } catch (MalformedURLException e) {
-      return null;
-    }
-  }
-
-
   public static int run(final String[] argv, final ClassLoader classLoader) {
     final Ref<Throwable> errorRef = new Ref<>();
     final Ref<Runtime> runtimeRef = new Ref<>();
 
     try {
       TestRunnerUtil.replaceIdeEventQueueSafely();
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
         try {
           RuntimeOptions runtimeOptions = new RuntimeOptions(new ArrayList<>(Arrays.asList(argv)));
           MultiLoader resourceLoader = new MultiLoader(classLoader) {
             @Override
             public Iterable<Resource> resources(String path, String suffix) {
               Iterable<Resource> resources = super.resources(path, suffix);
-              if (TestCaseLoader.shouldBucketTests() && ".feature".equals(suffix)) {
-                List<Resource> filteredResource = new ArrayList<>();
-                resources.forEach(it -> {
-                  if (TestCaseLoader.matchesCurrentBucket(it.getPath())) {
-                    filteredResource.add(it);
-                  }
-                });
-                return filteredResource;
+              if (!TestCaseLoader.shouldBucketTests() || !".feature".equals(suffix)) {
+                return resources;
               }
-              return resources;
+
+              List<Resource> result = new ArrayList<>();
+              for (Resource resource : resources) {
+                if (TestCaseLoader.matchesCurrentBucket(resource.getPath())) {
+                  result.add(resource);
+                }
+              }
+              return result;
             }
           };
           ResourceLoaderClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);

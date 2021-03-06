@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.util.io.hostName
+import com.intellij.util.io.getHostName
 import com.intellij.util.io.isLocalHost
 import com.intellij.util.io.isLocalOrigin
 import io.netty.channel.Channel
@@ -12,12 +12,18 @@ import io.netty.handler.codec.http.*
 import io.netty.handler.stream.ChunkedStream
 import org.jetbrains.io.FileResponses
 import org.jetbrains.io.addCommonHeaders
-import org.jetbrains.io.addKeepAliveIfNeed
+import org.jetbrains.io.addKeepAliveIfNeeded
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.*
 
 abstract class HttpRequestHandler {
+  enum class OriginCheckResult {
+    ALLOW, FORBID,
+    // any origin is allowed but user confirmation is required
+    ASK_CONFIRMATION
+  }
+
   companion object {
     // Your handler will be instantiated on first user request
     val EP_NAME = ExtensionPointName<HttpRequestHandler>("com.intellij.httpRequestHandler")
@@ -42,10 +48,14 @@ abstract class HttpRequestHandler {
    */
   @SuppressWarnings("SpellCheckingInspection")
   open fun isAccessible(request: HttpRequest): Boolean {
-    val hostName = request.hostName
+    val hostName = getHostName(request)
     // If attacker.com DNS rebound to 127.0.0.1 and user open site directly - no Origin or Referrer headers.
     // So we should check Host header.
-    return hostName != null && request.isLocalOrigin() && isLocalHost(hostName)
+    return hostName != null && isOriginAllowed(request) != OriginCheckResult.FORBID && isLocalHost(hostName)
+  }
+
+  protected open fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
+    return if (request.isLocalOrigin()) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
   }
 
   open fun isSupported(request: FullHttpRequest): Boolean {
@@ -59,15 +69,14 @@ abstract class HttpRequestHandler {
   abstract fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
 
   protected fun sendData(content: ByteArray, name: String, request: FullHttpRequest, channel: Channel, extraHeaders: HttpHeaders): Boolean {
-
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, FileResponses.getContentType(name))
     response.addCommonHeaders()
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
     response.headers().add(extraHeaders)
 
-    val keepAlive = response.addKeepAliveIfNeed(request)
+    val keepAlive = response.addKeepAliveIfNeeded(request)
     if (request.method() != HttpMethod.HEAD) {
       HttpUtil.setContentLength(response, content.size.toLong())
     }

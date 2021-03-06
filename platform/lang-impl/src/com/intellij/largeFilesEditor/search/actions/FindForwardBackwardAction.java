@@ -21,11 +21,11 @@ public class FindForwardBackwardAction extends AnAction implements DumbAware {
     this.searchManager = searchManager;
 
     getTemplatePresentation().setDescription(directionForward ?
-                                             EditorBundle.message("large.file.editor.find.forward.action.description") :
-                                             EditorBundle.message("large.file.editor.find.backward.action.description"));
+                                             EditorBundle.messagePointer("large.file.editor.find.forward.action.description") :
+                                             EditorBundle.messagePointer("large.file.editor.find.backward.action.description"));
     getTemplatePresentation().setText(directionForward ?
-                                      EditorBundle.message("large.file.editor.find.forward.action.text") :
-                                      EditorBundle.message("large.file.editor.find.backward.action.text"));
+                                      EditorBundle.messagePointer("large.file.editor.find.forward.action.text") :
+                                      EditorBundle.messagePointer("large.file.editor.find.backward.action.text"));
     getTemplatePresentation().setIcon(directionForward ? AllIcons.Actions.FindForward : AllIcons.Actions.FindBackward);
   }
 

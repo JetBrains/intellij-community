@@ -2,7 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +20,7 @@ public class CodeStyleSettingsTracker {
     myCurrentSettingsSupplier = currentSettingsSupplier;
     CodeStyleSettings settings = currentSettingsSupplier.get();
     if (settings != null) {
-      settings.getIndentOptions(StdFileTypes.JAVA);
+      settings.getIndentOptions(FileTypeManager.getInstance().getStdFileType("JAVA"));
       myOldSettings = CodeStyle.createTestSettings(settings);
     }
   }

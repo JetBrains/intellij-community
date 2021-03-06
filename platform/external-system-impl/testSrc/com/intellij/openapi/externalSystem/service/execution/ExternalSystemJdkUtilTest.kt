@@ -66,7 +66,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
     val javaHomeEnv = EnvironmentUtil.getValue("JAVA_HOME")?.let { FileUtil.toSystemIndependentName(it) }
     if (javaHomeEnv.isNullOrBlank()) {
-      assertThrows<UndefinedJavaHomeException>(UndefinedJavaHomeException::class.java) { getJdk(project, USE_JAVA_HOME) }
+      assertThrows(UndefinedJavaHomeException::class.java) { getJdk(project, USE_JAVA_HOME) }
     }
     else {
       assertThat(getJdk(project, USE_JAVA_HOME)?.homePath)
@@ -92,14 +92,14 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
 
     val javaHomeEnv = EnvironmentUtil.getValue("JAVA_HOME")?.let { FileUtil.toSystemIndependentName(it) }
     if (javaHomeEnv.isNullOrBlank()) {
-      assertThrows<UndefinedJavaHomeException>(UndefinedJavaHomeException::class.java) { resolveJdkName(null, USE_JAVA_HOME) }
+      assertThrows(UndefinedJavaHomeException::class.java) { resolveJdkName(null, USE_JAVA_HOME) }
     }
     else {
       assertThat(resolveJdkName(null, USE_JAVA_HOME)?.homePath)
         .isEqualTo(javaHomeEnv)
     }
 
-    assertThrows<ProjectJdkNotFoundException>(ProjectJdkNotFoundException::class.java) {
+    assertThrows(ProjectJdkNotFoundException::class.java) {
       resolveJdkName(null, USE_PROJECT_JDK)
     }
     val sdk: Sdk = mock(Sdk::class.java)
@@ -146,7 +146,7 @@ class ExternalSystemJdkUtilTest : UsefulTestCase() {
     val jdkDir = FileUtil.createTempDirectory(jdkVersionStr, null)
     listOf("bin/javac",
            "bin/java",
-           "lib/rt.jar")
+           "jre/lib/rt.jar")
       .forEach {
         File(jdkDir, it).apply {
           parentFile.mkdirs()
@@ -178,11 +178,11 @@ class TestJavaDependentSdkType(val myName: String): JavaDependentSdkType(myName)
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun isValidSdkHome(path: String?): Boolean {
+  override fun isValidSdkHome(path: String): Boolean {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
-  override fun suggestSdkName(currentSdkName: String?, sdkHome: String?): String {
+  override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 

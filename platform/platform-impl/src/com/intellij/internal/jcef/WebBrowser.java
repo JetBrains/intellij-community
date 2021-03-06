@@ -4,31 +4,31 @@ package com.intellij.internal.jcef;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
+import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.ui.jcef.JBCefCookie;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
  * @author tav
  */
 public class WebBrowser extends AnAction implements DumbAware {
-  private static final String URL = "http://maps.google.com";
+  private static final String URL = "https://maps.google.com";
   private static final String myTitle = "Web Browser - JCEF";
   private static final String myCookieManagerText = "Cookie Manager";
 
@@ -55,6 +55,9 @@ public class WebBrowser extends AnAction implements DumbAware {
     frame.setLayout(new BorderLayout());
 
     final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
+    myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
+    myJBCefBrowser.setProperty(JBCefBrowser.FOCUS_ON_SHOW, Boolean.TRUE);
+
     final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
 
     frame.addWindowListener(new WindowAdapter() {
@@ -94,6 +97,106 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     frame.add(controlPanel, BorderLayout.SOUTH);
 
+    JMenuBar menuBar = new JMenuBar();
+    frame.setJMenuBar(menuBar);
+    JMenu menu = new JMenu("Tools");
+    menu.setMnemonic('t');
+    menuBar.add(menu);
+    JMenuItem menuItem = new JMenuItem("Load HTML with URL", 'h');
+    menu.add(menuItem);
+    menuItem.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        MyOkCancelDialog<JPanel> dialog = new MyOkCancelDialog<>(frame, "Load HTML with URL");
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
+        JTextField url = new JTextField("file://foo/bar");
+        //noinspection NonAsciiCharacters
+        JTextArea html = new JTextArea("<html>\n<body>\nСъешь Еще Этих Мягких Французских Булок &#129366;&#129366;\n</body>\n</html>");
+        panel.add(url, BorderLayout.NORTH);
+        panel.add(html, BorderLayout.CENTER);
+
+        dialog.setComponent(panel);
+
+        dialog.setOkAction(() -> {
+          myUrlBar.setText(url.getText());
+          SwingUtilities.invokeLater(() -> myJBCefBrowser.loadHTML(html.getText(), url.getText()));
+        }, "Load");
+        dialog.show();
+      }
+    });
+
+    menuItem = new JMenuItem("Set background color", 'c');
+    menu.add(menuItem);
+    menuItem.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        MyOkCancelDialog<JTextField> dialog = new MyOkCancelDialog<>(frame, "Background Color");
+        JTextField color = dialog.setComponent(new JTextField("lightgreen"));
+        dialog.setOkAction(() -> myJBCefBrowser.setPageBackgroundColor(color.getText()), "Apply");
+        dialog.show();
+      }
+    });
+
+    final JMenuItem menuItemFocus = new JMenuItem("Set focus on navigation", 'f');
+    menu.add(menuItemFocus);
+    menuItemFocus.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean value = Boolean.TRUE.equals(myJBCefBrowser.getProperty(JBCefBrowser.FOCUS_ON_NAVIGATION));
+        myJBCefBrowser.setProperty(JBCefBrowser.FOCUS_ON_NAVIGATION, !value);
+        menuItemFocus.setText(value ? "Set focus on navigation" : "Unset focus on navigation");
+      }
+    });
+
     frame.setVisible(true);
+  }
+}
+
+class MyOkCancelDialog<T extends JComponent> extends DialogWrapper {
+  T myComp;
+  Runnable myOkAction;
+
+  MyOkCancelDialog(@NotNull JFrame owner, @NotNull String title)  {
+    super(null, owner, true, IdeModalityType.IDE);
+
+    setTitle(title);
+  }
+
+  public T setComponent(@NotNull T comp) {
+    return myComp = comp;
+  }
+
+  public void setOkAction(@NotNull Runnable okAction, @NotNull String buttonText) {
+    myOkAction = okAction;
+    setOKButtonText(buttonText);
+  }
+
+  @Override
+  protected @NotNull Action getOKAction() {
+    return new DialogWrapper.OkAction() {
+      @Override
+      protected void doAction(ActionEvent e) {
+        myOkAction.run();
+        super.doAction(e);
+      }
+    };
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createCenterPanel() {
+    return myComp;
+  }
+
+  @Override
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myComp;
+  }
+
+  @Override
+  public void show() {
+    init();
+    super.show();
   }
 }

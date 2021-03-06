@@ -35,10 +35,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   @Override
   protected TestResultsPanel createTestResultsPanel() {
     // Results View
-    myResultsViewer = new SMTestRunnerResultsForm(getConsole().getComponent(),
-                                                  getConsole().createConsoleActions(),
-                                                  myProperties,
-                                                  mySplitterProperty);
+    myResultsViewer = new SMTestRunnerResultsForm(getConsole(), myProperties, mySplitterProperty);
     return myResultsViewer;
   }
 
@@ -90,7 +87,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     super.attachToProcess(processHandler);
     for (AttachToProcessListener listener : myAttachToProcessListeners) {
       listener.onAttachToProcess(processHandler);

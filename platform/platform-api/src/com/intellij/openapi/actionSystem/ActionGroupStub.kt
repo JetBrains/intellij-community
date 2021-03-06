@@ -28,6 +28,8 @@ class ActionGroupStub(override val id: String, val actionClass: String, override
 
   fun initGroup(target: ActionGroup, actionManager: ActionManager) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
+    copyActionTextOverrides(target)
+
     target.shortcutSet = shortcutSet
     val children = getChildren(null, actionManager)
     if (children.isNotEmpty()) {
@@ -40,5 +42,6 @@ class ActionGroupStub(override val id: String, val actionClass: String, override
     if (popupDefinedInXml) {
       target.isPopup = isPopup
     }
+    target.isSearchable = isSearchable
   }
 }

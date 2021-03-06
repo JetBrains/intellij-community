@@ -23,7 +23,7 @@ public class ChangesViewContentEP implements PluginAware {
   public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 
   /**
-   * Used to determine specific tab content in {@link com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager#selectContent}
+   * Used to determine specific tab content in {@link ChangesViewContentManager#selectContent}
    * <p>
    * To provide localized tab name use {@link #displayNameSupplierClassName}
    */
@@ -41,6 +41,9 @@ public class ChangesViewContentEP implements PluginAware {
 
   @Attribute("displayNameSupplierClassName")
   public String displayNameSupplierClassName;
+
+  @Attribute("isInCommitToolWindow")
+  public boolean isInCommitToolWindow;
 
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
@@ -88,6 +91,14 @@ public class ChangesViewContentEP implements PluginAware {
 
   public void setDisplayNameSupplierClassName(String displayNameSupplierClassName) {
     this.displayNameSupplierClassName = displayNameSupplierClassName;
+  }
+
+  public boolean isInCommitToolWindow() {
+    return isInCommitToolWindow;
+  }
+
+  public void setInCommitToolWindow(boolean isInCommitToolWindow) {
+    this.isInCommitToolWindow = isInCommitToolWindow;
   }
 
   public ChangesViewContentProvider getInstance(@NotNull Project project) {

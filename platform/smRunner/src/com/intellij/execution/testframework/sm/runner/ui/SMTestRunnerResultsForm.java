@@ -18,11 +18,8 @@ import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsol
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -51,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +92,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final List<EventsListener> myEventListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Project myProject;
+  private final ConsoleView myConsoleView;
 
   private int myTotalTestCount = 0;
   private int myStartedTestCount = 0;
@@ -107,27 +106,23 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private volatile boolean myTestsRunning = true;
-  private AbstractTestProxy myLastSelected;
+  private volatile AbstractTestProxy myLastSelected;
   private volatile boolean myDisposed = false;
   private SMTestProxy myLastFailed;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
   private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-  public SMTestRunnerResultsForm(@NotNull final JComponent console,
-                                 final TestConsoleProperties consoleProperties) {
-    this(console, AnAction.EMPTY_ARRAY, consoleProperties, null);
-  }
-
-  public SMTestRunnerResultsForm(@NotNull final JComponent console,
-                                 AnAction[] consoleActions,
-                                 final TestConsoleProperties consoleProperties,
+  public SMTestRunnerResultsForm(@NotNull ConsoleView consoleView,
+                                 @NotNull TestConsoleProperties consoleProperties,
                                  @Nullable String splitterPropertyName) {
-    super(console, consoleActions, consoleProperties,
+    super(consoleView.getComponent(), consoleView.createConsoleActions(), consoleProperties,
           StringUtil.notNullize(splitterPropertyName, DEFAULT_SM_RUNNER_SPLITTER_PROPERTY), 0.2f);
     myProject = consoleProperties.getProject();
+    myConsoleView = consoleView;
 
     //Create tests common suite root
-    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName());
+    myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName(), consoleView.getComponent());
+    myTestsRootNode.setTestConsoleProperties(consoleProperties);
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
     // Fire selection changed and move focus on SHIFT+ENTER
@@ -165,27 +160,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     TrackRunningTestUtil.installStopListeners(myTreeView, myProperties, testProxy -> {
       if (testProxy == null) return;
-      final AbstractTestProxy selectedProxy = testProxy;
-      //drill to the first leaf
-      while (!testProxy.isLeaf()) {
-        final List<? extends AbstractTestProxy> children = testProxy.getChildren();
-        if (!children.isEmpty()) {
-          final AbstractTestProxy firstChild = children.get(0);
-          if (firstChild != null) {
-            testProxy = firstChild;
-            continue;
-          }
-        }
-        break;
-      }
-
-      //pretend the selection on the first leaf
-      //so if test would be run, tracking would be restarted
-      myLastSelected = testProxy;
+      setLastSelected(testProxy);
 
       //ensure scroll to source on explicit selection only
-      if (ScrollToTestSourceAction.isScrollEnabled(SMTestRunnerResultsForm.this)) {
-        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedProxy, SMTestRunnerResultsForm.this);
+      if (ScrollToTestSourceAction.isScrollEnabled(this)) {
+        final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(testProxy, this);
         if (descriptor != null) {
           OpenSourceUtil.navigate(false, descriptor);
         }
@@ -216,7 +195,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myIgnoredTestCount = 0;
     myTestsRunning = true;
     myLastFailed = null;
-    myLastSelected = null;
+    setLastSelected(null);
     myMentionedCategories.clear();
 
     if (myEndTime != 0) { // no need to reset when running for the first time
@@ -249,10 +228,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private void resetTreeAndConsoleOnSubsequentTestingStarted() {
     myTestsRootNode.testingRestarted();
-    ConsoleView consoleView = DataManager.getInstance().getDataContext(myConsole).getData(LangDataKeys.CONSOLE_VIEW);
-    if (consoleView != null) {
-      consoleView.clear();
-    }
+    myConsoleView.clear();
     ProcessHandler handler = myTestsRootNode.getHandler();
     if (handler instanceof BaseOSProcessHandler) {
       handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLine() + "\n", ProcessOutputTypes.SYSTEM);
@@ -277,19 +253,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     LvcsHelper.addLabel(this);
 
-
-    final Runnable onDone = () -> {
-      myTestsRunning = false;
-      final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
-      if (sortByDuration) {
-        myTreeBuilder.setTestsComparator(this);
-      }
-    };
     if (myLastSelected == null) {
-      selectAndNotify(myTestsRootNode, onDone);
+      selectAndNotify(myTestsRootNode);
     }
-    else {
-      onDone.run();
+
+    myTestsRunning = false;
+    if (TestConsoleProperties.SORT_BY_DURATION.value(myProperties)) {
+      myTreeBuilder.setTestsComparator(this);
     }
 
     fireOnTestingFinished();
@@ -356,7 +326,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {
-    myTotalTestCount++;
+    if (!testProxy.isSuite()) {
+      myTotalTestCount++;
+    }
   }
 
   @Override
@@ -449,7 +421,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   @Override
-  public void setFilter(final Filter filter) {
+  public void setFilter(@NotNull final Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
     final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
     treeStructure.setFilter(filter);
@@ -594,11 +566,20 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     if (TestConsoleProperties.TRACK_RUNNING_TEST.value(myProperties)) {
-      if (myLastSelected == null || myLastSelected == newTestOrSuite) {
-        myLastSelected = null;
+      if (myLastSelected == null || myLastSelected == newTestOrSuite || isFiltered(myLastSelected)) {
+        setLastSelected(null);
         selectAndNotify(newTestOrSuite);
       }
     }
+  }
+
+  private boolean isFiltered(AbstractTestProxy proxy) {
+    return proxy instanceof SMTestProxy && 
+           !getTreeBuilder().getTreeStructure().getFilter().shouldAccept((SMTestProxy)proxy);
+  }
+
+  private void setLastSelected(AbstractTestProxy proxy) {
+    myLastSelected = proxy;
   }
 
   private void fireOnTestNodeAdded(@NotNull SMTestProxy test) {
@@ -756,6 +737,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return isCustomMessage != (myCurrentCustomProgressCategory == null);
   }
 
+  @ApiStatus.Internal
+  public void setIncompleteIndexUsed() {
+    myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
+  }
+
   private static class MySaveHistoryTask extends Task.Backgroundable {
 
     private final TestConsoleProperties myConsoleProperties;
@@ -805,9 +791,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       List<SMTestProxy> tests = myRoot.getAllTests();
       for (SMTestProxy proxy : tests) {
         String url = proxy.getLocationUrl();
-        if (url != null) {
+        if (url != null && proxy.getLocator() != null) {
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-          DumbService.getInstance(getProject()).runWhenSmart(() -> {
+          DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
             Project project = getProject();
             TestStackTraceParser info =
               new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);

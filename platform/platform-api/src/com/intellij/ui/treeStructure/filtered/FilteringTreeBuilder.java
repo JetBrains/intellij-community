@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure.filtered;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.PatchedDefaultMutableTreeNode;
-import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -118,6 +118,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ActionCallback refilter() {
     return Promises.toActionCallback(refilter(null, true, false));
   }
@@ -161,7 +162,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     if (!isDisposed()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        getUi().cancelUpdate().doWhenProcessed(afterCancelUpdate);
+        AbstractTreeUi ui = getUi();
+        if (ui != null) ui.cancelUpdate().doWhenProcessed(afterCancelUpdate);
       }
       else {
         afterCancelUpdate.run();
@@ -177,7 +179,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     final ActionCallback selectionDone = new ActionCallback();
 
     getFilteredStructure().refilter();
-    getUi().updateSubtree(getRootNode(), false);
+    AbstractTreeUi ui = getUi();
+    if (ui != null) ui.updateSubtree(ui.getRootNode(), false);
     final Runnable selectionRunnable = () -> {
       revalidateTree();
 
@@ -247,22 +250,6 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
     return ((FilteringTreeStructure)getTreeStructure());
   }
 
-  //todo kirillk
-  private boolean isSimpleTree() {
-    return myTree instanceof SimpleTree;
-  }
-
-  @Nullable
-  private Object getSelected() {
-    if (isSimpleTree()) {
-      FilteringTreeStructure.FilteringNode selected = (FilteringTreeStructure.FilteringNode)((SimpleTree)myTree).getSelectedNode();
-      return selected != null ? selected.getDelegate() : null;
-    } else {
-      final Object[] nodes = myTree.getSelectedNodes(Object.class, null);
-      return nodes.length > 0 ? nodes[0] : null;
-    }
-  }
-
   public FilteringTreeStructure.FilteringNode getVisibleNodeFor(Object nodeObject) {
     FilteringTreeStructure structure = getFilteredStructure();
     return structure != null ? structure.getVisibleNodeFor(nodeObject) : null;
@@ -279,7 +266,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
   @Nullable
   public Object getElementFor(Object node) {
-    return getUi().getElementFor(node);
+    AbstractTreeUi ui = getUi();
+    return ui == null ? null : ui.getElementFor(node);
   }
 
   @Override

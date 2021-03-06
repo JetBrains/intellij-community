@@ -101,7 +101,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
   }
 
   private ArrayList<Debugger.Variable> collectVariables() {
-    final ArrayList<Debugger.Variable> variables = new ArrayList<Debugger.Variable>();
+    final ArrayList<Debugger.Variable> variables = new ArrayList<>();
 
     Iterable<PackageData> packages = myXPathContext.getController().getExecutable().getPackages();
     for (PackageData data : packages) {

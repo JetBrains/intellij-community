@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -20,11 +6,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.util.MathUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
-import gnu.trove.THashSet;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -57,7 +43,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   }
 
   interface MapIntAppender<T> {
-    void append(PersistentHashMap<T, ?> map, int indexKey, PersistentHashMap.ValueDataAppender appender) throws IOException;
+    void append(PersistentHashMap<T, ?> map, int indexKey, AppendablePersistentMap.ValueDataAppender appender) throws IOException;
   }
 
   private static <T> void run2GTest(MapConstructor<T, String> constructor, MapIntSetter<T, String> setter, MapGetter<T, String> getter)
@@ -126,18 +112,20 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         }
       }
       map.close();
+      //noinspection ConstantConditions
       final boolean isSmall = stringsCount < 1000000;
-      assertTrue(map.makesSenseToCompact());
+      assertTrue(makesSenseToCompact(map));
       long started = System.currentTimeMillis();
 
       map = constructor.createMap(file);
+      //noinspection ConstantConditions
       if (isSmall) {
-        map.compact();
+        PersistentMapImpl.unwrap(map).compact();
       }
       else {
         assertTrue(map.isDirty());  // autocompact on open should leave the map dirty
       }
-      assertFalse(map.makesSenseToCompact());
+      assertFalse(makesSenseToCompact(map));
       LOG.debug(String.valueOf(System.currentTimeMillis() - started));
       for (int i = 0; i < stringsCount; ++i) {
         if (i >= 2 * stringsCount / 3) {
@@ -152,6 +140,10 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     finally {
       clearMap(file, map);
     }
+  }
+
+  private static <T> boolean makesSenseToCompact(PersistentHashMap<T, Integer> map) {
+    return PersistentMapImpl.unwrap(map).makesSenseToCompact();
   }
 
   public void testOpeningWithCompact3() throws IOException {
@@ -177,7 +169,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     FileUtil.createParentDirs(file);
 
     int size = 10000000;
-    TIntIntHashMap checkMap = new TIntIntHashMap(size);
+    Int2IntMap checkMap = new Int2IntOpenHashMap(size);
     Random r = new Random(1);
     while (size != checkMap.size()) {
       if (checkMap.size() == 0) {
@@ -194,48 +186,39 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     PersistentHashMap<Integer, Integer> map = null;
 
     try {
-      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
-        @Override
-        protected boolean wantNonNegativeIntegralValues() {
-          return true;
-        }
-      };
+      map = PersistentMapBuilder
+        .newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+        .inlineValues()
+        .build();
 
       final PersistentHashMap<Integer, Integer> mapFinal = map;
-      boolean result = checkMap.forEachEntry((a, b) -> {
+      for (Int2IntMap.Entry entry : checkMap.int2IntEntrySet()) {
         try {
-          mapFinal.put(a, b);
+          mapFinal.put(entry.getIntKey(), entry.getIntValue());
         }
         catch (IOException e) {
           e.printStackTrace();
           fail();
-          return false;
+          break;
         }
-        return true;
-      });
-      assertTrue(result);
+      }
       map.close();
       LOG.debug("Done:" + (System.currentTimeMillis() - started));
       started = System.currentTimeMillis();
-      map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
-        @Override
-        protected boolean wantNonNegativeIntegralValues() {
-          return true;
-        }
-      };
+      map = PersistentMapBuilder.newBuilder(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE)
+        .inlineValues()
+        .build();
+
       final PersistentHashMap<Integer, Integer> mapFinal2 = map;
-      result = checkMap.forEachEntry((a, b) -> {
+      for (Int2IntMap.Entry entry : checkMap.int2IntEntrySet()) {
         try {
-          assertEquals(b, (int)mapFinal2.get(a));
+          assertEquals(entry.getIntValue(), (int)mapFinal2.get(entry.getIntKey()));
         }
         catch (IOException e) {
           e.printStackTrace();
           fail();
-          return false;
         }
-        return true;
-      });
-      assertTrue(result);
+      }
 
       LOG.debug("Done 2:" + (System.currentTimeMillis() - started));
     }
@@ -256,7 +239,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
     @Override
     public Collection<String> read(@NotNull DataInput in) throws IOException {
-      final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> result = CollectionFactory.createFilePathSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         final String str = IOUtil.readString(stream);
@@ -329,10 +312,11 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
 
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
+    PersistentMapImpl<String, String> unwrappedMap = PersistentMapImpl.unwrap(myMap);
     final IntObjectCache.DeletedPairsListener listener = (key, mapKey) -> {
       try {
         final String _mapKey = (String)mapKey;
-        assertEquals(myMap.enumerate(_mapKey), key);
+        assertEquals(unwrappedMap.enumerate(_mapKey), key);
 
         final String expectedMapValue = _mapKey == null ? null : _mapKey + "_value";
         final String actual = myMap.get(_mapKey);
@@ -352,7 +336,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
           final String string = createRandomString();
-          final int id = myMap.enumerate(string);
+          final int id = unwrappedMap.enumerate(string);
           stringCache.put(id, string);
           myMap.put(string, string + "_value");
         }
@@ -361,7 +345,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
           myMap.remove(key);
         }
         stringCache.removeAll();
-        myMap.compact();
+        PersistentMapImpl.unwrap(myMap).compact();
       }
       catch (IOException e) {
         throw new RuntimeException(e);

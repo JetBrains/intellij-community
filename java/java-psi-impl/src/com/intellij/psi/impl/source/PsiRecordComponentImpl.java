@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRecordComponentStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -69,10 +68,7 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
       if (type == null) {
-        String typeText = TypeInfo.createTypeText(stub.getType(false));
-        assert typeText != null : stub;
-        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
+        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
         myCachedType = new SoftReference<>(type);
       }
       return type;

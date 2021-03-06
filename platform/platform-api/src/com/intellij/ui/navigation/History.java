@@ -121,7 +121,7 @@ public final class History {
     myCurrentPos = -1;
   }
 
-  public Place query() {
+  public @NotNull Place query() {
     final Place result = new Place();
     myRoot.queryPlace(result);
     return result;
@@ -150,7 +150,7 @@ public final class History {
       checkPlace = query();
     }
 
-    return checkPlace != null && checkPlace.getPath(pathElement) != null ? checkPlace : null;
+    return checkPlace.getPath(pathElement) != null ? checkPlace : null;
   }
 
   public void addListener(final HistoryListener listener, Disposable parent) {

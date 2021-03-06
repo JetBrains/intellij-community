@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -33,7 +29,7 @@ public class MergeQuery<T> extends AbstractQuery<T>{
 
     AsyncFuture<Boolean> fq = myQuery1.forEachAsync(consumer);
 
-    fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result) {
+    fq.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<>(result) {
       @Override
       public void onSuccess(Boolean value) {
         if (value.booleanValue()) {

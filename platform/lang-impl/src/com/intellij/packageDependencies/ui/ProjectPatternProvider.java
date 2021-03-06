@@ -26,6 +26,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,8 +106,29 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       }
       final VirtualFile vDir = ((DirectoryNode)node).getDirectory();
       final PsiElement psiElement = node.getPsiElement();
-      final Module module = psiElement != null ? ModuleUtilCore.findModuleForFile(vDir, psiElement.getProject()) : null;
-      return new FilePatternPackageSet(module != null ? module.getName() : null, pattern);
+      boolean projectFiles = true;
+      String modulePattern = null;
+      if (psiElement != null) {
+        Project project = psiElement.getProject();
+        final Module module = ModuleUtilCore.findModuleForFile(vDir, project);
+        if (module == null) {
+          projectFiles = false;
+          modulePattern = ProjectFileIndex.getInstance(project)
+            .getOrderEntriesForFile(vDir).stream()
+            .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
+            .findFirst()
+            .map(entry -> entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdkName() : entry.getPresentableName())
+            .orElse(null);
+        }
+        else {
+          modulePattern = module.getName();
+        }
+      }
+      
+      return new FilePatternPackageSet(modulePattern, pattern, projectFiles);
+    }
+    else if (node instanceof LibraryNode) {
+      return new FilePatternPackageSet(node.toString(), recursively ? "*/" : "*", false);
     }
     else if (node instanceof FileNode) {
       if (recursively) return null;
@@ -117,6 +141,9 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       if (contentRoot == null) return null;
       final String fqName = VfsUtilCore.getRelativePath(virtualFile, contentRoot, '/');
       if (fqName != null) return new FilePatternPackageSet(getModulePattern(node), fqName);
+    }
+    else if (node instanceof GeneralGroupNode) {//external dependencies
+      return new FilePatternPackageSet("", recursively ? "*/" : "*", false);
     }
     return null;
   }

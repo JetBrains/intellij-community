@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public interface VirtualFilePointerListener {
   Topic<VirtualFilePointerListener> TOPIC = Topic.create("VirtualFilePointer", VirtualFilePointerListener.class);
 
-  default void beforeValidityChanged(VirtualFilePointer @NotNull [] pointers) {
+  default void beforeValidityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
   }
 
   default void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {

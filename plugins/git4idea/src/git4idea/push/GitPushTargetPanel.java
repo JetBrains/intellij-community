@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
-import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -36,6 +37,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.remote.GitDefineRemoteDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +80,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @NotNull private final Project myProject;
 
   @Nullable private GitPushTarget myCurrentTarget;
-  @Nullable private String myError;
+  @Nullable @Nls private String myError;
   @Nullable private Runnable myFireOnChangeAction;
   private boolean myBranchWasUpdatedManually;
   private boolean myEventFromRemoteChooser;
@@ -140,7 +142,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       }
     });
     //record undo only in active edit mode and set to ignore by default
-    myTargetEditor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    UndoUtil.disableUndoFor(myTargetEditor.getDocument());
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -212,7 +214,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     if (remotes.size() <= 1) {
       return;
     }
-    ListPopup popup = new ListPopupImpl(myProject, new BaseListPopupStep<PopupItem>(null, remotes) {
+    ListPopup popup = new ListPopupImpl(myProject, new BaseListPopupStep<>(null, remotes) {
       @Override
       public PopupStep onChosen(@NotNull PopupItem selectedValue, boolean finalChoice) {
         return doFinalStep(() -> {
@@ -322,6 +324,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     return myCurrentTarget;
   }
 
+  @NlsSafe
   @NotNull
   private static String getTextFieldText(@Nullable GitPushTarget target) {
     return (target != null ? target.getBranch().getNameForRemoteOperations() : "");
@@ -417,7 +420,12 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-          myTargetEditor.getDocument().putUserData(UndoConstants.DONT_RECORD_UNDO, !myTargetEditor.isShowing());
+          if (myTargetEditor.isShowing()) {
+            UndoUtil.enableUndoFor(myTargetEditor.getDocument());
+          }
+          else {
+            UndoUtil.disableUndoFor(myTargetEditor.getDocument());
+          }
         }
       }
     });
@@ -438,7 +446,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  private static class PopupItem {
+  private static final class PopupItem {
     static final PopupItem DEFINE_REMOTE = new PopupItem(null);
 
     @Nullable GitRemote remote;
@@ -452,6 +460,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       this.remote = remote;
     }
 
+    @Nls
     @NotNull
     String getPresentable() {
       return remote == null ? GitBundle.message("push.dialog.target.panel.define.remote") : remote.getName();

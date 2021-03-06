@@ -33,7 +33,7 @@ import com.jetbrains.python.pyi.PyiUtil;
 public class Py3ResolveTest extends PyResolveTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PyTestCase.ourPy3Descriptor;
+    return PyTestCase.ourPyLatestDescriptor;
   }
 
   @Override
@@ -839,5 +839,20 @@ public class Py3ResolveTest extends PyResolveTestCase {
           }
         )
     );
+  }
+
+  // PY-25832
+  public void testTypeVarBoundAttribute() {
+    assertResolvesTo(PyFunction.class, "upper", "builtins.pyi");
+  }
+
+  // PY-25832
+  public void testTypeVarConstraintAttribute() {
+    assertResolvesTo(PyFunction.class, "bit_length", "builtins.pyi");
+  }
+
+  // PY-25832
+  public void testTypeVarClassObjectBoundAttribute() {
+    assertNull(doResolve());
   }
 }

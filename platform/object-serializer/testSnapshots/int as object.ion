@@ -1,8 +1,8 @@
 {
-  '@id':0,
-  short:4,
-  long:9223372036854775807,
-  counter:42,
-  intAsObject:4212,
-  foo:null
+  '@id': 0,
+  short: 4,
+  long: 9223372036854775807,
+  counter: 42,
+  intAsObject: 4212,
+  foo: null
 }

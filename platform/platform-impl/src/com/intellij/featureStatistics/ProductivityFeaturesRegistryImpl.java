@@ -59,7 +59,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
   }
 
-  private void readFromXml(@NotNull String path) throws JDOMException, IOException {
+  private void readFromXml(@NotNull @NonNls String path) throws JDOMException, IOException {
     readFromXml(path, ProductivityFeaturesRegistryImpl.class);
   }
 
@@ -80,7 +80,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     loadFeaturesFromProviders(ProductivityFeaturesProvider.EP_NAME.getExtensionList());
   }
 
-  private void loadFeaturesFromProviders(@NotNull List<ProductivityFeaturesProvider> providers) {
+  private void loadFeaturesFromProviders(@NotNull List<? extends ProductivityFeaturesProvider> providers) {
     for (ProductivityFeaturesProvider provider : providers) {
       for (String xmlUrl : provider.getXmlFilesUrls()) {
         try {
@@ -192,6 +192,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   @Override
+  @NonNls
   public String toString() {
     return super.toString() + "; myAdditionalFeaturesLoaded="+myAdditionalFeaturesLoaded;
   }

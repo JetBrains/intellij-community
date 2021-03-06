@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.components.*;
@@ -61,10 +60,10 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
+    for (final AntBuildFileBase buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
       Element element = new Element(BUILD_FILE);
       element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-      ((AntBuildFileBase)buildFile).writeWorkspaceProperties(element);
+      buildFile.writeWorkspaceProperties(element);
       parentNode.addContent(element);
     }
   }
@@ -78,12 +77,12 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
     if (properties == null) {
       return;
     }
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
+    for (final AntBuildFileBase buildFile : AntConfiguration.getInstance(myProject).getBuildFileList()) {
       final Element fileElement = findChildByUrl(properties, buildFile.getVirtualFile().getUrl());
       if (fileElement == null) {
         continue;
       }
-      ((AntBuildFileBase)buildFile).readWorkspaceProperties(fileElement);
+      buildFile.readWorkspaceProperties(fileElement);
     }
   }
 

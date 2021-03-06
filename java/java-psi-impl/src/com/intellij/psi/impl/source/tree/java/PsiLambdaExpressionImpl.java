@@ -107,7 +107,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
       try {
-        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, ourPolicy, false, false);
+        ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body, ourPolicy, ControlFlowOptions.NO_CONST_EVALUATE);
         int startOffset = controlFlow.getStartOffset(body);
         int endOffset = controlFlow.getEndOffset(body);
         if (startOffset != -1 && endOffset != -1 && ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset)) {
@@ -254,7 +254,8 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, this);
   }
 
-  private static PsiType toArray(PsiType paramType) {
+  @NotNull
+  private static PsiType toArray(@NotNull PsiType paramType) {
     if (paramType instanceof PsiEllipsisType) {
       return ((PsiEllipsisType)paramType).toArrayType();
     }

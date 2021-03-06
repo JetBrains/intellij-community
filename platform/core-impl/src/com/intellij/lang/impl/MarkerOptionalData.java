@@ -16,8 +16,12 @@
 package com.intellij.lang.impl;
 
 import com.intellij.lang.WhitespacesAndCommentsBinder;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.openapi.util.NlsContexts;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +34,11 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
  * @author peter
  */
 final class MarkerOptionalData extends BitSet {
-  private final TIntObjectHashMap<Throwable> myDebugAllocationPositions = new TIntObjectHashMap<>();
-  private final TIntObjectHashMap<String> myDoneErrors = new TIntObjectHashMap<>();
-  private final TIntObjectHashMap<WhitespacesAndCommentsBinder> myLeftBinders = new TIntObjectHashMap<>();
-  private final TIntObjectHashMap<WhitespacesAndCommentsBinder> myRightBinders = new TIntObjectHashMap<>();
-  private final TIntHashSet myCollapsed = new TIntHashSet();
+  private final Int2ObjectMap<Throwable> myDebugAllocationPositions = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<@Nls String> myDoneErrors = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<WhitespacesAndCommentsBinder> myLeftBinders = new Int2ObjectOpenHashMap<>();
+  private final Int2ObjectMap<WhitespacesAndCommentsBinder> myRightBinders = new Int2ObjectOpenHashMap<>();
+  private final IntSet myCollapsed = new IntOpenHashSet();
 
   void clean(int markerId) {
     if (get(markerId)) {
@@ -47,15 +51,7 @@ final class MarkerOptionalData extends BitSet {
     }
   }
 
-  void compact() {
-    myLeftBinders.compact();
-    myRightBinders.compact();
-    myDebugAllocationPositions.compact();
-    myCollapsed.compact();
-    myDoneErrors.compact();
-  }
-
-  @Nullable
+  @Nullable @NlsContexts.DetailedDescription
   String getDoneError(int markerId) {
     return myDoneErrors.get(markerId);
   }
@@ -64,7 +60,7 @@ final class MarkerOptionalData extends BitSet {
     return myCollapsed.contains(markerId);
   }
 
-  void setErrorMessage(int markerId, @NotNull String message) {
+  void setErrorMessage(int markerId, @NotNull @Nls String message) {
     markAsHavingOptionalData(markerId);
     myDoneErrors.put(markerId, message);
   }
@@ -88,12 +84,12 @@ final class MarkerOptionalData extends BitSet {
   }
 
   WhitespacesAndCommentsBinder getBinder(int markerId, boolean right) {
-    WhitespacesAndCommentsBinder binder = getBinderMap(right).get(markerId);
+    WhitespacesAndCommentsBinder binder = get(markerId) ? getBinderMap(right).get(markerId) : null;
     return binder != null ? binder : getDefaultBinder(right);
   }
 
   void assignBinder(int markerId, @NotNull WhitespacesAndCommentsBinder binder, boolean right) {
-    TIntObjectHashMap<WhitespacesAndCommentsBinder> map = getBinderMap(right);
+    Int2ObjectMap<WhitespacesAndCommentsBinder> map = getBinderMap(right);
     if (binder != getDefaultBinder(right)) {
       markAsHavingOptionalData(markerId);
       map.put(markerId, binder);
@@ -107,7 +103,7 @@ final class MarkerOptionalData extends BitSet {
     return right ? DEFAULT_RIGHT_BINDER : DEFAULT_LEFT_BINDER;
   }
 
-  private TIntObjectHashMap<WhitespacesAndCommentsBinder> getBinderMap(boolean right) {
+  private Int2ObjectMap<WhitespacesAndCommentsBinder> getBinderMap(boolean right) {
     return right ? myRightBinders : myLeftBinders;
   }
 

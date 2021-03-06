@@ -7,9 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.util.Arrays;
 import java.util.List;
@@ -43,10 +45,14 @@ public interface ToolWindowEx extends ToolWindow {
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions);
 
+  @Nullable
+  default ToolWindowDecoration getDecoration() { return null; }
+
   /**
    * @deprecated Not used.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void setUseLastFocusedOnActivation(@SuppressWarnings("unused") boolean focus) {
   }
 
@@ -59,4 +65,23 @@ public interface ToolWindowEx extends ToolWindow {
       super(top ? 2 : 0, left ? 2 : 0, right ? 2 : 0, bottom ? 2 : 0);
     }
   }
+
+  final class ToolWindowDecoration {
+    private final ActionGroup myActionGroup;
+    private Icon myIcon;
+
+    public ToolWindowDecoration(Icon icon, ActionGroup actionGroup) {
+      myActionGroup = actionGroup;
+      myIcon = icon;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
+
+    public ActionGroup getActionGroup() {
+      return myActionGroup;
+    }
+  }
+
 }

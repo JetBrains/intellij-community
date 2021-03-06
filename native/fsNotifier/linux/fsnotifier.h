@@ -2,21 +2,14 @@
 
 #pragma once
 
-#define VERSION "20191018.1702"
+#define VERSION "20200827.1844"
 
 #include <stdbool.h>
 #include <stdio.h>
 
 
-// messaging
-typedef enum {
-  MSG_INSTANCE_LIMIT, MSG_WATCH_LIMIT
-} MSG;
-
-void message(MSG id);
-
-
-// logging
+// messaging and logging
+void message(const char *text);
 void userlog(int priority, const char* format, ...);
 
 #define CHECK_NULL(p, r) if (p == NULL) { userlog(LOG_ERR, "out of memory"); return r; }

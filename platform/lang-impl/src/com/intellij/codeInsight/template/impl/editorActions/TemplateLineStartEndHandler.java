@@ -11,15 +11,13 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
+public abstract class TemplateLineStartEndHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
   private final boolean myIsHomeHandler;
   private final boolean myWithSelection;
 
   public TemplateLineStartEndHandler(final EditorActionHandler originalHandler, boolean isHomeHandler, boolean withSelection) {
-    super(true);
     myOriginalHandler = originalHandler;
     myIsHomeHandler = isHomeHandler;
     myWithSelection = withSelection;
@@ -37,7 +35,7 @@ public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();

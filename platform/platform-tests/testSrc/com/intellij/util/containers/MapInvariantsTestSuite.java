@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.HashMap;
 import java.util.*;
 
 @RunWith(Parameterized.class)
@@ -23,8 +24,8 @@ public class MapInvariantsTestSuite {
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> parameters() {
     return Arrays.asList(
-      name("Our HashMap", com.intellij.util.containers.hash.HashMap::new),
-      name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createMap(ContainerUtil.canonicalStrategy())),
+      name("Our HashMap", HashMap::new),
+      name("Our ConcurrentHashMap", () -> ConcurrentCollectionFactory.createConcurrentMap()),
       name("Our LinkedHashMap", LinkedHashMap::new),
       name("ConcurrentFactoryMap (on ConcurrentHashMap)", () -> ConcurrentFactoryMap.createMap(k -> "val_" + k))
     );

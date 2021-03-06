@@ -27,6 +27,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
+import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.ErrorAnalyzer;
@@ -135,6 +136,8 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
     myCellRenderer = new MyCompositeTableCellRenderer();
     myCellEditor = new MyCellEditor();
+
+    TableHoverListener.DEFAULT.removeFrom(this);
 
     addMouseListener(new MouseAdapter() {
       @Override
@@ -1010,7 +1013,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
       myPropertyNameRenderer = new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(
-          final JTable table,
+          final @NotNull JTable table,
           final Object value,
           final boolean selected,
           final boolean hasFocus,
@@ -1025,7 +1028,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
       myErrorRenderer = new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setPaintFocusBorder(false);
         }
       };

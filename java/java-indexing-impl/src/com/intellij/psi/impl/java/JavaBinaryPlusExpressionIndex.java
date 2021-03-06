@@ -2,20 +2,16 @@
 package com.intellij.psi.impl.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lexer.TokenList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +21,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+
+import static com.intellij.psi.JavaTokenType.PLUS;
 
 public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");
@@ -41,24 +37,19 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
   @Override
   public DataIndexer<Boolean, PlusOffsets, FileContent> getIndexer() {
     return inputData -> {
-      CharSequence text = inputData.getContentAsText();
-      int[] offsets = new StringSearcher("+", true, true).findAllOccurrences(text);
-      if (offsets.length == 0) return Collections.emptyMap();
+      TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
 
-      LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
-      TIntArrayList result = new TIntArrayList(offsets.length);
-      Map<LighterASTNode, Boolean> stringConcatenations = new HashMap<>();
-      LightTreeUtil.processLeavesAtOffsets(offsets, tree, (leaf, offset) -> {
-        if (leaf == null || leaf.getTokenType() != JavaTokenType.PLUS) return;
-        LighterASTNode element = tree.getParent(leaf);
-        if (element == null) return;
-
-        if ((element.getTokenType() == JavaElementType.BINARY_EXPRESSION
-             || element.getTokenType() == JavaElementType.POLYADIC_EXPRESSION) &&
-            !stringConcatenations.computeIfAbsent(element, __ -> isStringConcatenation(element, tree))) {
-          result.add(offset);
+      TIntArrayList result = new TIntArrayList();
+      for (int i = 0; i < tokens.getTokenCount(); i++) {
+        if (tokens.hasType(i, PLUS) &&
+            (tokens.hasType(tokens.forwardWhile(i + 1, JavaParserUtil.WS_COMMENTS), ElementType.ALL_LITERALS) !=
+             tokens.hasType(tokens.backWhile(i - 1, JavaParserUtil.WS_COMMENTS), ElementType.ALL_LITERALS))) {
+          result.add(tokens.getTokenStart(i));
         }
-      });
+      }
+
+      if (result.isEmpty()) return Collections.emptyMap();
+
       THashMap<Boolean, PlusOffsets> resultMap = new THashMap<>();
       resultMap.put(Boolean.TRUE, new PlusOffsets(result.toNativeArray()));
       return resultMap;
@@ -74,7 +65,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
   @NotNull
   @Override
   public DataExternalizer<PlusOffsets> getValueExternalizer() {
-    return new DataExternalizer<PlusOffsets>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, PlusOffsets value) throws IOException {
         int[] offsets = value.getOffsets();
@@ -97,12 +88,17 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @Override
   public boolean hasSnapshotMapping() {
     return true;
+  }
+
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
   }
 
   @NotNull
@@ -146,10 +142,4 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     }
   }
 
-  private static boolean isStringConcatenation(@NotNull LighterASTNode concatExpr, @NotNull LighterAST tree) {
-    return LightTreeUtil
-      .getChildrenOfType(tree, concatExpr, ElementType.EXPRESSION_BIT_SET)
-      .stream()
-      .allMatch(e -> e.getTokenType() == JavaElementType.LITERAL_EXPRESSION);
-  }
 }

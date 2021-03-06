@@ -1,25 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressManager
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
 class GHPRRepositoryDataServiceImpl internal constructor(progressManager: ProgressManager,
                                                          private val requestExecutor: GithubApiRequestExecutor,
-                                                         private val serverPath: GithubServerPath,
-                                                         private val repoPath: GHRepositoryPath,
-                                                         private val repoOwner: GHRepositoryOwnerName)
+                                                         override val remoteCoordinates: GitRemoteUrlCoordinates,
+                                                         override val repositoryCoordinates: GHRepositoryCoordinates,
+                                                         private val repoOwner: GHRepositoryOwnerName,
+                                                         override val repositoryId: String,
+                                                         override val defaultBranchName: String,
+                                                         override val isFork: Boolean)
   : GHPRRepositoryDataService {
+
+  private val serverPath = repositoryCoordinates.serverPath
+  private val repoPath = repositoryCoordinates.repositoryPath
 
   init {
     requestExecutor.addListener(this) {
@@ -31,12 +42,12 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
     GithubApiPagesLoader
       .loadAll(requestExecutor, indicator,
                GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
-      .filter { it.permissions.isPush }
-      .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
-  override val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
-    get() = collaboratorsValue.value
+  override val collaborators: CompletableFuture<List<GHUser>>
+    get() = collaboratorsValue.value.thenApply { list ->
+      list.map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+    }
 
   private val teamsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
@@ -49,10 +60,13 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
     get() = teamsValue.value
 
   override val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
-    get() = collaboratorsWithPushAccess.thenCombine(teams,
-                                                    BiFunction<List<GHUser>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
-                                                      users + teams
-                                                    })
+    get() = collaboratorsValue.value.thenCombine(teams,
+                                                 BiFunction<List<GithubUserWithPermissions>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
+                                                   users
+                                                     .filter { it.permissions.isPush }
+                                                     .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) } +
+                                                   teams
+                                                 })
 
   private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
     GithubApiPagesLoader

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.*
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiClass
@@ -23,8 +22,9 @@ import com.intellij.util.io.PathKt
 import com.intellij.util.properties.EncodingAwareProperties
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.Path
+
+import static org.assertj.core.api.Assertions.assertThat
 
 class FileTemplatesTest extends JavaProjectTestCase {
   private Path myTestConfigDir
@@ -32,7 +32,7 @@ class FileTemplatesTest extends JavaProjectTestCase {
   @Override
   protected void tearDown() {
     super.tearDown()
-    if (myTestConfigDir != null && Files.exists(myTestConfigDir)) {
+    if (myTestConfigDir != null) {
       PathKt.delete(myTestConfigDir)
     }
   }
@@ -127,20 +127,27 @@ class FileTemplatesTest extends JavaProjectTestCase {
   }
 
   void testDefaultPackage() {
+    doClassTest('package ${PACKAGE_NAME}; public class ${NAME} {}', "public class XXX {\n}")
+  }
+
+  private void doClassTest(String templateText, String result) {
     String name = "my_class"
-    FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; public class ${NAME} {}')
-
-    File temp = createTempDirectory(false)
-    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
-
-    PsiTestUtil.addSourceRoot(getModule(), tempDir)
-
-    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]
-    PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot)
-
+    FileTemplate template = addTestTemplate(name, templateText)
+    PsiDirectory psiDirectory = createDirectory()
     PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name)
     assertNotNull(psiClass)
-    assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText())
+    assertEquals(result, psiClass.getContainingFile().getText())
+    FileTemplateManager.getInstance(getProject()).removeTemplate(template)
+  }
+
+  void testPopulateDefaultProperties() {
+    String name = "my_class"
+    FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; \n' +
+                                                  '// ${USER} \n' +
+                                                  'public class ${NAME} {}')
+    PsiDirectory psiDirectory = createDirectory()
+    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name)
+    assertFalse(psiClass.getContainingFile().getText().contains('${USER}'))
     FileTemplateManager.getInstance(getProject()).removeTemplate(template)
   }
 
@@ -149,12 +156,11 @@ class FileTemplatesTest extends JavaProjectTestCase {
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText('${DIR_PATH}; ${FILE_NAME}')
 
-    File temp = createTempDirectory(false)
-    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    VirtualFile tempDir = getTempDir().createVirtualDir()
     def directory = PsiManager.getInstance(project).findDirectory(tempDir)
     def element = FileTemplateUtil.createFromTemplate(template, "foo", new Properties(), directory)
 
-    assertEquals("idea_test_; foo.txt", element.getText())
+    assertThat(element.getText()).endsWith(tempDir.nameSequence + "; foo.txt")
   }
 
   void testFileNameTrimming() {
@@ -164,8 +170,7 @@ class FileTemplatesTest extends JavaProjectTestCase {
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText('${FILE_NAME}')
 
-    File temp = createTempDirectory(false)
-    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    VirtualFile tempDir = getTempDir().createVirtualDir()
     def directory = PsiManager.getInstance(project).findDirectory(tempDir)
     def element = FileTemplateUtil.createFromTemplate(template, "foo.txt", new Properties(), directory)
 
@@ -177,6 +182,13 @@ class FileTemplatesTest extends JavaProjectTestCase {
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
     template.setText(text)
     template
+  }
+
+  private PsiDirectory createDirectory() {
+    VirtualFile tempDir = getTempDir().createVirtualDir()
+    PsiTestUtil.addSourceRoot(getModule(), tempDir)
+    VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0]
+    PsiManager.getInstance(getProject()).findDirectory(sourceRoot)
   }
 
   void doTestSaveLoadTemplate(String name, String ext) {
@@ -218,8 +230,7 @@ class FileTemplatesTest extends JavaProjectTestCase {
     FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "my.txt")
     disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
 
-    File temp = createTempDirectory(false)
-    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    VirtualFile tempDir = getTempDir().createVirtualDir()
     def directory = PsiManager.getInstance(project).findDirectory(tempDir)
     assertTrue(FileTemplateUtil.canCreateFromTemplate([directory].toArray(PsiDirectory.EMPTY_ARRAY), template))
   }

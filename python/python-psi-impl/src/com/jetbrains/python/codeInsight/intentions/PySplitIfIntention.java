@@ -22,7 +22,7 @@ public class PySplitIfIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.split.if");
+    return PyPsiBundle.message("INTN.NAME.split.if");
   }
 
   @Override
@@ -63,7 +63,7 @@ public class PySplitIfIntention extends PyBaseIntentionAction {
     if (!(parent instanceof PyIfPart)) {
       return false;
     }
-    setText(PyPsiBundle.message("INTN.split.if.text"));
+    setText(PyPsiBundle.message("INTN.split.if"));
     return true;
   }
 

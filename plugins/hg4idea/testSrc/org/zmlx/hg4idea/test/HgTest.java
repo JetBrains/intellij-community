@@ -67,7 +67,7 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   private HgVcs myVcs;
 
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     // setting hg executable
     String exec = System.getenv(HG_EXECUTABLE_PATH);
     if (exec != null) {
@@ -101,15 +101,15 @@ public abstract class HgTest extends AbstractJunitVcsTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {
-      new RunAll()
-        .append(() -> HgGlobalSettings.getInstance().setHgExecutable(null))
-        .append(() -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed())
-        .append(() -> myChangeListManager.peer.waitEverythingDoneInTestMode())
-        .append(() -> tearDownFixture())
-        .append(() -> tearDownRepositories())
-        .run();
+      new RunAll(
+        () -> HgGlobalSettings.getInstance().setHgExecutable(null),
+        () -> AsyncVfsEventsPostProcessorImpl.waitEventsProcessed(),
+        () -> myChangeListManager.peer.waitEverythingDoneInTestMode(),
+        () -> tearDownFixture(),
+        () -> tearDownRepositories()
+      ).run();
     });
   }
 

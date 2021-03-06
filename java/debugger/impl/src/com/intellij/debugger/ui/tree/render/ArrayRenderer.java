@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -6,18 +6,21 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ArrayAction;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
@@ -28,11 +31,11 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
@@ -42,6 +45,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -50,6 +54,9 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
@@ -87,8 +94,71 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    return ClassRenderer.calcLabel(descriptor, evaluationContext);
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+    throws EvaluateException {
+    if (!Registry.is("debugger.renderers.arrays") ||
+        OnDemandRenderer.isOnDemandForced((DebugProcessImpl)evaluationContext.getDebugProcess())) {
+      return ClassRenderer.calcLabel(descriptor, evaluationContext);
+    }
+
+    Value value = descriptor.getValue();
+    if (value == null) {
+      return "null";
+    }
+    else if (value instanceof ArrayReference) {
+      ArrayReference arrValue = (ArrayReference)value;
+      String componentTypeName = ((ArrayType)arrValue.type()).componentTypeName();
+      boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(componentTypeName);
+      if (TypeConversionUtil.isPrimitive(componentTypeName) || isString) {
+        CompletableFuture<String> asyncLabel = DebuggerUtilsAsync.length(arrValue)
+          .thenCompose(length -> {
+            if (length > 0) {
+              int shownLength = Math.min(length, Registry.intValue(
+                isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
+              return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
+                CompletableFuture<String>[] futures = StreamEx.of(values).map(ArrayRenderer::getElementAsString).toArray(CompletableFuture[]::new);
+                return CompletableFuture.allOf(futures).thenApply(__ -> {
+                  List<String> elements = StreamEx.of(futures).map(CompletableFuture::join).toList();
+                  if (descriptor instanceof ValueDescriptorImpl) {
+                    int compactLength = Math.min(shownLength, isString ? 5 : 10);
+                    String compact =
+                      createLabel(elements.subList(0, compactLength), length - values.size() + (shownLength - compactLength));
+                    ((ValueDescriptorImpl)descriptor).setCompactValueLabel(compact);
+                  }
+                  return createLabel(elements, length - values.size());
+                });
+              });
+            }
+            return CompletableFuture.completedFuture("[]");
+          });
+        if (asyncLabel.isDone()) {
+          return asyncLabel.join();
+        }
+        else {
+          asyncLabel.thenAccept(res -> {
+            descriptor.setValueLabel(res);
+            listener.labelChanged();
+          });
+        }
+      }
+      return "";
+    }
+    return JavaDebuggerBundle.message("label.undefined");
+  }
+
+  private static String createLabel(List<String> elements, int remaining) {
+    StreamEx<String> strings = StreamEx.of(elements);
+    if (remaining > 0) {
+      strings = strings.append(JavaDebuggerBundle.message("message.node.array.elements.more", remaining));
+    }
+    return strings.joining(", ", "[", "]");
+  }
+
+  private static CompletableFuture<String> getElementAsString(Value value) {
+    if (value instanceof StringReference) {
+      return DebuggerUtilsAsync.getStringValue((StringReference)value).thenApply(e -> "\"" + StringUtil.first(e, 15, true) + "\"");
+    }
+    return CompletableFuture.completedFuture(value != null ? value.toString() : "null");
   }
 
   public void setForced(boolean forced) {
@@ -98,77 +168,92 @@ public class ArrayRenderer extends NodeRendererImpl{
   @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
-    NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
     ArrayReference array = (ArrayReference)value;
-    int arrayLength = array.length();
-    if (arrayLength > 0) {
-      if (!myForced) {
-        builder.initChildrenArrayRenderer(this, arrayLength);
+    DebuggerUtilsAsync.length(array)
+      .thenAccept(arrayLength -> {
+        if (arrayLength > 0) {
+          if (!myForced) {
+            builder.initChildrenArrayRenderer(this, arrayLength);
+          }
+
+          if (ENTRIES_LIMIT <= 0) {
+            ENTRIES_LIMIT = 1;
+          }
+
+          AtomicInteger added = new AtomicInteger();
+        AtomicBoolean hiddenNulls = new AtomicBoolean();
+
+        addChunk(array, START_INDEX, Math.min(arrayLength - 1, END_INDEX), arrayLength, builder, evaluationContext, added, hiddenNulls);
       }
+    });
+  }
 
-      if (ENTRIES_LIMIT <= 0) {
-        ENTRIES_LIMIT = 1;
-      }
+  private CompletableFuture<Void> addChunk(ArrayReference array,
+                                           int start,
+                                           int end,
+                                           int length,
+                                           ChildrenBuilder builder,
+                                           EvaluationContext evaluationContext,
+                                           AtomicInteger added,
+                                           AtomicBoolean hiddenNulls) {
+    int chunkLength = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, end - start + 1);
+    return DebuggerUtilsAsync.getValues(array, start, chunkLength)
+      .thenCompose(values -> {
+        int idx = start;
+        for (; idx < start + values.size(); idx++) {
+          Value val = values.get(idx - start);
+          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && val == null) {
+            hiddenNulls.set(true);
+            continue;
+          }
 
-      try {
-        int added = 0;
-        boolean hiddenNulls = false;
-        int end = Math.min(arrayLength - 1, END_INDEX);
-        int idx = START_INDEX;
-        if (arrayLength > START_INDEX) {
-          ArrayValuesCache arrayValuesCache = new ArrayValuesCache(array);
-          for (; idx <= end; idx++) {
-            Value val = arrayValuesCache.getValue(idx);
-            if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && val == null) {
-              hiddenNulls = true;
-              continue;
-            }
+          ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)builder.getDescriptorManager()
+            .getArrayItemDescriptor(builder.getParentDescriptor(), array, idx);
+          descriptor.setValue(val);
+          DebuggerTreeNode arrayItemNode = ((NodeManagerImpl)builder.getNodeManager()).createNode(descriptor, evaluationContext);
+          builder.addChildren(Collections.singletonList(arrayItemNode), false);
 
-            ArrayElementDescriptorImpl descriptor =
-              (ArrayElementDescriptorImpl)descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx);
-            descriptor.setValue(val);
-            DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptor, evaluationContext);
-
-            builder.addChildren(Collections.singletonList(arrayItemNode), false);
-            added++;
-            if (added >= ENTRIES_LIMIT) {
-              break;
-            }
+          if (added.incrementAndGet() >= ENTRIES_LIMIT) {
+            break;
           }
         }
-
-        builder.addChildren(Collections.emptyList(), true);
-
-        if (added == 0) {
-          if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
-            builder.setMessage(JavaDebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                               null);
-          }
-          else {
-            builder.setMessage(JavaDebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
-                               SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
-          }
+        // process next chunk if needed
+        if (idx < end && added.get() < ENTRIES_LIMIT) {
+          return addChunk(array, idx, end, length, builder, evaluationContext, added, hiddenNulls);
         }
-        else {
-          if (hiddenNulls) {
-            builder
-              .setMessage(JavaDebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                          null);
-          }
-          if (!myForced && idx < end) {
-            builder.tooManyChildren(end - idx);
-          }
-        }
+        finish(builder, length, added.get(), hiddenNulls.get(), end, idx);
+        return CompletableFuture.completedFuture(null);
+      });
+  }
+
+  private void finish(ChildrenBuilder builder, int arrayLength, int added, boolean hiddenNulls, int end, int idx) {
+    builder.addChildren(Collections.emptyList(), true);
+
+    if (added == 0) {
+      if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
+        builder
+          .setMessage(JavaDebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                      null);
       }
-      catch (ObjectCollectedException e) {
-        builder.setErrorMessage(JavaDebuggerBundle.message("evaluation.error.array.collected"));
+      else {
+        builder.setMessage(JavaDebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
+                           SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+      }
+    }
+    else {
+      if (hiddenNulls) {
+        builder
+          .setMessage(JavaDebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                      null);
+      }
+      if (!myForced && idx < end) {
+        builder.tooManyChildren(end - idx);
       }
     }
   }
 
-  private static class ArrayValuesCache {
+  private static final class ArrayValuesCache {
     private final ArrayReference myArray;
     private List<Value> myCachedValues = Collections.emptyList();
     private int myCachedStartIndex;
@@ -215,8 +300,11 @@ public class ArrayRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return value instanceof ArrayReference && ((ArrayReference)value).length() > 0;
+  public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    if (!(value instanceof ArrayReference)) {
+      return CompletableFuture.completedFuture(false);
+    }
+    return DebuggerUtilsAsync.length(((ArrayReference)value)).thenApply(l -> l > 0);
   }
 
   @Override
@@ -224,6 +312,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     return type instanceof ArrayType;
   }
 
+  //TODO: make async
   public static class Filtered extends ArrayRenderer {
     private final XExpression myExpression;
 
@@ -314,7 +403,8 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
 
-    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(" clear") {
+    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(
+      JavaDebuggerBundle.message("array.filter.node.clear.link")) {
       @Override
       public void onClick(MouseEvent e) {
         XDebuggerTree tree = (XDebuggerTree)e.getSource();

@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.injected.editor.InjectedFileChangesHandler;
 import com.intellij.injected.editor.InjectedFileChangesHandlerProvider;
+import com.intellij.injected.editor.InjectionMeta;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -40,10 +42,12 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
+import com.intellij.psi.impl.source.tree.injected.changesHandler.IndentAwareInjectedFileChangesHandler;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -86,16 +90,20 @@ public class QuickEditHandler implements Disposable, DocumentListener {
 
     PsiFileFactory factory = PsiFileFactory.getInstance(project);
     String text = InjectedLanguageManager.getInstance(project).getUnescapedText(injectedFile);
-    String newFileName =
-      StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
-      origFile.getName() + ":" + firstShred.getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
+    @Nls
+    String newFileName = CodeInsightBundle.message(
+      "name.for.injected.file.0.fragment.1.2.3",
+      StringUtil.notNullize(language.getDisplayName(), CodeInsightBundle.message("name.for.injected.file.default.lang.name")),
+      origFile.getName(),
+      firstShred.getHost().getTextRange().getStartOffset(),
+      fileType.getDefaultExtension()
+    );
 
     // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewFile = factory.createFileFromText(newFileName, language, text, true, false);
     myNewVirtualFile = Objects.requireNonNull((LightVirtualFile)myNewFile.getVirtualFile());
     myNewVirtualFile.setOriginalFile(injectedFile.getVirtualFile());
 
-    assert myNewFile != null : "PSI file is null";
     assert myNewFile.getTextLength() == myNewVirtualFile.getContent().length() : "PSI / Virtual file text mismatch";
 
     // suppress possible errors as in injected mode
@@ -139,6 +147,9 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       InjectedFileChangesHandlerProvider.EP.forLanguage(firstShred.getHost().getLanguage());
     if (changesHandlerFactory != null) {
       myEditChangesHandler = changesHandlerFactory.createFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
+    }
+    else if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+      myEditChangesHandler = new IndentAwareInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
     }
     else {
       myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
@@ -199,7 +210,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       .setHideOnClickOutside(true)
       .setHideOnKeyOutside(true)
       .setHideOnAction(false)
-      .setFillColor(UIUtil.getControlColor())
+      .setFillColor(UIUtil.getPanelBackground())
       .createBalloon();
     DumbAwareAction.create(e -> balloon.hide())
       .registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);

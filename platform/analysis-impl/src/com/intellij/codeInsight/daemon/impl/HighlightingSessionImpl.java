@@ -14,21 +14,21 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class HighlightingSessionImpl implements HighlightingSession {
+public final class HighlightingSessionImpl implements HighlightingSession {
   private final @NotNull PsiFile myPsiFile;
   private final @NotNull ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
   private final @NotNull Project myProject;
   private final Document myDocument;
-  private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<>();
+  private final Map<TextRange, RangeMarker> myRanges2markersCache = new HashMap<>();
   private final TransferToEDTQueue<Runnable> myEDTQueue;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
@@ -39,7 +39,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
     myDocument = psiFile.getOriginalFile().getViewProvider().getDocument();
-    myEDTQueue = new TransferToEDTQueue<Runnable>("Apply highlighting results", runnable -> {
+    myEDTQueue = new TransferToEDTQueue<>("Apply highlighting results", runnable -> {
       runnable.run();
       return true;
     }, __ -> myProject.isDisposed() || getProgressIndicator().isCanceled()) {
@@ -115,7 +115,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
                           @NotNull TextRange restrictedRange,
                           int groupId) {
     applyInEDT(() -> {
-      final EditorColorsScheme colorsScheme = getColorsScheme();
+      EditorColorsScheme colorsScheme = getColorsScheme();
       UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, getDocument(), getPsiFile(), restrictedRange.getStartOffset(),
                                              restrictedRange.getEndOffset(),
                                              info, colorsScheme, groupId, myRanges2markersCache);

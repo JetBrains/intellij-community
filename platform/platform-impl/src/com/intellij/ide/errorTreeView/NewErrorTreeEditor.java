@@ -23,7 +23,7 @@ import java.util.EventObject;
 /**
  * @author Vladislav.Soroka
  */
-public class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
+public final class NewErrorTreeEditor extends AbstractCellEditor implements TreeCellEditor, MouseMotionListener {
 
   public static void install(Tree tree) {
     NewErrorTreeEditor treeEditor = new NewErrorTreeEditor(tree);

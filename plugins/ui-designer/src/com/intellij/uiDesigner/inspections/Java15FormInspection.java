@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.Collections;
 /**
  * @author yole
  */
+@SuppressWarnings("InspectionDescriptionNotFoundInspection")
 public class Java15FormInspection extends BaseFormInspection {
   public Java15FormInspection() {
     super("Since15");
@@ -71,7 +72,7 @@ public class Java15FormInspection extends BaseFormInspection {
                              final IProperty prop,
                              @NonNls final String api) {
     collector.addError(getID(), component, prop, JavaBundle.message("inspection.1.5.problem.descriptor", api),
-                       (EditorQuickFixProvider)(editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
+                       (editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
   }
 
   private static class RemovePropertyFix extends QuickFix {

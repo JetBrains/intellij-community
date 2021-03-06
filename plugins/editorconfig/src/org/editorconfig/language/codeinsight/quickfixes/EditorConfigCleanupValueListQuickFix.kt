@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigCleanupValueListQuickFix(private val badCommas: List<PsiElement>) : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.values.list.cleanup.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.values.list.cleanup.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val list = descriptor.psiElement?.parent as? EditorConfigOptionValueList ?: return

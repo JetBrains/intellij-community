@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -33,13 +33,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ui.InspectionUiUtilKt;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +50,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -76,12 +78,12 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
     final PsiElement psiElement = e.getData(CommonDataKeys.PSI_ELEMENT);
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    final VirtualFile[] virtualFiles = ObjectUtils.notNull(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY), VirtualFile.EMPTY_ARRAY);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 
     final GotoInspectionModel model = new GotoInspectionModel(project);
-    showNavigationPopup(e, model, new GotoActionCallback<Object>() {
+    showNavigationPopup(e, model, new GotoActionCallback<>() {
       @Override
       protected ChooseByNameFilter<Object> createFilter(@NotNull ChooseByNamePopup popup) {
         popup.setSearchInAnyPlace(true);
@@ -91,7 +93,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         ApplicationManager.getApplication().invokeLater(
-          () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFile, psiElement, psiFile));
+          () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFiles, psiElement, psiFile));
       }
     }, false);
   }
@@ -102,33 +104,41 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
     return PlatformDataKeys.PREDEFINED_TEXT.is(dataId) ? myPredefinedText : null;
   }
 
-  public static void runInspection(final @NotNull Project project,
+  public static void runInspection(@NotNull Project project,
                                    @NotNull String shortName,
                                    @Nullable VirtualFile virtualFile,
-                                   PsiElement psiElement,
-                                   PsiFile psiFile) {
+                                   @Nullable PsiElement psiElement,
+                                   @Nullable PsiFile psiFile) {
+    runInspection(project, shortName, virtualFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {virtualFile} , psiElement, psiFile);
+  }
+
+  public static void runInspection(@NotNull Project project,
+                                   @NotNull String shortName,
+                                   VirtualFile @NotNull [] virtualFiles,
+                                   @Nullable PsiElement psiElement,
+                                   @Nullable PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;
     final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    final InspectionToolWrapper toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)
-                                                              : currentProfile.getInspectionTool(shortName, project);
+    final InspectionToolWrapper<?, ?> toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)
+                                                                    : currentProfile.getInspectionTool(shortName, project);
     LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
 
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final Module module = virtualFile != null ? ModuleUtilCore.findModuleForFile(virtualFile, project) : null;
+    final Module module = findModuleForFiles(project, virtualFiles);
 
     AnalysisScope analysisScope = null;
     if (psiFile != null) {
       analysisScope = new AnalysisScope(psiFile);
     }
     else {
-      if (virtualFile != null && virtualFile.isDirectory()) {
-        final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFile);
+      if (virtualFiles.length == 1 && virtualFiles[0].isDirectory()) {
+        final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
         if (psiDirectory != null) {
           analysisScope = new AnalysisScope(psiDirectory);
         }
       }
-      if (analysisScope == null && virtualFile != null) {
-        analysisScope = new AnalysisScope(project, Collections.singletonList(virtualFile));
+      if (analysisScope == null && virtualFiles.length != 0) {
+        analysisScope = new AnalysisScope(project, ContainerUtil.newHashSet(virtualFiles));
       }
       if (analysisScope == null) {
         analysisScope = new AnalysisScope(project);
@@ -141,37 +151,40 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
 
     final AnalysisScope initialAnalysisScope = analysisScope;
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, analysisScope, module, psiElement);
-    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog("Run '" + toolWrapper.getDisplayName() + "'",
+    final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(IdeBundle.message("goto.inspection.action.dialog.title", toolWrapper.getDisplayName()),
                                                                          CodeInsightBundle.message("analysis.scope.title", InspectionsBundle
                                                                            .message("inspection.action.noun")), project,
                                                                          items, options, true) {
 
-      private InspectionToolWrapper myUpdatedSettingsToolWrapper;
+      private InspectionToolWrapper<?, ?> myUpdatedSettingsToolWrapper;
 
-      @Nullable
       @Override
-      protected JComponent getAdditionalActionSettings(Project project) {
-        final JPanel fileFilter = fileFilterPanel.getPanel();
-        if (toolWrapper.getTool().createOptionsPanel() != null) {
-          JPanel additionPanel = new JPanel();
-          additionPanel.setLayout(new GridBagLayout());
-          additionPanel.add(fileFilter, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
-          myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);//new InheritOptionsForToolPanel(toolWrapper.getShortName(), project);
-          additionPanel.add(new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from")), new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
-          JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
+      protected @NotNull JComponent getAdditionalActionSettings(Project project) {
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final boolean hasOptionsPanel = toolWrapper.getTool().createOptionsPanel() != null;
+        var constraints = new GridBagConstraints(0, 0, 1, 1, 1, hasOptionsPanel ? 0 : 1,
+                                                 GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                                                 JBUI.emptyInsets(),
+                                                 0, 0);
+
+        panel.add(fileFilterPanel.getPanel(), constraints);
+
+        if (hasOptionsPanel) {
+          myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
+          final JComponent optionsPanel = myUpdatedSettingsToolWrapper.getTool().createOptionsPanel();
           LOGGER.assertTrue(optionsPanel != null);
-          GridBagConstraints constraints =
-            new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
-          if (UIUtil.hasScrollPane(optionsPanel)) {
-            additionPanel.add(optionsPanel, constraints);
-          }
-          else {
-            additionPanel.add(ScrollPaneFactory.createScrollPane(optionsPanel, SideBorder.NONE), constraints);
-          }
-          return additionPanel;
-        } else {
-          return fileFilter;
+
+          final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
+          separator.setBorder(JBUI.Borders.empty());
+          constraints.gridy++;
+          panel.add(separator, constraints);
+
+          optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
+          constraints.gridy++;
+          constraints.weighty = 1;
+          panel.add(InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel), constraints);
         }
+        return panel;
       }
 
       @NotNull
@@ -190,7 +203,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
         return getScope(initialAnalysisScope);
       }
 
-      private InspectionToolWrapper getToolWrapper() {
+      private InspectionToolWrapper<?, ?> getToolWrapper() {
         return myUpdatedSettingsToolWrapper == null ? toolWrapper : myUpdatedSettingsToolWrapper;
       }
 
@@ -206,7 +219,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
           @Override
           public void actionPerformed(ActionEvent e) {
             AnalysisScope scope = getScope();
-            InspectionToolWrapper wrapper = getToolWrapper();
+            InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
             DumbService.getInstance(project).smartInvokeLater(() -> RunInspectionIntention.rerunInspection(wrapper, managerEx, scope, null));
             close(DialogWrapper.OK_EXIT_CODE);
           }
@@ -215,7 +228,7 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
           actions.add(new AbstractAction(IdeBundle.message("goto.inspection.action.fix.all")) {
             @Override
             public void actionPerformed(ActionEvent e) {
-              InspectionToolWrapper wrapper = getToolWrapper();
+              InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
               InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
               managerEx.createNewGlobalContext()
                 .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
@@ -231,13 +244,20 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       }
     };
 
+    dialog.setShowInspectInjectedCode(true);
     dialog.showAndGet();
   }
 
-  private static InspectionToolWrapper copyToolWithSettings(@NotNull final InspectionToolWrapper tool) {
+  @Nullable
+  private static Module findModuleForFiles(@NotNull Project project, VirtualFile @NotNull [] files) {
+    Set<Module> modules = ContainerUtil.map2Set(files, f -> ModuleUtilCore.findModuleForFile(f, project));
+    return ContainerUtil.getFirstItem(modules);
+  }
+
+  private static InspectionToolWrapper<?, ?> copyToolWithSettings(@NotNull final InspectionToolWrapper tool) {
     final Element options = new Element("copy");
     tool.getTool().writeSettings(options);
-    final InspectionToolWrapper copiedTool = tool.createCopy();
+    final InspectionToolWrapper<?, ?> copiedTool = tool.createCopy();
     copiedTool.getTool().readSettings(options);
     return copiedTool;
   }

@@ -48,7 +48,7 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
   @NotNull
   @Override
   public ProjectGeneratorPeer<Object> createPeer() {
-    return new ProjectGeneratorPeer<Object>() {
+    return new ProjectGeneratorPeer<>() {
       @NotNull
       @Override
       public JComponent getComponent() {

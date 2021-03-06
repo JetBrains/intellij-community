@@ -43,7 +43,7 @@ public class TransientFieldNotInitializedInspection extends BaseInspection {
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-      if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.TRANSIENT)) {
         return;
       }
       final PsiClass containingClass = field.getContainingClass();

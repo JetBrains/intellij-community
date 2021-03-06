@@ -17,8 +17,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -41,14 +41,11 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
   }
 
   private static class ChangeSignaturePass extends TextEditorHighlightingPass {
-    @NonNls private static final String SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED = "Signature change was detected";
-    private final Project myProject;
     private final PsiFile myFile;
     private final Editor myEditor;
 
     ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
       super(project, editor.getDocument(), true);
-      myProject = project;
       myFile = file;
       myEditor = editor;
     }
@@ -75,7 +72,7 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
                                                        null, Font.PLAIN);
         HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(range);
         builder.textAttributes(attributes);
-        builder.descriptionAndTooltip(SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED);
+        builder.descriptionAndTooltip(RefactoringBundle.message("text.signature.change.was.detected.highlight.tooltip"));
         info = builder.createUnconditionally();
         QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(currentRefactoring.getInitialName()));
       }

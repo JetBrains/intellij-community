@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -8,12 +8,14 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +47,8 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return WebModuleTypeBase.getInstance();
-  }
-
-  @Override
-  public String getPresentableName() {
-    return getGroupName();
   }
 
   @Override
@@ -69,9 +66,8 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     return myTemplate != null ? myTemplate.getIcon() : ICON;
   }
 
-  @Nullable
   @Override
-  public Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
     Module module = super.commitModule(project, model);
     if (module != null && myTemplate != null) {
       doGenerate(myTemplate, module);
@@ -81,17 +77,16 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
 
   private void doGenerate(@NotNull WebProjectTemplate<T> template, @NotNull Module module) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    VirtualFile[] contentRoots = moduleRootManager.getContentRoots();
-    VirtualFile dir = module.getProject().getBaseDir();
-    if (contentRoots.length > 0 && contentRoots[0] != null) {
-      dir = contentRoots[0];
+    VirtualFile dir = ProjectUtil.guessModuleDir(module);
+    if (dir == null) {
+      dir = ArrayUtil.getFirstElement(moduleRootManager.getContentRoots());
     }
+    assert dir != null : module.getProject();
     template.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }
@@ -103,8 +98,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
       }
 
       @Override
-      public void updateDataModel() {
-      }
+      public void updateDataModel() { }
 
       @Override
       public boolean validate() throws ConfigurationException {

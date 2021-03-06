@@ -2,7 +2,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 record Test(final int foo, @Anno1 @Anno2 @Anno3 @Anno4 double bar, String... varArg) {
-    public Test(int foo, @Anno2 @Anno3 @Anno4 double bar, String... varArg) {<caret>
+    Test(int foo, @Anno2 @Anno3 @Anno4 double bar, String... varArg) {<caret>
         this.foo = foo;
         this.bar = bar;
         this.varArg = varArg;

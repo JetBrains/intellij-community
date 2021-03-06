@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
 import com.intellij.ide.scratch.ScratchFileService;
@@ -47,13 +47,14 @@ public interface ProjectFileNode {
   static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
     checkCanceled(); // ProcessCanceledException if current task is interrupted
     if (project == null || project.isDisposed() || !file.isValid()) return null;
+    if (FileTypeRegistry.getInstance().isFileIgnored(file)) return null; // hide ignored files
     if (ScratchFileService.getInstance().getRootType(file) != null) return ApplicationManager.getApplication();
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
     if (!is("projectView.show.base.dir")) return null;
     VirtualFile ancestor = findBaseDir(project);
-    // file does not belong to any content root, but it is located under the project directory and not ignored
-    return ancestor == null || FileTypeRegistry.getInstance().isFileIgnored(file) || !isAncestor(ancestor, file, false) ? null : project;
+    // file does not belong to any content root, but it is located under the project directory
+    return ancestor == null || !isAncestor(ancestor, file, false) ? null : project;
   }
 
   /**

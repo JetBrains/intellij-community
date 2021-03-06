@@ -16,16 +16,32 @@ sealed class PortableFilePath {
   object ProjectRoot : PortableFilePath() {
     override val presentablePath
       get() = "<project home>"
+
+    override fun equals(other: Any?) = other is ProjectRoot
+
+    /**
+     * Make it constant across IDE restarts.
+     */
+    override fun hashCode() = 42
   }
 
   @JsonTypeName("library")
   data class LibraryRoot(
+    val libraryType: LibraryType,
     val libraryName: String,
+    val moduleName: String?,
     val libraryRootIndex: Int,
     val inClassFiles: Boolean
   ) : PortableFilePath() {
+
+    enum class LibraryType {
+      APPLICATION, PROJECT, MODULE;
+
+      override fun toString() = name.toLowerCase()
+    }
+
     override val presentablePath
-      get() = "<library $libraryName>/" +
+      get() = "<$libraryType ${if (libraryType == LibraryType.MODULE) "'$moduleName' " else ""}library '$libraryName'>/" +
               "<library " + (if (inClassFiles) "class" else "source") + " root #$libraryRootIndex>"
   }
 
@@ -72,4 +88,5 @@ sealed class PortableFilePath {
       get() = root.presentablePath.trimEnd('/') + '/' + relativePath
   }
 
+  override fun toString() = presentablePath
 }

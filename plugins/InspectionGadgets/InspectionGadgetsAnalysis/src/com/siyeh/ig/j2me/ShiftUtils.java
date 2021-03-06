@@ -18,7 +18,7 @@ package com.siyeh.ig.j2me;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 
-class ShiftUtils {
+final class ShiftUtils {
 
   private ShiftUtils() {
     super();

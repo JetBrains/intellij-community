@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
@@ -15,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,12 +32,12 @@ import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.Gray.xD0;
 
-public class TipPanel extends JPanel implements DoNotAskOption {
+public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
-  private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
-  private static final String SEEN_TIPS = "seenTips";
+  @NonNls private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
+  @NonNls private static final String SEEN_TIPS = "seenTips";
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
@@ -73,25 +75,36 @@ public class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   void setTips(@NotNull List<? extends TipAndTrickBean> list) {
-    TipsOrderUtil.RecommendationDescription recommendation = TipsOrderUtil.sort(list);
+    RecommendationDescription recommendation = ApplicationManager.getApplication().getService(TipsOrderUtil.class).sort(list);
     myTips = new ArrayList<>(recommendation.getTips());
     myAlgorithm = recommendation.getAlgorithm();
     myAlgorithmVersion = recommendation.getVersion();
-    for (String id : mySeenIds) {
-      TipAndTrickBean tip = findByFileName(id);
-      if (tip != null) {
-        if (myTips.remove(tip)) {
-          myTips.add(tip);   //move last seen to the end
+    if (!isExperiment(myAlgorithm)) {
+      for (String id : mySeenIds) {
+        TipAndTrickBean tip = findByFileName(id);
+        if (tip != null) {
+          if (myTips.remove(tip)) {
+            myTips.add(tip);   //move last seen to the end
+          }
+        }
+      }
+      if (TipDialog.wereTipsShownToday()) {
+        TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
+        if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
+          myTips.add(0, lastSeenTip);
         }
       }
     }
-    if (TipDialog.wereTipsShownToday()) {
-      TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
-      if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
-        myTips.add(0, lastSeenTip);
-      }
-    }
     showNext(true);
+  }
+
+  /**
+   * We are running the experiment for research purposes and we want the experiment to be pure.
+   * This requires disabling idea's filtering mechanism as this mechanism affects the experiment
+   * results by modifying tips order.
+   */
+  private static boolean isExperiment(String algorithm) {
+    return algorithm.endsWith("_SUMMER2020");
   }
 
   @Override

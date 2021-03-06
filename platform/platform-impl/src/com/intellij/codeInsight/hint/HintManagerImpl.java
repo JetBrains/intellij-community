@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -8,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -20,9 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -73,7 +75,7 @@ public class HintManagerImpl extends HintManager {
   public interface ActionToIgnore {
   }
 
-  private static class HintInfo {
+  private static final class HintInfo {
     final LightweightHint hint;
     @HideFlags final int flags;
     private final boolean reviveOnEditorChange;
@@ -86,7 +88,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   public static HintManagerImpl getInstanceImpl() {
-    return (HintManagerImpl)ServiceManager.getService(HintManager.class);
+    return (HintManagerImpl)ApplicationManager.getApplication().getService(HintManager.class);
   }
 
   public HintManagerImpl() {
@@ -358,17 +360,28 @@ public class HintManagerImpl extends HintManager {
       timer.start();
     }
   }
-
   @Override
   public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
+    showHint(component, p,flags,timeout,null);
+  }
+  @Override
+  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     myHideAlarm.cancelAllRequests();
 
     hideHints(HIDE_BY_OTHER_HINT, false, false);
 
-    final JBPopup popup =
-      JBPopupFactory.getInstance().createComponentPopupBuilder(component, null).setRequestFocus(false).setResizable(false).setMovable(false)
-        .createPopup();
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+        .setRequestFocus(false)
+        .setResizable(false)
+        .setMovable(false);
+    if(onHintHidden != null)
+        builder.setCancelCallback(()->{
+          onHintHidden.run();
+          return true;
+        });
+
+    final JBPopup popup = builder.createPopup();
     popup.show(p);
 
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
@@ -423,6 +436,10 @@ public class HintManagerImpl extends HintManager {
     }
     else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, externalComponent.getWidth() - size.width);
+    }
+
+    if(hint.isShouldBeReopen()){
+      hint.hide(true);
     }
 
     if (hint.isVisible()) {
@@ -711,7 +728,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   private void showInformationHint(@NotNull Editor editor,
-                                   @NotNull String text,
+                                   @NotNull @NlsContexts.HintText String text,
                                    @Nullable HyperlinkListener listener,
                                    @PositionFlags short position) {
     JComponent label = HintUtil.createInformationLabel(text, listener, null, null);
@@ -729,7 +746,7 @@ public class HintManagerImpl extends HintManager {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    AccessibleContextUtil.setName(component, "Hint");
+    AccessibleContextUtil.setName(component, IdeBundle.message("information.hint.accessible.context.name"));
     LightweightHint hint = new LightweightHint(component);
     Point p = getHintPosition(hint, editor, position);
     showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
@@ -1015,7 +1032,7 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
-  private static class EditorHintListenerHolder {
+  private static final class EditorHintListenerHolder {
     private static final EditorHintListener ourEditorHintPublisher =
       ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
 

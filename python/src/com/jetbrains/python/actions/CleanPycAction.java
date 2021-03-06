@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -50,9 +51,9 @@ public class CleanPycAction extends AnAction {
         collectPycFiles(new File(dir.getVirtualFile().getPath()), pycFiles);
       }
       FileUtil.asyncDelete(pycFiles);
-    }, PyBundle.message("action.cleaning.up.pyc.files"), false, e.getProject());
+    }, PyBundle.message("action.CleanPyc.progress.title.cleaning.up.pyc.files"), false, e.getProject());
     final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(e.getProject()).getStatusBar();
-    statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() != 1 ? "s" : ""));
+    statusBar.setInfo(PyBundle.message("action.CleanPyc.status.bar.text.deleted.bytecode.files", pycFiles.size()));
   }
 
   private static void collectPycFiles(File directory, final List<File> pycFiles) {
@@ -70,7 +71,12 @@ public class CleanPycAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
-    e.getPresentation().setEnabled(isAllDirectories(elements));
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(isAllDirectories(elements));
+    }
+    else {
+      e.getPresentation().setEnabled(isAllDirectories(elements));
+    }
   }
 
   private static boolean isAllDirectories(PsiElement @Nullable [] elements) {

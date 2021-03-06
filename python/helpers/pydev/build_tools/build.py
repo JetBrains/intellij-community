@@ -15,6 +15,9 @@ import sys
 
 from generate_code import remove_if_exists, root_dir, is_python_64bit, generate_dont_trace_files, generate_cython_module
 
+# noinspection SpellCheckingInspection
+BINARY_DIRS = '_pydevd_bundle', '_pydevd_frame_eval'
+
 
 def validate_pair(ob):
     try:
@@ -89,10 +92,11 @@ def get_environment_from_batch_command(env_cmd, initial=None):
 
 
 def remove_binaries(suffixes):
-    for f in os.listdir(os.path.join(root_dir, '_pydevd_bundle')):
-        for suffix in suffixes:
-            if f.endswith(suffix):
-                remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', f))
+    for binary_dir in BINARY_DIRS:
+        for f in os.listdir(os.path.join(root_dir, binary_dir)):
+            for suffix in suffixes:
+                if f.endswith(suffix):
+                    remove_if_exists(os.path.join(root_dir, binary_dir, f))
 
 
 def build():
@@ -110,13 +114,13 @@ def build():
 
 
         env = os.environ.copy()
-        if sys.version_info[:2] in ((2, 7), (3, 5), (3, 6), (3, 7), (3, 8)):
+        if sys.version_info[:2] in ((2, 7), (3, 5), (3, 6), (3, 7), (3, 8), (3, 9)):
             import setuptools # We have to import it first for the compiler to be found
             from distutils import msvc9compiler
 
             if sys.version_info[:2] == (2, 7):
                 vcvarsall = msvc9compiler.find_vcvarsall(9.0)
-            elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7), (3, 8)):
+            elif sys.version_info[:2] in ((3, 5), (3, 6), (3, 7), (3, 8), (3, 9)):
                 vcvarsall = msvc9compiler.find_vcvarsall(14.0)
             if vcvarsall is None or not os.path.exists(vcvarsall):
                 raise RuntimeError('Error finding vcvarsall.')

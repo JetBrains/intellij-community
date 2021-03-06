@@ -6,6 +6,13 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Allows to get details where and how code completion is triggered.
+ * Values added to {@link UserDataHolder} from {@link ContextFeatureProvider} may be accessed in {@link ElementFeatureProvider}
+ * through user data of {@link ContextFeatures}.
+ * <p>
+ * See FAQ in {@link MLFeatureValue}
+ */
 public interface CompletionEnvironment extends UserDataHolder {
   @NotNull
   Lookup getLookup();

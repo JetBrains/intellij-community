@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -347,34 +348,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<String> methodNames = isDefinition() ? Arrays.asList(PyNames.INIT, PyNames.NEW) : Collections.singletonList(PyNames.CALL);
+    final var resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     return StreamEx
-      .of(methodNames)
-      .map(name -> getParametersOfMethod(name, context))
-      .findFirst(Objects::nonNull)
+      .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))
+      .select(PyCallable.class)
+      .map(callable -> callable.getParameters(context))
+      .findFirst()
       // If resolved parameters are empty, consider them as invalid and return null
       .filter(parameters -> !parameters.isEmpty())
       // Skip "self" for __init__/__call__ and "cls" for __new__
       .map(parameters -> ContainerUtil.subList(parameters, 1))
       .orElse(null);
   }
-
-  @Nullable
-  private List<PyCallableParameter> getParametersOfMethod(@NotNull String name, @NotNull TypeEvalContext context) {
-    final List<? extends RatedResolveResult> results =
-      resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext().withTypeEvalContext(context), true);
-    if (results != null) {
-      return StreamEx.of(results)
-        .map(RatedResolveResult::getElement)
-        .select(PyCallable.class)
-        .map(func -> func.getParameters(context))
-        .findFirst()
-        .orElse(null);
-    }
-    return null;
-  }
-
 
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
@@ -568,7 +554,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Override
-  public void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
+  public void visitMembers(@NotNull Processor<? super PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
     processMembers(processor);
 
     if (inherited) {
@@ -627,7 +613,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return result;
   }
 
-  private void processMembers(@NotNull Processor<PsiElement> processor) {
+  private void processMembers(@NotNull Processor<? super PsiElement> processor) {
     final PsiScopeProcessor scopeProcessor = new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -646,7 +632,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private void processOwnSlots(@NotNull Processor<String> processor, @NotNull TypeEvalContext context) {
+  private void processOwnSlots(@NotNull Processor<? super String> processor, @NotNull TypeEvalContext context) {
     if (myClass.isNewStyleClass(context)) {
       for (String slot : ContainerUtil.notNullize(myClass.getOwnSlots())) {
         if (!processor.process(slot)) return;
@@ -654,7 +640,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  private void processProvidedMembers(@NotNull Processor<PyCustomMember> processor,
+  private void processProvidedMembers(@NotNull Processor<? super PyCustomMember> processor,
                                       @Nullable PsiElement location,
                                       @NotNull TypeEvalContext context) {
     for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
@@ -669,7 +655,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return StreamEx.of(types).nonNull().map(type -> isDefinition() ? type.toClass() : type.toInstance());
   }
 
-  private void processMetaClassMembers(@NotNull Consumer<PyClassLikeType> typeTypeConsumer,
+  private void processMetaClassMembers(@NotNull Consumer<? super PyClassLikeType> typeTypeConsumer,
                                        @NotNull Processor<? super PyTargetExpression> instanceTypeAttributesProcessor,
                                        @NotNull TypeEvalContext context) {
     if (!myClass.isNewStyleClass(context)) return;

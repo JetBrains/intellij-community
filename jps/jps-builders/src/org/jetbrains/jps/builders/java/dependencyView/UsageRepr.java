@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * @author: db
  */
-class UsageRepr {
+final class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;
   private static final byte FIELD_ASSIGN_USAGE = 0x1;
   private static final byte METHOD_USAGE = 0x2;
@@ -156,7 +156,7 @@ class UsageRepr {
     }
   }
 
-  public static class FieldAssignUsage extends FieldUsage {
+  public static final class FieldAssignUsage extends FieldUsage {
     private FieldAssignUsage(final DependencyContext context, final int n, final int o, final int d) {
       super(context, n, o, d);
     }
@@ -192,7 +192,7 @@ class UsageRepr {
     }
   }
 
-  public static class MethodUsage extends FMUsage {
+  public static final class MethodUsage extends FMUsage {
     public final TypeRepr.AbstractType[] myArgumentTypes;
     public final TypeRepr.AbstractType myReturnType;
 
@@ -366,7 +366,7 @@ class UsageRepr {
     }
   }
 
-  public static class ModuleUsage extends Usage {
+  public static final class ModuleUsage extends Usage {
     final int myModuleName;
 
     @Override
@@ -419,7 +419,7 @@ class UsageRepr {
     }
   }
 
-  public static class ImportStaticOnDemandUsage extends Usage {
+  public static final class ImportStaticOnDemandUsage extends Usage {
     final int myOwner; // owner class
 
     @Override
@@ -589,7 +589,7 @@ class UsageRepr {
     }
   }
 
-  public static class AnnotationUsage extends Usage {
+  public static final class AnnotationUsage extends Usage {
     public static final DataExternalizer<ElemType> elementTypeExternalizer = new DataExternalizer<ElemType>() {
       @Override
       public void save(@NotNull final DataOutput out, final ElemType value) throws IOException {
@@ -832,11 +832,10 @@ class UsageRepr {
 
           case IMPORT_STATIC_ON_DEMAND_USAGE:
             return context.getUsage(new ImportStaticOnDemandUsage(in));
+
+          default:
+            throw new IOException("Unknown usage with tag " + tag);
         }
-
-        assert (false);
-
-        return null;
       }
     };
   }

@@ -1,12 +1,15 @@
 <component name="libraryTable">
   <library name="fastutil-min" type="repository">
-    <properties maven-id="com.github.develar:fastutil-min-builder:8.3.1-10" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil:8.5.2-6" />
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/fastutil" />
+    </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/develar/fastutil-min-builder/8.3.1-10/fastutil-min-builder-8.3.1-10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.2-6/intellij-deps-fastutil-8.5.2-6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil/8.3.1/fastutil-8.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8.5.2-6/intellij-deps-fastutil-8.5.2-6-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

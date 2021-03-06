@@ -1,51 +1,50 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CantRunException extends ExecutionException {
-  public CantRunException(final String message) {
+  public CantRunException(@DialogMessage String message) {
     super(message);
   }
 
-  public CantRunException(String s, Throwable cause) {
-    super(s, cause);
+  public CantRunException(@DialogMessage String message, Throwable cause) {
+    super(message, cause);
   }
 
   public static CantRunException noModuleConfigured(@Nullable String moduleName) {
-    if (StringUtil.isEmptyOrSpaces(moduleName)) {
-      return new CantRunException(ExecutionBundle.message("no.module.defined.error.message"));
-    }
-    return new CantRunException(ExecutionBundle.message("module.does.not.exist.error.message", moduleName));
+    return StringUtil.isEmptyOrSpaces(moduleName)
+           ? new CantRunException(ExecutionBundle.message("no.module.defined.error.message"))
+           : new CantRunException(ExecutionBundle.message("module.does.not.exist.error.message", moduleName));
   }
 
-  public static CantRunException noJdkForModule(@NotNull final Module module) {
+  public static CantRunException noJdkForModule(@NotNull Module module) {
     return new CantRunException(ExecutionBundle.message("no.jdk.for.module.error.message", module.getName()));
   }
 
-  public static CantRunException jdkMisconfigured(@NotNull final Sdk jdk, @NotNull final Module module) {
+  /** @deprecated please use {@link #jdkMisconfigured(Sdk)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static CantRunException jdkMisconfigured(@NotNull Sdk jdk, @NotNull Module module) {
+    return jdkMisconfigured(jdk);
+  }
+
+  public static CantRunException jdkMisconfigured(@NotNull Sdk jdk) {
     return new CantRunException(ExecutionBundle.message("jdk.is.bad.configured.error.message", jdk.getName()));
   }
 
-  public static CantRunException classNotFound(@NotNull final String className, @NotNull final Module module) {
+  public static CantRunException classNotFound(@NotNull String className, @NotNull Module module) {
     return new CantRunException(ExecutionBundle.message("class.not.found.in.module.error.message", className, module.getName()));
   }
 
-  public static CantRunException packageNotFound(final String packageName) {
+  public static CantRunException packageNotFound(@NotNull String packageName) {
     return new CantRunException(ExecutionBundle.message("package.not.found.error.message", packageName));
-  }
-
-  public static CantRunException noJdkConfigured(final String jdkName) {
-    if (jdkName != null) {
-      return new CantRunException(ExecutionBundle.message("jdk.not.configured.error.message", jdkName));
-    }
-    return new CantRunException(ExecutionBundle.message("project.has.no.jdk.error.message"));
   }
 
   public static CantRunException badModuleDependencies() {

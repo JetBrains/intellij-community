@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
@@ -212,7 +212,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       LOG.debug("Found ${renames.size} renames for ${fileHistory.unmatchedAdditionsDeletions.size} addition-deletions in " +
                 StopWatch.formatTime(System.currentTimeMillis() - start))
 
-      val result = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
+      val result = MultiMap<UnorderedPair<Int>, Rename>()
       renames.forEach { result.putValue(it.commits, it) }
       return result
     }
@@ -233,7 +233,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   }
 
   companion object {
-    private val LOG = Logger.getInstance(FileHistoryFilterer::class.java)
+    private val LOG = logger<FileHistoryFilterer>()
 
     private fun getStructureFilter(filters: VcsLogFilterCollection) = filters.detailsFilters.singleOrNull() as? VcsLogStructureFilter
 
@@ -260,10 +260,15 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 }
 
 private fun <K : Any?, V : Any?> MultiMap<K, V>.union(map: MultiMap<K, V>): MultiMap<K, V> {
-  if (isEmpty) return map
-  if (map.isEmpty) return this
-  return MultiMap.createSmart<K, V>().also {
-    it.putAllValues(this)
-    it.putAllValues(map)
+  if (isEmpty) {
+    return map
   }
+  if (map.isEmpty) {
+    return this
+  }
+
+  val result = MultiMap<K, V>()
+  result.putAllValues(this)
+  result.putAllValues(map)
+  return result
 }

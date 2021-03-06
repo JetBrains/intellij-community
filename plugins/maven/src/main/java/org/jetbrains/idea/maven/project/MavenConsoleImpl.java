@@ -10,6 +10,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -31,23 +33,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @deprecated to be removed when build tools will be active
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class MavenConsoleImpl extends MavenConsole {
   private static final Key<MavenConsoleImpl> CONSOLE_KEY = Key.create("MAVEN_CONSOLE_KEY");
 
   private static final String CONSOLE_FILTER_REGEXP =
     "(?:^|(?:\\[\\w+\\]\\s*)( /)?)" + RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
 
-  private final String myTitle;
+  private @NlsContexts.TabTitle final String myTitle;
   private final Project myProject;
   private final ConsoleView myConsoleView;
   private final AtomicBoolean isOpen = new AtomicBoolean(false);
   private final Pair<MavenRunnerParameters, MavenRunnerSettings> myParametersAndSettings;
 
-  public MavenConsoleImpl(String title, Project project) {
+  public MavenConsoleImpl(@NlsContexts.TabTitle String title, Project project) {
     this(title, project, null);
   }
 
-  public MavenConsoleImpl(String title,
+  public MavenConsoleImpl(@NlsContexts.TabTitle String title,
                           Project project,
                           Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
     super(getGeneralSettings(project).getLoggingLevel(), getGeneralSettings(project).isPrintErrorStackTraces());

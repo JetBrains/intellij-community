@@ -2,10 +2,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
@@ -81,9 +78,10 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
+  private final class ShowReadAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowReadAccessUsagesAction() {
-      super(UsageViewBundle.messagePointer("action.show.read.access"), AllIcons.Actions.ShowReadAccess);
+      super(UsageViewBundle.messagePointer("action.show.read.access"),
+            UsageViewBundle.messagePointer("action.show.read.access.description"), AllIcons.Actions.ShowReadAccess);
     }
 
     @Override
@@ -100,9 +98,10 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
   }
 
-  private class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
+  private final class ShowWriteAccessUsagesAction extends ToggleAction implements DumbAware {
     private ShowWriteAccessUsagesAction() {
-      super(UsageViewBundle.messagePointer("action.show.write.access"), AllIcons.Actions.ShowWriteAccess);
+      super(UsageViewBundle.messagePointer("action.show.write.access"),
+            UsageViewBundle.messagePointer("action.show.write.access.description"), AllIcons.Actions.ShowWriteAccess);
     }
 
     @Override

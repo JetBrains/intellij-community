@@ -2,45 +2,30 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.injection.MultiHostInjector;
-import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.project.Project;
+import com.intellij.lang.injection.general.Injection;
+import com.intellij.lang.injection.general.LanguageInjectionContributor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
-public final class DefaultLanguageInjector implements MultiHostInjector {
-  private final Configuration myInjectionConfiguration;
-
-  public DefaultLanguageInjector(@NotNull Project project) {
-    myInjectionConfiguration = Configuration.getProjectInstance(project);
-  }
+public final class DefaultLanguageInjector implements LanguageInjectionContributor {
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Collections.singletonList(PsiLanguageInjectionHost.class);
-  }
-
-  @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return;
+  public Injection getInjection(@NotNull PsiElement context) {
+    if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return null;
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
 
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       if (!support.isApplicableTo(host)) continue;
       if (!support.useDefaultInjector(host)) continue;
 
-      for (BaseInjection injection : myInjectionConfiguration.getInjections(support.getId())) {
+      for (BaseInjection injection : Configuration.getProjectInstance(context.getProject()).getInjections(support.getId())) {
         if (!injection.acceptsPsiElement(host)) continue;
-        if (!InjectorUtils.registerInjectionSimple(host, injection, support, registrar)) continue;
-        return;
+        return injection;
       }
     }
+    return null;
   }
 }

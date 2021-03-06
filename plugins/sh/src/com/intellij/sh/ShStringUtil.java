@@ -1,6 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
-
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -10,13 +9,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class ShStringUtil {
+public final class ShStringUtil {
   private static final char[] ORIGIN_CHARS = new char[]{
       ' ', '!', '"', '#', '$', '&', '\'', '(', ')', '*', ',', ';', '<', '>', '=', '?', '[', '\\', ']', '^', '`', '{', '|', '}'
   };
+
   public static final Set<Character> ORIGINS_SET = IntStream.range(0, ORIGIN_CHARS.length)
       .mapToObj(i -> ORIGIN_CHARS[i])
       .collect(Collectors.toSet());
+
   private static final List<String> ENCODED = toStr(ORIGIN_CHARS, '\\');
   private static final List<String> ORIGINS = toStr(ORIGIN_CHARS, null);
 
@@ -29,8 +30,7 @@ public class ShStringUtil {
         .collect(Collectors.toList());
   }
 
-  @NotNull
-  public static String quote(String name) {
+  public static @NotNull String quote(String name) {
     return StringUtil.replace(name, ORIGINS, ENCODED);
   }
 

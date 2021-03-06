@@ -2,14 +2,15 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
-import junit.framework.TestCase;
-import org.junit.Assume;
 import org.junit.Test;
 
-public class NSTLibTest extends TestCase {
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
+
+public class NSTLibTest {
   @Test
   public void testLoadingAndBasicFunctions() {
-    Assume.assumeTrue("NST-unsupported OS", NST.isSupportedOS());
+    assumeTrue("NST-unsupported OS", NST.isSupportedOS());
 
     NSTLibrary lib = null;
     try {
@@ -22,7 +23,7 @@ public class NSTLibTest extends TestCase {
     assertNotNull("Failed to load nst library for touchbar: native loader returns null", lib);
 
     // NOTE: it's difficult to promise correct library work in the system without running tb-server (this condition must be equals to isSettingsDomainExists())
-    Assume.assumeTrue("touch bar server not running", Utils.isTouchBarServerRunning());
+    assumeTrue("touch bar server not running", Utils.isTouchBarServerRunning());
 
     try {
       // small check that loaded library can create native objects

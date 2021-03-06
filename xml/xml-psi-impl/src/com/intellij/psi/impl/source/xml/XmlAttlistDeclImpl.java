@@ -8,7 +8,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,19 +22,9 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
   }
 
   @Override
-  public int getChildRole(@NotNull ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == XmlTokenType.XML_NAME) {
-      return XmlChildRole.XML_NAME;
-    }
-    else {
-      return ChildRoleBase.NONE;
-    }
-  }
-
-  @Override
   public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
+    ASTNode child = getNode().findChildByType(XmlTokenType.XML_NAME);
+    return child != null ? child.getPsi(XmlElement.class) : null;
   }
 
   @Override

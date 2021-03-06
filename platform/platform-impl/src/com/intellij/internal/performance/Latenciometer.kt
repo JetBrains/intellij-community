@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import gnu.trove.TIntArrayList
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
 private class LatencyRecorderImpl : LatencyRecorder {
   override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
@@ -17,7 +17,7 @@ private class LatencyRecorderImpl : LatencyRecorder {
 class LatencyRecord {
   var totalLatency: Long = 0L
   var maxLatency: Int = 0
-  val samples = TIntArrayList()
+  val samples = IntArrayList()
   var samplesSorted = false
 
   fun update(latencyInMS: Int) {
@@ -30,15 +30,15 @@ class LatencyRecord {
   }
 
   val averageLatency: Long
-    get() = totalLatency / samples.size()
+    get() = totalLatency / samples.size
 
   fun percentile(n: Int): Int {
     if (!samplesSorted) {
       samples.sort()
       samplesSorted = true
     }
-    val index = (samples.size() * n / 100).coerceAtMost(samples.size() - 1)
-    return samples[index]
+    val index = (samples.size * n / 100).coerceAtMost(samples.size - 1)
+    return samples.getInt(index)
   }
 }
 

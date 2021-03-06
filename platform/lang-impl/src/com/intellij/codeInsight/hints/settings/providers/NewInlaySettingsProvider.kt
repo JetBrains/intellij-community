@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings.providers
 
 import com.intellij.codeInsight.hints.HintUtils
@@ -13,9 +13,11 @@ import com.intellij.openapi.project.Project
 class NewInlaySettingsProvider : InlaySettingsProvider {
   override fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel> {
     val config = InlayHintsSettings.instance()
-    return HintUtils.getHintProvidersForLanguage(language, project).map {
-      NewInlayProviderSettingsModel(it.withSettingsCopy(), config)
-    }
+    return HintUtils.getHintProvidersForLanguage(language, project)
+      .filter { it.provider.isVisibleInSettings }
+      .map {
+        NewInlayProviderSettingsModel(it.withSettingsCopy(), config)
+      }
   }
 
   override fun getSupportedLanguages(project: Project): Collection<Language> {

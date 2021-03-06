@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -124,7 +124,7 @@ public final class JpsFileTargetContextUtils {
     int o1 = getTestsTargetOrdinal(d1);
     int o2 = getTestsTargetOrdinal(d2);
 
-    if (o1 > 0 && o2 > 0) {
+    if (o1 > 0 || o2 > 0) {
       return Integer.compare(o1, o2);
     }
 
@@ -135,7 +135,7 @@ public final class JpsFileTargetContextUtils {
     int o1 = getSourcesTargetOrdinal(d1);
     int o2 = getSourcesTargetOrdinal(d2);
 
-    if (o1 > 0 && o2 > 0) {
+    if (o1 > 0 || o2 > 0) {
       return Integer.compare(o1, o2);
     }
 
@@ -192,7 +192,7 @@ public final class JpsFileTargetContextUtils {
     return type == JavaSourceRootType.SOURCE;
   }
 
-  private static class FileTargetContextWrapper {
+  private static final class FileTargetContextWrapper {
     private final FileTargetContext myTargetContext;
     private final SourceFolder mySourceFolder;
 

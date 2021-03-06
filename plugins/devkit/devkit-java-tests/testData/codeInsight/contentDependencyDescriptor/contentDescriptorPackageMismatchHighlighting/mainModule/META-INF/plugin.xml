@@ -1,0 +1,10 @@
+<idea-plugin package="mypackage">
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <content>
+    <module name="anotherModule" package="<error descr="Package 'mypackage.mismatch' does not match package 'mypackage.subpackage' specified in module descriptor 'anotherModule'">mypackage.mismatch</error>"/>
+  </content>
+
+</idea-plugin>

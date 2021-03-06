@@ -11,12 +11,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.NettyUtil;
@@ -28,13 +26,14 @@ import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import java.util.stream.Collectors;
 
-/**
- * @author cdr
- */
 public final class ThreadTracker {
   private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
+
+  // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads detection)
+  private static final Set<String> wellKnownOffenders;
+  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
+
   private final Map<String, Thread> before;
   private final boolean myDefaultProjectInitialized;
 
@@ -44,10 +43,7 @@ public final class ThreadTracker {
     myDefaultProjectInitialized = ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized();
   }
 
-  private static final Method getThreads = Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads"));
-
-  @NotNull
-  public static Map<String, Thread> getThreads() {
+  public static @NotNull Map<String, Thread> getThreads() {
     Thread[] threads;
     try {
       // faster than Thread.getAllStackTraces().keySet()
@@ -56,53 +52,67 @@ public final class ThreadTracker {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    return ContainerUtil.newMapFromValues(ContainerUtil.iterate(threads), Thread::getName);
+
+    if (threads.length == 0) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, Thread> map = new HashMap<>(threads.length);
+    for (Thread thread : threads) {
+      map.put(thread.getName(), thread);
+    }
+    return map;
   }
 
-  // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads detection)
-  private static final Set<String> wellKnownOffenders = new THashSet<>();
   static {
-    List<String> offenders = Arrays.asList(
-    "AWT-EventQueue-",
-    "AWT-Shutdown",
-    "AWT-Windows",
-    "Batik CleanerThread",
-    "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
-    "CompilerThread0",
-    "dockerjava-netty",
-    "External compiler",
-    "Finalizer",
-    FlushingDaemon.NAME,
-    "IDEA Test Case Thread",
-    "Image Fetcher ",
-    "InnocuousThreadGroup",
-    "Java2D Disposer",
-    "JobScheduler FJ pool ",
-    "JPS thread pool",
-    "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
-    "Keep-Alive-Timer",
-    "main",
-    "Monitor Ctrl-Break",
-    "Netty ",
-    "ObjectCleanerThread",
-    "Reference Handler",
-    "RMI GC Daemon",
-    "RMI TCP ",
-    "Signal Dispatcher",
-    "timer-int", //serverIm,
-    "timer-sys", //clientim,
-    "TimerQueue",
-    "UserActivityMonitor thread",
-    "VM Periodic Task Thread",
-    "VM Thread",
-    "YJPAgent-Telemetry"
+    List<String> offenders = List.of(
+      "AWT-EventQueue-",
+      "AWT-Shutdown",
+      "AWT-Windows",
+      "Batik CleanerThread",
+      "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
+      "CompilerThread0",
+      "dockerjava-netty",
+      "External compiler",
+      "Finalizer",
+      FlushingDaemon.NAME,
+      "IDEA Test Case Thread",
+      "Image Fetcher ",
+      "InnocuousThreadGroup",
+      "Java2D Disposer",
+      "JobScheduler FJ pool ",
+      "JPS thread pool",
+      "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
+      "Keep-Alive-Timer",
+      "main",
+      "Monitor Ctrl-Break",
+      "Netty ",
+      "ObjectCleanerThread",
+      "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
+      "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
+      "Reference Handler",
+      "RMI GC Daemon",
+      "RMI TCP ",
+      "Save classpath indexes for file loader",
+      "Signal Dispatcher",
+      "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
+      "timer-int", //serverIm,
+      "timer-sys", //clientim,
+      "TimerQueue",
+      "UserActivityMonitor thread",
+      "VM Periodic Task Thread",
+      "VM Thread",
+      "YJPAgent-Telemetry"
     );
-    List<String> sorted = offenders.stream().sorted(String::compareToIgnoreCase).collect(Collectors.toList());
+    List<String> sorted = new ArrayList<>(offenders);
+    sorted.sort(String::compareToIgnoreCase);
     if (!offenders.equals(sorted)) {
-      String proper = StringUtil.join(ContainerUtil.map(sorted, s -> '"' + s + '"'), ",\n").replaceAll('"'+FlushingDaemon.NAME+'"', "FlushingDaemon.NAME");
+      String proper = String.join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
+        .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME");
       throw new AssertionError("Thread names must be sorted (for ease of maintenance). Something like this will do:\n" + proper);
     }
-    wellKnownOffenders.addAll(offenders);
+
+    wellKnownOffenders = new HashSet<>(offenders);
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
     if (application != null && !application.isDisposed()) {
@@ -124,7 +134,7 @@ public final class ThreadTracker {
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
   public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, final String @NotNull ... threadNamePrefixes) {
     wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
-    Disposer.register(parentDisposable, () -> wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes)));
+    Disposer.register(parentDisposable, () -> Arrays.asList(threadNamePrefixes).forEach(wellKnownOffenders::remove));
   }
 
   @TestOnly
@@ -133,19 +143,25 @@ public final class ThreadTracker {
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {
-      if (myDefaultProjectInitialized != ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) return;
+      ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+      if (projectManager != null && myDefaultProjectInitialized != projectManager.isDefaultProjectInitialized()) {
+        return;
+      }
 
       // compare threads by name because BoundedTaskExecutor reuses application thread pool for different bounded pools, leaks of which we want to find
       Map<String, Thread> all = getThreads();
       Map<String, Thread> after = new HashMap<>(all);
       after.keySet().removeAll(before.keySet());
-      Map<Thread, StackTraceElement[]> stackTraces = ContainerUtil.map2Map(after.values(), thread -> Pair.create(thread, thread.getStackTrace()));
+      Map<Thread, StackTraceElement[]> stackTraces = ContainerUtil.map2Map(after.values(), thread -> new Pair<>(thread, thread.getStackTrace()));
+      for (Thread thread : after.values()) {
+        if (thread == Thread.currentThread()) {
+          continue;
+        }
 
-      for (final Thread thread : after.values()) {
-        if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
-        if (group != null && "system".equals(group.getName()))continue;
-        if (!thread.isAlive()) continue;
+        if (group != null && "system".equals(group.getName()) || !thread.isAlive()) {
+          continue;
+        }
 
         long start = System.currentTimeMillis();
         //if (thread.isAlive()) {
@@ -221,17 +237,20 @@ public final class ThreadTracker {
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
-    return ContainerUtil.exists(wellKnownOffenders, threadName::contains);
+    for (String t : wellKnownOffenders) {
+      if (threadName.contains(t)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
   private static boolean isIdleApplicationPoolThread(StackTraceElement @NotNull [] stackTrace) {
-    //noinspection UnnecessaryLocalVariable
-    boolean insideTPEGetTask = ContainerUtil.exists(stackTrace,
-       element -> element.getMethodName().equals("getTask")
-                  && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
-
-    return insideTPEGetTask;
+    return ContainerUtil.exists(stackTrace, element -> {
+      return element.getMethodName().equals("getTask")
+             && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor");
+    });
   }
 
   private static boolean isIdleCommonPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
@@ -248,11 +267,11 @@ public final class ThreadTracker {
     // at java.base@11.0.6/java.util.concurrent.locks.LockSupport.park(LockSupport.java:194)
     // at java.base@11.0.6/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1628)
     // at java.base@11.0.6/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:177)
-    boolean isWaitingWorkInJdk11 = stackTrace.length > 2
-          && stackTrace[0].getClassName().equals("sun.misc.Unsafe") && stackTrace[0].getMethodName().equals("park")
-          && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport") && stackTrace[1].getMethodName().equals("park")
-          && stackTrace[2].getClassName().equals("java.util.concurrent.ForkJoinPool") && stackTrace[2].getMethodName().equals("runWorker");
-    return isWaitingWorkInJdk11;
+    return stackTrace.length > 2
+           // can be both sun.misc.Unsafe and jdk.internal.misc.Unsafe on depending on the jdk
+           && stackTrace[0].getClassName().endsWith(".Unsafe") && stackTrace[0].getMethodName().equals("park")
+           && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport") && stackTrace[1].getMethodName().equals("park")
+           && stackTrace[2].getClassName().equals("java.util.concurrent.ForkJoinPool") && stackTrace[2].getMethodName().equals("runWorker");
   }
 
   // in newer JDKs strange long hangups observed in Unsafe.unpark:
@@ -311,16 +330,11 @@ public final class ThreadTracker {
   }
 
   public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
-    awaitThreadTerminationWithParentParentGroup("JDI main", timeout, unit);
-  }
-  private static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup,
-                                                                  int timeout,
-                                                                  @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
       Thread jdiThread = ContainerUtil.find(getThreads().values(), thread -> {
         ThreadGroup group = thread.getThreadGroup();
-        return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
+        return group != null && group.getParent() != null && "JDI main".equals(group.getParent().getName());
       });
 
       if (jdiThread == null) {

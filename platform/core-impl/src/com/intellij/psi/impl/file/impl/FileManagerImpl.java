@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,7 +29,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -86,7 +86,7 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
-  @VisibleForTesting
+  @ApiStatus.Internal
   @NotNull
   public ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
@@ -171,7 +171,7 @@ public final class FileManagerImpl implements FileManager {
     ApplicationManager.getApplication().runWriteAction(this::clearViewProviders);
 
     myVFileToPsiDirMap.set(null);
-    ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
+    myManager.dropPsiCaches();
   }
 
   @Override
@@ -189,11 +189,22 @@ public final class FileManagerImpl implements FileManager {
       return Objects.requireNonNull(tempMap.get(file), "Recursive file view provider creation");
     }
 
-    viewProvider = createFileViewProvider(file, true);
+    viewProvider = createFileViewProvider(file, ModelBranch.getFileBranch(file) == null);
     if (file instanceof LightVirtualFile) {
+      checkHasNoOtherPsi(file);
       return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
     }
     return ConcurrencyUtil.cacheOrGet(getVFileToViewProviderMap(), file, viewProvider);
+  }
+
+  private void checkHasNoOtherPsi(@NotNull VirtualFile file) {
+    FileViewProvider vp = FileDocumentManager.getInstance().findCachedPsiInAnyProject(file);
+    if (vp != null) {
+      Project project = vp.getManager().getProject();
+      if (project != myManager.getProject()) {
+        LOG.error("Light files should have PSI only in one project, existing=" + vp + " in " + project + ", requested in " + myManager.getProject());
+      }
+    }
   }
 
   @Override
@@ -232,6 +243,7 @@ public final class FileManagerImpl implements FileManager {
       getVFileToViewProviderMap().remove(virtualFile);
     }
     else if (virtualFile instanceof LightVirtualFile) {
+      checkHasNoOtherPsi(virtualFile);
       virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
     }
     else {
@@ -243,25 +255,13 @@ public final class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
     FileType fileType = file.getFileType();
-    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), file);
+    Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), file, fileType);
     FileViewProviderFactory factory = language == null
                                       ? FileTypeFileViewProviders.INSTANCE.forFileType(fileType)
                                       : LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory == null ? null : factory.createFileViewProvider(file, language, myManager, eventSystemEnabled);
 
-    return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled) : viewProvider;
-  }
-
-  /** @deprecated Left for plugin compatibility */
-  @Deprecated
-  public void markInitialized() {
-  }
-
-  /** @deprecated Left for plugin compatibility */
-  @SuppressWarnings("MethodMayBeStatic")
-  @Deprecated
-  public boolean isInitialized() {
-    return true;
+    return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
   }
 
   private boolean myProcessingFileTypesChange;
@@ -483,8 +483,8 @@ public final class FileManagerImpl implements FileManager {
     removeInvalidDirs();
 
     // note: important to update directories map first - findFile uses findDirectory!
-    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(getVFileToViewProviderMap());
-    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<>(getVFileToViewProviderMap());
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new HashMap<>(getVFileToViewProviderMap());
+    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new HashMap<>(getVFileToViewProviderMap());
     if (useFind) {
       myVFileToViewProviderMap.set(null);
     }

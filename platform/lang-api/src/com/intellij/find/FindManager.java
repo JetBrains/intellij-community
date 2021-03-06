@@ -6,13 +6,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.messages.Topic;
-import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,8 +139,10 @@ public abstract class FindManager {
    * @param documentText source text in which the string was found (matters for regex searches)
    * @return the string to replace the specified found string.
    */
-  public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                            int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException;
+  public abstract @NlsSafe String getStringToReplace(
+    @NotNull String foundString, @NotNull FindModel model,
+    int startOffset, @NotNull CharSequence documentText
+  ) throws MalformedReplacementStringException;
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are
@@ -237,13 +239,6 @@ public abstract class FindManager {
   public abstract void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor editor);
 
   /**
-   * @deprecated please use {@link #findNextUsageInEditor(Editor)}
-   */
-  @ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public abstract boolean findNextUsageInEditor(@NotNull FileEditor editor);
-
-  /**
    * Performs a "Find Next" operation after "Find Usages in File" or
    * "Highlight Usages in File".
    *
@@ -252,13 +247,6 @@ public abstract class FindManager {
    *         {@code false} if an error occurred during the operation.
    */
   public abstract boolean findNextUsageInEditor(@NotNull Editor editor);
-
-  /**
-   * @deprecated please use {@link #findPreviousUsageInEditor(Editor)}
-   */
-  @ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public abstract boolean findPreviousUsageInEditor(@NotNull FileEditor editor);
 
   /**
    * Performs a "Find Previous" operation after "Find Usages in File" or

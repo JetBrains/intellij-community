@@ -1,23 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.VirtualConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,9 +35,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-
-public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extends DialogWrapper {
-
+public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> extends DialogWrapper {
   private final static Object TEMPLATE_ROOT = new Object();
   private final Project myProject;
   private DefaultMutableTreeNode myRoot;
@@ -107,11 +107,11 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
   private static void expandChecked(Tree tree) {
     TreeNode root = (TreeNode)tree.getModel().getRoot();
-    Enumeration factories = root.children();
+    Enumeration<?> factories = root.children();
     ArrayList<TreeNode[]> toExpand = new ArrayList<>();
     while (factories.hasMoreElements()) {
       DefaultMutableTreeNode factoryNode = (DefaultMutableTreeNode)factories.nextElement();
-      Enumeration configurations = factoryNode.children();
+      Enumeration<?> configurations = factoryNode.children();
       while (configurations.hasMoreElements()) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)configurations.nextElement();
         Descriptor config = (Descriptor)node.getUserObject();
@@ -154,7 +154,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
       GroupConfigurationDescriptor groupConfigurationDescriptor = new GroupConfigurationDescriptor(type, icon);
       DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(groupConfigurationDescriptor);
       root.add(typeNode);
-      final Set<String> addedNames = new THashSet<>();
+      Set<String> addedNames = CollectionFactory.createSmallMemoryFootprintSet();
       for (List<RunnerAndConfigurationSettings> list : entry.getValue().values()) {
         for (RunnerAndConfigurationSettings configuration : list) {
           final String configurationName = configuration.getName();
@@ -169,18 +169,19 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
         groupConfigurationDescriptor.setChecked(selectedAll);
       }
     }
-    buildTemplatesNode(root, runManager);
+    buildTemplatesNode(root);
     return root;
   }
 
-  private void buildTemplatesNode(DefaultMutableTreeNode root, RunManagerImpl manager) {
+  private void buildTemplatesNode(DefaultMutableTreeNode root) {
     DefaultMutableTreeNode node = new DefaultMutableTreeNode(TEMPLATE_ROOT);
     root.add(node);
     for (ConfigurationType type : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList()) {
-      final Icon icon = type.getIcon();
-      DefaultMutableTreeNode typeNode =
-        new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
-      node.add(typeNode);
+      if (!(type instanceof VirtualConfigurationType)) {
+        Icon icon = type.getIcon();
+        DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
+        node.add(typeNode);
+      }
     }
   }
 
@@ -194,7 +195,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   }
 
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
-    for (T task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskID())) {
+    for (T task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskId())) {
       if (isRunning(task))
         return true;
     }
@@ -204,7 +205,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   @Override
   protected void doOKAction() {
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
-    for (Enumeration nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
+    for (Enumeration<?> nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
       Object object = node.getUserObject();
       if (!(object instanceof Descriptor)) {
@@ -232,18 +233,18 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
   protected abstract String getTargetDisplayString();
 
-  protected abstract Key<T> getTaskID();
+  protected abstract Key<T> getTaskId();
 
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
     List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(config);
-    BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
+    BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskId());
     if (provider == null) {
       return;
     }
 
-    T task = provider.createTask(config);
+    T task = Objects.requireNonNull(provider.createTask(config));
     update(task);
     task.setEnabled(true);
     if (enabled) {
@@ -261,7 +262,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     runManager.setBeforeRunTasks(config, tasks);
   }
 
-  protected abstract void update(T task);
+  protected abstract void update(@NotNull T task);
 
   protected abstract void clear(T task);
 
@@ -326,6 +327,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
       return myConfiguration.getType();
     }
 
+    @NlsSafe
     public String getName() {
       return myConfiguration.getName();
     }

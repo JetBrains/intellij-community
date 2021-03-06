@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.properties;
 
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -8,10 +10,12 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 /**
  * @author Konstantin Kolosovsky.
  */
-public class ExternalsDefinitionParser {
+public final class ExternalsDefinitionParser {
 
   /**
    * Parses "svn:externals" property in format starting from svn 1.5.
@@ -44,19 +48,19 @@ public class ExternalsDefinitionParser {
 
     if (isUnescapedQuote(s, length - 1)) {
       int index = lastUnescapedIndexOf(s, length - 1, '"');
-      assertIndex(s, index, "Could not find start quote");
+      assertIndex(s, index, message("error.could.not.find.start.quote"));
       result = s.substring(index + 1, length - 1);
     }
     else {
       int index = lastUnescapedIndexOf(s, length, ' ');
-      assertIndex(s, index, "Could not find separating space");
+      assertIndex(s, index, message("error.could.not.find.separating.space"));
       result = s.substring(index + 1);
     }
 
     return unescape(result);
   }
 
-  private static void assertIndex(@NotNull String s, int index, @NotNull String message) throws SvnBindException {
+  private static void assertIndex(@NlsSafe @NotNull String s, int index, @DialogMessage @NotNull String message) throws SvnBindException {
     if (index < 0) {
       throw new SvnBindException(message + " - " + s);
     }

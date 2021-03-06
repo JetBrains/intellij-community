@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="emulator-proto" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.android.tools.base:emulator_java_proto:27.1.1.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/emulator_java_proto/27.1.1.0/emulator_java_proto-27.1.1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

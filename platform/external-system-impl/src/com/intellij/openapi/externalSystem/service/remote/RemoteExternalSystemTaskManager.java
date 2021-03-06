@@ -37,7 +37,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
 
   /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemProjectResolverImpl}. */
   RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> NULL_OBJECT =
-    new RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings>() {
+    new RemoteExternalSystemTaskManager<>() {
 
       @Override
       public void executeTasks(@NotNull ExternalSystemTaskId id,
@@ -48,8 +48,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
       }
 
       @Override
-      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException
-      {
+      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException {
         return false;
       }
 
@@ -73,25 +72,11 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
       }
     };
 
-  /**
-   * @deprecated use {@link RemoteExternalSystemTaskManager#executeTasks(ExternalSystemTaskId, List, String, ExternalSystemExecutionSettings, String)}
-   */
-  @Deprecated
-  default void executeTasks(@NotNull ExternalSystemTaskId id,
-                            @NotNull List<String> taskNames,
-                            @NotNull String projectPath,
-                            @Nullable S settings,
-                            @NotNull List<String> vmOptions,
-                            @NotNull List<String> scriptParameters,
-                            @Nullable String jvmParametersSetup) throws RemoteException, ExternalSystemException {
-  }
-
   default void executeTasks(@NotNull ExternalSystemTaskId id,
                             @NotNull List<String> taskNames,
                             @NotNull String projectPath,
                             @Nullable S settings,
                             @Nullable String jvmParametersSetup) throws RemoteException, ExternalSystemException {
-    executeTasks(id, taskNames, projectPath, settings, Collections.emptyList(), Collections.emptyList(), jvmParametersSetup);
   }
 
   @Override

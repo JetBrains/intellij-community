@@ -484,6 +484,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  // PY-42334
+  public void testTypeOfExplicitTypeAlias() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+  }
+
   // PY-29339
   public void testAsyncFunctionTooltip() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
@@ -634,7 +639,21 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testPositionalOnlyParameters() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::checkHover);
   }
-  
+
+  public void testStandardCollectionTypesRenderedCapitalizedBefore39() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::checkHTMLOnly);
+  }
+
+  // PY-42418
+  public void testStandardCollectionTypesRenderedWithOriginalCase() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+  }
+
+  // PY-42418
+  public void testTupleTypeIsRenderedLowercased() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::checkHTMLOnly);
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";

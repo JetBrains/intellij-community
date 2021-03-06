@@ -60,14 +60,11 @@ class JavaChangeSignatureUsageSearcher {
   public UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiMethod method = myChangeInfo.getMethod();
-    if (method != null) {
 
-      findSimpleUsages(method, result);
+    findSimpleUsages(method, result);
 
-      final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
-      return UsageViewUtil.removeDuplicatedUsages(usageInfos);
-    }
-    return UsageInfo.EMPTY_ARRAY;
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
+    return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
 
@@ -166,7 +163,7 @@ class JavaChangeSignatureUsageSearcher {
     if (JavaLanguage.INSTANCE.equals(myChangeInfo.getLanguage())) {
       PsiClass aClass = method.getContainingClass();
       PsiRecordComponent[] components = null;
-      if (aClass != null && method.equals(JavaPsiRecordUtil.findCanonicalConstructor(aClass))) {
+      if (aClass != null && JavaPsiRecordUtil.isCanonicalConstructor(method)) {
         components = aClass.getRecordComponents();
       } 
       PsiParameter[] parameters = method.getParameterList().getParameters();

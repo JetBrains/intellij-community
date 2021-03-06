@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,8 +10,9 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,15 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author ik, dsl
- */
-public class PsiSubstitutorImpl implements PsiSubstitutor {
+public final class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final Logger LOG = Logger.getInstance(PsiSubstitutorImpl.class);
 
-  private static final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
+  private static final HashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new HashingStrategy<PsiTypeParameter>() {
     @Override
-    public int computeHashCode(PsiTypeParameter parameter) {
+    public int hashCode(PsiTypeParameter parameter) {
       return Comparing.hashcode(parameter.getName());
     }
 
@@ -277,11 +261,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         }
         return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
       }
-
-      @Override
-      public PsiType visitType(@NotNull PsiType type) {
-        return null;
-      }
     });
   }
 
@@ -408,6 +387,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
    * @deprecated use {@link PsiSubstitutor#createSubstitutor(Map)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return PsiSubstitutor.createSubstitutor(map);
   }

@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.util.gotoByName.ChooseByNameItem;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -12,17 +13,17 @@ import java.util.List;
 * @author yole
 */
 public class SetupTask implements ChooseByNameItem {
-  private final String name;
-  private String description;
+  private final @NlsSafe String name;
+  private @NlsSafe String description;
   private final List<Option> options = new ArrayList<>();
 
-  SetupTask(@NotNull String name) {
+  SetupTask(@NotNull @NlsSafe String name) {
     this.name = name;
     description = name;
   }
 
   @Override
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 
@@ -32,7 +33,7 @@ public class SetupTask implements ChooseByNameItem {
 
   @NotNull
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 
@@ -46,11 +47,11 @@ public class SetupTask implements ChooseByNameItem {
 
   public static class Option {
     public final String name;
-    public final String description;
+    public final @NlsSafe String description;
     public final boolean checkbox;
     public final boolean negative;
 
-    public Option(String name, String description, boolean checkbox, boolean negative) {
+    public Option(String name, @NlsSafe String description, boolean checkbox, boolean negative) {
       this.name = name;
       this.description = description;
       this.checkbox = checkbox;

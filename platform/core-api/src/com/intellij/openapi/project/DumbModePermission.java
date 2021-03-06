@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated obsolete API
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public enum DumbModePermission {
   MAY_START_MODAL,
   MAY_START_BACKGROUND

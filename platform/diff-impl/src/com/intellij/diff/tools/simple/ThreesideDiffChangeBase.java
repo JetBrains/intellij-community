@@ -20,7 +20,7 @@ import com.intellij.diff.util.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,14 +38,14 @@ public abstract class ThreesideDiffChangeBase {
     myType = type;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void destroy() {
     destroyHighlighters();
     destroyInnerHighlighters();
     destroyOperations();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installHighlighters() {
     assert myHighlighters.isEmpty();
 
@@ -54,7 +54,7 @@ public abstract class ThreesideDiffChangeBase {
     if (isChange(Side.RIGHT)) createHighlighter(ThreeSide.RIGHT);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installInnerHighlighters() {
     assert myInnerHighlighters.isEmpty();
 
@@ -63,7 +63,7 @@ public abstract class ThreesideDiffChangeBase {
     if (isChange(Side.RIGHT)) createInnerHighlighter(ThreeSide.RIGHT);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyHighlighters() {
     for (RangeHighlighter highlighter : myHighlighters) {
       highlighter.dispose();
@@ -71,7 +71,7 @@ public abstract class ThreesideDiffChangeBase {
     myHighlighters.clear();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyInnerHighlighters() {
     for (RangeHighlighter highlighter : myInnerHighlighters) {
       highlighter.dispose();
@@ -79,11 +79,11 @@ public abstract class ThreesideDiffChangeBase {
     myInnerHighlighters.clear();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installOperations() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyOperations() {
     for (DiffGutterOperation operation : myOperations) {
       operation.dispose();

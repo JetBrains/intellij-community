@@ -17,6 +17,8 @@ package com.intellij.execution.console;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.openapi.util.text.StringHash;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +30,7 @@ public abstract class ConsoleRootType extends RootType {
   public static final String SEPARATOR = "-. . -..- - / . -. - .-. -.--";
   private static final String PATH_PREFIX = "consoles/";
 
-  protected ConsoleRootType(@NotNull String consoleTypeId, @Nullable String displayName) {
+  protected ConsoleRootType(@NonNls @NotNull String consoleTypeId, @Nls @Nullable String displayName) {
     super(PATH_PREFIX + consoleTypeId, displayName);
   }
 

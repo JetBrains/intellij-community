@@ -49,7 +49,7 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   private final LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComponent myAnchor;
 
-  public JavaScratchConfigurable(final Project project) {
+  public JavaScratchConfigurable(@NotNull  Project project) {
     myMainClass = new LabeledComponent<>();
     myMainClass.setLabelLocation(BorderLayout.WEST);
     myMainClass.setText(ExecutionBundle.message("main.class"));

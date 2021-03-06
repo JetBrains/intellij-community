@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.util.Comparator;
@@ -104,6 +105,13 @@ public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<Point> CONTEXT_MENU_POINT = DataKey.create("contextMenuPoint");
 
   /**
+   * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
+   * and the slow part to be queried on a background thread or under a progress.
+   * That slow part shall be returned when this data key is requested.
+   */
+  public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
+
+  /**
    * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current
    * context basis during processing (e.g., we can have two actions assigned to the same shortcut, but one of them is
    * configured to be inapplicable in modal dialog context).
@@ -117,5 +125,6 @@ public class PlatformDataKeys extends CommonDataKeys {
    * @deprecated use {@link ActionPromoter}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

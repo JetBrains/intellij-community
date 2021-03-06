@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -34,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,9 +75,9 @@ public class HighlightInfo implements Segment {
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
- 
-  private final String description;
-  private final String toolTip;
+
+  private final @DetailedDescription String description;
+  private final @Tooltip String toolTip;
   @NotNull
   private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
@@ -93,8 +94,11 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
   JComponent fileLevelComponent;
-  @Nullable("null means it the same as highlighter") RangeMarker fixMarker;
+  @Nullable("null means it the same as highlighter")
+  RangeMarker fixMarker;
+  @Nullable
   volatile RangeHighlighterEx highlighter; // modified in EDT only
+  @Nullable
   PsiElement psiElement;
 
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
@@ -102,8 +106,8 @@ public class HighlightInfo implements Segment {
                           @NotNull HighlightInfoType type,
                           int startOffset,
                           int endOffset,
-                          @Nullable String escapedDescription,
-                          @Nullable String escapedToolTip,
+                          @Nullable @DetailedDescription String escapedDescription,
+                          @Nullable @Tooltip String escapedToolTip,
                           @NotNull HighlightSeverity severity,
                           boolean afterEndOfLine,
                           @Nullable Boolean needsUpdateOnTyping,
@@ -156,7 +160,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public String getToolTip() {
+  public @Tooltip String getToolTip() {
     String toolTip = this.toolTip;
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
@@ -176,7 +180,7 @@ public class HighlightInfo implements Segment {
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    *         or tooltip without changes.
    */
-  private static String encodeTooltip(String tooltip, String description) {
+  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
     if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
     String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
@@ -188,7 +192,7 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.stripHtml(encoded);
   }
 
-  public String getDescription() {
+  public @DetailedDescription String getDescription() {
     return description;
   }
 
@@ -223,6 +227,7 @@ public class HighlightInfo implements Segment {
     return severity;
   }
 
+  @Nullable
   public RangeHighlighterEx getHighlighter() {
     return highlighter;
   }
@@ -266,7 +271,7 @@ public class HighlightInfo implements Segment {
 
   @Nullable
   @SuppressWarnings("deprecation")
-  Color getErrorStripeMarkColor(@NotNull PsiElement element, @Nullable("when null, a global scheme will be used") EditorColorsScheme colorsScheme) {
+  Color getErrorStripeMarkColor(@NotNull PsiElement element, @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
@@ -309,11 +314,11 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  private static String htmlEscapeToolTip(@Nullable String unescapedTooltip) {
+  private static @Tooltip String htmlEscapeToolTip(@Nullable @Tooltip String unescapedTooltip) {
     return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
-  boolean needUpdateOnTyping() {
+  public boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
@@ -362,7 +367,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
@@ -439,7 +444,7 @@ public class HighlightInfo implements Segment {
     return true;
   }
 
-  private static class B implements Builder {
+  private static final class B implements Builder {
     private Boolean myNeedsUpdateOnTyping;
     private TextAttributes forcedTextAttributes;
     private TextAttributesKey forcedTextAttributesKey;
@@ -448,8 +453,8 @@ public class HighlightInfo implements Segment {
     private int startOffset = -1;
     private int endOffset = -1;
 
-    private String escapedDescription;
-    private String escapedToolTip;
+    private @DetailedDescription String escapedDescription;
+    private @Tooltip String escapedToolTip;
     private HighlightSeverity severity;
 
     private boolean isAfterEndOfLine;
@@ -762,28 +767,13 @@ public class HighlightInfo implements Segment {
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
-    private final String myDisplayName;
+    private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
-    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, String displayName) {
-      this(action, options, displayName, null);
-    }
-
-    public IntentionActionDescriptor(@NotNull IntentionAction action, Icon icon) {
-      this(action, null, null, icon);
-    }
-
-    IntentionActionDescriptor(@NotNull IntentionAction action,
-                              @Nullable List<IntentionAction> options,
-                              @Nullable String displayName,
-                              @Nullable Icon icon) {
-      this(action, options, displayName, icon, null, null, null);
-    }
-
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<IntentionAction> options,
-                                     @Nullable String displayName,
+                                     @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
                                      @Nullable ProblemGroup problemGroup,
@@ -797,6 +787,18 @@ public class HighlightInfo implements Segment {
       mySeverity = severity;
     }
 
+    @Nullable IntentionActionDescriptor copyWithEmptyAction() {
+      String displayName = HighlightDisplayKey.getDisplayNameByKey(myKey);
+      if (displayName == null) return null;
+      return new IntentionActionDescriptor(new EmptyIntentionAction(displayName),
+                                           myOptions,
+                                           myDisplayName,
+                                           myIcon,
+                                           myKey,
+                                           myProblemGroup,
+                                           mySeverity);
+    }
+
     @NotNull
     public IntentionAction getAction() {
       return myAction;
@@ -805,7 +807,7 @@ public class HighlightInfo implements Segment {
     boolean isError() {
       return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
     }
-    
+
     boolean isInformation() {
       return HighlightSeverity.INFORMATION.equals(mySeverity);
     }
@@ -831,6 +833,9 @@ public class HighlightInfo implements Segment {
         return null;
       }
       List<IntentionAction> options = myOptions;
+      if (options != null) {
+        return options;
+      }
       HighlightDisplayKey key = myKey;
       if (myProblemGroup != null) {
         String problemName = myProblemGroup.getProblemName();
@@ -839,8 +844,15 @@ public class HighlightInfo implements Segment {
           key = problemGroupKey;
         }
       }
-      if (options != null || key == null) {
-        return options;
+      if (key == null) {
+        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+        if (action instanceof IntentionActionWithOptions) {
+          options = ((IntentionActionWithOptions)action).getOptions();
+          if (!options.isEmpty()) {
+            return updateOptions(options);
+          }
+        }
+        return null;
       }
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
@@ -853,7 +865,6 @@ public class HighlightInfo implements Segment {
         }
       }
       if (toolWrapper != null) {
-
         myCanCleanup = toolWrapper.isCleanupTool();
 
         IntentionAction fixAllIntention = intentionManager.createFixAllIntention(toolWrapper, myAction);
@@ -895,20 +906,20 @@ public class HighlightInfo implements Segment {
         ContainerUtil.addAll(newOptions, suppressActions);
       }
 
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        options = myOptions;
-        if (options == null) {
-          myOptions = options = newOptions;
-        }
-        myKey = null;
-      }
+      return updateOptions(newOptions);
+    }
 
+    private synchronized List<IntentionAction> updateOptions(List<IntentionAction> newOptions) {
+      List<IntentionAction> options = myOptions;
+      if (options == null) {
+        myOptions = options = newOptions;
+      }
+      myKey = null;
       return options;
     }
 
     @Nullable
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return myDisplayName;
     }
 
@@ -960,7 +971,7 @@ public class HighlightInfo implements Segment {
 
   public void registerFix(@Nullable IntentionAction action,
                           @Nullable List<IntentionAction> options,
-                          @Nullable String displayName,
+                          @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
     if (action == null) return;
@@ -981,5 +992,15 @@ public class HighlightInfo implements Segment {
     if (quickFixActionRanges != null) {
       quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
     }
+  }
+  
+  public @Nullable IntentionAction getSameFamilyFix(IntentionActionWithFixAllOption action) {
+    if (quickFixActionRanges == null) return null;
+    for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
+      IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
+      if (other instanceof IntentionActionWithFixAllOption &&
+          action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
+    }
+    return null;
   }
 }

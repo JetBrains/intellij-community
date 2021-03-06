@@ -3,17 +3,21 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.invokeAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.awt.RelativePoint.getCenterOf
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -23,24 +27,26 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
+import org.jetbrains.plugins.github.authentication.GHLoginRequest
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.JListHoveredRowMaterialiser
-import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
-import org.jetbrains.plugins.github.util.GithubImageResizer
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.*
 import javax.swing.*
 
-internal class GHAccountsPanel(private val project: Project,
-                               private val executorFactory: GithubApiRequestExecutor.Factory,
-                               private val avatarLoader: CachingGithubUserAvatarLoader,
-                               private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
+private val actionManager: ActionManager get() = ActionManager.getInstance()
+
+internal class GHAccountsPanel(
+  private val project: Project,
+  private val executorFactory: GithubApiRequestExecutor.Factory,
+  private val avatarLoader: CachingGHUserAvatarLoader
+) : BorderLayoutPanel(), GHAccountsHost, Disposable, DataProvider {
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>()
   private val accountList = JBList<GithubAccountDecorator>(accountListModel).apply {
@@ -50,11 +56,6 @@ internal class GHAccountsPanel(private val project: Project,
     UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(decoratorRenderer))
 
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-    emptyText.apply {
-      appendText(GithubBundle.message("accounts.none.added"))
-      appendSecondaryText(GithubBundle.message("accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { addAccount() }
-      appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
-    }
   }
 
   private val progressManager = createListProgressManager()
@@ -62,9 +63,18 @@ internal class GHAccountsPanel(private val project: Project,
   private val newTokensMap = mutableMapOf<GithubAccount, String>()
 
   init {
+    accountList.emptyText.apply {
+      appendText(GithubBundle.message("accounts.none.added"))
+      appendSecondaryText(GithubBundle.message("accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
+        invokeAction(actionManager.getAction("Github.Accounts.AddGHAccount"), accountList, ActionPlaces.UNKNOWN, null, null)
+      }
+      appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
+    }
+
     addToCenter(ToolbarDecorator.createDecorator(accountList)
                   .disableUpDownActions()
-                  .setAddAction { addAccount() }
+                  .setAddAction { showAddAccountActions(it.preferredPopupPoint ?: getCenterOf(accountList)) }
+                  .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton(GithubBundle.message("accounts.set.default"),
                                                                                 AllIcons.Actions.Checked) {
                     override fun actionPerformed(e: AnActionEvent) {
@@ -90,32 +100,41 @@ internal class GHAccountsPanel(private val project: Project,
     Disposer.register(this, progressManager)
   }
 
-  private fun addAccount() {
-    val dialog = GithubLoginDialog(executorFactory, project, this, ::isAccountUnique)
-    if (dialog.showAndGet()) {
-      val githubAccount = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
-      newTokensMap[githubAccount] = dialog.getToken()
+  override fun getData(dataId: String): Any? =
+    if (GHAccountsHost.KEY.`is`(dataId)) this
+    else null
 
-      val accountData = GithubAccountDecorator(githubAccount, false)
-      accountListModel.add(accountData)
-      loadAccountDetails(accountData)
-    }
+  private fun showAddAccountActions(point: RelativePoint) {
+    val group = actionManager.getAction("Github.Accounts.AddAccount") as ActionGroup
+    val popup = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group)
+
+    popup.setTargetComponent(this)
+    JBPopupMenu.showAt(point, popup.component)
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
-    val dialog = GithubLoginDialog(executorFactory, project, this).apply {
-      withServer(decorator.account.server.toString(), false)
-      withCredentials(decorator.account.name)
-    }
-    if (dialog.showAndGet()) {
-      decorator.account.name = dialog.getLogin()
-      newTokensMap[decorator.account] = dialog.getToken()
-      loadAccountDetails(decorator)
-    }
+    val authData = GithubAuthenticationManager.getInstance().login(
+      project, this,
+      GHLoginRequest(server = decorator.account.server, login = decorator.account.name)
+    )
+    if (authData == null) return
+
+    decorator.account.name = authData.login
+    newTokensMap[decorator.account] = authData.token
+    loadAccountDetails(decorator)
   }
 
-  private fun isAccountUnique(login: String, server: GithubServerPath) =
-    accountListModel.items.none { it.account.name == login && it.account.server == server }
+  override fun addAccount(server: GithubServerPath, login: String, token: String) {
+    val githubAccount = GithubAccountManager.createAccount(login, server)
+    newTokensMap[githubAccount] = token
+
+    val accountData = GithubAccountDecorator(githubAccount, false)
+    accountListModel.add(accountData)
+    loadAccountDetails(accountData)
+  }
+
+  override fun isAccountUnique(login: String, server: GithubServerPath) =
+    accountListModel.items.none { it.account.name == login && it.account.server.equals(server, true) }
 
   fun loadExistingAccountsDetails() {
     for (accountData in accountListModel.items) {
@@ -134,7 +153,7 @@ internal class GHAccountsPanel(private val project: Project,
       return
     }
     val executor = executorFactory.create(token)
-    progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
+    progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var loadedDetails: GithubAuthenticatedUser
       var correctScopes: Boolean = true
 
@@ -147,7 +166,7 @@ internal class GHAccountsPanel(private val project: Project,
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
           details = loadedDetails
-          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, GithubUIUtil.avatarSize, accountList)
+          iconProvider = GHAvatarIconsProvider(avatarLoader, executor)
           if (correctScopes) {
             errorText = null
             showReLoginLink = false
@@ -206,11 +225,8 @@ internal class GHAccountsPanel(private val project: Project,
     private val fullName = JLabel()
 
     private val loadingError = JLabel()
-    private val reloginLink = LinkLabel<Any?>(GithubBundle.message("accounts.relogin"), null)
+    private val reloginLink = LinkLabel<Any?>(GithubBundle.message("login.action"), null)
 
-    /**
-     * UPDATE [createLinkActivationListener] IF YOU CHANGE LAYOUT
-     */
     init {
       layout = FlowLayout(FlowLayout.LEFT, 0, 0)
       border = JBUI.Borders.empty(5, 8)

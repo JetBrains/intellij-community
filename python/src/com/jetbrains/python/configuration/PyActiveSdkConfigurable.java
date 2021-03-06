@@ -17,6 +17,7 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -97,9 +98,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     final PackagesNotificationPanel packagesNotificationPanel = new PackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
+    myPackagesPanel.setShowGrid(false);
 
-    final Pair<PyCustomSdkUiProvider, Disposable> customizer = buildCustomizer();
-    myDisposable = customizer == null ? null : customizer.second;
+    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
+    myDisposable = customUiProvider == null ? null : Disposer.newDisposable();
+    final Pair<PyCustomSdkUiProvider, Disposable> customizer =
+      customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
     final JButton detailsButton = buildDetailsButton(mySdkCombo, this::onShowDetailsClicked);
 
@@ -111,11 +115,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @NotNull
   private static ComboBox<Object> buildSdkComboBox(@NotNull Runnable onShowAllSelected, @NotNull Runnable onSdkSelected) {
-    final ComboBox<Object> result = new ComboBox<Object>() {
+    final ComboBox<Object> result = new ComboBox<>() {
       @Override
       public void setSelectedItem(Object item) {
         if (getShowAll().equals(item)) {
-          onShowAllSelected.run();
+          ApplicationManager.getApplication().invokeLater(onShowAllSelected);
         }
         else if (!PySdkListCellRenderer.SEPARATOR.equals(item)) {
           super.setSelectedItem(item);
@@ -132,12 +136,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     new ComboboxSpeedSearch(result);
     result.setPreferredSize(result.getPreferredSize()); // this line allows making `result` resizable
     return result;
-  }
-
-  @Nullable
-  private static Pair<PyCustomSdkUiProvider, Disposable> buildCustomizer() {
-    final PyCustomSdkUiProvider customUiProvider = PyCustomSdkUiProvider.getInstance();
-    return customUiProvider == null ? null : new Pair<>(customUiProvider, Disposer.newDisposable());
   }
 
   @NotNull
@@ -329,7 +327,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(PySdkListCellRenderer.SEPARATOR);
     items.add(getShowAll());
 
-    mySdkCombo.setRenderer(new PySdkListCellRenderer(null));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
     final Sdk selection = selectedSdk == null ? null : myProjectSdksModel.findSdk(selectedSdk.getName());
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
     // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above

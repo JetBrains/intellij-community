@@ -45,7 +45,8 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
 
       PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
       if (settings.isTemplateEnabled(template, templateLookupElement.getProvider())) {
-        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel, String.format("Disable '%s' template", template.getKey())) {
+        consumer.consume(new LookupElementAction(AllIcons.Actions.Cancel,
+                                                 CodeInsightBundle.message("action.text.disable.live.template", template.getKey())) {
           @Override
           public Result performLookupAction() {
             ApplicationManager.getApplication().invokeLater(() -> settings.disableTemplate(template, templateLookupElement.getProvider()));

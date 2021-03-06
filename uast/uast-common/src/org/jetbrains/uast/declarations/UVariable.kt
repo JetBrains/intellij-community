@@ -11,6 +11,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiVariable
 
   @Suppress("DEPRECATION")
@@ -65,6 +66,7 @@ private fun UVariable.visitContents(visitor: UastVisitor) {
 }
 
 interface UParameter : UVariable, PsiParameter {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiParameter
 
   override fun asLogString(): String = log("name = $name")
@@ -83,6 +85,7 @@ interface UParameterEx : UParameter, UDeclarationEx {
 }
 
 interface UField : UVariable, PsiField {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
 
   override fun asLogString(): String = log("name = $name")
@@ -101,6 +104,7 @@ interface UFieldEx : UField, UDeclarationEx {
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiLocalVariable
 
   override fun asLogString(): String = log("name = $name")
@@ -119,6 +123,7 @@ interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiEnumConstant
 
   val initializingClass: UClass?

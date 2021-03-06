@@ -28,7 +28,7 @@ import java.io.IOException;
 /**
  * Represents some data that probably can be compared with some other.
  *
- * @see com.intellij.openapi.diff.DiffRequest
+ * @see DiffRequest
  * @deprecated use {@link com.intellij.diff.contents.DiffContent} instead
  */
 @Deprecated
@@ -87,7 +87,7 @@ public abstract class DiffContent {
   /**
    * @return Binary representation of content.
    *         Should not be null if {@link #getFile()} returns existing not directory file
-   * @throws java.io.IOException
+   * @throws IOException
    */
   public abstract byte[] getBytes() throws IOException;
 

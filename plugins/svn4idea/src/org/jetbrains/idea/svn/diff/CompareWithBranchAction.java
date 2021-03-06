@@ -6,10 +6,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
@@ -35,10 +36,8 @@ public class CompareWithBranchAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    e.getPresentation().setEnabled(project != null && file != null && isEnabled(FileStatusManager.getInstance(project).getStatus(file)));
-  }
-
-  private static boolean isEnabled(FileStatus fileStatus) {
-    return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED && fileStatus != FileStatus.IGNORED;
+    e.getPresentation().setEnabled(project != null && file != null &&
+                                   VcsUtil.isFileForVcs(file, project, SvnVcs.getInstance(project)) &&
+                                   AbstractVcs.fileInVcsByFileStatus(project, file));
   }
 }

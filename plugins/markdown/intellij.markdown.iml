@@ -16,16 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" scope="TEST" />
-    <orderEntry type="module-library" exported="">
-      <library name="intellij-markdown" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.41" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.41/markdown-0.1.41.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="owasp-java-html-sanitizer" level="project" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
@@ -36,5 +26,12 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="library" name="jcef" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.images" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="library" name="intellij-markdown" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
 </module>

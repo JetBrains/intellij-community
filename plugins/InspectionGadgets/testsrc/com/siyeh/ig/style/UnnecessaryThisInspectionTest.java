@@ -100,6 +100,7 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
    * IDEA-42154
    */
   public void testCatchBlockParameter() {
+    //noinspection EmptyTryBlock
     doTest("class A {" +
            "    private Throwable throwable = null;" +
            "    public void method() {" +

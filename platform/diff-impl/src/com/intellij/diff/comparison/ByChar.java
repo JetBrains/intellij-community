@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterable;
@@ -20,7 +6,8 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,7 +17,7 @@ import static com.intellij.diff.comparison.TrimUtil.isPunctuation;
 import static com.intellij.diff.comparison.TrimUtil.isWhiteSpaceCodePoint;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 
-public class ByChar {
+public final class ByChar {
   @NotNull
   public static FairDiffIterable compare(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
@@ -220,7 +207,7 @@ public class ByChar {
   //
 
   private static int @NotNull [] getAllCodePoints(@NotNull CharSequence text) {
-    TIntArrayList list = new TIntArrayList(text.length());
+    IntList list = new IntArrayList(text.length());
 
     int len = text.length();
     int offset = 0;
@@ -234,13 +221,13 @@ public class ByChar {
       offset += charCount;
     }
 
-    return list.toNativeArray();
+    return list.toIntArray();
   }
 
   @NotNull
   private static CodePointsOffsets getNonSpaceCodePoints(@NotNull CharSequence text) {
-    TIntArrayList codePoints = new TIntArrayList(text.length());
-    TIntArrayList offsets = new TIntArrayList(text.length());
+    IntList codePoints = new IntArrayList(text.length());
+    IntList offsets = new IntArrayList(text.length());
 
     int len = text.length();
     int offset = 0;
@@ -257,13 +244,13 @@ public class ByChar {
       offset += charCount;
     }
 
-    return new CodePointsOffsets(codePoints.toNativeArray(), offsets.toNativeArray());
+    return new CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray());
   }
 
   @NotNull
   private static CodePointsOffsets getPunctuationChars(@NotNull CharSequence text) {
-    TIntArrayList codePoints = new TIntArrayList(text.length());
-    TIntArrayList offsets = new TIntArrayList(text.length());
+    IntList codePoints = new IntArrayList(text.length());
+    IntList offsets = new IntArrayList(text.length());
 
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -273,7 +260,7 @@ public class ByChar {
       }
     }
 
-    return new CodePointsOffsets(codePoints.toNativeArray(), offsets.toNativeArray());
+    return new CodePointsOffsets(codePoints.toIntArray(), offsets.toIntArray());
   }
 
   private static int countChars(int[] codePoints, int start, int end) {

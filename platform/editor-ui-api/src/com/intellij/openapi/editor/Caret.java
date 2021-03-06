@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,13 +83,9 @@ public interface Caret extends UserDataHolderEx, Disposable {
   void moveToOffset(int offset, boolean locateBeforeSoftWrap);
 
   /**
-   * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
-   * before caret. Caret offset, visual and logical positions should be updated then). So, there is a possible case
-   * that caret model in in the process of caret position update now.
-   * <p/>
-   * Current method allows to check that.
-   *
-   * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
+   * Tells whether caret is in consistent state currently. This might not be the case during document update, but client code can
+   * observe such a state only in specific circumstances. So unless you're implementing very low-level editor logic (involving
+   * {@code PrioritizedDocumentListener}), you don't need this method - you'll only see it return {@code true}.
    */
   boolean isUpToDate();
 
@@ -175,7 +158,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * @return the selected text, or null if there is currently no selection.
    */
   @Nullable
-  String getSelectedText();
+  @NlsSafe String getSelectedText();
 
   /**
    * Returns the offset from which the user started to extend the selection (the selection start
@@ -296,7 +279,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
    *
    * @param above if {@code true}, new caret will be created at the previous line, if {@code false} - on the next line
    * @return newly created caret instance, or {@code null} if the caret cannot be created because it already exists at the new location
-   * or caret model doesn't support multiple carets.
+   * or maximum supported number of carets already exists in editor ({@link CaretModel#getMaxCaretCount()}).
    */
   @Nullable
   Caret clone(boolean above);
@@ -310,8 +293,8 @@ public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns {@code true} if caret is located at a boundary between different runs of bidirectional text.
    * This means that text fragments at different sides of the boundary are non-adjacent in logical order.
-   * Caret can located at any side of the boundary, 
-   * exact location can be determined from directionality flags of caret's logical and visual position 
+   * Caret can located at any side of the boundary,
+   * exact location can be determined from directionality flags of caret's logical and visual position
    * ({@link LogicalPosition#leansForward} and {@link VisualPosition#leansRight}).
    */
   boolean isAtBidiRunBoundary();

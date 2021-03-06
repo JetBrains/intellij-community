@@ -21,6 +21,11 @@ public final class TestNGConfigurationType extends SimpleConfigurationType {
     super("TestNG", "TestNG", null, NotNullLazyValue.createValue(() -> TestngIcons.TestNG));
   }
 
+  @Override
+  public boolean isEditableInDumbMode() {
+    return true;
+  }
+
   @NotNull
   @Override
   public RunConfiguration createTemplateConfiguration(@NotNull Project project) {

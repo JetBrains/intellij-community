@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -10,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -36,7 +35,7 @@ import java.util.function.Consumer;
 /**
  * @author anna
  */
-public class RefactoringConflictsUtil {
+public final class RefactoringConflictsUtil {
   private RefactoringConflictsUtil() { }
 
   public static void analyzeAccessibilityConflicts(@NotNull Set<? extends PsiMember> membersToMove,
@@ -110,7 +109,7 @@ public class RefactoringConflictsUtil {
                                                    RefactoringUIUtil.getDescription(targetClass, true),
                                                    VisibilityUtil.getVisibilityStringToDisplay(targetClass),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-        message = CommonRefactoringUtil.capitalize(message);
+        message = StringUtil.capitalize(message);
         conflicts.putValue(targetClass, message);
       }
       // check for member accessibility
@@ -119,7 +118,7 @@ public class RefactoringConflictsUtil {
                                                    RefactoringUIUtil.getDescription(member, true),
                                                    VisibilityUtil.toPresentableText(VisibilityUtil.getVisibilityModifier(modifierListCopy)),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-        message = CommonRefactoringUtil.capitalize(message);
+        message = StringUtil.capitalize(message);
         conflicts.putValue(member, message);
       }
     }
@@ -204,7 +203,7 @@ public class RefactoringConflictsUtil {
                                                  RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
                                                  RefactoringUIUtil.getDescription(member, false));
-      message = CommonRefactoringUtil.capitalize(message);
+      message = StringUtil.capitalize(message);
       conflicts.putValue(refMember, message);
     }
     else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
@@ -213,9 +212,9 @@ public class RefactoringConflictsUtil {
           !refMember.hasModifierProperty(PsiModifier.STATIC) &&
           fieldInSubClass != refMember &&
           !member.hasModifierProperty(PsiModifier.STATIC)) {
-        conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
-                                                                       " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
-                                                                       " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
+        conflicts.putValue(refMember, StringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
+                                                            " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
+                                                            " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
       }
     }
   }
@@ -246,7 +245,7 @@ public class RefactoringConflictsUtil {
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<>();
-    Consumer<PsiJavaCodeReferenceElement> processor = new Consumer<PsiJavaCodeReferenceElement>() {
+    Consumer<PsiJavaCodeReferenceElement> processor = new Consumer<>() {
       @Override
       public void accept(PsiJavaCodeReferenceElement reference) {
         final PsiElement resolved = reference.resolve();
@@ -266,13 +265,13 @@ public class RefactoringConflictsUtil {
                                                            RefactoringUIUtil.getDescription(resolved, true),
                                                            scopeDescription,
                                                            CommonRefactoringUtil.htmlEmphasize(targetModule.getName()));
-          conflicts.putValue(reference, CommonRefactoringUtil.capitalize(message));
+          conflicts.putValue(reference, StringUtil.capitalize(message));
           reported.add(resolved);
         }
       }
 
       private boolean haveElementInScope(PsiElement resolved) {
-        if (PsiSearchScopeUtil.isInScope(resolveScope, resolved)){
+        if (PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
           return true;
         }
         if (!resolved.getManager().isInProject(resolved)) {
@@ -286,7 +285,7 @@ public class RefactoringConflictsUtil {
                   if (resolved instanceof PsiMethod) {
                     return classFromTarget.findMethodsBySignature((PsiMethod)resolved, true).length > 0;
                   }
-                  if (resolved instanceof PsiField ) {
+                  if (resolved instanceof PsiField) {
                     return classFromTarget.findFieldByName(((PsiField)resolved).getName(), false) != null;
                   }
                   if (resolved instanceof PsiClass) {
@@ -375,7 +374,7 @@ public class RefactoringConflictsUtil {
                                                     scopeDescription,
                                                     CommonRefactoringUtil.htmlEmphasize(module.getName()));
               }
-              conflicts.putValue(element, CommonRefactoringUtil.capitalize(message));
+              conflicts.putValue(element, StringUtil.capitalize(message));
             }
           }
         }

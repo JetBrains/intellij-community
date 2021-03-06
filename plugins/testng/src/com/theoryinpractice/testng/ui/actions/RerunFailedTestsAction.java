@@ -8,7 +8,11 @@ import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -48,8 +52,14 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       @Override
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         return new TestNGRunnableState(env, configuration) {
+
           @Override
-          public SearchingForTestsTask createSearchingForTestsTask() {
+          public SearchForTestsTask createSearchingForTestsTask() {
+            return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
+          }
+
+          @Override
+          public SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
             return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.commander;
 
-import com.intellij.ide.SelectInManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   }
 
   public String toString() {
-    return SelectInManager.getCommander();
+    return IdeBundle.message("select.in.commander");
   }
 
   @Override

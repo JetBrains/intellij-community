@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,12 +38,12 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final String MAVEN_COMPILER_PROPERTIES = "<properties>\n" +
@@ -51,14 +52,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
                                                             "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
                                                             "</properties>\n";
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
-  // should not be static
-  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS =
-    new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
+  private MavenProgressIndicator myProgressIndicator;
 
   private File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;
 
+  @NotNull
   protected Project myProject;
 
   protected File myDir;
@@ -79,6 +79,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     setUpFixtures();
 
     myProject = myTestFixture.getProject();
+    myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.NON_MODAL), null);
 
     MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
 
@@ -115,17 +116,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
-      () -> MavenIndicesManager.getInstance().clear(),
       () -> {
-        FileUtil.delete(myDir);
-        // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
-        // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
-        if (myDir.exists()) {
-          System.err.println("Cannot delete " + myDir);
-          //printDirectoryContent(myDir);
-          myDir.deleteOnExit();
+        Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+        MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
+        if (mavenIndicesManager != null) {
+          mavenIndicesManager.clear();
         }
       },
+      ()->deleteDirOnTearDown(myDir),
       () -> super.tearDown()
     ).run();
   }
@@ -153,6 +151,21 @@ public abstract class MavenTestCase extends UsefulTestCase {
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
   }
 
+  protected MavenProgressIndicator getMavenProgressIndicator() {
+    return myProgressIndicator;
+  }
+
+  protected static void deleteDirOnTearDown(File dir) {
+    FileUtil.delete(dir);
+    // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
+    // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+    if (dir.exists()) {
+      System.err.println("Cannot delete " + dir);
+      //printDirectoryContent(myDir);
+      dir.deleteOnExit();
+    }
+  }
+
   private static void printDirectoryContent(File dir) {
     File[] files = dir.listFiles();
     if (files == null) return;
@@ -176,36 +189,21 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
       if (runInWriteAction()) {
-        try {
-          WriteAction.runAndWait(() -> super.runTest());
-        }
-        catch (Throwable throwable) {
-          ExceptionUtil.rethrowAllAsUnchecked(throwable);
-        }
+        WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
       }
       else {
-        super.runTest();
+        super.runTestRunnable(testRunnable);
       }
     }
-    catch (Exception throwable) {
-      Throwable each = throwable;
-      do {
-        if (each instanceof HeadlessException) {
-          printIgnoredMessage("Doesn't work in Headless environment");
-          return;
-        }
+    catch (Throwable throwable) {
+      if (ExceptionUtil.causedBy(throwable, HeadlessException.class)) {
+        printIgnoredMessage("Doesn't work in Headless environment");
       }
-      while ((each = each.getCause()) != null);
       throw throwable;
     }
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    runnable.run();
   }
 
   protected boolean runInWriteAction() {
@@ -481,8 +479,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }
 
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
-    assertEquals(new HashSet<>(expected), new HashSet<>(actual));
+  protected static <T> void assertUnorderedElementsAreEqual(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+    assertThat(actual).hasSameElementsAs(expected);
   }
 
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {

@@ -65,7 +65,7 @@ class DebugFMap implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return myMap.keySet().toArray(new Key[0]);
   }
 
@@ -84,7 +84,7 @@ class DebugFMap implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap other) {
+  public boolean equalsByReference(@NotNull KeyFMap other) {
     if (this.size() != other.size()) return false;
     return myMap.entrySet().stream().allMatch(entry -> entry.getValue() == other.get(entry.getKey()));
   }

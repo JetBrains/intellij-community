@@ -2,14 +2,14 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.text.StringUtil;
-import one.util.streamex.StreamEx;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 
 import java.util.List;
-import java.util.function.Function;
 
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
@@ -71,13 +71,13 @@ final class LambdaIndy {
    * @param valueSupplier function to create new values by type
    * @return list of lambda argument values
    */
-  List<BasicValue> getLambdaMethodArguments(List<? extends BasicValue> captured, Function<Type, BasicValue> valueSupplier) {
+  List<BasicValue> getLambdaMethodArguments(List<? extends BasicValue> captured, Function<? super Type, ? extends BasicValue> valueSupplier) {
     // Lambda runtime representation args consist of captured values and invocation values
     // E.g.:
     // IntUnaryOperator getAdder(int addend) { return x -> addend + x; }
     // will generate
     // static int lambda$getAdder$0(int addend, int x) {return addend + x;}
-    return StreamEx.of(getFunctionalMethodType().getArgumentTypes()).map(valueSupplier).prepend(captured).toList();
+    return ContainerUtil.concat(captured, ContainerUtil.map(getFunctionalMethodType().getArgumentTypes(), valueSupplier));
   }
 
   public String toString() {

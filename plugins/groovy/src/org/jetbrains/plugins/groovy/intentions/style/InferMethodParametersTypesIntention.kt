@@ -1,21 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle
 import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
 import org.jetbrains.plugins.groovy.intentions.style.inference.*
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -34,21 +33,15 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), false, DefaultInferenceContext, lazy { unreachable() })
+    val options = SignatureInferenceOptions(false, DefaultInferenceContext)
     val virtualMethod = runInferenceProcess(method, options)
     substituteMethodSignature(virtualMethod, method)
   }
 
 
   private fun substituteMethodSignature(sourceMethod: GrMethod, sinkMethod: GrMethod) {
-    if (!sinkMethod.isConstructor) {
-      val returnType = if (sinkMethod.annotations.all { it.qualifiedName != CommonClassNames.JAVA_LANG_OVERRIDE }) {
-        sourceMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
-      }
-      else {
-        sourceMethod.returnType
-      }
-      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
+    if (!sinkMethod.isConstructor && !sinkMethod.modifierList.hasModifierProperty(GrModifier.DEF)) {
+      sinkMethod.modifierList.setModifierProperty(GrModifier.DEF, true)
     }
     if (sourceMethod.hasTypeParameters()) {
       when {
@@ -62,7 +55,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     }
     for ((actual, inferred) in sinkMethod.parameters.zip(sourceMethod.parameters)) {
       actual.setType(inferred.type)
-      actual.modifierList.setModifierProperty("def", false)
+      actual.modifierList.setModifierProperty(GrModifier.DEF, false)
       if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
@@ -76,7 +69,11 @@ internal class InferMethodParametersTypesIntention : Intention() {
       }
     }
     sinkMethod.typeParameters.forEach { GrReferenceAdjuster.shortenAllReferencesIn(it.originalElement as GroovyPsiElement?) }
-    sinkMethod.modifierList.setModifierProperty("def", false)
+    if (!sinkMethod.isConstructor && sinkMethod.returnTypeElement == null) {
+      val returnType = sinkMethod.inferredReturnType?.takeIf { it != PsiType.NULL } ?: getJavaLangObject(sinkMethod)
+      GrReferenceAdjuster.shortenAllReferencesIn(sinkMethod.setReturnType(returnType))
+    }
+    sinkMethod.modifierList.setModifierProperty(GrModifier.DEF, false)
   }
 
   private fun collectParameterSubstitutor(virtualMethod: GrMethod): PsiSubstitutor {
@@ -98,12 +95,10 @@ internal class InferMethodParametersTypesIntention : Intention() {
   }
 
   override fun getText(): String {
-    return GroovyIntentionsBundle.message("infer.method.parameters.types")
+    return GroovyBundle.message("infer.method.parameters.types")
   }
 
   override fun getFamilyName(): String {
-    return GroovyIntentionsBundle.message("infer.method.parameters.types.for.method.declaration")
+    return GroovyBundle.message("infer.method.parameters.types.for.method.declaration")
   }
-
 }
-

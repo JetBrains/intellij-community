@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -32,10 +31,7 @@ import com.jetbrains.python.psi.resolve.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.PyUtil.inSameFile;
@@ -46,7 +42,7 @@ import static com.jetbrains.python.psi.PyUtil.inSameFile;
 public class PyModuleType implements PyType { // Modules don't descend from object
   @NotNull private final PyFile myModule;
 
-  public static final ImmutableSet<String> MODULE_MEMBERS = ImmutableSet.of(
+  private static final ImmutableSet<String> MODULE_MEMBERS = ImmutableSet.of(
     "__name__", "__file__", "__path__", "__doc__", "__dict__", "__package__");
 
   public PyModuleType(@NotNull PyFile source) {
@@ -60,11 +56,22 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
+  public PyClassType getModuleClassType() {
+    return PyClassTypeImpl.createTypeByQName(myModule, "types.ModuleType", false);
+  }
+
+  @Nullable
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
+    if (MODULE_MEMBERS.contains(name)) {
+      var type = getModuleClassType();
+      if (type != null) {
+        return type.resolveMember(name, location, direction, resolveContext);
+      }
+    }
     return resolveMemberInPackageOrModule(null, myModule, name, location, resolveContext);
   }
 
@@ -151,7 +158,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return;
     }
 
-    final Set<String> seen = Sets.newHashSet();
+    final Set<String> seen = new HashSet<>();
     if (!processImplicitlyImportedByImportElements(anchor, footHold,
                                                    importElements, name -> filter.test(name) && seen.add(name),
                                                    resultProcessor)) {
@@ -562,5 +569,23 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @NotNull
   public static Set<String> getPossibleInstanceMembers() {
     return MODULE_MEMBERS;
+  }
+
+  @Override
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    return ObjectUtils.doIfNotNull(getModuleClassType(), PyClassType::getPyClass);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PyModuleType)) return false;
+    PyModuleType type = (PyModuleType)o;
+    return myModule.equals(type.myModule);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myModule);
   }
 }

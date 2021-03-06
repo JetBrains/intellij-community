@@ -5,10 +5,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -18,7 +16,6 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.Objects;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
 public class AsyncRendering {
@@ -26,22 +23,9 @@ public class AsyncRendering {
   private static final Key<CancellablePromise<?>> LAST_COMPUTATION = Key.create("LAST_COMPUTATION");
   private static final Executor ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ExpensiveRendering");
   private final LookupImpl myLookup;
-  private final SingleAlarm myAlarm;
-  private final AtomicBoolean myToResize = new AtomicBoolean();
 
   AsyncRendering(LookupImpl lookup) {
     myLookup = lookup;
-    myAlarm = new SingleAlarm(() -> {
-      if (myToResize.compareAndSet(true, false)) {
-        myLookup.requestResize();
-      }
-      myLookup.refreshUi(false, false);
-    }, 50);
-    Disposer.register(lookup, () -> {
-      synchronized (myAlarm) {
-        Disposer.dispose(myAlarm);
-      }
-    });
   }
 
   @NotNull
@@ -59,7 +43,14 @@ public class AsyncRendering {
 
       Ref<CancellablePromise<?>> promiseRef = Ref.create();
       CancellablePromise<Void> promise = ReadAction
-        .nonBlocking(() -> renderInBackground(element, renderer, promiseRef))
+        .nonBlocking(() -> {
+          if (element.isValid()) {
+            renderInBackground(element, renderer);
+          }
+          synchronized (LAST_COMPUTATION) {
+            element.replace(LAST_COMPUTATION, promiseRef.get(), null);
+          }
+        })
         .expireWith(myLookup)
         .submit(ourExecutor);
       element.putUserData(LAST_COMPUTATION, promise);
@@ -68,29 +59,15 @@ public class AsyncRendering {
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private void renderInBackground(LookupElement element, LookupElementRenderer renderer, Ref<CancellablePromise<?>> promiseRef) {
+  private void renderInBackground(LookupElement element, LookupElementRenderer renderer) {
     LookupElementPresentation presentation = new LookupElementPresentation();
-    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       renderer.renderElement(element, presentation);
-    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
+    });
 
+    presentation.freeze();
     rememberPresentation(element, presentation);
-    scheduleLookupUpdate(element, presentation);
-
-    synchronized (LAST_COMPUTATION) {
-      element.replace(LAST_COMPUTATION, promiseRef.get(), null);
-    }
-  }
-
-  private void scheduleLookupUpdate(LookupElement element, LookupElementPresentation presentation) {
-    if (myLookup.myCellRenderer.updateLookupWidth(element, presentation)) {
-      myToResize.set(true);
-    }
-    synchronized (myAlarm) {
-      if (!myAlarm.isDisposed()) {
-        myAlarm.request();
-      }
-    }
+    myLookup.myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
   }
 
   public static void cancelRendering(@NotNull LookupElement item) {

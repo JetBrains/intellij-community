@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeCook;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -23,11 +9,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class Util {
+public final class Util {
   private static final Logger LOG = Logger.getInstance(Util.class);
 
   public static PsiType createArrayType(PsiType theType, int level) {
@@ -38,7 +25,7 @@ public class Util {
     return theType;
   }
 
-  public static PsiClassType.ClassResolveResult resolveType(PsiType type) {
+  public static @NotNull PsiClassType.ClassResolveResult resolveType(PsiType type) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
     final PsiClass aClass = resolveResult.getElement();
     if (aClass instanceof PsiAnonymousClass) {
@@ -56,10 +43,6 @@ public class Util {
     }
     else if (t instanceof PsiClassType) {
       PsiClassType.ClassResolveResult result = resolveType(t);
-
-      if (result == null) {
-        return null;
-      }
 
       PsiClass aclass = result.getElement();
       PsiSubstitutor subst = result.getSubstitutor();
@@ -367,10 +350,6 @@ public class Util {
       else if (element instanceof PsiNewExpression) {
         final PsiNewExpression newx = (PsiNewExpression)element;
         final PsiClassType.ClassResolveResult result = resolveType(type);
-
-        if (result == null) {
-          return;
-        }
 
         final PsiSubstitutor subst = result.getSubstitutor();
         final PsiTypeParameter[] parms = result.getElement().getTypeParameters();

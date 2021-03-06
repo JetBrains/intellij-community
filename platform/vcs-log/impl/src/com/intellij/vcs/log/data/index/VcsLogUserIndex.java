@@ -11,29 +11,37 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
+import com.intellij.util.io.IntCollectionDataExternalizer;
+import com.intellij.util.io.Page;
+import com.intellij.util.io.PersistentEnumerator;
+import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
-import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
+public final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
-  @NonNls public static final String USERS = "users";
-  @NonNls public static final String USERS_IDS = "users-ids";
+  @NonNls private static final String USERS = "users";
+  @NonNls private static final String USERS_IDS = "users-ids";
   @NotNull private final UserIndexer myUserIndexer;
 
   public VcsLogUserIndex(@NotNull StorageId storageId,
@@ -46,23 +54,22 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommit
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
   }
 
-  @Nullable
   @Override
-  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex() throws IOException {
-    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), false),
+  protected @NotNull Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex() throws IOException {
+    return new Pair<>(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), false),
                        new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
   @NotNull
-  private static PersistentEnumeratorBase<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
+  private static PersistentEnumerator<VcsUser> createUsersEnumerator(@NotNull StorageId storageId,
                                                                          @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
-    return new PersistentBTreeEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, null,
+    return new PersistentEnumerator<>(storageFile, new VcsUserKeyDescriptor(userRegistry), Page.PAGE_SIZE, null,
                                            storageId.getVersion());
   }
 
-  public TIntHashSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
-    Set<Integer> ids = new HashSet<>();
+  public IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
+    IntSet ids = new IntOpenHashSet();
     for (VcsUser user : users) {
       ids.add(myUserIndexer.getUserId(user));
     }
@@ -103,26 +110,24 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommit
     }
   }
 
-  private static class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
-    @NotNull private final PersistentEnumeratorBase<VcsUser> myUserEnumerator;
+  private static final class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
+    @NotNull private final PersistentEnumerator<VcsUser> myUserEnumerator;
     @NotNull private Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
-    UserIndexer(@NotNull PersistentEnumeratorBase<VcsUser> userEnumerator) {
+    UserIndexer(@NotNull PersistentEnumerator<VcsUser> userEnumerator) {
       myUserEnumerator = userEnumerator;
     }
 
     @NotNull
     @Override
     public Map<Integer, Void> map(@NotNull VcsShortCommitDetails inputData) {
-      Map<Integer, Void> result = new THashMap<>();
-
+      Int2ObjectMap<Void> result = new Int2ObjectOpenHashMap<>();
       try {
         result.put(myUserEnumerator.enumerate(inputData.getAuthor()), null);
       }
       catch (IOException e) {
         myFatalErrorConsumer.consume(e);
       }
-
       return result;
     }
 

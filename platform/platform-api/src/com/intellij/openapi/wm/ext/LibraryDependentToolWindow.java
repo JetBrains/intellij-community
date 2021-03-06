@@ -9,8 +9,6 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.util.xmlb.annotations.Attribute;
 
 public final class LibraryDependentToolWindow extends ToolWindowEP {
-  private static final Logger LOG = Logger.getInstance(LibraryDependentToolWindow.class);
-
   public static final ExtensionPointName<LibraryDependentToolWindow> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.library.toolWindow");
 
@@ -19,17 +17,19 @@ public final class LibraryDependentToolWindow extends ToolWindowEP {
   @Attribute("librarySearchClass")
   public String librarySearchClass;
 
+  @Attribute("showOnStripeByDefault")
+  public boolean showOnStripeByDefault = true;
+
   public LibrarySearchHelper getLibrarySearchHelper() {
     if (myLibrarySearchHelper == null) {
       try {
-        myLibrarySearchHelper =
-          ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(librarySearchClass, getPluginDescriptor());
+        myLibrarySearchHelper = ApplicationManager.getApplication().instantiateClass(librarySearchClass, getPluginDescriptor());
       }
       catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {
-        LOG.error(e);
+        Logger.getInstance(LibraryDependentToolWindow.class).error(e);
         return null;
       }
     }

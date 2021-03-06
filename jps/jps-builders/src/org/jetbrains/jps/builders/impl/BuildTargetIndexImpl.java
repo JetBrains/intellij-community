@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -6,7 +6,6 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -14,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
-public class BuildTargetIndexImpl implements BuildTargetIndex {
+public final class BuildTargetIndexImpl implements BuildTargetIndex {
   private final BuildTargetRegistry myRegistry;
   private final BuildRootIndexImpl myBuildRootIndex;
   private final Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
@@ -23,7 +22,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {
     myRegistry = targetRegistry;
     myBuildRootIndex = buildRootIndex;
-    myDependencies = new THashMap<>();
+    myDependencies = new HashMap<>();
   }
 
   @Override

@@ -13,7 +13,7 @@ import java.util.Set;
 import static com.intellij.openapi.application.ex.ApplicationManagerEx.getApplicationEx;
 import static com.intellij.util.ui.EDT.isCurrentThreadEdt;
 
-final class LockWrappingClassVisitor extends ClassVisitor {
+public final class LockWrappingClassVisitor extends ClassVisitor {
   private static final @NonNls Set<String> METHODS_TO_WRAP = ContainerUtil.set(
     "paint",
     "paintComponent",
@@ -110,11 +110,11 @@ final class LockWrappingClassVisitor extends ClassVisitor {
    * @return {@code true} if IW lock was acquired, or {@code false} if it is held by the current thread already.
    */
   @SuppressWarnings("unused")
-  private static boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn) {
+  public static boolean acquireWriteIntentLockIfNeeded(@NotNull String invokedClassFqn) {
     if (!isCurrentThreadEdt()) return false; // do not do anything for non-EDT calls
 
     ApplicationEx application = getApplicationEx();
-    if (!application.isWriteThread()) return false;
+    if (application.isWriteThread()) return false;
 
     application.acquireWriteIntentLock(invokedClassFqn);
     return true;
@@ -128,7 +128,7 @@ final class LockWrappingClassVisitor extends ClassVisitor {
    * @param needed whether IW lock should be released or not
    */
   @SuppressWarnings("unused")
-  private static void releaseWriteIntentLockIfNeeded(boolean needed) {
+  public static void releaseWriteIntentLockIfNeeded(boolean needed) {
     if (needed) {
       getApplicationEx().releaseWriteIntentLock();
     }

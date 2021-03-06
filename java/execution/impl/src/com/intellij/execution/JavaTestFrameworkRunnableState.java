@@ -11,6 +11,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -24,6 +25,8 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -45,7 +48,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -59,13 +61,18 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
@@ -83,11 +90,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   }
 
   protected ServerSocket myServerSocket;
+  protected AsyncPromise<String> myPortPromise;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
 
   private RemoteConnectionCreator remoteConnectionCreator;
   private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
+
+  @Nullable private volatile TargetProgressIndicator myTargetProgressIndicator = null;
+  @Nullable private volatile TargetEnvironment.LocalPortBinding myPortBindingForSocket;
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -96,12 +107,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Nullable
   @Override
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+    return remoteConnectionCreator == null ? super.createRemoteConnection(environment) : remoteConnectionCreator.createRemoteConnection(environment);
   }
 
   @Override
   public boolean isPollConnection() {
-    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+    return remoteConnectionCreator != null ? remoteConnectionCreator.isPollConnection() : super.isPollConnection();
   }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
@@ -121,30 +132,56 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @NotNull protected abstract String getForkMode();
 
   @NotNull
-  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+  private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
     appendForkInfo(executor);
     appendRepeatMode();
 
-    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, new EmptyProgressIndicator());
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
+
+    resolveServerSocketPort(remoteEnvironment);
+
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
+    SearchForTestsTask searchForTestsTask = createSearchingForTestsTask(remoteEnvironment);
+    if (searchForTestsTask != null) {
+      searchForTestsTask.arrangeForIndexAccess();
+      searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
+    }
+
     OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(process,
-                                                                               targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                                                               targetedCommandLine
+                                                                                 .getCommandPresentation(remoteEnvironment),
                                                                                targetedCommandLine.getCharset(),
                                                                                targetedCommandLineBuilder.getFilesToDeleteOnTermination());
 
     ProcessTerminatedListener.attach(processHandler);
-    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
     if (searchForTestsTask != null) {
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
   }
 
-  public SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
+  public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) {
+    if (myServerSocket != null) {
+      boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
+      int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
+      myPortPromise.setResult(String.valueOf(port));
+   }
+  }
+
+  /**
+   * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
+  }
+
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) throws ExecutionException {
+    return createSearchingForTestsTask();
   }
 
   protected boolean configureByModule(Module module) {
@@ -153,6 +190,30 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected boolean isIdBasedTestTree() {
     return false;
+  }
+
+  @Override
+  public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
+                                              @Nullable TargetEnvironmentConfiguration configuration,
+                                              @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
+    myTargetProgressIndicator = targetProgressIndicator;
+    T myConfiguration = getConfiguration();
+    if (myConfiguration.getProjectPathOnTarget() != null) {
+      request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
+    }
+    super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
+  }
+
+  /**
+   * Returns the current {@link TargetProgressIndicator} if the call happens
+   * within the execution of {@code prepareTargetEnvironmentRequest(...)}.
+   *
+   * @return the current {@link TargetProgressIndicator} if it is present and
+   * {@code null} otherwise
+   */
+  @ApiStatus.Internal
+  protected final @Nullable TargetProgressIndicator getTargetProgressIndicator() {
+    return myTargetProgressIndicator;
   }
 
   @NotNull
@@ -178,14 +239,13 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
-    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
+    final BaseTestsOutputConsoleView consoleView = UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
-    final OSProcessHandler handler = createHandler(executor);
+    OSProcessHandler handler = createHandler(executor, viewer);
 
     for (ArgumentFileFilter filter : myArgumentFileFilters) {
       consoleView.addMessageFilter(filter);
@@ -246,7 +306,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     return module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
   }
-  
+
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = new JavaParameters();
@@ -264,14 +324,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     configureClasspath(javaParameters);
     javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
+    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
       patcher.patchJavaParameters(project, module, javaParameters);
     }
 
-    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
-      ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
-    }
+    JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
@@ -280,8 +340,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (ConsoleBuffer.useCycleBuffer()) {
       javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
-
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
     return javaParameters;
   }
@@ -316,15 +374,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
           final String actionName = executor.getActionName();
-          throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
-                                     "Please specify single working directory, or change test scope to single module.");
+          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured", actionName));
         }
       } else {
         return;
       }
     } else if (isExecutorDisabledInForkedMode()) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + StringUtil.toLowerCase(actionName) + ".");
+      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName, StringUtil.toLowerCase(actionName)));
     }
 
     final JavaParameters javaParameters = getJavaParameters();
@@ -335,12 +392,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     try {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      try (PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8)) {
+      try (PrintWriter writer = new PrintWriter(tempFile, StandardCharsets.UTF_8)) {
         ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
         boolean useDynamicClasspathForForkMode = shortenCommandLine == null
                                                  ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
                                                  : shortenCommandLine != ShortenCommandLine.NONE;
-        if (useDynamicClasspathForForkMode && forkPerModule()) {
+        if (shortenCommandLine == ShortenCommandLine.ARGS_FILE) {
+          //see com.intellij.rt.execution.testFrameworks.ForkedByModuleSplitter.startChildFork
+          writer.println(shortenCommandLine);
+        }
+        else if (useDynamicClasspathForForkMode && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {
@@ -383,7 +444,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final String jreHome = getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
     Module module = configurationModule.getModule();
     if (configureByModule(module)) {
@@ -528,7 +589,13 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void createServerSocket(JavaParameters javaParameters) {
     try {
       myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      javaParameters.getProgramParametersList().add("-socket" + myServerSocket.getLocalPort());
+      myPortPromise = new AsyncPromise<>();
+      javaParameters.getProgramParametersList().add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(myServerSocket.getLocalPort()), myPortPromise));
+      TargetEnvironmentRequest request = getTargetEnvironmentRequest();
+      if (request != null) {
+        myPortBindingForSocket = new TargetEnvironment.LocalPortBinding(myServerSocket.getLocalPort(), null);
+        request.getLocalPortBindings().add(myPortBindingForSocket);
+      }
     }
     catch (IOException e) {
       LOG.error(e);
@@ -578,7 +645,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
       myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
-      javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
+      javaParameters.getProgramParametersList()
+        .add(new CompositeParameterTargetedValue().addLocalPart("@w@").addPathPart(myWorkingDirsFile));
 
       myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
@@ -591,28 +659,30 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void writeClassesPerModule(String packageName,
                                        JavaParameters javaParameters,
                                        Map<Module, List<String>> perModule,
-                                       @NotNull String filters) throws FileNotFoundException, UnsupportedEncodingException {
+                                       @NotNull String filters) throws IOException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 
-      String workingDirectory = getConfiguration().getWorkingDirectory();
+      T configuration = getConfiguration();
+      String workingDirectory = configuration.getWorkingDirectory();
       //when only classpath should be changed, e.g. for starting tests in IDEA's project when some modules can never appear on the same classpath,
       //like plugin and corresponding IDE register the same components twice
       boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
 
-      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {
+      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, StandardCharsets.UTF_8)) {
+        Project project = configuration.getProject();
+        String jreHome = configuration.isAlternativeJrePathEnabled() ? configuration.getAlternativeJrePath() : null;
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
-          wWriter.println(toChangeWorkingDirectory ? PathMacroUtil.getModuleDir(module.getModuleFilePath()) : workingDirectory);
+          wWriter.println(toChangeWorkingDirectory ? ProgramParametersUtil.getWorkingDir(configuration, project, module)
+                                                   : workingDirectory);
           wWriter.println(module.getName());
 
           if (classpath == null) {
             final JavaParameters parameters = new JavaParameters();
             try {
-              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                                                 getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
-                                                   .getAlternativeJrePath() : null);
+              JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
               if (JavaSdkUtil.isJdkAtLeast(parameters.getJdk(), JavaSdkVersion.JDK_1_9)) {
                 configureModulePath(parameters, module);
               }

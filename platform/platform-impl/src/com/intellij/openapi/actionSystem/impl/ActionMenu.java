@@ -13,6 +13,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -29,6 +30,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
@@ -152,8 +155,11 @@ public final class ActionMenu extends JBMenu {
 
     myStubItem = macSystemMenu ? null : new StubItem();
     addStubItem();
-    addMenuListener(new MenuListenerImpl());
     setBorderPainted(false);
+
+    MenuListenerImpl menuListener = new MenuListenerImpl();
+    addMenuListener(menuListener);
+    getModel().addChangeListener(menuListener);
 
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
@@ -171,6 +177,7 @@ public final class ActionMenu extends JBMenu {
 
   public void setMnemonicEnabled(boolean enable) {
     myMnemonicEnabled = enable;
+    setText(myPresentation.getText(enable));
     setMnemonic(myPresentation.getMnemonic());
     setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
   }
@@ -194,14 +201,31 @@ public final class ActionMenu extends JBMenu {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
-      setIcon(icon);
-      if (presentation.getDisabledIcon() != null) {
-        setDisabledIcon(presentation.getDisabledIcon());
-      }
-      else {
-        setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+      if (isShowIcons()) {
+        setIcon(null);
+        setDisabledIcon(null);
+      } else {
+        setIcon(icon);
+        if (presentation.getDisabledIcon() != null) {
+          setDisabledIcon(presentation.getDisabledIcon());
+        }
+        else {
+          setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
+        }
       }
     }
+  }
+
+  static boolean isShowIcons() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons");
+  }
+
+  static boolean isAligned() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned");
+  }
+
+  static boolean isAlignedInGroup() {
+    return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("Aligned in group");
   }
 
   @Override
@@ -210,7 +234,7 @@ public final class ActionMenu extends JBMenu {
     showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
   }
 
-  public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
+  public static void showDescriptionInStatusBar(boolean isIncluded, Component component, @NlsContexts.StatusBarText String description) {
     IdeFrame frame = (IdeFrame)(component instanceof IdeFrame ? component : SwingUtilities.getAncestorOfClass(IdeFrame.class, component));
     StatusBar statusBar;
     if (frame != null && (statusBar = frame.getStatusBar()) != null) {
@@ -218,8 +242,30 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  private class MenuListenerImpl implements MenuListener {
+  private class MenuListenerImpl implements ChangeListener, MenuListener {
+    boolean isSelected = false;
+
     boolean myIsHidden = false;
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      // Re-implement javax.swing.JMenu.MenuChangeListener to avoid recursive event notifications
+      // if 'menuSelected' fires unrelated 'stateChanged' event, without changing 'model.isSelected()' value.
+      ButtonModel model = (ButtonModel)e.getSource();
+      boolean modelSelected = model.isSelected();
+
+      if (modelSelected != isSelected) {
+        isSelected = modelSelected;
+
+        if (modelSelected) {
+          menuSelected();
+        }
+        else {
+          menuDeselected();
+        }
+      }
+    }
+
     @Override
     public void menuCanceled(MenuEvent e) {
       onMenuHidden();
@@ -227,6 +273,15 @@ public final class ActionMenu extends JBMenu {
 
     @Override
     public void menuDeselected(MenuEvent e) {
+      // Use ChangeListener instead to guard against recursive calls
+    }
+
+    @Override
+    public void menuSelected(MenuEvent e) {
+      // Use ChangeListener instead to guard against recursive calls
+    }
+
+    private void menuDeselected() {
       if (myDisposable != null) {
         Disposer.dispose(myDisposable);
         myDisposable = null;
@@ -269,8 +324,7 @@ public final class ActionMenu extends JBMenu {
       }
     }
 
-    @Override
-    public void menuSelected(MenuEvent e) {
+    private void menuSelected() {
       UsabilityHelper helper = new UsabilityHelper(ActionMenu.this);
       if (myDisposable == null) {
         myDisposable = Disposer.newDisposable();
@@ -320,6 +374,7 @@ public final class ActionMenu extends JBMenu {
         IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
         context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor((Window)frame));
       }
+      context = Utils.wrapDataContext(context);
     }
 
     final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
@@ -346,25 +401,20 @@ public final class ActionMenu extends JBMenu {
         setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
       }
       else if (Presentation.PROP_TEXT.equals(name)) {
-        setText(myPresentation.getText());
+        setText(myPresentation.getText(true));
       }
       else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
         updateIcon();
       }
     }
   }
-  private static class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
-
+  private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
     private Component myComponent;
-    private Point myLastMousePoint;
+    private Point myStartMousePoint;
     private Point myUpperTargetPoint;
     private Point myLowerTargetPoint;
     private SingleAlarm myCallbackAlarm;
     private MouseEvent myEventToRedispatch;
-
-    private long myLastEventTime = 0L;
-    private boolean myInBounds = false;
-    private SingleAlarm myCheckAlarm;
 
     private UsabilityHelper(Component component) {
       myCallbackAlarm = new SingleAlarm(() -> {
@@ -374,18 +424,10 @@ public final class ActionMenu extends JBMenu {
           IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
       }, 50, ModalityState.any(), this);
-      myCheckAlarm = new SingleAlarm(() -> {
-        if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
-          if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
-            myCallbackAlarm.request();
-          }
-        }
-        myCheckAlarm.request();
-      }, 100, ModalityState.any(), this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
-      myLastMousePoint = info != null ? info.getLocation() : null;
-      if (myLastMousePoint != null) {
+      myStartMousePoint = info != null ? info.getLocation() : null;
+      if (myStartMousePoint != null) {
         Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK);
         IdeEventQueue.getInstance().addDispatcher(this, this);
       }
@@ -401,11 +443,11 @@ public final class ActionMenu extends JBMenu {
           Rectangle bounds = popup.getBounds();
           if (bounds.isEmpty()) return;
           bounds.setLocation(popup.getLocationOnScreen());
-          if (myLastMousePoint.x < bounds.x) {
+          if (myStartMousePoint.x < bounds.x) {
             myUpperTargetPoint = new Point(bounds.x, bounds.y);
             myLowerTargetPoint = new Point(bounds.x, bounds.y + bounds.height);
           }
-          if (myLastMousePoint.x > bounds.x + bounds.width) {
+          if (myStartMousePoint.x > bounds.x + bounds.width) {
             myUpperTargetPoint = new Point(bounds.x + bounds.width, bounds.y);
             myLowerTargetPoint = new Point(bounds.x + bounds.width, bounds.y + bounds.height);
           }
@@ -422,21 +464,18 @@ public final class ActionMenu extends JBMenu {
         Point point = ((MouseEvent)e).getLocationOnScreen();
         Rectangle bounds = myComponent.getBounds();
         bounds.setLocation(myComponent.getLocationOnScreen());
-        myInBounds = bounds.contains(point);
-        boolean isMouseMovingTowardsSubmenu = myInBounds || new Polygon(
-          new int[]{myLastMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
-          new int[]{myLastMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
+        boolean isMouseMovingTowardsSubmenu = bounds.contains(point) || new Polygon(
+          new int[]{myStartMousePoint.x, myUpperTargetPoint.x, myLowerTargetPoint.x},
+          new int[]{myStartMousePoint.y, myUpperTargetPoint.y, myLowerTargetPoint.y},
           3).contains(point);
 
         myEventToRedispatch = (MouseEvent)e;
-        myLastEventTime = System.currentTimeMillis();
 
         if (!isMouseMovingTowardsSubmenu) {
           myCallbackAlarm.request();
         } else {
           myCallbackAlarm.cancel();
         }
-        myLastMousePoint = point;
         return true;
       }
       return false;
@@ -446,7 +485,7 @@ public final class ActionMenu extends JBMenu {
     public void dispose() {
       myComponent = null;
       myEventToRedispatch = null;
-      myLastMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
+      myStartMousePoint = myUpperTargetPoint = myLowerTargetPoint = null;
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     }
   }

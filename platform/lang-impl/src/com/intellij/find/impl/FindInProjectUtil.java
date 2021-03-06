@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.impl;
 
@@ -6,6 +6,7 @@ import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
@@ -49,8 +50,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -61,7 +61,9 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-public class FindInProjectUtil {
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
+public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
 
   private FindInProjectUtil() {}
@@ -91,7 +93,20 @@ public class FindInProjectUtil {
 
     if (directoryName == null) {
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-      if (virtualFile != null && virtualFile.isDirectory()) directoryName = virtualFile.getPresentableUrl();
+      if (virtualFile != null) {
+        if (virtualFile.isDirectory()) {
+          directoryName = virtualFile.getPresentableUrl();
+        } else {
+          VirtualFile parent = virtualFile.getParent();
+          if (parent != null && parent.isDirectory()) {
+            if (editor == null) {
+              directoryName = parent.getPresentableUrl();
+            } else {
+              FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
+            }
+          }
+        }
+      }
     }
 
     Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
@@ -117,15 +132,6 @@ public class FindInProjectUtil {
 
     // set project scope if we have no other settings
     model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
-  }
-
-  /** @deprecated use {@link #getDirectory(FindModel)} */
-  @Deprecated
-  @Nullable
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
-    VirtualFile directory = getDirectory(findModel);
-    return directory == null ? null : PsiManager.getInstance(project).findDirectory(directory);
   }
 
   @Nullable
@@ -165,7 +171,7 @@ public class FindInProjectUtil {
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
   @NotNull
   public static Condition<CharSequence> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
-    if (filter == null) {
+    if (StringUtil.isEmpty(filter)) {
       return Conditions.alwaysTrue();
     }
 
@@ -187,27 +193,16 @@ public class FindInProjectUtil {
     final String finalPattern = pattern;
     final String finalNegativePattern = negativePattern;
 
-    return new Condition<CharSequence>() {
+    return new Condition<>() {
       final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
-      final Pattern negativeRegExp = StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
+      final Pattern negativeRegExp =
+        StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
+
       @Override
       public boolean value(CharSequence input) {
         return regExp.matcher(input).matches() && (negativeRegExp == null || !negativeRegExp.matcher(input).matches());
       }
     };
-  }
-
-  /**
-   * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void findUsages(@NotNull FindModel findModel,
-                                @Nullable final PsiDirectory psiDirectory,
-                                @NotNull final Project project,
-                                @NotNull final Processor<? super UsageInfo> consumer,
-                                @NotNull FindUsagesProcessPresentation processPresentation) {
-    findUsages(findModel, project, consumer, processPresentation);
   }
 
   public static void findUsages(@NotNull FindModel findModel,
@@ -305,7 +300,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static String getTitleForScope(@NotNull final FindModel findModel) {
+  private static @Nls String getTitleForScope(@NotNull final FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -347,14 +342,15 @@ public class FindInProjectUtil {
   public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
     String scope = getTitleForScope(findModel);
     final String stringToFind = findModel.getStringToFind();
+    final String stringToReplace = findModel.getStringToReplace();
     presentation.setScopeText(scope);
     if (stringToFind.isEmpty()) {
       if (!scope.isEmpty()) {
         scope = Character.toLowerCase(scope.charAt(0)) + scope.substring(1);
       }
-      presentation.setTabText("Files");
-      presentation.setToolwindowTitle("Files in " + scope);
-      presentation.setUsagesString("files");
+      presentation.setTabText(FindBundle.message("tab.title.files"));
+      presentation.setToolwindowTitle(FindBundle.message("tab.title.files.in.scope", scope));
+      presentation.setUsagesString(LangBundle.message("files"));
     }
     else {
       FindModel.SearchContext searchContext = findModel.getSearchContext();
@@ -362,10 +358,14 @@ public class FindInProjectUtil {
       if (searchContext != FindModel.SearchContext.ANY) {
         contextText = FindBundle.message("find.context.presentation.scope.label", FindInProjectUtil.getPresentableName(searchContext));
       }
-      presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind, contextText));
-      presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope, contextText));
+      if (!findModel.isReplaceState()) {
+        presentation.setTabText(FindBundle.message("find.usage.view.tab.text", stringToFind, contextText));
+        presentation.setToolwindowTitle(FindBundle.message("find.usage.view.toolwindow.title", stringToFind, scope, contextText));
+      } else {
+        presentation.setTabText(FindBundle.message("replace.usage.view.tab.text", stringToFind, stringToReplace, contextText));
+        presentation.setToolwindowTitle(FindBundle.message("replace.usage.view.toolwindow.title", stringToFind, stringToReplace, scope, contextText));
+      }
       presentation.setSearchString(FindBundle.message("find.occurrences.search.string", stringToFind, searchContext.ordinal()));
-      presentation.setUsagesWord(FindBundle.message("occurrence"));
       presentation.setCodeUsagesString(FindBundle.message("found.occurrences"));
     }
     presentation.setOpenInNewTab(toOpenInNewTab);
@@ -461,7 +461,7 @@ public class FindInProjectUtil {
     }
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, DataProvider {
     @NotNull protected final Project myProject;
     @NotNull protected final FindModel myFindModel;
 
@@ -477,9 +477,8 @@ public class FindInProjectUtil {
       return presentation.getToolwindowTitle();
     }
 
-    @NotNull
     @Override
-    public String getLongDescriptiveName() {
+    public @Nls @NotNull String getLongDescriptiveName() {
       return getPresentableText();
     }
 
@@ -541,12 +540,13 @@ public class FindInProjectUtil {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-      if (UsageView.USAGE_SCOPE.equals(key)) {
-        SearchScope scope = getScopeFromModel(myProject, myFindModel);
-        sink.put(UsageView.USAGE_SCOPE, scope);
+    public Object getData(@NotNull String dataId) {
+      if (UsageView.USAGE_SCOPE.is(dataId)) {
+        return getScopeFromModel(myProject, myFindModel);
       }
+      return null;
     }
   }
 
@@ -561,7 +561,7 @@ public class FindInProjectUtil {
     String relativePath = VfsUtilCore.getRelativePath(directory, classRoot);
     if (relativePath == null) return;
 
-    Collection<VirtualFile> otherSourceRoots = new THashSet<>();
+    Collection<VirtualFile> otherSourceRoots = new HashSet<>();
 
     // if we are in the library sources, return (to search in this directory only)
     // otherwise, if we outside sources or in a jar directory, add directories from other source roots
@@ -640,21 +640,28 @@ public class FindInProjectUtil {
     );
   }
 
-  public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
+  public static @Nls(capitalization = Title) @NotNull String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
     @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
-    if (searchContext == FindModel.SearchContext.ANY) {
-      messageKey = "find.context.anywhere.scope.label";
-    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS) {
-      messageKey = "find.context.except.comments.scope.label";
-    } else if (searchContext == FindModel.SearchContext.EXCEPT_STRING_LITERALS) {
-      messageKey = "find.context.except.literals.scope.label";
-    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS) {
-      messageKey = "find.context.except.comments.and.literals.scope.label";
-    } else if (searchContext == FindModel.SearchContext.IN_COMMENTS) {
-      messageKey = "find.context.in.comments.scope.label";
-    } else if (searchContext == FindModel.SearchContext.IN_STRING_LITERALS) {
-      messageKey = "find.context.in.literals.scope.label";
+    switch (searchContext) {
+      case ANY:
+        messageKey = "find.context.anywhere.scope.label";
+        break;
+      case EXCEPT_COMMENTS:
+        messageKey = "find.context.except.comments.scope.label";
+        break;
+      case EXCEPT_STRING_LITERALS:
+        messageKey = "find.context.except.literals.scope.label";
+        break;
+      case EXCEPT_COMMENTS_AND_STRING_LITERALS:
+        messageKey = "find.context.except.comments.and.literals.scope.label";
+        break;
+      case IN_COMMENTS:
+        messageKey = "find.context.in.comments.scope.label";
+        break;
+      case IN_STRING_LITERALS:
+        messageKey = "find.context.in.literals.scope.label";
+        break;
     }
-    return messageKey != null ? FindBundle.message(messageKey) : searchContext.toString();
+    return FindBundle.message(messageKey);
   }
 }

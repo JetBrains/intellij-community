@@ -61,13 +61,20 @@ class JreComboboxEditor extends BasicComboBoxEditor {
   private static class JreComboBoxTextComponentAccessor implements TextComponentAccessor<ComboBox<JrePathEditor.JreComboBoxItem>> {
     @Override
     public String getText(ComboBox<JrePathEditor.JreComboBoxItem> component) {
-      Object item = component.getEditor().getItem();
-      return item != null ? ((JrePathEditor.JreComboBoxItem)item).getPresentableText() : "";
+      JrePathEditor.JreComboBoxItem item = component.isEditable() ? component.getItem() : (JrePathEditor.JreComboBoxItem)component.getEditor().getItem();
+      return item != null ? item.getPresentableText() : "";
     }
 
     @Override
     public void setText(ComboBox<JrePathEditor.JreComboBoxItem> component, @NotNull String text) {
-      component.getEditor().setItem(new JrePathEditor.CustomJreItem(FileUtil.toSystemIndependentName(text)));
+      JrePathEditor.CustomJreItem item = new JrePathEditor.CustomJreItem(FileUtil.toSystemIndependentName(text));
+      if (component.isEditable()) {
+        component.getEditor().setItem(item);
+      }
+      else {
+        ((SortedComboBoxModel<JrePathEditor.JreComboBoxItem>)component.getModel()).add(item);
+        component.setItem(item);
+      }
     }
   }
 }

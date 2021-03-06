@@ -29,8 +29,6 @@ import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -79,7 +77,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     }
     final ResourceBundle resourceBundle = representative.getPropertiesFile().getResourceBundle();
     final List<IProperty> properties = ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(),
-                                                                (NullableFunction<PropertiesFile, IProperty>)propertiesFile -> propertiesFile.findPropertyByKey(key));
+                                                                propertiesFile -> propertiesFile.findPropertyByKey(key));
     final PropertiesCopyDialog dlg = new PropertiesCopyDialog(properties, resourceBundle);
     if (!properties.isEmpty() && dlg.showAndGet()) {
       final String propertyNewName = dlg.getCurrentPropertyName();
@@ -107,15 +105,15 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     final Project project = targetResourceBundle.getProject();
     if (properties.size() != propertiesFileMapping.size() &&
         Messages.NO == Messages.showYesNoDialog(project,
-                                                 "Source and target resource bundles properties files are not matched correctly. Copy properties anyway?",
-                                                 "Resource Bundles Are not Matched", null)) {
+                                                PropertiesBundle.message("copy.resource.bundles.are.not.matched.message"),
+                                                PropertiesBundle.message("copy.resource.bundles.are.not.matched.title"), null)) {
       return;
     }
 
     if (!propertiesFileMapping.isEmpty()) {
       WriteCommandAction.runWriteCommandAction(project, () -> {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
-                                                                                                (Function<PropertiesFile, PsiElement>)PropertiesFile::getContainingFile))) return;
+                                                                                                PropertiesFile::getContainingFile))) return;
         for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
           final String value = entry.getKey().getValue();
           final PropertiesFile target = entry.getValue();
@@ -178,10 +176,10 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Override
     protected ValidationInfo doValidate() {
       if (StringUtil.isEmpty(myCurrentPropertyName)) {
-        return new ValidationInfo("Property name must be not empty");
+        return new ValidationInfo(PropertiesBundle.message("copy.property.name.must.be.not.empty.error"));
       }
       return PropertiesUtil.containsProperty(myCurrentResourceBundle, myCurrentPropertyName)
-             ? new ValidationInfo(String.format("Property with name \'%s\' already exists", myCurrentPropertyName))
+             ? new ValidationInfo(PropertiesBundle.message("copy.property.with.name.0.already.exists.conflict", myCurrentPropertyName))
              : null;
     }
 
@@ -198,7 +196,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Override
     protected JComponent createCenterPanel() {
       JLabel informationalLabel = new JLabel();
-      informationalLabel.setText("Copy property " + ContainerUtil.getFirstItem(myProperties).getName());
+      informationalLabel.setText(PropertiesBundle.message("copy.property.0.label", ContainerUtil.getFirstItem(myProperties).getName()));
       informationalLabel.setFont(informationalLabel.getFont().deriveFont(Font.BOLD));
 
       final Collection<PropertiesFile> propertiesFiles = new ArrayList<>();
@@ -254,8 +252,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       return FormBuilder
         .createFormBuilder()
         .addComponent(informationalLabel)
-        .addLabeledComponent("&New name:", myPropertyNameTextField, UIUtil.LARGE_VGAP)
-        .addLabeledComponent("&Destination resource bundle:", resourceBundleComboBox)
+        .addLabeledComponent(PropertiesBundle.message("copy.destination.new.name.label"), myPropertyNameTextField, UIUtil.LARGE_VGAP)
+        .addLabeledComponent(PropertiesBundle.message("copy.destination.resource.bundle.label"), resourceBundleComboBox)
         .getPanel();
     }
 
@@ -297,7 +295,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     }
 
     @Override
-    public boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor) {
+    public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
       for (PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
         if (!propertiesFile.getContainingFile().processChildren(processor)) {
           return false;

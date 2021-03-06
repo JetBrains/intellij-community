@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link PsiSearchHelper#getInstance(Project)} to get a search helper instance.
  */
 public interface PsiSearchHelper {
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() {
     }
 
@@ -175,6 +175,10 @@ public interface PsiSearchHelper {
                                   @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                   boolean caseSensitive,
                                   boolean processInjectedPsi);
+
+  default boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
+    throw new UnsupportedOperationException();
+  }
 
   @NotNull
   AsyncFuture<Boolean> processElementsWithWordAsync(

@@ -1,17 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.intention
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 
@@ -84,6 +85,27 @@ public class Foo {
 }
 '''
     assert !myFixture.filterAvailableIntentions("Import class")
+  }
+
+  void testUncommentInnerClass() {
+    myFixture.addClass 'package bar; public class FooBar {}'
+    def file = myFixture.configureByText 'a.java', '''\
+package foo;
+public class Foo {
+    Foo<caret>Bar fb;
+    //class FooBar {}
+}
+'''
+
+    def intentions = myFixture.filterAvailableIntentions("Import class")
+    assert intentions.size() > 0
+
+    def commentOffset = file.getText().indexOf("//")
+    myFixture.getEditor().getCaretModel().moveToOffset(commentOffset)
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+    assert !intentions.get(0).isAvailable(myFixture.project, myFixture.editor, myFixture.file)
   }
 
   void testPackageLocalInner() {
@@ -577,7 +599,7 @@ class Tq {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject())
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
   }
@@ -696,7 +718,6 @@ class Bar {
 
   void "test prefer top-level List"() {
     myFixture.addClass("package foo; public interface Restore { interface List {}}")
-    def juList = myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST)
 
     myFixture.configureByText 'a.java', 'class F implements Lis<caret>t {}'
     importClass()
@@ -704,5 +725,19 @@ class Bar {
 import java.util.List;
 
 class F implements List {}'''
+  }
+
+  void "test type_use annotation"() {
+    myFixture.addClass("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface AssertTrue {}")
+    myFixture.configureByText 'test.java', '''import java.util.List;
+class IntellijBugTest {
+    final List<?> list = new @AssertTrue Array<caret>List<Object>();
+}'''
+    importClass()
+    myFixture.checkResult '''import java.util.ArrayList;
+import java.util.List;
+class IntellijBugTest {
+    final List<?> list = new @AssertTrue ArrayList<Object>();
+}'''
   }
 }

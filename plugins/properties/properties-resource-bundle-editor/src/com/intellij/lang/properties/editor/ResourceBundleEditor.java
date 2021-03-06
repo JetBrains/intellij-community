@@ -27,8 +27,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -66,8 +66,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,12 +82,14 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
-  private static final Logger LOG =
-    Logger.getInstance(ResourceBundleEditor.class);
+public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
+  private static final Logger LOG = Logger.getInstance(ResourceBundleEditor.class);
   @NonNls private static final String VALUES               = "values";
   @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
   public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");
+
+  private final Project myProject;
+  private final VirtualFile myFile;
 
   private final StructureViewComponent      myStructureViewComponent;
   private final Map<VirtualFile, EditorEx> myEditors;
@@ -97,11 +97,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private final ResourceBundlePropertiesUpdateManager myPropertiesInsertDeleteManager;
   private final Map<VirtualFile, JPanel> myTitledPanels;
   private final JComponent                    myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private final Project           myProject;
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
+  private final Set<VirtualFile> myBackSlashPressed     = new HashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final JPanel              myValuesPanel;
@@ -112,8 +111,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private String              myPropertyToSelectWhenVisible;
   private final ResourceBundleEditorHighlighter myHighlighter;
 
-  public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
-    myProject = resourceBundle.getProject();
+  public ResourceBundleEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull ResourceBundle resourceBundle) {
+    myProject = project;
+    myFile = file;
 
     final JPanel splitPanel = new JPanel();
     myValuesPanel = new JPanel();
@@ -186,7 +186,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     });
 
     myEditors = new ConcurrentHashMap<>();
-    myTitledPanels = new THashMap<>();
+    myTitledPanels = new HashMap<>();
     recreateEditorsPanel();
 
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
@@ -202,13 +202,19 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     myVfsListener = installPropertiesChangeListeners();
 
-    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         onSelectionChanged(event);
       }
     });
     myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
   }
 
   public ResourceBundle getResourceBundle() {
@@ -438,8 +444,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       gc.weighty = 1;
       gc.anchor = GridBagConstraints.CENTER;
 
-      String title = propertiesFile.getName();
-      title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
+      String title = propertiesFile.getName() + PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
       JPanel comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
@@ -550,7 +555,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       updateEditorsFromProperties(true);
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
       if (statusBar != null) {
-        statusBar.setInfo("Selected property: " + getSelectedPropertyName());
+        statusBar.setInfo(ResourceBundleEditorBundle.message("status.bar.selection.changed.message", getSelectedPropertyName()));
       }
     });
   }
@@ -558,13 +563,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private void updateDocumentFromPropertyValue(final String value,
                                                final Document document,
                                                final VirtualFile propertiesFile) {
-    @NonNls String text = value;
-    if (myBackSlashPressed.contains(propertiesFile)) {
-      text += "\\";
-    }
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    document.replaceString(0, document.getTextLength(), text);
-    document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.FALSE);
+    @NonNls String text = myBackSlashPressed.contains(propertiesFile) ? value + "\\" : value;
+    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), text));
   }
 
   @NotNull
@@ -603,9 +603,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       .toList();
   }
 
+  @NotNull
+  public Collection<Object> getSelectedObjects() {
+    return getSelectedNodes()
+      .filter(AbstractTreeNode.class)
+      .filterMap(AbstractTreeNode::getValue)
+      .toList();
+  }
+
   @Nullable
-  public ResourceBundleEditorViewElement getSelectedElementIfOnlyOne() {
-    final Collection<ResourceBundleEditorViewElement> selectedElements = getSelectedElements();
+  public Object getSelectedElementIfOnlyOne() {
+    final Collection<Object> selectedElements = getSelectedObjects();
     return selectedElements.size() == 1 ? ContainerUtil.getFirstItem(selectedElements) : null;
   }
 
@@ -704,7 +712,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   @Override
   @NotNull
   public String getName() {
-    return "Resource Bundle";
+    return ResourceBundleEditorBundle.message("resource.bundle.editor.title");
   }
 
   @Override
@@ -812,7 +820,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return false;
     }
 
@@ -854,7 +862,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE));
         group.add(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.ACTION_EDIT_SOURCE));
         group.addSeparator();
-        group.add(new AnAction(EditorBundle.messagePointer("action.ResourceBundleEditor.Anonymous.text.propagate.value.across.of.resource.bundle")) {
+        group.add(new AnAction(ResourceBundleEditorBundle.messagePointer("action.PropagateValue.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             final String valueToPropagate = editor.getDocument().getText();
@@ -862,7 +870,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
             if (currentSelectedProperty == null) {
               return;
             }
-            ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
+            ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, ResourceBundleEditorBundle.message("action.PropagateValue.text"), null, () -> {
               try {
                 final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
                   final IProperty property = f.findPropertyByKey(currentSelectedProperty);
@@ -887,7 +895,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     });
   }
 
-  private class DataProviderPanel extends JPanel implements DataProvider {
+  private final class DataProviderPanel extends JPanel implements DataProvider {
     private DataProviderPanel(final JPanel panel) {
       super(new BorderLayout());
       add(panel, BorderLayout.CENTER);
@@ -900,7 +908,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     }
   }
 
-  private class MyJPanel extends JPanel implements Scrollable{
+  private final class MyJPanel extends JPanel implements Scrollable{
     private MyJPanel(LayoutManager layout) {
       super(layout);
     }

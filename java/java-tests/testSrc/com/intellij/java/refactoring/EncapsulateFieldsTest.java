@@ -48,7 +48,7 @@ public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testHideOverriderMethod() {
-    doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated getter for a.i");
+    doTest("i", "A", "There is already a method <b><code>B.getI()</code></b> which would hide generated accessor for a.i");
   }
 
   public void testJavadocRefs() {
@@ -68,7 +68,7 @@ public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testHideOuterclassMethod() {
-    doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
+    doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated accessor");
   }
 
   public void testCommentsInside() {

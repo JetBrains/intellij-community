@@ -2,17 +2,18 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsIgnoreManager {
 
-  boolean isDirectoryVcsIgnored(@NotNull String dirPath);
+  boolean isDirectoryVcsIgnored(@NotNull @NlsSafe String dirPath);
 
-  boolean isRunConfigurationVcsIgnored(@NotNull String configurationName);
+  boolean isRunConfigurationVcsIgnored(@NotNull @NlsSafe String configurationName);
 
-  void removeRunConfigurationFromVcsIgnore(@NotNull String configurationName);
+  void removeRunConfigurationFromVcsIgnore(@NotNull @NlsSafe String configurationName);
 
   /**
    * Check if the file could be potentially ignored. However this doesn't mean that the file is ignored in VCS.

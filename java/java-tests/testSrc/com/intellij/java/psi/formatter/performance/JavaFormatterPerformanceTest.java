@@ -1,15 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.performance;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormatterImpl;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.psi.formatter.java.JavaFormatterTestCase;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -42,10 +43,11 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
 
     CodeStyleSettings settings = CodeStyle.createTestSettings();
     FormatterImpl formatter = (FormatterImpl)FormatterEx.getInstanceEx();
-    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(StdFileTypes.JAVA);
+    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
 
     PlatformTestUtil.startPerformanceTest("Java Formatting [1]", 5000, () -> {
-      FormattingModel model = LanguageFormatting.INSTANCE.forContext(file).createModel(file, settings);
+      FormattingModel model =
+        LanguageFormatting.INSTANCE.forContext(file).createModel(FormattingContext.create(file, settings));
       formatter.formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings, options, file.getTextRange());
     }).assertTiming();
   }
@@ -62,7 +64,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     settings.SPACE_BEFORE_METHOD_PARENTHESES = true;
     settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
     settings.ALIGN_MULTILINE_PARAMETERS = false;
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(StdFileTypes.JAVA);
+    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getRootSettings().getIndentOptions(JavaFileType.INSTANCE);
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.TAB_SIZE = 4;
 

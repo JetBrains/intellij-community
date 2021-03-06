@@ -13,8 +13,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,12 +96,12 @@ public final class Divider {
     int startOffset = restrictRange.getStartOffset();
     int endOffset = restrictRange.getEndOffset();
 
-    final Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
+    Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
-    final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    IntStack starts = new IntStack(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
-    final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
+    Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
+    Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = root;
 
     PsiElement child = HAVE_TO_GET_CHILDREN;

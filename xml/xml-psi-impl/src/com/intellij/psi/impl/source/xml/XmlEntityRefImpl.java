@@ -69,13 +69,13 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   private static CachedValueProvider.Result<XmlEntityDecl> doResolveEntity(final PsiElement targetElement,
                                                                            final String entityName,
                                                                            final PsiFile contextFile) {
-    return RecursionManager.doPreventingRecursion(targetElement, true, new Computable<CachedValueProvider.Result<XmlEntityDecl>>() {
+    return RecursionManager.doPreventingRecursion(targetElement, true, new Computable<>() {
       @Override
       public CachedValueProvider.Result<XmlEntityDecl> compute() {
         final List<PsiElement> deps = new ArrayList<>();
         final XmlEntityDecl[] result = {null};
 
-        PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<PsiElement>() {
+        PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
           @Override
           public boolean execute(@NotNull PsiElement element) {
             if (element instanceof XmlDoctype) {

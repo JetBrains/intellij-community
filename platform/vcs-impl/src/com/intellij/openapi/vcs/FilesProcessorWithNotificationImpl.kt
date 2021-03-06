@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.CommonBundle
@@ -7,22 +7,17 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
-import com.intellij.openapi.vfs.VirtualFile
 
-abstract class FilesProcessorWithNotificationImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
-  private val files = mutableSetOf<VirtualFile>()
+abstract class FilesProcessorWithNotificationImpl(
+  project: Project,
+  parentDisposable: Disposable
+) : FilesProcessorImpl(project, parentDisposable) {
 
   private val NOTIFICATION_LOCK = Object()
 
   private var notification: Notification? = null
-
-  abstract val askedBeforeProperty: String
-
-  abstract val doForCurrentProjectProperty: String?
-
   abstract val notificationDisplayId: String
 
   abstract val showActionText: String
@@ -30,44 +25,23 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
   abstract val forAllProjectsActionText: String?
   abstract val muteActionText: String
 
+  @NlsContexts.NotificationTitle
   abstract fun notificationTitle(): String
+  @NlsContexts.NotificationContent
   abstract fun notificationMessage(): String
+  @NlsContexts.DialogTitle
+  protected open val viewFilesDialogTitle: String? = null
+  @NlsContexts.Button
+  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
+  @NlsContexts.Button
+  protected open val  viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
 
-  abstract fun doActionOnChosenFiles(files: Collection<VirtualFile>)
-
-  abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
-
-  abstract fun rememberForAllProjects()
-
-  protected open val viewFilesDialogTitle: @NlsContexts.DialogTitle String? = null
-  protected open val viewFilesDialogOkActionName: @NlsContexts.Button String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: @NlsContexts.Button String = CommonBundle.getCancelButtonText()
-
-  protected open fun rememberForCurrentProject() {
-    setForCurrentProject(true)
-  }
-
-  init {
-    Disposer.register(parentDisposable, this)
-  }
-
-  override fun processFiles(files: List<VirtualFile>): List<VirtualFile> {
-
-    val filteredFiles = doFilterFiles(files)
-
-    if (filteredFiles.isEmpty()) return files
-
-    addNewFiles(filteredFiles)
-
-    if (needDoForCurrentProject()) {
-      doActionOnChosenFiles(acquireValidFiles())
-      clearFiles()
-    }
-    else {
+  override fun doProcess(): Boolean {
+    val processed = super.doProcess()
+    if (!processed) {
       proposeToProcessFiles()
     }
-
-    return files - filteredFiles
+    return processed
   }
 
   private fun proposeToProcessFiles() {
@@ -79,37 +53,15 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
           }
           add(muteAction())
         }
-        notification = VcsNotifier.getInstance(project).notifyMinorInfo(true, notificationDisplayId, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
+        notification = VcsNotifier.getInstance(project).notifyMinorInfo(
+          notificationDisplayId,
+          true,
+          notificationTitle(),
+          notificationMessage(),
+          *notificationActions.toTypedArray()
+        )
       }
     }
-  }
-
-  @Synchronized
-  protected fun removeFiles(filesToRemove: Collection<VirtualFile>) {
-    files.removeAll(filesToRemove)
-  }
-
-  @Synchronized
-  private fun isFilesEmpty() = files.isEmpty()
-
-  @Synchronized
-  private fun addNewFiles(filesToAdd: Collection<VirtualFile>) {
-    files.addAll(filesToAdd)
-  }
-
-  @Synchronized
-  protected fun acquireValidFiles(): List<VirtualFile> {
-    files.removeAll { !it.isValid }
-    return files.toList()
-  }
-
-  @Synchronized
-  private fun clearFiles() {
-    files.clear()
-  }
-
-  override fun dispose() {
-    clearFiles()
   }
 
   private fun showAction() = NotificationAction.createSimple(showActionText) {
@@ -163,20 +115,4 @@ abstract class FilesProcessorWithNotificationImpl(protected val project: Project
     synchronized(NOTIFICATION_LOCK) {
       notification?.expire()
     }
-
-  private fun setForCurrentProject(value: Boolean) {
-    doForCurrentProjectProperty?.let {
-      PropertiesComponent.getInstance(project).setValue(it, value)
-    }
   }
-
-  private fun getForCurrentProject(): Boolean {
-    return doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
-  }
-
-  private fun notAskedBefore() = !wasAskedBefore()
-
-  protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
-
-  protected open fun needDoForCurrentProject() = getForCurrentProject()
-}

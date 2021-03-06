@@ -18,10 +18,10 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableList;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.SimplifyBooleanCheckQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
@@ -53,8 +53,9 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
+    final PythonUiService uiService = PythonUiService.getInstance();
+    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
     return panel;
   }
 
@@ -67,7 +68,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyConditionalStatementPart(PyConditionalStatementPart node) {
+    public void visitPyConditionalStatementPart(@NotNull PyConditionalStatementPart node) {
       super.visitPyConditionalStatementPart(node);
       final PyExpression condition = node.getCondition();
       if (condition != null) {
@@ -87,7 +88,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(PyBinaryExpression node) {
+    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       super.visitPyBinaryExpression(node);
       final PyElementType operator = node.getOperator();
       final PyExpression rightExpression = node.getRightExpression();

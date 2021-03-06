@@ -3,6 +3,7 @@ package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   }
 
   @Override
+  @NonNls
   public String toString() {
-    return "filters: (" + myFilters + ")"; // NON-NLS
+    return "filters: (" + myFilters + ")";
   }
 }

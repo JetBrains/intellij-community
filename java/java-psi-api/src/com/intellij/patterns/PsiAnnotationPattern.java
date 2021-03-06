@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiAnnotation;
@@ -13,7 +13,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
 /**
  * @author peter
  */
-public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAnnotationPattern> {
+public final class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAnnotationPattern> {
   static final PsiAnnotationPattern PSI_ANNOTATION_PATTERN = new PsiAnnotationPattern();
 
   private PsiAnnotationPattern() {

@@ -37,7 +37,7 @@ import java.util.Map;
  * @see PythonSdkUtil for Pyhton SDK utilities with no run-time dependencies
  */
 //TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil
-public class PySdkUtil {
+public final class PySdkUtil {
   protected static final Logger LOG = Logger.getInstance(PySdkUtil.class);
 
   // Windows EOF marker, Ctrl+Z

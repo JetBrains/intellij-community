@@ -14,7 +14,7 @@ import javax.swing.*;
  * <p/>
  * FileType corresponding to any language that supported via TextMate bundle.
  */
-public class TextMateFileType extends LanguageFileType implements PlainTextLikeFileType, FileTypeIdentifiableByVirtualFile {
+public final class TextMateFileType extends LanguageFileType implements PlainTextLikeFileType, FileTypeIdentifiableByVirtualFile {
   public static final TextMateFileType INSTANCE = new TextMateFileType();
 
   private TextMateFileType() {

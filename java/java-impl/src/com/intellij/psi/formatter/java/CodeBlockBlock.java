@@ -48,7 +48,8 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                         JavaCodeStyleSettings javaSettings,
                         @NotNull FormattingMode formattingMode) {
     super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings, javaSettings, formattingMode);
-    if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) {
+    if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH ||
+        isLambdaCodeBlock() && settings.LAMBDA_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
       myChildrenIndent = 0;
     }
     else {
@@ -89,6 +90,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private boolean isSwitchCodeBlock() {
     return myNode.getTreeParent().getElementType() == JavaElementType.SWITCH_STATEMENT;
+  }
+
+  private boolean isLambdaCodeBlock() {
+    ASTNode parent = myNode.getTreeParent();
+    return parent != null && parent.getElementType() == JavaElementType.LAMBDA_EXPRESSION;
   }
 
   @Override
@@ -256,6 +262,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     if (state == BEFORE_LBRACE) {
       if (elementType == JavaTokenType.LBRACE
           || elementType == JavaTokenType.CLASS_KEYWORD
+          || elementType == JavaTokenType.RECORD_KEYWORD
           || elementType == JavaTokenType.INTERFACE_KEYWORD
           || elementType == JavaTokenType.IDENTIFIER
           || elementType == JavaTokenType.ENUM_KEYWORD

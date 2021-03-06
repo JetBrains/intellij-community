@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
-public class IteratorUtils {
+public final class IteratorUtils {
 
   private IteratorUtils() {
   }
@@ -41,7 +41,7 @@ public class IteratorUtils {
     return visitor.getIllegalCall();
   }
 
-  private static class CallsIteratorNextVisitor
+  private static final class CallsIteratorNextVisitor
     extends JavaRecursiveElementWalkingVisitor {
 
     private static final Pattern SCANNER_PATTERN = Pattern.compile("next.*");
@@ -55,11 +55,6 @@ public class IteratorUtils {
       this.checkTarget = checkTarget;
       this.target = target;
       this.checkScanner = checkScanner;
-    }
-
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      super.visitElement(element);
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.icons.AllIcons;
@@ -13,13 +15,13 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueGroup;
 import com.sun.jdi.Field;
 import com.sun.jdi.ReferenceType;
-import com.sun.jdi.Value;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvider {
   private final StaticDescriptorImpl myStaticDescriptor;
@@ -65,39 +67,45 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     JavaValue.scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
-        @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          final XValueChildrenList children = new XValueChildrenList();
+      @Override
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+        ReferenceType refType = myStaticDescriptor.getType();
+        DebuggerUtilsAsync.allFields(refType)
+          .thenAccept(
+            fields -> {
+              boolean showSynthetics = NodeRendererSettings.getInstance().getClassRenderer().SHOW_SYNTHETICS;
+              List<Field> fieldsToShow =
+                ContainerUtil.filter(fields, f -> f.isStatic() && (showSynthetics || !DebuggerUtils.isSynthetic(f)));
+              List<List<Field>> chunks = DebuggerUtilsImpl.partition(fieldsToShow, XCompositeNode.MAX_CHILDREN_TO_SHOW);
 
-          final ReferenceType refType = myStaticDescriptor.getType();
-          List<Field> fields = refType.allFields();
-
-          boolean showSynthetics = NodeRendererSettings.getInstance().getClassRenderer().SHOW_SYNTHETICS;
-          List<Field> fieldsToShow = ContainerUtil.filter(fields, f -> f.isStatic() && (showSynthetics || !DebuggerUtils.isSynthetic(f)));
-          int loaded = 0, total = fieldsToShow.size();
-          Map<Field, Value> cachedValues = null;
-          for (int i = 0; i < total; i++) {
-            Field field = fieldsToShow.get(i);
-            // load values in chunks
-            if (i > loaded || cachedValues == null) {
-              int chunkSize = Math.min(XCompositeNode.MAX_CHILDREN_TO_SHOW, total - loaded);
-              try {
-                cachedValues = refType.getValues(fieldsToShow.subList(loaded, loaded + chunkSize));
-              }
-              catch (Exception e) {
-                cachedValues = null;
-              }
-              loaded += chunkSize;
-            }
-            FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myStaticDescriptor, null, field);
-            if (cachedValues != null) {
-              fieldDescriptor.setValue(cachedValues.get(field));
-            }
-            children.add(JavaValue.create(fieldDescriptor, myEvaluationContext, myNodeManager));
+              //noinspection unchecked
+              CompletableFuture<XValueChildrenList>[] futures = chunks.stream()
+                .map(l -> createNodes(l, refType, suspendContext))
+                .toArray(CompletableFuture[]::new);
+              CompletableFuture.allOf(futures)
+              .thenAccept(__ -> {
+                StreamEx.of(futures).map(CompletableFuture::join).forEach(c -> node.addChildren(c, false));
+                node.addChildren(XValueChildrenList.EMPTY, true);
+              });
           }
+        );
+      }
 
-          node.addChildren(children, true);
-        }
+      private CompletableFuture<XValueChildrenList> createNodes(List<Field> fields, ReferenceType refType, SuspendContext context) {
+        return DebuggerUtilsAsync.getValues(refType, fields)
+          .thenApply(cachedValues -> {
+                       XValueChildrenList children = new XValueChildrenList();
+                       for (Field field : fields) {
+                         FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myStaticDescriptor, null, field);
+                         if (cachedValues != null) {
+                           fieldDescriptor.setValue(cachedValues.get(field));
+                         }
+                         children.add(JavaValue.create(fieldDescriptor, myEvaluationContext, myNodeManager));
+                       }
+                       return children;
+                     }
+          );
+      }
     });
   }
 }

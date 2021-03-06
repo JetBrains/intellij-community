@@ -65,7 +65,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     return new DoubleCheckedLockingFix(field);
   }
 
-  private static class DoubleCheckedLockingFix extends InspectionGadgetsFix {
+  private static final class DoubleCheckedLockingFix extends InspectionGadgetsFix {
 
     private final String myFieldName;
 

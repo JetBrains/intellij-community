@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.projectRoots.ex;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -35,7 +22,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class PathUtilEx {
+public final class PathUtilEx {
 
   @Nullable
   public static Sdk getAnyJdk(@NotNull Project project) {
@@ -45,7 +32,7 @@ public class PathUtilEx {
   @Nullable
   public static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (projectJdk != null) {
+    if (projectJdk != null && projectJdk.getSdkType() instanceof JavaSdkType) {
       return projectJdk;
     }
     return chooseJdk(modules);
@@ -53,7 +40,12 @@ public class PathUtilEx {
 
   @Nullable
   public static Sdk chooseJdk(@NotNull Collection<? extends Module> modules) {
-    List<Sdk> jdks = ContainerUtil.mapNotNull(modules, module -> module == null ? null : ModuleRootManager.getInstance(module).getSdk());
+    List<Sdk> jdks = ContainerUtil.mapNotNull(modules, module -> {
+      if (module == null) return null;
+      Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) return null;
+      return sdk;
+    });
     if (jdks.isEmpty()) {
       return null;
     }

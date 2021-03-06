@@ -5,6 +5,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -37,9 +38,9 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
 
   protected JList myList;
   protected JavaVisibilityPanel myVisibilityPanel;
-  protected final String myRefactoringName;
+  protected final @NlsContexts.DialogTitle String myRefactoringName;
 
-  public MoveInstanceMethodDialogBase(PsiMethod method, Object[] variables, String refactoringName, boolean addOpenInEditorCheckBox) {
+  public MoveInstanceMethodDialogBase(PsiMethod method, Object[] variables, @NlsContexts.DialogTitle String refactoringName, boolean addOpenInEditorCheckBox) {
     super(method.getProject(), true, addOpenInEditorCheckBox);
     myMethod = method;
     myVariables = variables;

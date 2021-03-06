@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.lang.LangBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
   }
 
   @Nullable
-  protected String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
+  protected @ActionText String getActionText(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
     Set<ModuleSourceRootEditHandler<?>> selectedRootHandlers = getHandlersForSelectedRoots(selection);
 
     if (!selectedRootHandlers.isEmpty()) {

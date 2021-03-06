@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.JavaUiBundle;
@@ -19,9 +19,10 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
@@ -35,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
@@ -140,10 +142,23 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
   }
 
   @Nullable
-  public static AddModuleWizard selectFileAndCreateWizard(@Nullable Project project,
-                                                          @Nullable Component dialogParent,
-                                                          @NotNull FileChooserDescriptor descriptor,
-                                                          ProjectImportProvider[] providers) {
+  public static AddModuleWizard selectFileAndCreateWizard(
+    @Nullable Project project,
+    @Nullable Component dialogParent,
+    @NotNull FileChooserDescriptor descriptor,
+    ProjectImportProvider[] providers
+  ) {
+    return selectFileAndCreateWizard(project, dialogParent, descriptor, __ -> true, providers);
+  }
+
+  @Nullable
+  public static AddModuleWizard selectFileAndCreateWizard(
+    @Nullable Project project,
+    @Nullable Component dialogParent,
+    @NotNull FileChooserDescriptor descriptor,
+    @NotNull Predicate<VirtualFile> validateSelectedFile,
+    ProjectImportProvider... providers
+  ) {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
     VirtualFile toSelect = null;
     String lastLocation = PropertiesComponent.getInstance().getValue(LAST_IMPORTED_LOCATION);
@@ -157,36 +172,34 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
 
     final VirtualFile file = files[0];
     if (project == null) { // wizard will create a new project
-      for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-        if (ProjectUtil.isSameProject(file.getPath(), p)) {
-          ProjectUtil.focusProjectWindow(p, false);
-          return null;
-        }
-      }
+      ProjectUtil.findAndFocusExistingProjectForPath(file.toNioPath());
+    }
+    if (!validateSelectedFile.test(file)) {
+      return null;
     }
     PropertiesComponent.getInstance().setValue(LAST_IMPORTED_LOCATION, file.getPath());
     return createImportWizard(project, dialogParent, file, providers);
   }
 
-  private static String getFileChooserDescription(List<ProjectImportProvider> providers) {
-    StringBuilder builder = new StringBuilder("<html>Select ");
+  private static @NlsContexts.Label String getFileChooserDescription(List<ProjectImportProvider> providers) {
+    HtmlBuilder builder = new HtmlBuilder().append(JavaUiBundle.message("select")).append(" ");
     boolean first = true;
     if (providers.size() > 0) {
       for (ProjectImportProvider provider : providers) {
         String sample = provider.getFileSample();
         if (sample != null) {
           if (!first) {
-            builder.append(", <br>");
+            builder.append(", ").br();
           }
           else {
             first = false;
           }
-          builder.append(sample);
+          builder.appendRaw(sample);
         }
       }
     }
-    builder.append(".</html>");
-    return builder.toString();
+    builder.append(".");
+    return builder.wrapWith("html").toString();
   }
 
   @NotNull

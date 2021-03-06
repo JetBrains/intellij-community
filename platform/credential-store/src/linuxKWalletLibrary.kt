@@ -98,12 +98,7 @@ internal class KWalletCredentialStore private constructor(private val connection
                   if (walletId == -1) return
                   val accountName = attributes.userName.nullize() ?: credentials?.userName
                   if (credentials.isEmpty()) {
-                    if (accountName == null) {
-                      kWallet.removeFolder(walletId, attributes.serviceName, appId)
-                    }
-                    else {
-                      kWallet.removeEntry(walletId, attributes.serviceName, accountName, appId)
-                    }
+                    kWallet.removeFolder(walletId, attributes.serviceName, appId)
                   }
                   else {
                     kWallet.writePassword(walletId, attributes.serviceName, accountName ?: "", credentials?.password?.toString() ?: "", appId)

@@ -1,4 +1,5 @@
 <idea-plugin>
+  <resource-bundle>messages.GroovyBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Groovy" extensions="gant"/>
     <projectConfigurable id="reference.settingsdialog.project.gant"
@@ -13,8 +14,8 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
   </extensions>
   <actions>
-    <action id="Gant.NewScript" text="Gant Script" description="Create new Gant script"
-            class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction">
+    <action id="Gant.NewScript" class="org.jetbrains.plugins.groovy.gant.NewGantScriptAction"
+            icon="JetgroovyIcons.Groovy.Gant_16x16">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
   </actions>

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ExtensionsSupport;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 import java.util.Collection;
 
 /**
@@ -29,13 +29,12 @@ public abstract class JavaCompilerToolExtension {
    /**
    * This method is called before compiler task execution.
    * The extension can install all necessary compiler listeners here.
-   *
-   * @param compilingTool descriptor of compiler implementation that will perform compilation
+   *  @param compilingTool descriptor of compiler implementation that will perform compilation
    * @param task an instance of compiler task that is going to be executed
-   * @param options compiler command line options for this compiler invocation
-   * @param diagnosticConsumer diagnostic data collector. Use this object to pass messages and collected data
-   */
-  public void beforeCompileTaskExecution(@NotNull JavaCompilingTool compilingTool, @NotNull JavaCompiler.CompilationTask task, @NotNull Collection<String> options, @NotNull DiagnosticOutputConsumer diagnosticConsumer) {
+    * @param options compiler command line options for this compiler invocation
+    * @param diagnosticConsumer diagnostic data collector. Use this object to pass messages and collected data
+    */
+  public void beforeCompileTaskExecution(@NotNull JavaCompilingTool compilingTool, @NotNull JavaCompiler.CompilationTask task, @NotNull Iterable<String> options, @NotNull DiagnosticOutputConsumer diagnosticConsumer) {
   }
 
   private static final ExtensionsSupport<JavaCompilerToolExtension> ourExtSupport = new ExtensionsSupport<JavaCompilerToolExtension>(JavaCompilerToolExtension.class);

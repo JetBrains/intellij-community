@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.amazon.ion.IonReader
@@ -6,9 +6,8 @@ import com.amazon.ion.IonWriter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.ObjectIntHashMap
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Reader
@@ -114,10 +113,14 @@ object SkipNullAndEmptySerializationFilter : SerializationFilter {
 }
 
 class ObjectIdWriter {
-  private val map: ObjectIntHashMap<Any> = ObjectIntHashMap(ContainerUtil.identityStrategy())
+  private val map = Reference2IntOpenHashMap<Any>()
   private var counter = 0
 
-  fun getId(obj: Any) = map.get(obj)
+  init {
+    map.defaultReturnValue(-1)
+  }
+
+  fun getId(obj: Any) = map.getInt(obj)
 
   fun registerObject(obj: Any): Int {
     val id = counter++
@@ -129,7 +132,7 @@ class ObjectIdWriter {
 }
 
 class ObjectIdReader {
-  private val map: TIntObjectHashMap<Any> = TIntObjectHashMap()
+  private val map = Int2ObjectOpenHashMap<Any>()
 
   fun getObject(id: Int): Any {
     return map.get(id)

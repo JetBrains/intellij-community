@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
@@ -27,6 +13,7 @@ import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +25,7 @@ import java.util.Set;
 public interface Git {
   @NotNull
   static Git getInstance() {
-    return ServiceManager.getService(Git.class);
+    return ApplicationManager.getApplication().getService(Git.class);
   }
 
   /**
@@ -72,15 +59,7 @@ public interface Git {
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners);
 
-  @Deprecated
-  @NotNull
-  Set<VirtualFile> ignoredFiles(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
-
   Set<FilePath> ignoredFilePaths(@NotNull Project project, @NotNull VirtualFile root, @Nullable Collection<? extends FilePath> paths) throws VcsException;
-
-  @Deprecated
-  @NotNull
-  Set<VirtualFile> ignoredFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
   Set<FilePath> ignoredFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root, @Nullable List<String> paths) throws VcsException;
 
@@ -91,12 +70,6 @@ public interface Git {
 
   Set<FilePath> untrackedFilePaths(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<FilePath> files) throws VcsException;
-
-  // relativePaths are guaranteed to fit into command line length limitations.
-  @Deprecated
-  @NotNull
-  Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root,
-                                                @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
   Collection<FilePath> untrackedFilePathsNoChunk(@NotNull Project project, @NotNull VirtualFile root,
@@ -157,6 +130,10 @@ public interface Git {
 
 
   @NotNull
+  GitCommandResult setUpstream(@NotNull GitRepository repository,
+                               @NotNull String upstreamBranchName,
+                               @NotNull String branchName);
+  @NotNull
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint, boolean force);
 
   @NotNull
@@ -191,6 +168,7 @@ public interface Git {
    * @deprecated Use {@link #cherryPick(GitRepository, String, boolean, boolean, GitLineHandlerListener...)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
                               GitLineHandlerListener @NotNull ... listeners);

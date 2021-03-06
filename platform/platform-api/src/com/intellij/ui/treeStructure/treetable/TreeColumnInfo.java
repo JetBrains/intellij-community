@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ColumnInfo;
 
 /**
@@ -22,7 +23,7 @@ import com.intellij.util.ui.ColumnInfo;
  */
 public class TreeColumnInfo extends ColumnInfo {
 
-  public TreeColumnInfo(final String name) {
+  public TreeColumnInfo(final @NlsContexts.ColumnName String name) {
     super(name);
   }
 

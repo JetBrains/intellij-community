@@ -30,7 +30,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class ManifestColorsAndFonts {
+public final class ManifestColorsAndFonts {
   public static final TextAttributesKey HEADER_NAME_KEY =
     TextAttributesKey.createTextAttributesKey("manifest.header.name", DefaultLanguageHighlighterColors.KEYWORD);
   public static final TextAttributesKey HEADER_ASSIGNMENT_KEY =

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipLinkHandlerEP;
 import com.intellij.codeInspection.ui.InspectionNodeInfo;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -23,24 +24,24 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   @NonNls protected static final String END_MARKER = "<!-- end marker -->";
 
 
-  DaemonTooltipRenderer(final String text, Object[] comparable) {
+  DaemonTooltipRenderer(final @Tooltip String text, Object[] comparable) {
     super(text, comparable);
   }
 
-  DaemonTooltipRenderer(final String text, final int width, Object[] comparable) {
+  DaemonTooltipRenderer(final @Tooltip String text, final int width, Object[] comparable) {
     super(text, width, comparable);
   }
 
   @NotNull
   @Override
-  protected String dressDescription(@NotNull final Editor editor, @NotNull String tooltipText, boolean expand) {
+  protected @Tooltip String dressDescription(@NotNull final Editor editor, @NotNull @Tooltip String tooltipText, boolean expand) {
     if (!expand) {
       return super.dressDescription(editor, tooltipText, false);
     }
 
-    final List<String> problems = getProblems(tooltipText);
-    StringBuilder text = new StringBuilder();
-    for (String problem : problems) {
+    final List<@Tooltip String> problems = getProblems(tooltipText);
+    @Tooltip StringBuilder text = new StringBuilder();
+    for (@Tooltip String problem : problems) {
       final String ref = getLinkRef(problem);
       if (ref != null) {
         String description = TooltipLinkHandlerEP.getDescription(ref, editor);
@@ -71,12 +72,12 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
   }
 
   @NotNull
-  protected List<String> getProblems(@NotNull String tooltipText) {
+  protected List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
     return StringUtil.split(UIUtil.getHtmlBody(new Html(tooltipText).setKeepFont(true)), UIUtil.BORDER_LINE);
   }
 
   @NotNull
-  protected String getHtmlForProblemWithLink(@NotNull String problem) {
+  protected @Tooltip String getHtmlForProblemWithLink(@NotNull @Tooltip String problem) {
     Html html = new Html(problem).setKeepFont(true);
     return UIUtil.getHtmlBody(html)
                  .replace(DaemonBundle.message("inspection.extended.description"), DaemonBundle.message("inspection.collapse.description"));

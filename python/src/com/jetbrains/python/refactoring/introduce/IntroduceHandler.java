@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
@@ -148,9 +149,9 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private final IntroduceValidator myValidator;
-  protected final String myDialogTitle;
+  protected final @DialogTitle String myDialogTitle;
 
-  protected IntroduceHandler(@NotNull final IntroduceValidator validator, @NotNull final String dialogTitle) {
+  protected IntroduceHandler(@NotNull final IntroduceValidator validator, @NotNull final @DialogTitle String dialogTitle) {
     myValidator = validator;
     myDialogTitle = dialogTitle;
   }
@@ -188,7 +189,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected Collection<String> generateSuggestedNames(PyExpression expression) {
-    Collection<String> candidates = new LinkedHashSet<String>() {
+    Collection<String> candidates = new LinkedHashSet<>() {
       @Override
       public boolean add(String s) {
         if (PyNames.isReserved(s)) {
@@ -386,7 +387,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return true;
     }
     else if (expressions.size() > 1) {
-      IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PyExpression>() {
+      IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
         @Override
         public void pass(PyExpression pyExpression) {
           operation.setElement(pyExpression);
@@ -458,7 +459,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         performInplaceIntroduce(operation);
       }
       else {
-        OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<OccurrencesChooser.ReplaceChoice>() {
+        OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<>() {
           @Override
           public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
             operation.setReplaceAll(replaceChoice == OccurrencesChooser.ReplaceChoice.ALL);
@@ -546,7 +547,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
 
     @Override
-    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+    public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
       final Pair<PsiElement, TextRange> data = node.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
       if (data != null) {
         final PsiElement parent = data.getFirst();
@@ -702,7 +703,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     PyInplaceVariableIntroducer(PyTargetExpression target,
                                        IntroduceOperation operation,
                                        List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Variable",
+      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("python.introduce.variable.refactoring.name"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
     }

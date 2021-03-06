@@ -17,13 +17,13 @@ package com.siyeh.ig.dataflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class ScopeUtils {
+final class ScopeUtils {
 
   private ScopeUtils() {}
 
@@ -93,7 +93,7 @@ class ScopeUtils {
           final PsiExpression expression = statement.getExpression();
           if (expression instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-            final PsiExpression lExpression = ParenthesesUtils.stripParentheses(assignmentExpression.getLExpression());
+            final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
             if (!lExpression.equals(referenceElement)) {
               commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class);
             }

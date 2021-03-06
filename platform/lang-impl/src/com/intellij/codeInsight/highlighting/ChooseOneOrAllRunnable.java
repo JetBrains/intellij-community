@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +35,9 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
   private final T[] myClasses;
   private final Editor myEditor;
 
-  private final String myTitle;
+  private final @NlsContexts.PopupTitle String myTitle;
 
-  public ChooseOneOrAllRunnable(@NotNull List<? extends T> classes, @NotNull Editor editor, @NotNull String title, @NotNull Class<T> type) {
+  public ChooseOneOrAllRunnable(@NotNull List<? extends T> classes, @NotNull Editor editor, @NotNull @NlsContexts.PopupTitle String title, @NotNull Class<T> type) {
     myClasses = ArrayUtil.toObjectArray(classes, type);
     myEditor = editor;
     myTitle = title;

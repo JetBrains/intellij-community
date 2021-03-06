@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,16 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @SafeFieldForPreview
-  private final NotNullLazyValue<PsiElementPredicate> myPredicate = AtomicNotNullLazyValue.createValue(() -> getElementPredicate());
+  private final NotNullLazyValue<PsiElementPredicate> myPredicate = NotNullLazyValue.atomicLazy(() -> getElementPredicate());
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
@@ -51,38 +47,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
-
-  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression, CommentTracker tracker) {
-    final Project project = expression.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    PsiExpression expressionToReplace = expression;
-    final String expString;
-    if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expressionToReplace);
-      expString = newExpression;
-    }
-    else {
-      PsiElement parent = expressionToReplace.getParent();
-      while (parent instanceof PsiParenthesizedExpression) {
-        expressionToReplace = (PsiExpression)parent;
-        parent = parent.getParent();
-      }
-      expString = "!(" + newExpression + ')';
-    }
-    assert expressionToReplace != null;
-    PsiExpression newCall = factory.createExpressionFromText(expString, expression);
-    if (newCall instanceof PsiPolyadicExpression) {
-      PsiElement insertedElement = ExpressionUtils.replacePolyadicWithParent(expressionToReplace, newCall);
-      if (insertedElement != null) {
-        CodeStyleManager.getInstance(project).reformat(insertedElement);
-        return;
-      }
-    }
-
-    PsiElement insertedElement = tracker.replaceAndRestoreComments(expressionToReplace, newCall);
-    CodeStyleManager.getInstance(project).reformat(insertedElement);
-  }
 
 
   @Nullable
@@ -143,6 +107,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return IntentionPowerPackBundle.defaultableMessage(getPrefix() + ".family.name");
+    return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
   }
 }

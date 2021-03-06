@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil
 
 class AdditionalLibraryRootsProviderRegistrationTest : HeavyPlatformTestCase() {
   fun `test register and unregister provider`() {
-    val file = getVirtualFile(createTempFile("a.txt", ""))
+    val file = tempDir.createVirtualFile("a.txt")
     val index = ProjectFileIndex.getInstance(myProject)
     assertFalse(index.isInLibrarySource(file))
     val disposable = Disposer.newDisposable()
@@ -26,7 +26,7 @@ class AdditionalLibraryRootsProviderRegistrationTest : HeavyPlatformTestCase() {
   }
 
   private fun registerProvider(sourceRoot: VirtualFile, disposable: Disposable) {
-    AdditionalLibraryRootsProvider.EP_NAME.getPoint(null).registerExtension(object : AdditionalLibraryRootsProvider() {
+    AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
         return listOf(SyntheticLibrary.newImmutableLibrary(listOf(sourceRoot)))
       }

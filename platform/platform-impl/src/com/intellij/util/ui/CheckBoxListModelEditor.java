@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -38,9 +39,9 @@ import java.util.List;
 public class CheckBoxListModelEditor<T> {
   private final CheckBoxList<T> list;
   private final ToolbarDecorator toolbarDecorator;
-  private final Function<? super T, String> toNameConverter;
+  private final Function<? super T, @NlsContexts.Checkbox String> toNameConverter;
 
-  public CheckBoxListModelEditor(@NotNull Function<? super T, String> toNameConverter, @NotNull String emptyText) {
+  public CheckBoxListModelEditor(@NotNull Function<? super T, @NlsContexts.Checkbox String> toNameConverter, @NotNull @NlsContexts.StatusText String emptyText) {
     this.toNameConverter = toNameConverter;
     list = new CheckBoxList<>();
     list.setEmptyText(emptyText);

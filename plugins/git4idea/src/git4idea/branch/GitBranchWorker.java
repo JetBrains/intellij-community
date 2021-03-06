@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static git4idea.GitNotificationIdsHolder.TAG_NOT_CREATED;
 
 /**
  * Executes the logic of git branch operations.
@@ -93,7 +94,7 @@ public final class GitBranchWorker {
                                          name,
                                          GitUtil.getRepositoryManager(repository.getProject()).getRepositories().size(),
                                          getShortRepositoryName(repository));
-        VcsNotifier.getInstance(myProject).notifyError(error, result.getErrorOutputAsHtmlString(), true);
+        VcsNotifier.getInstance(myProject).notifyError(TAG_NOT_CREATED, error, result.getErrorOutputAsHtmlString(), true);
         break;
       }
     }

@@ -10,13 +10,13 @@ import java.util.List;
 
 public abstract class ArtifactPropertiesProvider {
   public static final ExtensionPointName<ArtifactPropertiesProvider> EP_NAME = ExtensionPointName.create("com.intellij.packaging.artifactPropertiesProvider");
-  private final String myId;
+  private final @NonNls String myId;
 
   protected ArtifactPropertiesProvider(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public final String getId() {
+  public final @NonNls String getId() {
     return myId;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -26,7 +26,7 @@ import java.util.List;
  * @author ven
  */
 public class ChooseTypeExpression extends Expression {
-  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<PsiTypeLookupItem>() {
+  public static final InsertHandler<PsiTypeLookupItem> IMPORT_FIXER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull PsiTypeLookupItem item) {
       GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
@@ -127,11 +127,6 @@ public class ChooseTypeExpression extends Expression {
     }
 
     return null;
-  }
-
-  @Override
-  public Result calculateQuickResult(ExpressionContext context) {
-    return calculateResult(context);
   }
 
   @Override

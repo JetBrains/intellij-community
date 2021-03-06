@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -15,6 +15,8 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -25,7 +27,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -39,23 +40,21 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
-
-  @NotNull @NonNls public static final String RETURN_SYMBOL = "\u23ce";
+  public static final String RETURN_SYMBOL = "\u23ce";
 
   private List<Data> myAllContents;
-  private Editor     myViewer;
+  private Editor myViewer;
 
   private final boolean myUseIdeaEditor;
 
   private final JBList<Item> myList;
   private final JBSplitter mySplitter;
-  private final Project    myProject;
-  private final boolean    myAllowMultipleSelections;
-  private final Alarm      myUpdateAlarm;
+  private final Project myProject;
+  private final boolean myAllowMultipleSelections;
+  private final Alarm myUpdateAlarm;
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
   private boolean myUseNumbering = true;
 
@@ -71,7 +70,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-    myList = new JBList<Item>(new CollectionListModel<>()) {
+    myList = new JBList<>(new CollectionListModel<>()) {
       @Override
       protected void doCopyToClipboardAction() {
         String text = getSelectedText();
@@ -136,8 +135,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           int newSelectionIndex = -1;
-          for (Object o : myList.getSelectedValuesList()) {
-            int i = ((Item)o).index;
+          for (Item o : myList.getSelectedValuesList()) {
+            int i = o.index;
             removeContentAt(myAllContents.get(i));
             if (newSelectionIndex < 0) {
               newSelectionIndex = i;
@@ -239,7 +238,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void updateViewerForSelection() {
     if (myAllContents.isEmpty()) return;
-    String fullString = getSelectedText();
+    @NonNls String fullString = getSelectedText();
 
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);
@@ -289,7 +288,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void rebuildListContent() {
-    ArrayList<Item> items = new ArrayList<>();
+    List<Item> items = new ArrayList<>();
     int index = 0;
     List<Data> contents = new ArrayList<>(getContents());
     for (Data content : contents) {
@@ -300,10 +299,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       index++;
     }
     myAllContents = contents;
-    FilteringListModel listModel = (FilteringListModel)myList.getModel();
-    ((CollectionListModel)listModel.getOriginalModel()).removeAll();
+    FilteringListModel<Item> listModel = (FilteringListModel<Item>)myList.getModel();
+    ((CollectionListModel<?>)listModel.getOriginalModel()).removeAll();
     listModel.addAll(items);
-    ListWithFilter listWithFilter = ComponentUtil.getParentOfType((Class<? extends ListWithFilter>)ListWithFilter.class, (Component)myList);
+    ListWithFilter<?> listWithFilter = ComponentUtil.getParentOfType(ListWithFilter.class, myList);
     if (listWithFilter != null) {
       listWithFilter.getSpeedSearch().update();
       if (listModel.getSize() == 0) listWithFilter.resetFilter();
@@ -311,7 +310,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   @Nullable
-  protected abstract String getStringRepresentationFor(Data content);
+  protected abstract @NlsSafe String getStringRepresentationFor(Data content);
 
   @NotNull
   protected abstract List<Data> getContents();
@@ -341,17 +340,16 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   public String getSelectedText() {
     StringBuilder sb = new StringBuilder();
     boolean first = true;
-    for (Object o : myList.getSelectedValuesList()) {
+    for (Item o : myList.getSelectedValuesList()) {
       if (first) first = false;
       else sb.append("\n");
-      String s = ((Item)o).longText;
+      String s = o.longText;
       sb.append(StringUtil.convertLineSeparators(s));
     }
     return sb.toString();
   }
 
   private class MyListCellRenderer extends ColoredListCellRenderer<Item> {
-
     int previewChars = 80;
 
     @Override
@@ -361,9 +359,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         int max = list.getModel().getSize();
         String indexString = String.valueOf(index + 1);
         int count = String.valueOf(max).length() - indexString.length();
-        char[] spaces = new char[count];
-        Arrays.fill(spaces, ' ');
-        String prefix = indexString + new String(spaces) + "  ";
+        String prefix = indexString + StringUtil.repeatSymbol(' ', count) + "  ";
         append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
       }
 
@@ -384,7 +380,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       this.longText = longText;
     }
 
-    String getShortText(int maxChars) {
+    @NlsSafe String getShortText(int maxChars) {
       int len = shortText.length();
       if (len > 0 && !trimmed) return shortText;
       if (len >= maxChars && (len - maxChars) * 10 / len == 0) return shortText;
@@ -408,5 +404,4 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       return shortText;
     }
   }
-
 }

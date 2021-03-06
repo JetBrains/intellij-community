@@ -1,14 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
+import com.intellij.reference.SoftReference;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,14 +24,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNls
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
-  private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
-
+  private static final Int2ObjectMap<Reference<Key<?>>> allKeys = new Int2ObjectOpenHashMap<>();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
 
   public Key(@NonNls @NotNull String name) {
     myName = name;
-    allKeys.put(myIndex, this);
+    synchronized (allKeys) {
+      allKeys.put(myIndex, new WeakReference<>(this));
+    }
   }
 
   // Final because some clients depend on one-to-one key index/key instance relationship (e.g. UserDataHolderBase).
@@ -58,12 +61,6 @@ public class Key<T> {
     return holder == null ? null : holder.getUserData(this);
   }
 
-  @Contract("null -> null")
-  public T get(@Nullable Map<Key, ?> holder) {
-    //noinspection unchecked
-    return holder == null ? null : (T)holder.get(this);
-  }
-
   @Contract("_, !null -> !null")
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     T t = get(holder);
@@ -88,16 +85,12 @@ public class Key<T> {
     }
   }
 
-  public void set(@Nullable Map<Key, Object> holder, T value) {
-    if (holder != null) {
-      holder.put(this, value);
-    }
-  }
-
   @Nullable("can become null if the key has been gc-ed")
   public static <T> Key<T> getKeyByIndex(int index) {
-    //noinspection unchecked
-    return (Key<T>)allKeys.get(index);
+    synchronized (allKeys) {
+      //noinspection unchecked
+      return (Key<T>)SoftReference.dereference(allKeys.get(index));
+    }
   }
 
   /**
@@ -105,12 +98,15 @@ public class Key<T> {
    */
   @Deprecated
   @Nullable
-  public static Key<?> findKeyByName(String name) {
-    for (IntObjectMap.Entry<Key<?>> key : allKeys.entrySet()) {
-      if (name.equals(key.getValue().myName)) {
-        return key.getValue();
+  public static Key<?> findKeyByName(@NotNull String name) {
+    synchronized (allKeys) {
+      for (Reference<Key<?>> reference : allKeys.values()) {
+        Key<?> key = SoftReference.dereference(reference);
+        if (key != null && name.equals(key.myName)) {
+          return key;
+        }
       }
+      return null;
     }
-    return null;
   }
 }

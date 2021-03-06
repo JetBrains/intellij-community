@@ -1,7 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.ui.UtilUiBundle;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
@@ -33,19 +36,19 @@ public class ThreeStateCheckBox extends JCheckBox {
     this(null, null, initial);
   }
 
-  public ThreeStateCheckBox(final String text) {
+  public ThreeStateCheckBox(@Nls String text) {
     this(text, null, State.DONT_CARE);
   }
 
-  public ThreeStateCheckBox(final String text, final State initial) {
+  public ThreeStateCheckBox(@Nls String text, final State initial) {
     this(text, null, initial);
   }
 
-  public ThreeStateCheckBox(final String text, final Icon icon) {
+  public ThreeStateCheckBox(@Nls String text, final Icon icon) {
     this(text, icon, State.DONT_CARE);
   }
 
-  public ThreeStateCheckBox(final String text, final Icon icon, final State initial) {
+  public ThreeStateCheckBox(@Nls String text, final Icon icon, final State initial) {
     super(text, icon);
 
     setModel(new ToggleButtonModel() {
@@ -130,7 +133,7 @@ public class ThreeStateCheckBox extends JCheckBox {
         icon = UIManager.getIcon("CheckBox.icon");
       }
       if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-        icon = JBUI.scale(EmptyIcon.create(20, 18));
+        icon = JBUIScale.scaleIcon(EmptyIcon.create(20, 18));
       }
       if (icon != null) {
         final Insets i = getInsets();
@@ -143,12 +146,13 @@ public class ThreeStateCheckBox extends JCheckBox {
 
         final Rectangle r2 = new Rectangle();
         final Rectangle r3 = new Rectangle();
+        String text = getText();
         SwingUtilities.layoutCompoundLabel(
-          this, getFontMetrics(getFont()), getText(), icon,
+          this, getFontMetrics(getFont()), text, icon,
           getVerticalAlignment(), getHorizontalAlignment(),
           getVerticalTextPosition(), getHorizontalTextPosition(),
           r1, r2, r3,
-          getText() == null ? 0 : getIconTextGap());
+          text == null ? 0 : getIconTextGap());
 
         // selected table cell: do not paint white on white
         g.setColor(UIUtil.getTreeForeground());
@@ -204,14 +208,14 @@ public class ThreeStateCheckBox extends JCheckBox {
       return super.getAccessibleName();
     }
 
-    private String addStateDescription(String name) {
+    private @Nls String addStateDescription(@Nls String name) {
       switch(getState()) {
         case SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.checked"));
         case NOT_SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "not checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.not.checked"));
         case DONT_CARE:
-          return AccessibleContextUtil.combineAccessibleStrings(name, "partially checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, UtilUiBundle.message("accessible.checkbox.name.partially.checked"));
         default:
           return name;
       }

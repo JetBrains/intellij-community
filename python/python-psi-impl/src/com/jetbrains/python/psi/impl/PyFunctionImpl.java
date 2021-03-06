@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -271,9 +270,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                                  @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                  @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
+      Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
-        type = PyTypeChecker.substitute(type, substitutions, context);
+        Map<PyGenericType, PyType> substitutionsWithUnresolvedReturnGenerics =
+          PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
+        type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
       }
       else {
         type = null;
@@ -351,8 +352,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
       }
       else if (returnType instanceof PyUnionType) {
-        final Collection<PyType> members = ((PyUnionType)returnType).getMembers();
-        return PyUnionType.union(ContainerUtil.map(members, type -> replaceSelf(type, receiver, context, true)));
+        return ((PyUnionType)returnType).map(type -> replaceSelf(type, receiver, context, true));
       }
     }
     return returnType;
@@ -375,7 +375,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     final Set<PyType> types = new LinkedHashSet<>();
     statements.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyYieldExpression(PyYieldExpression node) {
+      public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
         final PyExpression expr = node.getExpression();
         final PyType type = expr != null ? context.getType(expr) : null;
 
@@ -396,7 +396,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
 
       @Override
-      public void visitPyFunction(PyFunction node) {
+      public void visitPyFunction(@NotNull PyFunction node) {
         // Ignore nested functions
       }
     });
@@ -510,7 +510,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return false;
   }
 
-  private static class ReturnVisitor extends PyRecursiveElementVisitor {
+  private static final class ReturnVisitor extends PyRecursiveElementVisitor {
     private final PyFunction myFunction;
     private final TypeEvalContext myContext;
     private PyType myResult = null;
@@ -523,7 +523,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
 
     @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       if (ScopeUtil.getScopeOwner(node) == myFunction) {
         final PyExpression expr = node.getExpression();
         PyType returnType = expr == null ? PyNoneType.INSTANCE : myContext.getType(expr);
@@ -538,7 +538,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
 
     @Override
-    public void visitPyRaiseStatement(PyRaiseStatement node) {
+    public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       myHasRaises = true;
     }
 
@@ -723,12 +723,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       Ref<Boolean> containsYield = Ref.create(false);
       getStatementList().accept(new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyYieldExpression(PyYieldExpression node) {
+        public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
           containsYield.set(true);
         }
 
         @Override
-        public void visitPyFunction(PyFunction node) {
+        public void visitPyFunction(@NotNull PyFunction node) {
           // Ignore nested functions
         }
 
@@ -765,7 +765,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return true;
     }
 
-    final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+    final Map<String, PyNames.BuiltinDescription> builtinMethods =
       asMethod() != null ? PyNames.getBuiltinMethods(languageLevel) : PyNames.getModuleBuiltinMethods(languageLevel);
 
     return !builtinMethods.containsKey(functionName);

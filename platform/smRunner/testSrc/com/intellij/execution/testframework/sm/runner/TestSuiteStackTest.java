@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.testFramework.exceptionCases.ThrowableErrorCase;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 
 /**
  * @author Roman Chernyatchik
@@ -70,15 +70,11 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   }
 
   public void testPopEmptySuite_DebugMode() throws Throwable {
-    // enable debug mode
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     enableDebugMode();
 
-    assertException(new ThrowableErrorCase() {
-      @Override
-      public void tryClosure() {
-        myTestSuiteStack.popSuite("some suite");
-      }
-    });
+    assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite("some suite"));
   }
 
   public void testPopEmptySuite_NormalMode() {
@@ -86,6 +82,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
   }
 
   public void testPopInconsistentSuite_DebugMode() throws Throwable {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     enableDebugMode();
 
     final String suiteName = mySuite.getName();
@@ -98,12 +95,7 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(4, myTestSuiteStack.getStackSize());
     assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
 
-    assertException(new ThrowableErrorCase() {
-      @Override
-      public void tryClosure() {
-        myTestSuiteStack.popSuite(suiteName);
-      }
-    });
+    assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite(suiteName));
     assertEquals(4, myTestSuiteStack.getStackSize());
   }
 

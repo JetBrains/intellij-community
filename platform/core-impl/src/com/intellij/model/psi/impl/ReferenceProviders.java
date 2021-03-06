@@ -21,7 +21,7 @@ public final class ReferenceProviders {
    * Given language of a host element returns list of providers that could provide references from this language.
    */
   static @NotNull LanguageReferenceProviders byLanguage(@NotNull Language language) {
-    return EP_NAME.computeIfAbsent(language, ReferenceProviders::byLanguageInner);
+    return EP_NAME.computeIfAbsent(language, ReferenceProviders.class, ReferenceProviders::byLanguageInner);
   }
 
   private static @NotNull LanguageReferenceProviders byLanguageInner(@NotNull Language language) {
@@ -29,7 +29,7 @@ public final class ReferenceProviders {
     for (PsiSymbolReferenceProviderBean bean : EP_NAME.getExtensionList()) {
       Language hostLanguage = bean.getHostLanguage();
       boolean matches = hostLanguage instanceof MetaLanguage ? ((MetaLanguage)hostLanguage).matchesLanguage(language)
-                                                             : language.isKindOf(hostLanguage);
+                                                             : hostLanguage == Language.ANY || language.isKindOf(hostLanguage);
       if (matches) {
         result.add(bean);
       }
@@ -41,6 +41,6 @@ public final class ReferenceProviders {
    * Given class of target returns list of providers that could provide references to this target.
    */
   public static @NotNull List<PsiSymbolReferenceProviderBean> byTargetClass(@NotNull Class<? extends Symbol> targetClass) {
-    return EP_NAME.getByGroupingKey(targetClass, bean -> bean.getResolveTargetClass().isAssignableFrom(targetClass) ? targetClass : null);
+    return EP_NAME.getByGroupingKey(targetClass, ReferenceProviders.class, bean -> bean.getResolveTargetClass().isAssignableFrom(targetClass) ? targetClass : null);
   }
 }

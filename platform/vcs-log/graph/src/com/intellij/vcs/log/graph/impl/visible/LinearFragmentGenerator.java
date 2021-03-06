@@ -41,14 +41,14 @@ public class LinearFragmentGenerator {
 
   @NotNull private final Set<Integer> myPinnedNodes;
 
-  private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
+  private final Function<Integer, List<Integer>> upNodesFun = new Function<>() {
     @Override
     public List<Integer> fun(Integer integer) {
       return myLinearGraph.getNodes(integer, UP);
     }
   };
 
-  private final Function<Integer, List<Integer>> downNodesFun = new Function<Integer, List<Integer>>() {
+  private final Function<Integer, List<Integer>> downNodesFun = new Function<>() {
     @Override
     public List<Integer> fun(Integer integer) {
       return myLinearGraph.getNodes(integer, DOWN);
@@ -146,8 +146,8 @@ public class LinearFragmentGenerator {
 
   @Nullable
   private static GraphFragment getFragment(int startNode,
-                                           Function<Integer, List<Integer>> getNextNodes,
-                                           Function<Integer, List<Integer>> getPrevNodes,
+                                           Function<? super Integer, ? extends List<Integer>> getNextNodes,
+                                           Function<? super Integer, ? extends List<Integer>> getPrevNodes,
                                            Set<Integer> thisNodeCantBeInMiddle, boolean isDown) {
     Set<Integer> blackNodes = new HashSet<>();
     blackNodes.add(startNode);

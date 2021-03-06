@@ -79,7 +79,7 @@ public class PyParametersRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String entityName() {
-      return "Parameter";
+      return PyBundle.message("refactoring.rename.parameter.entity.name");
     }
 
     @Override

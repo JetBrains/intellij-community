@@ -93,4 +93,19 @@ public class HtmlParsingTest extends XmlParsingTest {
     doTestHtml("<script type=\"foo/bar\"><div></div></script>\n" +
                "<script type=\"foo/bar\"><div> </div></script>");
   }
+
+  public void testSpecialTagsParsing() throws Exception {
+    doTestHtml("<head><title>This is my <title>&lt;<!--</title><body>\n" +
+               "<script type=\"foo/bar\"><div> </div></script>\n" +
+               "<style type='foo/bar'><my><style></style>\n"+
+               "<textarea>this {{text}} {area} &nbsp; <is></cool></textarea>");
+  }
+
+  public void testPAutoClose() throws Exception {
+    doTestHtml("<div>\n" +
+               "<p><br/><div><span><p></p></span></div>\n" +
+               "<P><table></table>\n" +
+               "</div>\n");
+  }
+
 }

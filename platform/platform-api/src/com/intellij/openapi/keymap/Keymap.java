@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +22,7 @@ public interface Keymap extends Scheme {
   String getName();
 
   //think about name
-  String getPresentableName();
+  @NlsSafe String getPresentableName();
 
   @Nullable
   Keymap getParent();
@@ -72,12 +74,14 @@ public interface Keymap extends Scheme {
    * @deprecated Use {@link KeymapManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void addShortcutChangeListener(@NotNull Listener listener);
 
   /**
    * @deprecated Use {@link KeymapManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   void removeShortcutChangeListener(@NotNull Listener listener);
 
   void removeAllActionShortcuts(@NotNull String actionId);
@@ -91,6 +95,7 @@ public interface Keymap extends Scheme {
    * @deprecated Use {@link KeymapManagerListener#TOPIC}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   interface Listener {
     void onShortcutChanged(@NotNull String actionId);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
   private MatchingHandler myCommentHandler;
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     if (patternNode instanceof PsiComment) {
       return myCommentHandler.match(patternNode, matchedNode, context);
     }
@@ -29,8 +30,8 @@ public class DeclarationStatementHandler extends MatchingHandler {
 
     final PsiDeclarationStatement dcl = (PsiDeclarationStatement)patternNode;
     if (matchedNode instanceof PsiDeclarationStatement) {
-      return context.getMatcher().matchSequentially(new SsrFilteringNodeIterator(patternNode.getFirstChild()),
-                                                    new SsrFilteringNodeIterator(matchedNode.getFirstChild()));
+      return context.getMatcher().matchSequentially(SsrFilteringNodeIterator.create(patternNode.getFirstChild()),
+                                                    SsrFilteringNodeIterator.create(matchedNode.getFirstChild()));
     }
     final PsiElement[] declared = dcl.getDeclaredElements();
 
@@ -39,7 +40,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
       if (!(matchedNode instanceof PsiField)) {
         return context.getMatcher().matchSequentially(
           new ArrayBackedNodeIterator(declared),
-          new CountingNodeIterator(declared.length, new SsrFilteringNodeIterator(matchedNode))
+          new CountingNodeIterator(declared.length, SsrFilteringNodeIterator.create(matchedNode))
         );
       }
 

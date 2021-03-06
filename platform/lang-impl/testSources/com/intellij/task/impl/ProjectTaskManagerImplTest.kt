@@ -67,12 +67,10 @@ class ProjectTaskManagerImplTest : LightPlatformTestCase() {
     doTest { taskManager.run(tasks, it) }
     doTest { taskManager.run(context, tasks, it) }
     doTest { taskManager.buildAllModules(it) }
-    doTest { taskManager.rebuildAllModules(it) }
     doTest { taskManager.build(Module.EMPTY_ARRAY, it) }
     doTest { taskManager.rebuild(Module.EMPTY_ARRAY, it) }
     doTest { taskManager.compile(VirtualFile.EMPTY_ARRAY, it) }
     doTest { taskManager.build(arrayOf<ProjectModelBuildableElement>(), it) }
-    doTest { taskManager.rebuild(arrayOf<ProjectModelBuildableElement>(), it) }
   }
 }
 

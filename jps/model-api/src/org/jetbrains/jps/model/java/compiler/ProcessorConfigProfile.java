@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.java.compiler;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public interface ProcessorConfigProfile extends AnnotationProcessingConfiguratio
 
   void initFrom(ProcessorConfigProfile other);
 
-  String getName();
+  @NlsSafe String getName();
 
   void setName(String name);
 
@@ -40,6 +41,8 @@ public interface ProcessorConfigProfile extends AnnotationProcessingConfiguratio
   void setObtainProcessorsFromClasspath(boolean value);
 
   void setGeneratedSourcesDirectoryName(@Nullable String generatedSourcesDirectoryName, boolean forTests);
+
+  void setProcOnly(boolean value);
 
   @NotNull
   Set<String> getModuleNames();

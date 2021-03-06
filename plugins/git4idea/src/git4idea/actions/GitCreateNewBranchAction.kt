@@ -17,6 +17,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
+import org.jetbrains.annotations.Nls
 
 internal class GitCreateNewBranchAction : DumbAwareAction() {
 
@@ -31,11 +32,12 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    when (collectData(e)) {
+    when (val data = collectData(e)) {
       is Data.Invisible -> e.presentation.isEnabledAndVisible = false
       is Data.Disabled -> {
         e.presentation.isVisible = true
         e.presentation.isEnabled = false
+        e.presentation.description = data.description
       }
       else -> e.presentation.isEnabledAndVisible = true
     }
@@ -43,7 +45,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
 
   private sealed class Data {
     object Invisible : Data()
-    object Disabled : Data()
+    class Disabled(val description : @Nls String) : Data()
     class WithCommit(val repository: GitRepository, val hash: Hash, val name: String?) : Data()
     class NoCommit(val project: Project, val repositories: List<GitRepository>) : Data()
   }
@@ -57,7 +59,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
     if (log != null) {
       val commits = log.selectedCommits
       if (commits.isEmpty()) return Data.Invisible
-      if (commits.size > 1) return Data.Disabled
+      if (commits.size > 1) return Data.Disabled(GitBundle.message("action.New.Branch.disabled.several.commits.description"))
       val commit = commits.first()
       val repository = manager.getRepositoryForRootQuick(commit.root)
       if (repository != null) {
@@ -76,7 +78,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       }
       else listOf(manager.repositories.first())
 
-    if (repositories == null || repositories.any { it.isFresh }) return Data.Invisible
+    if (repositories == null || repositories.any { it.isFresh }) return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
     return Data.NoCommit(project, repositories)
   }
 

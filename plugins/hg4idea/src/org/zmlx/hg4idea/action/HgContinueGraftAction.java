@@ -30,6 +30,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.GRAFT_CONTINUE_ERROR;
+
 public class HgContinueGraftAction extends HgProcessStateAction {
 
   public HgContinueGraftAction() {
@@ -49,7 +51,10 @@ public class HgContinueGraftAction extends HgProcessStateAction {
           HgCommandResult result = graftCommand.continueGrafting();
           if (HgErrorUtil.isAbort(result)) {
             new HgCommandResultNotifier(project)
-              .notifyError(result, HgBundle.message("hg4idea.hg.error"), HgBundle.message("action.hg4idea.Graft.continue.error"));
+              .notifyError(GRAFT_CONTINUE_ERROR,
+                           result,
+                           HgBundle.message("hg4idea.hg.error"),
+                           HgBundle.message("action.hg4idea.Graft.continue.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }

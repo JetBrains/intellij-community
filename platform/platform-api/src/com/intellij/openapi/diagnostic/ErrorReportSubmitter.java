@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,13 +37,12 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
-  @NotNull
-  public abstract String getReportActionText();
+  public abstract @NlsActions.ActionText @NotNull String getReportActionText();
 
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
-  public @Nullable String getPrivacyNoticeText() {
+  public @DetailedDescription @Nullable String getPrivacyNoticeText() {
     return null;
   }
 
@@ -63,6 +64,8 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   /**
    * This method is called whenever an exception in a plugin code had happened and a user decided to report a problem to the plugin vendor.
+   * <p>
+   * <b>Note</b>: the method is not abstract because compatibility, but all implementations must override it.
    *
    * @param events          a non-empty sequence of error descriptors.
    * @param additionalInfo  additional information provided by a user.
@@ -73,34 +76,25 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   public boolean submit(IdeaLoggingEvent @NotNull [] events,
                         @Nullable String additionalInfo,
                         @NotNull Component parentComponent,
-                        @NotNull Consumer<SubmittedReportInfo> consumer) {
-    return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
+                        @NotNull Consumer<? super SubmittedReportInfo> consumer) {
+    try {
+      consumer.consume(submit(events, parentComponent));
+      return true;
+    }
+    catch (UnsupportedOperationException e) {
+      Logger.getInstance(getClass()).warn(e);
+      consumer.consume(new SubmittedReportInfo(null, e.getMessage(), SubmittedReportInfo.SubmissionStatus.FAILED));
+      return false;
+    }
   }
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings("ALL")
-  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
-    submitAsync(events, info, parent, consumer);
-    return true;
-  }
-
-  /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings("ALL")
-  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
-    consumer.consume(submit(events, parent));
-  }
-
-  /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("ALL")
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
-    throw new UnsupportedOperationException("Deprecated API called");
+    throw new UnsupportedOperationException("'" + getClass().getName() + "' doesn't implement exception submitter API");
   }
   //</editor-fold>
 }

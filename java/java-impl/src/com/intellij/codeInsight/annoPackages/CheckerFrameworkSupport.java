@@ -26,10 +26,10 @@ class CheckerFrameworkSupport implements AnnotationPackageSupport {
   @Nullable
   @Override
   public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                       @NotNull PsiElement context,
                                                                        PsiAnnotation.TargetType @NotNull [] types,
                                                                        boolean superPackage) {
-    String qName = anno.getQualifiedName();
-    if (DEFAULT_QUALIFIER.equals(qName)) {
+    if (anno.hasQualifiedName(DEFAULT_QUALIFIER)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiClassObjectAccessExpression &&
           hasAppropriateTarget(types, anno.findAttributeValue("locations"))) {
@@ -47,11 +47,11 @@ class CheckerFrameworkSupport implements AnnotationPackageSupport {
       return null;
     }
 
-    if (DEFAULT_QUALIFIERS.equals(qName)) {
+    if (anno.hasQualifiedName(DEFAULT_QUALIFIERS)) {
       PsiAnnotationMemberValue value = anno.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       for (PsiAnnotationMemberValue initializer : AnnotationUtil.arrayAttributeValues(value)) {
         if (initializer instanceof PsiAnnotation) {
-          NullabilityAnnotationInfo result = getNullabilityByContainerAnnotation((PsiAnnotation)initializer, types, superPackage);
+          NullabilityAnnotationInfo result = getNullabilityByContainerAnnotation((PsiAnnotation)initializer, context, types, superPackage);
           if (result != null) {
             return result;
           }

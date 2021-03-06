@@ -32,7 +32,7 @@ public class CompositeBuildDataService extends AbstractProjectDataService<Compos
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataNode<CompositeBuildData>> toImport,
+  public void importData(final @NotNull Collection<? extends DataNode<CompositeBuildData>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {

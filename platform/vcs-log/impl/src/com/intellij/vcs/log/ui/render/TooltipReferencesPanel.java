@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBLabel;
@@ -77,7 +78,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
   protected JBLabel createRestLabel(int restSize) {
     String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
     String labelText = VcsLogBundle.message("vcs.log.references.more.tooltip", restSize);
-    String html = "<html><font color=\"#" + gray + "\">" + labelText + "</font></html>"; // NON-NLS
+    String html = HtmlChunk.text(labelText).wrapWith("font").attr("color", "#" + gray).wrapWith(HtmlChunk.html()).toString();
     return createLabel(html, createEmptyIcon(getIconHeight()));
   }
 }

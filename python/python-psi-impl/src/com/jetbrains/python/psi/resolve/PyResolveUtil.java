@@ -16,11 +16,9 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -32,13 +30,12 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
@@ -55,7 +52,7 @@ import java.util.stream.Stream;
  * <p>
  * TODO: Merge it with {@link ScopeUtil}
  */
-public class PyResolveUtil {
+public final class PyResolveUtil {
   private PyResolveUtil() {
   }
 
@@ -64,15 +61,7 @@ public class PyResolveUtil {
    */
   public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement element, @Nullable String name,
                                   @Nullable PsiElement roof) {
-    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PsiElement realContext = PyPsiUtils.getRealContext(element);
-    final ScopeOwner originalOwner;
-    if (realContext != element && realContext instanceof PyFile) {
-      originalOwner = (PyFile)realContext;
-    }
-    else {
-      originalOwner = ScopeUtil.getScopeOwner(realContext);
-    }
+    final ScopeOwner originalOwner = ScopeUtil.getScopeOwner(element);
     final PsiElement parent = element.getParent();
     ScopeOwner owner = originalOwner;
     if (parent instanceof PyNonlocalStatement) {
@@ -228,6 +217,15 @@ public class PyResolveUtil {
   public static List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
                                                              @NotNull ScopeOwner scopeOwner,
                                                              @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
+      return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond());
+    });
+  }
+
+  @NotNull
+  private static List<PsiElement> doResolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
+                                                                @NotNull ScopeOwner scopeOwner,
+                                                                @NotNull TypeEvalContext context) {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
@@ -289,7 +287,7 @@ public class PyResolveUtil {
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
         }));
 
-    return PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new));
+    return Collections.unmodifiableList(PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new)));
   }
 
   @Nullable
@@ -379,7 +377,7 @@ public class PyResolveUtil {
   @Nullable
   public static ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
     // com.jetbrains.python.codeInsight.dataflow.scope.Scope.containsDeclaration could not be used
-    // because it runs resolve on imports that is forbidden while indexing
+    // because it runs resolve on imports that is forbidden during indexing
     return containsDeclaration(cls, name) ? PyUtil.as(cls.getContainingFile(), PyFile.class) : ScopeUtil.getScopeOwner(cls);
   }
 
@@ -394,7 +392,9 @@ public class PyResolveUtil {
       .anyMatch(e -> name.equals(e.getVisibleName()));
   }
 
-  public static void addImplicitResolveResults(String referencedName, ResolveResultList ret, PyQualifiedExpression element) {
+  public static void addImplicitResolveResults(@NotNull String referencedName,
+                                               @NotNull ResolveResultList ret,
+                                               @NotNull PyQualifiedExpression element) {
     final Project project = element.getProject();
     final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(project);
     final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, project, scope);
@@ -406,16 +406,9 @@ public class PyResolveUtil {
     else {
       imports = Collections.emptyList();
     }
-    for (Object function : functions) {
-      //TODO: most likely the following code is obsolete
-      //if (!(function instanceof PyFunction)) {
-      //  FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-      //                                               new Throwable("found non-function object " + function + " in function list"));
-      //  break;
-      //}
-      PyFunction pyFunction = (PyFunction)function;
-      if (pyFunction.getContainingClass() != null) {
-        ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports, element)));
+    for (PyFunction function : functions) {
+      if (function.getContainingClass() != null) {
+        ret.add(new ImplicitResolveResult(function, getImplicitResultRate(function, imports, element)));
       }
     }
 
@@ -465,5 +458,31 @@ public class PyResolveUtil {
       if (!(target instanceof PyFunction)) rate += 50;
     }
     return rate;
+  }
+
+  @Nullable
+  public static PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+    final PsiElement element = reference.getElement();
+
+    final var context = resolveContext.getTypeEvalContext();
+    final var call = context.maySwitchToAST(element) ? PyCallExpressionNavigator.getPyCallExpressionByCallee(element) : null;
+    if (call != null && element instanceof PyTypedElement) {
+      final var type = PyUtil.as(context.getType((PyTypedElement)element), PyClassType.class);
+
+      if (type != null && type.isDefinition()) {
+        final var cls = type.getPyClass();
+
+        final var constructor = ContainerUtil.find(
+          PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
+          it -> it instanceof PyPossibleClassMember && ((PyPossibleClassMember)it).getContainingClass() == cls
+        );
+
+        if (constructor != null) {
+          return constructor;
+        }
+      }
+    }
+
+    return reference.resolve();
   }
 }

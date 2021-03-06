@@ -28,7 +28,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.*
+import com.intellij.testFramework.CompilerTester
+import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SystemProperties
@@ -40,7 +44,6 @@ import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.jetbrains.plugins.groovy.util.Slow
-
 /**
  * @author aalmiray
  * @author peter
@@ -78,13 +81,11 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   @Override
-  protected void runTest() throws Throwable {
-    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return
-
-    super.runTest()
+  protected boolean shouldRunTest() {
+    return !PlatformTestUtil.COVERAGE_ENABLED_BUILD
   }
 
-  protected static void addGroovyLibrary(final Module to) {
+  protected void addGroovyLibrary(final Module to) {
     GroovyProjectDescriptors.LIB_GROOVY_2_4.addTo(to)
   }
 
@@ -153,12 +154,12 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   }
 
   @Nullable
-  protected VirtualFile findClassFile(String className) {
+  protected File findClassFile(String className) {
     return findClassFile(className, module)
   }
 
   @Nullable
-  protected VirtualFile findClassFile(String className, Module module) {
+  protected File findClassFile(String className, Module module) {
     return myCompilerTester.findClassFile(className, module)
   }
 

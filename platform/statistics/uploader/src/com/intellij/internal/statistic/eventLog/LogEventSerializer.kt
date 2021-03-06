@@ -1,13 +1,11 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
 import java.io.OutputStreamWriter
 import java.lang.reflect.Type
-import java.util.*
+import kotlin.math.roundToLong
 
 private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
 
@@ -113,16 +111,22 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
     if (actionObj.has("data")) {
       val dataObj = actionObj.getAsJsonObject("data")
       for ((key, value) in context.deserialize<HashMap<String, Any>>(dataObj, object : TypeToken<HashMap<String, Any>>() {}.type)) {
-        if (value is Double && value % 1 == 0.0) {
-          val longValue = Math.round(value)
-          action.addData(key, longValue)
-        }
-        else {
-          action.addData(key, value)
-        }
+        action.addData(key, transformNumbers(value))
       }
     }
-    return newLogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, action)
+    return LogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, action)
+  }
+
+  private fun transformNumbers(value: Any): Any {
+    return when {
+      value is Double && value % 1 == 0.0 -> value.roundToLong()
+      value is List<*> -> value.map { if (it != null) transformNumbers(it) else it }
+      value is Map<*, *> -> value.entries.associate { (entryKey, entryValue) ->
+        val newValue = if (entryValue != null) transformNumbers(entryValue) else entryValue
+        entryKey to newValue
+      }
+      else -> value
+    }
   }
 
   fun createAction(obj: JsonObject): LogEventAction {

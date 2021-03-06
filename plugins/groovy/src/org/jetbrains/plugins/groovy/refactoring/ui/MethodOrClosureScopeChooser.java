@@ -5,8 +5,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -24,9 +27,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PairFunction;
 import icons.JetgroovyIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -52,9 +55,6 @@ import java.util.List;
 public final class MethodOrClosureScopeChooser {
   private static final Logger LOG = Logger.getInstance(MethodOrClosureScopeChooser.class);
 
-  @NonNls private static final String USE_SUPER_METHOD_OF = "Change base method";
-  @NonNls private static final String CHANGE_USAGES_OF = "Change usages";
-
   public interface JBPopupOwner {
     JBPopup get();
   }
@@ -68,7 +68,7 @@ public final class MethodOrClosureScopeChooser {
                                final JBPopupOwner popupRef,
                                final PairFunction<? super GrParameterListOwner, ? super PsiElement, Object> callback) {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox(USE_SUPER_METHOD_OF, true);
+    final JCheckBox superMethod = new JCheckBox(GroovyBundle.message("change.base.method.label"), true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList list = new JBList(scopes.toArray());
@@ -102,18 +102,16 @@ public final class MethodOrClosureScopeChooser {
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
     final List<RangeHighlighter> highlighters = new ArrayList<>();
-    final TextAttributes attributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     list.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
         final GrParameterListOwner selectedMethod = (GrParameterListOwner)list.getSelectedValue();
         if (selectedMethod == null) return;
         dropHighlighters(highlighters);
-        updateView(selectedMethod, editor, attributes, highlighters, superMethod);
+        updateView(selectedMethod, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlighters, superMethod);
       }
     });
-    updateView(scopes.get(0), editor, attributes, highlighters, superMethod);
+    updateView(scopes.get(0), editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, highlighters, superMethod);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -143,7 +141,7 @@ public final class MethodOrClosureScopeChooser {
 
 
     return JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-      .setTitle("Introduce parameter to")
+      .setTitle(GroovyBundle.message("parameter.list.owner.chooser.title"))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
@@ -158,21 +156,21 @@ public final class MethodOrClosureScopeChooser {
 
   public static void updateView(GrParameterListOwner selectedMethod,
                                 Editor editor,
-                                TextAttributes attributes,
+                                TextAttributesKey attributesKey,
                                 List<? super RangeHighlighter> highlighters,
                                 JCheckBox superMethod) {
     final MarkupModel markupModel = editor.getMarkupModel();
     final TextRange textRange = selectedMethod.getTextRange();
     final RangeHighlighter rangeHighlighter =
-      markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, attributes,
+      markupModel.addRangeHighlighter(attributesKey, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
                                       HighlighterTargetArea.EXACT_RANGE);
     highlighters.add(rangeHighlighter);
     if (selectedMethod instanceof GrMethod) {
-      superMethod.setText(USE_SUPER_METHOD_OF);
+      superMethod.setText(GroovyBundle.message("change.base.method.label"));
       superMethod.setEnabled(((GrMethod)selectedMethod).findDeepestSuperMethod() != null);
     }
     else {
-      superMethod.setText(CHANGE_USAGES_OF);
+      superMethod.setText(GroovyBundle.message("change.usages.label"));
       superMethod.setEnabled(findVariableToUse(selectedMethod) != null);
     }
   }

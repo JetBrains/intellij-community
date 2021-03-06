@@ -1,34 +1,40 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistUpdateError;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateError;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EventLogSystemLogger {
-  private static final String GROUP = "event.log";
+import java.util.List;
 
-  public static void logWhitelistLoad(@NotNull String recorderId, @Nullable String version) {
+@ApiStatus.Internal
+public final class EventLogSystemLogger {
+  public static final String DEFAULT_RECORDER = "FUS";
+  public static final String GROUP = "event.log";
+
+  public static void logMetadataLoad(@NotNull String recorderId, @Nullable String version) {
     final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
-    logEvent(recorderId, "whitelist.loaded", data);
+    logEvent(recorderId, "metadata.loaded", data);
   }
 
-  public static void logWhitelistUpdated(@NotNull String recorderId, @Nullable String version) {
+  public static void logMetadataUpdated(@NotNull String recorderId, @Nullable String version) {
     final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
-    logEvent(recorderId, "whitelist.updated", data);
+    logEvent(recorderId, "metadata.updated", data);
   }
 
-  public static void logWhitelistErrorOnLoad(@NotNull String recorderId, @NotNull EventLogWhitelistUpdateError error) {
-    logWhitelistError(recorderId, "whitelist.load.failed", error);
+  public static void logMetadataErrorOnLoad(@NotNull String recorderId, @NotNull EventLogMetadataUpdateError error) {
+    logMetadataError(recorderId, "metadata.load.failed", error);
   }
 
-  public static void logWhitelistErrorOnUpdate(@NotNull String recorderId, @NotNull EventLogWhitelistUpdateError error) {
-    logWhitelistError(recorderId, "whitelist.update.failed", error);
+  public static void logMetadataErrorOnUpdate(@NotNull String recorderId, @NotNull EventLogMetadataUpdateError error) {
+    logMetadataError(recorderId, "metadata.update.failed", error);
   }
 
-  private static void logWhitelistError(@NotNull String recorderId, @NotNull String eventId, @NotNull EventLogWhitelistUpdateError error) {
+  private static void logMetadataError(@NotNull String recorderId, @NotNull String eventId, @NotNull EventLogMetadataUpdateError error) {
     final FeatureUsageData data = new FeatureUsageData().
       addData("stage", error.getUpdateStage().name()).
       addData("error", error.getErrorType());
@@ -40,12 +46,22 @@ public class EventLogSystemLogger {
     logEvent(recorderId, eventId, data);
   }
 
-  public static void logFilesSend(@NotNull String recorderId, int total, int succeed, int failed, boolean external) {
+  public static void logFilesSend(@NotNull String recorderId,
+                                  int total,
+                                  int succeed,
+                                  int failed,
+                                  boolean external,
+                                  @NotNull List<String> successfullySentFiles,
+                                  @NotNull List<Integer> errors) {
+    EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
+      addData("succeed", succeed).
       addData("failed", failed).
-      addData("external", external);
+      addData("errors", ContainerUtil.map(errors, error -> String.valueOf(error))).
+      addData("external", external).
+      addData("paths", ContainerUtil.map(successfullySentFiles, path -> config.anonymize(path)));
     logEvent(recorderId, "logs.send", data);
   }
 
@@ -85,12 +101,21 @@ public class EventLogSystemLogger {
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
-    final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
-    provider.getLogger().logAsync(new EventLogGroup(GROUP, provider.getVersion()), eventId, data.build(), false);
+    StatisticsEventLoggerProvider provider = StatisticsEventLogProviderUtil.getEventLogProvider(recorderId);
+    String groupId = getGroupId(recorderId);
+    provider.getLogger().logAsync(new EventLogGroup(groupId, provider.getVersion()), eventId, data.build(), false);
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId) {
-    final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
-    provider.getLogger().logAsync(new EventLogGroup(GROUP, provider.getVersion()), eventId, false);
+    StatisticsEventLoggerProvider provider = StatisticsEventLogProviderUtil.getEventLogProvider(recorderId);
+    String groupId = getGroupId(recorderId);
+    provider.getLogger().logAsync(new EventLogGroup(groupId, provider.getVersion()), eventId, false);
+  }
+
+  private static String getGroupId(@NotNull String recorderId) {
+    if (DEFAULT_RECORDER.equals(recorderId)) {
+      return GROUP;
+    }
+    return StringUtil.toLowerCase(recorderId) + "." + GROUP;
   }
 }

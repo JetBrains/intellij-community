@@ -7,9 +7,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VFileDeleteEvent extends VFileEvent {
+public final class VFileDeleteEvent extends VFileEvent {
   @NotNull private final VirtualFile myFile;
-  private int myDepth = -1;
 
   public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
     super(requestor, isFromRefresh);
@@ -58,19 +57,5 @@ public class VFileDeleteEvent extends VFileEvent {
   @Override
   public int hashCode() {
     return myFile.hashCode();
-  }
-
-  public int getFileDepth() {
-    if (myDepth == -1) {
-      int d = 0;
-      VirtualFile cur = myFile;
-      while (cur != null) {
-        d++;
-        cur = cur.getParent();
-      }
-      myDepth = d;
-    }
-
-    return myDepth;
   }
 }

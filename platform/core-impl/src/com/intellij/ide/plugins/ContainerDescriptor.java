@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,18 +22,18 @@ public final class ContainerDescriptor {
   @Nullable List<ListenerDescriptor> listeners;
   @Nullable List<ExtensionPointImpl<?>> extensionPoints;
 
-  transient Map<String, List<Element>> extensions;
+  public transient Map<String, List<Element>> extensions;
 
   public @NotNull List<ServiceDescriptor> getServices() {
-    return ContainerUtil.notNullize(services);
+    return services == null ? Collections.emptyList() : services;
   }
 
-  public @NotNull List<ComponentConfig> getComponents() {
-    return ContainerUtil.notNullize(components);
+  public @Nullable List<ComponentConfig> getComponents() {
+    return components;
   }
 
-  public @NotNull List<ListenerDescriptor> getListeners() {
-    return ContainerUtil.notNullize(listeners);
+  public @Nullable List<ListenerDescriptor> getListeners() {
+    return listeners;
   }
 
   public @Nullable List<ExtensionPointImpl<?>> getExtensionPoints() {
@@ -59,22 +59,18 @@ public final class ContainerDescriptor {
     return result;
   }
 
-  void merge(@NotNull ContainerDescriptor another) {
-    components = concatOrNull(components, another.components);
-    services = concatOrNull(services, another.services);
-    extensionPoints = concatOrNull(extensionPoints, another.extensionPoints);
-    listeners = concatOrNull(listeners, another.listeners);
-  }
+  @Override
+  public String toString() {
+    if (services == null && components == null && extensionPoints == null && extensions == null && listeners == null) {
+      return "ContainerDescriptor(empty)";
+    }
 
-  @Nullable static <T> List<T> concatOrNull(@Nullable List<T> l1, @Nullable List<T> l2) {
-    if (l1 == null) {
-      return l2;
-    }
-    else if (l2 == null) {
-      return l1;
-    }
-    else {
-      return ContainerUtil.concat(l1, l2);
-    }
+    return "ContainerDescriptor(" +
+           "services=" + services +
+           ", components=" + components +
+           ", extensionPoints=" + extensionPoints +
+           ", extensions=" + extensions +
+           ", listeners=" + listeners +
+           ')';
   }
 }

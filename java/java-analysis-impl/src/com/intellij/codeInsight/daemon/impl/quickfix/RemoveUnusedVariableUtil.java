@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Contract;
@@ -28,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class RemoveUnusedVariableUtil {
+public final class RemoveUnusedVariableUtil {
   public enum RemoveMode {
     MAKE_STATEMENT,
     DELETE_ALL,
@@ -211,7 +198,7 @@ public class RemoveUnusedVariableUtil {
             deleteReferences(variable, references, deleteMode);
           }
           else if (deleteMode == RemoveMode.DELETE_ALL) {
-            element.delete();
+            deleteVariable(variable);
           }
           return true;
         }
@@ -220,7 +207,7 @@ public class RemoveUnusedVariableUtil {
             if (element instanceof PsiField) {
               ((PsiField)element).normalizeDeclaration();
             }
-            element.delete();
+            deleteVariable(variable);
           }
           return !sideEffectsFound;
         }
@@ -228,6 +215,12 @@ public class RemoveUnusedVariableUtil {
       element = element.getParent();
     }
     return true;
+  }
+
+  private static void deleteVariable(PsiVariable variable) {
+    CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(variable.getInitializer()); // assume that initializer is used (e.g. inlined)
+    tracker.deleteAndRestoreComments(variable);
   }
 
   @NotNull

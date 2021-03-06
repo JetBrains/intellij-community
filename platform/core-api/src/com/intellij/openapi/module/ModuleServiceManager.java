@@ -5,9 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @deprecated Do not use module services.
- *
- * See https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html
+ * @deprecated do not use module services, use <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">other kinds of services</a>
+ * instead
  */
 @Deprecated
 public final class ModuleServiceManager {

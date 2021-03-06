@@ -38,6 +38,10 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Override this class and register the implementation in META-INF/services/org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
+ * to support loading and saving custom entities in the project configuration files (*.iml and .idea).
+ */
 public abstract class JpsModelSerializerExtension {
   public static Iterable<JpsModelSerializerExtension> getExtensions() {
     return JpsServiceManager.getInstance().getExtensions(JpsModelSerializerExtension.class);

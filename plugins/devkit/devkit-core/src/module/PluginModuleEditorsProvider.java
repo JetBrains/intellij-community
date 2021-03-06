@@ -16,7 +16,7 @@ public class PluginModuleEditorsProvider implements ModuleConfigurationEditorPro
 
   @Override
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
-    final Module module = state.getRootModel().getModule();
+    final Module module = state.getCurrentRootModel().getModule();
     if (ModuleType.get(module) != PluginModuleType.getInstance()) return ModuleConfigurationEditor.EMPTY;
 
     final DefaultModuleConfigurationEditorFactory editorFactory = DefaultModuleConfigurationEditorFactory.getInstance();

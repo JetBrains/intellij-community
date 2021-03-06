@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -60,7 +59,7 @@ public class PyiTypeTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Override
@@ -90,15 +89,14 @@ public class PyiTypeTest extends PyTestCase {
     myFixture.copyDirectoryToProject("pyi/type/" + getTestName(true), "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final String fileName = getTestName(false) + ".py";
-    myFixture.configureByFile(fileName);
+    final var file = myFixture.configureByFile(fileName);
     final PsiElement element = myFixture.getElementAtCaret();
     assertInstanceOf(element, PyTypedElement.class);
     final PyTypedElement typedElement = (PyTypedElement)element;
     final Project project = element.getProject();
-    final PsiFile containingFile = element.getContainingFile();
-    assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
-    assertProjectFilesNotParsed(myFixture.getFile());
-    assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
+    assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, file));
+    assertProjectFilesNotParsed(file);
+    assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, file));
   }
 
   public void testFunctionParameter() {

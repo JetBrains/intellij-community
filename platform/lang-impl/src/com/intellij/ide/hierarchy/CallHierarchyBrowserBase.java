@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +23,6 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   public static final String CALLEE_TYPE = "Callees of {0}";
   public static final String CALLER_TYPE = "Callers of {0}";
 
-  private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
-
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
   }
@@ -43,12 +31,6 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   @Nullable
   protected JPanel createLegendPanel() {
     return null;
-  }
-
-  @Override
-  @NotNull
-  protected String getBrowserDataKey() {
-    return CALL_HIERARCHY_BROWSER_DATA_KEY;
   }
 
   @Override
@@ -89,10 +71,10 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     return map;
   }
 
-  private class ChangeViewTypeActionBase extends ToggleAction {
+  private final class ChangeViewTypeActionBase extends ToggleAction {
     private final String myTypeName;
 
-    private ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(final @NlsActions.ActionText String shortDescription, final @NlsActions.ActionDescription String longDescription, final Icon icon, String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
@@ -119,7 +101,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), CallHierarchyBrowserBase.class, LanguageCallHierarchy.INSTANCE);
     }
   }
 

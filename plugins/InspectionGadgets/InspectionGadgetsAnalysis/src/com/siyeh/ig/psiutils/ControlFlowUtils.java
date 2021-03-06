@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.Set;
 
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
-public class ControlFlowUtils {
+public final class ControlFlowUtils {
   private ControlFlowUtils() { }
 
   public static boolean isElseIf(PsiIfStatement ifStatement) {
@@ -77,7 +78,7 @@ public class ControlFlowUtils {
       if (method == null) {
         return true;
       }
-      final String methodName = method.getName();
+      @NonNls final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return true;
       }
@@ -348,8 +349,8 @@ public class ControlFlowUtils {
     return systemExitFinder.exitFound();
   }
 
-  public static boolean elementContainsCallToMethod(PsiElement context, String containingClassName, PsiType returnType,
-    String methodName, PsiType... parameterTypes) {
+  public static boolean elementContainsCallToMethod(PsiElement context, @NonNls String containingClassName, PsiType returnType,
+    @NonNls String methodName, PsiType... parameterTypes) {
     final MethodCallFinder methodCallFinder = new MethodCallFinder(containingClassName, returnType, methodName, parameterTypes);
     context.accept(methodCallFinder);
     return methodCallFinder.containsCallToMethod();
@@ -435,7 +436,7 @@ public class ControlFlowUtils {
           return false;
         }
       }
-      
+
       statementToCheck = container;
       if (statementToCheck instanceof PsiSwitchLabeledRuleStatement) {
         statementToCheck = PsiTreeUtil.getParentOfType(statementToCheck, PsiStatement.class);
@@ -575,6 +576,11 @@ public class ControlFlowUtils {
     return !containsReturn(codeBlock) && !codeBlockMayCompleteNormally(codeBlock);
   }
 
+  /**
+   * @param statement statement to test
+   * @return true if statement contains a break without a label that could jump outside of the supplied statement
+   */
+  @Contract("null -> false")
   public static boolean statementContainsNakedBreak(PsiStatement statement) {
     if (statement == null) {
       return false;
@@ -582,6 +588,20 @@ public class ControlFlowUtils {
     final NakedBreakFinder breakFinder = new NakedBreakFinder();
     statement.accept(breakFinder);
     return breakFinder.breakFound();
+  }
+
+  /**
+   * @param statement statement to test
+   * @return true if statement contains a continue without a label that could jump outside of the supplied statement
+   */
+  @Contract("null -> false")
+  public static boolean statementContainsNakedContinue(PsiStatement statement) {
+    if (statement == null) {
+      return false;
+    }
+    final NakedContinueFinder breakFinder = new NakedContinueFinder();
+    statement.accept(breakFinder);
+    return breakFinder.continueFound();
   }
 
   /**
@@ -773,14 +793,14 @@ public class ControlFlowUtils {
    *
    * @param flow      ControlFlow to analyze
    * @param start     start point
-   * @param statement loop to check
+   * @param statement statement to check
    * @param variable  variable to analyze
    * @param excluded  instructions to exclude
    * @return true if variable can be referenced between start point and statement entry
    */
   public static boolean isVariableReferencedBeforeStatementEntry(@NotNull ControlFlow flow,
                                                                  final int start,
-                                                                 final PsiStatement statement,
+                                                                 final PsiElement statement,
                                                                  @NotNull PsiVariable variable,
                                                                  @NotNull Set<Integer> excluded) {
     final int statementStart = flow.getStartOffset(statement);
@@ -986,7 +1006,7 @@ public class ControlFlowUtils {
   }
 
   /**
-   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent) 
+   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent)
    * @param ifStatement an {@code if} statement to add an else branch or expand it to the block
    */
   public static void ensureElseBranch(PsiIfStatement ifStatement) {
@@ -1026,16 +1046,8 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (m_found) {
-        return;
-      }
-      super.visitElement(element);
-    }
-
-    @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitExpression(PsiExpression expression) {
+      // don't drill down
     }
 
     @Override
@@ -1044,6 +1056,7 @@ public class ControlFlowUtils {
         return;
       }
       m_found = true;
+      stopWalking();
     }
 
     @Override
@@ -1072,6 +1085,47 @@ public class ControlFlowUtils {
     }
   }
 
+  private static class NakedContinueFinder extends JavaRecursiveElementWalkingVisitor {
+    private boolean m_found;
+
+    private boolean continueFound() {
+      return m_found;
+    }
+
+    @Override
+    public void visitExpression(PsiExpression expression) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitContinueStatement(PsiContinueStatement statement) {
+      if (statement.getLabelIdentifier() != null) {
+        return;
+      }
+      m_found = true;
+    }
+
+    @Override
+    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitForStatement(PsiForStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      // don't drill down
+    }
+
+    @Override
+    public void visitWhileStatement(PsiWhileStatement statement) {
+      // don't drill down
+    }
+  }
+
   private static class SystemExitFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found;
@@ -1096,7 +1150,7 @@ public class ControlFlowUtils {
       if (method == null) {
         return;
       }
-      final String methodName = method.getName();
+      @NonNls final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return;
       }
@@ -1191,7 +1245,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ContinueFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class ContinueFinder extends JavaRecursiveElementWalkingVisitor {
 
     private boolean m_found;
     private final PsiStatement m_target;
@@ -1241,7 +1295,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class MethodCallFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class MethodCallFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final String containingClassName;
     private final PsiType returnType;
@@ -1282,7 +1336,7 @@ public class ControlFlowUtils {
     }
   }
 
-  private static class ContinueToAncestorFinder extends JavaRecursiveElementWalkingVisitor {
+  private static final class ContinueToAncestorFinder extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiStatement statement;
     private boolean found;

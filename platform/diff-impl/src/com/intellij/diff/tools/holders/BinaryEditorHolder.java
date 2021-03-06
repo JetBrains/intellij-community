@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.holders;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.FileEditorBase;
@@ -144,7 +131,7 @@ public class BinaryEditorHolder extends EditorHolder {
       if (content instanceof FileContent) {
         VirtualFile file = ((FileContent)content).getFile();
         if (!file.isValid()) return false;
-        if (file instanceof VirtualFileWithoutContent) return false;
+        if (DiffUtil.isFileWithoutContent(file)) return false;
         return true;
       }
       return false;
@@ -162,7 +149,7 @@ public class BinaryEditorHolder extends EditorHolder {
     }
   }
 
-  private static class DumbFileEditor extends FileEditorBase {
+  private static final class DumbFileEditor extends FileEditorBase {
     @NotNull private final VirtualFile myFile;
     @NotNull private final JComponent myComponent;
 
@@ -192,7 +179,7 @@ public class BinaryEditorHolder extends EditorHolder {
     @NotNull
     @Override
     public String getName() {
-      return "Dumb";
+      return "Dumb"; //NON-NLS
     }
   }
 }

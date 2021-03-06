@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,8 +17,7 @@ import java.util.Set;
 
 @State(
   name = "EmmetOptions",
-  storages = @Storage("emmet.xml"),
-  reportStatistic = true
+  storages = @Storage("emmet.xml")
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myEmmetEnabled = true;
@@ -125,6 +124,6 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   }
 
   public static EmmetOptions getInstance() {
-    return ServiceManager.getService(EmmetOptions.class);
+    return ApplicationManager.getApplication().getService(EmmetOptions.class);
   }
 }

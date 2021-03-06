@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public interface CustomLiveTemplate {
 
   void wrap(@NotNull String selection, @NotNull CustomTemplateCallback callback);
 
-  @NotNull
+  @NotNull @NlsActions.ActionText
   String getTitle();
 
   char getShortcut();

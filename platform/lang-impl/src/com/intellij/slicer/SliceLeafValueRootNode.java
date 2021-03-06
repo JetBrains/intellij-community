@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.TextChunk;
@@ -17,9 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
   public final List<SliceNode> myCachedChildren;
 
@@ -60,9 +59,9 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
       text = element == null ? "" : element.getText();
     }
     else {
-      text = "Other";
+      text = LangBundle.message("node.slice.other");
     }
-    return "Value: " + text;
+    return LangBundle.message("node.slice.value.2", text);
   }
 
   @Override
@@ -75,19 +74,19 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
                                     int row,
                                     boolean hasFocus) {
     SliceUsage usage = getValue();
-    renderer.append("Value: ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(LangBundle.message("node.slice.value"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (usage != null) {
       PsiElement element = usage.getElement();
       if (element == null) {
-        renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
+        renderer.append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
       }
       else {
         appendElementText(usage, element, renderer);
       }
     }
     else {
-      renderer.append("Other", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      renderer.append(LangBundle.message("node.slice.other"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 

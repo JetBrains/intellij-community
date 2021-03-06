@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -20,7 +19,7 @@ public class PyStringLiteralFileReferenceSet extends RootFileReferenceSet {
 
 
   public PyStringLiteralFileReferenceSet(@NotNull PyStringLiteralExpression element) {
-    this(element, SystemInfo.isFileSystemCaseSensitive);
+    this(element, element.getContainingFile().getViewProvider().getVirtualFile().isCaseSensitive());
   }
 
   public PyStringLiteralFileReferenceSet(@NotNull PyStringLiteralExpression element, boolean caseSensitive) {

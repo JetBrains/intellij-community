@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.win;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -11,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PathChooserDialogHelper;
 import com.intellij.ui.UIBundle;
@@ -35,7 +38,7 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
   private final FileChooserDescriptor myFileChooserDescriptor;
   private final WeakReference<Component> myParent;
   private final Project myProject;
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
   private VirtualFile [] virtualFiles;
   private final PathChooserDialogHelper myHelper;
 
@@ -54,9 +57,26 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
       .ifDialog(dialogConsumer)
       .ifFrame(frameConsumer)
       .ifNull(frameConsumer);
+    initExtendedProperties();
   }
 
-  private static String getChooserTitle(final FileChooserDescriptor descriptor) {
+  private void initExtendedProperties() {
+    if (myFileDialog == null) return;
+
+    JdkEx.trySetCommonFileDialogLocalization(
+      myFileDialog,
+      IdeBundle.message("windows.native.common.dialog.open"),
+      IdeBundle.message("windows.native.common.dialog.select.folder"));
+    boolean isFolderExclusiveMode = myFileChooserDescriptor.isChooseFolders() && !myFileChooserDescriptor.isChooseFiles();
+    if (isFolderExclusiveMode)
+      JdkEx.trySetFolderPickerMode(myFileDialog, true);
+
+    boolean isFileExclusiveMode = myFileChooserDescriptor.isChooseFiles() && !myFileChooserDescriptor.isChooseFolders();
+    if (isFileExclusiveMode)
+      JdkEx.trySetFileExclusivePickerMode(myFileDialog, true);
+  }
+
+  private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {
     final String title = descriptor.getTitle();
     return title != null ? title : UIBundle.message("file.chooser.default.title");
   }

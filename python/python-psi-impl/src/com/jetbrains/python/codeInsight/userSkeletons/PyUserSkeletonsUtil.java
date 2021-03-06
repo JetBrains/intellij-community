@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,6 +30,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -53,7 +56,7 @@ import java.util.List;
  */
 public class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
+  private static final Logger LOG = Logger.getInstance(PyUserSkeletonsUtil.class);
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
 
   private static final ImmutableSet<String> STDLIB_SKELETONS = ImmutableSet.of(
@@ -115,12 +118,24 @@ public class PyUserSkeletonsUtil {
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 
+  @NotNull
+  public static GlobalSearchScope getUserSkeletonsDirectoryScope(@NotNull Project project) {
+    VirtualFile userSkeletonsDirectory = getUserSkeletonsDirectory();
+    if (userSkeletonsDirectory != null) {
+      return new GlobalSearchScopesCore.DirectoryScope(project, userSkeletonsDirectory, true);
+    }
+    else {
+      return GlobalSearchScope.EMPTY_SCOPE;
+    }
+  }
+
   public static boolean isStandardLibrarySkeleton(@NotNull VirtualFile virtualFile) {
     final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
     if (skeletonsDir == null) {
       return false;
     }
-    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir, '/');
+    final String relativePath =
+      VfsUtilCore.getRelativePath(virtualFile, ModelBranchUtil.obtainCopyFromTheSameBranch(virtualFile, skeletonsDir), '/');
     // not under skeletons directory
     if (relativePath == null) {
       return false;
@@ -227,7 +242,7 @@ public class PyUserSkeletonsUtil {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
-        final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
+        final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(file, qName, null);
         if (restored != null) {
           moduleName = restored.toString();
         }

@@ -17,6 +17,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated see {@link LogicalRootsManager} for details
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class VirtualFileLogicalRoot extends LogicalRoot {
   private final VirtualFile myVirtualFile;
   private final LogicalRootType myType;

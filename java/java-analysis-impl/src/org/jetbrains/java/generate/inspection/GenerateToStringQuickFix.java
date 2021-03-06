@@ -15,9 +15,9 @@
  */
 package org.jetbrains.java.generate.inspection;
 
-import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,7 +28,7 @@ import org.jetbrains.java.generate.GenerateToStringActionHandler;
 /**
  * Quick fix to run Generate toString() to fix any code inspection problems.
  */
-public class GenerateToStringQuickFix implements LocalQuickFix {
+public final class GenerateToStringQuickFix implements OnTheFlyLocalFix {
 
   public static final GenerateToStringQuickFix INSTANCE = new GenerateToStringQuickFix();
 
@@ -56,7 +56,7 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
     if (clazz == null) {
       return; // no class to fix
     }
-    GenerateToStringActionHandler handler = ServiceManager.getService(GenerateToStringActionHandler.class);
+    GenerateToStringActionHandler handler = ApplicationManager.getApplication().getService(GenerateToStringActionHandler.class);
     handler.executeActionQuickFix(project, clazz);
   }
 

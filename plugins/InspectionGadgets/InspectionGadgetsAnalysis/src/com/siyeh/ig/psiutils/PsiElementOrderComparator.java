@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 
 import java.util.Comparator;
 
-public class PsiElementOrderComparator implements Comparator<PsiElement> {
+public final class PsiElementOrderComparator implements Comparator<PsiElement> {
 
   private static final PsiElementOrderComparator INSTANCE = new PsiElementOrderComparator();
 

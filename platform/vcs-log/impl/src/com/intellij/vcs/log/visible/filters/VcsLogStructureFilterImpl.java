@@ -14,6 +14,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogDetailsFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,7 +24,7 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   @NotNull private final Collection<FilePath> myFiles;
 
   /**
-   * Use {@link com.intellij.vcs.log.visible.filters.VcsLogFilterObject#fromPaths(Collection)}
+   * Use {@link VcsLogFilterObject#fromPaths(Collection)}
    */
   protected VcsLogStructureFilterImpl(@NotNull Collection<FilePath> files) {
     myFiles = files;
@@ -57,8 +58,9 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
   }
 
   @Override
+  @NonNls
   public String toString() {
-    return "files:" + myFiles; // NON-NLS
+    return "files:" + myFiles;
   }
 
   @Override

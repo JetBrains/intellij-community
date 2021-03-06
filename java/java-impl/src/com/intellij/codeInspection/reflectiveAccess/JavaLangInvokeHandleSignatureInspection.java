@@ -15,8 +15,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +90,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {
         final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
         if (ownerClass != null) {
-          final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[1]);
+          final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[1]);
           checkConstructor(ownerClass, typeExpression, holder);
         }
       }
@@ -98,11 +98,11 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     else if (arguments.length >= 3) {
       final ReflectiveClass ownerClass = getReflectiveClass(arguments[0]);
       if (ownerClass != null) {
-        final PsiExpression nameExpression = ParenthesesUtils.stripParentheses(arguments[1]);
+        final PsiExpression nameExpression = PsiUtil.skipParenthesizedExprDown(arguments[1]);
         final PsiExpression nameDefinition = findDefinition(nameExpression);
         final String memberName = computeConstantExpression(nameDefinition, String.class);
         if (!StringUtil.isEmpty(memberName)) {
-          final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[2]);
+          final PsiExpression typeExpression = PsiUtil.skipParenthesizedExprDown(arguments[2]);
 
           switch (factoryMethodName) {
             case FIND_GETTER:
@@ -352,18 +352,16 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
   }
 
   private static class SwitchStaticnessQuickFix implements LocalQuickFix {
-    private static final Map<String, String> STATIC_TO_NON_STATIC = ContainerUtil.<String, String>immutableMapBuilder()
-      .put(FIND_STATIC_GETTER, FIND_GETTER)
-      .put(FIND_STATIC_SETTER, FIND_SETTER)
-      .put(FIND_STATIC_VAR_HANDLE, FIND_VAR_HANDLE)
-      .put(FIND_STATIC, FIND_VIRTUAL)
-      .build();
-    private static final Map<String, String> NON_STATIC_TO_STATIC = ContainerUtil.<String, String>immutableMapBuilder()
-      .put(FIND_GETTER, FIND_STATIC_GETTER)
-      .put(FIND_SETTER, FIND_STATIC_SETTER)
-      .put(FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE)
-      .put(FIND_VIRTUAL, FIND_STATIC)
-      .build();
+    private static final Map<String, String> STATIC_TO_NON_STATIC = Map.of(
+      FIND_STATIC_GETTER, FIND_GETTER,
+      FIND_STATIC_SETTER, FIND_SETTER,
+      FIND_STATIC_VAR_HANDLE, FIND_VAR_HANDLE,
+      FIND_STATIC, FIND_VIRTUAL);
+    private static final Map<String, String> NON_STATIC_TO_STATIC = Map.of(
+      FIND_GETTER, FIND_STATIC_GETTER,
+      FIND_SETTER, FIND_STATIC_SETTER,
+      FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE,
+      FIND_VIRTUAL, FIND_STATIC);
 
     private final String myReplacementName;
 

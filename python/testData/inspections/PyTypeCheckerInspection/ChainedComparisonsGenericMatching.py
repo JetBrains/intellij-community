@@ -11,4 +11,4 @@ class MyClass(Generic[T]):
         pass
 
 
-x = MyClass(1) < MyClass(2) < <weak_warning descr="Expected type 'MyClass[int]' (matched generic type 'MyClass[T]'), got 'MyClass[str]' instead">MyClass('foo')</weak_warning>
+x = MyClass(1) < MyClass(2) < <warning descr="Expected type 'MyClass[int]' (matched generic type 'MyClass[T]'), got 'MyClass[str]' instead">MyClass('foo')</warning>

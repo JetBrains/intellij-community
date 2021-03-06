@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
 import com.intellij.codeInsight.Nullability;
@@ -123,7 +123,7 @@ class MethodReturnInferenceVisitor {
     if (ElementType.JAVA_STATEMENT_BIT_SET.contains(parent.getTokenType())) {
       ReturnValue value = findValueBeforeStatement(parent, target);
       if (!myParameters.isEmpty()) {
-        // For now disable NULLABLE inference (except delegation case), because contract inference 
+        // For now disable NULLABLE inference (except delegation case), because contract inference
         // is not so smart one and we may infer NULLABLE where contract is possible producing noise
         // nullability warnings
         value = value.dropNullable();
@@ -268,7 +268,7 @@ class MethodReturnInferenceVisitor {
     }
     return ReturnValue.merge(thenValue, elseValue);
   }
-  
+
   @Nullable
   private ReturnValue findValueInExpression(LighterASTNode expression, LighterASTNode target) {
     if (expression == null) return null;
@@ -291,7 +291,7 @@ class MethodReturnInferenceVisitor {
     }
     return null;
   }
-  
+
   private boolean completesAbruptly(LighterASTNode statement) {
     if (statement == null) return false;
     if (statement.getTokenType() == BLOCK_STATEMENT) {
@@ -342,7 +342,7 @@ class MethodReturnInferenceVisitor {
         }
       }
       IElementType tokenType = node.getTokenType();
-      if (tokenType == CONDITIONAL_EXPRESSION || tokenType == SWITCH_EXPRESSION || 
+      if (tokenType == CONDITIONAL_EXPRESSION || tokenType == SWITCH_EXPRESSION ||
           (tokenType == POLYADIC_EXPRESSION || tokenType == BINARY_EXPRESSION) && firstChildOfType(tree, node, SHORT_CIRCUIT) != null) {
         ContainerUtil.addIfNotNull(workList, findExpressionChild(tree, node));
       } else if (tokenType != LAMBDA_EXPRESSION && tokenType != TYPE_PARAMETER_LIST && tokenType != ANONYMOUS_CLASS) {
@@ -377,7 +377,7 @@ class MethodReturnInferenceVisitor {
   }
 
   private boolean isReferenceToLocal(@Nullable LighterASTNode operand, @NotNull LighterASTNode var) {
-    // We do not actually resolve here as this method is guaranteed to be called within the scope of var, 
+    // We do not actually resolve here as this method is guaranteed to be called within the scope of var,
     // thus simply comparing names is enough
     return operand != null &&
            operand.getTokenType() == REFERENCE_EXPRESSION &&
@@ -417,7 +417,7 @@ class MethodReturnInferenceVisitor {
     return null;
   }
 
-  private static class ReturnValue {
+  private static final class ReturnValue {
     static final ReturnValue TOP = new ReturnValue(EnumSet.noneOf(Nullability.class), null, Collections.emptyList());
     static final ReturnValue UNKNOWN = new ReturnValue(EnumSet.of(Nullability.UNKNOWN), null, Collections.emptyList());
     static final ReturnValue NULLABLE = new ReturnValue(EnumSet.of(Nullability.NULLABLE), null, Collections.emptyList());

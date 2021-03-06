@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Nls
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
@@ -31,21 +32,24 @@ internal fun Cell.tabPlacementComboBox(model: ComboBoxModel<Int>): CellBuilder<C
                   })
 }
 
-private fun asOptionDescriptor(i: Int) = object : NotABooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID) {
-  override fun isOptionEnabled() = ui.editorTabPlacement == i
+private fun asOptionDescriptor(i: Int): BooleanOptionDescription {
+  return object : BooleanOptionDescription(TAB_PLACEMENT + " | " + i.asTabPlacement(), ID), NotABooleanOptionDescription {
+    override fun isOptionEnabled() = ui.editorTabPlacement == i
 
-  override fun setOptionState(enabled: Boolean) {
-    ui.editorTabPlacement = next(ui.editorTabPlacement, enabled)
-    UISettings.instance.fireUISettingsChanged()
-  }
+    override fun setOptionState(enabled: Boolean) {
+      ui.editorTabPlacement = next(ui.editorTabPlacement, enabled)
+      UISettings.instance.fireUISettingsChanged()
+    }
 
-  private fun next(prev: Int, enabled: Boolean) = when {
-    prev != i && enabled -> i
-    prev == i -> if (i == TABS_NONE) TOP else TABS_NONE
-    else -> prev
+    private fun next(prev: Int, enabled: Boolean) = when {
+      prev != i && enabled -> i
+      prev == i -> if (i == TABS_NONE) TOP else TABS_NONE
+      else -> prev
+    }
   }
 }
 
+@Nls
 private fun Int.asTabPlacement(): String {
   return when (this) {
     TABS_NONE -> ApplicationBundle.message("combobox.tab.placement.none")

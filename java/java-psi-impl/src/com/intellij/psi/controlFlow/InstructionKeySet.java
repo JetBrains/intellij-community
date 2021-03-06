@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -32,7 +18,7 @@ import java.util.Arrays;
  *
  * @author Pavel.Dolgov
  */
-class InstructionKeySet {
+final class InstructionKeySet {
   private final @NotNull Node myRoot;
 
   InstructionKeySet(int initialCapacity) {
@@ -56,7 +42,7 @@ class InstructionKeySet {
    * If the instruction key N is in the set it's represented as N->null.
    * If the instruction key N[A,B,C] is in the set it's represented as N->A->B->C->null.
    */
-  private static class Node extends TIntObjectHashMap<Node> {
+  private static final class Node extends Int2ObjectOpenHashMap<Node> {
     private Node(int initialCapacity) {
       super(Math.max(initialCapacity, 2));
     }
@@ -90,7 +76,7 @@ class InstructionKeySet {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("{");
-      int[] offsets = keys();
+      int[] offsets = keySet().toIntArray();
       Arrays.sort(offsets);
       for (int offset : offsets) {
         if (sb.length() > 1) sb.append(", ");

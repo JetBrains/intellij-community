@@ -129,6 +129,7 @@ abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> ext
   }
 
   protected PsiElement getPsiElement(){
+    //noinspection CastToIncompatibleInterface
     return (PsiElement)getValue(); // automatically de-anchorized in AbstractTreeNode.getValue
   }
 }

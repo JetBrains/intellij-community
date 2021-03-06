@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -34,18 +35,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ClassUtils {
+public final class ClassUtils {
 
-  /**
-   */
   private static final Set<String> immutableTypes = new HashSet<>(19);
 
-  /**
-   */
   private static final Set<PsiType> primitiveNumericTypes = new HashSet<>(7);
 
-  /**
-   */
   private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
   static {
@@ -90,6 +85,7 @@ public class ClassUtils {
     immutableTypes.add("java.util.Locale");
     immutableTypes.add("java.util.UUID");
     immutableTypes.add("java.util.regex.Pattern");
+    immutableTypes.add("java.time.ZoneOffset");
   }
 
   private ClassUtils() {}
@@ -148,8 +144,16 @@ public class ClassUtils {
       return true;
     }
     final String qualifiedName = aClass.getQualifiedName();
-    return qualifiedName != null &&
-           (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"));
+    if (qualifiedName != null &&
+        (immutableTypes.contains(qualifiedName) || qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
+      return true;
+    }
+
+    return aClass.hasModifierProperty(PsiModifier.FINAL) &&
+           Arrays.stream(aClass.getAllFields())
+             .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
+             .map(field -> field.getType())
+             .allMatch(type -> TypeConversionUtil.isPrimitiveAndNotNull(type) || immutableTypes.contains(type.getCanonicalText()));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1, @Nullable PsiElement element2) {
@@ -171,6 +175,12 @@ public class ClassUtils {
       (PsiClassOwner)containingFile2;
     final String packageName2 = containingJavaFile2.getPackageName();
     return packageName1.equals(packageName2);
+  }
+
+  @Contract("_, null -> false")
+  public static boolean isInsideClassBody(@NotNull PsiElement element, @Nullable PsiClass outerClass) {
+    final PsiElement brace = outerClass != null ? outerClass.getLBrace() : null;
+    return brace != null && brace.getTextOffset() < element.getTextOffset();
   }
 
   public static boolean isFieldVisible(@NotNull PsiField field, PsiClass fromClass) {
@@ -328,8 +338,9 @@ public class ClassUtils {
         return false;
       }
       // has at least on accessible instance method
-      return Arrays.stream(aClass.getMethods())
-        .anyMatch(m -> !m.isConstructor() && !m.hasModifierProperty(PsiModifier.PRIVATE) && !m.hasModifierProperty(PsiModifier.STATIC));
+      return ContainerUtil.exists(aClass.getMethods(), m -> !m.isConstructor() &&
+                                                            !m.hasModifierProperty(PsiModifier.PRIVATE) &&
+                                                            !m.hasModifierProperty(PsiModifier.STATIC));
     }
     if (getIfOnlyInvisibleConstructors(aClass).length == 0) {
       return false;
@@ -433,5 +444,18 @@ public class ClassUtils {
     public boolean isNewOnlyAssignedToField() {
       return newOnlyAssignedToField;
     }
+  }
+
+  /**
+   * For use with property files.
+   * <code>{0, choice, 1#class|2#interface|3#anonymous class extending|4#annotation type|5#enum|6#record}</code>
+   */
+  public static int getTypeOrdinal(PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass) return 3;
+    if (aClass.isAnnotationType()) return 4;
+    if (aClass.isInterface()) return 2;
+    if (aClass.isEnum()) return 5;
+    if (aClass.isRecord()) return 6;
+    return 1;
   }
 }

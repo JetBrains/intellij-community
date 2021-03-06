@@ -6,23 +6,19 @@ import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.FlatteningIterator;
-import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.*;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
-
 /**
 * @author peter
 */
-public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
+public final class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<>();
   private final MultiMap<String, LookupElement> myElements = createMultiMap(false);
   private final MultiMap<LookupElement, LookupElement> myToLift = createMultiMap(true);
@@ -31,7 +27,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final boolean myLiftBefore;
   private int myCount = 0;
 
-  public LiftShorterItemsClassifier(String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
+  public LiftShorterItemsClassifier(@NonNls String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
     super(next, name);
     myCondition = condition;
     myLiftBefore = liftBefore;
@@ -88,22 +84,20 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     return liftShorterElements(source, null, context);
   }
 
-  private Iterable<LookupElement> liftShorterElements(final Iterable<? extends LookupElement> source,
-                                                      @Nullable final THashSet<? super LookupElement> lifted, final ProcessingContext context) {
-    final Set<LookupElement> srcSet = newIdentityTroveSet(source instanceof Collection ? ((Collection)source).size() : myCount);
+  private Iterable<LookupElement> liftShorterElements(Iterable<? extends LookupElement> source,
+                                                      @Nullable Set<? super LookupElement> lifted, final ProcessingContext context) {
+    Set<LookupElement> srcSet = new ReferenceOpenHashSet<>(source instanceof Collection ? ((Collection<?>)source).size() : myCount);
     ContainerUtil.addAll(srcSet, source);
-
     if (srcSet.size() < 2) {
       return myNext.classify(source, context);
     }
-
     return new LiftingIterable(srcSet, context, source, lifted);
   }
 
   @NotNull
   @Override
   public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
-    final THashSet<LookupElement> lifted = newIdentityTroveSet();
+    Set<LookupElement> lifted = new ReferenceOpenHashSet<>();
     Iterable<LookupElement> iterable = liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
     return ContainerUtil.map(iterable, element -> new Pair<>(element, lifted.contains(element)));
   }
@@ -144,12 +138,12 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     private final Set<LookupElement> mySrcSet;
     private final ProcessingContext myContext;
     private final Iterable<? extends LookupElement> mySource;
-    private final THashSet<? super LookupElement> myLifted;
+    private final Set<? super LookupElement> myLifted;
 
     LiftingIterable(Set<LookupElement> srcSet,
                     ProcessingContext context,
                     Iterable<? extends LookupElement> source,
-                    THashSet<? super LookupElement> lifted) {
+                    Set<? super LookupElement> lifted) {
       mySrcSet = srcSet;
       myContext = context;
       mySource = source;
@@ -158,12 +152,12 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
     @Override
     public Iterator<LookupElement> iterator() {
-      final Set<LookupElement> processed = newIdentityTroveSet(mySrcSet.size());
-      final Set<Collection<LookupElement>> arraysProcessed = newIdentityTroveSet();
+      Set<LookupElement> processed = new ReferenceOpenHashSet<>(mySrcSet.size());
+      Set<Collection<LookupElement>> arraysProcessed = new ReferenceOpenHashSet<>();
 
       final Iterable<LookupElement> next = myNext.classify(mySource, myContext);
       Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), element -> processed.add(element));
-      return new FlatteningIterator<LookupElement, LookupElement>(base) {
+      return new FlatteningIterator<>(base) {
         @Override
         protected Iterator<LookupElement> createValueIterator(LookupElement element) {
           List<LookupElement> shorter = addShorterElements(myToLift.get(element));
@@ -194,25 +188,15 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
                 toLift.add(shorterElement);
               }
             }
-
           }
           return toLift;
         }
-
       };
     }
   }
 
-  @NotNull
-  private static <K, V> MultiMap<K, V> createMultiMap(final boolean identityKeys) {
-    return new MultiMap<K, V>() {
-      @NotNull
-      @Override
-      protected Map<K, Collection<V>> createMap() {
-        if (identityKeys) return new IdentityHashMap<>();
-        return new THashMap<>();
-      }
-
+  private static @NotNull <K, V> MultiMap<K, V> createMultiMap(boolean identityKeys) {
+    return new MultiMap<>(identityKeys ? new Reference2ObjectOpenHashMap<>() : CollectionFactory.createSmallMemoryFootprintMap()) {
       @Override
       public boolean remove(K key, V value) {
         List<V> elements = (List<V>)get(key);
@@ -226,7 +210,6 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         }
         return false;
       }
-
     };
   }
 }

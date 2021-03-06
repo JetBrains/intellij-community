@@ -42,7 +42,7 @@ private const val SEPARATOR_HEIGHT = 5
 /**
  * Builder class to help to create customized picker components depends on the requirement.
  */
-class ColorPickerBuilder(private val showAlpha: Boolean = false) {
+class ColorPickerBuilder(private val showAlpha: Boolean = false, private val showAlphaAsPercent: Boolean = true) {
 
   private val componentsToBuild = mutableListOf<JComponent>()
   private val model = ColorPickerModel()
@@ -62,7 +62,7 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false) {
     componentsToBuild.add(ColorAdjustPanel(model, colorPipetteProvider, showAlpha))
   }
 
-  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha)) }
+  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha, showAlphaAsPercent)) }
 
   /**
    * If both [okOperation] and [cancelOperation] are null, [IllegalArgumentException] will be raised.
@@ -129,7 +129,10 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false) {
     val width: Int = componentsToBuild.map { it.preferredSize.width }.max()!!
     val height = componentsToBuild.map { it.preferredSize.height }.sum()
 
-    val defaultFocusComponent = componentsToBuild.getOrNull(focusedComponentIndex)
+    var defaultFocusComponent = componentsToBuild.getOrNull(focusedComponentIndex)
+    if (defaultFocusComponent is ColorValuePanel) {
+      defaultFocusComponent = defaultFocusComponent.hexField
+    }
 
     val panel = object : JPanel() {
       override fun requestFocusInWindow() = defaultFocusComponent?.requestFocusInWindow() ?: false

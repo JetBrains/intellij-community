@@ -14,6 +14,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +33,6 @@ public class ConfigFilesTreeBuilder {
   }
 
   public Set<PsiFile> buildTree(DefaultMutableTreeNode root, ConfigFileSearcher... searchers) {
-    final Set<PsiFile> psiFiles = new HashSet<>();
 
     final MultiMap<Module, PsiFile> files = new MultiMap<>();
     final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<>();
@@ -43,7 +44,7 @@ public class ConfigFilesTreeBuilder {
       virtualFiles.putAllValues(searcher.getVirtualFiles());
     }
 
-    psiFiles.addAll(buildModuleNodes(files, jars, root));
+    final Set<PsiFile> psiFiles = new HashSet<>(buildModuleNodes(files, jars, root));
 
     for (Map.Entry<VirtualFile, Collection<PsiFile>> entry : virtualFiles.entrySet()) {
       DefaultMutableTreeNode node = createFileNode(entry.getKey());
@@ -118,8 +119,9 @@ public class ConfigFilesTreeBuilder {
     return psiFiles;
   }
 
+  @Nls
   private static String getFileTypeNodeName(FileType fileType) {
-    return fileType.getName() + " files";
+    return XmlBundle.message("xml.tree.config.files.type", fileType.getName());
   }
 
   private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
@@ -179,7 +181,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static void renderPath(ColoredTreeCellRenderer renderer, VirtualFile virtualFile) {
-    String path = virtualFile.getPath();
+    String path = virtualFile.getPath(); //NON-NLS
     final int i = path.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (i >= 0) {
       path = path.substring(i + JarFileSystem.JAR_SEPARATOR.length());

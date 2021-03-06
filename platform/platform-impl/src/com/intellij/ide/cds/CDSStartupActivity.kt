@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.cds
 
 import com.intellij.ide.PowerSaveMode
@@ -21,18 +21,21 @@ import kotlin.math.max
 
 private val LOG = logger<CDSStartupActivity>()
 
-internal class CDSStartupActivity : StartupActivity {
+internal class CDSStartupActivity : StartupActivity.DumbAware {
   private val isExecuted = AtomicBoolean(false)
 
   //for tests
   val setupResult = AtomicReference<String>(null)
 
   override fun runActivity(project: Project) {
-    if (!isExecuted.compareAndSet(false, true)) return
-    if (!Registry.`is`("appcds.useStartupActivity")) return
+    if (!isExecuted.compareAndSet(false, true) || !Registry.`is`("appcds.useStartupActivity")) {
+      return
+    }
 
     NonUrgentExecutor.getInstance().execute {
-      if (!CDSManager.isValidEnv && !Registry.`is`("appcds.assumeValidEnv")) return@execute
+      if (!CDSManager.isValidEnv && !Registry.`is`("appcds.assumeValidEnv")) {
+        return@execute
+      }
 
       val cdsEnabled = Registry.`is`("appcds.enabled")
       val cdsArchive = CDSManager.currentCDSArchive

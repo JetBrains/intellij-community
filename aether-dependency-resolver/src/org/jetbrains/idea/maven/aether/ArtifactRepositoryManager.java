@@ -1,19 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.graph.DependencyVisitor;
+import org.eclipse.aether.graph.*;
 import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -29,6 +27,8 @@ import org.eclipse.aether.transport.http.HttpTransporterFactory;
 import org.eclipse.aether.util.artifact.DelegatingArtifact;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
+import org.eclipse.aether.util.graph.selector.AndDependencySelector;
+import org.eclipse.aether.util.graph.selector.ExclusionDependencySelector;
 import org.eclipse.aether.util.graph.visitor.FilteringDependencyVisitor;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.eclipse.aether.util.version.GenericVersionScheme;
@@ -39,10 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -51,13 +49,12 @@ import java.util.*;
  *
  * instance of this component should be managed by the code which requires dependency resolution functionality
  * all necessary params like path to local repo should be passed in constructor
- *
  */
-public class ArtifactRepositoryManager {
+public final class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
-  private final DefaultRepositorySystemSession mySession;
+  private final RepositorySystemSessionFactory mySessionFactory;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
     "central", "https://repo1.maven.org/maven2/"
@@ -91,39 +88,103 @@ public class ArtifactRepositoryManager {
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, @NotNull final ProgressConsumer progressConsumer) {
     // recreate remote repository objects to ensure the latest proxy settings are used
-    this(localRepositoryPath, Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY)), progressConsumer);
+    this(localRepositoryPath, createDefaultRemoteRepositories(), progressConsumer);
   }
 
-  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer) {
+  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull ProgressConsumer progressConsumer) {
+    this(localRepositoryPath, remoteRepositories, progressConsumer, false);
+  }
+
+  public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull ProgressConsumer progressConsumer, boolean offline) {
     myRemoteRepositories.addAll(remoteRepositories);
-    final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-    if (progressConsumer != ProgressConsumer.DEAF) {
-      session.setTransferListener((TransferListener)Proxy
-        .newProxyInstance(session.getClass().getClassLoader(), new Class[]{TransferListener.class}, new InvocationHandler() {
-          private final EnumSet<TransferEvent.EventType> checkCancelEvents = EnumSet.of(TransferEvent.EventType.INITIATED, TransferEvent.EventType.STARTED, TransferEvent.EventType.PROGRESSED);
-        @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-          final Object event = args[0];
-          if (event instanceof TransferEvent) {
-            final TransferEvent.EventType type = ((TransferEvent)event).getType();
-            if (checkCancelEvents.contains(type) && progressConsumer.isCanceled()) {
+    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
+  }
+
+  private static class RepositorySystemSessionFactory {
+    private final RepositorySystemSession defaultSession;
+
+    RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
+                                   @NotNull ProgressConsumer progressConsumer,
+                                   boolean offline) {
+      final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+      if (progressConsumer != ProgressConsumer.DEAF) {
+        session.setTransferListener(new TransferListener() {
+          @Override
+          public void transferInitiated(TransferEvent event) throws TransferCancelledException {
+            handle(event);
+          }
+
+          @Override
+          public void transferStarted(TransferEvent event) throws TransferCancelledException {
+            handle(event);
+          }
+
+          @Override
+          public void transferProgressed(TransferEvent event) throws TransferCancelledException {
+            handle(event);
+          }
+
+          @Override
+          public void transferCorrupted(TransferEvent event) {
+          }
+
+          @Override
+          public void transferSucceeded(TransferEvent event) {
+
+          }
+
+          @Override
+          public void transferFailed(TransferEvent event) {
+          }
+
+          private void handle(TransferEvent event) throws TransferCancelledException {
+            if (progressConsumer.isCanceled()) {
               throw new TransferCancelledException();
             }
-            progressConsumer.consume(event.toString());
-            //if (type != TransferEvent.EventType.PROGRESSED) {
-            //  progressConsumer.consume(event.toString());
-            //}
+            progressConsumer.consume(event.toString()); //NON-NLS
           }
-          return null;
-        }
-      }));
-    }
-    // setup session here
+        });
+      }
+      // setup session here
 
-    session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
-    session.setProxySelector(ourProxySelector);
-    session.setReadOnly();
-    mySession = session;
+      session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
+      session.setProxySelector(ourProxySelector);
+      session.setOffline(offline);
+      session.setReadOnly();
+      this.defaultSession = session;
+    }
+
+    RepositorySystemSession getDefaultSession() {
+      return defaultSession;
+    }
+
+    RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
+      if (excludedDependencies.isEmpty()) {
+        return defaultSession;
+      }
+      else {
+        DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(defaultSession);
+        session.setDependencySelector(new AndDependencySelector(
+          session.getDependencySelector(),
+          new ExclusionDependencySelector(exclusions(excludedDependencies)))
+        );
+        session.setReadOnly();
+        return session;
+      }
+    }
+
+    @SuppressWarnings("SSBasedInspection")
+    private static List<Exclusion> exclusions(List<String> excludedDependencies) {
+      return excludedDependencies.stream().map(exclusion -> {
+        String[] split = exclusion.split(":", 2);
+        if (split.length != 2) {
+          throw new RuntimeException("Malformed exclusion, 'groupId:artifactName' format is expected but got " + exclusion);
+        }
+        String groupId = split[0];
+        String artifactName = split[1];
+        return new Exclusion(groupId, artifactName, "*", "*");
+      }).collect(Collectors.toList());
+    }
   }
 
   /**
@@ -141,7 +202,7 @@ public class ArtifactRepositoryManager {
       org.apache.maven.model.Model.class, //maven-model
       org.apache.maven.model.building.ModelBuilder.class, //maven-model-builder
       org.apache.maven.artifact.repository.metadata.Metadata.class, //maven-repository-metadata
-      org.codehaus.plexus.component.annotations.Component.class, //plexus-component-annotations
+      //org.codehaus.plexus.component.annotations.Component.class, //plexus-component-annotations
       org.codehaus.plexus.interpolation.Interpolator.class, //plexus-interpolation
       org.eclipse.aether.RepositorySystem.class, //aether-api
       org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory.class, //aether-connector-basic
@@ -158,11 +219,19 @@ public class ArtifactRepositoryManager {
     );
   }
 
-  public Collection<File> resolveDependency(String groupId, String artifactId, String version, boolean includeTransitiveDependencies,
-                                            List<String> excludedDependencies) throws Exception {
-    final List<File> files = new ArrayList<>();
-    for (Artifact artifact : resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT), includeTransitiveDependencies,
-                                                         excludedDependencies)) {
+  public @NotNull Collection<File> resolveDependency(String groupId,
+                                                     String artifactId,
+                                                     String version,
+                                                     boolean includeTransitiveDependencies,
+                                                     List<String> excludedDependencies) throws Exception {
+    Collection<Artifact> artifacts = resolveDependencyAsArtifact(groupId, artifactId, version, EnumSet.of(ArtifactKind.ARTIFACT),
+                                                                 includeTransitiveDependencies, excludedDependencies);
+    if (artifacts.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<File> files = new ArrayList<>(artifacts.size());
+    for (Artifact artifact : artifacts) {
       files.add(artifact.getFile());
     }
     return files;
@@ -173,7 +242,7 @@ public class ArtifactRepositoryManager {
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
-    DependencyNode root = ourSystem.collectDependencies(mySession, collectRequest).getRoot();
+    DependencyNode root = ourSystem.collectDependencies(mySessionFactory.getDefaultSession(), collectRequest).getRoot();
     if (root.getArtifact() == null && root.getChildren().size() == 1) {
       root = root.getChildren().get(0);
     }
@@ -198,9 +267,11 @@ public class ArtifactRepositoryManager {
         } else {
           constraints = Collections.singleton(originalConstraints);
         }
+        RepositorySystemSession session;
         if (includeTransitiveDependencies) {
+          session = mySessionFactory.createSession(excludedDependencies);
           final CollectResult collectResult = ourSystem.collectDependencies(
-            mySession, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
+            session, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
           );
           final ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
           DependencyFilter filter = createScopeFilter();
@@ -211,11 +282,12 @@ public class ArtifactRepositoryManager {
           requests = builder.getRequests();
         }
         else {
+          session = mySessionFactory.getDefaultSession();
           requests = new ArrayList<>();
           for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
             if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
               final VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
-              final VersionRangeResult result = ourSystem.resolveVersionRange(mySession, versionRangeRequest);
+              final VersionRangeResult result = ourSystem.resolveVersionRange(session, versionRangeRequest);
               if (!result.getVersions().isEmpty()) {
                 Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
                 requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
@@ -229,7 +301,7 @@ public class ArtifactRepositoryManager {
 
         if (!requests.isEmpty()) {
           try {
-            for (ArtifactResult result : ourSystem.resolveArtifacts(mySession, requests)) {
+            for (ArtifactResult result : ourSystem.resolveArtifacts(session, requests)) {
               artifacts.add(result.getArtifact());
             }
           }
@@ -239,7 +311,7 @@ public class ArtifactRepositoryManager {
               if (requests.size() > 1) {
                 for (ArtifactRequest request : requests) {
                   try {
-                    final ArtifactResult result = ourSystem.resolveArtifact(mySession, request);
+                    final ArtifactResult result = ourSystem.resolveArtifact(session, request);
                     artifacts.add(result.getArtifact());
                   }
                   catch (ArtifactResolutionException ignored) {
@@ -283,18 +355,19 @@ public class ArtifactRepositoryManager {
 
     final Version version = constraint.getVersion();
     if (version != null) {
-      final String major = version.toString().split("[.\\-_]")[0];
-      annotationsConstraint = "[" + major + ", " + version.toString() + "-an10000]";
+      final String lower = chooseLowerBoundString(version);
+      annotationsConstraint = "[" + lower + ", " + version + "-an10000]";
     }
 
     final VersionRange range = constraint.getRange();
     if (range != null) {
-      final String majorLower = range.getLowerBound().getVersion().toString().split("[.\\-_]")[0];
+      Version lowerBoundVersion = range.getLowerBound().getVersion();
 
+      String lower = chooseLowerBoundString(lowerBoundVersion);
       String upper = range.getUpperBound().isInclusive()
                      ? range.getUpperBound().toString() + "-an10000]"
                      : range.getUpperBound().toString() + ")";
-      annotationsConstraint = "[" + majorLower + ", " + upper;
+      annotationsConstraint = "[" + lower + ", " + upper;
     }
 
     try {
@@ -304,6 +377,20 @@ public class ArtifactRepositoryManager {
     }
 
     return Collections.singleton(constraint);
+  }
+
+  private static String chooseLowerBoundString(Version lowerBoundVersion) {
+    String lowerBoundString = lowerBoundVersion.toString();
+    String candidate = lowerBoundString.split("[.\\-_]")[0];
+    try {
+      Version candidateVersion = ourVersioning.parseVersion(candidate);
+      if (lowerBoundVersion.compareTo(candidateVersion) < 0) {
+       return lowerBoundString;
+      }
+    } catch (InvalidVersionSpecificationException e) {
+      LOG.info("Failed to parse major part of lower bound of version " + lowerBoundVersion, e);
+    }
+    return candidate;
   }
 
   @NotNull
@@ -317,19 +404,35 @@ public class ArtifactRepositoryManager {
   @NotNull
   public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, final ArtifactKind artifactKind) throws Exception {
     final VersionRangeResult result = ourSystem.resolveVersionRange(
-      mySession, createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
+      mySessionFactory.getDefaultSession(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
     );
     return result.getVersions();
   }
 
-  public static RemoteRepository createRemoteRepository(final String id, final String url) {
+  public static RemoteRepository createRemoteRepository(final String id,
+                                                        final String url) {
+    return createRemoteRepository(id, url, true);
+  }
+
+  public static RemoteRepository createRemoteRepository(final String id,
+                                                        final String url,
+                                                        boolean allowSnapshots) {
     // for maven repos repository type should be 'default'
-    return new RemoteRepository.Builder(id, "default", url).setProxy(ourProxySelector.getProxy(url)).build();
+    RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
+    if (!allowSnapshots) {
+      builder.setSnapshotPolicy(new RepositoryPolicy(false, null, null));
+    }
+    return builder.setProxy(ourProxySelector.getProxy(url)).build();
   }
 
   public static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
     final String url = prototype.getUrl();
     return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
+  }
+
+  @NotNull
+  public static List<RemoteRepository> createDefaultRemoteRepositories() {
+    return Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY));
   }
 
   private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, final Set<ArtifactKind> kinds) {

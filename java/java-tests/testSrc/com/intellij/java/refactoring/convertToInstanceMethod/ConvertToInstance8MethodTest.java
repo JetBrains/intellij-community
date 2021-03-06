@@ -58,4 +58,5 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;
   }
+
 }

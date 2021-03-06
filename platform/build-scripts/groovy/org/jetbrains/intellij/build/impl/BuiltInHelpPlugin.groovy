@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
+import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.BuildContext
 
+@CompileStatic
 final class BuiltInHelpPlugin {
-
+  @CompileStatic(TypeCheckingMode.SKIP)
   static PluginLayout helpPlugin(BuildContext buildContext, String pluginVersion) {
     def productName = buildContext.applicationInfo.productName
     def moduleName = "intellij.platform.builtInHelp"
@@ -16,7 +18,7 @@ final class BuiltInHelpPlugin {
       return null
     }
     return PluginLayout.plugin(moduleName) {
-      def productLowerCase = productName.replace(" ", "-").toLowerCase();
+      def productLowerCase = productName.replace(" ", "-").toLowerCase()
       mainJarName = "$productLowerCase-help.jar"
       directoryName = "${productName.replace(" ", "")}Help"
       excludeFromModule(moduleName, "com/jetbrains/builtInHelp/indexer/**")
@@ -73,6 +75,7 @@ final class BuiltInHelpPlugin {
     <description>$productName Web Help for offline use.</description>
 
     <depends>$productModuleDep</depends>
+    <resource-bundle>messages.BuiltInHelpBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceInterface="com.intellij.openapi.help.HelpManager" overrides="true"

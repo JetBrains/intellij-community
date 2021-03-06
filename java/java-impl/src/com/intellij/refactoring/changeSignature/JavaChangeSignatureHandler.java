@@ -51,7 +51,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     }
     else {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_SIGNATURE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_SIGNATURE);
     }
   }
 
@@ -69,7 +69,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invoke(@NotNull PsiMethod method, @NotNull Project project, @Nullable final Editor editor) {
-    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {
@@ -83,7 +83,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
     final boolean allowDelegation = containingClass != null && 
                                     (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass)) &&
-                                    !method.equals(JavaPsiRecordUtil.findCanonicalConstructor(containingClass));
+                                    !JavaPsiRecordUtil.isCanonicalConstructor(method);
     InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
 
@@ -94,7 +94,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     PsiIdentifier nameIdentifier = method.getNameIdentifier();
     LOG.assertTrue(nameIdentifier != null);
     if (isInplace) {
-      CommandProcessor.getInstance().executeCommand(project, () -> new InplaceChangeSignature(project, editor, nameIdentifier), REFACTORING_NAME, null);
+      CommandProcessor.getInstance().executeCommand(project, () -> new InplaceChangeSignature(project, editor, nameIdentifier),
+                                                    RefactoringBundle.message("changeSignature.refactoring.name"), null);
     }
     else {
       JavaMethodDescriptor methodDescriptor = new JavaMethodDescriptor(method);
@@ -142,7 +143,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     Project project = aClass.getProject();
     if (typeParameterList == null) {
       final String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("changeClassSignature.no.type.parameters"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.CHANGE_CLASS_SIGNATURE);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_CLASS_SIGNATURE);
       return;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;

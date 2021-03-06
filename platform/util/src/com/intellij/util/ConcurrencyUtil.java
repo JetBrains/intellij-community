@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @author cdr
- */
 public final class ConcurrencyUtil {
+
+  public static final long DEFAULT_TIMEOUT_MS = 10;
+
   /**
    * Invokes and waits all tasks using threadPool, avoiding thread starvation on the way
    * (see <a href="http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html">"A Thread Pool Puzzler"</a>).
@@ -59,7 +59,7 @@ public final class ConcurrencyUtil {
     }
     finally {
       if (!done) {
-        for (Future f : futures) {
+        for (Future<?> f : futures) {
           f.cancel(false);
         }
       }
@@ -84,6 +84,8 @@ public final class ConcurrencyUtil {
    */
   @NotNull
   public static <T> T cacheOrGet(@NotNull AtomicReference<T> ref, @NotNull T defaultValue) {
+    T value = ref.get();
+    if (value != null) return value;
     return ref.updateAndGet(prev -> prev == null ? defaultValue : prev);
   }
 
@@ -159,15 +161,16 @@ public final class ConcurrencyUtil {
         thread.join(unit.toMillis(timeout));
       }
       catch (InterruptedException e) {
-        StringBuilder trace = new StringBuilder().append("Thread leaked: ").append(thread).append("; ")
+        @NonNls StringBuilder trace = new StringBuilder().append("Thread leaked: ").append(thread).append("; ")
           .append(thread.getState()).append(" (").append(thread.isAlive()).append(")\n--- its stacktrace:\n");
         for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
           trace.append(" at ").append(stackTraceElement).append("\n");
         }
         trace.append("---\n");
-        System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
-                           "Thread "+thread+" dump:\n" + trace+
-                           "all thread dump:\n"+ThreadDumper.dumpThreadsToString() + "\n/////");
+        @NonNls String message = "Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
+                                 "Thread " + thread + " dump:\n" + trace +
+                                 "all thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n/////";
+        System.err.println(message);
         break;
       }
     }
@@ -245,4 +248,17 @@ public final class ConcurrencyUtil {
     }
   }
 
+  /**
+   * Rethrow exception (wrapped in RuntimeException if necessary) if it's the completion result of the {@code task}
+   */
+  public static void manifestExceptionsIn(@NotNull Future<?> task) {
+    try {
+      task.get();
+    }
+    catch (CancellationException | InterruptedException ignored) {
+    }
+    catch (ExecutionException e) {
+      ExceptionUtil.rethrow(e.getCause());
+    }
+  }
 }

@@ -11,20 +11,15 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -114,7 +109,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
     SoftReference<Interner<ChildrenDescriptionsHolder<?>>> ref = file.getUserData(HOLDERS_CACHE);
     Interner<ChildrenDescriptionsHolder<?>> cache = SoftReference.dereference(ref);
     if (cache == null) {
-      cache = new WeakInterner<>();
+      cache = Interner.createWeakInterner();
       file.putUserData(HOLDERS_CACHE, new SoftReference<>(cache));
     }
     //noinspection unchecked
@@ -166,7 +161,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   @NotNull
   public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     checkInitialized();
-    final ArrayList<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
+    final List<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
     myAttributes.dumpDescriptions(list);
     myFixeds.dumpDescriptions(list);
     myCollections.dumpDescriptions(list);
@@ -239,7 +234,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
 
   @Override
   public boolean processAttributeChildrenDescriptions(final Processor<? super AttributeChildDescriptionImpl> processor) {
-    final Set<AttributeChildDescriptionImpl> visited = new THashSet<>();
+    final Set<AttributeChildDescriptionImpl> visited = new HashSet<>();
     if (!myStaticGenericInfo.processAttributeChildrenDescriptions(attributeChildDescription -> {
       visited.add(attributeChildDescription);
       return processor.process(attributeChildDescription);

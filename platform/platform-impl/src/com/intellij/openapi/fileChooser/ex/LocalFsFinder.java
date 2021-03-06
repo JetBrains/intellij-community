@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -147,7 +148,7 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
           result.add(eachFile);
         }
       }
-      result.sort((o1, o2) -> FileUtil.comparePaths(o1.getName(), o2.getName()));
+      result.sort((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !myFile.isCaseSensitive()));
 
       return result;
     }

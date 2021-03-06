@@ -17,16 +17,19 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class IdIndexEntry {
   private final int myWordHashCode;
   
   public IdIndexEntry(@NotNull String word, boolean caseSensitive) {
-    this(caseSensitive? StringUtil.stringHashCode(word) : StringUtil.stringHashCodeInsensitive(word));
+    this(word, 0, word.length(), caseSensitive);
+  }
+
+  public IdIndexEntry(@NotNull CharSequence seq, int start, int end, boolean caseSensitive) {
+    this(getWordHash(seq, start, end, caseSensitive));
   }
 
   public IdIndexEntry(int wordHash) {
@@ -57,5 +60,16 @@ public final class IdIndexEntry {
   @Override
   public String toString() {
     return "IdIndexEntry[hash: " + myWordHashCode +"]";
+  }
+
+  static int getWordHash(@NotNull CharSequence line, int start, int end, boolean caseSensitive) {
+    if (start == end) return 0;
+    char firstChar = line.charAt(start);
+    char lastChar = line.charAt(end - 1);
+    if (!caseSensitive) {
+      firstChar = StringUtil.toLowerCase(firstChar);
+      lastChar = StringUtil.toLowerCase(lastChar);
+    }
+    return (firstChar << 8) + (lastChar << 4) + end - start;
   }
 }

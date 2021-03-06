@@ -99,11 +99,32 @@ public class Highlighted {
 }
 """)
   }
+
   fun testPackageLocalEncapsulated2() {
     highlight("""package apiPkg;
 public class Highlighted {
   Highlighted(PackageLocal var) {
   }
+}
+""")
+  }
+
+fun testPackageLocalEncapsulated3() {
+    highlight("""package apiPkg;
+public class Highlighted {
+  protected <warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> myVar;
+  protected <warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'PackageLocal' is not exported from module 'MAIN'">PackageLocal</warning> var) {myVar = var;}
+}
+""")
+  }
+
+  fun testPackageLocalEncapsulated4() {
+    highlight("""package apiPkg;
+public final class Highlighted {
+  protected PackageLocal myVar;
+  protected PackageLocal getVar() {return myVar;}
+  protected void setVar(PackageLocal var) {myVar = var;}
 }
 """)
   }

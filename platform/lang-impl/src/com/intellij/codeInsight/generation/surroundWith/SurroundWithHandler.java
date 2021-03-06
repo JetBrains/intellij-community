@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.generation.surroundWith;
 
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable;
 import com.intellij.codeInsight.template.impl.SurroundWithLogger;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.ide.DataManager;
@@ -263,14 +264,14 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static class ConfigureTemplatesAction extends AnAction {
+  private static final class ConfigureTemplatesAction extends AnAction {
     private ConfigureTemplatesAction() {
       super(ActionsBundle.messagePointer("action.ConfigureTemplatesAction.text"));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), "Live Templates");
+      ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), LiveTemplatesConfigurable.displayName());
     }
   }
 }

@@ -280,6 +280,8 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
   public void testFixedContainingClassTypeArguments() { doTest(false);}
   public void testPotentialCompatibilityWithArrayCreation() { doTest(false);}
   public void testOverloadsWithOneNonCompatible() { doTest(false);}
+  public void testOverloadedConstructors() { doTest(false);}
+  public void testTwoFunctionalInterfacesWithVarargs() { doTest(false);}
   public void testSecondSearchOverloadsBoxing() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
     String filePath = BASE_PATH + "/" + getTestName(false) + ".java";

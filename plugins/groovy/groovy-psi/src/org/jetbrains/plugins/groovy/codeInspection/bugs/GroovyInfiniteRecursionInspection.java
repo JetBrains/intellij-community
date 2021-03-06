@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -27,7 +28,7 @@ public class GroovyInfiniteRecursionInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "<code>#ref</code> recurses infinitely, and can only complete by throwing an exception #loc";
+    return GroovyBundle.message("inspection.message.code.ref.code.recurses.infinitely.can.only.complete.by.throwing.exception");
 
   }
 

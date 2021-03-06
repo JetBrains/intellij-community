@@ -7,10 +7,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -47,8 +49,9 @@ public class MigrationMapSet {
   @NonNls private static final String CLASS_TYPE = "class";
   @NonNls private static final String RECURSIVE = "recursive";
 
+  @NonNls private static final String SWING_MAP_FILE_NAME = "Swing__1_0_3____1_1_.xml";
   @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
-    "/com/intellij/refactoring/migration/res/Swing__1_0_3____1_1_.xml",
+    "/com/intellij/refactoring/migration/res/" + SWING_MAP_FILE_NAME,
   };
   private final Set<String> myDeletedMaps = new TreeSet<>();
 
@@ -219,16 +222,29 @@ public class MigrationMapSet {
     if (!MIGRATION_MAP.equals(root.getName())){
       throw new InvalidDataException();
     }
+    String fileName = file.getName();
 
     MigrationMap map = new MigrationMap();
 
     for (Element node : root.getChildren()) {
       if (NAME.equals(node.getName())) {
-        String name = node.getAttributeValue(VALUE);
+        @NlsSafe String name = node.getAttributeValue(VALUE);
         map.setName(name);
+        if (SWING_MAP_FILE_NAME.equals(fileName)) {
+          map.setDescription(RefactoringBundle.message("migration.swing.description"));
+        }
+        else {
+          for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
+            if (new File(provider.getMigrationMap().getFile()).getName().equals(fileName)) {
+              map.setDescription(provider.getDescription());
+              break;
+            }
+          }
+        }
       }
-      if (DESCRIPTION.equals(node.getName())) {
-        String description = node.getAttributeValue(VALUE);
+
+      if (map.getDescription() == null && DESCRIPTION.equals(node.getName())) {
+        @NlsSafe String description = node.getAttributeValue(VALUE);
         map.setDescription(description);
       }
 

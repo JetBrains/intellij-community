@@ -1,9 +1,4 @@
-//
-// Created by max on 11/6/12.
-//
-// To change the template use AppCode | Preferences | File Templates.
-//
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #import "PropertyFileReader.h"
 #import "utils.h"
@@ -17,7 +12,7 @@
     if (delimiter.length > 0 && delimiter.location + 1 <= string.length) {
         NSString *key = [string substringToIndex:delimiter.location];
         NSString *value=[string substringFromIndex:delimiter.location + 1];
-        [to setObject:value forKey:key];
+        to[key] = value;
     }
 }
 

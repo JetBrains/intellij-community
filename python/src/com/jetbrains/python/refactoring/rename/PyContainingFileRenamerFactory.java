@@ -80,7 +80,7 @@ public class PyContainingFileRenamerFactory implements AutomaticRenamerFactory {
 
     @Override
     public String entityName() {
-      return "Containing File";
+      return PyBundle.message("refactoring.rename.containing.file.entity.name");
     }
 
     @Override

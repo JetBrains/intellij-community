@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -8,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Comparing;
@@ -47,11 +47,9 @@ public class FileManagerTest extends JavaPsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = createTempDir(getName(), false);
+    VirtualFile rootVFile = getTempDir().createVirtualDir();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-
       VirtualFile found = VirtualFileManager.getInstance().findFileByUrl(rootVFile.getUrl());
       LOG.assertTrue(Comparing.equal(found, rootVFile));
 
@@ -250,13 +248,13 @@ public class FileManagerTest extends JavaPsiTestCase {
         fileManager.findFile(file);
 
         ftManager.removeAssociation(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"), false);
-        ftManager.associate(StdFileTypes.JAVA, new ExtensionFileNameMatcher("txt"), true);
+        ftManager.associate(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"), true);
 
         fileManager.checkConsistency();
       }
       finally {
         ftManager.associate(FileTypes.PLAIN_TEXT, new ExtensionFileNameMatcher("txt"), false);
-        ftManager.removeAssociation(StdFileTypes.JAVA, new ExtensionFileNameMatcher("txt"), true);
+        ftManager.removeAssociation(JavaFileType.INSTANCE, new ExtensionFileNameMatcher("txt"), true);
       }
     });
   }
@@ -350,7 +348,7 @@ public class FileManagerTest extends JavaPsiTestCase {
     if (!(file1 instanceof PsiJavaFile)) {
       System.err.println("Wrong file: " + file1);
       System.err.println("Java ext file type " + FileTypeManager.getInstance().getFileTypeByExtension("java"));
-      System.err.println("Java assocs:" + FileTypeManager.getInstance().getAssociations(StdFileTypes.JAVA));
+      System.err.println("Java assocs:" + FileTypeManager.getInstance().getAssociations(JavaFileType.INSTANCE));
       System.err.println("Plain text assocs" + FileTypeManager.getInstance().getAssociations(FileTypes.PLAIN_TEXT));
       System.err.println("File path: " + file1.getVirtualFile().getPresentableUrl());
       fail();

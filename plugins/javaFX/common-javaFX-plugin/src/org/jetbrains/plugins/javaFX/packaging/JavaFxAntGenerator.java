@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.util.Couple;
@@ -13,7 +13,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
-public class JavaFxAntGenerator {
+public final class JavaFxAntGenerator {
   public static List<SimpleTag> createJarAndDeployTasks(AbstractJavaFxPackager packager,
                                                         String artifactFileName,
                                                         String artifactName,
@@ -269,7 +269,7 @@ public class JavaFxAntGenerator {
     if (!StringUtil.isEmptyOrSpaces(paramFile)) {
       final Properties properties = new Properties();
       try {
-        final FileInputStream paramsInputStream = new FileInputStream(new File(paramFile));
+        final FileInputStream paramsInputStream = new FileInputStream(paramFile);
         try {
           properties.load(paramsInputStream);
           for (Object o : properties.keySet()) {

@@ -16,14 +16,21 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.options.ConfigurationQuickFix;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import org.jetbrains.annotations.Nullable;
 
 public class RuntimeConfigurationError extends RuntimeConfigurationException{
   public RuntimeConfigurationError(@DialogMessage String message) {
     super(message, ExecutionBundle.message("error.common.title"));
   }
 
-  public RuntimeConfigurationError(@DialogMessage String message, final Runnable quickFix) {
+  public RuntimeConfigurationError(@DialogMessage String message, @Nullable ConfigurationQuickFix quickFix) {
+    super(message, ExecutionBundle.message("error.common.title"));
+    setQuickFix(quickFix);
+  }
+
+  public RuntimeConfigurationError(@DialogMessage String message, @Nullable Runnable quickFix) {
     super(message, ExecutionBundle.message("error.common.title"));
     setQuickFix(quickFix);
   }

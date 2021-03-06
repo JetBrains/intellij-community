@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -45,7 +46,7 @@ public class CachedVcsContext implements VcsContext {
   private final FilePath mySelectedFilePath;
   private final ChangeList[] mySelectedChangeLists;
   private final Change[] mySelectedChanges;
-  private final String myActionName;
+  private final @NlsActions.ActionText String myActionName;
 
   public CachedVcsContext(VcsContext baseContext) {
     myProject = baseContext.getProject();

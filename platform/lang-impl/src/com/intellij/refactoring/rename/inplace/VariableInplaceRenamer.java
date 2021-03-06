@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
@@ -16,6 +17,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,7 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -117,7 +119,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       final RenameChooser renameChooser = new RenameChooser(myEditor) {
         @Override
         protected void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages) {
-          VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+          if (!VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile)) {
+            VariableInplaceRenameHandler.performDialogRename(myElementToRename, 
+                                                             myEditor, 
+                                                             DataManager.getInstance().getDataContext(myEditor.getContentComponent()), 
+                                                             myInitialName);
+          }
         }
       };
       renameChooser.showChooser(refs, stringUsages);
@@ -126,7 +133,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    return stringUsages.isEmpty() || StartMarkAction.canStart(myProject) != null;
+    return stringUsages.isEmpty() || StartMarkAction.canStart(myEditor) != null;
   }
 
   protected boolean shouldCreateSnapshot() {
@@ -154,40 +161,64 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void restoreSelection() {
     if (mySelectedRange != null) {
-      Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-      TextRange selectedRange;
-      if (myEditor instanceof EditorWindow) {
-        PsiFile injected = ((EditorWindow)myEditor).getInjectedFile();
-        selectedRange = InjectedLanguageManager.getInstance(editor.getProject()).injectedToHost(injected, mySelectedRange);
-      } else {
-        selectedRange = mySelectedRange;
-      }
-      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
-
-      if (state != null) {
-        for (int i = 0; i < state.getSegmentsCount(); i++) {
-          final TextRange segmentRange = state.getSegmentRange(i);
-          TextRange intersection = segmentRange.intersection(selectedRange);
-          if (intersection != null) {
-            editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
-            return;
-          }
-        }
-      }
-      myEditor.getSelectionModel().setSelection(mySelectedRange.getStartOffset(), mySelectedRange.getEndOffset());
+      restoreSelection(myEditor, mySelectedRange);
     }
     else if (!shouldSelectAll()) {
       myEditor.getSelectionModel().removeSelection();
     }
   }
 
+  /**
+   * @param selectedRange range which is relative to the {@code editor}
+   */
+  static void restoreSelection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    if (handleSelectionIntersection(editor, selectedRange)) {
+      return;
+    }
+    editor.getSelectionModel().setSelection(selectedRange.getStartOffset(), selectedRange.getEndOffset());
+  }
+
+  private static boolean handleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    if (editor instanceof EditorWindow) {
+      EditorWindow editorWindow = (EditorWindow)editor;
+      Editor hostEditor = editorWindow.getDelegate();
+      PsiFile injected = editorWindow.getInjectedFile();
+      TextRange hostSelectedRange = InjectedLanguageManager.getInstance(hostEditor.getProject()).injectedToHost(injected, selectedRange);
+      return doHandleSelectionIntersection(hostEditor, hostSelectedRange);
+    }
+    else {
+      return doHandleSelectionIntersection(editor, selectedRange);
+    }
+  }
+
+  private static boolean doHandleSelectionIntersection(@NotNull Editor editor, @NotNull TextRange selectedRange) {
+    TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+    if (state == null) {
+      return false;
+    }
+    for (int i = 0; i < state.getSegmentsCount(); i++) {
+      final TextRange segmentRange = state.getSegmentRange(i);
+      TextRange intersection = segmentRange.intersection(selectedRange);
+      if (intersection == null) {
+        continue;
+      }
+      editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
+      return true;
+    }
+    return false;
+  }
+
   @Override
   protected int restoreCaretOffset(int offset) {
-    if (myCaretRangeMarker.isValid()) {
-      if (myCaretRangeMarker.getStartOffset() <= offset && myCaretRangeMarker.getEndOffset() >= offset) {
+    return restoreCaretOffset(myCaretRangeMarker, offset);
+  }
+
+  static int restoreCaretOffset(@NotNull RangeMarker caretRangeMarker, int offset) {
+    if (caretRangeMarker.isValid()) {
+      if (caretRangeMarker.getStartOffset() <= offset && caretRangeMarker.getEndOffset() >= offset) {
         return offset;
       }
-      return myCaretRangeMarker.getEndOffset();
+      return caretRangeMarker.getEndOffset();
     }
     return offset;
   }
@@ -213,7 +244,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         return;
       }
       JBPopupFactory.getInstance()
-        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("button.continue.editing"),
+        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
                             CommonBundle.getCancelButtonText(),
                             () -> createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions), 0).showInBestPositionFor(myEditor);
     }
@@ -263,8 +294,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
             final ThrowableRunnable<RuntimeException> performAutomaticRename = () -> {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-              final UsageInfo[] usageInfos = usages.toArray(UsageInfo.EMPTY_ARRAY);
-              final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
+              MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usages);
               for (final PsiNamedElement element : renamer.getElements()) {
                 final String newElementName = renamer.getNewName(element);
                 if (newElementName != null) {
@@ -293,7 +323,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
 
       try {
-        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+        ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -334,7 +364,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       revertStateOnFinish();
     }
     else {
-      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+      ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
     }
   }
 

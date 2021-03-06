@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
 
@@ -23,6 +24,6 @@ public class GroovyMethodParameterCountInspection extends GroovyMethodParameterC
 
   @Override
   public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Maximum number of parameters:");
+    return new SingleIntegerFieldOptionsPanel(GroovyBundle.message("method.parameters.count.max.parameters.option"), this, "m_limit");
   }
 }

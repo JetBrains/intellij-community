@@ -16,18 +16,23 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -37,7 +42,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class ConvertToInstanceMethodHandler implements RefactoringActionHandler {
+public class ConvertToInstanceMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodHandler.class);
 
   @Override
@@ -77,6 +82,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     for (final PsiParameter parameter : parameters) {
+      if (VariableAccessUtils.variableIsAssigned(parameter, parameter.getDeclarationScope())) continue;
       final PsiType type = parameter.getType();
       if (type instanceof PsiClassType) {
         classTypesFound = true;
@@ -105,12 +111,12 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         message = JavaRefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
       }
       else if (!resolvableClassesFound) {
-        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
+        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.have.unknown.types");
       }
       else {
         message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
-      message += " and containing class doesn't have default constructor";
+      message += " " + JavaRefactoringBundle.message("convertToInstanceMethod.no.default.ctor");
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
@@ -119,7 +125,13 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
   }
 
-  static String getRefactoringName() {
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
+    return RefactoringActionContextUtil.getJavaMethodHeader(caretElement) != null;
+  }
+
+  static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("convert.to.instance.method.title");
   }
 }

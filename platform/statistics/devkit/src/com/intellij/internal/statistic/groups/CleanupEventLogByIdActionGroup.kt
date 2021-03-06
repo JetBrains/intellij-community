@@ -2,15 +2,15 @@
 package com.intellij.internal.statistic.groups
 
 import com.intellij.internal.statistic.StatisticsBundle
+import com.intellij.internal.statistic.StatisticsDevKitUtil.getLogProvidersInTestMode
 import com.intellij.internal.statistic.actions.CleanupEventLogAction
-import com.intellij.internal.statistic.eventLog.getEventLogProviders
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 class CleanupEventLogByIdActionGroup : ActionGroup() {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    return getEventLogProviders()
+    return getLogProvidersInTestMode()
       .map { logger ->
         val recorder = logger.recorderId
         val actionText = StatisticsBundle.message("stats.cleanup.0.event.log", recorder)
@@ -20,7 +20,7 @@ class CleanupEventLogByIdActionGroup : ActionGroup() {
   }
 
   override fun isPopup(): Boolean {
-    return getEventLogProviders().size > 1
+    return getLogProvidersInTestMode().size > 1
   }
 
 }

@@ -15,12 +15,13 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.ZoomProvider;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
@@ -51,7 +52,7 @@ public abstract class ToolProvider implements ZoomProvider {
         }
       }
       catch (Throwable e) {
-        showError("Edit operation", e);
+        showError(DesignerBundle.message("tool.provider.edit.operation"), e);
       }
     }
   }
@@ -95,7 +96,7 @@ public abstract class ToolProvider implements ZoomProvider {
         }
       }
       catch (Throwable e) {
-        showError("Edit operation", e);
+        showError(DesignerBundle.message("tool.provider.edit.operation"), e);
       }
     }
   }
@@ -108,7 +109,7 @@ public abstract class ToolProvider implements ZoomProvider {
     myArea = area;
   }
 
-  public abstract void showError(@NonNls String message, Throwable e);
+  public abstract void showError(@Nls String message, Throwable e);
 
   public InputTool getActiveTool() {
     return myTool;
@@ -133,7 +134,7 @@ public abstract class ToolProvider implements ZoomProvider {
           myTool.mouseMove(myEvent, myArea);
         }
         catch (Exception e) {
-          showError("Edit operation", e);
+          showError(DesignerBundle.message("tool.provider.edit.operation"), e);
         }
       }
     }
@@ -141,11 +142,11 @@ public abstract class ToolProvider implements ZoomProvider {
 
   public abstract void loadDefaultTool();
 
-  public abstract boolean execute(ThrowableRunnable<Exception> operation, String command, boolean updateProperties);
+  public abstract boolean execute(ThrowableRunnable<Exception> operation, @Nls String command, boolean updateProperties);
 
-  public abstract void executeWithReparse(ThrowableRunnable<Exception> operation, String command);
+  public abstract void executeWithReparse(ThrowableRunnable<Exception> operation, @Nls String command);
 
-  public abstract void execute(List<EditOperation> operations, String command);
+  public abstract void execute(List<EditOperation> operations, @Nls String command);
 
   public abstract void startInplaceEditing(@Nullable InplaceContext inplaceContext);
 

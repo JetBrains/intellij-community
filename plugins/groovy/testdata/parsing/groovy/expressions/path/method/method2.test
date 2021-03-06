@@ -12,19 +12,19 @@ Groovy script
       PsiElement(identifier)('foo')
     Arguments
       PsiElement(()('(')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Literal
         PsiElement(Integer)('1')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Literal
         PsiElement(Integer)('2')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       Literal
         PsiElement(Integer)('3')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement(,)(',')
-      PsiWhiteSpace('\n')
+      PsiElement(new line)('\n')
       PsiElement())(')')

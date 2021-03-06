@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public final class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Map<String, Type> myHeavyProcesses = new ConcurrentHashMap<>();
+  private final Map<@Nls String, Type> myHeavyProcesses = new ConcurrentHashMap<>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final Deque<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedDeque<>();
@@ -33,25 +34,26 @@ public final class HeavyProcessLatch {
    */
   public enum Type {
     Indexing("heavyProcess.type.indexing"),
-    Refreshing("heavyProcess.type.refreshing"),
-    Paused("heavyProcess.type.paused");
+    Syncing("heavyProcess.type.syncing"),
+    Processing("heavyProcess.type.processing");
 
     private final String bundleKey;
     Type(String bundleKey) {
       this.bundleKey = bundleKey;
     }
 
+    @Nls
     @Override
     public String toString() {
       return UtilBundle.message(bundleKey);
     }
   }
 
-  public @NotNull AccessToken processStarted(@NotNull String operationName) {
-    return processStarted(operationName, Type.Paused);
+  public @NotNull AccessToken processStarted(@NotNull @Nls String operationName) {
+    return processStarted(operationName, Type.Processing);
   }
 
-  public AccessToken processStarted(@NotNull String operationName, @NotNull Type type) {
+  public AccessToken processStarted(@NotNull @Nls String operationName, @NotNull Type type) {
     myHeavyProcesses.put(operationName, type);
     myEventDispatcher.getMulticaster().processStarted();
     return new AccessToken() {
@@ -62,7 +64,7 @@ public final class HeavyProcessLatch {
     };
   }
 
-  private void processFinished(@NotNull String operationName) {
+  private void processFinished(@NotNull @Nls String operationName) {
     myHeavyProcesses.remove(operationName);
     myEventDispatcher.getMulticaster().processFinished();
     if (isRunning()) {
@@ -84,17 +86,17 @@ public final class HeavyProcessLatch {
     return !myHeavyProcesses.isEmpty();
   }
 
-  public @Nullable String getRunningOperationName() {
-    Map.Entry<String, Type> runningOperation = getRunningOperation();
+  public @Nullable @Nls String getRunningOperationName() {
+    Map.Entry<@Nls String, Type> runningOperation = getRunningOperation();
     return runningOperation != null ? runningOperation.getKey() : null;
   }
 
-  public @Nullable Map.Entry<String, Type> getRunningOperation() {
+  public @Nullable Map.Entry<@Nls String, Type> getRunningOperation() {
     if (myHeavyProcesses.isEmpty()) {
       return null;
     }
     else {
-      Iterator<Map.Entry<String, Type>> iterator = myHeavyProcesses.entrySet().iterator();
+      Iterator<Map.Entry<@Nls String, Type>> iterator = myHeavyProcesses.entrySet().iterator();
       return iterator.hasNext() ? iterator.next() : null;
     }
   }

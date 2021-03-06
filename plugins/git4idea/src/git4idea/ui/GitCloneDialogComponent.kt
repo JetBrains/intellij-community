@@ -16,6 +16,8 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
@@ -24,10 +26,13 @@ import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
 import java.nio.file.Paths
 
-class GitCloneDialogComponent(project: Project, private val modalityState: ModalityState) :
+class GitCloneDialogComponent(project: Project,
+                              private val modalityState: ModalityState,
+                              dialogStateListener: VcsCloneDialogComponentStateListener) :
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
-                           GitRememberedInputs.getInstance()) {
+                           GitRememberedInputs.getInstance(),
+                           dialogStateListener) {
   private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
@@ -36,15 +41,14 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
   private val executableProblemHandler = findGitExecutableProblemHandler(project)
   private val checkVersionAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-  private var listenerInstalled = false
+  private var versionCheckState: VersionCheckState = VersionCheckState.NOT_CHECKED // accessed only on EDT
 
   override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
     val parent = Paths.get(getDirectory()).toAbsolutePath().parent
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
       LOG.error("Unable to create destination directory", destinationValidation.message)
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
-                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      notifyCloneError(project)
       return
     }
 
@@ -55,8 +59,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     }
     if (destinationParent == null) {
       LOG.error("Clone Failed. Destination doesn't exist")
-      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
-                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      notifyCloneError(project)
       return
     }
     val sourceRepositoryURL = getUrl()
@@ -69,24 +72,27 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     rememberedInputs.cloneParentDir = parentDirectory
   }
 
+  @RequiresEdt
   override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
-    dialogStateListener.onOkActionEnabled(false)
+    updateOkActionState(dialogStateListener)
 
-    val scheduleCheckVersion = {
-      if (!errorNotifier.isTaskInProgress) {
-        checkVersionAlarm.addRequest({ checkGitVersion(dialogStateListener) }, 0)
-      }
-    }
-
-    if (!listenerInstalled) {
-      listenerInstalled = true
-      scheduleCheckVersion()
+    if (versionCheckState == VersionCheckState.NOT_CHECKED) {
+      versionCheckState = VersionCheckState.IN_PROGRESS
+      scheduleCheckVersion(dialogStateListener)
 
       ApplicationActivationListener.TOPIC.subscribe(this, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
-          scheduleCheckVersion()
+          if (versionCheckState == VersionCheckState.FAILED) {
+            scheduleCheckVersion(dialogStateListener)
+          }
         }
       })
+    }
+  }
+
+  private fun scheduleCheckVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
+    if (!errorNotifier.isTaskInProgress) {
+      checkVersionAlarm.addRequest({ checkGitVersion(dialogStateListener) }, 0)
     }
   }
 
@@ -96,28 +102,47 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     }
 
     try {
-      executableManager.dropExecutableCache()
-      val pathToGit = executableManager.pathToGit
-      val gitVersion = executableManager.identifyVersion(pathToGit)
+      val executable = executableManager.getExecutable(null)
+      val gitVersion = executableManager.identifyVersion(executable)
 
       invokeAndWaitIfNeeded(modalityState) {
         if (!gitVersion.isSupported) {
           showUnsupportedVersionError(project, gitVersion, errorNotifier)
-          dialogStateListener.onOkActionEnabled(false)
+          versionCheckState = VersionCheckState.FAILED
+          updateOkActionState(dialogStateListener)
         }
         else {
           inlineComponent.hideProgress()
-          dialogStateListener.onOkActionEnabled(true)
+          versionCheckState = VersionCheckState.SUCCESS
+          updateOkActionState(dialogStateListener)
         }
       }
     }
     catch (t: Throwable) {
       invokeAndWaitIfNeeded(modalityState) {
         executableProblemHandler.showError(t, errorNotifier, onErrorResolved = {
-          dialogStateListener.onOkActionEnabled(true)
+          versionCheckState = VersionCheckState.SUCCESS
+          updateOkActionState(dialogStateListener)
         })
-        dialogStateListener.onOkActionEnabled(false)
+        versionCheckState = VersionCheckState.FAILED
+        updateOkActionState(dialogStateListener)
       }
     }
+  }
+
+  @RequiresEdt
+  override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
+
+  private fun notifyCloneError(project: Project) {
+    VcsNotifier.getInstance(project).notifyError(CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR,
+                                                 VcsBundle.message("clone.dialog.clone.button"),
+                                                 VcsBundle.message("clone.dialog.unable.create.destination.error"))
+  }
+
+  private enum class VersionCheckState {
+    NOT_CHECKED,
+    SUCCESS,
+    IN_PROGRESS,
+    FAILED
   }
 }

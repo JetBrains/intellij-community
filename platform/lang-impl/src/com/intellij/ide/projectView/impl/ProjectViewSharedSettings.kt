@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))], reportStatistic = true)
+@State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))])
 class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSettings> {
   var flattenPackages: Boolean = false
   var showMembers: Boolean = false
@@ -38,6 +38,6 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
 
   companion object {
     val instance: ProjectViewSharedSettings
-      get() = ServiceManager.getService(ProjectViewSharedSettings::class.java)
+      get() = ApplicationManager.getApplication().getService(ProjectViewSharedSettings::class.java)
   }
 }

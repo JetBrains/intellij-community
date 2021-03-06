@@ -4,7 +4,6 @@ package com.jetbrains.python.debugger.pydev;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +13,8 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e);
+      throw new ExecutionException("Failed to find free socket port", e); //NON-NLS
     }
     return serverSocket;
   }
@@ -197,6 +198,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
                                    int cols,
                                    String format) throws PyDebuggerException {
     return debugger(threadId).loadArrayItems(threadId, frameId, var, rowOffset, colOffset, rows, cols, format);
+  }
+
+  @Override
+  @NotNull
+  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+    assert builder.getThreadId() != null;
+    return debugger(builder.getThreadId()).executeDataViewerCommand(builder);
   }
 
   @Override
@@ -413,16 +421,17 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
-    for (ProcessDebugger d : allDebuggers()) {
-      d.removeBreakpoint(typeId, file, line);
-    }
+    allDebuggers().forEach(d -> d.removeBreakpoint(typeId, file, line));
   }
 
   @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
-    for (ProcessDebugger d : allDebuggers()) {
-      d.setShowReturnValues(isShowReturnValues);
-    }
+    allDebuggers().forEach(d -> d.setShowReturnValues(isShowReturnValues));
+  }
+
+  @Override
+  public void setUnitTestDebuggingMode() {
+    allDebuggers().forEach(d -> d.setUnitTestDebuggingMode());
   }
 
   private static class DebuggerProcessAcceptor implements Runnable {
@@ -502,7 +511,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     }
 
     private Set<String> collectThreads(RemoteDebugger debugger) {
-      Set<String> result = Sets.newHashSet();
+      Set<String> result = new HashSet<>();
       for (Map.Entry<String, RemoteDebugger> entry : myMultiProcessDebugger.myThreadRegistry.myThreadIdToDebugger.entrySet()) {
         if (entry.getValue() == debugger) {
           result.add(entry.getKey());

@@ -1,10 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,16 +58,16 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     return super.getSelectedText();
   }
 
-  public void setBody(@NotNull String text) {
+  public void setBody(@NotNull @Nls String text) {
     if (text.isEmpty()) {
       setText("");
     }
     else {
-      setText("<html><head>" +
-              UIUtil.getCssFontDeclaration(getBodyFont()) +
-              "</head><body>" +
-              text +
-              "</body></html>");
+      @NlsSafe String cssFontDeclaration = UIUtil.getCssFontDeclaration(getBodyFont());
+      setText(new HtmlBuilder()
+                .append(HtmlChunk.raw(cssFontDeclaration).wrapWith("head"))
+                .append(HtmlChunk.raw(text).wrapWith(HtmlChunk.body()))
+                .wrapWith(HtmlChunk.html()).toString());
     }
   }
 
@@ -73,6 +77,7 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
   }
 
   @NotNull
+  @Nls
   protected abstract String getBody();
 
   @Override
@@ -96,8 +101,8 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     Document document = getDocument();
     if (document instanceof HTMLDocument) {
       StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
-      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor());
-      styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
+      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.ENABLED); // NON-NLS
+      styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}"); // NON-NLS
     }
   }
 }

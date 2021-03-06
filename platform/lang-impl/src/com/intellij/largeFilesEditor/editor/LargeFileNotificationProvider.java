@@ -36,7 +36,7 @@ public final class LargeFileNotificationProvider extends EditorNotifications.Pro
       return null;
     }
 
-    EditorNotificationPanel panel = new EditorNotificationPanel();
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.createActionLabel(EditorBundle.message("notification.hide.message"), () -> {
       editor.putUserData(HIDDEN_KEY, "true");
       update(file, project);

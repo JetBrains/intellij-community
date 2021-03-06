@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,18 +31,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     myAppSettings = appSettings;
   }
 
-  public static class State {
-    public boolean SHOW_DETAILS_IN_CHANGES = true;
-    public boolean LONG_EDGES_VISIBLE = false;
-    public int BEK_SORT_TYPE = 0;
-    public boolean SHOW_ROOT_NAMES = false;
-    public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
-    public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
-    public Map<String, List<String>> FILTERS = new TreeMap<>();
-    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
-    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
-  }
-
   @NotNull
   @Override
   public abstract S getState();
@@ -58,9 +48,16 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
       if (result == null) return (T)Boolean.TRUE;
       return (T)result;
     }
-    if (property instanceof CommonUiProperties.TableColumnProperty) {
-      Integer savedWidth = state.COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumnIndex());
-      if (savedWidth == null) return (T)Integer.valueOf(-1);
+    if (property instanceof TableColumnWidthProperty) {
+      TableColumnWidthProperty tableColumnWidthProperty = (TableColumnWidthProperty)property;
+      if (!state.COLUMN_WIDTH.isEmpty()) {
+        tableColumnWidthProperty.moveOldSettings(state.COLUMN_WIDTH, state.COLUMN_ID_WIDTH);
+        state.COLUMN_WIDTH = new HashMap<>();
+      }
+      Integer savedWidth = state.COLUMN_ID_WIDTH.get(property.getName());
+      if (savedWidth == null) {
+        return (T)Integer.valueOf(-1);
+      }
       return (T)savedWidth;
     }
     TextFilterSettings filterSettings = getTextFilterSettings();
@@ -106,8 +103,8 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
-    else if (property instanceof CommonUiProperties.TableColumnProperty) {
-      getState().COLUMN_WIDTH.put(((CommonUiProperties.TableColumnProperty)property).getColumnIndex(), (Integer)value);
+    else if (property instanceof TableColumnWidthProperty) {
+      getState().COLUMN_ID_WIDTH.put(property.getName(), (Integer)value);
     }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
@@ -124,7 +121,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     if (myAppSettings.exists(property) ||
         SUPPORTED_PROPERTIES.contains(property) ||
         property instanceof VcsLogHighlighterProperty ||
-        property instanceof CommonUiProperties.TableColumnProperty) {
+        property instanceof TableColumnWidthProperty) {
       return true;
     }
     return false;
@@ -166,6 +163,21 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
     myAppSettings.removeChangeListener(listener);
+  }
+
+  public static class State {
+    public boolean SHOW_DETAILS_IN_CHANGES = true;
+    public boolean LONG_EDGES_VISIBLE = false;
+    public int BEK_SORT_TYPE = 0;
+    public boolean SHOW_ROOT_NAMES = false;
+    public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
+    public Map<String, Boolean> HIGHLIGHTERS = new TreeMap<>();
+    public Map<String, List<String>> FILTERS = new TreeMap<>();
+    public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+    public Map<Integer, Integer> COLUMN_WIDTH = new HashMap<>();
+    public Map<String, Integer> COLUMN_ID_WIDTH = new HashMap<>();
   }
 
   public static class TextFilterSettings {

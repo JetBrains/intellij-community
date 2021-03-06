@@ -141,7 +141,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
 
     final List<String> expectedList = Arrays.asList(expected);
 
-    Collections.sort(result.myToComplete, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    Collections.sort(result.myToComplete, Comparator.comparing(FileLookup.LookupFile::getName));
     Collections.sort(expectedList);
 
     assertEquals(asString(expectedList, result), asString(result.myToComplete, result));
@@ -153,7 +153,7 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
     }
   }
 
-  private String asString(List objects, FileTextFieldImpl.CompletionResult completion) {
+  private String asString(List<?> objects, FileTextFieldImpl.CompletionResult completion) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < objects.size(); i++) {
       final Object each = objects.get(i);

@@ -10,6 +10,8 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,11 +23,12 @@ import java.awt.event.KeyEvent;
  * @deprecated Use {@link SearchTextField}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class SearchFieldAction extends AnAction implements CustomComponentAction {
   private final JPanel myComponent;
   private final SearchTextField myField;
 
-  public SearchFieldAction(String text) {
+  public SearchFieldAction(@Nls String text) {
     super(VcsBundle.messagePointer("action.SearchFieldAction.text.find"));
     myField = new SearchTextField(true) {
       @Override

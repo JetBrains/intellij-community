@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
@@ -57,7 +57,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   @Override
   protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_14_PREVIEW;
+    return LanguageLevel.JDK_15_PREVIEW;
   }
 
   public void testSimpleField() { doTestField(); }
@@ -321,7 +321,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
 
   private VirtualFile createProjectStructure(String rootPath) {
     try {
-      return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+      return createTestProjectStructure(rootPath);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -349,8 +349,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   private void assertFileTextEquals(String docInfo, String expectedFile) {
-    String actualText = replaceEnvironmentDependentContent(docInfo);
-    File htmlPath = new File(getTestDataPath() + TEST_DATA_FOLDER + expectedFile);
+    assertEqualsFileText(getTestDataPath() + TEST_DATA_FOLDER + expectedFile, docInfo);
+  }
+
+  static void assertEqualsFileText(@NotNull String expectedFile, @NotNull String actual) {
+    String actualText = replaceEnvironmentDependentContent(actual);
+    File htmlPath = new File(expectedFile);
     String expectedText = loadFile(htmlPath);
     if (!StringUtil.equals(expectedText, actualText)) {
       String message = "Text mismatch in file: " + htmlPath.getName();

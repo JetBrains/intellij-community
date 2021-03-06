@@ -1,7 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet;
 
+import com.intellij.ProjectTopics;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetConfiguration;
@@ -12,6 +12,8 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +22,14 @@ import org.junit.Assume;
 
 import java.io.File;
 
-
 public class FacetManagerTest extends FacetTestCase {
   public void testAddDeleteFacet() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        fail("rootsChanged must not be called on change of facets");
+      }
+    });
     final FacetManager manager = getFacetManager();
     assertEquals(0, manager.getAllFacets().length);
     assertEquals(0, manager.getFacetsByType(MockFacetType.ID).size());
@@ -56,7 +63,7 @@ public class FacetManagerTest extends FacetTestCase {
 
   public void testAddFacetToNotYetCommittedModule() {
     ModifiableModuleModel moduleModel = ModuleManager.getInstance(myProject).getModifiableModel();
-    Module newModule = moduleModel.newModule(new File(myProject.getBasePath(), "new.iml").getAbsolutePath(), EmptyModuleType.EMPTY_MODULE);
+    Module newModule = moduleModel.newModule(new File(myProject.getBasePath(), "new.iml").toPath(), EmptyModuleType.EMPTY_MODULE);
     FacetManager manager = FacetManager.getInstance(newModule);
     assertNull(manager.getFacetByType(MockFacetType.ID));
 
@@ -95,7 +102,20 @@ public class FacetManagerTest extends FacetTestCase {
     commit(model);
     assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
   }
-  
+
+  public void testChangeFacetConfiguration() {
+    String configData = "data";
+    ModifiableFacetModel model = getFacetManager().createModifiableModel();
+    MockFacet mockFacet = new MockFacet(myModule, "mock");
+    model.addFacet(mockFacet);
+    mockFacet.getConfiguration().setData(configData);
+    commit(model);
+
+    MockFacet facetByType = getFacetManager().getFacetByType(MockFacetType.ID);
+    assertEquals(configData, facetByType.getConfiguration().getData());
+    assertSame(mockFacet, facetByType);
+  }
+
   public void testAddRemoveFacetWithSubFacet() {
     assertNull(getFacetManager().getFacetByType(MockSubFacetType.ID));
     assertNull(getFacetManager().getFacetByType(MockFacetType.ID));
@@ -142,7 +162,7 @@ public class FacetManagerTest extends FacetTestCase {
   public void testListeners() {
     final FacetManager manager = getFacetManager();
     final MyFacetManagerListener listener = new MyFacetManagerListener();
-    myModule.getMessageBus().connect(/*getTestRootDisposable()*/).subscribe(FacetManager.FACETS_TOPIC, listener);
+    myModule.getProject().getMessageBus().connect(/*getTestRootDisposable()*/).subscribe(FacetManager.FACETS_TOPIC, listener);
 
     ModifiableFacetModel model = manager.createModifiableModel();
     final MockFacet facet = new MockFacet(myModule, "1");
@@ -150,6 +170,13 @@ public class FacetManagerTest extends FacetTestCase {
     assertEquals("", listener.getEvents());
     commit(model);
     assertEquals("before added[1]\nadded[1]\n", listener.getEvents());
+
+    FacetManager.getInstance(myModule).facetConfigurationChanged(facet);
+    assertEquals("changed[1]\n", listener.getEvents());
+
+    facet.getConfiguration().setData("updated");
+    FacetManager.getInstance(myModule).facetConfigurationChanged(facet);
+    assertEquals("changed[1]\n", listener.getEvents());
 
     model = manager.createModifiableModel();
     model.rename(facet, "3");

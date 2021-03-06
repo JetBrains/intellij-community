@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.wrapper;
 
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceUtil {
+public final class TraceUtil {
   private static final String THREE_DOTS = "...";
 
   public static List<TraceElement> sortedByTime(@NotNull Collection<? extends TraceElement> values) {
@@ -39,6 +40,7 @@ public class TraceUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String formatWithArguments(@NotNull MethodCall call) {
     return call.getName() + StreamEx.of(call.getArguments())
       .map(x -> StringUtil.shortenTextWithEllipsis(x.getText().replaceAll("\\s", ""), 30, 5, THREE_DOTS))
@@ -46,6 +48,7 @@ public class TraceUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String formatQualifierExpression(@NotNull String expression, int maxLength) {
     expression = expression.replaceAll("\\s", "").replaceAll(",", ", ");
     if (expression.length() < maxLength) return expression;

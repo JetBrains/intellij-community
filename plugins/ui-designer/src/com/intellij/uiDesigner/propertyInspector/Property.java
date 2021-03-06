@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -39,7 +40,7 @@ public abstract class Property<T extends RadComponent, V> implements IProperty {
    */
   @Override
   @NotNull
-  public final String getName() {
+  public final @NlsSafe String getName() {
     return myName;
   }
 

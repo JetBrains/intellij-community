@@ -189,7 +189,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   public boolean isValid() {
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null && !parameterList.isValid()) return false;
-    return myRefMember == null || myRefMember.isValid();
+    return myRefMember.isValid();
   }
 
   @Override

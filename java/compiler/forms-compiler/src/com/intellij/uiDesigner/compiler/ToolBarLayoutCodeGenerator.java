@@ -30,7 +30,8 @@ public class ToolBarLayoutCodeGenerator extends LayoutCodeGenerator {
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,
-                                      final int parentLocal) {
+                                      final int parentLocal,
+                                      final String formClassName) {
     generator.loadLocal(parentLocal);
     generator.loadLocal(componentLocal);
     generator.invokeVirtual(ourContainerType, ourAddMethod);

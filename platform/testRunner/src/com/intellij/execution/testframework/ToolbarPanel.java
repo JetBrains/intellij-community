@@ -47,7 +47,8 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     actionGroup.addAction(new DumbAwareToggleInvertedBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"), ExecutionBundle.message("junit.run.hide.passed.action.description"),
                                                                      AllIcons.RunConfigurations.ShowPassed,
                                                                      properties, TestConsoleProperties.HIDE_PASSED_TESTS));
-    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty("Show Ignored", "Show Ignored", AllIcons.RunConfigurations.ShowIgnored,
+    actionGroup.add(new DumbAwareToggleInvertedBooleanProperty(TestRunnerBundle.message("action.show.ignored.text"),
+                                                               TestRunnerBundle.message("action.show.ignored.description"), AllIcons.RunConfigurations.ShowIgnored,
                                                                properties, TestConsoleProperties.HIDE_IGNORED_TEST));
     actionGroup.addSeparator();
 
@@ -99,8 +100,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                  ExecutionBundle.message("junit.runing.info.track.test.action.description"),
                                                  null, properties, TestConsoleProperties.TRACK_RUNNING_TEST));
-    secondaryGroup.add(new DumbAwareToggleBooleanProperty("Show Inline Statistics", "Toggle the visibility of the test duration in the tree",
-                                                 null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
+    secondaryGroup.add(new DumbAwareToggleBooleanProperty(TestRunnerBundle.message("action.show.inline.statistics.text"), TestRunnerBundle
+      .message("action.toggle.visibility.test.duration.in.tree.description"),
+                                                          null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
 
     secondaryGroup.addSeparator();
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
@@ -140,12 +142,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   }
 
   private static TestFrameworkPropertyListener<Boolean> createComparatorPropertyListener(TestFrameworkRunningModel model) {
-    return new TestFrameworkPropertyListener<Boolean>() {
+    return new TestFrameworkPropertyListener<>() {
       @Override
       public void onChanged(Boolean value) {
         try {
           //todo reflection to avoid binary incompatibility with substeps plugin
-          final AbstractTestTreeBuilderBase builder = (AbstractTestTreeBuilderBase)model.getClass().getMethod("getTreeBuilder").invoke(model);
+          final AbstractTestTreeBuilderBase builder =
+            (AbstractTestTreeBuilderBase)model.getClass().getMethod("getTreeBuilder").invoke(model);
           if (builder != null) {
             builder.setTestsComparator(model);
           }

@@ -1,22 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.JBValue;
-import org.jetbrains.annotations.NonNls;
+import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.GeneralPath;
+
+import static javax.swing.SwingConstants.*;
 
 /**
  * @author pegov
  */
-public class TabsUtil {
-  public static final JBValue TAB_VERTICAL_PADDING = new JBValue.Float(2);
+public final class TabsUtil {
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);
-  private static final @NonNls String FAKE_LABEL_TEXT = "XXX";
 
   private TabsUtil() {
   }
@@ -26,7 +28,7 @@ public class TabsUtil {
   }
 
   public static int getTabsHeight(int verticalPadding) {
-    JLabel xxx = new JLabel(FAKE_LABEL_TEXT);
+    @SuppressWarnings("HardCodedStringLiteral") JLabel xxx = new JLabel("XXX");
     xxx.setFont(getLabelFont());
     return xxx.getPreferredSize().height + (verticalPadding * 2);
   }
@@ -39,5 +41,71 @@ public class TabsUtil {
     }
 
     return font;
+  }
+
+  @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1})
+  public static int getDropSideFor(Point point, JComponent component) {
+    double r = Math.max(.05, Math.min(.45, Registry.doubleValue("ide.tabbedPane.dragToSplitRatio")));
+
+    Dimension size = component.getSize();
+    double width = size.getWidth();
+    double height = size.getHeight();
+    GeneralPath topShape = new GeneralPath();
+    topShape.moveTo(0, 0);
+    topShape.lineTo(width, 0);
+    topShape.lineTo(width * (1 - r), height * r);
+    topShape.lineTo(width  * r, height  * r);
+    topShape.closePath();
+
+    GeneralPath leftShape = new GeneralPath();
+    leftShape.moveTo(0, 0);
+    leftShape.lineTo(width  * r, height  * r);
+    leftShape.lineTo(width  * r, height * (1 - r));
+    leftShape.lineTo(0, height);
+    leftShape.closePath();
+
+    GeneralPath bottomShape = new GeneralPath();
+    bottomShape.moveTo(0, height);
+    bottomShape.lineTo(width  * r, height * (1 - r));
+    bottomShape.lineTo(width * (1 - r), height * (1 - r));
+    bottomShape.lineTo(width, height);
+    bottomShape.closePath();
+
+    GeneralPath rightShape = new GeneralPath();
+    rightShape.moveTo(width, 0);
+    rightShape.lineTo(width * (1 - r), height  * r);
+    rightShape.lineTo(width * (1 - r), height * (1 - r));
+    rightShape.lineTo(width, height);
+    rightShape.closePath();
+
+    if (rightShape.contains(point)) return RIGHT;
+    if (leftShape.contains(point)) return LEFT;
+    if (bottomShape.contains(point)) return BOTTOM;
+    if (topShape.contains(point)) return TOP;
+    return component.getBounds().contains(point) ? CENTER : -1;
+  }
+
+  @NotNull
+  public static Rectangle getDropArea(@NotNull JBTabs tabs) {
+    Rectangle r = new Rectangle(tabs.getComponent().getBounds());
+    if (tabs.getTabCount() > 0) {
+      Rectangle firstTabBounds = tabs.getTabLabel(tabs.getTabAt(0)).getBounds();
+      switch (tabs.getPresentation().getTabsPosition()) {
+        case top:
+          r.y += firstTabBounds.height;
+          r.height -= firstTabBounds.height;
+          break;
+        case left:
+          r.x += firstTabBounds.width;
+          r.width -= firstTabBounds.width;
+          break;
+        case bottom:
+          r.height -= firstTabBounds.height;
+          break;
+        case right:
+          r.width -= firstTabBounds.width;
+      }
+    }
+    return r;
   }
 }

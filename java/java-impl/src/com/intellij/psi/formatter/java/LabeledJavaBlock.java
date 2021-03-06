@@ -17,8 +17,8 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -59,7 +59,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
   }
 
   private Indent getLabelIndent() {
-    if (mySettings.getRootSettings().getIndentOptions(StdFileTypes.JAVA).LABEL_INDENT_ABSOLUTE) {
+    if (mySettings.getRootSettings().getIndentOptions(JavaFileType.INSTANCE).LABEL_INDENT_ABSOLUTE) {
       return Indent.getAbsoluteLabelIndent();
     } else {
       return Indent.getLabelIndent();

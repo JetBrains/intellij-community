@@ -3,6 +3,7 @@ package com.intellij.troubleshooting;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,8 +15,10 @@ public interface GeneralTroubleInfoCollector {
   ExtensionPointName<GeneralTroubleInfoCollector> EP_SETTINGS = ExtensionPointName.create("com.intellij.generalTroubleInfoCollector");
 
   @NotNull
+  @NonNls  // this information is collected for JetBrains support, so we need it to be in English
   String getTitle();
 
   @NotNull
+  @NonNls
   String collectInfo(@NotNull Project project);
 }

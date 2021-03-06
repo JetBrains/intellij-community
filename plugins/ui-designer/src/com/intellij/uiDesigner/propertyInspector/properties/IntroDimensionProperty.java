@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -10,11 +9,9 @@ import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntRegexEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.DimensionRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
 
@@ -57,15 +54,5 @@ public final class IntroDimensionProperty extends IntrospectedProperty<Dimension
   @Override
   public PropertyEditor<Dimension> getEditor() {
     return myEditor;
-  }
-
-  @Override
-  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    if (getName().equals(SwingProperties.MINIMUM_SIZE) ||
-        getName().equals(SwingProperties.MAXIMUM_SIZE) ||
-        getName().equals(SwingProperties.PREFERRED_SIZE)) {
-      return;
-    }
-    super.importSnapshotValue(context, component, radComponent);
   }
 }

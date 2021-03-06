@@ -39,6 +39,7 @@ import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
 import org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringActionBase;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +50,7 @@ import java.util.Set;
 public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     @Override
     public String getRefactoringName() {
-        return "Extract Template";
+        return XPathBundle.message("dialog.title.extract.template");
     }
 
     @Override
@@ -197,7 +198,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
         sb.append("\n");
 
         final String s = newName == null ?
-                Messages.showInputDialog(start.getProject(), "Template Name: ", getRefactoringName(), Messages.getQuestionIcon()) :
+                Messages.showInputDialog(start.getProject(), XPathBundle.message("dialog.message.template.name"), getRefactoringName(), Messages.getQuestionIcon()) :
                 newName;
 
         if (s != null) {
@@ -255,7 +256,7 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     @Nullable
     public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (!editor.getSelectionModel().hasSelection()) {
-            return "Please select the code that should be extracted.";
+            return XPathBundle.message("notification.content.please.select.code.that.should.be.extracted");
         }
         return null;
     }

@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE filse.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
@@ -14,22 +13,39 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
-/**
- * @author Bas Leijdekkers
- */
 public class ArrayObjectsEqualsInspection extends BaseInspection {
+  enum Kind {
+    TO_EQUALS("equals", "array.equals.problem.descriptor"),
+    TO_DEEP_EQUALS("deepEquals", "array.equals.problem.descriptor"),
+    TO_DEEP_HASH_CODE("deepHashCode", "array.hashcode.problem.descriptor");
+
+    private final String myNewMethodName;
+    private final @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String myMessage;
+
+    Kind(String newMethodName, @PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String message) {
+      myNewMethodName = newMethodName;
+      myMessage = message;
+    }
+
+    @Override
+    public @InspectionMessage String toString() {
+      return InspectionGadgetsBundle.message(myMessage, "Arrays." + myNewMethodName + "()");
+    }
+
+    public String getNewMethodName() {
+      return myNewMethodName;
+    }
+  }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final boolean deep = ((Boolean)infos[0]).booleanValue();
-    return deep
-           ? InspectionGadgetsBundle.message("array.objects.deep.equals.problem.descriptor")
-           : InspectionGadgetsBundle.message("array.objects.equals.problem.descriptor");
+    final Kind kind = ((Kind)infos[0]);
+    return kind.toString();
   }
 
   @Override
@@ -40,28 +56,28 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final boolean deep = ((Boolean)infos[0]).booleanValue();
-    return new ArrayObjectsEqualsFix(deep);
+    final Kind kind = ((Kind)infos[0]);
+    return new ArrayEqualsHashCodeFix(kind);
   }
 
-  private static class ArrayObjectsEqualsFix extends InspectionGadgetsFix {
+  private static class ArrayEqualsHashCodeFix extends InspectionGadgetsFix {
 
-    private final boolean myDeep;
+    private final Kind myKind;
 
-    ArrayObjectsEqualsFix(boolean deep) {
-      myDeep = deep;
+    ArrayEqualsHashCodeFix(Kind kind) {
+      myKind = kind;
     }
 
     @Override
     @NotNull
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myDeep ? "Arrays.deepEquals()" : "Arrays.equals()");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays." + myKind.myNewMethodName + "()");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", "Arrays.equals()");
+      return getName();
     }
 
     @Override
@@ -71,16 +87,11 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-      final StringBuilder newExpression = new StringBuilder("java.util.Arrays.");
-      if (myDeep) {
-        newExpression.append("deepEquals");
-      }
-      else {
-        newExpression.append("equals");
-      }
       CommentTracker commentTracker = new CommentTracker();
-      newExpression.append(commentTracker.text(methodCallExpression.getArgumentList()));
-      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpression.toString(), commentTracker);
+      String newExpression = "java.util.Arrays." + myKind.getNewMethodName() +
+                             commentTracker.text(methodCallExpression.getArgumentList());
+      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
+                                                     newExpression, commentTracker);
     }
   }
 
@@ -95,12 +106,10 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
-        return;
-      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] expressions = argumentList.getExpressions();
-      if (expressions.length != 2) {
+      if (!((expressions.length == 1 && HardcodedMethodConstants.HASH_CODE.equals(methodName)) ||
+            (expressions.length == 2 && HardcodedMethodConstants.EQUALS.equals(methodName)))) {
         return;
       }
       final PsiExpression argument1 = expressions[0];
@@ -108,24 +117,47 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
       if (!(type1 instanceof PsiArrayType)) {
         return;
       }
-      final PsiExpression argument2 = expressions[1];
-      final PsiType type2 = argument2.getType();
-      if (!(type2 instanceof PsiArrayType)) {
-        return;
-      }
       final int dimensions = type1.getArrayDimensions();
-      if (dimensions != type2.getArrayDimensions()) {
-        return;
+      if (expressions.length == 2) {
+        final PsiExpression argument2 = expressions[1];
+        final PsiType type2 = argument2.getType();
+        if (!(type2 instanceof PsiArrayType)) {
+          return;
+        }
+        if (dimensions != type2.getArrayDimensions()) {
+          return;
+        }
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !"java.util.Objects".equals(containingClass.getQualifiedName())) {
+      if (containingClass == null) {
         return;
       }
-      registerMethodCallError(expression, Boolean.valueOf(dimensions > 1));
+      final Kind kind = getKind(containingClass.getQualifiedName(), methodName, dimensions);
+      if (kind == null) {
+        return;
+      }
+      registerMethodCallError(expression, kind);
+    }
+
+    private static Kind getKind(String className, String methodName, int dimensions) {
+      final boolean isJavaUtilObjects = CommonClassNames.JAVA_UTIL_OBJECTS.equals(className);
+      final boolean isJavaUtilArrays = CommonClassNames.JAVA_UTIL_ARRAYS.equals(className);
+      final boolean isEquals = HardcodedMethodConstants.EQUALS.equals(methodName);
+      final boolean isHashCode = HardcodedMethodConstants.HASH_CODE.equals(methodName);
+      if (isJavaUtilObjects && isEquals) {
+        return dimensions > 1 ? Kind.TO_DEEP_EQUALS : Kind.TO_EQUALS;
+      } else if (isJavaUtilArrays && dimensions > 1) {
+          if (isEquals) {
+            return Kind.TO_DEEP_EQUALS;
+          } else if (isHashCode) {
+            return Kind.TO_DEEP_HASH_CODE;
+          }
+      }
+      return null;
     }
   }
 }

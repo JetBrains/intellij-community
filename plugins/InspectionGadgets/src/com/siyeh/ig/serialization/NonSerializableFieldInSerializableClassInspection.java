@@ -26,6 +26,7 @@ import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -48,7 +49,7 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final PsiField field = (PsiField)infos[0];
+    final PsiModifierListOwner field = (PsiModifierListOwner)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
   }
 
@@ -61,37 +62,48 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (field.hasModifierProperty(PsiModifier.TRANSIENT) || field.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) {
         return;
       }
-      final PsiClass aClass = field.getContainingClass();
-      if (aClass == null) {
+      if (ignoreAnonymousInnerClasses && containingClass instanceof PsiAnonymousClass) {
         return;
       }
-      if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
+      if (isIgnoredSubclass(containingClass)) {
         return;
       }
-      if (!SerializationUtils.isSerializable(aClass)) {
+      visitVariable(field, containingClass);
+    }
+
+    @Override
+    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+      visitVariable(recordComponent, recordComponent.getContainingClass());
+    }
+
+    private void visitVariable(@NotNull PsiVariable psiVariable, @Nullable PsiClass containingClass) {
+      if (psiVariable.hasModifierProperty(PsiModifier.TRANSIENT) || psiVariable.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
-      PsiType fieldType = field.getType();
-      if (SerializationUtils.isProbablySerializable(fieldType)) {
+      if (!SerializationUtils.isSerializable(containingClass)) {
         return;
       }
-      PsiClass fieldClass = PsiUtil.resolveClassInClassTypeOnly(fieldType);
-      if (fieldClass != null && isIgnoredSubclass(fieldClass)) {
+      PsiType variableType = psiVariable.getType();
+      if (SerializationUtils.isProbablySerializable(variableType)) {
         return;
       }
-      if (SerializationUtils.hasWriteObject(aClass) || SerializationUtils.hasWriteReplace(aClass)) {
+      PsiClass variableClass = PsiUtil.resolveClassInClassTypeOnly(variableType);
+      if (variableClass != null && isIgnoredSubclass(variableClass)) {
         return;
       }
-      if (isIgnoredSubclass(aClass)) {
+      if (SerializationUtils.hasWriteObject(containingClass) || SerializationUtils.hasWriteReplace(containingClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations, 0)) {
+      if (AnnotationUtil.isAnnotated(psiVariable, ignorableAnnotations, 0)) {
         return;
       }
-      registerFieldError(field, field);
+      PsiIdentifier nameIdentifier = psiVariable.getNameIdentifier();
+      assert nameIdentifier != null;
+      registerError(nameIdentifier, psiVariable);
     }
   }
 }

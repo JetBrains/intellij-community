@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -25,6 +26,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
@@ -49,9 +51,11 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
   }
 }
 
-private class PyCollectImportsTask(private val module: Module,
-                                   private val psiManager: PsiManager,
-                                   title: String) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
+private class PyCollectImportsTask(
+  private val module: Module,
+  private val psiManager: PsiManager,
+  @NlsContexts.DialogTitle title: String
+) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
 
   override fun compute(indicator: ProgressIndicator): Set<String> {
     val imported = mutableSetOf<String>()
@@ -72,7 +76,7 @@ internal fun syncWithImports(module: Module) {
   val notificationGroup = NotificationGroup.balloonGroup("Sync Python requirements", PyBundle.message("python.requirements.balloon"))
   val sdk = PythonSdkUtil.findPythonSdk(module)
   if (sdk == null) {
-    val configureSdkAction = NotificationAction.createSimpleExpiring(PyBundle.message("configure.python.interpreter")) {
+    val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
       PySdkPopupFactory.createAndShow(module.project, module)
     }
     showNotification(notificationGroup,
@@ -126,7 +130,7 @@ internal fun syncWithImports(module: Module) {
 
 private fun showNotification(notificationGroup: NotificationGroup,
                              type: NotificationType,
-                             text: String,
+                             @NlsContexts.NotificationContent text: String,
                              project: Project,
                              action: NotificationAction? = null) {
   val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type)

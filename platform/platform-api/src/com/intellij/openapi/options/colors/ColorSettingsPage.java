@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +43,7 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    * The mapping between the names of the tags and the text attribute keys used for highlighting
    * is defined by the {@link #getAdditionalHighlightingTagToDescriptorMap()} method.
    *
-   * @return the text to show in the preview pane.
+   * @return the text to show in the preview pane or empty text to hide it.
    */
   @NonNls @NotNull String getDemoText();
 

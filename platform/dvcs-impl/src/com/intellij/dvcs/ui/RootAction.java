@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +33,9 @@ public class RootAction<T extends Repository> extends ActionGroup implements Pop
 
   @NotNull protected final T myRepository;
   @NotNull private final ActionGroup myGroup;
-  @Nullable private final String myBranchText;
+  @Nullable private final @Nls String myBranchText;
 
-  public RootAction(@NotNull T repository, @NotNull ActionGroup actionsGroup, @Nullable String branchText) {
+  public RootAction(@NotNull T repository, @NotNull ActionGroup actionsGroup, @Nullable @Nls String branchText) {
     super("", true);
     myRepository = repository;
     myGroup = actionsGroup;

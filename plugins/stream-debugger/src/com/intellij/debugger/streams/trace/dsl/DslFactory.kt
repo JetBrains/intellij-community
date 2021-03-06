@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.trace.dsl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Vitaliy.Bibaev
@@ -49,6 +50,7 @@ interface DslFactory {
   fun updateTime(): Expression
 
   @Deprecated("use createPeekCall(GenericType, Lambda): IntermediateStreamCall instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
 
   fun createPeekCall(elementType: GenericType, lambda: Lambda): IntermediateStreamCall

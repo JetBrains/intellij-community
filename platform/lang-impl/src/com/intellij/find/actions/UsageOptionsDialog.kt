@@ -5,8 +5,8 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.find.FindBundle.message
 import com.intellij.find.FindSettings
-import com.intellij.find.usages.UsageHandler
-import com.intellij.find.usages.UsageOptions
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.openapi.options.OptionEditor
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.UserActivityWatcher
 import com.intellij.ui.components.JBCheckBox
@@ -29,9 +29,10 @@ import javax.swing.JPanel
 
 internal class UsageOptionsDialog<O>(
   private val project: Project,
-  private val presentableText: String?,
+  @NlsContexts.Label presentableText: String?,
   private val handler: UsageHandler<O>,
   allOptions: AllSearchOptions<O>,
+  showScopeChooser: Boolean,
   canReuseTab: Boolean
 ) : DialogWrapper(project) {
 
@@ -45,7 +46,54 @@ internal class UsageOptionsDialog<O>(
   private fun customResult(): O = myOptionEditor?.result() as O
 
   // ui
-  private val myDialogPanel: DialogPanel = doCreateCenterPanel()
+  private val myDialogPanel: DialogPanel = panel {
+    if (presentableText != null) {
+      row {
+        label(presentableText)
+      }
+    }
+
+    titledRow(message("find.what.group")) {
+      row {
+        checkBox(CheckboxDescriptor(message("find.what.usages.checkbox"), ::myFindUsages))
+      }
+      row {
+        myOptionEditor?.component?.let { editorComponent ->
+          if (editorComponent is DialogPanel) {
+            onGlobalApply {
+              editorComponent.apply()
+            }
+          }
+          editorComponent.invoke()
+        }
+      }
+      myTextSearch?.let {
+        row {
+          checkBox(
+            text = message("find.options.search.for.text.occurrences.checkbox"),
+            getter = { it },
+            setter = { myTextSearch = it }
+          )
+        }
+      }
+    }
+
+    if (showScopeChooser) {
+      val scopeCombo = ScopeChooserCombo(project, true, true, myScope.displayName)
+      Disposer.register(myDisposable, scopeCombo)
+      scopeCombo.comboBox.addItemListener { event ->
+        if (event.stateChange == ItemEvent.SELECTED) {
+          myScope = scopeCombo.selectedScope ?: return@addItemListener
+        }
+      }
+      titledRow(message("find.scope.label")) {
+        row {
+          scopeCombo().focused()
+        }
+      }
+    }
+  }
+
   private val myCbOpenInNewTab: JBCheckBox? = if (canReuseTab) {
     JBCheckBox(message("find.open.in.new.tab.checkbox"), FindSettings.getInstance().isShowResultsInSeparateView)
   }
@@ -90,54 +138,6 @@ internal class UsageOptionsDialog<O>(
     JPanel().apply {
       add(checkbox)
       border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP)
-    }
-  }
-
-  private fun doCreateCenterPanel(): DialogPanel = panel {
-    if (presentableText != null) {
-      row {
-        label(presentableText)
-      }
-    }
-
-    titledRow(message("find.what.group")) {
-      row {
-        checkBox(CheckboxDescriptor(message("find.what.usages.checkbox"), ::myFindUsages))
-      }
-      row {
-        myOptionEditor?.component?.let { editorComponent ->
-          if (editorComponent is DialogPanel) {
-            onGlobalApply {
-              editorComponent.apply()
-            }
-          }
-          editorComponent.invoke()
-        }
-      }
-      myTextSearch?.let {
-        row {
-          checkBox(
-            text = message("find.options.search.for.text.occurrences.checkbox"),
-            getter = { it },
-            setter = { myTextSearch = it }
-          )
-        }
-      }
-    }
-
-    if (handler.maximalSearchScope is GlobalSearchScope) {
-      val scopeCombo = ScopeChooserCombo(project, true, true, myScope.displayName)
-      Disposer.register(myDisposable, scopeCombo)
-      scopeCombo.comboBox.addItemListener { event ->
-        if (event.stateChange == ItemEvent.SELECTED) {
-          myScope = scopeCombo.selectedScope ?: return@addItemListener
-        }
-      }
-      titledRow(message("find.scope.label")) {
-        row {
-          scopeCombo().focused()
-        }
-      }
     }
   }
 

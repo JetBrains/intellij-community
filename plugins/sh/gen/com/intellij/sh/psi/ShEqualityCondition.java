@@ -16,7 +16,4 @@ public interface ShEqualityCondition extends ShCondition {
   @Nullable
   PsiElement getNe();
 
-  @Nullable
-  PsiElement getRegexp();
-
 }

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class QuickFixWrapper implements IntentionAction, PriorityAction {
+public final class QuickFixWrapper implements IntentionAction, PriorityAction {
   private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;
@@ -34,10 +34,10 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   @NotNull
   public static IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     LOG.assertTrue(fixNumber >= 0, fixNumber);
-    QuickFix[] fixes = descriptor.getFixes();
+    QuickFix<?>[] fixes = descriptor.getFixes();
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
-    final QuickFix fix = fixes[fixNumber];
+    final QuickFix<?> fix = fixes[fixNumber];
     return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
   }
 
@@ -61,7 +61,10 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement psiElement = myDescriptor.getPsiElement();
-    return psiElement != null && psiElement.isValid();
+    if (psiElement == null || !psiElement.isValid()) return false;
+    PsiFile containingFile = psiElement.getContainingFile();
+    return containingFile == file || containingFile == null ||
+           containingFile.getViewProvider().getVirtualFile().equals(file.getViewProvider().getVirtualFile());
   }
 
   @Override

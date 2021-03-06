@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import java.io.IOException
@@ -29,7 +31,12 @@ object GithubUtil {
 
   @JvmField
   val LOG: Logger = Logger.getInstance("github")
+
+  @NlsSafe
   const val SERVICE_DISPLAY_NAME: String = "GitHub"
+
+  @NlsSafe
+  const val ENTERPRISE_SERVICE_DISPLAY_NAME: String = "GitHub Enterprise"
   const val GIT_AUTH_PASSWORD_SUBSTITUTE: String = "x-oauth-basic"
 
   @JvmStatic
@@ -58,6 +65,7 @@ object GithubUtil {
     }
   }
 
+  @NlsSafe
   @JvmStatic
   fun getErrorTextFromException(e: Throwable): String {
     return if (e is UnknownHostException) {
@@ -117,6 +125,7 @@ object GithubUtil {
   @JvmStatic
   @Deprecated("{@link GithubGitHelper}", ReplaceWith("GithubGitHelper.findGitRepository(project, file)",
                                                      "org.jetbrains.plugins.github.util.GithubGitHelper"))
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun getGitRepository(project: Project, file: VirtualFile?): GitRepository? {
     return GithubGitHelper.findGitRepository(project, file)
   }
@@ -156,6 +165,7 @@ object GithubUtil {
   @Suppress("DeprecatedCallableAddReplaceWith")
   @JvmStatic
   @Deprecated("{@link org.jetbrains.plugins.github.api.GithubServerPath}")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   fun isRepositoryOnGitHub(repository: GitRepository): Boolean {
     return findGithubRemoteUrl(repository) != null
   }

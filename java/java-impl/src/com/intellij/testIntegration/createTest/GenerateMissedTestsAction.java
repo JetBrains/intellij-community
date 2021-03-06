@@ -65,7 +65,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     final Collection<PsiElement> testClasses = TestFinderHelper.findTestsForClass(srcClass);
 
     if (testClasses.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No tests found.");
+      HintManager.getInstance().showErrorHint(editor, JavaBundle.message("generate.missed.tests.action.error.no.tests.found"));
       return;
     }
 
@@ -96,7 +96,8 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
         }
       }
       else {
-        HintManager.getInstance().showErrorHint(srcEditor, "Failed to detect test framework for " + testClass.getQualifiedName());
+        String message = JavaBundle.message("generate.missed.tests.action.failed.to.detect.framework", testClass.getQualifiedName());
+        HintManager.getInstance().showErrorHint(srcEditor, message);
       }
     }
   }

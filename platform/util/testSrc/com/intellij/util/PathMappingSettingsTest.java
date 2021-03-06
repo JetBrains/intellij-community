@@ -6,6 +6,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
+
 public class PathMappingSettingsTest {
 
   public static final String LOCAL_PATH_TO_FILE = "C:\\PythonSources\\src\\runner\\run.py";
@@ -16,6 +18,12 @@ public class PathMappingSettingsTest {
   @Before
   public void setUp() {
     myMappingSettings = new PathMappingSettings();
+  }
+
+  @Test
+  public void testNoSlashBetweenParts() {
+    myMappingSettings.addMapping("//wsl$/Debian", "/");
+    Assert.assertEquals("//wsl$/Debian/home/link/my.py", myMappingSettings.convertToLocal("/home/link/my.py"));
   }
 
   @Test
@@ -175,5 +183,16 @@ public class PathMappingSettingsTest {
 
     Assert.assertEquals("/web-project/bar/my-test.php", myMappingSettings.convertToRemote("C:/testPrj/src/tests/my-test.php"));
     Assert.assertEquals("/web-project/foo/info.php", myMappingSettings.convertToRemote("C:/testPrj/src/test/info.php"));
+  }
+
+  @Test
+  public void testAddMappingCheckUnique() {
+    myMappingSettings.addMappingCheckUnique("C:/testPrj/src/test/", "/web-project/");
+    myMappingSettings.addMappingCheckUnique("C:/testPrj/src/test", "/web-project/");
+    myMappingSettings.addMappingCheckUnique("C:/testPrj/src/test/", "/web-project");
+    myMappingSettings.addMappingCheckUnique("C:/testPrj/src/test", "/web-project");
+
+    Assert.assertEquals(Collections.singletonList(new PathMappingSettings.PathMapping("C:/testPrj/src/test", "/web-project")),
+                        myMappingSettings.getPathMappings());
   }
 }

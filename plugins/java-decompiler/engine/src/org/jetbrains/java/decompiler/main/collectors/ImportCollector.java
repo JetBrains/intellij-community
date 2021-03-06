@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -150,21 +150,14 @@ public class ImportCollector {
     return result == null ? shortName : result;
   }
 
-  public int writeImports(TextBuffer buffer) {
-    int importLinesWritten = 0;
-
+  public void writeImports(TextBuffer buffer, boolean addSeparator) {
     List<String> imports = packImports();
-
-    for (String s : imports) {
-      buffer.append("import ");
-      buffer.append(s);
-      buffer.append(';');
-      buffer.appendLineSeparator();
-
-      importLinesWritten++;
+    for (String line : imports) {
+      buffer.append("import ").append(line).append(';').appendLineSeparator();
     }
-
-    return importLinesWritten;
+    if (addSeparator && !imports.isEmpty()) {
+      buffer.appendLineSeparator();
+    }
   }
 
   private List<String> packImports() {

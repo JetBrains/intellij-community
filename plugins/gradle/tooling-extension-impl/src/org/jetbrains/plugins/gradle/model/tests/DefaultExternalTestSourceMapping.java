@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.model.tests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class DefaultExternalTestSourceMapping implements ExternalTestSourceMapping {
@@ -13,16 +15,24 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
   @Nullable
   private String testTaskPath;
   @NotNull
-  private Set<String> sourceFolders = Collections.emptySet();
+  private Set<File> sourceFolders = Collections.emptySet();
 
   @Override
   @NotNull
   public Set<String> getSourceFolders() {
-    return Collections.unmodifiableSet(sourceFolders);
+    if (sourceFolders.isEmpty()) return Collections.emptySet();
+    LinkedHashSet<String> set = new LinkedHashSet<String>(sourceFolders.size());
+    for (File folder : sourceFolders) {
+      set.add(folder.getPath());
+    }
+    return Collections.unmodifiableSet(set);
   }
 
   public void setSourceFolders(@NotNull Set<String> sourceFolders) {
-    this.sourceFolders = sourceFolders;
+    this.sourceFolders = new LinkedHashSet<File>(sourceFolders.size());
+    for (String folder : sourceFolders) {
+      this.sourceFolders.add(new File(folder));
+    }
   }
 
   @NotNull

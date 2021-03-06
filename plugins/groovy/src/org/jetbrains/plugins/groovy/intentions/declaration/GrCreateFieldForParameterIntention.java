@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -30,7 +31,7 @@ import java.util.List;
 public class GrCreateFieldForParameterIntention extends CreateFieldFromParameterActionBase {
 
   @Override
-  protected boolean isAvailable(PsiParameter parameter) {
+  protected boolean isAvailable(@NotNull PsiParameter parameter) {
     PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof GrMethod)) return false;
     if (((GrMethod)scope).getContainingClass() == null) return false;
@@ -41,7 +42,7 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   @Override
-  protected PsiType getSubstitutedType(PsiParameter parameter) {
+  protected PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     return GroovyRefactoringUtil.getSubstitutedType((GrParameter)parameter);
   }
 
@@ -60,12 +61,12 @@ public class GrCreateFieldForParameterIntention extends CreateFieldFromParameter
   }
 
   @Override
-  protected void performRefactoring(Project project,
-                                    PsiClass targetClass,
-                                    PsiMethod method,
-                                    PsiParameter myParameter,
+  protected void performRefactoring(@NotNull Project project,
+                                    @NotNull PsiClass targetClass,
+                                    @NotNull PsiMethod method,
+                                    @NotNull PsiParameter myParameter,
                                     PsiType type,
-                                    String fieldName,
+                                    @NotNull String fieldName,
                                     boolean methodStatic,
                                     boolean isFinal) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);

@@ -1,18 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -23,8 +27,8 @@ import java.util.stream.Stream;
 @State(name = "StructuralSearchPlugin", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ConfigurationManager implements PersistentStateComponent<Element> {
   private static final int MAX_RECENT_SIZE = 30;
-  @NonNls static final String SEARCH_TAG_NAME = "searchConfiguration";
-  @NonNls static final String REPLACE_TAG_NAME = "replaceConfiguration";
+  @NonNls private static final String SEARCH_TAG_NAME = "searchConfiguration";
+  @NonNls private static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
   private final List<Configuration> configurations = new SmartList<>();
@@ -63,21 +67,20 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
   /**
    * Stores configurations at the application level. Before the configurations where stored in the workspace file.
-   * @param configurations
    */
-  private void migrate(List<? extends Configuration> configurations) {
+  private void migrate(@NotNull List<? extends Configuration> configurations) {
     if (configurations.isEmpty()) {
       return;
     }
     outer:
     for (Configuration configuration : configurations) {
-      Configuration existing = myApplicationState.get(configuration.getName());
+      Configuration existing = myApplicationState.get(configuration.getRefName());
       while (existing != null) {
         if (configuration.equals(existing)) {
           continue outer;
         }
         configuration.setName(configuration.getName() + '~');
-        existing = myApplicationState.get(configuration.getName());
+        existing = myApplicationState.get(configuration.getRefName());
       }
       myApplicationState.add(configuration);
     }
@@ -100,9 +103,14 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return historyConfigurations.isEmpty() ? null : historyConfigurations.get(0);
   }
 
+  @TestOnly
+  public void addConfiguration(Configuration configuration) {
+    myApplicationState.add(configuration);
+  }
+
   public void removeConfiguration(Configuration configuration) {
     if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      myApplicationState.remove(configuration.getName());
+      myApplicationState.remove(configuration.getRefName());
     }
     configurations.remove(configuration);
   }
@@ -125,7 +133,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
   }
 
-  static Element saveConfiguration(@NotNull Element element, @NotNull Configuration config) {
+  @NotNull
+  private static Element saveConfiguration(@NotNull Element element, @NotNull Configuration config) {
     final Element infoElement = new Element(config instanceof SearchConfiguration ? SEARCH_TAG_NAME : REPLACE_TAG_NAME);
     element.addContent(infoElement);
     config.writeExternal(infoElement);
@@ -152,7 +161,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
   }
 
-  static Configuration readConfiguration(@NotNull Element element) {
+  private static Configuration readConfiguration(@NotNull Element element) {
     final String name = element.getName();
     final Configuration config;
     if (name.equals(SEARCH_TAG_NAME)) {
@@ -173,7 +182,12 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
    */
   public List<String> getAllConfigurationNames() {
     final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
-    return stream.map(c -> c.getName()).collect(Collectors.toList());
+    return stream.map(c -> c.getRefName()).collect(Collectors.toList());
+  }
+
+  public List<Configuration> getAllConfigurations() {
+    final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
+    return stream.collect(Collectors.toList());
   }
 
   @NotNull
@@ -201,25 +215,22 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @Nullable
   private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
-    return configurations.stream().filter(config -> config.getName().equals(name)).findFirst().orElse(null);
+    return ContainerUtil.find(configurations, config -> config.getRefName().equals(name));
   }
 
   @Nullable
   private static Configuration findConfiguration(@NotNull Collection<? extends Configuration> configurations, Configuration configuration) {
-    return configurations.stream()
-      .filter(c -> {
-        if (configuration instanceof ReplaceConfiguration) {
-          return c instanceof ReplaceConfiguration &&
-                 c.getMatchOptions().getSearchPattern().equals(configuration.getMatchOptions().getSearchPattern()) &&
-                 c.getReplaceOptions().getReplacement().equals(configuration.getReplaceOptions().getReplacement());
-        }
-        else {
-          return c instanceof SearchConfiguration && c.getMatchOptions().getSearchPattern().equals(
-            configuration.getMatchOptions().getSearchPattern());
-        }
-      })
-      .findFirst()
-      .orElse(null);
+    return ContainerUtil.find(configurations, c -> {
+      if (configuration instanceof ReplaceConfiguration) {
+        return c instanceof ReplaceConfiguration &&
+               c.getMatchOptions().getSearchPattern().equals(configuration.getMatchOptions().getSearchPattern()) &&
+               c.getReplaceOptions().getReplacement().equals(configuration.getReplaceOptions().getReplacement());
+      }
+      else {
+        return c instanceof SearchConfiguration && c.getMatchOptions().getSearchPattern().equals(
+          configuration.getMatchOptions().getSearchPattern());
+      }
+    });
   }
 
   @NotNull
@@ -280,8 +291,10 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
                                     });
   }
 
-  @Nullable
-  private static String showInputDialog(@NotNull String initial, @NotNull Project project) {
+  /**
+   * @return the name entered by the user, or null if the dialog was cancelled
+   */
+  private static @Nullable @NlsSafe String showInputDialog(@NotNull String initial, @NotNull Project project) {
     return Messages.showInputDialog(
       project,
       SSRBundle.message("template.name.button"),
@@ -298,7 +311,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     public final Map<String, Configuration> configurations = new LinkedHashMap<>();
 
     public static ConfigurationManagerState getInstance() {
-      return ServiceManager.getService(ConfigurationManagerState.class);
+      return ApplicationManager.getApplication().getService(ConfigurationManagerState.class);
     }
 
     public static ConfigurationManagerState getInstance(Project project) {
@@ -307,7 +320,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
     public void add(Configuration configuration) {
       configuration.getMatchOptions().setScope(null);
-      configurations.put(configuration.getName(), configuration);
+      configurations.put(configuration.getRefName(), configuration);
     }
 
     public Configuration get(String name) {
@@ -337,7 +350,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
       for (Element child : state.getChildren()) {
         final Configuration configuration = readConfiguration(child);
         if (configuration != null) {
-          configurations.put(configuration.getName(), configuration);
+          configurations.put(configuration.getRefName(), configuration);
         }
       }
     }

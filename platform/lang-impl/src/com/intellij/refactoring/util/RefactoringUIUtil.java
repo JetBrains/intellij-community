@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -17,6 +17,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -24,10 +25,10 @@ import java.util.Arrays;
 /**
  * @author yole
  */
-public class RefactoringUIUtil {
+public final class RefactoringUIUtil {
   private RefactoringUIUtil() { }
 
-  public static String getDescription(@NotNull PsiElement element, boolean includeParent) {
+  public static @Nls String getDescription(@NotNull PsiElement element, boolean includeParent) {
     RefactoringDescriptionLocation location = includeParent ? RefactoringDescriptionLocation.WITH_PARENT : RefactoringDescriptionLocation.WITHOUT_PARENT;
     return ElementDescriptionUtil.getElementDescription(element, location);
   }
@@ -44,7 +45,7 @@ public class RefactoringUIUtil {
       () -> Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
   }
 
-  public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
+  public static @NotNull String calculatePsiElementDescriptionList(@NotNull PsiElement @NotNull [] elements) {
     Function<PsiElement, String> presentationFun = e -> UsageViewUtil.getType(e) + ' ' + DescriptiveNameUtil.getDescriptiveName(e);
     return StringUtil.join(ContainerUtil.map2LinkedSet(Arrays.asList(elements), presentationFun), ", ");
   }

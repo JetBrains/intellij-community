@@ -54,7 +54,7 @@ public class ReadObjectInitializationInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isRecord()) {
         return;
       }
       if (!SerializationUtils.isSerializable(aClass)) {

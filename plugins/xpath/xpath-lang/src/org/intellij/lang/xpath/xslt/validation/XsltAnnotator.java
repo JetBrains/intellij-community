@@ -30,6 +30,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.context.XsltContextProviderBase;
 import org.intellij.lang.xpath.xslt.quickfix.ConvertToEntityFix;
 import org.intellij.lang.xpath.xslt.quickfix.FlipOperandsFix;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class XsltAnnotator implements Annotator {
@@ -53,13 +54,14 @@ public class XsltAnnotator implements Annotator {
         XsltPatternValidator.validate(holder, file);
       } else {
         if (file.getText().trim().length() == 0 && file.getExpression() == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Empty XPath expression").create();
+          holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.empty.xpath.expression")).create();
         }
       }
       if (XsltSupport.isXsltAttribute(context) && !XsltSupport.mayBeAVT(context)) {
         final ASTNode node = file.getNode();
         if (node.findChildByType(XPathTokenTypes.LBRACE) != null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Attribute Value Template is not allowed here").create();
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.attribute.value.template.not.allowed.here")).create();
         }
       }
     }
@@ -68,7 +70,8 @@ public class XsltAnnotator implements Annotator {
   public void visitXPathToken(XPathToken token, AnnotationHolder holder) {
     if (XPathTokenTypes.REL_OPS.contains(token.getTokenType())) {
       if (token.textContains('<')) {
-        holder.newAnnotation(HighlightSeverity.ERROR, "'<' must be escaped as '&lt;' in XSLT documents")
+        holder.newAnnotation(HighlightSeverity.ERROR,
+                             XPathBundle.message("annotator.less.than.must.be.escaped.as.ampersand.lt.in.xslt.documents"))
         .withFix(new ConvertToEntityFix(token))
         .withFix(new FlipOperandsFix(token))
         .create();

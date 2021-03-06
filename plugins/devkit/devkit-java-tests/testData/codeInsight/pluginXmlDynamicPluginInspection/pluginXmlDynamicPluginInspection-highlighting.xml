@@ -24,13 +24,13 @@
   </actions>
 
 
-  <<warning descr="Non-dynamic plugin due to using components, replace with alternatives">application-components</warning>>
+  <<warning descr="Non-dynamic plugin due to using components. Migration Guide">application-components</warning>>
   </application-components>
 
-  <<warning descr="Non-dynamic plugin due to using components, replace with alternatives">project-components</warning>>
+  <<warning descr="Non-dynamic plugin due to using components. Migration Guide">project-components</warning>>
   </project-components>
 
-  <<warning descr="Non-dynamic plugin due to using components, replace with alternatives">module-components</warning>>
+  <<warning descr="Non-dynamic plugin due to using components. Migration Guide">module-components</warning>>
   </module-components>
 
 </idea-plugin>

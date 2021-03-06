@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +12,10 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
+  public static ReadonlyStatusHandler getInstance(@NotNull Project project) {
+    return project.getService(ReadonlyStatusHandler.class);
+  }
+
   public static boolean ensureFilesWritable(@NotNull Project project, VirtualFile @NotNull ... files) {
     return !getInstance(project).ensureFilesWritable(Arrays.asList(files)).hasReadonlyFiles();
   }
@@ -40,7 +44,7 @@ public abstract class ReadonlyStatusHandler {
     public abstract boolean hasReadonlyFiles();
 
     @NotNull
-    public abstract String getReadonlyFilesMessage();
+    public abstract @NlsContexts.DialogMessage String getReadonlyFilesMessage();
   }
 
   /**
@@ -54,8 +58,4 @@ public abstract class ReadonlyStatusHandler {
 
   @NotNull
   public abstract OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files);
-
-  public static ReadonlyStatusHandler getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ReadonlyStatusHandler.class);
-  }
 }

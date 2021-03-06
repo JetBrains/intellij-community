@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.Nullability;
@@ -27,7 +27,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Represents a way to indicate whether method execution is already finished
  */
-public class FinishMarker {
+public final class FinishMarker {
   /**
    * Type of finish marker
    */
@@ -62,7 +62,7 @@ public class FinishMarker {
 
   /**
    * Checks whether we may need a marker value to indicate premature exit from given return statement.
-   * 
+   *
    * @param returnStatement return statement to check
    * @param block method body (ancestor of return statement).
    * @return false if it's possible to transform the code removing given return statement without introducing a marker;
@@ -148,7 +148,7 @@ public class FinishMarker {
       .map(val -> val instanceof PsiLiteralExpression ? ((PsiLiteralExpression)val).getValue() : NULL)
       .toSet();
     if (!mayNeedMarker) {
-      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker);
+      PsiExpression initValue = findBestExpression(terminalReturn, nonTerminalReturns, false);
       if (initValue == null && nonTerminalReturnValues.size() == 1 && nonTerminalReturnValues.iterator().next() != NULL) {
         initValue = nonTerminalReturns.iterator().next();
       }
@@ -165,7 +165,7 @@ public class FinishMarker {
       }
     }
     if (PsiType.INT.equals(returnType) || PsiType.LONG.equals(returnType)) {
-      return getMarkerForIntegral(nonTerminalReturns, terminalReturn, mayNeedMarker, returnType, factory);
+      return getMarkerForIntegral(nonTerminalReturns, terminalReturn, returnType, factory);
     }
     if (!(returnType instanceof PsiPrimitiveType)) {
       if (StreamEx.of(nonTerminalReturns).map(ret -> NullabilityUtil.getExpressionNullability(ret, true))
@@ -179,7 +179,7 @@ public class FinishMarker {
         return new FinishMarker(FinishMarkerType.SEPARATE_VAR, value);
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, true));
   }
 
   @Nullable
@@ -208,7 +208,7 @@ public class FinishMarker {
   @NotNull
   private static FinishMarker getMarkerForIntegral(List<PsiExpression> nonTerminalReturns,
                                                    PsiReturnStatement terminalReturn,
-                                                   boolean mayNeedMarker, PsiType returnType, PsiElementFactory factory) {
+                                                   PsiType returnType, PsiElementFactory factory) {
     boolean isLong = PsiType.LONG.equals(returnType);
     LongRangeSet fullSet = requireNonNull(LongRangeSet.fromType(returnType));
     LongRangeSet set = nonTerminalReturns.stream()
@@ -246,7 +246,7 @@ public class FinishMarker {
         return new FinishMarker(FinishMarkerType.VALUE_NON_EQUAL, factory.createExpressionFromText(text, null));
       }
     }
-    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, mayNeedMarker));
+    return new FinishMarker(FinishMarkerType.SEPARATE_VAR, findBestExpression(terminalReturn, nonTerminalReturns, true));
   }
 
   @Contract("null -> false")

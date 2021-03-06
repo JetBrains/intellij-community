@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions
 
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.UsageHandler
-import com.intellij.find.usages.UsageOptions.createOptions
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
-import com.intellij.find.usages.impl.buildQuery
+import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.usages.UsageSearchPresentation
 import com.intellij.usages.UsageSearcher
@@ -29,14 +30,14 @@ internal data class ShowTargetUsagesActionHandler<O>(
   }
 
   override fun createUsageSearcher(): UsageSearcher {
-    val query = buildQuery(project, target, usageHandler, allOptions)
+    val query = buildUsageViewQuery(project, target, usageHandler, allOptions)
     return UsageSearcher {
       query.forEach(it)
     }
   }
 
   override fun showDialog(): ShowUsagesActionHandler? {
-    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, false)
+    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, target.showScopeChooser(), false)
     if (!dialog.showAndGet()) {
       // cancelled
       return null
@@ -54,7 +55,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
   override fun getSelectedScope(): SearchScope = allOptions.options.searchScope
 
-  override fun getMaximalScope(): SearchScope = usageHandler.maximalSearchScope
+  override fun getMaximalScope(): SearchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
 
   companion object {
 

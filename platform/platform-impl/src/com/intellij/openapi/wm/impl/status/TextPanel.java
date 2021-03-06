@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
@@ -8,9 +9,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends NonOpaquePanel implements Accessible {
-  @Nullable private String myText;
+  @Nullable @Nls private String myText;
 
   private Integer myPrefHeight;
   private Dimension myExplicitSize;
@@ -34,7 +38,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
 
   @Override
   public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);
@@ -46,7 +50,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   public void recomputeSize() {
-    final JLabel label = new JLabel("XXX");
+    final JLabel label = new JLabel("XXX"); //NON-NLS
     label.setFont(getFont());
     myPrefHeight = label.getPreferredSize().height;
   }
@@ -55,12 +59,13 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
    * @deprecated no effect
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void resetColor() {
   }
 
   @Override
   protected void paintComponent(final Graphics g) {
-    String s = getText();
+    @Nls String s = getText();
     int panelWidth = getWidth();
     int panelHeight = getHeight();
     if (s == null) return;
@@ -70,10 +75,10 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     UISettings.setupAntialiasing(g);
 
     Rectangle bounds = new Rectangle(panelWidth, panelHeight);
-    int x = getTextX(g2);
-    int maxWidth = panelWidth - x - getInsets().right;
     FontMetrics fm = g.getFontMetrics();
     int textWidth = fm.stringWidth(s);
+    int x = textWidth > panelWidth ? getInsets().left : getTextX(g2);
+    int maxWidth = panelWidth - x - getInsets().right;
     if (textWidth > maxWidth) {
       s = truncateText(s, bounds, fm, new Rectangle(), new Rectangle(), maxWidth);
     }
@@ -103,7 +108,8 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     return insets.left;
   }
 
-  protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
+  @Nls
+  protected String truncateText(@Nls String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
     return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                               SwingConstants.TRAILING,
                                               bounds, iconR, textR, 0);
@@ -139,6 +145,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   @Nullable
+  @Nls
   public String getText() {
     return myText;
   }
@@ -189,6 +196,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
      * @deprecated arrows are not painted anymore
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     protected boolean shouldPaintArrows() {
       return false;
     }
@@ -236,6 +244,8 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     }
 
     public boolean hasIcon() { return myIcon != null; }
+
+    public @Nullable Icon getIcon() { return myIcon; }
   }
 
   public static class ExtraSize extends TextPanel {

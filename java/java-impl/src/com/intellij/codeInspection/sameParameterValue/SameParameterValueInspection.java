@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +37,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -61,18 +61,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    JPanel panel = new InspectionOptionsPanel();
     LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
                                                                                     JavaBundle
                                                                                       .message("label.minimal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
-    panel.add(component, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
-
+    panel.add(component);
 
     IntegerField minimalUsageCountEditor = new IntegerField(null, 1, Integer.MAX_VALUE);
-    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<Integer>() {
+    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<>() {
       @Override
       public void valueChanged(@NotNull Integer newValue) {
         minimalUsageCount = newValue;
@@ -80,8 +79,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     });
     minimalUsageCountEditor.setValue(minimalUsageCount);
     minimalUsageCountEditor.setColumns(4);
-    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST),
-              new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.FIRST_LINE_START, GridBagConstraints.NORTHWEST, JBUI.emptyInsets(), 0, 0));
+    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST));
     return panel;
   }
 
@@ -204,6 +202,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                  PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
                                                  PsiSubstitutor.EMPTY);
       }
+      else if (value instanceof Character) {
+        stringPresentation = shortName =  "'" + value + "'";
+      }
       else {
         stringPresentation = shortName =  String.valueOf(value);
       }
@@ -216,11 +217,11 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
                                                                      StringUtil.unquoteString(shortName)),
-                                           suggestFix ? createFix(name, stringPresentation) : null,
+                                           suggestFix ? createFix(name, stringPresentation.startsWith("\"\"") ? stringPresentation : StringUtil.escapeLineBreak(stringPresentation)) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 
-  public static class InlineParameterValueFix implements LocalQuickFix {
+  public static final class InlineParameterValueFix implements LocalQuickFix {
     private final String myValue;
     private final String myParameterName;
 
@@ -357,7 +358,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
   }
 
-  private class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
+  private final class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameParameterValueInspection myGlobal;
 
     private LocalSameParameterValueInspection(SameParameterValueInspection global) {

@@ -17,21 +17,28 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectServiceContainerInitializedListener;
+import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its base class {@link ModuleManagerEx} should be used instead.
+ */
 @State(
-  name = ModuleManagerImpl.COMPONENT_NAME,
+  name = JpsProjectLoader.MODULE_MANAGER_COMPONENT,
   storages = @Storage("modules.xml"),
   useLoadedStateAsExisting = false /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */
 )
+@ApiStatus.Internal
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private final MessageBusConnection myMessageBusConnection;
 
@@ -39,7 +46,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     super(project);
 
     myMessageBusConnection = project.getMessageBus().connect(this);
-    myMessageBusConnection.setDefaultHandler((event, params) -> cleanCachedStuff());
+    myMessageBusConnection.setDefaultHandler(() -> cleanCachedStuff());
     myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
 
     // default project doesn't have modules
@@ -67,7 +74,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   }
 
   @Override
-  protected void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
+  public void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
     UnloadedModulesListChange change = AutomaticModuleUnloader.getInstance(myProject).processNewModules(modulesToLoad, modulesToUnload);
     modulesToLoad.removeAll(change.getToUnload());
     modulesToUnload.addAll(change.getToUnloadDescriptions());
@@ -110,7 +117,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createNonPersistentModule(@NotNull String name) {
-    return new ModuleImpl(name, myProject, null);
+    return new ModuleImpl(name, myProject);
   }
 
   @NotNull

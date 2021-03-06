@@ -25,7 +25,8 @@ public class ToggleDumbModeAction extends DumbAwareAction {
 
     if (isToggledDumb(project)) {
       setToggledDumb(project, false);
-    } else {
+    }
+    else {
       setToggledDumb(project, true);
       DumbServiceImpl.getInstance(project).queueTask(new DumbModeTask(project) {
         @Override

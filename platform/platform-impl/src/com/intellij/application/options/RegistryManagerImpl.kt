@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -17,6 +17,15 @@ private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryM
   }
 
   override fun intValue(key: String) = Registry.get(key).asInteger()
+
+  override fun intValue(key: String, defaultValue: Int): Int {
+    return try {
+      intValue(key)
+    }
+    catch (ignore: MissingResourceException) {
+      defaultValue
+    }
+  }
 
   override fun get(key: String) = Registry.get(key)
 

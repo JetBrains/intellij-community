@@ -40,12 +40,19 @@ public class LineCommentCopyPastePreProcessor implements CopyPastePreProcessor {
     int lineStartOffset = DocumentUtil.getLineStartOffset(offset, document);
     CharSequence chars = document.getImmutableCharSequence();
     int firstNonWsLineOffset = CharArrayUtil.shiftForward(chars, lineStartOffset, " \t");
-    if (offset < (firstNonWsLineOffset + lineCommentPrefix.length()) || 
-        !CharArrayUtil.regionMatches(chars, firstNonWsLineOffset, lineCommentPrefix)) return text;
-    
+    if (offset < (firstNonWsLineOffset + lineCommentPrefix.length()) ||
+        !CharArrayUtil.regionMatches(chars, firstNonWsLineOffset, lineCommentPrefix)) {
+      return text;
+    }
+
     CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
     String lineStartReplacement = "\n" + chars.subSequence(lineStartOffset, firstNonWsLineOffset + lineCommentPrefix.length()) +
                                   (codeStyleSettings.getCommonSettings(language).LINE_COMMENT_ADD_SPACE ? " " : "");
     return StringUtil.trimTrailing(text, '\n').replace("\n", lineStartReplacement);
+  }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,7 @@ public final class FontUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String rightArrow(@NotNull Font font) {
     return canDisplay(font, '\u2192', "->");
   }
@@ -48,10 +50,11 @@ public final class FontUtil {
 
   /**
    * The method checks whether the font can display the character.
-   *
+   * <p>
    * If the character should be shown in editor, the method might return incorrect result,
    * since the editor will try to use fallback fonts if the base one cannot display the character.
-   * In this case use {@link com.intellij.openapi.editor.ex.util.EditorUtil#displayCharInEditor(char, com.intellij.openapi.editor.colors.TextAttributesKey, String)} instead.
+   * In this case use {@code com.intellij.openapi.editor.ex.util.EditorUtil#displayCharInEditor(char, com.intellij.openapi.editor.colors.TextAttributesKey, String)} instead.
+   * </p>
    */
   @NotNull
   public static String canDisplay(@NotNull Font font, char value, @NotNull String defaultValue) {
@@ -59,7 +62,7 @@ public final class FontUtil {
   }
 
   @NotNull
-  public static String spaceAndThinSpace() {
+  public static @NlsSafe String spaceAndThinSpace() {
     return " " + thinSpace();
   }
 

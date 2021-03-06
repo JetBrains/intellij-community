@@ -45,7 +45,7 @@ public class PyDecoratorTest extends PyTestCase {
   }
 
   public void testDecoParamCall() {
-    PsiElement targetElement = find().getParent();
+    PsiElement targetElement = find().getParent().getParent(); //first parent is PyCallExpression
     assertTrue(targetElement instanceof PyDecorator);
     PyDecorator deco = (PyDecorator)targetElement;
     PyFunction decofun = deco.getTarget();

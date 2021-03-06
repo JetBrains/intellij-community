@@ -1,11 +1,12 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Consider using {@link com.intellij.util.io.DirectoryContentBuilder} instead, it provides more convenient Kotlin DSL.
+ * Consider using {@link DirectoryContentBuilder} instead, it provides more convenient Kotlin DSL.
  */
-public class TestFileSystemBuilder {
+public final class TestFileSystemBuilder {
   private final TestFileSystemItem myItem;
   private final TestFileSystemBuilder myParent;
 

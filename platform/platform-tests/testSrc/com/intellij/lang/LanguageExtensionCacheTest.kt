@@ -66,7 +66,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   fun `test extensions are cleared when explicit extension is added`() {
     val language = PlainTextLanguage.INSTANCE
 
-    val unregisterDialectDisposable = Disposer.newDisposable(testRootDisposable, null)
+    val unregisterDialectDisposable = Disposer.newDisposable(testRootDisposable, getTestName(false))
     val plainTextDialect = registerLanguageDialect(unregisterDialectDisposable)
 
     val extensionRegistrationDisposable = registerExtension(myExtensionPointName, language.id, String::class.java.name)   // emulate registration via plugin.xml
@@ -98,7 +98,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   }
 
   fun `test CompletionExtension extensions are cleared when explicit extension is added`() {
-    val unregisterDialectDisposable = Disposer.newDisposable(testRootDisposable, null)
+    val unregisterDialectDisposable = Disposer.newDisposable(testRootDisposable, getTestName(false))
     val plainTextDialect = registerLanguageDialect(unregisterDialectDisposable)
 
     val extensionRegistrationDisposable = registerExtension(myCompletionExtensionPointName, PlainTextLanguage.INSTANCE.id, String::class.java.name)

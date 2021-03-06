@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
   <component name="copyright">
     <Base>

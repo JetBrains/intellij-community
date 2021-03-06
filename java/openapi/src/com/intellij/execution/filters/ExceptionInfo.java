@@ -9,13 +9,14 @@ import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public class ExceptionInfo {
-  private static final String EXCEPTION_IN_THREAD = "Exception in thread \"";
-  private static final String CAUSED_BY = "Caused by: ";
+  private static final @NonNls String EXCEPTION_IN_THREAD = "Exception in thread \"";
+  private static final @NonNls String CAUSED_BY = "Caused by: ";
   private final int myClassNameOffset;
   private final @NotNull String myExceptionClassName;
   private final @NotNull String myExceptionMessage;
@@ -90,7 +91,7 @@ public class ExceptionInfo {
     String message = colonPos == -1 ? null : line.substring(colonPos + 1).trim();
     message = StringUtil.notNullize(message);
     int absoluteOffset = textEndOffset - line.length();
-    String exceptionName = line.substring(classRange.getStartOffset(), classRange.getEndOffset());
+    String exceptionName = classRange.substring(line);
     int startOffset = classRange.getStartOffset() + absoluteOffset;
     return createExceptionInfo(message, exceptionName, startOffset);
   }
@@ -183,7 +184,7 @@ public class ExceptionInfo {
     }
   }
 
-  public ExceptionInfo consumeStackLine(String line) {
+  public ExceptionInfo consumeStackLine(@NonNls String line) {
     return null;
   }
 }

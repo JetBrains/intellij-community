@@ -6,6 +6,6 @@ import java.lang.annotation.*;
 class C {
     void foo () {
         @TA C y = null;
-        @TA C y1 = y;
+        C y1 = y;
     }
 }

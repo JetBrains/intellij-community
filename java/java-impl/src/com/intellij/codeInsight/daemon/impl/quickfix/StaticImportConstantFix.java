@@ -62,7 +62,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
         element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element, toAddStaticImports(), searchMode) {
+    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<>(element, toAddStaticImports(), searchMode) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
         ProgressManager.checkCanceled();
@@ -77,7 +77,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, Psi
   @Override
   @NotNull
   protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<PsiField>(project, editor, methodsToImport, myRef) {
+    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef) {
       @NotNull
       @Override
       protected String getPopupTitle() {

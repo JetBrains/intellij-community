@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFix;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -122,7 +123,7 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
   @TestFor(issues = "IDEA-236153")
   public void testItIgnoresSameSnapshot() {
     AtomicInteger lookupCalls = new AtomicInteger();
-    UnknownSdkResolver.EP_NAME.getPoint(null).registerExtension(new UnknownSdkResolver() {
+    UnknownSdkResolver.EP_NAME.getPoint().registerExtension(new UnknownSdkResolver() {
       @Override
       public boolean supportsResolution(@NotNull SdkTypeId sdkTypeId) {
         return true;
@@ -283,13 +284,13 @@ public class UnknownSdkTrackerTest extends JavaCodeInsightFixtureTestCase {
 
   @NotNull
   private List<String> detectMissingSdks() {
-    UnknownSdkTracker.getInstance(getProject()).updateUnknownSdksNow();
+    UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     UIUtil.dispatchAllInvocationEvents();
 
     ArrayList<String> infos = new ArrayList<>();
-    for (UnknownSdkEditorNotification.SimpleSdkFixInfo notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
+    for (UnknownSdkFix notification : UnknownSdkEditorNotification.getInstance(getProject()).getNotifications()) {
       infos.add("SdkFixInfo:" + notification.toString());
     }
 

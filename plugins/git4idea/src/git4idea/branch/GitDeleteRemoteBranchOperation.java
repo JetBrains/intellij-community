@@ -38,6 +38,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static git4idea.GitNotificationIdsHolder.REMOTE_BRANCH_DELETION_ERROR;
+import static git4idea.GitNotificationIdsHolder.REMOTE_BRANCH_DELETION_SUCCESS;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANCEL;
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE_WITH_TRACKING;
@@ -137,9 +139,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       GitCommandResult res;
       GitRemote remote = getRemoteByName(repository, remoteName);
       if (remote == null) {
-        String error = "Couldn't find remote by name: " + remoteName;
-        LOG.error(error);
-        res = GitCommandResult.error(error);
+        LOG.error("Couldn't find remote by name: " + remoteName);
+        res = GitCommandResult.error(GitBundle.message("delete.remote.branch.operation.couldn.t.find.remote.by.name", remoteName));
       }
       else {
         res = pushDeletion(repository, remote, branch);
@@ -152,7 +153,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     }
     if (!result.totalSuccess()) {
       VcsNotifier.getInstance(myProject).notifyError(
-        GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
+        REMOTE_BRANCH_DELETION_ERROR, GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
         result.getErrorOutputWithReposIndication(),
         true);
     }
@@ -197,6 +198,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
                                   StringUtil.join(localBranches, ", "));
     }
     VcsNotifier.getInstance(myProject).notifySuccess(
+      REMOTE_BRANCH_DELETION_SUCCESS,
       GitBundle.message("delete.remote.branch.operation.deleted.remote.branch", remoteBranchName),
       message);
   }

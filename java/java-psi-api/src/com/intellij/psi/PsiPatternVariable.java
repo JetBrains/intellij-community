@@ -2,12 +2,11 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A variable declared within the pattern
  */
-public interface PsiPatternVariable extends PsiParameter {
+public interface PsiPatternVariable extends PsiParameter, PsiModifierListOwner {
   @NotNull
   @Override
   String getName();

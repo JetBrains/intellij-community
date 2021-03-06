@@ -17,20 +17,21 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Mikhail Golubev
  */
-public class PyNewStyleStringFormatParser {
+public final class PyNewStyleStringFormatParser {
   private int myImplicitlyNumberedFieldsCounter = 0;
   private final List<Field> myTopLevelFields = new ArrayList<>();
   private final List<Integer> mySingleRightBraces = new ArrayList<>();
@@ -120,7 +121,7 @@ public class PyNewStyleStringFormatParser {
     int autoFieldNumber = myImplicitlyNumberedFieldsCounter;
 
     // in the order of appearance inside a field
-    final TIntArrayList attrAndLookupBounds = new TIntArrayList();
+    final IntList attrAndLookupBounds=new IntArrayList();
     int conversionStart = -1;
     int formatSpecStart = -1;
     final List<Field> nestedFields = new ArrayList<>();
@@ -157,9 +158,9 @@ public class PyNewStyleStringFormatParser {
           if (!recovering) {
             // avoid duplicate offsets in sequences like "]." or "]["
             addIfNotLastItem(attrAndLookupBounds, offset);
-            
+
             // no name in the field, increment implicitly named fields counter
-            if (attrAndLookupBounds.size() == 1 && attrAndLookupBounds.get(0) == startOffset + 1) {
+            if (attrAndLookupBounds.size() == 1 && attrAndLookupBounds.getInt(0) == startOffset + 1) {
               myImplicitlyNumberedFieldsCounter++;
             }
           }
@@ -205,7 +206,7 @@ public class PyNewStyleStringFormatParser {
 
     return new Field(myNodeText,
                      startOffset,
-                     attrAndLookupBounds.toNativeArray(),
+                     attrAndLookupBounds.toIntArray(),
                      conversionStart,
                      formatSpecStart,
                      nestedFields,
@@ -215,8 +216,8 @@ public class PyNewStyleStringFormatParser {
                      recursionDepth);
   }
 
-  private static void addIfNotLastItem(TIntArrayList attrAndLookupBounds, int offset) {
-    if (attrAndLookupBounds.isEmpty() || attrAndLookupBounds.get(attrAndLookupBounds.size() - 1) != offset) {
+  private static void addIfNotLastItem(IntList attrAndLookupBounds, int offset) {
+    if (attrAndLookupBounds.isEmpty() || attrAndLookupBounds.getInt(attrAndLookupBounds.size() - 1) != offset) {
       attrAndLookupBounds.add(offset);
     }
   }
@@ -234,7 +235,7 @@ public class PyNewStyleStringFormatParser {
     return offset;
   }
 
-  public static class Field extends PyStringFormatParser.SubstitutionChunk {
+  public static final class Field extends PyStringFormatParser.SubstitutionChunk {
 
     private final String myNodeText;
     private final int myLeftBraceOffset;
@@ -383,7 +384,7 @@ public class PyNewStyleStringFormatParser {
      */
     @NotNull
     public List<String> getAttributesAndLookups() {
-      return getAttributesAndLookupsRanges().stream().map(ranges -> ranges.substring(myNodeText)).collect(Collectors.toList());
+      return ContainerUtil.map(getAttributesAndLookupsRanges(), ranges -> ranges.substring(myNodeText));
     }
 
     @NotNull

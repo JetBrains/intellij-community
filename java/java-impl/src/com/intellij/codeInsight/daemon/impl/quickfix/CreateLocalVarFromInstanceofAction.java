@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author cdr
- */
 public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateLocalVarFromInstanceofAction.class);
 

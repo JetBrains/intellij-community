@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.ui.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.CommonActionsPanel;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
  public AddDomElementAction() {
-    super(XmlDomBundle.messagePointer("action.add"), IconUtil.getAddIcon());
+    super(XmlDomBundle.messagePointer("dom.action.add"), AllIcons.General.Add);
   }
 
   @Override
@@ -49,7 +50,7 @@ public abstract class AddDomElementAction extends AnAction {
         e.getPresentation().setText(actionText + (actions.length > 1 ? "..." : ""));
       }
     }
-    e.getPresentation().setIcon(IconUtil.getAddIcon());
+    e.getPresentation().setIcon(AllIcons.General.Add);
   }
 
   @Override
@@ -73,6 +74,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
   }
 
+  @NlsActions.ActionText
   protected String getActionText(final AnActionEvent e) {
     return e.getPresentation().getText();
   }
@@ -111,7 +113,7 @@ public abstract class AddDomElementAction extends AnAction {
           icon = ElementPresentationManager.getIconForClass(rawType);
           //          }
         }
-        actions.add(createAddingAction(e, XmlDomBundle.message("action.add") + " " + name, icon, type, description));
+        actions.add(createAddingAction(e, XmlDomBundle.message("dom.action.add") + " " + name, icon, type, description));
       }
     }
     if (actions.size() > 1 && showAsPopup()) {
@@ -153,7 +155,7 @@ public abstract class AddDomElementAction extends AnAction {
     protected final ActionGroup myGroup;
 
     protected ShowPopupAction(ActionGroup group) {
-      super(XmlDomBundle.message("action.add"), null, IconUtil.getAddIcon());
+      super(XmlDomBundle.message("dom.action.add"), null, AllIcons.General.Add);
       myGroup = group;
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }

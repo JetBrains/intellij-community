@@ -22,15 +22,21 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 
 public class ResizeableMappedFile implements Forceable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
@@ -38,20 +44,20 @@ public class ResizeableMappedFile implements Forceable {
   private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private long myLogicalSize;
   private long myLastWrittenLogicalSize;
-  private final PagedFileStorage myStorage;
+  protected final PagedFileStorage myStorage;
   private final int myInitialSize;
 
   static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;
   private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
 
-  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
+  public ResizeableMappedFile(@NotNull Path file, int initialSize, @Nullable StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
   }
 
   public ResizeableMappedFile(@NotNull Path file,
                               int initialSize,
-                              @Nullable PagedFileStorage.StorageLockContext lockContext,
+                              @Nullable StorageLockContext lockContext,
                               int pageSize,
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) {
@@ -125,29 +131,17 @@ public class ResizeableMappedFile implements Forceable {
     final Path lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
-      stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, IOException>() {
-        boolean parentWasCreated;
-        
-        @Nullable
-        @Override
-        public DataOutputStream execute(boolean lastAttempt) throws IOException {
-          try {
-            return new DataOutputStream(Files.newOutputStream(lengthFile));
+      stream = FileUtilRt.doIOOperation(lastAttempt -> {
+        try {
+          return new DataOutputStream(Files.newOutputStream(lengthFile));
+        }
+        catch (NoSuchFileException ex) {
+          Path parent = lengthFile.getParent();
+          if (!Files.exists(parent)) {
+            Files.createDirectories(parent);
           }
-          catch (NoSuchFileException ex) {
-            Path parent = lengthFile.getParent();
-            if (!Files.exists(parent)) {
-              if (!parentWasCreated) {
-                Files.createDirectories(parent);
-                parentWasCreated = true;
-              }
-              else {
-                throw new IOException("Parent file still doesn't exist:" + lengthFile);
-              }
-            }
-            if (!lastAttempt) return null;
-            throw ex;
-          }
+          if (!lastAttempt) return null;
+          throw ex;
         }
       });
       if (stream != null) stream.writeLong(len);
@@ -173,7 +167,7 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     if (isDirty()) {
       if (myLastWrittenLogicalSize != myLogicalSize) {
         writeLength(myLogicalSize);
@@ -185,26 +179,16 @@ public class ResizeableMappedFile implements Forceable {
 
   private long readLength() {
     Path lengthFile = getLengthFile();
-    DataInputStream stream = null;
     if (!Files.exists(lengthFile)) return 0;
-    try {
-      stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ));
+
+    try (DataInputStream stream = new DataInputStream(Files.newInputStream(lengthFile, StandardOpenOption.READ))) {
       return stream.readLong();
     }
     catch (IOException e) {
       long realSize = realSize();
       writeLength(realSize);
+      LOG.error(e);
       return realSize;
-    }
-    finally {
-      if (stream != null) {
-        try {
-          stream.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
     }
   }
 
@@ -215,15 +199,6 @@ public class ResizeableMappedFile implements Forceable {
   public void putInt(long index, int value) {
     ensureSize(index + 4);
     myStorage.putInt(index, value);
-  }
-
-  public short getShort(long index) {
-    return myStorage.getShort(index);
-  }
-
-  public void putShort(long index, short value) {
-    ensureSize(index + 2);
-    myStorage.putShort(index, value);
   }
 
   public long getLong(long index) {
@@ -239,11 +214,6 @@ public class ResizeableMappedFile implements Forceable {
     return myStorage.get(index);
   }
 
-  public void put(long index, byte value) {
-    ensureSize(index + 1);
-    myStorage.put(index, value);
-  }
-
   public void get(long index, byte[] dst, int offset, int length) {
     myStorage.get(index, dst, offset, length);
   }
@@ -253,18 +223,17 @@ public class ResizeableMappedFile implements Forceable {
     myStorage.put(index, src, offset, length);
   }
 
-  public void close() {
-    try {
+  public void close() throws IOException {
+    List<Exception> exceptions = new SmartList<>();
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
       force();
       if (truncateOnClose && myLogicalSize < myStorage.length()) {
         myStorage.resize(myLogicalSize);
       }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      myStorage.close();
+    }));
+    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> myStorage.close()));
+    if (!exceptions.isEmpty()) {
+      throw new IOException(new CompoundRuntimeException(exceptions));
     }
   }
 

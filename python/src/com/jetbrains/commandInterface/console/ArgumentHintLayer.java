@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.LineExtensionInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.commandInterface.command.Argument;
@@ -93,7 +94,7 @@ final class ArgumentHintLayer {
         final ValidationResult result = ((CommandLineFile)file).getValidationResult();
         final Pair<Boolean, Argument> arg = result != null ? result.getNextArg() : null;
         if (arg != null) {
-          final String text = wrapBracesIfNeeded(arg.first, arg.second.getHelp().getHelpString());
+          final @NlsSafe String text = wrapBracesIfNeeded(arg.first, arg.second.getHelp().getHelpString());
           final TextAttributes attributes = ConsoleViewContentType.USER_INPUT.getAttributes();
           attributes.setForegroundColor(arg.first ? requiredColour : optionalColour);
           return Collections.singletonList(new LineExtensionInfo(" " + text, attributes));

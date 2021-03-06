@@ -16,13 +16,8 @@
  */
 package org.jetbrains.builtInWebServer.ssi;
 
-import gnu.trove.THashMap;
-
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Converts dates to strings using the same format specifiers as strftime
@@ -42,12 +37,13 @@ import java.util.TimeZone;
  * @author Bip Thelin
  * @author Dan Sandberg
  */
-@SuppressWarnings("SpellCheckingInspection")
-public class Strftime {
-  protected static final Map<String, String> translate = new THashMap<>();
-  protected final SimpleDateFormat simpleDateFormat;
+@SuppressWarnings({"SpellCheckingInspection", "HardCodedStringLiteral"})
+public final class Strftime {
+  private static final Map<String, String> translate = new HashMap<>();
+  private final SimpleDateFormat simpleDateFormat;
 
   static {
+    //noinspection HardCodedStringLiteral
     translate.put("a", "EEE");
     translate.put("A", "EEEE");
     translate.put("b", "MMM");
@@ -150,7 +146,7 @@ public class Strftime {
    * @param pattern The pattern to search
    * @return The modified pattern
    */
-  protected String convertDateFormat(String pattern) {
+  private static String convertDateFormat(String pattern) {
     boolean inside = false;
     boolean mark = false;
     boolean modifiedCommand = false;
@@ -203,7 +199,7 @@ public class Strftime {
     return buf.toString();
   }
 
-  protected String quote(String str, boolean insideQuotes) {
+  private static String quote(String str, boolean insideQuotes) {
     String retVal = str;
     if (!insideQuotes) {
       retVal = '\'' + retVal + '\'';
@@ -221,7 +217,7 @@ public class Strftime {
    * @param oldInside Flag value
    * @return True if new is inside buffer
    */
-  protected boolean translateCommand(StringBuilder buf, String pattern, int index, boolean oldInside) {
+  private static boolean translateCommand(StringBuilder buf, String pattern, int index, boolean oldInside) {
     char firstChar = pattern.charAt(index);
     boolean newInside = oldInside;
 

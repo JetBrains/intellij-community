@@ -51,6 +51,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
   static final TextAttributesKey QUANTIFIER = createTextAttributesKey("REGEXP.QUANTIFIER", DefaultLanguageHighlighterColors.NUMBER);
   static final TextAttributesKey OPTIONS = createTextAttributesKey("REGEXP.OPTIONS", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
   static final TextAttributesKey NAME = createTextAttributesKey("REGEXP.NAME", DefaultLanguageHighlighterColors.IDENTIFIER);
+  public static final TextAttributesKey MATCHED_GROUPS = createTextAttributesKey("REGEXP_MATCHED_GROUPS");
 
   private final Project myProject;
   private final ParserDefinition myParserDefinition;
@@ -115,8 +116,7 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     ourMap.put(RegExpTT.PYTHON_NAMED_GROUP, PARENTHS);
     ourMap.put(RegExpTT.PYTHON_NAMED_GROUP_REF, PARENTHS);
     ourMap.put(RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF, PARENTHS);
-    ourMap.put(RegExpTT.PYTHON_COND_REF, PARENTHS);
-    ourMap.put(RegExpTT.PCRE_COND_REF, PARENTHS);
+    ourMap.put(RegExpTT.CONDITIONAL, PARENTHS);
     ourMap.put(RegExpTT.RUBY_NAMED_GROUP, PARENTHS);
     ourMap.put(RegExpTT.RUBY_QUOTED_NAMED_GROUP, PARENTHS);
     ourMap.put(RegExpTT.GROUP_BEGIN, PARENTHS);

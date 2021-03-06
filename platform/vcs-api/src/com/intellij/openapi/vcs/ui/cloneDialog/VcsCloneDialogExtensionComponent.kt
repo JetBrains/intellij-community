@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JComponent
 
 /**
@@ -24,14 +24,14 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * It is called once when extension is selected first time
    */
-  @CalledInAwt
+  @RequiresEdt
   abstract fun getView(): JComponent
 
   /**
    * Performs primary clone/checkout action. [doClone] is called from the UI-thread, but internal heavy clone task should be scheduled
    * in background
    */
-  @CalledInAwt
+  @RequiresEdt
   abstract fun doClone(checkoutListener: CheckoutProvider.Listener)
 
   /**
@@ -39,7 +39,7 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.doValidateAll
    */
-  @CalledInAwt
+  @RequiresEdt
   abstract fun doValidateAll(): List<ValidationInfo>
 
   /**
@@ -47,7 +47,7 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.getPreferredFocusedComponent
    */
-  @CalledInAwt
+  @RequiresEdt
   open fun getPreferredFocusedComponent(): JComponent? = null
 
   /**
@@ -55,17 +55,17 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    *
    * @see VcsCloneDialogComponentStateListener
    */
-  @CalledInAwt
+  @RequiresEdt
   fun addComponentStateListener(componentStateListener: VcsCloneDialogComponentStateListener) {
     listeners.addListener(componentStateListener)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun removeComponentListener(componentStateListener: VcsCloneDialogComponentStateListener) {
     listeners.removeListener(componentStateListener)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun onComponentSelected()
 
   final override fun dispose() = listeners.listeners.clear()

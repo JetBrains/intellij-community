@@ -11,19 +11,21 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements DumbAware, UsageGroupingRuleEx {
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
@@ -45,6 +47,11 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     return TestSourcesFilter.isTestSources(virtualFile, project) ? TEST : PRODUCTION;
   }
 
+  @Override
+  public String getGroupingActionId() {
+    return "UsageGrouping.Scope";
+  }
+
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     @Override
     public Icon getIcon(boolean isOpen) {
@@ -54,7 +61,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return "Test";
+      return UsageViewBundle.message("list.item.test");
     }
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
@@ -66,7 +73,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return "Production";
+      return UsageViewBundle.message("list.item.production");
     }
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
@@ -78,7 +85,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return "Library";
+      return UsageViewBundle.message("list.item.library");
     }
   };
   private abstract static class UsageScopeGroup implements UsageGroup {

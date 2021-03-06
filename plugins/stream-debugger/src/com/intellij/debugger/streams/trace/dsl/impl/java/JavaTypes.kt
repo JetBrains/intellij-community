@@ -15,19 +15,19 @@ import org.jetbrains.annotations.Contract
  * @author Vitaliy.Bibaev
  */
 object JavaTypes : Types {
-  override val ANY: GenericType = ClassTypeImpl("java.lang.Object", "new java.lang.Object()")
+  override val ANY: GenericType = ClassTypeImpl(CommonClassNames.JAVA_LANG_OBJECT, "new java.lang.Object()")
 
-  override val INT: GenericType = GenericTypeImpl("int", "java.lang.Integer", "0")
+  override val INT: GenericType = GenericTypeImpl("int", CommonClassNames.JAVA_LANG_INTEGER, "0")
 
-  override val BOOLEAN: GenericType = GenericTypeImpl("boolean", "java.lang.Boolean", "false")
-  override val DOUBLE: GenericType = GenericTypeImpl("double", "java.lang.Double", "0.")
-  override val EXCEPTION: GenericType = ClassTypeImpl("java.lang.Throwable")
-  override val VOID: GenericType = GenericTypeImpl("void", "java.lang.Void", "null")
+  override val BOOLEAN: GenericType = GenericTypeImpl("boolean", CommonClassNames.JAVA_LANG_BOOLEAN, "false")
+  override val DOUBLE: GenericType = GenericTypeImpl("double", CommonClassNames.JAVA_LANG_DOUBLE, "0.")
+  override val EXCEPTION: GenericType = ClassTypeImpl(CommonClassNames.JAVA_LANG_THROWABLE)
+  override val VOID: GenericType = GenericTypeImpl("void", CommonClassNames.JAVA_LANG_VOID, "null")
 
   override val TIME: GenericType = ClassTypeImpl("java.util.concurrent.atomic.AtomicInteger",
                                                  "new java.util.concurrent.atomic.AtomicInteger()")
-  override val STRING: GenericType = ClassTypeImpl("java.lang.String", "\"\"")
-  override val LONG: GenericType = GenericTypeImpl("long", "java.lang.Long", "0L")
+  override val STRING: GenericType = ClassTypeImpl(CommonClassNames.JAVA_LANG_STRING, "\"\"")
+  override val LONG: GenericType = GenericTypeImpl("long", CommonClassNames.JAVA_LANG_LONG, "0L")
 
   override fun array(elementType: GenericType): ArrayType =
     ArrayTypeImpl(elementType, { "$it[]" }, { "new ${elementType.variableTypeName}[$it]" })
@@ -43,7 +43,7 @@ object JavaTypes : Types {
 
   override fun nullable(typeSelector: Types.() -> GenericType): GenericType = this.typeSelector()
 
-  private val optional: GenericType = ClassTypeImpl("java.util.Optional")
+  private val optional: GenericType = ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL)
   private val optionalInt: GenericType = ClassTypeImpl("java.util.OptionalInt")
   private val optionalLong: GenericType = ClassTypeImpl("java.util.OptionalLong")
   private val optionalDouble: GenericType = ClassTypeImpl("java.util.OptionalDouble")

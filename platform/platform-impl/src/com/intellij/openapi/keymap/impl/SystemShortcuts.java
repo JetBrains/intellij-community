@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -170,7 +170,7 @@ public final class SystemShortcuts {
     return result;
   }
 
-  private static <T> T computeOnEdt(Supplier<T> supplier) {
+  private static <T> T computeOnEdt(Supplier<? extends T> supplier) {
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();
@@ -296,9 +296,9 @@ public final class SystemShortcuts {
           }
         }
 
-        KeymapPanel
-          .addKeyboardShortcut(actionId, ActionShortcutRestrictions.getInstance().getForActionId(actionId), keymap, component, conflicted,
-                               SystemShortcuts.this);
+        KeymapPanel.addKeyboardShortcut(
+          actionId, ActionShortcutRestrictions.getInstance().getForActionId(actionId), keymap, component, conflicted, this);
+
         notification.expire();
       });
       notification.addAction(configureShortcut);
@@ -338,7 +338,7 @@ public final class SystemShortcuts {
     notification.notify(null);
   }
 
-  private static Class ourShkClass;
+  private static Class<?> ourShkClass;
   private static Method ourMethodGetDescription;
   private static Method ourMethodReadSystemHotkeys;
 
@@ -346,9 +346,6 @@ public final class SystemShortcuts {
   String getDescription(@NotNull AWTKeyStroke systemHotkey) {
     if (ourShkClass == null) {
       ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-    }
-    if (ourShkClass == null) {
-      return ourUnknownSysAction;
     }
 
     if (ourMethodGetDescription == null) {
@@ -397,9 +394,6 @@ public final class SystemShortcuts {
 
       if (ourShkClass == null) {
         ourShkClass = ReflectionUtil.forName("java.awt.desktop.SystemHotkey");
-      }
-      if (ourShkClass == null) {
-        return;
       }
 
       if (ourMethodReadSystemHotkeys == null) {

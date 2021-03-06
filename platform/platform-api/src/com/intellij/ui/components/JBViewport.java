@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
@@ -30,21 +31,17 @@ import java.awt.event.ContainerListener;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
-
   public static final Key<Boolean> FORCE_VISIBLE_ROW_COUNT_KEY = Key.create("forceVisibleRowCount");
 
   private static final MethodInvocator ourCanUseWindowBlitterMethod = new MethodInvocator(JViewport.class, "canUseWindowBlitter");
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
   private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
 
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug",
-                                                                                             PluginId.getId("com.intellij"));
   private static final int NOTIFICATION_TIMEOUT = 1500;
 
   private Notification myPreviousNotification;
 
   private static final ViewportLayout ourLayoutManager = new ViewportLayout() {
-
     @Override
     public void layoutContainer(Container parent) {
       if (parent instanceof JViewport) {
@@ -130,11 +127,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private void checkScrollingCapabilities() {
     if (myPreviousNotification == null || myPreviousNotification.isExpired()) {
       if (!Boolean.TRUE.equals(isWindowBlitterAvailableFor(this))) {
-        myPreviousNotification = notify("Scrolling: cannot use window blitter");
+        myPreviousNotification = notify("Scrolling: cannot use window blitter"); //NON-NLS
       }
       else {
         if (!Boolean.TRUE.equals(isTrueDoubleBufferingAvailableFor(this))) {
-          myPreviousNotification = notify("Scrolling: cannot use true double buffering");
+          myPreviousNotification = notify("Scrolling: cannot use true double buffering"); //NON-NLS
         }
       }
     }
@@ -189,14 +186,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return null;
   }
 
-  private static Notification notify(String message) {
-    Notification notification = NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
+  private static Notification notify(@NlsContexts.NotificationContent String message) {
+    Notification notification = NotificationGroupManager.getInstance().getNotificationGroup("scrolling-capabilities-debug")
+      .createNotification(message, NotificationType.INFORMATION);
     notification.notify(null);
 
     Timer timer = new Timer(NOTIFICATION_TIMEOUT, event -> notification.expire());
     timer.setRepeats(false);
     timer.start();
-
     return notification;
   }
 
@@ -476,12 +473,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     private void addViewInsets(JComponent view, Insets insets) {
       if (this == view.getBorder()) {
-        Container parent = view.getParent();
-        if (parent instanceof JViewport) {
-          JViewport viewport = (JViewport)parent;
-          Container grand = viewport.getParent();
-          if (grand instanceof JScrollPane) {
-            JScrollPane pane = (JScrollPane)grand;
+        JViewport viewport = ComponentUtil.getViewport(view);
+        if (viewport != null) {
+          JScrollPane pane = ComponentUtil.getScrollPane(viewport);
+          if (pane != null) {
             // calculate empty border under vertical scroll bar
             JScrollBar vsb = pane.getVerticalScrollBar();
             if (vsb != null && vsb.isVisible()) {

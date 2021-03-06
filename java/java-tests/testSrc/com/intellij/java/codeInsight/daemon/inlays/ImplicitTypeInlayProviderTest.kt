@@ -28,6 +28,38 @@ class Demo {
     testAnnotations(text)
   }
 
+  fun `test cast`() {
+    val text = """
+class Demo {
+  private static void pure(Object object) {
+    var x = (String)object;
+  }
+}"""
+    testAnnotations(text)
+  }
+
+  fun `test unknown type`() {
+    val text = """
+class Demo {
+  private static void pure(Object object) {
+    var x = unresolved;
+  }
+}"""
+    testAnnotations(text)
+  }
+
+  fun `test long`() {
+    val text = """
+class Demo {
+  class GenericLongClass<T1, T2> {}
+
+  private static void pure(GenericLongClass<Integer, GenericLongClass<String, Integer>> object) {
+    var x<# [:  [[Demo . GenericLongClass] [< [Integer ,  [[Demo . GenericLongClass] [< ... >]]] >]]] #> = object;
+  }
+}"""
+    testAnnotations(text)
+  }
+
 
   private fun testAnnotations(
     text: String

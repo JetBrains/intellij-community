@@ -17,6 +17,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
@@ -47,7 +48,7 @@ class TestCategory extends TestPackage {
       getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
     final String category = getConfiguration().getPersistentData().getCategory();
     if (category == null || category.isEmpty()) {
-      throw new RuntimeConfigurationError("Category is not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("category.is.not.specified.error.message"));
     }
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     if (getSourceScope() == null) {
@@ -65,7 +66,7 @@ class TestCategory extends TestPackage {
 
   @Override
   public String suggestActionName() {
-    return "Tests of " + getConfiguration().getPersistentData().getCategory();
+    return JUnitBundle.message("action.text.test.category", getConfiguration().getPersistentData().getCategory());
   }
 
   @Override

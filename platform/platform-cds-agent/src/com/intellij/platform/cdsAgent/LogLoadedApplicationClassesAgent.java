@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.cdsAgent;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +29,9 @@ import java.util.stream.Collectors;
  * other dependencies)
  * <p>
  * Java Agent to log all loaded class in CDS supported format
- * [JEP 310](https://openjdk.java.net/jeps/310)
+ * <a href="https://openjdk.java.net/jeps/310">JEP 310</a>
  */
-public class LogLoadedApplicationClassesAgent {
+public final class LogLoadedApplicationClassesAgent {
   public static final String TARGET_FILE = "JB_CDS_TARGET_FILE";
   public static final String USE_APP_CDS = "JB_CDS_USE_APP_CDS";
 
@@ -266,7 +266,7 @@ public class LogLoadedApplicationClassesAgent {
    * Generated report file in the classes list format
    * compatible with JDK loader from src/hotspot/share/classfile/classListParser.cpp
    */
-  private static class ClassesLogger {
+  private static final class ClassesLogger {
     private int myIdCounter = 0;
     private final Map<Class<?>, ClassInfo> myClasses = new LinkedHashMap<>();
     private final List<String> myLog = new ArrayList<>();

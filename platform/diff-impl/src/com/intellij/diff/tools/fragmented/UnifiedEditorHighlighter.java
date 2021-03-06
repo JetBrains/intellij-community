@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +8,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
@@ -54,6 +41,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
                     int textLength) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
+    int i = 0;
     int offset = 0;
 
     for (HighlightRange range : ranges) {
@@ -69,6 +57,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
 
       HighlighterIterator it = range.getSide().select(it1, it2);
       while (!it.atEnd() && changed.getStartOffset() >= it.getEnd()) {
+        if (i++ % 1024 == 0) ProgressManager.checkCanceled();
         it.advance();
       }
 
@@ -95,6 +84,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
           break;
         }
 
+        if (i++ % 1024 == 0) ProgressManager.checkCanceled();
         it.advance();
         if (it.atEnd()) {
           LOG.error("Unexpected end of highlighter");
@@ -142,7 +132,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   public void setEditor(@NotNull HighlighterClient editor) {
   }
 
-  private static class ProxyIterator implements HighlighterIterator {
+  private static final class ProxyIterator implements HighlighterIterator {
     @NotNull
     private final Document myDocument;
     private int myIdx;
@@ -200,7 +190,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     }
   }
 
-  private static class Element {
+  private static final class Element {
     private final int myStart;
     private final int myEnd;
     private final IElementType myElementType;

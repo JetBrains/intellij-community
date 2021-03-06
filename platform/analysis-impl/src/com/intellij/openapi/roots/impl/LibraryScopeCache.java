@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
@@ -17,8 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -28,19 +26,18 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author yole
  */
-public class LibraryScopeCache {
-
+public final class LibraryScopeCache {
   private final LibrariesOnlyScope myLibrariesOnlyScope;
 
-  public static LibraryScopeCache getInstance(Project project) {
-    return ServiceManager.getService(project, LibraryScopeCache.class);
+  public static LibraryScopeCache getInstance(@NotNull Project project) {
+    return project.getService(LibraryScopeCache.class);
   }
 
   private final Project myProject;
   private final ConcurrentMap<Module[], GlobalSearchScope> myLibraryScopes =
-    ConcurrentCollectionFactory.createMap(new TObjectHashingStrategy<Module[]>() {
+    ConcurrentCollectionFactory.createConcurrentMap(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(Module[] object) {
+      public int hashCode(Module[] object) {
         return Arrays.hashCode(object);
       }
 
@@ -148,8 +145,8 @@ public class LibraryScopeCache {
   }
 
   private @NotNull GlobalSearchScope calcLibraryUseScope(@NotNull List<? extends OrderEntry> entries) {
-    Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
-    Set<Module> modulesWithSdk = new THashSet<>(entries.size());
+    Set<Module> modulesWithLibrary = new HashSet<>(entries.size());
+    Set<Module> modulesWithSdk = new HashSet<>(entries.size());
     for (OrderEntry entry : entries) {
       (entry instanceof JdkOrderEntry ? modulesWithSdk : modulesWithLibrary).add(entry.getOwnerModule());
     }
@@ -175,24 +172,17 @@ public class LibraryScopeCache {
     return GlobalSearchScope.union(united.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
-  private static class LibrariesOnlyScope extends GlobalSearchScope {
-    private final GlobalSearchScope myOriginal;
+  private static final class LibrariesOnlyScope extends DelegatingGlobalSearchScope {
     private final ProjectFileIndex myIndex;
 
     private LibrariesOnlyScope(@NotNull GlobalSearchScope original, @NotNull Project project) {
-      super(project);
+      super(original);
       myIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      myOriginal = original;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myOriginal.contains(file) && myIndex.isInLibrary(file);
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return myOriginal.compare(file1, file2);
+      return super.contains(file) && myIndex.isInLibrary(file);
     }
 
     @Override

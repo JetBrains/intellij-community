@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package org.jetbrains.java.generate.template;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -39,7 +35,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
    *
    * @param resource the resource name. Will lookup using the classpath.
    * @return the content if the resource
-   * @throws java.io.IOException error reading the file.
+   * @throws IOException error reading the file.
    */
   protected static String readFile(String resource, Class<? extends TemplatesManager> templatesManagerClass) throws IOException {
     BufferedInputStream in = new BufferedInputStream(templatesManagerClass.getResourceAsStream(resource));

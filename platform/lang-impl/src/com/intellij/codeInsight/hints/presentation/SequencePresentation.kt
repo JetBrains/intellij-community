@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
-import com.intellij.codeInsight.hints.dimension
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -22,19 +21,10 @@ class SequencePresentation(val presentations: List<InlayPresentation>) : BasePre
     }
   }
 
-  fun calcDimensions() {
-    width = presentations.sumBy { it.width }
-    height = presentations.maxBy { it.height }!!.height
-  }
-
-  override var width: Int = 0
-    private set
-  override var height: Int = 0
-    private set
-
-  init {
-    calcDimensions()
-  }
+  override val width: Int
+    get() = presentations.sumBy { it.width }
+  override val height: Int
+    get() = presentations.maxBy { it.height }!!.height
 
   private var presentationUnderCursor: InlayPresentation? = null
 
@@ -121,10 +111,7 @@ class SequencePresentation(val presentations: List<InlayPresentation>) : BasePre
     }
 
     override fun sizeChanged(previous: Dimension, current: Dimension) {
-      val old = dimension()
-      calcDimensions()
-      val new = dimension()
-      this@SequencePresentation.fireSizeChanged(old, new)
+      this@SequencePresentation.fireSizeChanged(previous, current)
     }
 
     private fun shiftOfCurrent(): Int {

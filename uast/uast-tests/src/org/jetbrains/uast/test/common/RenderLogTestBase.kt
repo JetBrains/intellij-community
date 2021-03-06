@@ -4,7 +4,7 @@ package org.jetbrains.uast.test.common
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.env.assertEqualsToFile
+import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
 import java.io.File

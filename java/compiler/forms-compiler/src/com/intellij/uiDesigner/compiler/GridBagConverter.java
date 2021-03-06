@@ -290,9 +290,7 @@ public class GridBagConverter {
       return 1.0;
     }
     boolean canGrow = ((policy & GridConstraints.SIZEPOLICY_CAN_GROW) != 0);
-    for (Object myConstraint : myConstraints) {
-      GridConstraints otherConstraints = (GridConstraints)myConstraint;
-
+    for (GridConstraints otherConstraints : myConstraints) {
       if (!constraintsIntersect(horizontal, constraints, otherConstraints)) {
         int otherPolicy = horizontal ? otherConstraints.getHSizePolicy() : otherConstraints.getVSizePolicy();
         if ((otherPolicy & GridConstraints.SIZEPOLICY_WANT_GROW) != 0) {

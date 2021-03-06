@@ -1,12 +1,7 @@
-//
-// Created by max on 5/4/12.
-//
-// To change the template use AppCode | Preferences | File Templates.
-//
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #import <Foundation/Foundation.h>
-#import <JavaVM/jni.h>
+#import <JavaNativeFoundation/jnf_fallback_jni.h>
 
 
 @interface Launcher : NSObject {
@@ -19,3 +14,12 @@ BOOL validationJavaVersion();
 
 - (void) launch;
 @end
+
+NSString *getExecutable();
+NSString *jvmVersion(NSBundle *bundle);
+NSString *requiredJvmVersions();
+NSString *getPropertiesFilePath();
+NSString *getPreferencesFolderPath();
+BOOL meetMinRequirements(NSString *vmVersion);
+BOOL satisfies(NSString *vmVersion, NSString *requiredVersion);
+typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, JNIEnv **env, void *args);

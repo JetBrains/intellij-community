@@ -144,7 +144,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     }
   }
 
-  private static class DeclarationVisitor
+  private static final class DeclarationVisitor
     extends JavaRecursiveElementWalkingVisitor {
 
     private final Set<String> declarations;
@@ -159,8 +159,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     public void visitVariable(PsiVariable variable) {
       super.visitVariable(variable);
       final String name = variable.getName();
-      for (Object declaration : declarations) {
-        final String testName = (String)declaration;
+      for (String testName : declarations) {
         if (testName.equals(name)) {
           hasConflict = true;
           break;

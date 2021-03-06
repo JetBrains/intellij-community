@@ -9,7 +9,7 @@ interface PyCondaSdkCustomizer {
   val preferCondaEnvironments: Boolean
     get() = false
 
-  val detectEnvironmentsOutsideEnvsFolder: Boolean
+  val detectBaseEnvironment: Boolean
     get() = false
 
   val preferExistingEnvironments: Boolean

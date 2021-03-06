@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
@@ -43,6 +43,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
                                   @NotNull BuildProgressListener buildProgressListener,
                                   @NotNull BuildDescriptor descriptor,
                                   @NotNull ExternalSystemTaskId taskId,
+                                  @NotNull Function<String, String> targetFileMapper,
                                   @Nullable Function<MavenParsingContext, StartBuildEvent> startBuildEventSupplier) {
 
     myBuildProgressListener = buildProgressListener;
@@ -53,7 +54,7 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myStartBuildEventSupplier = startBuildEventSupplier != null ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "")
       .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
 
-    myParser = MavenOutputParserProvider.createMavenOutputParser(myTaskId);
+    myParser = MavenOutputParserProvider.createMavenOutputParser(project, myTaskId, targetFileMapper);
 
     myInstantReader = new BuildOutputInstantReaderImpl(
       myTaskId, myTaskId,

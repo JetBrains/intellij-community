@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,7 +29,7 @@ public class StatusPanel extends JPanel {
   public void update() {
     String message = getMessage();
     myTextLabel.setVisible(message != null);
-    myTextLabel.setText(StringUtil.notNullize(message));
+    myTextLabel.setText(message);
   }
 
   public void setBusy(boolean busy) {
@@ -44,7 +43,7 @@ public class StatusPanel extends JPanel {
     }
   }
 
-  @Nls
+  @NlsContexts.Label
   @Nullable
   protected String getMessage() {
     return null;

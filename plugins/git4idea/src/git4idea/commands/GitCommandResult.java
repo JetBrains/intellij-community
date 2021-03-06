@@ -1,26 +1,16 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -106,28 +96,33 @@ public class GitCommandResult {
     return Collections.unmodifiableList(myErrorOutput);
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("{%d} %nOutput: %n%s %nError output: %n%s", myExitCode, myOutput, myErrorOutput);
   }
 
   @NotNull
-  public String getErrorOutputAsHtmlString() {
-    return StringUtil.join(cleanup(getErrorOrStdOutput()), "<br/>");
+  @NlsSafe
+  public @NlsContexts.NotificationContent String getErrorOutputAsHtmlString() {
+    return StringUtil.join(cleanup(getErrorOrStdOutput()), UIUtil.BR);
   }
 
   @NotNull
+  @NlsSafe
   public String getErrorOutputAsJoinedString() {
     return StringUtil.join(cleanup(getErrorOrStdOutput()), "\n");
   }
 
   // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
   @NotNull
+  @NlsSafe
   private List<String> getErrorOrStdOutput() {
     return myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
   }
 
   @NotNull
+  @NlsSafe
   public String getOutputAsJoinedString() {
     return StringUtil.join(myOutput, "\n");
   }
@@ -140,6 +135,7 @@ public class GitCommandResult {
    * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
    */
   @NotNull
+  @NlsSafe
   public String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
     throwOnError(ignoredErrorCodes);
     return getOutputAsJoinedString();
@@ -155,23 +151,13 @@ public class GitCommandResult {
     if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
   }
 
-  /**
-   * @return null
-   * @deprecated use {@link #getErrorOutput()}
-   */
-  @Deprecated
-  @Nullable
-  public Throwable getException() {
-    return null;
-  }
-
   @NotNull
-  static GitCommandResult startError(@NotNull String error) {
+  static GitCommandResult startError(@NotNull @Nls String error) {
     return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList());
   }
 
   @NotNull
-  public static GitCommandResult error(@NotNull String error) {
+  public static GitCommandResult error(@NotNull @Nls String error) {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
 

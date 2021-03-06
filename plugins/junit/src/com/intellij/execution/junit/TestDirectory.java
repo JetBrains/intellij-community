@@ -10,16 +10,19 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,6 +72,17 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
+  protected Module getModuleWithTestsToFilter(Module module) {
+    try {
+      PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+      return ModuleUtilCore.findModuleForPsiElement(directory);
+    }
+    catch (CantRunException e) {
+      return module;
+    }
+  }
+
+  @Override
   protected boolean configureByModule(Module module) {
     return module != null;
   }
@@ -80,15 +94,15 @@ class TestDirectory extends TestPackage {
       getConfiguration(), getConfiguration().getProject(), getConfiguration().getConfigurationModule().getModule());
     final String dirName = getConfiguration().getPersistentData().getDirName();
     if (dirName == null || dirName.isEmpty()) {
-      throw new RuntimeConfigurationError("Directory is not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("directory.is.not.specified.error.message"));
     }
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
-      throw new RuntimeConfigurationError("Directory \'" + dirName + "\' is not found");
+      throw new RuntimeConfigurationError(JUnitBundle.message("directory.0.is.not.found.error.message", dirName));
     }
     final Module module = getConfiguration().getConfigurationModule().getModule();
     if (module == null) {
-      throw new RuntimeConfigurationError("Module to choose classpath from is not specified");
+      throw new RuntimeConfigurationError(JUnitBundle.message("module.to.choose.classpath.not.specified.error.message"));
     }
   }
 
@@ -177,7 +191,7 @@ class TestDirectory extends TestPackage {
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
-    return dirName.isEmpty() ? JUnitBundle.message("all.tests.scope.presentable.text")
+    return dirName.isEmpty() ? TestRunnerBundle.message("all.tests.scope.presentable.text")
                              : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 
@@ -189,6 +203,6 @@ class TestDirectory extends TestPackage {
                                        PsiDirectory testDir) {
     return JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) &&
            testDir != null &&
-           FileUtil.pathsEqual(configuration.getPersistentData().getDirName(), testDir.getVirtualFile().getPath());
+           VfsUtilCore.pathEqualsTo(testDir.getVirtualFile(), configuration.getPersistentData().getDirName());
   }
 }

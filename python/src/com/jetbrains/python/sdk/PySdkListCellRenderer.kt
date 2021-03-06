@@ -16,19 +16,18 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JList
 
 /**
  * @author vlan
  */
-open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifiers: Map<Sdk, SdkModificator>?,
-                                                           private val nullSdkName: String = noInterpreterMarker,
+open class PySdkListCellRenderer @JvmOverloads constructor(@Nls private val nullSdkName: String = noInterpreterMarker,
                                                            private val nullSdkValue: Sdk? = null) : ColoredListCellRenderer<Any>() {
 
   override fun getListCellRendererComponent(list: JList<out Any>?, value: Any?, index: Int, selected: Boolean,
@@ -46,8 +45,7 @@ open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifi
         value.renderInList(this)
       }
       is Sdk -> {
-        val sdkModificator = sdkModifiers?.get(value)
-        appendName(value, name(value, sdkModificator), sdkModificator)
+        appendName(value, name(value))
         icon = icon(value)
       }
       is String -> append(value)
@@ -63,7 +61,7 @@ open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifi
     }
   }
 
-  private fun appendName(sdk: Sdk, name: Triple<String?, String, String?>, sdkModificator: SdkModificator? = null) {
+  private fun appendName(sdk: Sdk, name: Triple<String?, String, String?>) {
     val (modifier, primary, secondary) = name
     if (modifier != null) {
       append("[$modifier] $primary", SimpleTextAttributes.ERROR_ATTRIBUTES)
@@ -76,7 +74,7 @@ open class PySdkListCellRenderer @JvmOverloads constructor(private val sdkModifi
       append(" $secondary", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
 
-    path(sdk, sdkModificator)?.let { append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES) }
+    path(sdk)?.let { append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES) }
   }
 
   companion object {

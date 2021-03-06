@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
@@ -44,7 +45,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
   }
 
   public static GithubSettings getInstance() {
-    return ServiceManager.getService(GithubSettings.class);
+    return ApplicationManager.getApplication().getService(GithubSettings.class);
   }
 
   public int getConnectionTimeout() {
@@ -111,6 +112,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
    * @deprecated {@link GithubAuthenticationManager}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public String getLogin() {
     return myState.LOGIN;
@@ -129,6 +131,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
    * @deprecated {@link GithubAuthenticationManager}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isAuthConfigured() {
     return GithubAuthenticationManager.getInstance().hasAccounts();
   }
@@ -137,6 +140,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
    * @deprecated {@link GithubAuthenticationManager}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public GithubAuthData getAuthData() {
     throw new IllegalStateException("Single account auth is deprecated");

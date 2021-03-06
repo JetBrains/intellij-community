@@ -23,7 +23,7 @@ final class LibraryKindLoader implements ApplicationInitializedListener {
     //In order to properly fix the problem we should extract all UI-related methods from LibraryType to a separate class and move LibraryType to intellij.platform.projectModel.impl module
     LibraryType.EP_NAME.getExtensionList();
 
-    LibraryType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LibraryType<?>>() {
+    LibraryType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull LibraryType<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
         WriteAction.run(() -> {
@@ -40,7 +40,7 @@ final class LibraryKindLoader implements ApplicationInitializedListener {
     }, null);
   }
 
-  private static void processAllLibraries(@NotNull Consumer<Library> processor) {
+  private static void processAllLibraries(@NotNull Consumer<? super Library> processor) {
     processLibraries(LibraryTablesRegistrar.getInstance().getLibraryTable(), processor);
     for (LibraryTable table : LibraryTablesRegistrar.getInstance().getCustomLibraryTables()) {
       processLibraries(table, processor);
@@ -55,7 +55,7 @@ final class LibraryKindLoader implements ApplicationInitializedListener {
     }
   }
 
-  private static void processLibraries(@NotNull LibraryTable table, Consumer<Library> processor) {
+  private static void processLibraries(@NotNull LibraryTable table, Consumer<? super Library> processor) {
     for (Library library : table.getLibraries()) {
       processor.accept(library);
     }

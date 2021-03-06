@@ -3,10 +3,10 @@ package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.TabListAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -14,7 +14,9 @@ import com.intellij.openapi.ui.PersistentThreeComponentSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -23,10 +25,13 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.frame.XThreadsFramesView
-import com.intellij.xdebugger.impl.frame.XVariablesView
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
+import com.intellij.xdebugger.impl.frame.*
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
+import java.awt.Component
+import java.awt.Container
 import javax.swing.Icon
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
@@ -51,11 +56,19 @@ class XDebugSessionTab2(
   private val splitter = PersistentThreeComponentSplitter(false, true, "DebuggerViewTab", lifetime, project, 0.35f, 0.3f)
   private val xThreadsFramesView = XThreadsFramesView(myProject)
 
+  private var variables: XVariablesView? = null
+
   private val toolWindow get() = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
+
+  private val focusTraversalPolicy = MyFocusTraversalPolicy()
 
   init {
     // value from com.intellij.execution.ui.layout.impl.GridImpl
     splitter.setMinSize(48)
+
+    splitter.isFocusCycleRoot = true
+    splitter.isFocusTraversalPolicyProvider = true
+    splitter.focusTraversalPolicy = focusTraversalPolicy
 
     session.addSessionListener(object : XDebugSessionListener {
       override fun sessionStopped() {
@@ -118,33 +131,45 @@ class XDebugSessionTab2(
     Disposer.register(lifetime, Disposable {
       toolWindow?.component?.removeAncestorListener(ancestorListener)
     })
+
+    var oldToolWindowType: ToolWindowType? = null
+    project.messageBus.connect(lifetime).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        if (oldToolWindowType == toolWindow?.type) return
+
+        setHeaderState()
+        oldToolWindowType = toolWindow?.type
+      }
+    })
   }
 
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
 
-  override fun setWatchesInVariablesImpl() {
-    val session = mySession ?: return
+  override fun addVariablesAndWatches(session: XDebugSessionImpl) {
+    val variablesView: XVariablesView?
+    val watchesView: XVariablesView?
+    val layoutDisposable = Disposer.newDisposable(ui.contentManager, "debugger layout disposable")
+    if (isWatchesInVariables) {
+      variablesView = XWatchesViewImpl2(session, true, true, layoutDisposable)
+      registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
+      variables = variablesView
 
-    unregisterView(DebuggerContentInfo.VARIABLES_CONTENT)
-    unregisterView(DebuggerContentInfo.WATCHES_CONTENT)
-
-    val watchesView = XWatchesViewImpl(session, isWatchesInVariables, true).apply {
-      myWatchesView = this
-      registerView(DebuggerContentInfo.WATCHES_CONTENT, this)
-      attachViewToSession(session, this)
-    }
-
-    fun tryCreateVariables(session: XDebugSessionImpl) = if (isWatchesInVariables) null else XVariablesView(session)
-
-    val variablesView = tryCreateVariables(session).apply {
-      registerView(DebuggerContentInfo.VARIABLES_CONTENT, this ?: watchesView)
-      attachViewToSession(session, this)
+      watchesView = null
+      myWatchesView = variablesView
+    } else {
+      variablesView = XVariablesView(session)
+      registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
+      variables = variablesView
+      
+      watchesView = XWatchesViewImpl2(session, false, true, layoutDisposable)
+      registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
+      myWatchesView = watchesView
     }
 
     splitter.apply {
-      innerComponent = variablesView?.panel
-      lastComponent = watchesView.panel
+      innerComponent = variablesView.panel
+      lastComponent = watchesView?.panel
     }
 
     UIUtil.removeScrollBorder(splitter)
@@ -152,7 +177,11 @@ class XDebugSessionTab2(
     splitter.revalidate()
     splitter.repaint()
 
-    session.rebuildViews()
+    updateTraversalPolicy()
+  }
+
+  private fun updateTraversalPolicy() {
+    focusTraversalPolicy.components = getComponents().asSequence().toList()
   }
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
@@ -161,10 +190,10 @@ class XDebugSessionTab2(
 
     framesView.setThreadsVisible(threadsIsVisible)
     splitter.firstComponent = xThreadsFramesView.mainPanel
-    setWatchesInVariablesImpl()
+    addVariablesAndWatches(session)
 
     val name = debuggerContentId
-    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null, framesView.defaultFocusedComponent).apply {
+    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), AllIcons.Toolwindows.ToolWindowDebugger, framesView.defaultFocusedComponent).apply {
       isCloseable = false
     }
 
@@ -191,30 +220,45 @@ class XDebugSessionTab2(
 
     setHeaderState()
   }
+  private fun getComponents(): Iterator<Component> {
+    return iterator {
+      if (threadsIsVisible)
+        yield(xThreadsFramesView.threads)
+
+      yield(xThreadsFramesView.frames)
+      val vars = variables ?: return@iterator
+
+      yield(vars.defaultFocusedComponent)
+      if (!isWatchesInVariables)
+        yield(myWatchesView.defaultFocusedComponent)
+    }
+  }
 
   private fun setHeaderState() {
     toolWindow?.let { toolWindow ->
       if (toolWindow !is ToolWindowEx) return@let
 
       val singleContent = toolWindow.contentManager.contents.singleOrNull()
-      val toolbar = DefaultActionGroup().apply {
-        if (singleContent == null) return@apply
+      val headerVisible = toolWindow.isHeaderVisible
+      val topRightToolbar = DefaultActionGroup().apply {
+        if (headerVisible) return@apply
+        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
+      }
+      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-        add(object : AnAction() {
+      val topMiddleToolbar = DefaultActionGroup().apply {
+        if (singleContent == null || headerVisible) return@apply
+
+        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Close) {
           override fun actionPerformed(e: AnActionEvent) {
             toolWindow.contentManager.removeContent(singleContent, true)
           }
-
-          override fun update(e: AnActionEvent) {
-            e.presentation.text = "Close"
-            e.presentation.icon = AllIcons.Actions.Close
-          }
         })
-        addAll(toolWindow.decorator.headerToolbar.actions)
+        addSeparator()
       }
-      myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
-      toolWindow.decorator.isHeaderVisible = singleContent == null
+      toolWindow.decorator.isHeaderVisible = headerVisible
 
       if (toolWindow.decorator.isHeaderVisible) {
         toolWindow.component.border = null
@@ -226,13 +270,18 @@ class XDebugSessionTab2(
     }
   }
 
+  private val ToolWindowEx.isHeaderVisible get() = (type != ToolWindowType.DOCKED) || contentManager.contents.singleOrNull() == null
+
   override fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup) {
     leftToolbar.apply {
       val constraints = Constraints(Anchor.BEFORE, XDebuggerActions.VIEW_BREAKPOINTS)
 
       add(object : ToggleAction() {
         override fun setSelected(e: AnActionEvent, state: Boolean) {
-          threadsIsVisible = state
+          if (threadsIsVisible != state) {
+            threadsIsVisible = state
+            updateTraversalPolicy()
+          }
           xThreadsFramesView.setThreadsVisible(state)
           Toggleable.setSelected(e.presentation, state)
         }
@@ -242,10 +291,10 @@ class XDebugSessionTab2(
         override fun update(e: AnActionEvent) {
           e.presentation.icon = AllIcons.Actions.SplitVertically
           if (threadsIsVisible) {
-            e.presentation.text = "Hide threads view"
+            e.presentation.text = XDebuggerBundle.message("session.tab.hide.threads.view")
           }
           else {
-            e.presentation.text = "Show threads view"
+            e.presentation.text = XDebuggerBundle.message("session.tab.show.threads.view")
           }
 
           setSelected(e, threadsIsVisible)
@@ -262,5 +311,77 @@ class XDebugSessionTab2(
   override fun dispose() {
     Disposer.dispose(lifetime)
     super.dispose()
+  }
+
+  class MyFocusTraversalPolicy : LayoutFocusTraversalPolicy() {
+    var components: List<Component> = listOf()
+
+    override fun getLastComponent(aContainer: Container?): Component {
+      if (components.isNotEmpty())
+        return components.last().prepare()
+
+      return super.getLastComponent(aContainer)
+    }
+
+    override fun getFirstComponent(aContainer: Container?): Component {
+      if (components.isNotEmpty())
+        return components.first().prepare()
+
+      return super.getFirstComponent(aContainer)
+    }
+
+    override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component {
+      if (aComponent == null)
+        return super.getComponentAfter(aContainer, aComponent)
+
+      val index = components.indexOf(aComponent)
+      if (index < 0 || index > components.lastIndex)
+        return super.getComponentAfter(aContainer, aComponent)
+
+      for (i in components.indices) {
+        val component = components[(index + i + 1) % components.size]
+        if (isEmpty(component)) continue
+
+        return component.prepare()
+      }
+
+      return components[index + 1].prepare()
+    }
+
+    override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component {
+      if (aComponent == null)
+        return super.getComponentBefore(aContainer, aComponent)
+
+      val index = components.indexOf(aComponent)
+      if (index < 0 || index > components.lastIndex)
+        return super.getComponentBefore(aContainer, aComponent)
+
+      for (i in components.indices) {
+        val component = components[(components.size + index - i - 1) % components.size]
+        if (isEmpty(component)) continue
+
+        return component.prepare()
+      }
+
+      return components[index - 1].prepare()
+    }
+
+    private fun Component.prepare(): Component {
+      if (this is XDebuggerTree && this.selectionCount == 0){
+        val child = root.children.firstOrNull() as? XDebuggerTreeNode ?: return this
+
+        selectionPath = child.path
+      }
+      return this
+    }
+
+    private fun isEmpty(component: Component): Boolean {
+      return when (component) {
+        is XDebuggerThreadsList -> component.isEmpty
+        is XDebuggerFramesList -> component.isEmpty
+        is XDebuggerTree -> component.isEmpty
+        else -> false;
+      }
+    }
   }
 }

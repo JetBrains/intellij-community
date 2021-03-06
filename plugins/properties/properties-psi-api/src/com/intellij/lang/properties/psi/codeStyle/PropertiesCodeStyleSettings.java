@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -55,8 +54,7 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
     parentElement = parentElement.getChild(getTagName());
     if (parentElement != null) {
       Character delimiter = null;
-      for (final Object o : parentElement.getChildren("option")) {
-        Element e = (Element)o;
+      for (final Element e : parentElement.getChildren("option")) {
         String fieldName = e.getAttributeValue("name");
         if ("KEY_VALUE_DELIMITER".equals(fieldName)) {
           final String value = e.getAttributeValue("value");
@@ -80,10 +78,4 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
     }
   }
 
-  @Override
-  protected void importLegacySettings(@NotNull CodeStyleSettings rootSettings) {
-    if (rootSettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
-      rootSettings.getCommonSettings(PropertiesLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    }
-  }
 }

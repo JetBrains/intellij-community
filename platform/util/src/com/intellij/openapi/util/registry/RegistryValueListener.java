@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,6 +20,7 @@ public interface RegistryValueListener {
    * @deprecated implement {@link RegistryValueListener} directly
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   class Adapter implements RegistryValueListener {
   }
 }

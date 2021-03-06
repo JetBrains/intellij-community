@@ -9,6 +9,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -51,7 +52,7 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass,
-                                          final Condition<PsiClass> acceptAbstractCondition) {
+                                          final Condition<? super PsiClass> acceptAbstractCondition) {
     if (containingClass != null && acceptAbstractCondition.value(containingClass)) {
       final Location location = context.getLocation();
       if (location instanceof MethodLocation) {
@@ -104,7 +105,7 @@ public class InheritorChooser {
                                                              boolean selected,
                                                              boolean hasFocus) {
           if (value == null) {
-            renderer.append("All (" + numberOfInheritors + ")");
+            renderer.append(JavaCompilerBundle.message("all.inheritors", numberOfInheritors));
             return true;
           }
           return super.customizeNonPsiElementLeftRenderer(renderer, list, value, index, selected, hasFocus);

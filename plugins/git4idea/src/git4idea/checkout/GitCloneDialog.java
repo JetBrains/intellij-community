@@ -27,7 +27,7 @@ public class GitCloneDialog extends CloneDvcsDialog {
   }
 
   public GitCloneDialog(@NotNull Project project, @Nullable String defaultUrl) {
-    super(project, GitVcs.NAME, GitUtil.DOT_GIT, defaultUrl);
+    super(project, GitVcs.DISPLAY_NAME.get(), GitUtil.DOT_GIT, defaultUrl);
     myGit = Git.getInstance();
   }
 

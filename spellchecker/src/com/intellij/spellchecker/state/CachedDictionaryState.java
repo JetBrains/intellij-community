@@ -1,19 +1,25 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.state;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "CachedDictionaryState",
-  storages = @Storage(value = "cachedDictionary.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "cachedDictionary.xml", roamingType = RoamingType.DISABLED),
+  reportStatistic = false
 )
 public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";
-  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener.class);
+  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher =
+    EventDispatcher.create(DictionaryStateListener.class);
 
   public CachedDictionaryState() {
     name = DEFAULT_NAME;
@@ -21,7 +27,7 @@ public class CachedDictionaryState extends DictionaryState implements Persistent
 
   @NotNull
   public static CachedDictionaryState getInstance() {
-    return ServiceManager.getService(CachedDictionaryState.class);
+    return ApplicationManager.getApplication().getService(CachedDictionaryState.class);
   }
 
   @NonInjectable
@@ -39,7 +45,14 @@ public class CachedDictionaryState extends DictionaryState implements Persistent
     myDictListenerEventDispatcher.getMulticaster().dictChanged(getDictionary());
   }
 
+  /** @deprecated Use {@link CachedDictionaryState#addCachedDictListener(DictionaryStateListener, Disposable)} instead.*/
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3") // Use overload with parentDisposable
   public void addCachedDictListener(DictionaryStateListener listener) {
     myDictListenerEventDispatcher.addListener(listener);
+  }
+
+  public void addCachedDictListener(DictionaryStateListener listener, Disposable parentDisposable) {
+    myDictListenerEventDispatcher.addListener(listener, parentDisposable);
   }
 }

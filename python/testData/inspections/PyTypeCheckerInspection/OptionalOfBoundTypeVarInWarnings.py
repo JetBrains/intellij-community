@@ -8,4 +8,4 @@ def expects_int_subclass_or_none(x: Optional[T]):
     pass
 
 
-expects_int_subclass_or_none(<weak_warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[T]'), got 'str' instead">'foo'</weak_warning>)
+expects_int_subclass_or_none(<warning descr="Expected type 'Optional[Any]' (matched generic type 'Optional[T]'), got 'str' instead">'foo'</warning>)

@@ -52,9 +52,9 @@ class PatternDialog extends DialogWrapper {
   private final ColorAndFontDescription myColorAndFontDescription;
   private final JBCheckBox myUsedDefaultColorsCheckBox;
   private final int myPatternIndex;
-  private final List<? extends TodoPattern> myExistingPatterns;
+  private final List<TodoPattern> myExistingPatterns;
 
-  PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<? extends TodoPattern> existingPatterns) {
+  PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<TodoPattern> existingPatterns) {
     super(parent, true);
     myPatternIndex = patternIndex;
     myExistingPatterns = existingPatterns;
@@ -80,7 +80,7 @@ class PatternDialog extends DialogWrapper {
     myColorAndFontDescriptionPanel = new ColorAndFontDescriptionPanel();
 
     TextAttributes attributes = myPattern.getAttributes().getCustomizedTextAttributes();
-    myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null,
+    myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null, //NON-NLS
                                                               EditorColorsManager.getInstance().getGlobalScheme(), null, null) {
       @Override
       public boolean isErrorStripeEnabled() {

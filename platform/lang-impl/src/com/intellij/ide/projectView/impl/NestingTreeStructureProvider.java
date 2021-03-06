@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.nodes.NestingTreeNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -44,7 +44,10 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                              @NotNull Collection<AbstractTreeNode<?>> children,
                                             ViewSettings settings) {
     if (!(settings instanceof ProjectViewSettings) || !((ProjectViewSettings)settings).isUseFileNestingRules()) return children;
-    if (!(parent instanceof PsiDirectoryNode)) return children;
+
+    ProjectViewNode<?> parentNode = ObjectUtils.tryCast(parent, ProjectViewNode.class);
+    VirtualFile virtualFile = parentNode == null ? null : parentNode.getVirtualFile();
+    if (virtualFile == null || !virtualFile.isDirectory()) return children;
 
     final ArrayList<PsiFileNode> childNodes = new ArrayList<>();
     for (AbstractTreeNode<?> node : children) {
@@ -93,10 +96,7 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                                                                @NotNull final VirtualFile parentFile) {
     LOG.assertTrue(!parentFile.isDirectory());
 
-    final AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
-    if (pane instanceof ProjectViewPane) {
-      if (!((ProjectViewPane)pane).isUseFileNestingRules()) return Collections.emptyList();
-    }
+    if (!ProjectViewState.getInstance(project).getUseFileNestingRules()) return Collections.emptyList();
 
     final Collection<NestingRule> rules = FileNestingBuilder.getInstance().getNestingRules();
     if (rules.isEmpty()) return Collections.emptyList();

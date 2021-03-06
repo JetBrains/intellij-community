@@ -15,19 +15,18 @@
  */
 package com.siyeh.ig.classmetrics;
 
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
@@ -80,32 +79,11 @@ public class FieldCountInspection extends ClassMetricInspection {
       new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.enum.constants.in.count"),
                    this, "myCountEnumConstants");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0.0;
-    constraints.weighty = 0.0;
-    constraints.insets.right = UIUtil.DEFAULT_HGAP;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.NONE;
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(label, constraints);
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.gridwidth = 1;
-    constraints.weightx = 1.0;
-    constraints.insets.right = 0;
-    constraints.anchor = GridBagConstraints.NORTHWEST;
-    panel.add(valueField, constraints);
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    panel.add(includeCheckBox, constraints);
-    constraints.gridy = 2;
-    panel.add(considerCheckBox, constraints);
-    constraints.gridy = 3;
-    constraints.weighty = 1;
-    panel.add(enumConstantCheckBox, constraints);
+    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
+    panel.addRow(label, valueField);
+    panel.add(includeCheckBox);
+    panel.add(considerCheckBox);
+    panel.add(enumConstantCheckBox);
     return panel;
   }
 

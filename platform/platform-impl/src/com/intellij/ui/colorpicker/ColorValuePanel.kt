@@ -15,7 +15,9 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.Alarm
@@ -61,7 +63,7 @@ enum class ColorFormat {
   }
 }
 
-class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false)
+class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false, val showAlphaInPercent: Boolean = true)
   : JPanel(GridBagLayout()), DocumentListener, ColorListener {
 
   /**
@@ -105,7 +107,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private val blueDocument = DigitColorDocument(colorField3, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val brightnessDocument = DigitColorDocument(colorField3, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
 
-  var currentAlphaFormat by Delegates.observable(loadAlphaFormatProperty()) { _, _, newValue ->
+  var currentAlphaFormat by Delegates.observable(if (showAlphaInPercent) AlphaFormat.PERCENTAGE else loadAlphaFormatProperty()) { _, _, newValue ->
     updateAlphaFormat()
     saveAlphaFormatProperty(newValue)
     repaint()
@@ -126,15 +128,6 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     val c = GridBagConstraints()
     c.fill = GridBagConstraints.HORIZONTAL
 
-    if (showAlpha) {
-      c.weightx = 0.12
-      c.gridx = 0
-      c.gridy = 0
-      add(alphaButtonPanel, c)
-      c.gridy = 1
-      add(alphaField, c)
-    }
-
     c.weightx = 0.36
     c.gridwidth = 3
     c.gridx = 1
@@ -153,12 +146,21 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     c.gridy = 1
     add(colorField3, c)
 
+    if (showAlpha) {
+      c.weightx = 0.12
+      c.gridx = 4
+      c.gridy = 0
+      add(alphaButtonPanel, c)
+      c.gridy = 1
+      add(alphaField, c)
+    }
+
     // Hex should be longer
     c.gridheight = 1
     c.weightx = 0.51
-    c.gridx = 4
+    c.gridx = if(showAlpha) 5 else  4
     c.gridy = 0
-    add(ColorLabel("Hex"), c)
+    add(ColorLabel(IdeBundle.message("colorpicker.colorvaluepanel.hexlabel")), c)
     c.gridy = 1
     add(hexField, c)
     hexField.document = HexColorDocument(hexField)
@@ -175,12 +177,12 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private fun updateAlphaFormat() {
     when (currentAlphaFormat) {
       AlphaFormat.BYTE -> {
-        alphaLabel.text = "A"
+        alphaLabel.text = IdeBundle.message("colorpanel.label.alpha")
         alphaField.document = alphaHexDocument
         alphaField.text = model.alpha.toString()
       }
       AlphaFormat.PERCENTAGE -> {
-        alphaLabel.text = "A%"
+        alphaLabel.text = IdeBundle.message("colorpanel.label.alpha.percent")
         alphaField.document = alphaPercentageDocument
         alphaField.text = (model.alpha * 100f / 0xFF).roundToInt().toString()
       }
@@ -193,9 +195,9 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private fun updateColorFormat() {
     when (currentColorFormat) {
       ColorFormat.RGB -> {
-        colorLabel1.text = "R"
-        colorLabel2.text = "G"
-        colorLabel3.text = "B"
+        colorLabel1.text = IdeBundle.message("colorpanel.label.red")
+        colorLabel2.text = IdeBundle.message("colorpanel.label.green")
+        colorLabel3.text = IdeBundle.message("colorpanel.label.blue")
 
         colorField1.document = redDocument
         colorField2.document = greenDocument
@@ -206,9 +208,9 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
         colorField3.text = model.blue.toString()
       }
       ColorFormat.HSB -> {
-        colorLabel1.text = "H°"
-        colorLabel2.text = "S%"
-        colorLabel3.text = "B%"
+        colorLabel1.text = IdeBundle.message("colorpanel.label.hue")
+        colorLabel2.text = IdeBundle.message("colorpanel.label.saturation")
+        colorLabel3.text = IdeBundle.message("colorpanel.label.brightness")
 
         colorField1.document = hueDocument
         colorField2.document = saturationDocument
@@ -244,9 +246,9 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
       colorField2.setTextIfNeeded((hsb[1] * 100).roundToInt().toString(), source)
       colorField3.setTextIfNeeded((hsb[2] * 100).roundToInt().toString(), source)
     }
-    var hexStr = String.format("%08X", color.rgb)
-    if (!showAlpha) {
-      hexStr = hexStr.substring(2)
+    var hexStr = String.format("%02X", color.red) + String.format("%02X", color.green) + String.format("%02X", color.blue)
+    if (showAlpha) {
+      hexStr += String.format("%02X", color.alpha)
     }
     hexField.setTextIfNeeded(hexStr, source)
     // Cleanup the update requests which triggered by setting text in this function
@@ -460,14 +462,16 @@ abstract class ButtonPanel : JPanel() {
   }
 }
 
-private class ColorLabel(text: String = ""): JLabel(text, SwingConstants.CENTER) {
+private class ColorLabel(@NlsContexts.Label text: String = ""): JLabel(text, SwingConstants.CENTER) {
   init {
     foreground = PICKER_TEXT_COLOR
   }
 }
 
 private const val ACTION_UP = "up"
+private const val ACTION_UP_FAST = "up_fast"
 private const val ACTION_DOWN = "down"
+private const val ACTION_DOWN_FAST = "down_fast"
 
 class ColorValueField(private val hex: Boolean = false, private val showAlpha: Boolean = false): JTextField(fieldLength(hex, showAlpha)) {
 
@@ -487,18 +491,27 @@ class ColorValueField(private val hex: Boolean = false, private val showAlpha: B
         selectionEnd = size
       }
     })
+    addMouseWheelListener { e -> increaseValue((-e.preciseWheelRotation).toInt()) }
     if (!hex) {
       // Don't increase value for hex field.
       with(getInputMap(JComponent.WHEN_FOCUSED)) {
         put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), ACTION_UP)
+        put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.SHIFT_DOWN_MASK), ACTION_UP_FAST)
         put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), ACTION_DOWN)
+        put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.SHIFT_DOWN_MASK), ACTION_DOWN_FAST)
       }
       with(actionMap) {
         put(ACTION_UP, object : AbstractAction() {
           override fun actionPerformed(e: ActionEvent) = increaseValue(1)
         })
+        put(ACTION_UP_FAST, object : AbstractAction() {
+          override fun actionPerformed(e: ActionEvent) = increaseValue(10)
+        })
         put(ACTION_DOWN, object : AbstractAction() {
           override fun actionPerformed(e: ActionEvent) = increaseValue(-1)
+        })
+        put(ACTION_DOWN_FAST, object : AbstractAction() {
+          override fun actionPerformed(e: ActionEvent) = increaseValue(-10)
         })
       }
     }
@@ -569,11 +582,20 @@ private class HexColorDocument(src: JTextField) : ColorDocument(src) {
 private fun convertHexToColor(hex: String): Color {
   val s = if (hex == "") "0" else hex
   val i = s.toLong(16)
-  val a = if (hex.length > 6) i shr 24 and 0xFF else 0xFF
-  val r = i shr 16 and 0xFF
-  val g = i shr 8 and 0xFF
-  val b = i and 0xFF
-  return Color(r.toInt(), g.toInt(), b.toInt(), a.toInt())
+  if (hex.length > 6) {
+    return Color(
+      (i shr 24 and 0xFF).toInt(), //RED
+      (i shr 16 and 0xFF).toInt(), //GREEN
+      (i shr 8 and 0xFF).toInt(),  //BLUE
+      (i and 0xFF).toInt()         //ALPHA
+    )
+  } else {
+    return Color(
+      (i shr 16 and 0xFF).toInt(), //RED
+      (i shr 8 and 0xFF).toInt(),  //GREEN
+      (i and 0xFF).toInt()         //BLUE
+    )
+  }
 }
 
 private const val PROPERTY_PREFIX = "colorValuePanel_"

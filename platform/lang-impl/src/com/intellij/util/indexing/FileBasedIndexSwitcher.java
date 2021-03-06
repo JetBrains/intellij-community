@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public final class FileBasedIndexSwitcher {
@@ -18,9 +19,10 @@ public final class FileBasedIndexSwitcher {
 
   @NotNull
   private final FileBasedIndexImpl myFileBasedIndex;
+  @NotNull
+  private final Semaphore myDumbModeSemaphore = new Semaphore();
 
-  // accessed only in EDT
-  private Semaphore myDumbModeSemaphore;
+  private int myNestedLevelCount = 0;
 
   @TestOnly
   public FileBasedIndexSwitcher() {
@@ -35,43 +37,72 @@ public final class FileBasedIndexSwitcher {
     Application app = ApplicationManager.getApplication();
     LOG.assertTrue(app.isDispatchThread());
     LOG.assertTrue(!app.isWriteAccessAllowed());
-    boolean unitTestMode = app.isUnitTestMode();
-    if (!unitTestMode) {
-      myDumbModeSemaphore = new Semaphore(1);
-      for (Project project : ProjectUtil.getOpenProjects()) {
-        DumbService dumbService = DumbService.getInstance(project);
-        dumbService.cancelAllTasksAndWait();
-        dumbService.queueTask(new DumbModeTask(myDumbModeSemaphore) {
-          @Override
-          public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-            indicator.setText(IndexingBundle.message("indexes.reloading"));
-            myDumbModeSemaphore.waitFor();
+
+    try {
+      if (myNestedLevelCount == 0) {
+        boolean unitTestMode = app.isUnitTestMode();
+        if (!unitTestMode) {
+          boolean wasUp = myDumbModeSemaphore.isUp();
+          myDumbModeSemaphore.down();
+          if (wasUp) {
+            for (Project project : ProjectUtil.getOpenProjects()) {
+              DumbService dumbService = DumbService.getInstance(project);
+              dumbService.cancelAllTasksAndWait();
+              dumbService.queueTask(new DumbModeTask(myDumbModeSemaphore) {
+                @Override
+                public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+                  indicator.setText(IndexingBundle.message("indexes.reloading"));
+                  myDumbModeSemaphore.waitFor();
+                }
+
+                @Override
+                public String toString() {
+                  return "Plugin loading/unloading";
+                }
+              });
+            }
           }
-        });
+        }
+        myFileBasedIndex.waitUntilIndicesAreInitialized();
+        myFileBasedIndex.performShutdown(true);
+        myFileBasedIndex.dropRegisteredIndexes();
+        IndexingStamp.dropTimestampMemoryCaches();
       }
     }
-    myFileBasedIndex.performShutdown(true);
-    myFileBasedIndex.dropRegisteredIndexes();
-    IndexingStamp.flushCaches();
+    finally {
+      myNestedLevelCount++;
+    }
   }
 
   public void turnOn() {
+    turnOn(null);
+  }
+
+  public void turnOn(@Nullable Runnable beforeIndexTasksStarted) {
     LOG.assertTrue(ApplicationManager.getApplication().isWriteThread());
-    RebuildStatus.reset();
-    myFileBasedIndex.initComponent();
-    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-    if (unitTestMode) {
-      myFileBasedIndex.waitUntilIndicesAreInitialized();
-    }
+    myNestedLevelCount--;
+    if (myNestedLevelCount == 0) {
+      RebuildStatus.reset();
+      myFileBasedIndex.loadIndexes();
+      boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-    if (!unitTestMode) {
-      myDumbModeSemaphore.up();
-    }
+      if (unitTestMode) {
+        myFileBasedIndex.waitUntilIndicesAreInitialized();
+      }
 
-    FileBasedIndexImpl.cleanupProcessedFlag();
-    for (Project project : ProjectUtil.getOpenProjects()) {
-      DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+      if (!unitTestMode) {
+        myDumbModeSemaphore.up();
+      }
+
+      if (beforeIndexTasksStarted != null) {
+        beforeIndexTasksStarted.run();
+      }
+
+      IndexingFlag.cleanupProcessedFlag();
+      for (Project project : ProjectUtil.getOpenProjects()) {
+        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+      }
     }
   }
 }

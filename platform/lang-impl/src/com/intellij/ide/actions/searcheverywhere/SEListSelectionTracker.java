@@ -18,13 +18,13 @@ import java.util.stream.IntStream;
 class SEListSelectionTracker implements ListSelectionListener {
 
   private final JBList<?> myList;
-  private final SearchEverywhereUI.SearchListModel myListModel;
+  private final SearchListModel myListModel;
 
   private int myLockCounter;
   private final List<Object> mySelectedItems = new ArrayList<>();
   private boolean myMoreSelected;
 
-  SEListSelectionTracker(@NotNull JBList<?> list, @NotNull SearchEverywhereUI.SearchListModel model) {
+  SEListSelectionTracker(@NotNull JBList<?> list, @NotNull SearchListModel model) {
     myList = list;
     myListModel = model;
   }
@@ -32,6 +32,7 @@ class SEListSelectionTracker implements ListSelectionListener {
   @Override
   public void valueChanged(ListSelectionEvent e) {
     if (isLocked()) return;
+    if (myList.getSelectedIndices().length == 0) return;
 
     saveSelection();
   }

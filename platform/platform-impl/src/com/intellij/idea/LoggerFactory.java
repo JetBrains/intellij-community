@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -47,11 +47,12 @@ public final class LoggerFactory implements Logger.Factory {
 
   @Override
   public @NotNull Logger getLoggerInstance(@NotNull String name) {
-    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
+    IdeaLogger logger = new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
+    return MutedErrorLogger.isEnabled() ? MutedErrorLogger.of(logger) : logger;
   }
 
   private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {
-    String text = new String(Files.readAllBytes(xmlFile), StandardCharsets.UTF_8);
+    String text = Files.readString(xmlFile);
     text = text.replace(SYSTEM_MACRO, PathManager.getSystemPath().replace("\\", "\\\\"));
     text = text.replace(APPLICATION_MACRO, PathManager.getHomePath().replace("\\", "\\\\"));
     text = text.replace(LOG_DIR_MACRO, PathManager.getLogPath().replace("\\", "\\\\"));
@@ -62,7 +63,7 @@ public final class LoggerFactory implements Logger.Factory {
       @Override
       public org.w3c.dom.Document createDocument() throws JDOMException {
         String key = "javax.xml.parsers.DocumentBuilderFactory";
-        @SuppressWarnings("SpellCheckingInspection") String property = System.setProperty(key, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+        String property = System.setProperty(key, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
         try {
           return super.createDocument();
         }
@@ -86,7 +87,13 @@ public final class LoggerFactory implements Logger.Factory {
 
     PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
 
-    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/idea.log", true);
+    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/idea.log", true) {
+      @Override
+      public void rollOver() {
+        super.rollOver();
+        MutedLogger.dropCaches();
+      }
+    };
     ideaLog.setEncoding(StandardCharsets.UTF_8.name());
     ideaLog.setMaxBackupIndex(12);
     ideaLog.setMaximumFileSize(10_000_000);

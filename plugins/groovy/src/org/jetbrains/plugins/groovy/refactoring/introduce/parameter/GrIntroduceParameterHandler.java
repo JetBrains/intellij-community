@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -63,12 +63,12 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
         selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<GrExpression>() {
-          @Override
-          public void pass(final GrExpression selectedValue) {
-            invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
-          }
-        }, grExpression -> grExpression.getText()
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
+                                             @Override
+                                             public void pass(final GrExpression selectedValue) {
+                                               invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+                                             }
+                                           }, grExpression -> grExpression.getText()
         );
         return;
       }
@@ -98,7 +98,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       final GrParameterListOwner owner = scopes.get(0);
       final PsiElement toSearchFor;
       if (owner instanceof GrMethod) {
-        toSearchFor = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)owner, RefactoringBundle.message("to.refactor"));
+        toSearchFor = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)owner);
         if (toSearchFor == null) return; //if it is null, refactoring was canceled
       }
       else {
@@ -139,7 +139,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     if (isInplace(info, editor)) {
       final GrIntroduceContext context = createContext(info, editor);
       Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = GrIntroduceHandlerBase.fillChoice(context);
-      new IntroduceOccurrencesChooser(editor).showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+      new IntroduceOccurrencesChooser(editor).showChooser(new Pass<>() {
         @Override
         public void pass(OccurrencesChooser.ReplaceChoice choice) {
           startInplace(info, context, choice);
@@ -180,9 +180,5 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     GrVariable var = GroovyIntroduceParameterUtil.findVar(info);
     StringPartInfo stringPart = info.getStringPartInfo();
     return new GrIntroduceVariableHandler().getContext(info.getProject(), editor, expr, var, stringPart, info.getToReplaceIn());
-  }
-
-  static String getRefactoringName() {
-    return RefactoringBundle.message("introduce.parameter.title");
   }
 }

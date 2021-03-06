@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.MathUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
@@ -41,7 +42,7 @@ import static com.jetbrains.python.PyTokenTypes.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyReplaceExpressionUtil implements PyElementTypes {
+public final class PyReplaceExpressionUtil implements PyElementTypes {
   /**
    * This marker is added in cases where valid selection nevertheless breaks existing expression.
    * It can happen in cases like (here {@code <start> and <end>} represent selection boundaries):
@@ -266,7 +267,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
     final PyExpression[] members = tupleFormatValue.getElements();
     final int n = members.length;
-    final int i = Math.min(n, Math.max(0, getPositionInRanges(substitutionsToRanges(substitutions), textRange)));
+    final int i = MathUtil.clamp(getPositionInRanges(substitutionsToRanges(substitutions), textRange), 0, n);
     final boolean last = i == n;
     final PsiElement trailingComma = PyPsiUtils.getNextComma(members[n - 1]);
     if (trailingComma != null) {

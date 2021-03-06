@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.refactoring.RefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedViewSwingImpl;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +128,7 @@ class PyExtractSuperclassViewSwingImpl
     return "refactoring.extract.superclass.dialog";
   }
 
-  private static String getFileOrDirectory() {
+  private static @Nls String getFileOrDirectory() {
     return RefactoringBundle.message("extract.superclass.elements.header");
   }
 }

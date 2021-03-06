@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaOptionalConversionUtil {
+public final class GuavaOptionalConversionUtil {
   static boolean isOptionalOrContext(@Nullable PsiExpression context) {
     if (context == null) return false;
     final PsiElement parent = context.getParent();
@@ -29,16 +30,16 @@ public class GuavaOptionalConversionUtil {
     return aClass != null && GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName());
   }
 
-  static String simplifyParameterPattern(PsiMethodCallExpression methodCall) {
+  static @NonNls String simplifyParameterPattern(PsiMethodCallExpression methodCall) {
     final PsiExpressionList argumentList = methodCall.getArgumentList();
     final PsiExpression[] expressions = argumentList.getExpressions();
     if (expressions.length == 1) {
       final PsiExpression expression = expressions[0];
       final MatchOptions options = new MatchOptions();
       options.setSearchPattern(GuavaOptionalConversionRule.OPTIONAL_CONVERTOR_PATTERN);
-      options.setFileType(StdFileTypes.JAVA);
+      options.setFileType(JavaFileType.INSTANCE);
       final Matcher matcher = new Matcher(methodCall.getProject(), options);
-      final List<MatchResult> results = matcher.testFindMatches(expression.getText(), false, StdFileTypes.JAVA, false);
+      final List<MatchResult> results = matcher.testFindMatches(expression.getText(), false, JavaFileType.INSTANCE, false);
       if (!results.isEmpty()) {
         final MatchResult result = results.get(0);
         if (result.getStart() == 0 && result.getEnd() == -1) {

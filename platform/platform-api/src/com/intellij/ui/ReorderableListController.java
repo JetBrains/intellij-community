@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ public abstract class ReorderableListController <T> {
     return myList;
   }
 
-  public RemoveActionDescription addRemoveAction(final String actionName) {
+  public RemoveActionDescription addRemoveAction(final @NlsActions.ActionText String actionName) {
     final RemoveActionDescription description = new RemoveActionDescription(actionName);
     addActionDescription(description);
     return description;
@@ -33,13 +34,13 @@ public abstract class ReorderableListController <T> {
 
   protected abstract void addActionDescription(ActionDescription description);
 
-  public AddActionDescription addAddAction(final String actionName, final Factory<? extends T> creator, final boolean createShortcut) {
+  public AddActionDescription addAddAction(final @NlsActions.ActionText String actionName, final Factory<? extends T> creator, final boolean createShortcut) {
     final AddActionDescription description = new AddActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
   }
 
-  public AddMultipleActionDescription addAddMultipleAction(final String actionName, final Factory<? extends Collection<T>> creator, final boolean createShortcut) {
+  public AddMultipleActionDescription addAddMultipleAction(final @NlsActions.ActionText String actionName, final Factory<? extends Collection<T>> creator, final boolean createShortcut) {
     final AddMultipleActionDescription description = new AddMultipleActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
@@ -90,7 +91,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public static <T> ReorderableListController<T> create(final JList list, final DefaultActionGroup actionGroup) {
-    return new ReorderableListController<T>(list) {
+    return new ReorderableListController<>(list) {
       @Override
       protected void addActionDescription(final ActionDescription description) {
         actionGroup.add(description.createAction(list));
@@ -131,7 +132,7 @@ public abstract class ReorderableListController <T> {
 
     protected abstract Icon getActionIcon();
 
-    protected abstract String getActionName();
+    protected abstract @NlsActions.ActionText String getActionName();
 
     public void setShowText(final boolean showText) {
       myShowText = showText;
@@ -142,7 +143,7 @@ public abstract class ReorderableListController <T> {
       private final CustomActionDescription<? super V> myCustomActionDescription;
 
       public BaseAction(final CustomActionDescription<? super V> customActionDescription,
-                        final String text, final String description, final Icon icon, final ActionBehaviour<? extends V> behaviour) {
+                        final @NlsActions.ActionText String text, final @NlsActions.ActionDescription String description, final Icon icon, final ActionBehaviour<? extends V> behaviour) {
         super(text, description, icon);
         myBehaviour = behaviour;
         this.myCustomActionDescription = customActionDescription;
@@ -162,8 +163,8 @@ public abstract class ReorderableListController <T> {
     }
 
     private static class ActionWithText<V> extends BaseAction  {
-      ActionWithText(final CustomActionDescription<? super V> customActionDescription, final String text,
-                            final String description,
+      ActionWithText(final CustomActionDescription<? super V> customActionDescription, final @NlsActions.ActionText String text,
+                            final @NlsActions.ActionDescription String description,
                             final Icon icon,
                             final ActionBehaviour<? extends V> behaviour) {
         super(customActionDescription, text, description, icon, behaviour);
@@ -182,17 +183,17 @@ public abstract class ReorderableListController <T> {
   }
 
   public class RemoveActionDescription extends CustomActionDescription<List<T>> {
-    private final String myActionName;
+    private final @NlsActions.ActionText String myActionName;
     private Condition<? super List<T>> myConfirmation;
     private Condition<? super T> myEnableCondition;
 
-    public RemoveActionDescription(final String actionName) {
+    public RemoveActionDescription(final @NlsActions.ActionText String actionName) {
       myActionName = actionName;
     }
 
     @Override
     public BaseAction createAction(final JComponent component) {
-      final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<List<T>>() {
+      final ActionBehaviour<List<T>> behaviour = new ActionBehaviour<>() {
         @Override
         public List<T> performAction(@NotNull final AnActionEvent e) {
           if (myConfirmation != null && !myConfirmation.value((List<T>)Arrays.asList(myList.getSelectedValues()))) {
@@ -235,12 +236,12 @@ public abstract class ReorderableListController <T> {
   }
 
   public abstract static class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
-    private final String myActionDescription;
+    private final @NlsActions.ActionText String myActionDescription;
     private final Factory<? extends V> myAddHandler;
     private final boolean myCreateShortcut;
     private Icon myIcon = IconUtil.getAddIcon();
 
-    public AddActionDescriptionBase(final String actionDescription, final Factory<? extends V> addHandler, final boolean createShortcut) {
+    public AddActionDescriptionBase(final @NlsActions.ActionText String actionDescription, final Factory<? extends V> addHandler, final boolean createShortcut) {
       myActionDescription = actionDescription;
       myAddHandler = addHandler;
       myCreateShortcut = createShortcut;
@@ -248,7 +249,7 @@ public abstract class ReorderableListController <T> {
 
     @Override
     public BaseAction createAction(final JComponent component) {
-      final ActionBehaviour<V> behaviour = new ActionBehaviour<V>() {
+      final ActionBehaviour<V> behaviour = new ActionBehaviour<>() {
         @Override
         public V performAction(@NotNull final AnActionEvent e) {
           return addInternal(myAddHandler.create());
@@ -283,7 +284,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public class AddActionDescription extends AddActionDescriptionBase<T> {
-    public AddActionDescription(final String actionDescription, final Factory<? extends T> addHandler, final boolean createShortcut) {
+    public AddActionDescription(final @NlsActions.ActionText String actionDescription, final Factory<? extends T> addHandler, final boolean createShortcut) {
       super(actionDescription, addHandler, createShortcut);
     }
 
@@ -297,7 +298,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public class AddMultipleActionDescription extends AddActionDescriptionBase<Collection<T>> {
-    public AddMultipleActionDescription(final String actionDescription, final Factory<? extends Collection<T>> addHandler, final boolean createShortcut) {
+    public AddMultipleActionDescription(final @NlsActions.ActionText String actionDescription, final Factory<? extends Collection<T>> addHandler, final boolean createShortcut) {
       super(actionDescription, addHandler, createShortcut);
     }
 

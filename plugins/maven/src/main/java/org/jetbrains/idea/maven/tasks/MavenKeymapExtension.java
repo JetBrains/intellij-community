@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.icons.AllIcons;
@@ -13,10 +13,14 @@ import com.intellij.openapi.keymap.impl.ui.Hyperlink;
 import com.intellij.openapi.keymap.impl.ui.KeymapListener;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -25,6 +29,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -51,8 +56,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
       = new TreeMap<>(projectComparator);
 
     ActionManager actionManager = ActionManager.getInstance();
-    //noinspection TestOnlyProblems
-    for (String eachId : actionManager.getActionIds(getActionPrefix(project, null))) {
+    for (String eachId : getActionIdList(project, null)) {
       AnAction eachAction = actionManager.getAction(eachId);
 
       if (!(eachAction instanceof MavenGoalAction)) continue;
@@ -84,7 +88,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
     }
 
     Icon icon = AllIcons.General.Add;
-    ((Group)result).addHyperlink(new Hyperlink(icon, "Choose a phase/goal to assign a shortcut") {
+    ((Group)result).addHyperlink(new Hyperlink(icon, MavenConfigurableBundle.message("link.label.choose.phase.goal.to.assign.shortcut")) {
       @Override
       public void onClick(MouseEvent e) {
         SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(project);
@@ -131,6 +135,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems
       String actionIdPrefix = getActionPrefix(project, eachProject);
+      if (actionIdPrefix == null) continue;
       for (MavenGoalAction eachAction : collectActions(eachProject)) {
         String id = actionIdPrefix + eachAction.getGoal();
         if(shortcutsManager.hasShortcuts(eachProject, eachAction.getGoal())) {
@@ -153,8 +158,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
 
   public static void clearActions(Project project) {
     ActionManager manager = ActionManager.getInstance();
-    //noinspection TestOnlyProblems
-    for (String each : manager.getActionIds(getActionPrefix(project, null))) {
+    for (String each : getActionIdList(project, null)) {
       manager.unregisterAction(each);
     }
   }
@@ -162,11 +166,17 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
   static void clearActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager manager = ActionManager.getInstance();
     for (MavenProject eachProject : mavenProjects) {
-      //noinspection TestOnlyProblems
-      for (String eachAction : manager.getActionIds(getActionPrefix(project, eachProject))) {
+      for (String eachAction : getActionIdList(project, eachProject)) {
         manager.unregisterAction(eachAction);
       }
     }
+  }
+
+  private static @NotNull List<@NonNls String> getActionIdList(@NotNull Project project, @Nullable MavenProject mavenProject) {
+    //noinspection TestOnlyProblems
+    String actionPrefix = getActionPrefix(project, mavenProject);
+    if (actionPrefix == null) return Collections.emptyList();
+    return ActionManager.getInstance().getActionIdList(actionPrefix);
   }
 
   private static List<String> collectGoals(MavenProject project) {
@@ -189,20 +199,22 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
   }
 
   @TestOnly
-  public static String getActionPrefix(Project project, MavenProject mavenProject) {
+  @Nullable
+  public static String getActionPrefix(@NotNull Project project, @Nullable MavenProject mavenProject) {
     String pomPath = mavenProject == null ? null : mavenProject.getPath();
-    return MavenShortcutsManager.getInstance(project).getActionId(pomPath, null);
+    MavenShortcutsManager mavenShortcutsManager = MavenShortcutsManager.getInstanceIfCreated(project);
+    return mavenShortcutsManager == null ? null : mavenShortcutsManager.getActionId(pomPath, null);
   }
 
   private static class MavenGoalAction extends MavenAction {
     private final MavenProject myMavenProject;
-    private final String myGoal;
+    private final @NlsSafe String myGoal;
 
     MavenGoalAction(MavenProject mavenProject, String goal) {
       myMavenProject = mavenProject;
       myGoal = goal;
       Presentation template = getTemplatePresentation();
-      template.setText(goal + " (" + mavenProject.getMavenId() + ")", false);
+      template.setText(goal + " (" + mavenProject.getMavenId() + ")", false); //NON-NLS
       template.setIcon(Task);
     }
 

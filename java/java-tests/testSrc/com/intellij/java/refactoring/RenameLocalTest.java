@@ -35,8 +35,8 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
-    doRunTest(); // don't wrap in command
+  protected boolean isRunInCommand() {
+    return false;
   }
 
   public void testIDEADEV3320() {

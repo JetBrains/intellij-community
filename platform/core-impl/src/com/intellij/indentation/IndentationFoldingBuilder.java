@@ -52,12 +52,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       String text = child.getText();
-      if (text == null) {
-        if (builder.length() > 0) {
-          break;
-        }
-      }
-      else if (!text.contains("\n")) {
+      if (!text.contains("\n")) {
         builder.append(text);
       }
       else if (builder.length() > 0) {

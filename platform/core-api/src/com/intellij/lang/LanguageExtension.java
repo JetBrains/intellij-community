@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.lang;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,18 +6,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import static com.intellij.lang.LanguageUtil.matchingMetaLanguages;
+import java.util.*;
 
 public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T myDefaultImplementation;
@@ -64,7 +54,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     for (Language derivedLanguage : languages) {
       clearCacheForLanguage(derivedLanguage);
 
-      Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(derivedLanguage);
+      Collection<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(derivedLanguage);
       for (MetaLanguage metaLanguage : metaLanguages) {
         clearCacheForLanguage(metaLanguage);
       }
@@ -152,12 +142,12 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   @NotNull
   @Override
   protected List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-    Collection<MetaLanguage> metaLanguages = matchingMetaLanguages(key);
+    Collection<MetaLanguage> metaLanguages = LanguageUtil.matchingMetaLanguages(key);
     if (metaLanguages.isEmpty()) {
       return super.buildExtensions(stringKey, key);
     }
 
-    Set<String> allKeys = new THashSet<>();
+    Set<String> allKeys = new HashSet<>();
     allKeys.add(stringKey);
     for (MetaLanguage language : metaLanguages) {
       allKeys.add(keyToString(language));

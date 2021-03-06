@@ -5,11 +5,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Function;
 
 /**
  * @author Anna.Kozlova
  */
 public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
+
+  public static <T> void  installSpeedSearch(JComboBox<T> comboBox, Function<? super T, String> textGetter) {
+    new ComboboxSpeedSearch(comboBox) {
+      @Override
+      protected String getElementText(Object element) {
+        return textGetter.apply((T)element);
+      }
+    };
+  }
+
   public ComboboxSpeedSearch(@NotNull final JComboBox comboBox) {
     super(comboBox);
     removeKeyStroke(comboBox.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
@@ -34,13 +45,13 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
   }
 
   @Override
-  protected Object @NotNull [] getAllElements() {
-    ListModel model = myComponent.getModel();
-    Object[] elements = new Object[model.getSize()];
-    for (int i = 0; i < elements.length; i++) {
-      elements[i] = model.getElementAt(i);
-    }
-    return elements;
+  protected int getElementCount() {
+    return myComponent.getModel().getSize();
+  }
+
+  @Override
+  protected Object getElementAt(int viewIndex) {
+    return myComponent.getModel().getElementAt(viewIndex);
   }
 
   @Override

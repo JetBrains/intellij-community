@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -50,23 +51,32 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   @NotNull
-  public RangeHighlighter addRangeHighlighter(int startOffset,
+  public RangeHighlighter addRangeHighlighter(@Nullable TextAttributesKey textAttributesKey,
+                                              int startOffset,
                                               int endOffset,
                                               int layer,
-                                              @Nullable TextAttributes textAttributes,
                                               @NotNull HighlighterTargetArea targetArea) {
+    throw new ProcessCanceledException();
+  }
+
+  @Override
+  public @NotNull RangeHighlighter addRangeHighlighter(int startOffset,
+                                                       int endOffset,
+                                                       int layer,
+                                                       @Nullable TextAttributes textAttributes,
+                                                       @NotNull HighlighterTargetArea targetArea) {
     throw new ProcessCanceledException();
   }
 
   @NotNull
   @Override
-  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
+                                                                   int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   TextAttributes textAttributes,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
-                                                                   Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+                                                                   @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     throw new ProcessCanceledException();
   }
 
@@ -77,7 +87,12 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   @NotNull
-  public RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
+  public RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int line, int layer) {
+    throw new ProcessCanceledException();
+  }
+
+  @Override
+  public @NotNull RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
     throw new ProcessCanceledException();
   }
 
@@ -108,7 +123,12 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes) {
+  public RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
+    return null;
+  }
+
+  @Override
+  public @Nullable RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
     return null;
   }
 
@@ -146,8 +166,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @Override
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                                 int endOffset,
-                                                                boolean onlyRenderedInGutter,
-                                                                boolean onlyRenderedInScrollBar) {
+                                                                boolean onlyRenderedInGutter) {
     return MarkupIterator.EMPTY;
   }
 

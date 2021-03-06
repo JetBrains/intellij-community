@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -65,7 +64,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
     }
 
-    ((ToolWindowEx)myToolWindow).setTitleActions(myToolWindowContent.createActions());
+    myToolWindow.setTitleActions(myToolWindowContent.createActions());
     initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();

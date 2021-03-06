@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,12 +43,14 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
-  private static final String IDEA_LOG = "idea.log";
+  @NonNls private static final String IDEA_LOG = "idea.log";
+  @NonNls private static final String LOG_DIR = "/system/log/";
+
   private Module myModule;
   private String myModuleName;
 
@@ -75,7 +78,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
       if (ideaJdk != null) {
         final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
         if (sandboxHome != null) {
-          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/" + IDEA_LOG, predefinedLogFile.isEnabled());
+          return new LogFileOptions(IDEA_LOG, sandboxHome + LOG_DIR + IDEA_LOG, predefinedLogFile.isEnabled());
         }
       }
     }
@@ -157,17 +160,17 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
 
         if (!fromIdeaProject) {
-          String bootPath = "/lib/boot.jar";
-          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          @NonNls String bootPath = "/lib/boot.jar";
+          @NonNls String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
           if (new File(bootJarPath).exists()) {
             //there is no need to add boot.jar in modern IDE builds (181.*)
             vm.add("-Xbootclasspath/a:" + bootJarPath);
           }
         }
 
-        vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
-        vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
-        vm.defineProperty("idea.plugins.path", canonicalSandbox + File.separator + "plugins");
+        vm.defineProperty(PathManager.PROPERTY_CONFIG_PATH, canonicalSandbox + File.separator + "config");
+        vm.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, canonicalSandbox + File.separator + "system");
+        vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
         vm.defineProperty("idea.classpath.index.enabled", "false");
 
         if (!vm.hasProperty(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY) && PluginModuleType.isOfType(module)) {
@@ -184,7 +187,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isXWindow) {
-          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
+          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) // NON-NLS
+          {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }
         }
@@ -211,9 +215,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          for (String path : Arrays.asList(
-            "log4j.jar", "jdom.jar", "trove4j.jar", "openapi.jar", "util.jar",
-            "extensions.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar")) {
+          for (String path : List.of("log4j.jar", "jdom.jar", "trove4j.jar", "openapi.jar", "util.jar", "bootstrap.jar",
+                                     "idea_rt.jar", "idea.jar")) {
             params.getClassPath().add(ideaJdkHome + toSystemDependentName("/lib/" + path));
           }
         }
@@ -302,7 +305,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     Element moduleElement = new Element(MODULE);
-    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<>() {
       @Override
       public String compute() {
         final Module module = getModule();

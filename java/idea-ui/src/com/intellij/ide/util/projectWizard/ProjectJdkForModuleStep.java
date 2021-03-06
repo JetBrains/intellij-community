@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     jdkLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(jdkLabel, new GridBagConstraints(0, 1, 1, 1, 0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, JBUI.insets(8, 10, 0, 10), 0, 0));
+    jdkLabel.setLabelFor(myJdkChooser);
 
     myPanel.add(myJdkChooser, new GridBagConstraints(1, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));
@@ -143,6 +145,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
    * @deprecated this method does return an empty array
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public Object @NotNull [] getAllJdks() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

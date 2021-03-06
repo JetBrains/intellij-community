@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -43,13 +43,9 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           if (child instanceof PsiDirectory) {
             if (event.getOldParent() instanceof PsiDirectory && event.getNewParent() instanceof PsiDirectory) {
               final String fromDirUrl = ((PsiDirectory)event.getOldParent()).getVirtualFile().getUrl() + "/";
-              final NotNullLazyValue<String> toDirUrl = new NotNullLazyValue<String>() {
-                @NotNull
-                @Override
-                protected String compute() {
-                  return ((PsiDirectory)event.getNewParent()).getVirtualFile().getUrl() + "/";
-                }
-              };
+              final NotNullLazyValue<String> toDirUrl = NotNullLazyValue.lazy(() -> {
+                return ((PsiDirectory)event.getNewParent()).getVirtualFile().getUrl() + "/";
+              });
               for (String dissociatedFileUrl : new SmartList<>(myState.getDissociatedFiles())) {
                 if (dissociatedFileUrl.startsWith(fromDirUrl)) {
                   myState.getDissociatedFiles().remove(dissociatedFileUrl);
@@ -81,14 +77,10 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
           return;
         }
 
-        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = new NotNullLazyValue<Pair<String, String>>() {
-          @NotNull
-          @Override
-          protected Pair<String, String> compute() {
-            final String newUrl = propertiesFile.getVirtualFile().getUrl();
-            return Pair.create(oldParentUrl + newUrl.substring(newParentUrl.length()), newUrl);
-          }
-        };
+        final NotNullLazyValue<Pair<String, String>> oldAndNewUrls = NotNullLazyValue.lazy(() -> {
+          final String newUrl = propertiesFile.getVirtualFile().getUrl();
+          return new Pair<>(oldParentUrl + newUrl.substring(newParentUrl.length()), newUrl);
+        });
 
         if (!myState.getDissociatedFiles().isEmpty()) {
           if (myState.getDissociatedFiles().remove(oldAndNewUrls.getValue().getFirst())) {
@@ -138,13 +130,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         if (!PropertiesImplUtil.canBePropertyFile(psiFile)) return;
 
         final VirtualFile virtualFile = psiFile.getVirtualFile();
-        final NotNullLazyValue<String> url = new NotNullLazyValue<String>() {
-          @NotNull
-          @Override
-          protected String compute() {
-            return virtualFile.getUrl();
-          }
-        };
+        final NotNullLazyValue<String> url = NotNullLazyValue.lazy(() -> virtualFile.getUrl());
         if (!myState.getDissociatedFiles().isEmpty()) {
           myState.getDissociatedFiles().remove(url.getValue());
         }

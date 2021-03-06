@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.util.diff.Diff;
@@ -24,9 +10,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ModelDiff {
+public final class ModelDiff {
+
   @Nullable
-  public static List<Cmd> createDiffCmds(@NotNull Model<Object> listModel, Object @NotNull [] oldElements, Object @NotNull [] newElements) {
+  public static <T> List<Cmd> createDiffCmds(@NotNull Model<T> listModel, T @NotNull [] oldElements, T @NotNull [] newElements) {
     Diff.Change change = null;
     try {
       change = Diff.buildChanges(oldElements, newElements);
@@ -49,7 +36,7 @@ public class ModelDiff {
       }
 
       if (change.inserted > 0) {
-        List<Object> elements = new ArrayList<>(Arrays.asList(newElements).subList(change.line1, change.line1 + change.inserted));
+        List<T> elements = new ArrayList<>(Arrays.asList(newElements).subList(change.line1, change.line1 + change.inserted));
         commands.add(new InsertCmd<>(listModel, change.line0 + inserted - deleted, elements));
       }
 
@@ -77,7 +64,7 @@ public class ModelDiff {
     void removeRangeFromModel(int start, int end);
   }
 
-  private static class RemoveCmd<T> implements Cmd {
+  private static final class RemoveCmd<T> implements Cmd {
     private final Model<T> myListModel;
     private final int start;
     private final int end;
@@ -106,7 +93,7 @@ public class ModelDiff {
     }
   }
 
-  private static class InsertCmd<T> implements Cmd {
+  private static final class InsertCmd<T> implements Cmd {
     private final Model<T> myListModel;
     private final int idx;
     private final List<? extends T> elements;

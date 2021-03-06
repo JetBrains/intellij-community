@@ -24,6 +24,7 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
            "}}");
   }
 
+  @SuppressWarnings("RedundantOperationOnEmptyContainer")
   public void testZeroArgumentsWithType() {
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.emptyList()"),
            "import java.util.*;\n" +
@@ -40,11 +41,11 @@ public class ArraysAsListWithZeroOrOneArgumentFixTest extends IGQuickFixesTestCa
     doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Collections.singletonList()"),
            "import java.util.*;" +
            "class X {{\n" +
-           "  List<Map<String, String>> list = Arrays./**/asList(new HashMap<String, String>());" +
+           "  List<Map<String, String>> list = Arrays./**/asList(new HashMap<>());" +
            "}}",
            "import java.util.*;" +
            "class X {{\n" +
-           "  List<Map<String, String>> list = Collections.singletonList(new HashMap<String, String>());" +
+           "  List<Map<String, String>> list = Collections.singletonList(new HashMap<>());" +
            "}}");
   }
 

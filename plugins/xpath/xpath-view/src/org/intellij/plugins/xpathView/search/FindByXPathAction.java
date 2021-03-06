@@ -26,10 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usages.*;
-import org.intellij.plugins.xpathView.Config;
-import org.intellij.plugins.xpathView.XPathAppComponent;
-import org.intellij.plugins.xpathView.XPathEvalAction;
-import org.intellij.plugins.xpathView.XPathProjectComponent;
+import org.intellij.plugins.xpathView.*;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.jaxen.JaxenException;
@@ -80,13 +77,13 @@ public class FindByXPathAction extends AnAction {
         }
 
         final UsageViewPresentation presentation = new UsageViewPresentation();
-        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? "XPath Pattern" : "XPath Expression");
+        presentation.setTargetsNodeText(settings.MATCH_RECURSIVELY ? XPathBundle.message("list.item.xpath.pattern")
+                                                                   : XPathBundle.message("list.item.xpath.expression"));
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Found Matches in " + scope.getName());
-        presentation.setNonCodeUsagesString("Result");
-        presentation.setUsagesString("results matching '" + expression + '\'');
-        presentation.setUsagesWord("match");
-        presentation.setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + expression + '\'', 60, 0, true));
+        presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches.in", scope.getName()));
+        presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
+        presentation.setUsagesString(XPathBundle.message("results.matching.0", expression));
+        presentation.setTabText(StringUtil.shortenTextWithEllipsis(XPathBundle.message("tab.title.xpath", expression), 60, 0, true));
         presentation.setScopeText(scope.getName());
 
         presentation.setOpenInNewTab(FindSettings.getInstance().isShowResultsInSeparateView());
@@ -103,7 +100,8 @@ public class FindByXPathAction extends AnAction {
         final UsageViewManager.UsageViewStateListener stateListener = new UsageViewManager.UsageViewStateListener() {
             @Override
             public void usageViewCreated(@NotNull UsageView usageView) {
-                usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");
+                usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module),
+                                               XPathBundle.message("button.edit.expression.with.mnemonic"));
             }
 
             @Override
@@ -138,9 +136,9 @@ public class FindByXPathAction extends AnAction {
           XPathSupport.getInstance().createXPath(null, expression, Collections.emptyList());
             return true;
         } catch (XPathSyntaxException e) {
-            Messages.showErrorDialog(project, e.getMultilineMessage(), "XPath Syntax Error");
+            Messages.showErrorDialog(project, e.getMultilineMessage(), XPathBundle.message("dialog.title.xpath.syntax.error")); //NON-NLS
         } catch (JaxenException e) {
-            Messages.showErrorDialog(project, e.getMessage(), "XPath Error");
+            Messages.showErrorDialog(project, e.getMessage(), XPathBundle.message("dialog.title.xpath.error"));
         }
         return false;
     }

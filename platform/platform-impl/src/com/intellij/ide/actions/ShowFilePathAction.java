@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,7 +111,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   }
 
   private static ListPopup createPopup(List<? extends VirtualFile> files, List<? extends Icon> icons) {
-    BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
+    BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override
       public String getTextFor(VirtualFile value) {
@@ -167,7 +168,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   /** @deprecated use {@link RevealFileAction#showDialog} (to be removed in IDEA 2021.3) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void showDialog(Project project, String message, String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
+  public static void showDialog(Project project, @NlsContexts.DialogMessage String message, @NlsContexts.DialogTitle String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
     RevealFileAction.showDialog(project, message, title, file, option);
   }
 

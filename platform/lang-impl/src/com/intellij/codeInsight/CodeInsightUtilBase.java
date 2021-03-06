@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -13,15 +13,15 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
-public class CodeInsightUtilBase extends CodeInsightUtilCore {
+public final class CodeInsightUtilBase extends CodeInsightUtilCore {
   private CodeInsightUtilBase() {
   }
 
@@ -58,7 +58,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   @Override
   public boolean preparePsiElementsForWrite(@NotNull Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
-    Set<VirtualFile> files = new THashSet<>();
+    Set<VirtualFile> files = new HashSet<>();
     Project project = null;
     for (PsiElement element : elements) {
       if (element == null) continue;

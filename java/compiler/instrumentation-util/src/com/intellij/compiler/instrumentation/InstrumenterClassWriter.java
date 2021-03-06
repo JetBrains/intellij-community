@@ -1,14 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.instrumentation;
 
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
-/**
-* @author Eugene Zhuravlev
-*/
-public class InstrumenterClassWriter extends ClassWriter {
+public final class InstrumenterClassWriter extends ClassWriter {
   private final InstrumentationClassFinder myFinder;
 
   public InstrumenterClassWriter(ClassReader reader, int flags, InstrumentationClassFinder finder) {

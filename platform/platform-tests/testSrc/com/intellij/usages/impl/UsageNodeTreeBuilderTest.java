@@ -90,7 +90,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setUsagesString("searching for mock usages");
 
-    ExtensionPoint<UsageGroupingRuleProvider> point = UsageGroupingRuleProvider.EP_NAME.getPoint(null);
+    ExtensionPoint<UsageGroupingRuleProvider> point = UsageGroupingRuleProvider.EP_NAME.getPoint();
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
       @Override
       public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {

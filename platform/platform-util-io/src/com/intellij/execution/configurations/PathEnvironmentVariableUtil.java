@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -7,6 +7,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import java.util.List;
 /**
  * A collection of utility methods for working with PATH environment variable.
  */
-public class PathEnvironmentVariableUtil {
+public final class PathEnvironmentVariableUtil {
 
   private static final String PATH = "PATH";
 
@@ -33,7 +34,7 @@ public class PathEnvironmentVariableUtil {
    * @return {@link File} instance or null if not found
    */
   @Nullable
-  public static File findInPath(@NotNull String fileBaseName) {
+  public static File findInPath(@NotNull @NonNls String fileBaseName) {
     return findInPath(fileBaseName, null);
   }
 
@@ -140,10 +141,10 @@ public class PathEnvironmentVariableUtil {
       if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
 
-        String[] baseNames = ContainerUtil.map2Array(executableFileExtensions, String.class, s -> exePath+s);
+        String[] baseNames = ContainerUtil.map2Array(executableFileExtensions, String.class, s -> exePath + s);
         List<File> exeFiles = findExeFilesInPath(true, null, getPathVariableValue(), baseNames);
         File foundFile = ContainerUtil.getFirstItem(exeFiles);
-        if(foundFile != null){
+        if (foundFile != null) {
           return foundFile.getAbsolutePath();
         }
       }
@@ -157,5 +158,18 @@ public class PathEnvironmentVariableUtil {
   @Nullable
   public static String getPathVariableValue() {
     return EnvironmentUtil.getValue(PATH);
+  }
+
+  @Nullable
+  public static File findExecutableInPathOnAnyOS(@NotNull @NonNls String fileBaseName) {
+    if (SystemInfo.isWindows) {
+      String[] fileNames = ContainerUtil.map2Array(getWindowsExecutableFileExtensions(), String.class,
+                                                   (String extension) -> fileBaseName + extension);
+      List<File> exeFiles = findExeFilesInPath(true, null, getPathVariableValue(), fileNames);
+      return ContainerUtil.getFirstItem(exeFiles);
+    }
+    else {
+      return findInPath(fileBaseName);
+    }
   }
 }

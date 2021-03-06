@@ -118,7 +118,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   @Override
   protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
-    if (data.requiredLength > data.toFitLength) {
+    if (data.requiredLength > data.toFitLength && !label.isPinned()) {
       length = getStrategy().getLengthIncrement(label.getPreferredSize());
       final int moreRectSize = getStrategy().getMoreRectAxisSize();
       if (data.position + length > data.toFitLength - moreRectSize) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
 import com.intellij.ide.CopyProvider;
@@ -14,7 +14,8 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwContainer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -111,8 +112,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
     }
 
     final ArrayList<RadComponent> componentsToPaste = new ArrayList<>();
-    final TIntArrayList xs = new TIntArrayList();
-    final TIntArrayList ys = new TIntArrayList();
+    final IntList xs=new IntArrayList();
+    final IntList ys=new IntArrayList();
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
 
     myEditor.getMainProcessor().startPasteProcessor(componentsToPaste, xs, ys);
@@ -121,8 +122,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   @Nullable
   private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
     ArrayList<RadComponent> components = new ArrayList<>();
-    TIntArrayList xs = new TIntArrayList();
-    TIntArrayList ys = new TIntArrayList();
+    IntList xs=new IntArrayList();
+    IntList ys=new IntArrayList();
     if (!loadComponentsToPaste(editor, serializedComponents, xs, ys, components)) {
       return null;
     }
@@ -130,8 +131,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   }
 
   private static boolean loadComponentsToPaste(final GuiEditor editor, final String serializedComponents,
-                                               final TIntArrayList xs,
-                                               final TIntArrayList ys,
+                                               final IntList xs,
+                                               final IntList ys,
                                                final ArrayList<? super RadComponent> componentsToPaste) {
     final PsiPropertiesProvider provider = new PsiPropertiesProvider(editor.getModule());
 

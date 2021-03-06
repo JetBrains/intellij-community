@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
@@ -10,6 +11,8 @@ import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
@@ -59,7 +62,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public TerminalListener createTerminal(final String pipeName,
+  public TerminalListener createTerminal(@Nls String pipeName,
                                          OutputStream terminalInput,
                                          InputStream terminalOutput,
                                          InputStream stderr) {
@@ -96,6 +99,16 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
     }
 
     @Override
+    public void printHyperlink(String line, Runnable action) {
+      myLoggingHandler.printHyperlink(line, new HyperlinkInfo() {
+        @Override
+        public void navigate(@NotNull Project project) {
+          action.run();
+        }
+      });
+    }
+
+    @Override
     public void close() {
       if (myLoggingHandler instanceof LoggingHandlerBase) {
         ((LoggingHandlerBase)myLoggingHandler).close();
@@ -106,6 +119,12 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
       return myLoggingHandler instanceof LoggingHandlerBase && ((LoggingHandlerBase)myLoggingHandler).isClosed();
     }
 
+    @Override
+    public void scrollTo(int offset) {
+      myLoggingHandler.scrollTo(offset);
+    }
+
+    @Override
     public void clear() {
       myLoggingHandler.clear();
     }

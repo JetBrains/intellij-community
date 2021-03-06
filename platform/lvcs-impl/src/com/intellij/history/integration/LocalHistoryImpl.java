@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
@@ -12,33 +12,31 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
 public final class LocalHistoryImpl extends LocalHistory implements Disposable {
-  private MessageBusConnection myConnection;
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
 
-  private LocalHistoryEventDispatcher myEventDispatcher;
+  private @Nullable LocalHistoryEventDispatcher myEventDispatcher;
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -83,21 +81,15 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     myGateway = new IdeaGateway();
 
     myEventDispatcher = new LocalHistoryEventDispatcher(myVcs, myGateway);
-
-    myConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myEventDispatcher);
-    myConnection.subscribe(CommandListener.TOPIC, myEventDispatcher);
-
-    VirtualFileManager.getInstance().addVirtualFileManagerListener(myEventDispatcher, this);
   }
 
-  @NotNull
-  public static File getStorageDir() {
-    return new File(getSystemPath(), "LocalHistory");
+  @Nullable
+  LocalHistoryEventDispatcher getEventDispatcher() {
+    return myEventDispatcher;
   }
 
-  private static String getSystemPath() {
-    return PathManager.getSystemPath();
+  public static @NotNull Path getStorageDir() {
+    return Paths.get(PathManager.getSystemPath(), "LocalHistory");
   }
 
   @Override
@@ -109,10 +101,6 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     if (!isInitialized.getAndSet(false)) return;
 
     long period = Registry.intValue("localHistory.daysToKeep") * 1000L * 60L * 60L * 24L;
-
-    myConnection.disconnect();
-    myConnection = null;
-
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
     myChangeList.close();
@@ -122,12 +110,12 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   @TestOnly
   public void cleanupForNextTest() {
     doDispose();
-    FileUtil.delete(getStorageDir());
+    PathKt.delete(getStorageDir());
     init();
   }
 
   @Override
-  public LocalHistoryAction startAction(String name) {
+  public LocalHistoryAction startAction(@NlsContexts.Label String name) {
     if (!isInitialized()) return LocalHistoryAction.NULL;
 
     LocalHistoryActionImpl a = new LocalHistoryActionImpl(myEventDispatcher, name);
@@ -136,7 +124,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public Label putUserLabel(Project p, @NotNull String name) {
+  public Label putUserLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putUserLabel(name, getProjectId(p)));
@@ -147,7 +135,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public Label putSystemLabel(Project p, @NotNull String name, int color) {
+  public Label putSystemLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name, int color) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));
@@ -173,7 +161,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public byte @Nullable [] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
+  public byte @Nullable [] getByteContent(@NotNull VirtualFile f, @NotNull FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;
     if (!myGateway.areContentChangesVersioned(f)) return null;
     return ReadAction.compute(() -> new ByteContentRetriever(myGateway, myVcs, f, c).getResult());

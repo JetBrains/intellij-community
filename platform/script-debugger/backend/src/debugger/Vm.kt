@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderEx
+import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.nullPromise
 
@@ -45,7 +46,7 @@ interface Vm : UserDataHolderEx {
   fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*> = nullPromise()
 
   val presentableName: String
-    get() = "Main Thread"
+    @Nls get() = ScriptDebuggerBundle.message("debug.vm.title.main.thread")
 
   val childVMs: MutableList<Vm>
 }

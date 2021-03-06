@@ -6,7 +6,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -16,7 +15,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uast.UastModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdIterator;
@@ -31,12 +33,17 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.psi.PsiAnnotation.TargetType.ANNOTATION_TYPE;
+import static com.intellij.psi.search.GlobalSearchScope.allScope;
+import static com.intellij.psi.search.GlobalSearchScope.moduleWithDependenciesAndLibrariesScope;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 
 /**
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
  */
 public abstract class MetaAnnotationUtil {
-  private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
+  private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<>() {
     @Override
     public int computeHashCode(PsiClass object) {
       String qualifiedName = object.getQualifiedName();
@@ -54,31 +61,30 @@ public abstract class MetaAnnotationUtil {
 
     Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(project).getCachedValue(module, () -> {
       Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
-        GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
+        GlobalSearchScope moduleScope = moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
 
         PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(key.getFirst(), moduleScope);
         if (annotationClass == null || !annotationClass.isAnnotationType()) {
-          return Collections.emptyList();
+          return emptyList();
         }
 
         // limit search to files containing annotations
         GlobalSearchScope effectiveSearchScope = getAllAnnotationFilesScope(project).intersectWith(moduleScope);
         return getAnnotationTypesWithChildren(annotationClass, effectiveSearchScope);
       });
-      return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return Result.create(factoryMap, UastModificationTracker.getInstance(project));
     });
 
     return map.get(pair(annotationName, includeTests));
   }
 
   public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
-        null) {
-      return Collections.emptySet();
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+      return emptySet();
     }
 
     String name = psiClass.getQualifiedName();
-    if (name == null) return Collections.emptySet();
+    if (name == null) return emptySet();
 
     Set<PsiClass> result = new THashSet<>(HASHING_STRATEGY);
     AnnotatedElementsSearch.searchPsiClasses(psiClass, scope).forEach(processorResult -> {
@@ -89,31 +95,39 @@ public abstract class MetaAnnotationUtil {
       return true;
     });
 
+    if (result.isEmpty()) return emptySet();
+
     return result;
   }
 
-  public static Collection<PsiClass> getAnnotatedTypes(@NotNull Module module,
-                                                       @NotNull Key<CachedValue<Collection<PsiClass>>> key,
-                                                       @NotNull String annotationName) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, key, () -> {
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
-      PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject()).findClass(annotationName, scope);
+  public static Collection<PsiClass> getAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
+    Map<String, Collection<PsiClass>> map = CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      Map<String, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
+        return findAnnotatedTypes(module, key);
+      });
 
-      Collection<PsiClass> classes;
-      if (psiClass == null || !psiClass.isAnnotationType()) {
-        classes = Collections.emptyList();
-      }
-      else {
-        classes = getChildren(psiClass, scope);
-      }
-      return new CachedValueProvider.Result<>(classes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-    }, false);
+      return new Result<>(factoryMap, UastModificationTracker.getInstance(module.getProject()));
+    });
+    return map.get(annotationName);
+  }
+
+  @NotNull
+  private static Collection<PsiClass> findAnnotatedTypes(@NotNull Module module, @NotNull String annotationName) {
+    GlobalSearchScope scope = moduleWithDependenciesAndLibrariesScope(module, false);
+    PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject()).findClass(annotationName, scope);
+    if (psiClass == null || !psiClass.isAnnotationType()) {
+      return emptyList();
+    }
+    return getChildren(psiClass, scope);
   }
 
   @NotNull
   private static Collection<PsiClass> getAnnotationTypesWithChildren(PsiClass annotationClass, GlobalSearchScope scope) {
     Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
     collectClassWithChildren(annotationClass, classes, scope);
+
+    if (classes.isEmpty()) return emptySet();
+
     return classes;
   }
 
@@ -121,15 +135,15 @@ public abstract class MetaAnnotationUtil {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope javaScope = new FileIdScope(project, getJavaAnnotationInheritorIds(project));
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(project);
-      return CachedValueProvider.Result.createSingleDependency(
+      return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
-        PsiModificationTracker.MODIFICATION_COUNT);
+        UastModificationTracker.getInstance(project));
     });
   }
 
   @NotNull
   private static GlobalSearchScope searchForAnnotationInheritorsInOtherLanguages(Project project) {
-    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+    GlobalSearchScope allScope = allScope(project);
     Set<VirtualFile> allAnnotationFiles = new HashSet<>();
     for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
       .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, allScope)) {
@@ -153,7 +167,7 @@ public abstract class MetaAnnotationUtil {
   @NotNull
   private static TIntHashSet getJavaAnnotationInheritorIds(Project project) {
     IdIterator iterator = StubIndex.getInstance().getContainingIds(JavaStubIndexKeys.SUPER_CLASSES, "Annotation", project,
-                                                                   GlobalSearchScope.allScope(project));
+                                                                   allScope(project));
     TIntHashSet idSet = new TIntHashSet();
     while (iterator.hasNext()) {
       idSet.add(iterator.next());
@@ -220,8 +234,7 @@ public abstract class MetaAnnotationUtil {
 
   public static boolean hasMetaAnnotatedMethods(@NotNull PsiClass psiClass,
                                                 @NotNull Collection<String> annotations) {
-    return Stream.of(psiClass.getMethods())
-        .anyMatch(psiMethod -> isMetaAnnotated(psiMethod, annotations));
+    return ContainerUtil.or(psiClass.getMethods(), psiMethod -> isMetaAnnotated(psiMethod, annotations));
   }
 
   private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
@@ -246,7 +259,7 @@ public abstract class MetaAnnotationUtil {
     return CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
       ConcurrentMap<String, PsiAnnotation> metaAnnotationsMap = ConcurrentFactoryMap.createMap(
         anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
-      return new CachedValueProvider.Result<>(metaAnnotationsMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return Result.create(metaAnnotationsMap, UastModificationTracker.getInstance(subjectAnnotation.getProject()));
     }).get(annotationToFind);
   }
 
@@ -291,12 +304,8 @@ public abstract class MetaAnnotationUtil {
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
-      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), psiAnnotation -> {
-        PsiJavaCodeReferenceElement nameReferenceElement = psiAnnotation.getNameReferenceElement();
-        PsiElement resolve = nameReferenceElement != null ? nameReferenceElement.resolve() : null;
-        return resolve instanceof PsiClass && ((PsiClass)resolve).isAnnotationType() ? (PsiClass)resolve : null;
-      });
+      return ContainerUtil.mapNotNull(modifierList.getApplicableAnnotations(), annotation -> annotation.resolveAnnotationType());
     }
-    return Collections.emptyList();
+    return emptyList();
   }
 }

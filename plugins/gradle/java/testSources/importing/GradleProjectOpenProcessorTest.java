@@ -1,24 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EdtTestUtilKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,7 +42,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
  * @author Vladislav.Soroka
  */
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
-
   /**
    * Needed only to reuse stuff in GradleImportingTestCase#setUp().
    */
@@ -93,12 +89,11 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
                          "  </component>\n" +
                          "</module>");
 
-    Project fooProject = executeOnEdt(() -> ProjectUtil.openProject(foo.getPath(), null, true));
+    Project fooProject = PlatformTestUtil.loadAndOpenProject(foo.toNioPath(), getTestRootDisposable());
     AutoImportProjectTracker.getInstance(fooProject).enableAutoImportInTests();
 
     try {
-      assertTrue(fooProject.isOpen());
-      edt(() -> UIUtil.dispatchAllInvocationEvents());
+      EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
       assertModules(fooProject, "foo", "bar");
 
       AsyncPromise<?> promise = new AsyncPromise<>();
@@ -141,7 +136,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
     createProjectSubFile("foo/settings.gradle", "");
-    Project fooProject = executeOnEdt(() -> ProjectUtil.openOrImport(foo.getPath(), null, true));
+    Project fooProject = executeOnEdt(() -> ProjectUtil.openOrImport(foo.toNioPath()));
 
     try {
       assertTrue(fooProject.isOpen());
@@ -185,26 +180,11 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
                          "</component>");
     FileUtil.copyDir(new File(getProjectPath(), "gradle"), new File(getProjectPath(), "foo/gradle"));
 
-    // run forceLoadSchemes before project startup activities
-    // because one of them can define default inspection profile and forceLoadSchemes will do nothing later
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
-    connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
-      @Override
-      public void beforeProjectLoaded(@NotNull Project project) {
-        MessageBusConnection busConnection = project.getMessageBus().connect();
-        busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-          @Override
-          public void projectOpened(@NotNull Project project) {
-            ProjectInspectionProfileManager.getInstance(project).forceLoadSchemes();
-          }
-        });
-      }
-    });
-
     Project fooProject = null;
     try {
       fooProject = EdtTestUtilKt.runInEdtAndGet(() -> {
-        final Project project = ProjectUtil.openOrImport(foo.getPath(), null, true);
+        final Project project = ProjectUtil.openOrImport(foo.toNioPath());
+        ProjectInspectionProfileManager.getInstance(project).forceLoadSchemes();
         UIUtil.dispatchAllInvocationEvents();
         return project;
       });
@@ -218,7 +198,6 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
       // assertModules(fooProject, "foo", "foo_main", "foo_test");
     }
     finally {
-      connection.disconnect();
       if (fooProject != null) {
         Project finalFooProject = fooProject;
         edt(() -> closeProject(finalFooProject));

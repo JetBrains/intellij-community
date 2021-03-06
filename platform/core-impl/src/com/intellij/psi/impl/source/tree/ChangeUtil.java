@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class ChangeUtil {
+public final class ChangeUtil {
 
   private static final Logger LOG = Logger.getInstance(ChangeUtil.class);
 
@@ -139,13 +139,11 @@ public class ChangeUtil {
     final FileElement changedFile = TreeUtil.getFileElement(changedElement);
     final PsiManager manager = changedFile.getManager();
     final PomModel model = PomManager.getModel(manager.getProject());
-    final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
-    model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
+    model.runTransaction(new PomTransactionBase(changedElement.getPsi()) {
       @Override
-      public PomModelEvent runInner() {
-        final PomModelEvent event = new PomModelEvent(model);
-        final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
-        event.registerChangeSet(treeAspect, destinationTreeChange);
+      public @NotNull PomModelEvent runInner() {
+        TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(model.getModelAspect(TreeAspect.class), changedFile);
+        PomModelEvent event = new PomModelEvent(model, destinationTreeChange);
         action.makeChange(destinationTreeChange);
 
         changedElement.clearCaches();

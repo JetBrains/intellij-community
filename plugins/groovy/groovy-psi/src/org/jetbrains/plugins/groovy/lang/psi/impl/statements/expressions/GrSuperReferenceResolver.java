@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.psi.PsiClass;
@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collection;
 import java.util.Collections;
 
-public class GrSuperReferenceResolver {
+public final class GrSuperReferenceResolver {
 
   @Nullable("null if ref is not 'super' reference")
   public static Collection<GroovyResolveResult> resolveSuperExpression(@NotNull GrReferenceExpression ref) {

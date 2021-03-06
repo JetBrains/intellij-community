@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -211,7 +211,7 @@ public class XValueHint extends AbstractValueHint {
                                .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
-              showHint(createExpandableHintComponent(icon, text, () -> showTree(result)));
+              showHint(createExpandableHintComponent(icon, text, () -> showTree(result), myFullValueEvaluator));
             }
             myShown = true;
           }
@@ -258,12 +258,8 @@ public class XValueHint extends AbstractValueHint {
     SimpleColoredComponent component = HintUtil.createInformationComponent();
     component.setIcon(icon);
     text.appendToComponent(component);
+    appendEvaluatorLink(evaluator, component);
     if (evaluator != null) {
-      component.append(
-        evaluator.getLinkText(),
-        XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES,
-        (Consumer<MouseEvent>)event -> DebuggerUIUtil.showValuePopup(evaluator, event, getProject(), getEditor())
-      );
       LinkMouseListenerBase.installSingleTagOn(component);
     }
     return component;
@@ -282,7 +278,12 @@ public class XValueHint extends AbstractValueHint {
     }
     XValueMarkers<?,?> valueMarkers = myDebugSession == null ? null : ((XDebugSessionImpl)myDebugSession).getValueMarkers();
     XSourcePosition position = myDebugSession == null ? null : myDebugSession.getCurrentPosition();
-    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers);
+    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(getProject(), myEditorsProvider, position, valueMarkers) {
+      @Override
+      public @NotNull String getTitle(@NotNull Pair<XValue, String> descriptor) {
+        return "";
+      }
+    };
     showTreePopup(creator, Pair.create(value, myValueName));
   }
 

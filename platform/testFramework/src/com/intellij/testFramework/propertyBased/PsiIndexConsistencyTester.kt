@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased
 
 import com.intellij.lang.Language
@@ -30,19 +16,18 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ref.GCUtil
 import org.junit.Assert.fail
 
-/**
- * @author peter
- */
 object PsiIndexConsistencyTester {
-
   val commonRefs: List<RefKind> = listOf(RefKind.PsiFileRef, RefKind.DocumentRef, RefKind.DirRef,
                                          RefKind.AstRef(null),
                                          RefKind.StubRef(null), RefKind.GreenStubRef(null))
-  
+
   val commonActions: List<Action> = listOf(Action.Commit,
+                                           Action.FlushIndexes,
                                            Action.Gc,
                                            Action.ReparseFile,
                                            Action.FilePropertiesChanged,
@@ -96,6 +81,12 @@ object PsiIndexConsistencyTester {
 
     abstract class SimpleAction: Action {
       override fun toString(): String = javaClass.simpleName
+    }
+
+    object FlushIndexes: SimpleAction() {
+      override fun performAction(model: Model) {
+        (FileBasedIndex.getInstance() as FileBasedIndexImpl).flushIndexes()
+      }
     }
 
     object Gc: SimpleAction() {
@@ -193,7 +184,7 @@ object PsiIndexConsistencyTester {
   abstract class RefKind {
 
     abstract fun loadRef(model: Model): Any?
-    
+
     open fun checkDuplicates(oldValue: Any, newValue: Any) {
       if (oldValue is PsiElement && oldValue.isValid && newValue is PsiElement) {
         fail("Duplicate PSI elements: $oldValue and $newValue")

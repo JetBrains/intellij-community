@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
@@ -10,10 +9,14 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.ProviderNotFoundException;
+import java.nio.file.spi.FileSystemProvider;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -29,10 +32,9 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
   static final int IGNORE_MISSING_SUB_DESCRIPTOR = 4;
-  static final int SKIP_DISABLED_PLUGINS = 8;
-  static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 16;
+  static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 8;
 
-  private static final Logger LOG = PluginManagerCore.getLogger();
+  static final Logger LOG = PluginManagerCore.getLogger();
 
   private final @NotNull ExecutorService executorService;
 
@@ -51,14 +53,12 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   final boolean ignoreMissingInclude;
   final boolean ignoreMissingSubDescriptor;
-  private final boolean skipDisabledPlugins;
 
   boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
 
   private final Map<String, PluginId> optionalConfigNames;
 
-  String bundledPluginsPath = PathManager.getPreInstalledPluginsPath();
-  boolean loadBundledPlugins = !PluginManagerCore.isUnitTestMode;
+  final FileSystemProvider zipFsProvider;
 
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
@@ -69,8 +69,9 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
     ignoreMissingSubDescriptor = (flags & IGNORE_MISSING_SUB_DESCRIPTOR) == IGNORE_MISSING_SUB_DESCRIPTOR;
-    skipDisabledPlugins = (flags & SKIP_DISABLED_PLUGINS) == SKIP_DISABLED_PLUGINS;
     optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? new ConcurrentHashMap<>() : null;
+
+    zipFsProvider = findZipFsProvider();
 
     maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
@@ -94,13 +95,22 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
-  boolean isPluginDisabled(@NotNull PluginId id) {
-    return id != PluginManagerCore.CORE_ID && disabledPlugins.contains(id);
+  private @NotNull
+  static FileSystemProvider findZipFsProvider() {
+    for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
+      try {
+        if (provider.getScheme().equals("jar")) {
+          return provider;
+        }
+      }
+      catch (UnsupportedOperationException ignored) {
+      }
+    }
+    throw new ProviderNotFoundException("Provider not found");
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
-  @NotNull Logger getLogger() {
-    return LOG;
+  boolean isPluginDisabled(@NotNull PluginId id) {
+    return id != PluginManagerCore.CORE_ID && disabledPlugins.contains(id);
   }
 
   @NotNull ExecutorService getExecutorService() {
@@ -130,8 +140,8 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     executorService.shutdown();
   }
 
-  public @NotNull Interner<String> getStringInterner() {
-    return xmlFactorySupplier.get().stringInterner;
+  public @NotNull String internString(@NotNull String string) {
+    return xmlFactorySupplier.get().intern(string);
   }
 
   public @NotNull String getDefaultVersion() {
@@ -158,7 +168,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
 
     Map<String, PluginId> configNames = this.optionalConfigNames;
-    if (configNames == null) {
+    if (configNames == null || configFile.startsWith("intellij.")) {
       return false;
     }
 
@@ -167,7 +177,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       return false;
     }
 
-    getLogger().error("Optional config file with name '" + configFile + "' already registered by '" + oldPluginId +
+    LOG.error("Optional config file with name '" + configFile + "' already registered by '" + oldPluginId +
                       "'. " +
                       "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
                       "Current plugin: '" + rootDescriptor + "'. ");
@@ -183,55 +193,48 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   // doesn't make sense to intern class name since it is unique
   // ouch, do we really cannot agree how to name implementation class attribute?
-  private static final List<String> CLASS_NAME_LIST = Arrays.asList(
-    "implementation-class", "implementation",
+  private static final @NonNls Set<String> CLASS_NAMES = new ReferenceOpenHashSet<>(new String[]{
+    "implementation", "implementationClass", "builderClass",
     "serviceImplementation", "class", "className", "beanClass",
-    "serviceInterface", "interface", "interfaceClass", "instance",
-    "qualifiedName");
+    "serviceInterface", "interface", "interfaceClass", "instance", "implementation-class",
+    "qualifiedName"});
 
-  private static final Set<String> CLASS_NAMES = ContainerUtil.newIdentityTroveSet(CLASS_NAME_LIST);
-
-  final Interner<String> stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST,
-                                                                                           Arrays.asList("id",
-                                                                                                         PluginManagerCore.VENDOR_JETBRAINS,
-                                                                                                         XmlReader.APPLICATION_SERVICE,
-                                                                                                         XmlReader.PROJECT_SERVICE,
-                                                                                                         XmlReader.MODULE_SERVICE))) {
-
-
-    @Override
-    public @NotNull String intern(@NotNull String name) {
-      // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-      return name.length() < 64 ? super.intern(name) : name;
-    }
-  };
+  private static final List<String> EXTRA_STRINGS = Arrays.asList("id",
+                                                                  PluginManagerCore.VENDOR_JETBRAINS,
+                                                                  XmlReader.APPLICATION_SERVICE,
+                                                                  XmlReader.PROJECT_SERVICE,
+                                                                  XmlReader.MODULE_SERVICE);
+  private final Interner<String> strings = new HashSetInterner<>(ContainerUtil.union(CLASS_NAMES, EXTRA_STRINGS));
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
   final List<String> visitedFiles = new ArrayList<>(3);
 
+  PluginXmlFactory() {
+  }
+
+  @NotNull String intern(@NotNull String string) {
+    // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
+    return string.length() < 64 ? strings.intern(string) : string;
+  }
+
   @Override
   public @NotNull Element element(@NotNull String name, @Nullable Namespace namespace) {
-    return super.element(stringInterner.intern(name), namespace);
+    return super.element(intern(name), namespace);
   }
 
   @Override
   public @NotNull Attribute attribute(@NotNull String name, @NotNull String value, @Nullable AttributeType type, @Nullable Namespace namespace) {
-    String internedName = stringInterner.intern(name);
+    String internedName = intern(name);
     if (CLASS_NAMES.contains(internedName)) {
       return super.attribute(internedName, value, type, namespace);
     }
     else {
-      return super.attribute(internedName, stringInterner.intern(value), type, namespace);
+      return super.attribute(internedName, intern(value), type, namespace);
     }
   }
 
   @Override
   public @NotNull Text text(@NotNull String text, @NotNull Element parentElement) {
-    if (CLASS_NAMES.contains(parentElement.getName())) {
-      return super.text(text, parentElement);
-    }
-    else {
-      return super.text(stringInterner.intern(text), parentElement);
-    }
+    return new Text(CLASS_NAMES.contains(parentElement.getName()) ? text : intern(text));
   }
 }

@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
@@ -23,6 +25,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +34,8 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implements CodeStyleSettingsListener {
   public static final String WIDGET_ID = CodeStyleStatusBarWidget.class.getName();
+
+  private CodeStyleStatusBarPanel myPanel;
 
   public CodeStyleStatusBarWidget(@NotNull Project project) {
     super(project, true);
@@ -61,7 +66,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
 
   @Nullable
-  private static IndentStatusBarUIContributor getUiContributor(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
+  private static CodeStyleStatusBarUIContributor getUiContributor(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     FileIndentOptionsProvider provider = findProvider(file, indentOptions);
     if (provider != null) {
       return provider.getIndentStatusBarUiContributor(indentOptions);
@@ -74,7 +79,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     FileIndentOptionsProvider optionsProvider = indentOptions.getFileIndentOptionsProvider();
     if (optionsProvider != null) return optionsProvider;
     for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensions()) {
-      IndentStatusBarUIContributor uiContributor = provider.getIndentStatusBarUiContributor(indentOptions);
+      CodeStyleStatusBarUIContributor uiContributor = provider.getIndentStatusBarUiContributor(indentOptions);
       if (uiContributor != null && uiContributor.areActionsAvailable(file)) {
         return provider;
       }
@@ -190,8 +195,8 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     private final @Nullable CodeStyleStatusBarUIContributor myContributor;
     private final @NotNull PsiFile myPsiFile;
 
-    protected MyWidgetState(String toolTip,
-                            String text,
+    protected MyWidgetState(@NlsContexts.Tooltip String toolTip,
+                            @NlsContexts.StatusBarText String text,
                             @NotNull PsiFile psiFile,
                             @NotNull IndentOptions indentOptions,
                             @Nullable CodeStyleStatusBarUIContributor uiContributor) {
@@ -218,5 +223,23 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     public PsiFile getPsiFile() {
       return myPsiFile;
     }
+  }
+
+  @Override
+  protected JPanel createComponent() {
+    myPanel = new CodeStyleStatusBarPanel();
+    return myPanel;
+  }
+
+  @Override
+  protected void updateComponent(@NotNull WidgetState state) {
+    myPanel.setIcon(state.getIcon());
+    myPanel.setText(state.getText());
+    myPanel.setToolTipText(state.getToolTip());
+  }
+
+  @Override
+  protected boolean isEmpty() {
+    return StringUtil.isEmpty(myPanel.getText());
   }
 }

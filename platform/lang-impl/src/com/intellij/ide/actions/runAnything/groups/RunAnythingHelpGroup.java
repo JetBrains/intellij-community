@@ -6,6 +6,8 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,10 +24,10 @@ import java.util.stream.Collectors;
 public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnythingGroupBase {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME = ExtensionPointName.create("com.intellij.runAnything.helpGroup");
 
-  @NotNull private String myTitle = "undefined";
+  @NotNull @Nls(capitalization = Nls.Capitalization.Title) private String myTitle = "undefined"; //NON-NLS
   @NotNull private List<P> myProviders = ContainerUtil.emptyList();
 
-  public RunAnythingHelpGroup(@NotNull String title, @NotNull List<P> providers) {
+  public RunAnythingHelpGroup(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title, @NotNull List<P> providers) {
     myTitle = title;
     myProviders = providers;
   }
@@ -34,6 +36,7 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
    * @deprecated API compatibility
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public RunAnythingHelpGroup() { }
 
   @NotNull
@@ -48,6 +51,7 @@ public class RunAnythingHelpGroup<P extends RunAnythingProvider> extends RunAnyt
    * @deprecated please use {@link RunAnythingProvider#getHelpGroupTitle()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public Collection<P> getProviders() {
     return myProviders;

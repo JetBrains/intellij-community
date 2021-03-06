@@ -17,10 +17,12 @@ public class ShLiteralExpressionImpl extends ShExpressionImpl implements ShLiter
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitLiteralExpression(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
@@ -69,7 +71,7 @@ public class ShLiteralExpressionImpl extends ShExpressionImpl implements ShLiter
   }
 
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ShPsiImplUtil.getReferences(this);
   }
 

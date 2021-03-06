@@ -6,6 +6,7 @@ import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.navigation.ChooseByNameRegistry
 import com.intellij.navigation.GotoClassContributor
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.Nls
 
 object GotoClassPresentationUpdater {
   @JvmStatic
@@ -15,16 +16,18 @@ object GotoClassPresentationUpdater {
   }
 
   @JvmStatic
-  fun getTabTitlePluralized(): String = getActionTitlePluralized()[0]
+  @Nls
+  fun getTabTitlePluralized(): String = getGotoClassContributor()?.tabTitlePluralized ?: IdeBundle.message("go.to.class.kind.text.pluralized")
 
   @JvmStatic
   fun getActionTitle(): String =
     StringUtil.capitalizeWords(getGotoClassContributor()?.elementKind ?: IdeBundle.message("go.to.class.kind.text"), " /", true, true)
 
   @JvmStatic
+  @Nls
   fun getActionTitlePluralized(): List<String> =
     (getGotoClassContributor()?.elementKindsPluralized ?:
-     listOf(IdeBundle.message("go.to.class.kind.text.pluralized"))).map { StringUtil.capitalize(it) }
+     listOf(IdeBundle.message("go.to.class.kind.text.pluralized")))
 
   @JvmStatic
   fun getElementKinds(): Set<String> {

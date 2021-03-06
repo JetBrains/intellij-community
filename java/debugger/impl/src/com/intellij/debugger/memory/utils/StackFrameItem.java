@@ -17,21 +17,23 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +52,8 @@ public class StackFrameItem {
     JavaStackFrame.createMessageNode(JavaDebuggerBundle.message("message.node.local.variables.not.captured"),
                                      XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
 
-  public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
+  public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(
+    JavaDebuggerBundle.message("capture.node.settings.link")) {
     @Override
     public void onClick(MouseEvent event) {
       ShowSettingsUtil.getInstance().showSettingsDialog(
@@ -229,6 +232,7 @@ public class StackFrameItem {
     }
   }
 
+  @Nls
   public static String getAsyncStacktraceMessage() {
     return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
   }
@@ -240,7 +244,7 @@ public class StackFrameItem {
     private final boolean myIsInLibraryContent;
 
     private final String myPath;
-    private final String myMethodName;
+    private final @NlsSafe String myMethodName;
     private final int myLineNumber;
 
     private final List<XNamedValue> myVariables;
@@ -279,14 +283,14 @@ public class StackFrameItem {
 
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
-      component.setIcon(JBUI.scale(EmptyIcon.create(6)));
-      component.append(String.format("%s:%d", myMethodName, myLineNumber), getAttributes());
+      component.setIcon(JBUIScale.scaleIcon(EmptyIcon.create(6)));
+      component.append(myMethodName + ":" + myLineNumber, getAttributes());
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
       if (settings.SHOW_CLASS_NAME) {
-        component.append(String.format(", %s", StringUtil.getShortName(myPath)), getAttributes());
+        component.append(", " + StringUtil.getShortName(myPath), getAttributes());
         String packageName = StringUtil.getPackageName(myPath);
         if (settings.SHOW_PACKAGE_NAME && !packageName.trim().isEmpty()) {
-          component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          component.append(" (" + packageName + ")", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
         }
       }
     }

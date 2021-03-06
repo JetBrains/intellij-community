@@ -46,7 +46,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
         !FormInspectionUtil.isComponentClass(module, component, JTextField.class) &&
         !FormInspectionUtil.isComponentClass(module, component.getParentContainer(), JScrollPane.class)) {
       collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.scroll.pane"),
-                         (EditorQuickFixProvider)MyQuickFix::new);
+                         MyQuickFix::new);
 
     }
   }

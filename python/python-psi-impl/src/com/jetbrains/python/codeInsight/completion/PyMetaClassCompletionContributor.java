@@ -39,7 +39,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
              .withLanguage(PythonLanguage.getInstance())
              .withParents(PyReferenceExpression.class, PyExpressionStatement.class, PyStatementList.class, PyClass.class)
              .and(hasLanguageLevel(LanguageLevel::isPython2)),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -53,7 +53,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
             .withLanguage(PythonLanguage.getInstance())
             .withParents(PyReferenceExpression.class, PyArgumentList.class, PyClass.class)
             .and(hasLanguageLevel(level -> !level.isPython2())),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,

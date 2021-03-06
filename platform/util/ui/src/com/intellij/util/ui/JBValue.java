@@ -53,7 +53,7 @@ public abstract class JBValue {
   /**
    * Returns initial unscaled value.
    */
-  protected abstract float getUnscaled();
+  public abstract float getUnscaled();
 
   /**
    * JBValue wrapper over an integer value in {@link UIDefaults}.
@@ -70,7 +70,7 @@ public abstract class JBValue {
     }
 
     @Override
-    protected float getUnscaled() {
+    public float getUnscaled() {
       return JBUI.getInt(key, defValue);
     }
   }
@@ -91,7 +91,7 @@ public abstract class JBValue {
     }
 
     @Override
-    protected float getUnscaled() {
+    public float getUnscaled() {
       return value;
     }
   }

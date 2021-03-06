@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -25,7 +26,11 @@ import org.jetbrains.annotations.NotNull;
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
-  public Result beforeCharTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile, @NotNull final FileType fileType) {
+  public Result beforeCharTyped(final char c,
+                                @NotNull final Project project,
+                                @NotNull final Editor editor,
+                                @NotNull final PsiFile editedFile,
+                                @NotNull final FileType fileType) {
     if (c == '/' && XmlGtTypedHandler.fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -40,19 +45,45 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
 
         if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END &&
             offset == element.getTextOffset()
-           ) {
+        ) {
           editor.getCaretModel().moveToOffset(offset + 1);
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
           return Result.STOP;
-        } else if (tokenType == XmlTokenType.XML_TAG_END &&
-                   offset == element.getTextOffset()
-                  ) {
+        }
+        else if (tokenType == XmlTokenType.XML_TAG_END &&
+                 offset == element.getTextOffset()
+        ) {
           final ASTNode parentNode = element.getParent().getNode();
           final ASTNode child = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parentNode);
 
           if (child != null && offset + 1 == child.getTextRange().getStartOffset()) {
-            editor.getDocument().replaceString(offset + 1, parentNode.getTextRange().getEndOffset(),"");
+            editor.getDocument().replaceString(offset + 1, parentNode.getTextRange().getEndOffset(), "");
           }
+        }
+      }
+      CharSequence contents = provider.getContents();
+      XmlTag parentTag;
+      if (offset > 0 && contents.charAt(offset - 1) == '<'
+          // We need to correct only HTML behaviour
+          && (parentTag = PsiTreeUtil.getParentOfType(element, XmlTag.class)) instanceof HtmlTag
+          && element == provider.findElementAt(offset, provider.getBaseLanguage())) {
+        // Ensure we're not closing within a closed tag
+        ASTNode closingTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(parentTag.getNode());
+        ASTNode startingTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(parentTag.getNode());
+        if (closingTagName != null
+            && startingTagName != null
+            && startingTagName.getStartOffset() < offset) {
+          if (closingTagName.getStartOffset() - 1 != offset) {
+            int nextCharPos = StringUtil.skipWhitespaceForward(contents, offset);
+            if (nextCharPos > 0 && contents.charAt(nextCharPos) == '>') {
+              editor.getDocument().insertString(offset, "/");
+            }
+            else {
+              editor.getDocument().insertString(offset, "/>");
+            }
+          }
+          editor.getCaretModel().moveCaretRelatively(1, 0, false, false, false);
+          return Result.STOP;
         }
       }
     }
@@ -107,16 +138,16 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       }
       if (!"/".equals(prevLeafText.trim())) return Result.CONTINUE;
 
-      while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
-      if(prevLeaf instanceof OuterLanguageElement) {
+      while ((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE) ;
+      if (prevLeaf instanceof OuterLanguageElement) {
         element = file.getViewProvider().findElementAt(offset - 1, file.getLanguage());
         prevLeaf = element != null ? element.getNode() : null;
-        while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
+        while ((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE) ;
       }
-      if(prevLeaf == null) return Result.CONTINUE;
+      if (prevLeaf == null) return Result.CONTINUE;
 
       XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
-      if(tag == null) { // prevLeaf maybe in one tree and element in another
+      if (tag == null) { // prevLeaf maybe in one tree and element in another
         PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), XMLLanguage.class);
         tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
         if (tag == null) return Result.CONTINUE;

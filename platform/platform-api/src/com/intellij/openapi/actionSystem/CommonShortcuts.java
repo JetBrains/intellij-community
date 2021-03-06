@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public class CommonShortcuts {
+public final class CommonShortcuts {
 
   private CommonShortcuts() {}
 
@@ -27,7 +28,8 @@ public class CommonShortcuts {
   /**
    * @deprecated use getDelete() instead to support keymap-specific and user-configured shortcuts
    */
-  @Deprecated public static final ShortcutSet DELETE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final ShortcutSet DELETE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
   public static final ShortcutSet ESCAPE = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 
   public static final ShortcutSet DOUBLE_CLICK_1 = new CustomShortcutSet(new MouseShortcut(MouseEvent.BUTTON1, 0, 2));

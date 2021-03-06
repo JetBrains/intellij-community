@@ -3,12 +3,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.RootPolicy;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -16,13 +11,14 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import java.util.Objects;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+
+import java.util.Objects;
 
 final class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance(LibraryOrderEntryImpl.class);
@@ -259,7 +255,7 @@ final class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
     }
 
     @Override
-    public void afterLibraryRenamed(@NotNull Library library) {
+    public void afterLibraryRenamed(@NotNull Library library, @Nullable String oldName) {
       afterLibraryAdded(library);
     }
 

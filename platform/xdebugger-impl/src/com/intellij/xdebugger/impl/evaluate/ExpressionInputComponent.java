@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -37,7 +37,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     BorderLayoutPanel expressionPanel = JBUI.Panels.simplePanel();
     myExpressionEditor = new XDebuggerExpressionComboBox(project, editorsProvider, historyId, sourcePosition, true, false) {
       @Override
-      protected void prepareEditor(Editor editor) {
+      protected void prepareEditor(EditorEx editor) {
         Font font = EditorUtil.getEditorFont();
         editor.getColorsScheme().setEditorFontName(font.getFontName());
         editor.getColorsScheme().setEditorFontSize(font.getSize());

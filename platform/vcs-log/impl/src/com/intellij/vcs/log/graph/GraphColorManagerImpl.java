@@ -69,7 +69,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
     @NotNull private final Function<? super Integer, ? extends Hash> myHashGetter;
 
-    @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<Integer, Integer>(10) {
+    @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<>(10) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
         return size() > 100;

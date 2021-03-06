@@ -22,6 +22,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -31,16 +32,12 @@ import java.io.IOException;
  */
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   // there is no volatile as we modify under write lock and read under read lock
-  private ValueContainerImpl<Value> myAdded;
-  private TIntHashSet myInvalidated;
-  private volatile ValueContainerImpl<Value> myMerged;
-  private final Initializer<Value> myInitializer;
+  protected ValueContainerImpl<Value> myAdded;
+  protected TIntHashSet myInvalidated;
+  protected volatile ValueContainerImpl<Value> myMerged;
+  private final @Nullable Computable<? extends ValueContainer<Value>> myInitializer;
   
-  public interface Initializer<T> extends Computable<ValueContainer<T>> {
-    Object getLock();
-  }
-
-  public ChangeTrackingValueContainer(Initializer<Value> initializer) {
+  public ChangeTrackingValueContainer(@Nullable Computable<? extends ValueContainer<Value>> initializer) {
     myInitializer = initializer;
   }
 
@@ -68,14 +65,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     myInvalidated.add(inputId);
   }
 
-  // Resets diff of index value for particular fileId
-  public void dropAssociatedValue(int inputId) {
-    myMerged = null;
-
-    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
-    if (myInvalidated != null) myInvalidated.remove(inputId);
-  }
-
   @Override
   public int size() {
     return getMergedData().size();
@@ -98,7 +87,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     if (merged != null) {
       return merged;
     }
-    synchronized (myInitializer.getLock()) {
+    synchronized (this) {
       merged = myMerged;
       if (merged != null) {
         return merged;
@@ -156,6 +145,16 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     return (myAdded != null && myAdded.size() > 0) ||
            (myInvalidated != null && !myInvalidated.isEmpty()) ||
            needsCompacting();
+  }
+
+  boolean containsOnlyInvalidatedChange() {
+    return myInvalidated != null &&
+           !myInvalidated.isEmpty() &&
+           (myAdded == null || myAdded.size() == 0);
+  }
+
+  boolean containsCachedMergedData() {
+    return myMerged != null;
   }
   
   @Override

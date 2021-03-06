@@ -1,8 +1,11 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 #import "Launcher.h"
+#include "rosetta.h"
 
 #define FOREVER ((CFTimeInterval) 1e20)
 
-static void timer_empty(CFRunLoopTimerRef timer, void *info) {
+static void timer_empty(__unused CFRunLoopTimerRef timer, __unused void *info) {
 }
 
 static void parkRunLoop() {
@@ -32,6 +35,13 @@ static void launchInNewThread(Launcher *launcher) {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc > 1) {
+        if (strcmp(argv[1], ROSETTA_CHECK_COMMAND) == 0) return checkRosetta();
+#ifndef NDEBUG
+        if (strcmp(argv[1], ROSETTA_REQUEST_COMMAND) == 0) return requestRosetta(@(argv[0]));
+#endif
+    }
+
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     if (validationJavaVersion()){
         launchInNewThread([[[Launcher alloc] initWithArgc:argc argv:argv] autorelease]);

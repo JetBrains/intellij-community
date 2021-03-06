@@ -2,6 +2,9 @@
 
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
+import java.util.Arrays;
 import java.util.EventListener;
 import java.util.Iterator;
 
@@ -93,7 +96,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
   }
 
   public void removeAll() {
-    final it.unimi.dsi.fastutil.ints.IntArrayList keys = new it.unimi.dsi.fastutil.ints.IntArrayList(count());
+    final IntList keys = new it.unimi.dsi.fastutil.ints.IntArrayList(count());
     int current = myTop;
     while (current > 0) {
       if (myCache[current].value != null) {
@@ -313,9 +316,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
       myListeners = new DeletedPairsListener[1];
     }
     else {
-      DeletedPairsListener[] newListeners = new DeletedPairsListener[myListeners.length + 1];
-      System.arraycopy(myListeners, 0, newListeners, 0, myListeners.length);
-      myListeners = newListeners;
+      myListeners = Arrays.copyOf(myListeners, myListeners.length + 1);
     }
     myListeners[myListeners.length - 1] = listener;
   }

@@ -225,8 +225,6 @@ data class SuggestedChangeSignatureData private constructor(
      * Creates an instance of [SuggestedChangeSignatureData].
      *
      * @param nameOfStuffToUpdate term to be used in the UI to describe usages to be updated.
-     * Typical values are [SuggestedRefactoringAvailability.USAGES], [SuggestedRefactoringAvailability.OVERRIDES]
-     * and [SuggestedRefactoringAvailability.IMPLEMENTATIONS].
      */
     @JvmStatic
     fun create(state: SuggestedRefactoringState, @Nls nameOfStuffToUpdate: String): SuggestedChangeSignatureData {

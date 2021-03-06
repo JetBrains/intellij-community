@@ -1,95 +1,122 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.IntIntFunction;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * @author Dmitry Avdeev
- */
-class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
-  @NotNull private final DataExternalizer<Value> myValueExternalizer;
+class ValueContainerMap<Key, Value> {
+  private final @NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> myPersistentMap;
+  private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
+  private final @NotNull DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
-  ValueContainerMap(@NotNull Path file,
-                    @NotNull KeyDescriptor<Key> keyKeyDescriptor,
+  ValueContainerMap(@NotNull PersistentMapBase<Key, UpdatableValueContainer<Value>> persistentMap,
+                    @NotNull KeyDescriptor<Key> keyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
-                    boolean keyIsUniqueForIndexedFile,
-                    @NotNull ValueContainerInputRemapping inputRemapping) throws IOException {
-    super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping));
+                    boolean keyIsUniqueForIndexedFile) {
+    myPersistentMap = persistentMap;
+    myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
 
+  ValueContainerMap(@NotNull Path file,
+                    @NotNull KeyDescriptor<Key> keyDescriptor,
+                    @NotNull DataExternalizer<Value> valueExternalizer,
+                    boolean keyIsUniqueForIndexedFile,
+                    @NotNull ValueContainerInputRemapping inputRemapping,
+                    boolean isReadonly,
+                    boolean compactOnClose) throws IOException {
+    myPersistentMap = new PersistentMapImpl<>(PersistentMapBuilder
+            .newBuilder(file, keyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping))
+            .withReadonly(isReadonly)
+            .withCompactOnClose(compactOnClose));
+    myValueExternalizer = valueExternalizer;
+    myKeyDescriptor = keyDescriptor;
+    myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
+  }
+
+  void merge(Key key, UpdatableValueContainer<Value> valueContainer) throws IOException {
+    // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
+    // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
+    // file) and there is no benefit to accumulate values for particular key because only one value exists
+    if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
+      myPersistentMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
+        @Override
+        public void append(@NotNull final DataOutput out) throws IOException {
+          valueContainer.saveTo(out, myValueExternalizer);
+        }
+      });
+    }
+    else {
+      // rewrite the value container for defragmentation
+      myPersistentMap.put(key, valueContainer);
+    }
+  }
+
+  boolean processKeys(@NotNull Processor<? super Key> processor) throws IOException {
+    return myKeyDescriptor instanceof InlineKeyDescriptor
+           // process keys and check that they're already present in map because we don't have separated key storage we must check keys
+           ? myPersistentMap.processExistingKeys(processor)
+           // optimization: process all keys, some of them might be already deleted but we don't care. We just read key storage file here
+           : myPersistentMap.processKeys(processor);
+  }
+
   @NotNull
-  Object getDataAccessLock() {
-    return myEnumerator;
+  ChangeTrackingValueContainer<Value> getModifiableValueContainer(final Key key) {
+    return new ChangeTrackingValueContainer<>(() -> {
+      ValueContainer<Value> value;
+      try {
+        value = myPersistentMap.get(key);
+        if (value == null) {
+          value = new ValueContainerImpl<>();
+        }
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return value;
+    });
   }
 
-  @Override
-  protected void doPut(Key key, UpdatableValueContainer<Value> container) throws IOException {
-    synchronized (myEnumerator) {
-      final ChangeTrackingValueContainer<Value> valueContainer = (ChangeTrackingValueContainer<Value>)container;
-
-      // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
-      // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
-      // file) and there is no benefit to accumulate values for particular key because only one value exists
-      if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
-        appendData(key, new PersistentHashMap.ValueDataAppender() {
-          @Override
-          public void append(@NotNull final DataOutput out) throws IOException {
-            valueContainer.saveTo(out, myValueExternalizer);
-          }
-        });
-      }
-      else {
-        // rewrite the value container for defragmentation
-        super.doPut(key, valueContainer);
-      }
+  void force() {
+    try {
+      myPersistentMap.force();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
-    @NotNull private final DataExternalizer<T> myValueExternalizer;
-    @NotNull private final ValueContainerInputRemapping myInputRemapping;
+  void close() throws IOException {
+    myPersistentMap.close();
+  }
 
-    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
-      myValueExternalizer = valueExternalizer;
-      myInputRemapping = inputRemapping;
-    }
+  void closeAndDelete() throws IOException {
+    myPersistentMap.closeAndDelete();
+  }
 
-    @Override
-    public void save(@NotNull final DataOutput out, @NotNull final UpdatableValueContainer<T> container) throws IOException {
-      container.saveTo(out, myValueExternalizer);
-    }
+  void markDirty() throws IOException {
+    myPersistentMap.markDirty();
+  }
 
-    @NotNull
-    @Override
-    public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
-      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
+  boolean isClosed() {
+    return myPersistentMap.isClosed();
+  }
 
-      valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
-      return valueContainer;
-    }
+  boolean isDirty() {
+    return myPersistentMap.isClosed();
+  }
+
+  @TestOnly
+  PersistentMapBase<Key, UpdatableValueContainer<Value>> getStorageMap() {
+    return myPersistentMap;
   }
 }

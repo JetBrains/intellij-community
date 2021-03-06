@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
@@ -18,19 +16,24 @@ import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author peter
  */
 public final class DomApplicationComponent {
   private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
-  private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
+  private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new HashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
@@ -39,12 +42,10 @@ public final class DomApplicationComponent {
       return desc == null ? null : desc.createAnnotator();
     }
   );
+  private final Map<Class<?>, DomFileDescription<?>> classToDescription = new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.create(InvocationCache::new,
-                                                                                                ContainerUtil::createConcurrentSoftValueMap);
-  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
-    ConcurrentFactoryMap.createMap(VisitorDescription::new);
-
+  private final Map<Class<?>, InvocationCache> myInvocationCaches = ContainerUtil.createConcurrentSoftValueMap();
+  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions = new ConcurrentHashMap<>();
 
   public DomApplicationComponent() {
     registerDescriptions();
@@ -52,11 +53,12 @@ public final class DomApplicationComponent {
     //noinspection deprecation
     addChangeListener(DomFileDescription.EP_NAME, this::extensionsChanged);
     addChangeListener(DomFileMetaData.EP_NAME, this::extensionsChanged);
+    addChangeListener(DomImplementationClassEP.EP_NAME, this::extensionsChanged);
   }
 
   private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable onChange) {
     Application app = ApplicationManager.getApplication();
-    if (Disposer.isDisposing(app)) {
+    if (app.isDisposed()) {
       return;
     }
     ep.addChangeListener(onChange, app);
@@ -74,8 +76,10 @@ public final class DomApplicationComponent {
 
   private synchronized void extensionsChanged() {
     myRootTagName2FileDescription.clear();
+
     myAcceptingOtherRootTagNamesDescriptions.clear();
     myClass2Annotator.clear();
+    classToDescription.clear();
 
     myCachedImplementationClasses.clearCache();
     myTypeChooserManager.clearCache();
@@ -83,37 +87,40 @@ public final class DomApplicationComponent {
     myInvocationCaches.clear();
     assignabilityCache.clear();
 
+    myVisitorDescriptions.clear();
+
     registerDescriptions();
   }
 
   public static DomApplicationComponent getInstance() {
-    return ServiceManager.getService(DomApplicationComponent.class);
+    return ApplicationManager.getApplication().getService(DomApplicationComponent.class);
   }
 
   public synchronized int getCumulativeVersion(boolean forStubs) {
-    int result = 0;
-    for (DomFileMetaData meta : allMetas()) {
+    return allMetas().mapToInt(meta -> {
       if (forStubs) {
         if (meta.stubVersion != null) {
-          result += meta.stubVersion;
-          result += StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+          return meta.stubVersion + StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
         }
       }
       else {
-        result += meta.domVersion;
-        result += StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
+        return meta.domVersion + StringUtil.notNullize(meta.rootTagName).hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
       }
-    }
-    return result;
+      return 0;
+    }).sum();
   }
 
-  private Iterable<DomFileMetaData> allMetas() {
-    return ContainerUtil.concat(myRootTagName2FileDescription.values(), myAcceptingOtherRootTagNamesDescriptions);
+  private @NotNull Stream<DomFileMetaData> allMetas() {
+    return Stream.concat(myRootTagName2FileDescription.values().stream(), myAcceptingOtherRootTagNamesDescriptions.stream());
+  }
+
+  public synchronized @NotNull List<DomFileMetaData> getStubBuildingMetadata() {
+    return allMetas().filter(m -> m.hasStubs()).collect(Collectors.toList());
   }
 
   @Nullable
   public synchronized DomFileMetaData findMeta(DomFileDescription<?> description) {
-    return ContainerUtil.find(allMetas(), m -> m.lazyInstance == description);
+    return allMetas().filter(m -> m.lazyInstance == description).findFirst().orElse(null);
   }
 
   public synchronized Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
@@ -129,17 +136,17 @@ public final class DomApplicationComponent {
     initDescription(description);
   }
 
-  void registerFileDescription(DomFileMetaData meta) {
+  void registerFileDescription(@NotNull DomFileMetaData meta) {
     if (StringUtil.isEmpty(meta.rootTagName)) {
       myAcceptingOtherRootTagNamesDescriptions.add(meta);
-    } else {
+    }
+    else {
       myRootTagName2FileDescription.putValue(meta.rootTagName, meta);
     }
   }
 
-  void initDescription(DomFileDescription<?> description) {
-    Map<Class<? extends DomElement>, Class<? extends DomElement>> implementations = description.getImplementations();
-    for (final Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : implementations.entrySet()) {
+  void initDescription(@NotNull DomFileDescription<?> description) {
+    for (Map.Entry<Class<? extends DomElement>, Class<? extends DomElement>> entry : description.getImplementations().entrySet()) {
       registerImplementation(entry.getKey(), entry.getValue(), null);
     }
 
@@ -152,15 +159,16 @@ public final class DomApplicationComponent {
     myAcceptingOtherRootTagNamesDescriptions.remove(meta);
   }
 
-  @Nullable
-  private synchronized DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
-    for (DomFileMetaData meta : allMetas()) {
-      DomFileDescription<?> description = meta.lazyInstance;
-      if (description != null && description.getRootElementClass() == rootElementClass) {
-        return description;
-      }
-    }
-    return null;
+  public synchronized @Nullable DomFileDescription<?> findFileDescription(Class<?> rootElementClass) {
+    return classToDescription.computeIfAbsent(rootElementClass, this::_findFileDescription);
+  }
+
+  private synchronized @Nullable DomFileDescription<?> _findFileDescription(Class<?> rootElementClass) {
+    return allMetas()
+      .map(meta -> meta.getDescription())
+      .filter(description -> description.getRootElementClass() == rootElementClass)
+      .findAny()
+      .orElse(null);
   }
 
   public DomElementsAnnotator getAnnotator(Class<?> rootElementClass) {
@@ -170,7 +178,7 @@ public final class DomApplicationComponent {
   @Nullable
   final Class<? extends DomElement> getImplementation(Class<?> concreteInterface) {
     //noinspection unchecked
-    return myCachedImplementationClasses.get(concreteInterface);
+    return (Class<? extends DomElement>)myCachedImplementationClasses.get(concreteInterface);
   }
 
   public final void registerImplementation(Class<? extends DomElement> domElementClass, Class<? extends DomElement> implementationClass,
@@ -187,11 +195,10 @@ public final class DomApplicationComponent {
   }
 
   final InvocationCache getInvocationCache(Class<?> type) {
-    return myInvocationCaches.get(type);
+    return myInvocationCaches.computeIfAbsent(type, InvocationCache::new);
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {
-    return myVisitorDescriptions.get(aClass);
+    return myVisitorDescriptions.computeIfAbsent(aClass, VisitorDescription::new);
   }
-
 }

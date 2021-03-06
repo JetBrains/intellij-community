@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -11,16 +11,16 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
-import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -39,11 +39,11 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @Nullable
-  protected String getInheritedFontTitle() {
+  protected @NlsContexts.LinkLabel String getInheritedFontTitle() {
     return ApplicationBundle.message("settings.editor.font.default");
   }
 
-  protected String getOverwriteFontTitle() {
+  protected @NlsContexts.Checkbox String getOverwriteFontTitle() {
     return ApplicationBundle.message("settings.editor.font.overwrite");
   }
 
@@ -66,7 +66,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
       topPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(FONT_PANEL_LEFT_OFFSET, 0))), c);
       c.gridx = 1;
       c.anchor = GridBagConstraints.NORTHWEST;
-      topPanel.add(createFontSettingsPanel(), c);
+      topPanel.add(createBaseAndSecondaryFontPanel(), c);
       return topPanel;
     }
     else {
@@ -74,12 +74,33 @@ public class FontOptions extends AbstractFontOptionsPanel {
     }
   }
 
+  private JPanel createBaseAndSecondaryFontPanel() {
+    JPanel fontSettingsPanel = createFontSettingsPanel();
+
+    JPanel secondaryPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridx = 0;
+    c.gridy = 0;
+    createSecondaryFontComboAndLabel(secondaryPanel, c);
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints c2 = new GridBagConstraints();
+    c2.gridx = 0;
+    c2.gridy = 0;
+    c2.insets = JBUI.insets(0, BASE_INSET * 2);
+    c2.anchor = GridBagConstraints.NORTH;
+    panel.add(fontSettingsPanel, c2);
+    c2.gridx ++;
+    panel.add(secondaryPanel, c2);
+    return panel;
+  }
+
   @Nullable
   private Component createOverwriteCheckBox() {
     if (getInheritedFontTitle() != null) {
       JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       overwritePanel.setBorder(BorderFactory.createEmptyBorder());
-      myOverwriteCheckBox = new JCheckBox(getOverwriteFontTitle() + " ");
+      myOverwriteCheckBox = new JCheckBox(getOverwriteFontTitle());
       myOverwriteCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
       myOverwriteCheckBox.addActionListener(new ActionListener() {
         @Override
@@ -103,7 +124,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
     return label;
   }
 
-  private String getBaseFontInfo() {
+  private @NlsSafe String getBaseFontInfo() {
     FontPreferences basePrefs = getBaseFontPreferences();
     return basePrefs.getFontFamily() + ',' + basePrefs.getSize(basePrefs.getFontFamily());
   }
@@ -113,17 +134,10 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @NotNull
-  private JLabel createHyperlinkLabel() {
-    HoverHyperlinkLabel label = new HoverHyperlinkLabel(getInheritedFontTitle());
-    label.addHyperlinkListener(new HyperlinkListener() {
-      @Override
-      public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          navigateToParentFontConfigurable();
-        }
-      }
+  private ActionLink createHyperlinkLabel() {
+    return new ActionLink(getInheritedFontTitle(), e -> {
+        navigateToParentFontConfigurable();
     });
-    return label;
   }
 
   protected void navigateToParentFontConfigurable() {

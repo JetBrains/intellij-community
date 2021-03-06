@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 /**
  * @author Medvedev Max
@@ -309,16 +310,15 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(name, block);
 
     final GrParameter[] parameters = block.getParameters();
-    settings.parametersToRemove().forEachDescending(paramNum -> {
+    for (int i = settings.parametersToRemove().size() - 1; i >= 0; i--) {
       try {
-        PsiParameter param = parameters[paramNum];
+        PsiParameter param = parameters[settings.parametersToRemove().getInt(i)];
         param.delete();
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
-    });
+    }
 
     final PsiType type = settings.getSelectedType();
     final String typeText = type == null ? null : type.getCanonicalText();
@@ -568,12 +568,11 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final GrSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
-    settings.parametersToRemove().forEach(value -> {
+    settings.parametersToRemove().forEach((IntConsumer)value -> {
       final List<PsiElement> args = argInfos[value].args;
       for (PsiElement arg : args) {
         arg.delete();
       }
-      return true;
     });
   }
 

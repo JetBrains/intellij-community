@@ -9,7 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PyStringLiteralLexerBase extends LexerBase {
-  protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.lexer.PyStringLiteralLexer");
+  protected static final Logger LOG = Logger.getInstance(PyStringLiteralLexer.class);
   protected final IElementType myOriginalLiteralToken;
   protected CharSequence myBuffer;
   protected int myBufferEnd;
@@ -47,7 +47,7 @@ public abstract class PyStringLiteralLexerBase extends LexerBase {
     if (myStart >= myEnd) return null;
 
     // skip non-escapes immediately
-    if (myBuffer.charAt(myStart) != '\\' || (isRaw() && !(isUnicodeMode() && nextIsUnicodeEscape()))) {
+    if (!isEscape()) {
       mySeenEscapedSpacesOnly = false;
       return myOriginalLiteralToken;
     }
@@ -57,7 +57,7 @@ public abstract class PyStringLiteralLexerBase extends LexerBase {
   }
 
   @NotNull
-  public final IElementType getEscapeSequenceType() {
+  public IElementType getEscapeSequenceType() {
     if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; // escape ends too early
     char nextChar = myBuffer.charAt(myStart + 1);
     mySeenEscapedSpacesOnly &= nextChar == ' ';
@@ -117,6 +117,10 @@ public abstract class PyStringLiteralLexerBase extends LexerBase {
 
     // other unrecognized escapes are just part of string, not an error
     return myOriginalLiteralToken;
+  }
+
+  protected boolean isEscape() {
+    return myBuffer.charAt(myStart) == '\\' && (!isRaw() || isUnicodeMode() && nextIsUnicodeEscape());
   }
 
   private boolean nextIsUnicodeEscape() {

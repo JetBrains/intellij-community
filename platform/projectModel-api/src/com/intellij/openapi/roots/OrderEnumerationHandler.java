@@ -57,6 +57,14 @@ public abstract class OrderEnumerationHandler {
     return true;
   }
 
+  /**
+   * Returns {@code true} if resource files located under roots of types {@link org.jetbrains.jps.model.java.JavaModuleSourceRootTypes#SOURCES}
+   * are copied to the module output.
+   */
+  public boolean areResourceFilesFromSourceRootsCopiedToOutput() {
+    return true;
+  }
+
   public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
                                           @NotNull OrderRootType type,
                                           @NotNull Collection<String> urls) {

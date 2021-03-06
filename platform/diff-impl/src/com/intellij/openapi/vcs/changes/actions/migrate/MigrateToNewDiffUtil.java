@@ -9,6 +9,7 @@ import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.openapi.diff.FileContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl;
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
@@ -25,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class MigrateToNewDiffUtil {
+public final class MigrateToNewDiffUtil {
   @NotNull
   public static DiffRequest convertRequest(@NotNull com.intellij.openapi.diff.DiffRequest oldRequest) {
     com.intellij.openapi.diff.DiffContent[] contents = oldRequest.getContents();
@@ -45,11 +46,11 @@ public class MigrateToNewDiffUtil {
     if (oldContent.isEmpty()) {
       return factory.createEmpty();
     }
-    if (oldContent instanceof com.intellij.openapi.diff.FileContent) {
+    if (oldContent instanceof FileContent) {
       VirtualFile file = Objects.requireNonNull(oldContent.getFile());
       return factory.create(project, file);
     }
-    else if (oldContent instanceof com.intellij.openapi.diff.SimpleContent) {
+    else if (oldContent instanceof SimpleContent) {
       return factory.create(project, ((SimpleContent)oldContent).getText(), oldContent.getContentType());
     }
     else {
@@ -63,8 +64,8 @@ public class MigrateToNewDiffUtil {
     MergeRequestImpl.MergeContent mergeContent = Objects.requireNonNull(request.getMergeContent());
     MergeVersion.MergeDocumentVersion mergeVersion = (MergeVersion.MergeDocumentVersion)mergeContent.getMergeVersion();
 
-    com.intellij.openapi.diff.SimpleContent leftContent = (SimpleContent)request.getContents()[0];
-    com.intellij.openapi.diff.SimpleContent rightContent = (SimpleContent)request.getContents()[2];
+    SimpleContent leftContent = (SimpleContent)request.getContents()[0];
+    SimpleContent rightContent = (SimpleContent)request.getContents()[2];
     List<String> contents = Arrays.asList(leftContent.getText(), mergeVersion.getOriginalText(), rightContent.getText());
 
     Document document = mergeContent.getDocument();

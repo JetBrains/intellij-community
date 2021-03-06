@@ -18,6 +18,8 @@ package com.intellij.java.codeInsight.navigation;
 import com.intellij.application.options.editor.GutterIconsConfigurable;
 import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -96,8 +98,12 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(list.toString(), 2, list.size());
     list.get(0).update(event);
     assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
+    // when testEditConfigurationAction is run before, there exists "main" configuration, none - otherwise 
+    // assertNotNull(ConfigurationContext.getFromContext(event.getDataContext()).findExisting());
     list.get(1).update(event);
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
+    myFixture.testAction(list.get(1));
+    assertEquals("MainTest", RunManager.getInstance(getProject()).getSelectedConfiguration().getName());
   }
 
   public void testAbstractTestClassMethods() {
@@ -202,19 +208,23 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     AnAction[] children = mark.getPopupMenuActions().getChildren(new TestActionEvent());
-    AnAction action = ContainerUtil.find(children, t -> t.getTemplateText() != null && t.getTemplateText().startsWith("Create"));
+    String message = ExecutionBundle.message("create.run.configuration.action.name");
+    AnAction action = ContainerUtil.find(children, t -> {
+      if (t.getTemplateText() == null) return false;
+      return t.getTemplateText().startsWith(message);
+    });
     assertNotNull(action);
     myFixture.testAction(action);
     TestActionEvent event = new TestActionEvent();
     action.update(event);
-    assertTrue(event.getPresentation().getText().startsWith("Edit"));
+    assertTrue(event.getPresentation().getText().startsWith(message));
   }
 
   public void testActionNameFromPreferredProducer() {
     myFixture.configureByText("Main.java", "public class Main {\n" +
                                            "    public static void ma<caret>in(String[] args) {}\n" +
                                            "}");
-    RunConfigurationProducer.EP_NAME.getPoint(null).registerExtension(new ApplicationConfigurationProducer() {
+    RunConfigurationProducer.EP_NAME.getPoint().registerExtension(new ApplicationConfigurationProducer() {
       @Override
       protected boolean setupConfigurationFromContext(@NotNull ApplicationConfiguration configuration,
                                                       @NotNull ConfigurationContext context,

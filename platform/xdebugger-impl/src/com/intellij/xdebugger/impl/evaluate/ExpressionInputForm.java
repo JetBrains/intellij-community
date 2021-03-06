@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
+import org.jetbrains.annotations.Nls;
+
 import javax.swing.*;
 
 public class ExpressionInputForm {
@@ -17,7 +19,7 @@ public class ExpressionInputForm {
     myExpressionPanel.add(component);
   }
 
-  public void setName(String name) {
+  public void setName(@Nls String name) {
     myNameLabel.setText(name);
   }
 

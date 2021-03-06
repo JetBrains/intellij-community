@@ -5,6 +5,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.git.GitCommitsIterator;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.model.BuildTargetState;
@@ -14,6 +15,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +37,7 @@ import org.jetbrains.jps.model.serialization.JpsLoaderBase;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -43,15 +46,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static com.intellij.jps.cache.ui.JpsLoaderNotifications.NONE_NOTIFICATION_GROUP;
-import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATION_GROUP;
+import static com.intellij.jps.cache.ui.JpsLoaderNotifications.*;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
-public class JpsOutputLoaderManager {
+public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
-  private static final String PROGRESS_TITLE = "Updating Compiler Caches";
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;
   private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
@@ -60,6 +61,9 @@ public class JpsOutputLoaderManager {
   private final JpsServerClient myServerClient;
   private final String myBuildOutDir;
   private final Project myProject;
+
+  @Override
+  public void dispose() { }
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
@@ -78,14 +82,22 @@ public class JpsOutputLoaderManager {
     if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
-  public void load(boolean isForceUpdate) {
-    Task.Backgroundable task = new Task.Backgroundable(myProject, PROGRESS_TITLE) {
+  public void load(boolean isForceUpdate, boolean verbose) {
+    Task.Backgroundable task = new Task.Backgroundable(myProject, JpsCacheBundle.message("progress.title.updating.compiler.caches")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
+        Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, verbose);
         if (commitInfo != null) {
           // Drop JPS metadata to force plugin for downloading all compilation outputs
-          if (isForceUpdate) myMetadataLoader.dropCurrentProjectMetadata();
+          if (isForceUpdate) {
+            myMetadataLoader.dropCurrentProjectMetadata();
+            File outDir = new File(myBuildOutDir);
+            if (outDir.exists()) {
+              indicator.setText(JpsCacheBundle.message("progress.text.clean.output.directories"));
+              FileUtil.delete(outDir);
+            }
+            LOG.info("Compilation output folder empty");
+          }
           startLoadingForCommit(commitInfo.first);
         }
         hasRunningTask.set(false);
@@ -99,51 +111,67 @@ public class JpsOutputLoaderManager {
   }
 
   public void notifyAboutNearestCache() {
-    INSTANCE.execute(() -> {
-      Pair<String, Integer> commitInfo = getNearestCommit(false);
-      if (commitInfo == null) return;
+    Pair<String, Integer> commitInfo = getNearestCommit(false, false);
+    if (commitInfo == null) return;
 
-      String notificationContent = commitInfo.second == 1
-                                   ? "Caches are for the current commit."
-                                   : "Caches are for the commit " + (commitInfo.second - 1) + " commits prior to yours.";
+    String notificationContent = commitInfo.second == 1
+                                 ? JpsCacheBundle.message("notification.content.caches.are.for.current.commit")
+                                 : JpsCacheBundle
+                                   .message("notification.content.caches.are.for.commit.commits.prior.to.yours", commitInfo.second - 1);
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
-                                                                                 NotificationType.INFORMATION, null);
-        notification
-          .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
-            "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Notification notification = STANDARD.createNotification(
+        JpsCacheBundle.message("notification.title.compiler.caches.available"), notificationContent,
+        NotificationType.INFORMATION, null);
+      notification
+        .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
+          "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
           notification.expire();
-          load(false);
+          load(false, false);
         }));
-        Notifications.Bus.notify(notification, myProject);
-      });
+      Notifications.Bus.notify(notification, myProject);
     });
   }
 
   @Nullable
-  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
-    Set<String> allCacheKeys = myServerClient.getAllCacheKeys(myProject);
+  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
+    Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myProject);
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    List<Iterator<String>> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject);
+    List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
     String commitId = "";
     int commitsBehind = 0;
-    for (Iterator<String> commitsIterator : repositoryList) {
-      if (allCacheKeys.contains(commitId)) continue;
+    Set<String> availableCommitsForRemote = new HashSet<>();
+    for (GitCommitsIterator commitsIterator : repositoryList) {
+      availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
+      if (availableCommitsForRemote.contains(commitId)) continue;
       commitsBehind = 0;
-      while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+      while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
         commitId = commitsIterator.next();
         commitsBehind++;
       }
     }
-
-    if (!allCacheKeys.contains(commitId)) {
-      LOG.warn("Not found any caches for the latest commits in the brunch");
+    var group = verbose ? STANDARD : EVENT_LOG;
+    if (!availableCommitsForRemote.contains(commitId)) {
+      String warning = JpsCacheBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
+      LOG.warn(warning);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = group.createNotification(
+          JpsCacheBundle.message("notification.title.jps.caches.downloader"), warning,
+          NotificationType.WARNING, null);
+        Notifications.Bus.notify(notification, myProject);
+      });
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
-      LOG.info("The system contains up to date caches");
+      String info = JpsCacheBundle.message("notification.content.system.contains.up.to.date.caches");
+      LOG.info(info);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = group.createNotification(
+          JpsCacheBundle.message("notification.title.jps.caches.downloader"), info,
+          NotificationType.INFORMATION, null);
+        Notifications.Bus.notify(notification, myProject);
+      });
       return null;
     }
     return Pair.create(commitId, commitsBehind);
@@ -152,7 +180,7 @@ public class JpsOutputLoaderManager {
   private void startLoadingForCommit(@NotNull String commitId) {
     long startTime = System.currentTimeMillis();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    indicator.setText("Fetching cache for commit: " + commitId);
+    indicator.setText(JpsCacheBundle.message("progress.text.fetching.cache.for.commit", commitId));
 
     // Loading metadata for commit
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
@@ -182,7 +210,7 @@ public class JpsOutputLoaderManager {
           LOG.warn("Unexpected exception rollback all progress", e);
           onFail();
           getLoaders(myProject).forEach(loader -> loader.rollback());
-          indicator.setText("Rolling back downloaded caches");
+          indicator.setText(JpsCacheBundle.message("progress.text.rolling.back.downloaded.caches"));
         }
       }).handle((result, ex) -> handleExceptions(result, ex, indicator)).get();
     }
@@ -269,7 +297,7 @@ public class JpsOutputLoaderManager {
   private static CompletableFuture<Void> applyChanges(LoaderStatus loaderStatus, JpsOutputLoader<?> loader, ProgressIndicator indicator,
                                                       SegmentedProgressIndicatorManager indicatorManager) {
     if (loaderStatus == LoaderStatus.FAILED) {
-      indicator.setText("Rolling back");
+      indicator.setText(JpsCacheBundle.message("progress.text.rolling.back"));
       return CompletableFuture.runAsync(() -> loader.rollback(), INSTANCE);
     }
     return CompletableFuture.runAsync(() -> loader.apply(indicatorManager), INSTANCE);
@@ -285,9 +313,10 @@ public class JpsOutputLoaderManager {
     BuildManager.getInstance().clearState(myProject);
     long endTime = (System.currentTimeMillis() - startTime) / 1000;
     ApplicationManager.getApplication().invokeLater(() -> {
-      String message = "Update compiler caches completed successfully in " + endTime + " s";
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compiler Caches Loader", message,
-                                                                             NotificationType.INFORMATION, null);
+      String message = JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime);
+      Notification notification = STANDARD.createNotification(
+        JpsCacheBundle.message("notification.title.compiler.caches.loader"), message,
+        NotificationType.INFORMATION, null);
       Notifications.Bus.notify(notification, myProject);
     });
     LOG.info("Loading finished");
@@ -304,7 +333,7 @@ public class JpsOutputLoaderManager {
         onFail();
       }
       getLoaders(myProject).forEach(loader -> loader.rollback());
-      indicator.setText("Rolling back downloaded caches");
+      indicator.setText(JpsCacheBundle.message("progress.text.rolling.back.downloaded.caches"));
     }
     return result;
   }
@@ -323,8 +352,10 @@ public class JpsOutputLoaderManager {
 
   private void onFail() {
     ApplicationManager.getApplication().invokeLater(() -> {
-      Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Compiler Caches Loader", "Update compiler caches failed",
-                                                                             NotificationType.WARNING, null);
+      Notification notification = ATTENTION.createNotification(
+        JpsCacheBundle.message("notification.title.compiler.caches.loader"),
+        JpsCacheBundle.message("notification.content.update.compiler.caches.failed"),
+        NotificationType.WARNING, null);
       Notifications.Bus.notify(notification, myProject);
     });
   }

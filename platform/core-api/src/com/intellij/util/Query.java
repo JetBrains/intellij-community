@@ -2,18 +2,23 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public interface Query<Result> extends Iterable<Result> {
+
   /**
    * Get all of the results in the {@link Collection}
+   *
    * @return results in a collection or empty collection if no results found.
    */
   @NotNull
@@ -21,6 +26,7 @@ public interface Query<Result> extends Iterable<Result> {
 
   /**
    * Get the first result or {@code null} if no results have been found.
+   *
    * @return first result of the search or {@code null} if no results.
    */
   @Nullable
@@ -31,16 +37,21 @@ public interface Query<Result> extends Iterable<Result> {
    * The consumer might be called on different threads, but by default these calls are mutually exclusive, so no additional
    * synchronization inside consumer is necessary. If you need to process results in parallel, run {@code forEach()} on
    * the result of {@link #allowParallelProcessing()}.
+   *
    * @param consumer - a processor search results should be fed to.
    * @return {@code true} if the search was completed normally,
-   *         {@code false} if the occurrence processing was cancelled by the processor.
+   * {@code false} if the occurrence processing was cancelled by the processor.
    */
   boolean forEach(@NotNull Processor<? super Result> consumer);
 
   @NotNull
-  AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer);
+  default AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
+    return AsyncUtil.wrapBoolean(forEach(consumer));
+  }
 
-  Result @NotNull [] toArray(Result @NotNull [] a);
+  default Result @NotNull [] toArray(Result @NotNull [] a) {
+    return findAll().toArray(a);
+  }
 
   /**
    * Checks whether predicate is satisfied for every result of this query.
@@ -49,7 +60,6 @@ public interface Query<Result> extends Iterable<Result> {
    * Use this method only if your predicate is stateless and side-effect free.
    *
    * @param predicate predicate to test on query results
-   *
    * @return true if given predicate is satisfied for all query results.
    */
   @Contract(pure = true)
@@ -63,7 +73,6 @@ public interface Query<Result> extends Iterable<Result> {
    * Use this method only if your predicate is stateless and side-effect free.
    *
    * @param predicate predicate to test on query results
-   *
    * @return true if given predicate is satisfied for at least one query result.
    */
   @Contract(pure = true)
@@ -72,12 +81,20 @@ public interface Query<Result> extends Iterable<Result> {
   }
 
   /**
+   * @param transformation pure function
+   */
+  @Experimental
+  default <R> @NotNull Query<R> transforming(@NotNull Function<? super Result, ? extends Collection<? extends R>> transformation) {
+    return Queries.getInstance().transforming(this, transformation);
+  }
+
+  /**
    * @param mapper pure function
    */
   @Experimental
   @NotNull
   default <R> Query<R> mapping(@NotNull Function<? super Result, ? extends R> mapper) {
-    return Queries.getInstance().mapping(this, mapper);
+    return transforming(value -> Collections.singletonList(mapper.apply(value)));
   }
 
   /**
@@ -86,7 +103,7 @@ public interface Query<Result> extends Iterable<Result> {
   @Experimental
   @NotNull
   default Query<Result> filtering(@NotNull Predicate<? super Result> predicate) {
-    return Queries.getInstance().filtering(this, predicate);
+    return transforming(value -> predicate.test(value) ? Collections.singletonList(value) : Collections.emptyList());
   }
 
   /**
@@ -99,11 +116,16 @@ public interface Query<Result> extends Iterable<Result> {
   }
 
   /**
-   * @return an equivalent query whose {@link #forEach} accepts non-thread-safe consumers, so it may call the consumer in parallel.
+   * @return an equivalent query whose {@link #forEach} accepts thread-safe consumers, so it may call the consumer in parallel.
    */
   @NotNull
   @Contract(pure = true)
   default Query<Result> allowParallelProcessing() {
     return this;
+  }
+
+  @Override
+  default @NotNull Iterator<Result> iterator() {
+    return findAll().iterator();
   }
 }

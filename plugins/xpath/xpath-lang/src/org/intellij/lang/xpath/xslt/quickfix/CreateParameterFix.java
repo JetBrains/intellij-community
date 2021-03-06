@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateParameterFix extends AddParamBase {
@@ -33,7 +34,12 @@ public class CreateParameterFix extends AddParamBase {
     @Override
     @NotNull
     public String getText() {
-        return "Create parameter '" + myReference.getReferencedName() + "'";
+        return XPathBundle.message("intention.name.create.parameter", myReference.getReferencedName());
+    }
+
+    @Override
+    public String getFamilyName() {
+        return XPathBundle.message("intention.family.name.create.parameter");
     }
 
     @Override

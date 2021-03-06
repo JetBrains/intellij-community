@@ -4,10 +4,12 @@ package com.intellij.ui.content;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +29,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
-  public static final String POPUP_PLACE = "TabbedPanePopup";
+  @NonNls public static final String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
   private final TabbedPaneWrapper myTabbedPaneWrapper;
@@ -107,7 +109,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return selectedComponent == null ? null : myManager.getContent(selectedComponent);
   }
 
-  private class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
+  public class MyTabbedPaneWrapper extends TabbedPaneWrapper.AsJTabbedPane {
     MyTabbedPaneWrapper(int tabPlacement) {
       super(tabPlacement);
     }
@@ -120,6 +122,10 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     @Override
     protected TabbedPaneHolder createTabbedPaneHolder() {
       return new MyTabbedPaneHolder(this);
+    }
+
+    public ContentManager getContentManager() {
+      return myManager;
     }
 
     private class MyTabbedPane extends TabbedPaneImpl {
@@ -162,6 +168,9 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
             int index = ui.tabForCoordinate(this, e.getX(), e.getY());
             if (index != -1) {
               setSelectedIndex(index);
+              // Always request a focus for tab component when user clicks on tab header.
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+                () -> IdeFocusManager.getGlobalInstance().requestFocus(MyTabbedPaneWrapper.this.getComponent(), true));
             }
             hideMenu();
           }
@@ -253,7 +262,7 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
       }
     }
 
-    private class MyTabbedPaneHolder extends TabbedPaneHolder implements DataProvider {
+    private final class MyTabbedPaneHolder extends TabbedPaneHolder implements DataProvider {
 
       private MyTabbedPaneHolder(TabbedPaneWrapper wrapper) {
         super(wrapper);

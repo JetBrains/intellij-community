@@ -8,11 +8,11 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.EmmetAbbreviationBalloon.EmmetContextHelp;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,15 +38,7 @@ import java.util.*;
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
   private static final String EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY = "emmet.recent.update.abbreviations";
   private static final String EMMET_LAST_UPDATE_ABBREVIATIONS_KEY = "emmet.last.update.abbreviations";
-  private static final String DOCUMENTATION = "Update HTML tag with Emmet abbreviation:<br/>" +
-                                              ".class[attribute] to overwrite value;<br/>" +
-                                              ".+class[attribute] to append value;<br/>" +
-                                              ".-class[attribute] to remove value.<br/>" +
-                                              "<p/>" +
-                                              "For example, <code>.+c2[title=Hello]</code> abbreviation updates<br/>" +
-                                              "<code>&lt;div class=\"c1\"&gt;</code> to<br/>" +
-                                              "<code>&lt;div class=\"c1 c2\" title=\"Hello\"&gt;</code>.";
-  private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(DOCUMENTATION);
+  private static final EmmetContextHelp CONTEXT_HELP = new EmmetContextHelp(XmlBundle.messagePointer("emmet.context.help.tooltip"));
 
   @NotNull
   @Override
@@ -135,7 +128,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
                                   @NotNull PairProcessor<? super XmlTag, ? super Boolean> processor) {
     if (StringUtil.isNotEmpty(templateText)) {
       final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(project);
-      XmlFile xmlFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.HTML, templateText);
+      XmlFile xmlFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", HtmlFileType.INSTANCE, templateText);
       XmlTag tag = xmlFile.getRootTag();
       boolean firstTag = true;
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.text.DateFormatUtil.formatPrettyDateTime
+import org.jetbrains.annotations.Nls
 
 private val KEY = Key<EditorNotificationPanel>("OutdatedVersionNotifier")
 
@@ -21,11 +22,11 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
   override fun getKey(): Key<EditorNotificationPanel> = KEY
 
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    val cache = CommittedChangesCache.getInstance(project)
+    val cache = CommittedChangesCache.getInstanceIfCreated(project) ?: return null
     val (incomingChangeList, incomingChange) = cache.getIncomingChangeList(file) ?: return null
     if (!isIncomingChangesAvailable(incomingChangeList.vcs)) return null
 
-    return createOutdatedVersionPanel(incomingChangeList, incomingChange)
+    return createOutdatedVersionPanel(incomingChangeList, incomingChange, fileEditor)
   }
 
   class IncomingChangesListener(private val project: Project) : CommittedChangesListener {
@@ -49,22 +50,17 @@ class OutdatedVersionNotifier : EditorNotifications.Provider<EditorNotificationP
   }
 }
 
-private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change): EditorNotificationPanel =
-  EditorNotificationPanel().apply {
+private fun createOutdatedVersionPanel(changeList: CommittedChangeList, change: Change, fileEditor: FileEditor): EditorNotificationPanel =
+  EditorNotificationPanel(fileEditor).apply {
     createActionLabel(message("outdated.version.show.diff.action"), "Compare.LastVersion")
     createActionLabel(message("outdated.version.update.project.action"), "Vcs.UpdateProject")
-    setText(getOutdatedVersionText(changeList, change))
+    text = getOutdatedVersionText(changeList, change)
   }
 
-private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): String {
+private fun getOutdatedVersionText(changeList: CommittedChangeList, change: Change): @Nls String {
   val formattedDate = formatPrettyDateTime(changeList.commitDate)
-  val messageKey = when {
-    change.type == Change.Type.DELETED -> "outdated.version.text.deleted"
-    "/" !in formattedDate -> "outdated.version.pretty.date.text"
-    else -> "outdated.version.text"
-  }
-
-  return message(messageKey, changeList.committerName, formattedDate, changeList.comment.getSubject())
+  return message("outdated.version.text", changeList.committerName, formattedDate, changeList.comment.getSubject(),
+                 if (change.type == Change.Type.DELETED) 1 else 0)
 }
 
 private fun String.getSubject(): String {

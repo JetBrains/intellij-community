@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
 internal class CommitMessageGrammarCheckingStrategy : GrammarCheckingStrategy {
   companion object {
     private val IGNORED_RULES = RuleGroup.CASING + RuleGroup.PUNCTUATION
+
+    const val ID = "COMMIT_MESSAGE_GRAMMAR_STRATEGY"
   }
 
   override fun isMyContextRoot(element: PsiElement) = true
@@ -18,7 +20,7 @@ internal class CommitMessageGrammarCheckingStrategy : GrammarCheckingStrategy {
 
   override fun getContextRootTextDomain(root: PsiElement) = GrammarCheckingStrategy.TextDomain.PLAIN_TEXT
 
-  override fun getID() = "COMMIT_MESSAGE_GRAMMAR_STRATEGY"
+  override fun getID() = ID
 
   override fun getName() = "Commit message"
 }

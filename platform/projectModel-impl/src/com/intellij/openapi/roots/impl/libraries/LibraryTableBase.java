@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.roots.impl.libraries;
 
@@ -17,14 +17,20 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.*;
 
+/**
+ * This class isn't used in the new implementation of project model, which is based on {@link com.intellij.workspaceModel.ide Workspace Model}.
+ * It shouldn't be used directly, its interface {@link LibraryTable} should be used instead.
+ */
 @ApiStatus.Internal
 public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, Disposable {
   private static final Logger LOG = Logger.getInstance(LibraryTableBase.class);
@@ -136,9 +142,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return createLibrary(null);
   }
 
-  void fireLibraryRenamed(@NotNull LibraryImpl library) {
+  void fireLibraryRenamed(@NotNull LibraryImpl library, String oldName) {
     incrementModificationCount();
-    myDispatcher.getMulticaster().afterLibraryRenamed(library);
+    myDispatcher.getMulticaster().afterLibraryRenamed(library, oldName);
   }
 
   private void incrementModificationCount() {
@@ -200,10 +206,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
-  class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
+  final class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
     private final List<Library> myLibraries = new ArrayList<>();
-    private final Set<Library> myAddedLibraries = ContainerUtil.newIdentityTroveSet();
-    private final Set<Library> myRemovedLibraries = ContainerUtil.newIdentityTroveSet();
+    private final Set<Library> myAddedLibraries = new ReferenceOpenHashSet<>();
+    private final Set<Library> myRemovedLibraries = new ReferenceOpenHashSet<>();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
 
@@ -285,13 +291,13 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @NotNull
     @Override
-    public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> kind) {
       return createLibrary(name, kind, null);
     }
 
     @NotNull
     @Override
-    public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind<?> kind, @Nullable ProjectModelExternalSource externalSource) {
       assertWritable();
       final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null, externalSource);
       myLibraries.add(library);
@@ -334,7 +340,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       }
       myLibraries.clear();
 
-      final List<Element> libraryElements = element.getChildren(LibraryImpl.ELEMENT);
+      final List<Element> libraryElements = element.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG);
       for (Element libraryElement : libraryElements) {
         final LibraryImpl library = new LibraryImpl(LibraryTableBase.this, libraryElement, null);
         if (library.getName() != null) {
@@ -352,7 +358,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     @Override
-    public void afterLibraryRenamed(@NotNull Library library) {
+    public void afterLibraryRenamed(@NotNull Library library, @Nullable String oldName) {
       myLibraryByNameCache = null;
     }
 

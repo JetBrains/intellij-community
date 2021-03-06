@@ -18,6 +18,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -26,7 +27,6 @@ import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,19 +36,9 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> {
+public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBeforeRun.MakeBeforeRunTask> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CompileStepBeforeRun.class);
   public static final Key<MakeBeforeRunTask> ID = Key.create("Make");
-  /**
-   * @deprecated to be removed in IDEA 2020.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
-  /**
-   * @deprecated to be removed in IDEA 2020.1
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
@@ -176,7 +166,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
       });
       done.waitFor();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       return false;
     }
 

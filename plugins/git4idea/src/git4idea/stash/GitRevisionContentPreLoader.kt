@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vfs.CharsetToolkit.UTF8_CHARSET
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.vcsUtil.VcsFileUtil
@@ -21,7 +20,7 @@ import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils.addTextConvParameters
-import org.apache.commons.lang.ArrayUtils
+import java.nio.charset.StandardCharsets
 
 
 private val LOG = logger<GitRevisionContentPreLoader>()
@@ -57,11 +56,11 @@ class GitRevisionContentPreLoader(val project: Project) {
     h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(
       // we need to pass '<hash> <path>', otherwise --filters parameter doesn't work
       hashesAndPaths.map { "${it.hash} ${it.relativePath}" },
-      UTF8_CHARSET))
+      StandardCharsets.UTF_8))
 
     val output: ByteArray
     try {
-      output = h.run() 
+      output = h.run()
     }
     catch (e: Exception) {
       LOG.error("Couldn't get git cat-file for $hashesAndPaths", e)
@@ -107,26 +106,24 @@ class GitRevisionContentPreLoader(val project: Project) {
     val result = mutableMapOf<FilePath, ByteArray>()
     var currentPosition = 0
     for ((hash, path, _) in hashes) {
-      val separatorBytes = "$RECORD_SEPARATOR${hash}".toByteArray()
+      val separatorBytes = "$RECORD_SEPARATOR${hash}\n".toByteArray()
       if (!ArrayUtil.startsWith(output, currentPosition, separatorBytes)) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
         return null
       }
 
-      val eol = '\n'.toByte()
-      val eolIndex = ArrayUtils.indexOf(output, eol, currentPosition + separatorBytes.size)
-      if (eolIndex < 0) {
-        LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
-        return null
-      }
+      val startIndex = currentPosition + separatorBytes.size
 
       val plainSeparatorBytes = RECORD_SEPARATOR.toByteArray()
-      val nextSeparator = ArrayUtil.indexOf(output, plainSeparatorBytes, eolIndex)
+      val nextSeparator = ArrayUtil.indexOf(output, plainSeparatorBytes, startIndex)
 
-      val startIndex = eolIndex + 1
       val endIndex = if (nextSeparator > 0) nextSeparator else output.size
       if (endIndex > output.size) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
+        return null
+      }
+      if (endIndex <= startIndex || output[endIndex - 1] != '\n'.toByte()) {
+        LOG.error("Unexpected output for hash $hash at position $endIndex", Attachment("catfile.txt", String(output)))
         return null
       }
 

@@ -1,20 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -26,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,11 +85,9 @@ public final class IdeaTestUtil {
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
-                               "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', 'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
+                               "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', " +
+                               "'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
     }
-
-    String homePath = PathUtil.toSystemIndependentName(path);
-    File jdkHomeFile = new File(homePath);
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
     SdkModificator sdkModificator = new SdkModificator() {
@@ -116,15 +113,20 @@ public final class IdeaTestUtil {
       }
     };
 
+    Path jdkHomeFile = Path.of(path);
     JavaSdkImpl.addClasses(jdkHomeFile, sdkModificator, isJre);
     JavaSdkImpl.addSources(jdkHomeFile, sdkModificator);
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
 
-    return new MockSdk(name, homePath, name, roots, () -> JavaSdk.getInstance());
+    return new MockSdk(name, PathUtil.toSystemIndependentName(path), name, roots, () -> JavaSdk.getInstance());
   }
 
   public static @NotNull Sdk getMockJdk14() {
     return getMockJdk(JavaVersion.compose(4));
+  }
+
+  public static @NotNull Sdk getMockJdk16() {
+    return getMockJdk(JavaVersion.compose(6));
   }
 
   public static @NotNull Sdk getMockJdk17() {
@@ -141,6 +143,10 @@ public final class IdeaTestUtil {
 
   public static @NotNull Sdk getMockJdk9() {
     return getMockJdk(JavaVersion.compose(9));
+  }
+  
+  public static @NotNull Sdk getMockJdk11() {
+    return getMockJdk(JavaVersion.compose(11));
   }
 
   public static @NotNull File getMockJdk14Path() {
@@ -171,76 +177,13 @@ public final class IdeaTestUtil {
     return new File(PathManager.getCommunityHomePath(), "java/" + name);
   }
 
-  /**
-   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static Sdk getWebMockJdk17() {
-    Sdk jdk = getMockJdk17();
-    jdk=addWebJarsTo(jdk);
-    return jdk;
-  }
-
-  /**
-   * @deprecated {@link IdeaTestUtil#addWebJarsToModule(Module)} instead
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull Sdk addWebJarsTo(@NotNull Sdk jdk) {
-    try {
-      jdk = (Sdk)jdk.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-    SdkModificator sdkModificator = jdk.getSdkModificator();
-    sdkModificator.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
-    sdkModificator.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
-    sdkModificator.commitChanges();
-    return jdk;
-  }
-
   public static void addWebJarsToModule(@NotNull Module module) {
     ModuleRootModificationUtil.updateModel(module, IdeaTestUtil::addWebJarsToModule);
   }
 
-  public static void removeWebJarsFromModule(@NotNull Module module) {
-    ModuleRootModificationUtil.updateModel(module, model -> {
-      boolean removed = false;
-      for (OrderEntry entry : model.getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry) {
-          LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-          if (libraryOrderEntry.isModuleLevel() && IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME.equals(libraryOrderEntry.getLibraryName())) {
-            model.removeOrderEntry(entry);
-            removed = true;
-            // do not break here to remove all matched entries
-          }
-        }
-      }
-      assertTrue("Module library " + IdeaTestUtil.WEB_JARS_MODULE_LIBRARY_NAME + " was not found in module " + module, removed);
-    });
-  }
-
-  public static final String WEB_JARS_MODULE_LIBRARY_NAME = "webjars";
-
   public static void addWebJarsToModule(@NotNull ModifiableRootModel model) {
-    LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(WEB_JARS_MODULE_LIBRARY_NAME);
-    LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
-
-    libraryModel.addRoot(findJar("lib/jsp-api.jar"), OrderRootType.CLASSES);
-    libraryModel.addRoot(findJar("lib/servlet-api.jar"), OrderRootType.CLASSES);
-
-    WriteAction.runAndWait(libraryModel::commit);
-  }
-
-  private static @NotNull VirtualFile findJar(@NotNull String name) {
-    String path = PathManager.getHomePath() + '/' + name;
-    VirtualFile file = VfsTestUtil.findFileByCaseSensitivePath(path);
-    VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-    assert jar != null : "no .jar for: " + path;
-    return jar;
+    MavenDependencyUtil.addFromMaven(model, "javax.servlet.jsp:javax.servlet.jsp-api:2.3.3");
+    MavenDependencyUtil.addFromMaven(model, "javax.servlet:javax.servlet-api:3.1.0");
   }
 
   public static void setTestVersion(@NotNull JavaSdkVersion testVersion, @NotNull Module module, @NotNull Disposable parentDisposable) {

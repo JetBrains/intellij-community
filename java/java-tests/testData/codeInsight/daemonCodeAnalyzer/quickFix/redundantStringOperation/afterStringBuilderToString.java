@@ -16,8 +16,7 @@ class StringBuilderToString {
       /* 1 */
       int s5 = new StringBuilder()/* 2 */.substring(1, 4).length();
 
-      /* 1 */
-      System.out.println(new StringBuilder()/* 2 */);
+    System.out.println(new StringBuilder()./* 1 */toString()/* 2 */);
       /* 1 */
       System.out.println(new StringBuilder()/* 2 */.substring(1));
       /* 1 */
@@ -26,6 +25,10 @@ class StringBuilderToString {
       System.out.println(new StringBuilder()/* 2 */.substring(1, 3).length());
     System.out.println(new StringBuilder().substring(1, 3));
     System.out.println(new StringBuilder().substring(1, 3).length());
+
+    "hello".substring(sb.toString());
+    System.out.println((((new StringBuilder()))).substring(1, 3));
+    System.out.println((new StringBuilder()).substring(1, 3).length());
   }
 
   void builder(StringBuilder sb) {
@@ -39,8 +42,7 @@ class StringBuilderToString {
       /* 1 */
       int s5 = sb/* 2 */.substring(1, 4).length();
 
-      /* 1 */
-      System.out.println(sb/* 2 */);
+    System.out.println(sb./* 1 */toString()/* 2 */);
       /* 1 */
       System.out.println(sb/* 2 */.substring(1));
       /* 1 */

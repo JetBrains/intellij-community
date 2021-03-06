@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
@@ -39,8 +40,9 @@ public class SetupTaskChooserAction extends AnAction {
     final Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) return;
     final Project project = module.getProject();
-    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project, "Enter setup.py task name",
-                                                                               "No tasks found",
+    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project,
+                                                                               PyBundle.message("python.packaging.enter.setup.py.task"),
+                                                                               PyBundle.message("python.packaging.no.tasks.found"),
                                                                                SetupTaskIntrospector.getTaskList(module));
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, GotoActionBase.getPsiContext(e));
     popup.setShowListForEmptyPattern(true);
@@ -67,7 +69,7 @@ public class SetupTaskChooserAction extends AnAction {
     e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PythonSdkUtil.findPythonSdk(module) != null);
   }
 
-  public static void runSetupTask(String taskName, Module module) {
+  public static void runSetupTask(@NlsSafe String taskName, Module module) {
     final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
     List<String> parameters = new ArrayList<>();
     parameters.add(taskName);
@@ -81,7 +83,7 @@ public class SetupTaskChooserAction extends AnAction {
     runSetupTask(taskName, module, parameters);
   }
 
-  public static void runSetupTask(String taskName, Module module, List<String> parameters) {
+  public static void runSetupTask(@NlsSafe String taskName, Module module, List<String> parameters) {
     try {
       final PyFile setupPy = PyPackageUtil.findSetupPy(module);
       if (setupPy == null) return;

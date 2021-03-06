@@ -2,6 +2,8 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.model.BranchableSyntheticPsiElement;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -11,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 
-public class LightRecordMethod extends LightMethod implements LightRecordMember {
+public final class LightRecordMethod extends LightMethod implements LightRecordMember, BranchableSyntheticPsiElement {
   private final @NotNull PsiRecordComponent myRecordComponent;
 
   public LightRecordMethod(@NotNull PsiManager manager,
@@ -102,11 +105,29 @@ public class LightRecordMethod extends LightMethod implements LightRecordMember 
   }
 
   @Override
-  public PsiElement getContext() {
-    return getContainingClass();
+  public @NotNull LightRecordMethod obtainBranchCopy(@NotNull ModelBranch branch) {
+    PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
+    PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);
+    assert accessorCopy instanceof LightRecordMethod;
+    return (LightRecordMethod)accessorCopy;
+  }
+
+  @Override
+  public @Nullable ModelBranch getModelBranch() {
+    return ModelBranch.getPsiBranch(myRecordComponent);
   }
 
   private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
+  }
+
+  @Override
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+    return myRecordComponent.setName(name);
+  }
+
+  @Override
+  public PsiElement copy() {
+    return myMethod.copy();
   }
 }

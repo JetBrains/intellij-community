@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -43,7 +30,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class DynamicMemberUtils {
+public final class DynamicMemberUtils {
 
   public static final Key<Map<String, String>> COMMENT_KEY = Key.create("DynamicMemberUtils:COMMENT_KEY");
 
@@ -110,14 +97,15 @@ public class DynamicMemberUtils {
     return version.compareTo(since) >= 0;
   }
 
+  @NlsSafe
   @Nullable
-  public static String getCommentValue(PsiMethod method, String commentTagName) {
+  public static String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
     if (commentMap == null) return null;
     return commentMap.get(commentTagName);
   }
 
-  public static class ClassMemberHolder {
+  public static final class ClassMemberHolder {
     private final String myClassSource;
 
     private final GrTypeDefinition myClass;
@@ -150,10 +138,10 @@ public class DynamicMemberUtils {
       PsiField[] allFields = new PsiField[fields.length];
 
       int i = 0;
-      for (PsiField field : fields) {
-        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, (GrField)field, null, classSource);
+      for (GrField field : fields) {
+        MyGrDynamicPropertyImpl dynamicField = new MyGrDynamicPropertyImpl(myClass, field, null, classSource);
 
-        Map<String, String> commentMap = parseComment(((GrField)field).getDocComment());
+        Map<String, String> commentMap = parseComment(field.getDocComment());
         String originalInfo = commentMap.get("originalInfo");
         if (originalInfo == null) {
           originalInfo = classCommentMap.get("originalInfo");
@@ -224,7 +212,7 @@ public class DynamicMemberUtils {
       myNonStaticMethodMap = convertMap(nonStaticMultiMap);
     }
 
-    private static Map<String, String> parseComment(@Nullable GrDocComment comment) {
+    private static @NlsSafe Map<String, String> parseComment(@Nullable GrDocComment comment) {
       if (comment == null) return Collections.emptyMap();
 
       GrDocTag[] docTags = comment.getTags();
@@ -404,7 +392,7 @@ public class DynamicMemberUtils {
     }
   }
 
-  private static class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
+  private static final class MyGrDynamicPropertyImpl extends GrDynamicPropertyImpl implements DynamicElement, OriginInfoAwareElement {
     private final String mySource;
     private final PsiClass myClass;
 

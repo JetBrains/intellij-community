@@ -1,16 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -24,7 +22,7 @@ public class ExprTypePredicate extends MatchPredicate {
   private final boolean myCaseSensitive;
   private final List<String> myTypes;
 
-  public ExprTypePredicate(String type, String baseName, boolean withinHierarchy, boolean caseSensitiveMatch, boolean target, boolean regex) {
+  public ExprTypePredicate(@NotNull String type, String baseName, boolean withinHierarchy, boolean caseSensitiveMatch, boolean target, boolean regex) {
     myDelegate = regex ? new RegExpPredicate(type, caseSensitiveMatch, baseName, false, target) : null;
     myWithinHierarchy = withinHierarchy;
     needsTypeParameters = type.indexOf('<') >= 0;
@@ -35,7 +33,7 @@ public class ExprTypePredicate extends MatchPredicate {
   }
 
   @Override
-  public boolean match(PsiElement match, int start, int end, MatchContext context) {
+  public boolean match(@NotNull PsiElement match, int start, int end, @NotNull MatchContext context) {
     if (match instanceof PsiIdentifier) {
       // since we pickup tokens
       match = match.getParent();
@@ -51,7 +49,7 @@ public class ExprTypePredicate extends MatchPredicate {
     return type != null && doMatchWithTheType(type, context, match, null);
   }
 
-  protected PsiType evalType(PsiExpression match, MatchContext context) {
+  protected PsiType evalType(@NotNull PsiExpression match, @NotNull MatchContext context) {
     if (match instanceof PsiFunctionalExpression) {
       final PsiFunctionalExpression functionalExpression = (PsiFunctionalExpression)match;
       return functionalExpression.getFunctionalInterfaceType();
@@ -65,7 +63,7 @@ public class ExprTypePredicate extends MatchPredicate {
     return match.getType();
   }
 
-  private boolean doMatchWithTheType(final PsiType type, MatchContext context, PsiElement matchedNode, Set<? super PsiType> visited) {
+  private boolean doMatchWithTheType(@NotNull PsiType type, @NotNull MatchContext context, @NotNull PsiElement matchedNode, @Nullable Set<? super PsiType> visited) {
     final List<String> permutations = getTextPermutations(type);
     for (String permutation : permutations) {
       if (myDelegate == null ? doMatch(permutation) : myDelegate.doMatch(permutation, context, matchedNode)) {
@@ -74,7 +72,7 @@ public class ExprTypePredicate extends MatchPredicate {
     }
     if (myWithinHierarchy) {
       if (visited == null) {
-        visited = new THashSet<>();
+        visited = new HashSet<>();
         visited.add(type);
       }
       for (PsiType superType : type.getSuperTypes()) {

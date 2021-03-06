@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,7 @@ import static com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.Ef
 /**
  * Allows to build effects for the TextAttributes. Allows to cover effects on the current state and slip effects under it.
  */
-public class TextAttributesEffectsBuilder {
+public final class TextAttributesEffectsBuilder {
   private static final Logger LOG = Logger.getInstance(TextAttributesEffectsBuilder.class);
 
   public enum EffectSlot {
@@ -30,7 +30,7 @@ public class TextAttributesEffectsBuilder {
   // this probably could be a property of the EffectType
   private static final Map<EffectType, EffectSlot> EFFECT_SLOTS_MAP = ContainerUtil.<EffectType, EffectSlot>immutableMapBuilder()
     .put(STRIKEOUT, STRIKE_SLOT)
-    .put(BOXED, FRAME_SLOT).put(ROUNDED_BOX, FRAME_SLOT)
+    .put(BOXED, FRAME_SLOT).put(ROUNDED_BOX, FRAME_SLOT).put(SLIGHTLY_WIDER_BOX, FRAME_SLOT)
     .put(BOLD_LINE_UNDERSCORE, UNDERLINE_SLOT)
     .put(LINE_UNDERSCORE, UNDERLINE_SLOT)
     .put(WAVE_UNDERSCORE, UNDERLINE_SLOT)
@@ -170,7 +170,7 @@ public class TextAttributesEffectsBuilder {
     return myEffectsMap.get(effectSlot);
   }
 
-  public static class EffectDescriptor {
+  public static final class EffectDescriptor {
     @NotNull
     public final EffectType effectType;
     @NotNull

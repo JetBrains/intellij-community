@@ -10,7 +10,7 @@ import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigReplaceWithValidRootDeclarationQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.root-declaration.replace-with-valid.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.root-declaration.replace-with-valid.description")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement as? EditorConfigRootDeclaration ?: return
     val elementFactory = EditorConfigElementFactory.getInstance(project)

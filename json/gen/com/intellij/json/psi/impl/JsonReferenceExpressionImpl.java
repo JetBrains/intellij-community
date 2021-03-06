@@ -16,6 +16,7 @@ public class JsonReferenceExpressionImpl extends JsonValueImpl implements JsonRe
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitReferenceExpression(this);
   }

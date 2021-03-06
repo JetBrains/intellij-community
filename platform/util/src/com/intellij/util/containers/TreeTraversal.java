@@ -164,7 +164,7 @@ public abstract class TreeTraversal {
    * stops when the {@code rangeCondition} return false after that.
    */
   @NotNull
-  public final <T> TreeTraversal onRange(@NotNull final Condition<T> rangeCondition) {
+  public final <T> TreeTraversal onRange(@NotNull final Condition<? super T> rangeCondition) {
     return intercept("ON_RANGE", new TraversalInterceptor() {
       @NotNull
       @Override
@@ -173,7 +173,7 @@ public abstract class TreeTraversal {
         final Condition<? super TT> inRangeCondition = (Condition<? super TT>)rangeCondition;
         final Condition<? super TT> notInRangeCondition = (Condition<? super TT>)not(rangeCondition);
         class WrappedTree implements Function<TT, Iterable<? extends TT>> {
-          final Condition<T> inner = rangeCondition;
+          final Condition<? super T> inner = rangeCondition;
 
           @Override
           public Iterable<? extends TT> fun(TT t) {

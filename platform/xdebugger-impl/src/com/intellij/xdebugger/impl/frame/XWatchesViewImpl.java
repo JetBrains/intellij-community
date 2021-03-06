@@ -10,29 +10,34 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.ui.CaptionPanel;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ListenerUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebugSessionData;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.inline.InlineWatch;
+import com.intellij.xdebugger.impl.inline.InlineWatchNode;
+import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
+import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
@@ -46,27 +51,32 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView {
-  private WatchesRootNode myRootNode;
+public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
+  protected WatchesRootNode myRootNode;
+  private XDebuggerExpressionComboBox myEvaluateComboBox;
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private final boolean myWatchesInVariables;
+  private final boolean inlineWatchesEnabled;
 
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
     this(session, watchesInVariables, watchesInVariables);
-
   }
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
+
+  protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
+    this(session, watchesInVariables, vertical, true);
+  }
+
+  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
     super(session);
     myWatchesInVariables = watchesInVariables;
+    inlineWatchesEnabled = Registry.is("debugger.watches.inline.enabled");
 
     XDebuggerTree tree = getTree();
     createNewRootNode(null);
@@ -95,21 +105,61 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       }
     }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
-    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.DEBUGGER_TOOLBAR,
-      DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
-      !vertical);
-    toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
-                                           vertical ? 0 : 1,
-                                           vertical ? 1 : 0));
-    toolbar.setTargetComponent(tree);
+    if (withToolbar) {
+      ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
+        ActionPlaces.DEBUGGER_TOOLBAR,
+        DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
+        !vertical);
+      toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
+                                             vertical ? 0 : 1,
+                                             vertical ? 1 : 0));
+      toolbar.setTargetComponent(tree);
+      getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
+    }
 
     if (!myWatchesInVariables) {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
-    getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
-
     installEditListeners();
+  }
+
+  @Override
+  JComponent createTopPanel() {
+    if (Registry.is("debugger.new.tool.window.layout")) {
+      XDebuggerTree tree = getTree();
+      myEvaluateComboBox =
+        new XDebuggerExpressionComboBox(tree.getProject(), tree.getEditorsProvider(), "evaluateInVariables", null, false, true) {
+          @Override
+          protected void prepareEditor(EditorEx editor) {
+            super.prepareEditor(editor);
+            editor.setPlaceholder(XDebuggerBundle.message("debugger.evaluate.expression.or.add.a.watch.hint"));
+          }
+        };
+      final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
+      editorComponent.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterStroke");
+      editorComponent.getActionMap().put("enterStroke", new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myEvaluateComboBox.saveTextInHistory();
+          XDebugSession session = getSession(getTree());
+          myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, myEvaluateComboBox.getExpression());
+        }
+      });
+      JComponent component = myEvaluateComboBox.getComponent();
+      //component.setBackground(tree.getBackground());
+      component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+      return component;
+    }
+    return null;
+  }
+
+  @Override
+  protected void buildTreeAndRestoreState(@NotNull XStackFrame stackFrame) {
+    super.buildTreeAndRestoreState(stackFrame);
+    if (myEvaluateComboBox != null) {
+      myEvaluateComboBox.setSourcePosition(stackFrame.getSourcePosition());
+    }
   }
 
   private void installEditListeners() {
@@ -238,9 +288,72 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   @Override
   protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
-    WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
-    myRootNode = node;
-    return node;
+    if (inlineWatchesEnabled) {
+      myRootNode = new InlineWatchesRootNode(getTree(), this, getExpressions(), getInlineExpressions(), stackFrame, myWatchesInVariables);
+    } else {
+      myRootNode = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
+    }
+    return myRootNode;
+  }
+
+  @NotNull
+  private List<InlineWatch> getInlineExpressions() {
+    return getWatchesManager().getInlineWatches();
+  }
+
+  private XDebuggerWatchesManager getWatchesManager() {
+    return ((XDebuggerManagerImpl)XDebuggerManager.getInstance(getTree().getProject()))
+      .getWatchesManager();
+  }
+
+  @Override
+  public void addInlineWatchExpression(@NotNull InlineWatch watch, int index, boolean navigateToWatchNode) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    XDebugSession session = getSession(getTree());
+
+    ((InlineWatchesRootNode)myRootNode).addInlineWatchExpression(session != null ? session.getCurrentStackFrame() : null, watch, index, navigateToWatchNode);
+
+    if (navigateToWatchNode && session != null) {
+      XDebugSessionTab.showWatchesView((XDebugSessionImpl)session);
+    }
+  }
+
+  @Override
+  public void removeInlineWatches(Collection<InlineWatch> watches) {
+    InlineWatchesRootNode rootNode = (InlineWatchesRootNode)myRootNode;
+    @SuppressWarnings("unchecked")
+    List<? extends XDebuggerTreeNode> nodesToRemove =
+      (List<? extends XDebuggerTreeNode>)ContainerUtil.filter(rootNode.getInlineWatchChildren(), node -> watches.contains(node.getWatch()));
+
+    if (!nodesToRemove.isEmpty()) {
+      removeInlineNodes(nodesToRemove, false);
+    }
+  }
+
+
+  private void removeInlineNodes(List<? extends XDebuggerTreeNode> inlineWatches, boolean updateManager) {
+    InlineWatchesRootNode rootNode = (InlineWatchesRootNode)myRootNode;
+    List<? extends InlineWatchNode> inlineWatchChildren = rootNode.getInlineWatchChildren();
+    final int[] minIndex = {Integer.MAX_VALUE};
+    List<InlineWatchNode> toRemoveInlines = new ArrayList<>();
+    inlineWatches.forEach((node) -> {
+      int index = inlineWatchChildren.indexOf(node);
+      if (index != -1) {
+        toRemoveInlines.add((InlineWatchNode)node);
+        minIndex[0] = Math.min(minIndex[0], index);
+      }
+    });
+
+    rootNode.removeInlineChildren(toRemoveInlines);
+
+    List<? extends InlineWatchNode> newChildren = rootNode.getInlineWatchChildren();
+    if (!newChildren.isEmpty()) {
+      InlineWatchNode node = newChildren.get(Math.min(minIndex[0], newChildren.size() - 1));
+      TreeUtil.selectNode(getTree(), node);
+    }
+    if (updateManager) {
+      getWatchesManager().inlineWatchesRemoved(ContainerUtil.map(toRemoveInlines, node -> node.getWatch()), this);
+    }
   }
 
   @Override
@@ -251,7 +364,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @NotNull
-  private List<XExpression> getExpressions() {
+  protected List<XExpression> getExpressions() {
     XDebuggerTree tree = getTree();
     XDebugSession session = getSession(tree);
     List<XExpression> expressions;
@@ -283,10 +396,18 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void removeWatches(List<? extends XDebuggerTreeNode> nodes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
+    List<? extends XDebuggerTreeNode> ordinaryWatches = ContainerUtil.filter(nodes, node -> !(node instanceof InlineWatchNode));
+    List<? extends XDebuggerTreeNode> inlineWatches = ContainerUtil.filter(nodes, node -> node instanceof InlineWatchNode);
+    if (!inlineWatches.isEmpty()) {
+      removeInlineNodes(inlineWatches, true);
+    }
+    if (ordinaryWatches.isEmpty()) return;
+
     List<? extends WatchNode> children = myRootNode.getWatchChildren();
     int minIndex = Integer.MAX_VALUE;
     List<XDebuggerTreeNode> toRemove = new ArrayList<>();
-    for (XDebuggerTreeNode node : nodes) {
+    for (XDebuggerTreeNode node : ordinaryWatches) {
       @SuppressWarnings("SuspiciousMethodCalls")
       int index = children.indexOf(node);
       if (index != -1) {
@@ -307,6 +428,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void removeAllWatches() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (inlineWatchesEnabled) {
+      List<? extends InlineWatchNode> children = ((InlineWatchesRootNode)myRootNode).getInlineWatchChildren();
+      if (!children.isEmpty()) {
+        //noinspection unchecked
+        removeInlineNodes((List<? extends XDebuggerTreeNode>)children, true);
+      }
+    }
     myRootNode.removeAllChildren();
     updateSessionData();
   }

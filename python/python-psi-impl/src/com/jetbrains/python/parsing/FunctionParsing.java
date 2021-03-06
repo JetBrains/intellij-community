@@ -15,8 +15,7 @@
  */
 package com.jetbrains.python.parsing;
 
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.WhitespacesBinders;
+import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -36,7 +35,7 @@ public class FunctionParsing extends Parsing {
     super(context);
   }
 
-  public void parseFunctionDeclaration(@NotNull PsiBuilder.Marker endMarker, boolean async) {
+  public void parseFunctionDeclaration(@NotNull SyntaxTreeBuilder.Marker endMarker, boolean async) {
     assertCurrentToken(PyTokenTypes.DEF_KEYWORD);
     parseFunctionInnards(endMarker, async);
   }
@@ -45,7 +44,7 @@ public class FunctionParsing extends Parsing {
     return FUNCTION_TYPE;
   }
 
-  protected void parseFunctionInnards(@NotNull PsiBuilder.Marker functionMarker, boolean async) {
+  protected void parseFunctionInnards(@NotNull SyntaxTreeBuilder.Marker functionMarker, boolean async) {
     myBuilder.advanceLexer();
     parseIdentifierOrSkip(PyTokenTypes.LPAR);
     parseParameterList();
@@ -66,7 +65,7 @@ public class FunctionParsing extends Parsing {
       if (checkLanguageLevel && myContext.getLanguageLevel().isPython2()) {
         myBuilder.error(message("PARSE.function.return.type.annotations.py2"));
       }
-      PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
+      SyntaxTreeBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
       if (!myContext.getExpressionParser().parseSingleExpression(false)) {
         myBuilder.error(message("PARSE.expected.expression"));
@@ -77,21 +76,14 @@ public class FunctionParsing extends Parsing {
 
   public void parseDecoratedDeclaration() {
     assertCurrentToken(PyTokenTypes.AT); // ??? need this?
-    final PsiBuilder.Marker decoratorStartMarker = myBuilder.mark();
-    final PsiBuilder.Marker decoListMarker = myBuilder.mark();
+    final SyntaxTreeBuilder.Marker decoratorStartMarker = myBuilder.mark();
+    final SyntaxTreeBuilder.Marker decoListMarker = myBuilder.mark();
     boolean decorated = false;
     while (myBuilder.getTokenType() == PyTokenTypes.AT) {
-      PsiBuilder.Marker decoratorMarker = myBuilder.mark();
+      SyntaxTreeBuilder.Marker decoratorMarker = myBuilder.mark();
       myBuilder.advanceLexer();
-      getStatementParser().parseDottedName();
-      if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-        getExpressionParser().parseArgumentList();
-      }
-      else { // empty arglist node, so we always have it
-        PsiBuilder.Marker argListMarker = myBuilder.mark();
-        argListMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
-        argListMarker.done(PyElementTypes.ARGUMENT_LIST);
-      }
+
+      myContext.getFunctionParser().parseDecoratorExpression();
       if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
         decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
         nextToken();
@@ -107,7 +99,16 @@ public class FunctionParsing extends Parsing {
     parseDeclarationAfterDecorator(decoratorStartMarker);
   }
 
-  private void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker) {
+  /**
+   * Parses decorator expression after {@code @} according to PEP-614
+   */
+  public void parseDecoratorExpression() {
+    if (!getExpressionParser().parseNamedTestExpression(false, false)) {
+      myBuilder.error(message("PARSE.expected.expression"));
+    }
+  }
+
+  private void parseDeclarationAfterDecorator(SyntaxTreeBuilder.Marker endMarker) {
     if (myBuilder.getTokenType() == PyTokenTypes.ASYNC_KEYWORD) {
       myBuilder.advanceLexer();
       parseDeclarationAfterDecorator(endMarker, true);
@@ -121,7 +122,7 @@ public class FunctionParsing extends Parsing {
     }
   }
 
-  protected void parseDeclarationAfterDecorator(PsiBuilder.Marker endMarker, boolean async) {
+  protected void parseDeclarationAfterDecorator(SyntaxTreeBuilder.Marker endMarker, boolean async) {
     if (myBuilder.getTokenType() == PyTokenTypes.DEF_KEYWORD) {
       parseFunctionInnards(endMarker, async);
     }
@@ -130,7 +131,7 @@ public class FunctionParsing extends Parsing {
     }
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));
-      PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
+      SyntaxTreeBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
       parameterList.done(PyElementTypes.PARAMETER_LIST);
       myBuilder.mark().done(PyElementTypes.STATEMENT_LIST); // To have non-empty empty statement list
       endMarker.done(getFunctionType());
@@ -138,7 +139,7 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseParameterList() {
-    final PsiBuilder.Marker parameterList;
+    final SyntaxTreeBuilder.Marker parameterList;
     if (myBuilder.getTokenType() != PyTokenTypes.LPAR) {
       myBuilder.error(message("PARSE.expected.lpar"));
       parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
@@ -149,7 +150,7 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseParameterListContents(IElementType endToken, boolean advanceLexer, boolean isLambda) {
-    PsiBuilder.Marker parameterList;
+    SyntaxTreeBuilder.Marker parameterList;
     parameterList = myBuilder.mark();
     if (advanceLexer) {
       myBuilder.advanceLexer();
@@ -198,7 +199,7 @@ public class FunctionParsing extends Parsing {
   }
 
   protected boolean parseParameter(IElementType endToken, boolean isLambda) {
-    PsiBuilder.Marker parameter = myBuilder.mark();
+    SyntaxTreeBuilder.Marker parameter = myBuilder.mark();
 
     if (myBuilder.getTokenType() == PyTokenTypes.DIV) {
       myBuilder.advanceLexer();
@@ -213,7 +214,7 @@ public class FunctionParsing extends Parsing {
         if (myContext.getLanguageLevel().isPython2()) {
           parameter.rollbackTo();
           parameter = myBuilder.mark();
-          advanceError(myBuilder, "Single star parameter is not supported in Python 2");
+          advanceError(myBuilder, message("PARSE.single.star.parameter.not.supported.py2"));
         }
         parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
         return true;
@@ -231,7 +232,7 @@ public class FunctionParsing extends Parsing {
       }
       if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
         if (!getExpressionParser().parseSingleExpression(false)) {
-          PsiBuilder.Marker invalidElements = myBuilder.mark();
+          SyntaxTreeBuilder.Marker invalidElements = myBuilder.mark();
           while (!atAnyOfTokens(endToken, PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
             nextToken();
           }
@@ -245,7 +246,7 @@ public class FunctionParsing extends Parsing {
       if (atToken(endToken)) {
         return false;
       }
-      PsiBuilder.Marker invalidElements = myBuilder.mark();
+      SyntaxTreeBuilder.Marker invalidElements = myBuilder.mark();
       while (!atToken(endToken) && !atAnyOfTokens(PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
         nextToken();
       }
@@ -264,7 +265,7 @@ public class FunctionParsing extends Parsing {
       if (checkLanguageLevel && myContext.getLanguageLevel().isPython2()) {
         myBuilder.error(message("PARSE.function.type.annotations.py2"));
       }
-      PsiBuilder.Marker annotationMarker = myBuilder.mark();
+      SyntaxTreeBuilder.Marker annotationMarker = myBuilder.mark();
       nextToken();
       if (!getExpressionParser().parseSingleExpression(false)) {
         myBuilder.error(message("PARSE.expected.expression"));
@@ -275,11 +276,11 @@ public class FunctionParsing extends Parsing {
 
   protected void parseParameterSubList() {
     assertCurrentToken(PyTokenTypes.LPAR);
-    final PsiBuilder.Marker tuple = myBuilder.mark();
+    final SyntaxTreeBuilder.Marker tuple = myBuilder.mark();
     myBuilder.advanceLexer();
     while (true) {
       if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-        final PsiBuilder.Marker parameter = myBuilder.mark();
+        final SyntaxTreeBuilder.Marker parameter = myBuilder.mark();
         myBuilder.advanceLexer();
         parameter.done(PyElementTypes.NAMED_PARAMETER);
       }

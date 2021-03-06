@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +36,9 @@ public class StartUseVcsAction extends DumbAwareAction {
     if (!isEnabled(project)) return;
 
     StartUseVcsDialog dialog = new StartUseVcsDialog(project);
-    dialog.show();
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      String vcsName = dialog.getVcs();
-      if (vcsName.length() > 0) {
-        AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsName);
-        assert vcs != null : "No vcs found for name " + vcsName;
-        vcs.enableIntegration();
-      }
+    if (dialog.showAndGet()) {
+      AbstractVcs vcs = dialog.getVcs();
+      vcs.enableIntegration();
     }
   }
 

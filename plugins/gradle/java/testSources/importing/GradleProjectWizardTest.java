@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
@@ -8,9 +8,9 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -19,8 +19,8 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,22 +32,21 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep;
-import com.intellij.openapi.externalSystem.util.environment.Environment;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside;
 
@@ -55,32 +54,26 @@ import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.co
  * @author Dmitry Avdeev
  */
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {
-
-  protected static final String GRADLE_JDK_NAME = "Gradle JDK";
+  private static final String GRADLE_JDK_NAME = "Gradle JDK";
   private final List<Sdk> removedSdks = new SmartList<>();
   private String myJdkHome;
 
   public void testGradleProject() throws Exception {
     final String projectName = "testProject";
-    Project project = createProject(step -> {
-      if (step instanceof ProjectTypeStep) {
-        assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
-        List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-        assertEquals(3, steps.size());
-        final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
-        assertInstanceOf(projectBuilder, AbstractGradleModuleBuilder.class);
-        AbstractGradleModuleBuilder gradleProjectBuilder = (AbstractGradleModuleBuilder)projectBuilder;
-        gradleProjectBuilder.setName(projectName);
-        gradleProjectBuilder.setProjectId(new ProjectId("", null, null));
-      }
+    Project project = GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createProject(step -> {
+        if (step instanceof ProjectTypeStep) {
+          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
+          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
+          assertEquals(3, steps.size());
+          final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
+          assertInstanceOf(projectBuilder, AbstractGradleModuleBuilder.class);
+          AbstractGradleModuleBuilder gradleProjectBuilder = (AbstractGradleModuleBuilder)projectBuilder;
+          gradleProjectBuilder.setName(projectName);
+          gradleProjectBuilder.setProjectId(new ProjectId("", null, null));
+        }
+      });
     });
-    CountDownLatch latch = new CountDownLatch(1);
-    MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(ProjectDataImportListener.TOPIC, path -> latch.countDown());
-    while (latch.getCount() == 1) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
-      Thread.yield();
-    }
 
     assertEquals(projectName, project.getName());
     assertModules(project, projectName, projectName + ".main", projectName + ".test");
@@ -98,7 +91,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertNotNull(buildScript);
     assertEquals("plugins {\n" +
                  "    id 'java'\n" +
-                 "}\n\n" +
+                 "}\n" +
+                 "\n" +
                  "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "repositories {\n" +
@@ -106,21 +100,28 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testCompile group: 'junit', name: 'junit', version: '4.12'\n" +
-                 "}\n",
+                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'\n" +
+                 "}\n" +
+                 "\n" +
+                 "test {\n" +
+                 "    useJUnitPlatform()\n" +
+                 "}",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
 
-    Module childModule = createModuleFromTemplate("Gradle", null, project, step -> {
-      if (step instanceof ProjectTypeStep) {
-        List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-        assertEquals(3, steps.size());
-      }
-      else if (step instanceof GradleStructureWizardStep) {
-        GradleStructureWizardStep gradleStructureWizardStep = (GradleStructureWizardStep)step;
-        assertEquals(projectName, gradleStructureWizardStep.getParentData().getExternalName());
-        gradleStructureWizardStep.setArtifactId("childModule");
-        gradleStructureWizardStep.setGroupId("");
-      }
+    Module childModule = GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate("Gradle", null, project, step -> {
+        if (step instanceof ProjectTypeStep) {
+          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
+          assertEquals(3, steps.size());
+        }
+        else if (step instanceof GradleStructureWizardStep) {
+          GradleStructureWizardStep gradleStructureWizardStep = (GradleStructureWizardStep)step;
+          assertEquals(projectName, gradleStructureWizardStep.getParentData().getExternalName());
+          gradleStructureWizardStep.setArtifactId("childModule");
+          gradleStructureWizardStep.setGroupId("");
+        }
+      });
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
@@ -141,15 +142,16 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
   @Override
   protected Project createProject(Consumer adjuster) throws IOException {
-    @SuppressWarnings("unchecked") Project project = super.createProject(adjuster);
-    myFilesToDelete.add(ProjectUtil.getExternalConfigurationDir(project).toFile());
+    @SuppressWarnings("unchecked")
+    Project project = super.createProject(adjuster);
+    Disposer.register(getTestRootDisposable(), () -> PathKt.delete(ProjectUtil.getExternalConfigurationDir(project)));
     return project;
   }
 
   @Override
   protected void createWizard(@Nullable Project project) throws IOException {
-    Collection linkedProjectsSettings = project == null
-                                        ? ContainerUtil.emptyList()
+    Collection<?> linkedProjectsSettings = project == null
+                                        ? Collections.emptyList()
                                         : ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings();
     assertTrue(linkedProjectsSettings.size() <= 1);
     File directory;
@@ -157,11 +159,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     if (settings instanceof ExternalProjectSettings) {
       directory = new File(((ExternalProjectSettings)settings).getExternalProjectPath());
       FileUtil.createDirectory(directory);
+      Disposer.register(getTestRootDisposable(), () -> FileUtil.delete(directory));
     }
     else {
-      directory = FileUtil.createTempDirectory(getName(), "new", false);
+      directory = createTempDirectoryWithSuffix("new").toFile();
     }
-    myFilesToDelete.add(directory);
     if (myWizard != null) {
       Disposer.dispose(myWizard.getDisposable());
       myWizard = null;
@@ -170,7 +172,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
-  protected void collectAllowedRoots(final List<String> roots) {
+  private void collectAllowedRoots(final List<String> roots) {
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
@@ -220,7 +222,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         });
       },
       () -> {
-        Messages.setTestDialog(TestDialog.DEFAULT);
+        TestDialogManager.setTestDialog(TestDialog.DEFAULT);
       },
       super::tearDown
     ).run();

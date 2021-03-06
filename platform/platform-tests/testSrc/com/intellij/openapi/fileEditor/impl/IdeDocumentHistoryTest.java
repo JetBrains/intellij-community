@@ -41,6 +41,11 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       public void setState(@NotNull FileEditorState state) {
         myEditorState = state;
       }
+
+      @Override
+      public VirtualFile getFile() {
+        return mySelectedFile;
+      }
     };
 
     EditorManager editorManager = new EditorManager();
@@ -228,7 +233,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return myCanBeMerged;
     }
 

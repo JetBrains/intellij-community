@@ -20,6 +20,7 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -56,7 +57,7 @@ public class GenerateToStringWorker {
   /**
    * Creates the {@code toString} method.
    *
-   * @param selectedMembers the selected members as both {@link com.intellij.psi.PsiField} and {@link com.intellij.psi.PsiMethod}.
+   * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param policy          conflict resolution policy
    * @param params          additional parameters stored with key/value in the map.
    * @param template        the template to use
@@ -114,8 +115,8 @@ public class GenerateToStringWorker {
     }
     catch (IncorrectOperationException e) {
       logger.info(e);
-      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
-                                                      template.getFileName() + '\'');
+      HintManager.getInstance().showErrorHint(editor, JavaBundle
+        .message("hint.text.tostring.method.could.not.be.created.from.template", template.getFileName()));
       return null;
     }
   }

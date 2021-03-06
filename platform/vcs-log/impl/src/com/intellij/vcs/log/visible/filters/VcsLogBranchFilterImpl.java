@@ -46,6 +46,14 @@ class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   }
 
   @Override
+  public boolean isEmpty() {
+    return myBranches.isEmpty()
+           && myPatterns.isEmpty()
+           && myExcludedBranches.isEmpty()
+           && myExcludedPatterns.isEmpty();
+  }
+
+  @Override
   @NonNls
   public String toString() {
     String result = "";

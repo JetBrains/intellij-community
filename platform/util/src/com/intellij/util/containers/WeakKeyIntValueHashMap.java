@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
@@ -30,7 +18,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   private final TObjectIntHashMap<MyReference<K>> myMap = new TObjectIntHashMap<>();
   private final ReferenceQueue<K> myQueue = new ReferenceQueue<>();
 
-  private static class MyReference<T> extends WeakReference<T> {
+  private static final class MyReference<T> extends WeakReference<T> {
     private final int myHashCode;
 
     private MyReference(@NotNull T key, ReferenceQueue<? super T> q) {
@@ -42,10 +30,11 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
     @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof MyReference)) return false;
-      MyReference<T> other = (MyReference)obj;
+      //noinspection unchecked
+      MyReference<T> other = (MyReference<T>)obj;
       T myKey = get();
       T otherKey = other.get();
-      return obj == this || myKey != null && otherKey != null && myKey.equals(otherKey);
+      return obj == this || myKey != null && myKey.equals(otherKey);
     }
 
     @Override
@@ -55,8 +44,9 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   }
 
   private void processQueue() {
-    while(true){
-      MyReference<K> ref = (MyReference)myQueue.poll();
+    while (true) {
+      //noinspection unchecked
+      MyReference<K> ref = (MyReference<K>)myQueue.poll();
       if (ref == null) {
         return;
       }
@@ -114,6 +104,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   @NotNull
   @Override
   public Set<K> keySet() {
+    //noinspection unchecked
     return new THashSet<>(ContainerUtil.map(myMap.keys(), ref -> SoftReference.dereference((MyReference<K>)ref)));
   }
 
@@ -126,42 +117,38 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   @NotNull
   @Override
   public Iterable<Entry<K>> entries() {
-    return new Iterable<Entry<K>>() {
-      @NotNull
-      @Override
-      public Iterator<Entry<K>> iterator() {
-        final TObjectIntIterator<MyReference<K>> tIterator = myMap.iterator();
-        return ContainerUtil.filterIterator(new Iterator<Entry<K>>() {
-          @Override
-          public boolean hasNext() {
-            return tIterator.hasNext();
-          }
+    return () -> {
+      final TObjectIntIterator<MyReference<K>> tIterator = myMap.iterator();
+      return ContainerUtil.filterIterator(new Iterator<Entry<K>>() {
+        @Override
+        public boolean hasNext() {
+          return tIterator.hasNext();
+        }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException();
+        }
 
-          @Override
-          public Entry<K> next() {
-            tIterator.advance();
-            return new Entry<K>() {
-              @NotNull
-              @Override
-              public K getKey() {
-                K v = SoftReference.dereference(tIterator.key());
-                //noinspection unchecked
-                return ObjectUtils.notNull(v, (K)GCED);
-              }
+        @Override
+        public Entry<K> next() {
+          tIterator.advance();
+          return new Entry<K>() {
+            @NotNull
+            @Override
+            public K getKey() {
+              K v = SoftReference.dereference(tIterator.key());
+              //noinspection unchecked
+              return ObjectUtils.notNull(v, (K)GCED);
+            }
 
-              @Override
-              public int getValue() {
-                return tIterator.value();
-              }
-            };
-          }
-        }, o -> o.getKey() != GCED);
-      }
+            @Override
+            public int getValue() {
+              return tIterator.value();
+            }
+          };
+        }
+      }, o -> o.getKey() != GCED);
     };
   }
 }

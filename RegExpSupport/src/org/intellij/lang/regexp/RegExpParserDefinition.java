@@ -49,8 +49,8 @@ public class RegExpParserDefinition implements ParserDefinition {
     }
 
     @Override
-    public PsiParser createParser(Project project) {
-        return createParser(project, getDefaultCapabilities());
+    public @NotNull PsiParser createParser(Project project) {
+      return createParser(project, getDefaultCapabilities());
     }
 
     @NotNull
@@ -63,10 +63,10 @@ public class RegExpParserDefinition implements ParserDefinition {
         return new RegExpLexer(capabilities);
     }
 
-    @Override
-    public IFileElementType getFileNodeType() {
-        return REGEXP_FILE;
-    }
+  @Override
+  public @NotNull IFileElementType getFileNodeType() {
+    return REGEXP_FILE;
+  }
 
     @Override
     @NotNull
@@ -135,13 +135,13 @@ public class RegExpParserDefinition implements ParserDefinition {
         return new ASTWrapperPsiElement(node);
     }
 
-    @Override
-    public PsiFile createFile(FileViewProvider viewProvider) {
-        return new RegExpFile(viewProvider, RegExpLanguage.INSTANCE);
-    }
+  @Override
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
+    return new RegExpFile(viewProvider, RegExpLanguage.INSTANCE);
+  }
 
-    @Override
-    public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-        return SpaceRequirements.MUST_NOT;
-    }
+  @Override
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return SpaceRequirements.MUST_NOT;
+  }
 }

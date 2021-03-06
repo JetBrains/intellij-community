@@ -19,12 +19,19 @@ import com.intellij.JavaTestUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.impl.rules.JavaUsageTypeProvider;
 import com.intellij.usages.impl.rules.UsageType;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaUsageTypeProviderTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15;
+  }
+
   public void testNestedClassAccess() {
     myFixture.configureByFiles("NestedClassAccess.java", "Foo.java");
     assertUsageType(UsageType.CLASS_NESTED_CLASS_ACCESS, myFixture.findClass("Foo"));
@@ -53,6 +60,11 @@ public class JavaUsageTypeProviderTest extends LightJavaCodeInsightFixtureTestCa
   public void testMethodReferenceConstructor() {
     myFixture.configureByFiles("MethodReferenceConstructor.java");
     assertUsageType(UsageType.CLASS_NEW_OPERATOR, myFixture.findClass("Foo"));
+  }
+
+  public void testPermitsClause() {
+    myFixture.configureByFiles("PermitsClause.java");
+    assertUsageType(UsageType.CLASS_PERMITS_LIST, myFixture.findClass("Foo"));
   }
 
   private void assertUsageType(UsageType expected, PsiClass target) {

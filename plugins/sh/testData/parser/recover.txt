@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -8,7 +9,7 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('for')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
@@ -34,7 +35,7 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('for')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
@@ -195,7 +196,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('i')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('1')
@@ -261,7 +262,7 @@ SHELL_SCRIPT
       PsiErrorElement:<list terminator> or in expected, got 'a'
         PsiElement(word)('a')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('1,2,4,5')
       PsiElement(;)(';')
@@ -291,7 +292,7 @@ SHELL_SCRIPT
       PsiErrorElement:<list terminator> or in expected, got 'a'
         PsiElement(word)('a')
       PsiWhiteSpace(' ')
-      PsiElement(word)('in')
+      PsiElement(in)('in')
       PsiWhiteSpace(' ')
       PsiElement(word)('1,2,4,5')
       PsiWhiteSpace(' ')
@@ -376,10 +377,9 @@ SHELL_SCRIPT
             PsiElement(CLOSE_QUOTE)('"')
             PsiElement(\n)('\n')
             PsiWhiteSpace('  ')
-            PsiElement(word)(';')
-            PsiElement(word)(';')
+            PsiElement(word)(';;')
             PsiElement(\n)('\n')
-          PsiElement(word)('pattern')
+            PsiElement(word)('pattern')
         PsiElement())(')')
         PsiElement(\n)('\n')
         PsiWhiteSpace('  ')

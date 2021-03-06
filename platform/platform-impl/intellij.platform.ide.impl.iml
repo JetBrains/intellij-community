@@ -24,6 +24,7 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
@@ -38,12 +39,11 @@
     <orderEntry type="library" exported="" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
-    <orderEntry type="library" name="imageio-tiff" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="imageio-tiff" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="fluent-hc" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
@@ -84,6 +84,18 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-jsr223" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="classgraph" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.elevation" scope="RUNTIME" />
+    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
+    <orderEntry type="library" name="zip-signer" level="project" />
   </component>
 </module>

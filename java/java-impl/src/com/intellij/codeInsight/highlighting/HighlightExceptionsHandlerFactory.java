@@ -18,13 +18,12 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -63,7 +62,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
     PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
-    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, Conditions.alwaysTrue());
+    return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, __->true);
   }
 
   @Nullable
@@ -94,7 +93,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     if (parameter == null || tryBlock == null) return null;
 
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
-    Condition<PsiType> filter = type -> {
+    Predicate<PsiType> filter = type -> {
       for (PsiParameter p : parameters) {
         boolean isAssignable = p.getType().isAssignableFrom(type);
         if (p == parameter) return isAssignable;
@@ -107,7 +106,7 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
     if (resourceList != null) {
       unhandled = Stream.concat(unhandled, ExceptionUtil.collectUnhandledExceptions(resourceList, resourceList).stream());
     }
-    PsiClassType[] types = unhandled.filter(filter::value).toArray(PsiClassType[]::new);
+    PsiClassType[] types = unhandled.filter(filter).toArray(PsiClassType[]::new);
     return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, resourceList, filter);
   }
 
@@ -122,6 +121,6 @@ public class HighlightExceptionsHandlerFactory extends HighlightUsagesHandlerFac
 
     Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(body, body);
     PsiClassType[] types = unhandled.toArray(PsiClassType.EMPTY_ARRAY);
-    return new HighlightExceptionsHandler(editor, file, target, types, body, null, Conditions.alwaysTrue());
+    return new HighlightExceptionsHandler(editor, file, target, types, body, null, __->true);
   }
 }

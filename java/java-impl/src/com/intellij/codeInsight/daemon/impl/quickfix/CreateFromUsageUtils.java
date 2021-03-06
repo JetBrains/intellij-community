@@ -67,7 +67,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CreateFromUsageUtils {
+public final class CreateFromUsageUtils {
   private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
@@ -205,7 +205,7 @@ public class CreateFromUsageUtils {
         newEditor.getCaretModel().moveToOffset(end + 1);
         CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
         PsiFile containingFile = body.getContainingFile();
-        final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
+        final String lineIndent = styleManager.getLineIndent(containingFile, end);
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
         manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
         EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
@@ -328,7 +328,7 @@ public class CreateFromUsageUtils {
       if (qualifierElement instanceof PsiClass) {
         if (!FileModificationService.getInstance().preparePsiElementForWrite(qualifierElement)) return null;
 
-        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement));
+        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement, superClassName));
       }
     }
     else {
@@ -393,7 +393,8 @@ public class CreateFromUsageUtils {
   private static PsiClass createClassInQualifier(PsiClass psiClass,
                                                  CreateClassKind classKind,
                                                  String name,
-                                                 PsiJavaCodeReferenceElement referenceElement) {
+                                                 PsiJavaCodeReferenceElement referenceElement, 
+                                                 @Nullable String superClassName) {
     PsiManager manager = psiClass.getManager();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
@@ -403,6 +404,9 @@ public class CreateFromUsageUtils {
                       elementFactory.createEnum(name);
     CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
     result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
+    if (!StringUtil.isEmpty(superClassName)) {
+      setupSuperClassReference(result, superClassName);
+    }
     return (PsiClass) psiClass.add(result);
   }
 
@@ -436,7 +440,7 @@ public class CreateFromUsageUtils {
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
-          if (superClassName != null &&
+          if (StringUtil.isNotEmpty(superClassName)  &&
               (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
               (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
             setupSuperClassReference(targetClass, superClassName);
@@ -575,10 +579,19 @@ public class CreateFromUsageUtils {
       if (!(parent instanceof PsiReferenceExpression)) {
         boolean isAssignmentToFunctionalExpression = PsiUtil.isOnAssignmentLeftHand(expr) &&
                                                      ((PsiAssignmentExpression)PsiUtil.skipParenthesizedExprUp(parent)).getRExpression() instanceof PsiFunctionalExpression;
+        PsiElement gParent = parent.getParent();
         PsiExpressionList expressionList = ObjectUtils
-          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? parent.getParent() : parent),
-                   PsiExpressionList.class);
-        boolean forCompletion = expressionList != null || parent.getParent() instanceof PsiPolyadicExpression;
+          .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? gParent : parent), PsiExpressionList.class);
+        boolean forCompletion;
+        if (expressionList != null) {
+          forCompletion = true;
+        }
+        else if (parent instanceof PsiPolyadicExpression) {
+          forCompletion = !(gParent instanceof PsiPolyadicExpression);
+        }
+        else {
+          forCompletion = gParent instanceof PsiPolyadicExpression && !(gParent.getParent() instanceof PsiPolyadicExpression);
+        }
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, forCompletion);
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
@@ -743,7 +756,7 @@ public class CreateFromUsageUtils {
       //Double check to avoid expensive operations on PsiClassTypes
       final Set<PsiType> typesSet = new HashSet<>();
 
-      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
+      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
         @Override
         @Nullable
         public PsiType visitType(@NotNull PsiType type) {
@@ -753,7 +766,7 @@ public class CreateFromUsageUtils {
 
           if (!typesSet.contains(type)) {
             if (type instanceof PsiClassType && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
-              PsiClass aClass = ((PsiClassType) type).resolve();
+              PsiClass aClass = ((PsiClassType)type).resolve();
               if (aClass != null) {
                 for (String fieldName : expectedFieldNames) {
                   if (aClass.findFieldByName(fieldName, true) == null) return null;

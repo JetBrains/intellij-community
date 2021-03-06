@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.editor;
 
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -11,7 +13,6 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.tree.IElementType;
@@ -52,7 +53,7 @@ public class XmlHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testRecoveryAfterAttributeModification() {
-    configure("<root><tag attr=\"","value\"/></root>", StdFileTypes.XML);
+    configure("<root><tag attr=\"", "value\"/></root>", XmlFileType.INSTANCE);
 
     runTest(() -> {
       doc.insertString(offset, "q");
@@ -64,13 +65,13 @@ public class XmlHighlighterTest extends LightJavaCodeInsightTestCase {
     configure("<html:form action=\"/arquivo/associar\">\n" +
               "  <html:hidden property=\"idAcao\"/>\n" +
               "  ","<html:hidden property=\"possuiMensagem\"/>\n" +
-                     "</html:form>", StdFileTypes.XHTML);
+                     "</html:form>", XHtmlFileType.INSTANCE);
 
     runTest(() -> doc.insertString(offset, "\n"));
   }
 
   public void testUnclosedCommentAtEnd() {
-    configure("<a></a>\n<!--","", StdFileTypes.XHTML);
+    configure("<a></a>\n<!--", "", XHtmlFileType.INSTANCE);
 
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> doc.insertString(offset, " -")), "", null);
     List<IElementType> newTokens = EditorTestUtil.getAllTokens(highlighter);

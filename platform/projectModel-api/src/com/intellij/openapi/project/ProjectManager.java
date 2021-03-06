@@ -1,16 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.messages.Topic;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -20,7 +17,7 @@ import java.nio.file.Path;
 @ApiStatus.NonExtendable
 public abstract class ProjectManager {
   @Topic.AppLevel
-  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class);
+  public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
    * @return {@code ProjectManager} instance
@@ -40,12 +37,6 @@ public abstract class ProjectManager {
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
 
   public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
-
-  /**
-   * @deprecated Use {@link #TOPIC} instead
-   */
-  @Deprecated
-  public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * @deprecated Use {@link #TOPIC} instead
@@ -101,21 +92,16 @@ public abstract class ProjectManager {
    */
   public abstract @Nullable Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException;
 
-  @ApiStatus.Experimental
-  @TestOnly
-  public @Nullable Project loadAndOpenProject(@NotNull File file) throws IOException, JDOMException {
-    return loadAndOpenProject(file.toPath());
-  }
-
-  @ApiStatus.Experimental
-  public abstract @Nullable Project loadAndOpenProject(@NotNull Path file) throws IOException, JDOMException;
+  /**
+   * Save, close and dispose project. Please note that only the project will be saved, but not the application.
+   * @return true on success
+   */
+  public abstract boolean closeAndDispose(@NotNull Project project);
 
   /**
-   * Closes the specified project, but does not dispose it.
-   *
-   * @param project the project to close.
-   * @return true if the project was closed successfully, false if the closing was disallowed by the close listeners.
+   * @deprecated Use {@link #closeAndDispose}
    */
+  @Deprecated
   public abstract boolean closeProject(@NotNull Project project);
 
   /**
@@ -127,12 +113,9 @@ public abstract class ProjectManager {
   public abstract void reloadProject(@NotNull Project project);
 
   /**
-   * Create new project in given location.
-   *
-   * @param name project name
-   * @param path project location
-   *
-   * @return newly crated project
+   * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract @Nullable Project createProject(@Nullable String name, @NotNull String path);
 }

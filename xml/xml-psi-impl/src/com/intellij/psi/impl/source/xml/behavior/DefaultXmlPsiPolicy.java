@@ -17,9 +17,9 @@ package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
@@ -29,9 +29,7 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
@@ -55,8 +53,10 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     LOG.assertTrue(child != null, "Child is null for tag: " + rootTag.getText());
 
     final TreeElement element = (TreeElement)child.getNode();
-    ((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext()).rawRemoveUpToLast();
-    dummyParent.rawAddChildren(element);
+    DebugUtil.performPsiModification(getClass().getName(), () -> {
+      ((TreeElement)tagChildren[tagChildren.length - 1].getNode().getTreeNext()).rawRemoveUpToLast();
+      dummyParent.rawAddChildren(element);
+    });
     TreeUtil.clearCaches(dummyParent);
     return element.getFirstChildNode();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation;
 
@@ -23,6 +23,8 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -33,6 +35,8 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +91,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
                     @NotNull Editor editor,
                     @NotNull PsiFile file,
                     @NotNull GotoData gotoData) {
+    if (gotoData.isCanceled) return;
+
     PsiElement[] targets = gotoData.targets;
     List<AdditionalAction> additionalActions = gotoData.additionalActions;
 
@@ -130,12 +136,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     builder.setRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == null) return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value == null) return super.getListCellRendererComponent(list, null, index, isSelected, cellHasFocus);
         if (value instanceof AdditionalAction) {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
         PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
-        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return SlowOperations.allowSlowOperations(
+          () -> renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        );
       }
     }).
       setItemsChosenCallback(selectedElements -> {
@@ -205,7 +213,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   @NotNull
   protected Comparator<PsiElement> createComparator(@NotNull GotoData gotoData) {
-    return new Comparator<PsiElement>() {
+    return new Comparator<>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
         return getComparingObject(o1).compareTo(getComparingObject(o2));
@@ -247,33 +255,33 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
    * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
-  protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
+  protected @NlsContexts.PopupTitle String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
     return "";
   }
 
   @NotNull
-  protected String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
+  protected @NlsContexts.PopupTitle String getChooserTitle(@NotNull PsiElement sourceElement, @Nullable String name, int length, boolean finished) {
     return getChooserTitle(sourceElement, name, length);
   }
 
   @NotNull
-  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected @NlsContexts.TabTitle String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return getChooserTitle(sourceElement, name, length, true);
   }
 
   @NotNull
-  protected abstract String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  protected abstract @NlsContexts.HintText String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
   @Nullable
-  protected String getAdText(PsiElement source, int length) {
+  protected @NlsContexts.PopupAdvertisement String getAdText(PsiElement source, int length) {
     return null;
   }
 
   public interface AdditionalAction {
-    @NotNull
-    String getText();
+    @NlsActions.ActionText @NotNull String getText();
 
     Icon getIcon();
 
@@ -284,6 +292,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     @NotNull public final PsiElement source;
     public PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
+    public boolean isCanceled;
 
     private boolean hasDifferentNames;
     public BackgroundUpdaterTask listUpdaterTask;

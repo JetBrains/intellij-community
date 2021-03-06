@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -81,6 +82,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
            && !(containingClass instanceof PsiSyntheticClass)
+           && !containingClass.isRecord()
            && containingClass.getName() != null;
   }
 
@@ -94,7 +96,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
       constructors = myClass.getConstructors();
     }
-    Arrays.sort(constructors, new Comparator<PsiMethod>() {
+    Arrays.sort(constructors, new Comparator<>() {
       @Override
       public int compare(PsiMethod c1, PsiMethod c2) {
         final PsiMethod cc1 = RefactoringUtil.getChainedConstructor(c1);
@@ -103,7 +105,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         if (cc2 == c1) return -1;
         if (cc1 == null) {
           return cc2 == null ? 0 : compare(c1, cc2);
-        } else {
+        }
+        else {
           return cc2 == null ? compare(cc1, c2) : compare(cc1, cc2);
         }
       }
@@ -179,7 +182,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     Map<SmartPsiElementPointer<PsiField>, Boolean> fields = myClass.getUserData(FIELDS);
     if (fields == null) myClass.putUserData(FIELDS, fields = ContainerUtil.createConcurrentWeakMap());
     final Map<SmartPsiElementPointer<PsiField>, Boolean> finalFields = fields;
-    return new AbstractCollection<SmartPsiElementPointer<PsiField>>() {
+    return new AbstractCollection<>() {
       @Override
       public boolean add(SmartPsiElementPointer<PsiField> psiVariable) {
         PsiField field = psiVariable.getElement();
@@ -243,7 +246,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (param instanceof PsiParameter) {
         newParamInfos[i++] = ParameterInfoImpl.create(parameterList.getParameterIndex((PsiParameter)param))
           .withName(param.getName())
-          .withType(paramType)
+          .withType(AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType))
           .withDefaultValue(param.getName());
       } else {
         try {
@@ -252,7 +255,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
           usedFields.put((PsiField)param, uniqueParameterName);
           newParamInfos[i++] = ParameterInfoImpl.createNew()
             .withName(uniqueParameterName)
-            .withType(paramType)
+            .withType(AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(param.getModifierList(), paramType))
             .withDefaultValue(uniqueParameterName);
         }
         finally {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -23,15 +21,15 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 
-public class JavaSuppressionUtil {
+public final class JavaSuppressionUtil {
   private static final String GENERATED_ANNOTATION_NAME = "javax.annotation.Generated";
   private static final String JDK9_GENERATED_ANNOTATION_NAME = "javax.annotation.processing.Generated";
 
@@ -53,7 +51,7 @@ public class JavaSuppressionUtil {
     else if (element instanceof PsiReferenceExpression) {
       final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
       if (psiElement instanceof PsiVariableEx) {
-        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new THashSet<>());
+        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new HashSet<>());
         if (val instanceof String) {
           return (String)val;
         }
@@ -78,7 +76,7 @@ public class JavaSuppressionUtil {
     }
     return CachedValuesManager.getCachedValue(annotation, () ->
       CachedValueProvider.Result.create(getInspectionIdsSuppressedInAnnotation(annotation),
-                                        PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+                                        PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull

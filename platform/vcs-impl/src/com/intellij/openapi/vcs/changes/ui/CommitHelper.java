@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.util.NullableFunction;
 import com.intellij.vcs.commit.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * @deprecated use Committer directly
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class CommitHelper {
   @NotNull private final String myActionName;
   private final boolean myForceSyncCommit;

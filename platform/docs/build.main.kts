@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Repository("https://repo1.maven.org/maven2/")
-@file:DependsOn("net.sourceforge.plantuml:plantuml:1.2020.0")
+@file:DependsOn("net.sourceforge.plantuml:plantuml:1.2020.17")
 
-import net.sourceforge.plantuml.*
-import net.sourceforge.plantuml.error.*
+import net.sourceforge.plantuml.FileFormat
+import net.sourceforge.plantuml.FileFormatOption
+import net.sourceforge.plantuml.SourceFileReader
+import net.sourceforge.plantuml.error.PSystemError
 import org.w3c.dom.*
 import java.nio.file.Files
 import java.nio.file.Path

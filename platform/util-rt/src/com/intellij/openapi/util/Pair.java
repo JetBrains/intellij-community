@@ -5,6 +5,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 /**
  * Generic wrapper around two related values.
  */
@@ -89,9 +91,37 @@ public class Pair<A, B> {
     return "<" + first + "," + second + ">";
   }
 
-  public static class NonNull<A, B> extends Pair<A, B> {
+  public static class NonNull<A, B> extends Pair</*@NotNull*/ A, /*@NotNull*/ B> {
     public NonNull(@NotNull A first, @NotNull B second) {
       super(first, second);
     }
+  }
+
+  /**
+   * @param <A> first value type (Comparable)
+   * @param <B> second value type
+   * @return comparator that compares pair values by first value
+   */
+  public static <A extends Comparable<? super A>, B> Comparator<Pair<A, B>> comparingByFirst() {
+    return new Comparator<Pair<A, B>>() {
+      @Override
+      public int compare(Pair<A, B> o1, Pair<A, B> o2) {
+        return o1.first.compareTo(o2.first);
+      }
+    };
+  }
+
+  /**
+   * @param <A> first value type
+   * @param <B> second value type (Comparable)
+   * @return comparator that compares pair values by second value
+   */
+  public static <A, B extends Comparable<? super B>> Comparator<Pair<A, B>> comparingBySecond() {
+    return new Comparator<Pair<A, B>>() {
+      @Override
+      public int compare(Pair<A, B> o1, Pair<A, B> o2) {
+        return o1.second.compareTo(o2.second);
+      }
+    };
   }
 }

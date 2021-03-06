@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
@@ -20,8 +21,9 @@ import java.io.File;
 /**
  * @author peter
  */
-public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
   protected JavaCodeInsightTestFixture myFixture;
+  private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
 
   @NotNull
   @Override
@@ -35,7 +37,8 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, getIndexingMode());
+    JavaModuleFixtureBuilder<?> moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     if (toAddSourceRoot()) {
       moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     }
@@ -88,8 +91,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 
-  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) throws Exception {}
-
+  protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {}
 
   protected Project getProject() {
     return myFixture.getProject();
@@ -105,5 +107,15 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
 
   protected Module getModule() {
     return myFixture.getModule();
+  }
+
+  @Override
+  public void setIndexingMode(@NotNull IndexingMode mode) {
+    myIndexingMode = mode;
+  }
+
+  @Override
+  public @NotNull IndexingMode getIndexingMode() {
+    return myIndexingMode;
   }
 }

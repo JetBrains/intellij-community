@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -17,12 +16,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class SuppressIntentionAction implements Iconable, IntentionAction {
-  private String myText = "";
+  private @IntentionName String myText = "";
   public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
 
   @Override
   public Icon getIcon(int flags) {
-    return AllIcons.Ide.HectorOff;
+    return null;
   }
 
   @Override

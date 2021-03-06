@@ -32,7 +32,7 @@ import org.jetbrains.java.generate.config.ReplacePolicy;
  *    <li/>Cancel
  * </ul>
  */
-public class MethodExistsDialog {
+public final class MethodExistsDialog {
     private MethodExistsDialog() {
     }
 

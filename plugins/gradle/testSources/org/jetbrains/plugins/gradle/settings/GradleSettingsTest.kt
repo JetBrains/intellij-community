@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -10,8 +9,6 @@ import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleSystemSettingsControlBuilder
 import org.jetbrains.plugins.gradle.settings.TestRunner.GRADLE
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 class GradleSettingsTest : UsefulTestCase() {
@@ -20,7 +17,6 @@ class GradleSettingsTest : UsefulTestCase() {
   private lateinit var myProject: Project
   private lateinit var gradleProjectSettings: GradleProjectSettings
 
-  @Before
   override fun setUp() {
     super.setUp()
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name).fixture
@@ -31,12 +27,11 @@ class GradleSettingsTest : UsefulTestCase() {
     GradleSettings.getInstance(myProject).linkProject(gradleProjectSettings)
   }
 
-  @After
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { myTestFixture.tearDown() })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { myTestFixture.tearDown() },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   @Test

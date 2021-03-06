@@ -2,15 +2,15 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.NlsContexts.Checkbox;
-import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,14 @@ public class PythonUiService {
   public void showBalloonWarning(Project project, @PopupContent String message) {}
 
   public void showBalloonError(Project project, @PopupContent String message) {}
+
+  public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return null;
+  }
+
+  public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
+    return null;
+  }
 
   public Editor openTextEditor(@NotNull Project project, VirtualFile virtualFile) {
     return null;
@@ -71,7 +80,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createSingleCheckboxOptionsPanel(@Label String label, InspectionProfileEntry inspection, String property) {
+  public JComponent createSingleCheckboxOptionsPanel(@Checkbox String label, InspectionProfileEntry inspection, String property) {
     return null;
   }
 
@@ -79,9 +88,9 @@ public class PythonUiService {
   }
 
   @NotNull
-  public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                String defaultEncoding,
-                                                String[] possibleFormats,
+  public JComponent createEncodingsOptionsPanel(String @ListItem [] possibleEncodings,
+                                                @ListItem String defaultEncoding,
+                                                String @ListItem[] possibleFormats,
                                                 int formatIndex,
                                                 Consumer<String> encodingChanged,
                                                 Consumer<Integer> formatIndexChanged) {
@@ -100,7 +109,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createListEditForm(String title, List<String> stringList) {
+  public JComponent createListEditForm(@ColumnName String title, List<String> stringList) {
     return null;
   }
 
@@ -108,11 +117,11 @@ public class PythonUiService {
     return null;
   }
 
-  public void showErrorHint(Editor editor, String message) {
+  public void showErrorHint(Editor editor, @NotNull @HintText String message) {
   }
 
   public static PythonUiService getInstance() {
-    return ServiceManager.getService(PythonUiService.class);
+    return ApplicationManager.getApplication().getService(PythonUiService.class);
   }
 
   @Nullable
@@ -122,8 +131,8 @@ public class PythonUiService {
 
   @Nullable
   public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
-                                            String[] items,
-                                            final String selectedItem,
+                                            String @ListItem [] items,
+                                            @ListItem String selectedItem,
                                             Consumer<Object> selectedItemChanged) {
     return null;
   }
@@ -159,12 +168,22 @@ public class PythonUiService {
 
   public int showChooseDialog(@Nullable Project project,
                               @Nullable Component parentComponent,
-                              String message,
-                              String title,
-                              String[] values,
-                              String initialValue,
+                              @DialogMessage String message,
+                              @DialogTitle String title,
+                              String @ListItem [] values,
+                              @ListItem String initialValue,
                               @Nullable Icon icon) {
     return -1;
 
+  }
+
+  public JPanel createMultipleCheckboxOptionsPanel(final InspectionProfileEntry owner) {
+    return null;
+  }
+
+  public void addRowToOptionsPanel(JPanel optionsPanel, JComponent label, JComponent component) {
+  }
+
+  public void addCheckboxToOptionsPanel(JPanel optionsPanel, @NlsContexts.Checkbox String label, @NonNls String property) {
   }
 }

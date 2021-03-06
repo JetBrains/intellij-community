@@ -1,30 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
-
-@JvmOverloads
-inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
-  val app = ApplicationManagerEx.getApplicationEx()
-  if (isSaveAllowed == app.isSaveAllowed) {
-    task()
-    return
-  }
-
-  app.isSaveAllowed = isSaveAllowed
-  try {
-    task()
-  }
-  finally {
-    app.isSaveAllowed = !isSaveAllowed
-  }
-}
 
 /**
  * Execute coroutine on pooled thread. Uncaught error will be logged.

@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -213,6 +213,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testFieldGroupAnchor() throws Exception {
+    doTest();
+  }
+
+  public void testFieldGroupAnchor2() throws Exception {
+    doTest();
+  }
+
   public void testSCR27887() throws Exception {
     doTest();
   }
@@ -227,6 +235,38 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   public void testExtractFromTryFinally() throws Exception {
     doTest();
+  }
+
+  public void testInferredReturnType1() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType2() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType3() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType4() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType5() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType6() throws Exception {
+    doTest();
+  }
+
+  public void testNotPassedStaticField() throws Exception {
+    doTestPassFieldsAsParams();
+  }
+
+  public void testNotPassedStaticField2() throws Exception {
+    doTestPassFieldsAsParams();
   }
 
   public void testExtractAssignmentExpression() throws Exception {
@@ -491,6 +531,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
+  public void testLocalClassScope() throws Exception {
+    doTest();
+  }
+
   public void testStaticImport() throws Exception {
     doTest();
   }
@@ -520,7 +564,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testForceBraces() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int old = settings.IF_BRACE_FORCE;
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     try {
@@ -1094,7 +1138,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariable() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testPatternVariableIntroduced() throws Exception {
@@ -1106,7 +1150,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testPatternVariableIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.JDK_14_PREVIEW);
+    doTestWithLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
   }
 
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
@@ -1121,7 +1165,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testSimpleMethodsInOneLine() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     doTest();
@@ -1154,6 +1198,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   public void testExpression() throws Exception {
     doTestWithJava17();
+  }
+
+  public void testNonPhysicalSubexpression() throws Exception {
+    doTest();
   }
 
   public void testCopyParamAnnotations() throws Exception {
@@ -1211,7 +1259,16 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testCantPassFieldAsParameter() {
     try {
       doTestPassFieldsAsParams();
-      fail("Field was modified inside. Make static should be disabled");
+      fail("Field was modified inside. Make static should be disabled.");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
+  public void testCantMakeStatic() {
+    try {
+      doTestPassFieldsAsParams();
+      fail("Local method is used. Make static should be disabled.");
     }
     catch (PrepareFailedException ignore) {
     }
@@ -1369,8 +1426,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testNestedReference() throws Exception {
+    doTest();
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1379,6 +1440,29 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     boolean success =
       performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, null, psiClass.getContainingClass(), null);
     assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testNoStaticForInnerClass() {
+    try {
+      configureByFile(BASE_PATH + getTestName(false) + ".java");
+      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+      fail("Static modifier is forbidden inside inner classes");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testStaticForNestedClass() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testStaticForOuterClass() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    final int caret = getEditor().getSelectionModel().getLeadSelectionOffset();
+    final PsiClass outerClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(caret), PsiClass.class).getContainingClass();
+    performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, outerClass, null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
@@ -1614,7 +1698,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1624,7 +1708,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestReturnTypeChanged(PsiType type) throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1634,7 +1718,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestPassFieldsAsParams() throws PrepareFailedException {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1673,7 +1757,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTest() throws Exception {
-    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     doTest(true);
@@ -1791,10 +1875,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
 
     if (doRefactor) {
-      processor.testTargetClass(targetClass);
+      processor.setTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
       if (methodVisibility != null) processor.setMethodVisibility(methodVisibility);
-      processor.testNullability();
+      processor.prepareNullability();
       for (int param : disabledParams) {
         processor.doNotPassParameter(param);
       }

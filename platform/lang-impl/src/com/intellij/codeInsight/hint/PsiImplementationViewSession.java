@@ -316,6 +316,12 @@ public class PsiImplementationViewSession implements ImplementationViewSession {
     if (element instanceof PsiCompiledElement) {
       element = element.getNavigationElement();
     }
+
+    // check virtual code if any
+    if(element instanceof SyntheticElement) {
+      element = element.getNavigationElement();
+    }
+
     return Pair.pair(element, ref);
   }
 

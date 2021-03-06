@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -34,16 +20,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FunctionalExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
+public final class FunctionalExpressionCompletionProvider {
   static final Key<Boolean> LAMBDA_ITEM = Key.create("LAMBDA_ITEM");
-  static final Key<Boolean> METHOD_REF_ITEM = Key.create("METHOD_REF_ITEM");
+  static final Key<Boolean> METHOD_REF_PREFERRED = Key.create("METHOD_REF_ITEM");
 
   private static boolean isLambdaContext(@NotNull PsiElement element) {
     final PsiElement rulezzRef = element.getParent();
@@ -53,14 +38,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
   }
 
   static boolean isFunExprItem(LookupElement item) {
-    return item.getUserData(LAMBDA_ITEM) != null || item.getUserData(METHOD_REF_ITEM) != null;
-  }
-
-  @Override
-  protected void addCompletions(@NotNull CompletionParameters parameters,
-                                @NotNull ProcessingContext context,
-                                @NotNull CompletionResultSet result) {
-    addFunctionalVariants(parameters, true, result.getPrefixMatcher(), result);
+    return item.getUserData(LAMBDA_ITEM) != null || item.getUserData(METHOD_REF_PREFERRED) != null;
   }
 
   static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean addInheritors, PrefixMatcher matcher, Consumer<? super LookupElement> result) {
@@ -109,7 +87,8 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
               new MethodReferenceCompletion(addInheritors, parameters, matcher, functionalInterfaceType, params, originalPosition,
                                             substitutor, expectedReturnType);
             completion.suggestMethodReferences(element -> {
-                element.putUserData(METHOD_REF_ITEM, true);
+              Object object = element.getObject();
+              element.putUserData(METHOD_REF_PREFERRED, object instanceof PsiMethod && completion.hasExactReturnType((PsiMethod)object));
                 result.consume(parameters.getCompletionType() == CompletionType.SMART
                                ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes))
                                : element);
@@ -325,6 +304,10 @@ class MethodReferenceCompletion {
   private boolean hasAppropriateReturnType(PsiMethod psiMethod) {
     PsiType returnType = psiMethod.getReturnType();
     return returnType != null && TypeConversionUtil.isAssignable(myExpectedReturnType, mySubstitutor.substitute(returnType));
+  }
+
+  boolean hasExactReturnType(PsiMethod psiMethod) {
+    return myExpectedReturnType.equals(mySubstitutor.substitute(psiMethod.getReturnType()));
   }
 
   private boolean isSignatureAppropriate(PsiMethod psiMethod, int offset, PsiClass accessObjectClass) {

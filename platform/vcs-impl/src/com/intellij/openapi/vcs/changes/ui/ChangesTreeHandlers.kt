@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ui.DoubleClickListener
 import com.intellij.util.Processor
-import com.intellij.util.ui.tree.WideSelectionTreeUI.isWideSelection
+import com.intellij.util.ui.tree.TreeUtil
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
@@ -17,14 +17,14 @@ private class ChangesTreeHandlers(private val tree: ChangesTree) {
   private var enterKeyListener: KeyListener? = null
   private var doubleClickListener: DoubleClickListener? = null
 
-  var enterKeyHandler by observable<Processor<KeyEvent>?>(null) { _, oldValue, newValue ->
+  var enterKeyHandler by observable<Processor<in KeyEvent>?>(null) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
 
     if (oldValue == null) enterKeyListener = createEnterListener().also { tree.addKeyListener(it) }
     if (newValue == null) enterKeyListener?.let { tree.removeKeyListener(it) }?.also { enterKeyListener = null }
   }
 
-  var doubleClickHandler by observable<Processor<MouseEvent>?>(null) { _, oldValue, newValue ->
+  var doubleClickHandler by observable<Processor<in MouseEvent>?>(null) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
 
     if (oldValue == null) doubleClickListener = createDoubleClickListener().also { it.installOn(tree) }
@@ -44,7 +44,7 @@ private class ChangesTreeHandlers(private val tree: ChangesTree) {
   private fun createDoubleClickListener(): DoubleClickListener =
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        val clickPath = if (isWideSelection(tree)) tree.getClosestPathForLocation(e.x, e.y) else tree.getPathForLocation(e.x, e.y)
+        val clickPath = TreeUtil.getPathForLocation(tree, e.x, e.y)
         if (clickPath == null) return false
 
         if (tree.getPathIfCheckBoxClicked(e.point) != null) return false

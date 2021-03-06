@@ -1,4 +1,4 @@
-// "Remove the 'containsKey' check" "true"
+// "Remove 'containsKey()' check" "true"
 import java.util.Map;
 
 class Test {

@@ -16,6 +16,7 @@ public class JsonNullLiteralImpl extends JsonLiteralImpl implements JsonNullLite
     super(node);
   }
 
+  @Override
   public void accept(@NotNull JsonElementVisitor visitor) {
     visitor.visitNullLiteral(this);
   }

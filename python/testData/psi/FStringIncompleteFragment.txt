@@ -12,6 +12,6 @@ PyFile:FStringIncompleteFragment.py
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
           PyNumericLiteralExpression
             PsiElement(Py:INTEGER_LITERAL)('42')
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)(''')

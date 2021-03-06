@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -73,7 +74,9 @@ public class MergeFilterChainAction extends PsiElementBaseIntentionAction {
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] expressions = argumentList.getExpressions();
     if (expressions.length != 1) return false;
-    if (!StreamRefactoringUtil.isRefactoringCandidate(expressions[0], true)) return false;
+    if (!StreamRefactoringUtil.isRefactoringCandidate(PsiUtil.skipParenthesizedExprDown(expressions[0]), true)) {
+      return false;
+    }
 
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null) return false;

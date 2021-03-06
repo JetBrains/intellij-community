@@ -15,13 +15,15 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface DomReferenceInjector {
-  @Nullable String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context);
+  @Nullable @NlsSafe String resolveString(@Nullable @NonNls String unresolvedText, @NotNull ConvertContext context);
 
-  PsiReference @NotNull [] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context);
+  PsiReference @NotNull [] inject(@Nullable @NonNls String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -32,6 +32,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +50,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
@@ -70,11 +70,11 @@ public class JavaDebugProcess extends XDebugProcess {
   private final JvmSmartStepIntoActionHandler mySmartStepIntoActionHandler;
 
   private static final JavaBreakpointHandlerFactory[] ourDefaultBreakpointHandlerFactories = {
-    JavaBreakpointHandler.JavaLineBreakpointHandler::new,
-    JavaBreakpointHandler.JavaExceptionBreakpointHandler::new,
-    JavaBreakpointHandler.JavaFieldBreakpointHandler::new,
-    JavaBreakpointHandler.JavaMethodBreakpointHandler::new,
-    JavaBreakpointHandler.JavaWildcardBreakpointHandler::new
+    process -> new JavaBreakpointHandler.JavaLineBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaExceptionBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaFieldBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaMethodBreakpointHandler(process),
+    process -> new JavaBreakpointHandler.JavaWildcardBreakpointHandler(process)
   };
 
   public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
@@ -94,7 +94,7 @@ public class JavaDebugProcess extends XDebugProcess {
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 
-    JavaBreakpointHandlerFactory.EP_NAME.addExtensionPointListener(new ExtensionPointListener<JavaBreakpointHandlerFactory>() {
+    JavaBreakpointHandlerFactory.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull JavaBreakpointHandlerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
         //noinspection NonAtomicOperationOnVolatileField
@@ -192,9 +192,6 @@ public class JavaDebugProcess extends XDebugProcess {
         }
       }
     });
-    if (Registry.is("debugger.show.values.between.lines") && session instanceof XDebugSessionImpl) {
-      ((XDebugSessionImpl)session).getSessionData().putUserData(XDebuggerInlayUtil.HELPER_KEY, new JavaDebuggerInlayUtil.Helper());
-    }
     if (!DebuggerUtilsImpl.isRemote(process)) {
       DfaAssist.installDfaAssist(myJavaSession, session);
     }
@@ -446,8 +443,8 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private static class WatchLastMethodReturnValueAction extends ToggleAction {
-    private final String myText;
-    private final String myTextUnavailable;
+    private final @NlsActions.ActionText String myText;
+    private final @NlsActions.ActionText String myTextUnavailable;
 
     WatchLastMethodReturnValueAction() {
       super("", JavaDebuggerBundle.message("action.watch.method.return.value.description"), null);

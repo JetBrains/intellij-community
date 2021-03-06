@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.util.SVGLoader
@@ -19,8 +21,8 @@ import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
 import com.intellij.util.ui.JBHtmlEditorKit
-import com.intellij.util.ui.TestScaleHelper
-import com.intellij.util.ui.paint.ImageComparator
+import com.intellij.ui.scale.TestScaleHelper
+import com.intellij.ui.scale.paint.ImageComparator
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
@@ -59,10 +61,12 @@ open class RequireHeadlessMode : ExternalResource() {
 
 open class RestoreScaleRule : ExternalResource() {
   override fun before() {
+    IconLoader.activate()
     TestScaleHelper.setState()
   }
 
   override fun after() {
+    IconLoader.deactivate()
     TestScaleHelper.restoreState()
   }
 }
@@ -124,7 +128,7 @@ fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String
 @Throws(FileComparisonFailure::class)
 internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMismatch: Boolean) {
   if (!snapshotFile.exists()) {
-    System.out.println("Write a new snapshot ${snapshotFile.fileName}")
+    println("Write a new snapshot ${snapshotFile.fileName}")
     snapshotFile.write(newData)
     return
   }
@@ -132,11 +136,11 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMis
   val uri = snapshotFile.toUri().toURL()
 
   val old = try {
-    snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+    snapshotFile.inputStream().use { SVGLoader.load(uri, it, 1f) } as BufferedImage
   }
   catch (e: Exception) {
     if (updateIfMismatch) {
-      System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
+      println("UPDATED snapshot ${snapshotFile.fileName}")
       snapshotFile.write(newData)
       return
     }
@@ -144,7 +148,7 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, updateIfMis
     throw e
   }
 
-  val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
+  val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1f) } as BufferedImage
   val imageMismatchError = StringBuilder("images mismatch: ")
   if (ImageComparator(ImageComparator.AASmootherComparator(0.5, 0.2, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
     return
@@ -178,6 +182,7 @@ internal fun dumpComponentBounds(component: Container): Map<String, IntArray> {
 internal fun getComponentKey(c: Component, index: Int): String {
   return when {
     c is JLabel && !c.text.isNullOrEmpty() -> StringUtil.removeHtmlTags(c.text, true).removeSuffix(":") + " [label]"
+    c is ActionLink && !c.text.isNullOrEmpty() -> StringUtil.removeHtmlTags(c.text, true) + " [link]"
     c is AbstractButton && c.text.isNotEmpty() -> StringUtil.removeHtmlTags(c.text, true)
     c is TitledSeparator -> c.text + " [titledSeparator]"
     else -> "${c.javaClass.simpleName} #${index}"

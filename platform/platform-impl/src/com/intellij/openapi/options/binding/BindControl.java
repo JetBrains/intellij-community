@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options.binding;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -26,6 +28,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface BindControl {
-  String value() default "";
+  @NonNls String value() default "";
   boolean instant() default false;
 }

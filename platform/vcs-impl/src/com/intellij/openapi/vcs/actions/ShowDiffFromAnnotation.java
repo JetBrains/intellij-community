@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
@@ -20,11 +6,11 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.FileAnnotation.RevisionChangesProvider;
@@ -43,7 +30,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.ListSelection;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.diagnostic.Logger.getInstance;
-
-class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
-  private static final Logger LOG = getInstance(ShowDiffFromAnnotation.class);
-
-  @NotNull private final Project myProject;
+final class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumberListener {
+  private final @NotNull Project myProject;
   private final FileAnnotation myFileAnnotation;
   private final RevisionChangesProvider myChangesProvider;
   private int currentLine = -1;
@@ -91,29 +73,27 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     if (revisionNumber == null) return;
 
     DiffRequestChain requestChain = new ChangeDiffRequestChain.Async() {
-      @NotNull
       @Override
-      protected ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
+      protected @NotNull ListSelection<ChangeDiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException {
         return loadRequests(myFileAnnotation, myChangesProvider, actualNumber);
       }
     };
     DiffManager.getInstance().showDiff(myProject, requestChain, DiffDialogHints.FRAME);
   }
 
-  @NotNull
-  private static ListSelection<ChangeDiffRequestProducer> loadRequests(@NotNull FileAnnotation fileAnnotation,
-                                                                       @NotNull RevisionChangesProvider changesProvider,
-                                                                       int actualNumber) throws DiffRequestProducerException {
+  private static @NotNull ListSelection<ChangeDiffRequestProducer> loadRequests(@NotNull FileAnnotation fileAnnotation,
+                                                                                @NotNull RevisionChangesProvider changesProvider,
+                                                                                int actualNumber) throws DiffRequestProducerException {
     try {
       Pair<? extends CommittedChangeList, FilePath> pair = changesProvider.getChangesIn(actualNumber);
       if (pair == null || pair.getFirst() == null || pair.getSecond() == null) {
-        throw new DiffRequestProducerException("Can not load data to show diff");
+        throw new DiffRequestProducerException(VcsBundle.message("show.diff.from.annotation.action.error.can.not.load.data.to.show.diff"));
       }
 
       FilePath targetPath = pair.getSecond();
       List<Change> changes = ContainerUtil.sorted(pair.getFirst().getChanges(), ChangesComparator.getInstance(true));
 
-      Map<Change, Map<Key, Object>> context = new HashMap<>();
+      Map<Change, Map<Key<?>, Object>> context = new HashMap<>();
       int idx = findSelfInList(changes, targetPath);
       if (idx != -1) {
         DiffNavigationContext navigationContext = createDiffNavigationContext(fileAnnotation, actualNumber);
@@ -155,8 +135,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   /*
    * Locate line in annotated content, using lines that are known to be modified in this revision
    */
-  @Nullable
-  private static DiffNavigationContext createDiffNavigationContext(@NotNull FileAnnotation fileAnnotation, int actualLine) {
+  private static @Nullable DiffNavigationContext createDiffNavigationContext(@NotNull FileAnnotation fileAnnotation, int actualLine) {
     String annotatedContent = fileAnnotation.getAnnotatedContent();
     if (StringUtil.isEmptyOrSpaces(annotatedContent)) return null;
 
@@ -164,7 +143,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     if (contentsLines.length <= actualLine) return null;
 
     final int correctedLine = correctActualLineIfTextEmpty(fileAnnotation, contentsLines, actualLine);
-    return new DiffNavigationContext(new Iterable<String>() {
+    return new DiffNavigationContext(new Iterable<>() {
       @Override
       public Iterator<String> iterator() {
         return new CacheOneStepIterator<>(new ContextLineIterator(contentsLines, fileAnnotation, correctedLine));
@@ -172,7 +151,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
     }, contentsLines[correctedLine]);
   }
 
-  private final static int ourVicinity = 5;
+  private static final int ourVicinity = 5;
 
   private static int correctActualLineIfTextEmpty(@NotNull FileAnnotation fileAnnotation, String @NotNull [] contentsLines,
                                                   final int actualLine) {
@@ -200,11 +179,11 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   /**
    * Slightly break the contract: can return null from next() while had claimed hasNext()
    */
-  private static class ContextLineIterator implements Iterator<String> {
+  private static final class ContextLineIterator implements Iterator<String> {
     private final String @NotNull [] myContentsLines;
 
     private final VcsRevisionNumber myRevisionNumber;
-    @NotNull private final FileAnnotation myAnnotation;
+    private final @NotNull FileAnnotation myAnnotation;
     private final int myStopAtLine;
     // we assume file has at least one line ;)
     private int myCurrentLine;  // to start looking for next line with revision from

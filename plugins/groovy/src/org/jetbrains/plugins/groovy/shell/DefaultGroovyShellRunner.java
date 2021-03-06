@@ -11,7 +11,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.FindClassUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -98,7 +100,7 @@ public class DefaultGroovyShellRunner extends GroovyShellConfig {
   }
 
   @Override
-  public String getTitle() {
-    return "Groovy Shell";
+  public @Nls(capitalization = Nls.Capitalization.Title) String getTitle() {
+    return GroovyBundle.message("title.groovy.shell");
   }
 }

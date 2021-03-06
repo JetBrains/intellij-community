@@ -16,12 +16,13 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.PushSource;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public class HgPushSource implements PushSource {
-  @NotNull private final String myBranch;
+  @NotNull private final @NlsSafe String myBranch;
 
-  public HgPushSource(@NotNull String branch) {
+  public HgPushSource(@NotNull @NlsSafe String branch) {
     myBranch = branch;
   }
 
@@ -31,6 +32,7 @@ public class HgPushSource implements PushSource {
     return myBranch;
   }
 
+  @NlsSafe
   @NotNull
   public String getBranch() {
     return myBranch;   // presentation may differ from branch

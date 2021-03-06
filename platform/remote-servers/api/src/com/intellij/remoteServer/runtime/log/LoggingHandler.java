@@ -13,4 +13,6 @@ public interface LoggingHandler {
   void attachToProcess(@NotNull ProcessHandler handler);
 
   void clear();
+
+  void scrollTo(int offset);
 }

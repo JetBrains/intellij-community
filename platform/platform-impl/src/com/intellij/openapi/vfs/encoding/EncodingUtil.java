@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.AppTopics;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-public class EncodingUtil {
+public final class EncodingUtil {
 
   enum FailReason {
     IS_DIRECTORY,
@@ -51,9 +55,9 @@ public class EncodingUtil {
 
   // the result of wild guess
   public enum Magic8 {
-    ABSOLUTELY,
-    WELL_IF_YOU_INSIST,
-    NO_WAY
+    ABSOLUTELY,  // bytes on disk/editor text stay the same after the change
+    WELL_IF_YOU_INSIST,  // bytes on disk after convert/editor text after reload are changed, but the change is reversible
+    NO_WAY // the change will cause information loss
   }
 
   // check if file can be loaded in the encoding correctly:
@@ -147,9 +151,7 @@ public class EncodingUtil {
   static void reloadIn(@NotNull VirtualFile virtualFile,
                        @NotNull Charset charset,
                        @NotNull Project project) {
-    Consumer<VirtualFile> setEncoding = file -> {
-      EncodingProjectManager.getInstance(project).setEncoding(file, charset);
-    };
+    Consumer<VirtualFile> setEncoding = file -> EncodingProjectManager.getInstance(project).setEncoding(file, charset);
 
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     if (documentManager.getCachedDocument(virtualFile) == null) {
@@ -174,34 +176,34 @@ public class EncodingUtil {
 
     // if file was modified, the user will be asked here
     try {
-      EncodingProjectManagerImpl.suppressReloadDuring(() -> {
-        ((FileDocumentManagerImpl)documentManager).contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
-      });
+      VFileContentChangeEvent event =
+        new VFileContentChangeEvent(null, virtualFile, 0, 0, false);
+      EncodingProjectManagerImpl.suppressReloadDuring(() -> ((FileDocumentManagerImpl)documentManager).contentsChanged(event));
     }
     finally {
       Disposer.dispose(disposable);
     }
   }
 
-  // returns file type description if the charset is hard-coded or null if file type does not restrict encoding
-  private static String checkHardcodedCharsetFileType(@NotNull VirtualFile virtualFile) {
+  /**
+   * @param virtualFile file to check
+   * @return true if the charset is hard-coded, false if file type does not restrict encoding
+   */
+  private static boolean checkHardcodedCharsetFileType(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     // in lesser IDEs all special file types are plain text so check for that first
-    if (fileType == FileTypes.PLAIN_TEXT) return null;
-    if (fileType == StdFileTypes.GUI_DESIGNER_FORM) return "IDEA GUI Designer form";
-    if (fileType == StdFileTypes.IDEA_MODULE) return "IDEA module file";
-    if (fileType == StdFileTypes.IDEA_PROJECT) return "IDEA project file";
-    if (fileType == StdFileTypes.IDEA_WORKSPACE) return "IDEA workspace file";
-
-    if (fileType == StdFileTypes.PROPERTIES) return ".properties file\n(see Settings|Editor|File Encodings|Properties Files)";
-
-    if (fileType == StdFileTypes.XML) {
-      return "XML file";
+    if (fileType == FileTypes.PLAIN_TEXT) return false;
+    if (fileType == StdFileTypes.GUI_DESIGNER_FORM ||
+        fileType == ModuleFileType.INSTANCE ||
+        fileType == ProjectFileType.INSTANCE ||
+        fileType == WorkspaceFileType.INSTANCE ||
+        fileType == StdFileTypes.PROPERTIES ||
+        fileType == StdFileTypes.XML ||
+        fileType == StdFileTypes.JSPX) {
+      return true;
     }
-    if (fileType == StdFileTypes.JSPX) {
-      return "JSPX file";
-    }
-    return null;
+
+    return false;
   }
 
   public static boolean canReload(@NotNull VirtualFile virtualFile) {
@@ -216,7 +218,7 @@ public class EncodingUtil {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return FailReason.IS_BINARY;
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
     Charset existing = virtualFile.getCharset();
     LoadTextUtil.AutoDetectionReason autoDetectedFrom = LoadTextUtil.getCharsetAutoDetectionReason(virtualFile);
     FailReason result;
@@ -239,8 +241,8 @@ public class EncodingUtil {
   private static FailReason fileTypeDescriptionError(@NotNull VirtualFile virtualFile) {
     if (virtualFile.getFileType().isBinary()) return FailReason.IS_BINARY;
 
-    String fileTypeDescription = checkHardcodedCharsetFileType(virtualFile);
-    return fileTypeDescription == null ? null : FailReason.BY_FILETYPE;
+    boolean hardcoded = checkHardcodedCharsetFileType(virtualFile);
+    return hardcoded ? FailReason.BY_FILETYPE : null;
   }
 
   @Nullable("null means enabled, notnull means disabled and contains error message")
@@ -249,7 +251,7 @@ public class EncodingUtil {
       return FailReason.IS_DIRECTORY;
     }
 
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
     return charsetFromContent != null ? FailReason.BY_FILE : fileTypeDescriptionError(virtualFile);
   }
 
@@ -271,14 +273,15 @@ public class EncodingUtil {
     return Pair.create(current.get(), errorDescription);
   }
 
-  static String reasonToString(@NotNull FailReason reason, VirtualFile file) {
+  @NotNull
+  static @Nls String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
     switch (reason) {
-      case IS_DIRECTORY: return "disabled for a directory";
-      case IS_BINARY: return "disabled for a binary file";
-      case BY_FILE: return "charset is hard-coded in the file";
-      case BY_BOM: return "charset is auto-detected by BOM";
-      case BY_BYTES: return "charset is auto-detected from content";
-      case BY_FILETYPE: return "disabled for " + file.getFileType().getDescription();
+      case IS_DIRECTORY: return IdeBundle.message("no.charset.set.reason.disabled.for.directory");
+      case IS_BINARY: return IdeBundle.message("no.charset.set.reason.disabled.for.binary.file");
+      case BY_FILE: return IdeBundle.message("no.charset.set.reason.charset.hard.coded.in.file");
+      case BY_BOM: return IdeBundle.message("no.charset.set.reason.charset.auto.detected.by.bom");
+      case BY_BYTES: return IdeBundle.message("no.charset.set.reason.charset.auto.detected.from.content");
+      case BY_FILETYPE: return IdeBundle.message("no.charset.set.reason.disabled.for.file.type", file.getFileType().getDescription());
     }
     throw new AssertionError(reason);
   }

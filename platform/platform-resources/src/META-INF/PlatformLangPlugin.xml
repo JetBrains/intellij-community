@@ -22,16 +22,20 @@
   <xi:include href="/META-INF/Indexing.xml"/>
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
-  <xi:include href="/META-INF/Inspect.xml"/>
+
+  <xi:include href="/META-INF/Inspect.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/xml.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
-  <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
   <xi:include href="/META-INF/LangExtensions.xml"/>
 
-  <xi:include href="/META-INF/ExternalSystemExtensions.xml"/>
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -46,6 +50,8 @@
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
+    <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
+    <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
@@ -71,6 +77,7 @@
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <multiHostInjector id="adapter" implementation="com.intellij.psi.impl.source.tree.injected.LanguageInjectionPerformerAdapter" order="last"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 
@@ -90,23 +97,51 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <notificationWhitelist groupIds="Code style settings migration;Find Problems;Missing SDKs;Automatic indent detection;Indexing;
-    Framework Detection;Power Save Mode;Show control flow group"/>
+    <notificationGroup id="Show control flow group" displayType="BALLOON"/>
+    <notificationGroup id="Power Save Mode" displayType="BALLOON"/>
+    <notificationGroup id="Indexing" displayType="BALLOON"/>
+    <notificationGroup id="Framework Detection" displayType="BALLOON"/>
+    <notificationGroup id="Code style settings migration" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Missing SDKs" displayType="BALLOON"/>
+    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.EditorWindowTracker"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl"/>
+
+    <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>
 
   <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
-  <xi:include href="xdebugger.xml"/>
+  <xi:include href="/META-INF/xdebugger.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/GraphPlugin.xml">
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="built-in-server.xml"/>
-  <xi:include href="/idea/ExternalSystemActions.xml"/>
-  <xi:include href="/componentSets/ExternalSystemComponents.xml"/>
+  <xi:include href="/META-INF/builtInServer.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/smRunner.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/duplicates-analysis.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/tasks.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <xi:include href="/META-INF/ExternalSystem.xml">
+    <xi:fallback/>
+  </xi:include>
 </idea-plugin>

@@ -74,7 +74,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
         }
 
         if (result.size() > 0) {
-          OverridingDefineRenderer.doClickAction(e, result, "Go to overriding define(s)");
+          OverridingDefineRenderer.doClickAction(e, result, RelaxngBundle.message("relaxng.gutter.go-to-overriding-defines"));
         }
       }
     };
@@ -88,7 +88,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   @Override
   @Nullable
   public String getTooltipText() {
-    return RelaxngBundle.message("is.overridden");
+    return RelaxngBundle.message("relaxng.gutter.is-overridden");
   }
 
   @Override

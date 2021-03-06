@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -24,14 +25,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 // not final for android
-public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
+public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
@@ -111,11 +112,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
   }
 
   @Override
-  public void notifyByBalloon(final @NotNull String toolWindowId,
-                              final @NotNull MessageType type,
-                              final @NotNull String text,
-                              final @Nullable Icon icon,
-                              final @Nullable HyperlinkListener listener) {
+  public void notifyByBalloon(@NotNull ToolWindowBalloonShowOptions options) {
   }
 
   @Override
@@ -130,6 +127,53 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
   @Override
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
+  }
+
+  @Nullable
+  @Override
+  public ToolWindow getLastActiveToolWindow(@Nullable Predicate<? super JComponent> condition) {
+    return null;
+  }
+
+  @Override
+  public void initToolWindow(@NotNull ToolWindowEP bean) {
+    doRegisterToolWindow(bean.id);
+  }
+
+  @Override
+  public ToolWindowsPane init(ProjectFrameHelper frameHelper) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull DesktopLayout getLayout() {
+    return new DesktopLayout();
+  }
+
+  @Override
+  public void setLayoutToRestoreLater(@Nullable DesktopLayout layout) {
+  }
+
+  @Override
+  public @Nullable DesktopLayout getLayoutToRestoreLater() {
+    return null;
+  }
+
+  @Override
+  public void setLayout(@NotNull DesktopLayout layout) {
+  }
+
+  @Override
+  public void clearSideStack() {
+  }
+
+  @Override
+  public void hideToolWindow(@NotNull String id, boolean hideSide) {
+  }
+
+  @Override
+  public @NotNull List<String> getIdsOn(@NotNull ToolWindowAnchor anchor) {
+    return Collections.emptyList();
   }
 
   public static class MockToolWindow implements ToolWindowEx {
@@ -167,6 +211,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public void activate(@Nullable Runnable runnable) {
+      if (runnable != null) runnable.run();
     }
 
     @Override
@@ -178,6 +223,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     public boolean isVisible() {
       return false;
     }
+
+    @Override
+    public boolean isVisibleOnLargeStripe() {
+      return false;
+    }
+
+    @Override
+    public void setVisibleOnLargeStripe(boolean visible) { }
 
     @Override
     public void setShowStripeButton(boolean show) {
@@ -205,6 +258,14 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     public @NotNull ToolWindowAnchor getAnchor() {
       return ToolWindowAnchor.BOTTOM;
     }
+
+    @Override
+    public @NotNull ToolWindowAnchor getLargeStripeAnchor() {
+      return ToolWindowAnchor.BOTTOM;
+    }
+
+    @Override
+    public void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor) { }
 
     @Override
     public void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable) {
@@ -326,10 +387,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public void activate(final @Nullable Runnable runnable, final boolean autoFocusContents) {
+      activate(runnable);
     }
 
     @Override
     public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
+      activate(runnable);
     }
 
     @Override
@@ -371,6 +434,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
   private static class MockContentManager implements ContentManager {
     private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
     private final List<Content> myContents = new ArrayList<>();
@@ -627,6 +691,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
 
     @Override
     public @NotNull ContentFactory getFactory() {
-      return ServiceManager.getService(ContentFactory.class);
+      return ApplicationManager.getApplication().getService(ContentFactory.class);
     }
   }}

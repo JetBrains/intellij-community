@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
  * Please implement {@link com.intellij.openapi.project.DumbAware} marker interface to indicate that the tool window content should be
  * available during the indexing process.
  * <p/>
- * To localize tool window stripe title, add key <code>toolwindow.stripe.yourToolWindowId.replace(" ", "_")</code> to plugin's resource bundle.
+ * To localize tool window stripe title, add key {@code toolwindow.stripe.yourToolWindowId.replace(" ", "_")} to plugin's resource bundle.
  * <p/>
- * See https://www.jetbrains.org/intellij/sdk/docs/user_interface_components/tool_windows.html
+ * See <a href="https://www.jetbrains.org/intellij/sdk/docs/user_interface_components/tool_windows.html">Tool Windows</a> in SDK Docs.
  */
 public interface ToolWindowFactory {
   default boolean isApplicable(@NotNull Project project) {

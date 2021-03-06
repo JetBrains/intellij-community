@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class SelectInMavenNavigatorTarget implements SelectInTarget {
@@ -55,7 +56,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
 
   @Override
   public String toString() {
-    return MavenProjectsNavigator.TOOL_WINDOW_ID;
+    return MavenProjectBundle.message("maven.name");
   }
 
   @Override

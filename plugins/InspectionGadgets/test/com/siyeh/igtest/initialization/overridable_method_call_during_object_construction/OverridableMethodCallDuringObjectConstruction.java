@@ -24,3 +24,17 @@ class A implements Cloneable {
     return (A) super.clone();
   }
 }
+class InnerCall {
+
+  protected long currentTimeMillis() {
+    return System.currentTimeMillis();
+  }
+
+  public class Item {
+    final long now;
+
+    public Item() {
+      now = currentTimeMillis();
+    }
+  }
+}

@@ -17,12 +17,19 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCase {
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_13;
+  }
 
   public void testNarrowingCast() {
     doTest("class X {" +
@@ -36,7 +43,7 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
   }
 
   public void testNarrowingCastTextBlock() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
       doTest("class X {" +
              "  String s = (byte)321 +/*_Replace '+' with 'formatted()'*/ \" parsecs\";" +
              "}",

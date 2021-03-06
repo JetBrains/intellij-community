@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -65,14 +64,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
-public class DependenciesPanel extends JPanel implements Disposable, DataProvider {
+public final class DependenciesPanel extends JPanel implements Disposable, DataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<VirtualFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private final MyTree myLeftTree = new MyTree();
   private final MyTree myRightTree = new MyTree();
   private final DependenciesUsagesPanel myUsagesPanel;
 
-  private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
+  private static final Set<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
   private final TreeExpansionMonitor myRightTreeExpansionMonitor;
   private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
@@ -331,9 +330,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     EditSourceOnDoubleClickHandler.install(tree);
     new TreeSpeedSearch(tree);
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree), ActionManager.getInstance());
-
-
+    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree));
   }
 
   private void updateRightTreeModel() {
@@ -384,7 +381,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     return group;
   }
 
-  private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
+  private TreeModel buildTreeModel(Set<? extends PsiFile> deps, Marker marker) {
     return Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE)).createTreeModel(myProject, deps, marker,
                                                                                                              mySettings);
   }
@@ -752,7 +749,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class ShowDetailedInformationAction extends AnAction {
+  private final class ShowDetailedInformationAction extends AnAction {
     private ShowDetailedInformationAction() {
       super(ActionsBundle.messagePointer("action.ShowDetailedInformationAction.text"));
     }
@@ -789,7 +786,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class RemoveFromScopeAction extends AnAction {
+  private final class RemoveFromScopeAction extends AnAction {
     private RemoveFromScopeAction() {
       super(ActionsBundle.messagePointer("action.RemoveFromScopeAction.text"));
     }
@@ -812,7 +809,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private class AddToScopeAction extends AnAction {
+  private final class AddToScopeAction extends AnAction {
     private AddToScopeAction() {
       super(ActionsBundle.messagePointer("action.AddToScopeAction.text"));
     }

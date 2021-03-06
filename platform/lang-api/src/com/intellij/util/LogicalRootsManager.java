@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.List;
  * if you need to enumerate all source roots in a project, use {@link ProjectRootManager#getContentSourceRoots()}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public abstract class LogicalRootsManager {
 
   public static LogicalRootsManager getLogicalRootsManager(@NotNull final Project project) {

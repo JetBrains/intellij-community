@@ -1,7 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
@@ -28,8 +30,7 @@ public class WCInfo {
     return myStickyDepth;
   }
 
-  @NotNull
-  public String getPath() {
+  public @NlsSafe @NotNull String getPath() {
     return myRootInfo.getPath();
   }
 
@@ -57,8 +58,7 @@ public class WCInfo {
     return getRootInfo().getNode().hasError();
   }
 
-  @NotNull
-  public String getErrorMessage() {
+  public @Nls @NotNull String getErrorMessage() {
     SvnBindException error = getRootInfo().getNode().getError();
 
     return error != null ? error.getMessage() : "";

@@ -1,22 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
 import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
 import com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestApplicationManager;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -26,7 +20,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -34,16 +27,6 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
   @Override
   protected void setUp() throws Exception {
     TestApplicationManager.getInstance();
-    Application application = ApplicationManager.getApplication();
-    // Necessary to properly update button states
-    ServiceContainerUtil.replaceService(application, DataManager.class, new HeadlessDataManager() {
-      @NotNull
-      @Override
-      public DataContext getDataContext(Component component) {
-        SearchReplaceComponent searchReplace = ComponentUtil.getParentOfType(SearchReplaceComponent.class, component);
-        return searchReplace != null ? searchReplace::getData : super.getDataContext(component);
-      }
-    }, getTestRootDisposable());
     super.setUp();
   }
 
@@ -57,6 +40,9 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
         model.setWholeWordsOnly(false);
         model.setCaseSensitive(false);
       }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
     }
     finally {
       super.tearDown();
@@ -210,7 +196,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
 
     model.setRegularExpressions(true);
     assertTrue(actionButton.isSelected());
-    assertEquals(SearchSession.INCORRECT_REGEX_MESSAGE, component.getStatusText());
+    assertEquals(FindBundle.message(SearchSession.INCORRECT_REGEXP_MESSAGE_KEY), component.getStatusText());
     model.setStringToFind("|");
     assertEquals(ApplicationBundle.message("editorsearch.empty.string.matches"), component.getStatusText());
     model.setStringToFind("ba.?");

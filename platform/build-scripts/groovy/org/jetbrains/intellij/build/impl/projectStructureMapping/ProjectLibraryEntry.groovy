@@ -9,11 +9,13 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 @AutoClone
-class ProjectLibraryEntry extends DistributionFileEntry {
+final class ProjectLibraryEntry extends DistributionFileEntry {
   String libraryName
+  String libraryFilePath
 
-  ProjectLibraryEntry(String path, String libraryName) {
+  ProjectLibraryEntry(String path, String libraryName, String libraryFilePath) {
     super(path, "project-library")
     this.libraryName = libraryName
+    this.libraryFilePath = libraryFilePath
   }
 }

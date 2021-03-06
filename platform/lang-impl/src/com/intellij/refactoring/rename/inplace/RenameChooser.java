@@ -4,17 +4,22 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.rename.RenameUsagesCollector;
+import com.intellij.testFramework.TestModeFlags;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,16 +29,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-abstract class RenameChooser {
-  @NonNls private static final String CODE_OCCURRENCES = "Rename code occurrences";
-  @NonNls private static final String ALL_OCCURRENCES = "Rename all occurrences";
+public abstract class RenameChooser {
+  @NonNls private static final String CODE_OCCURRENCES = "rename.string.select.code.occurrences";
+  @NonNls private static final String ALL_OCCURRENCES = "rename.string.select.all.occurrences";
+  public static final Key<Boolean> CHOOSE_ALL_OCCURRENCES_IN_TEST = Key.create("RenameChooser.CHOOSE_ALL_OCCURRENCES_IN_TEST");
   private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
-  private final TextAttributes myAttributes;
 
   RenameChooser(Editor editor) {
     myEditor = editor;
-    myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
 
   protected abstract void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages);
@@ -41,12 +45,9 @@ abstract class RenameChooser {
   public void showChooser(final Collection<? extends PsiReference> refs,
                           final Collection<Pair<PsiElement, TextRange>> stringUsages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runRenameTemplate(
-        RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE ? stringUsages : new ArrayList<>());
+      runRenameTemplate(TestModeFlags.is(CHOOSE_ALL_OCCURRENCES_IN_TEST) ? stringUsages : new ArrayList<>());
       return;
     }
-
-
 
     JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(CODE_OCCURRENCES, ALL_OCCURRENCES))
       .setItemSelectedCallback(selectedValue -> {
@@ -58,26 +59,29 @@ abstract class RenameChooser {
           for (Pair<PsiElement, TextRange> pair : stringUsages) {
             final TextRange textRange = pair.second.shiftRight(pair.first.getTextOffset());
             final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
-              textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
+              EditorColors.SEARCH_RESULT_ATTRIBUTES, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
               HighlighterTargetArea.EXACT_RANGE);
             myRangeHighlighters.add(rangeHighlighter);
           }
         }
 
         for (PsiReference reference : refs) {
-          final PsiElement element = reference.getElement();
-          final TextRange textRange = element.getTextRange();
+          final TextRange textRange = reference.getAbsoluteRange();
           final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
-            textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1, myAttributes,
+            EditorColors.SEARCH_RESULT_ATTRIBUTES, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
             HighlighterTargetArea.EXACT_RANGE);
           myRangeHighlighters.add(rangeHighlighter);
         }
       })
       .setTitle(RefactoringBundle.message("rename.string.occurrences.found.title"))
+      .setRenderer(SimpleListCellRenderer.create("", RefactoringBundle::message))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChosenCallback((selectedValue) -> runRenameTemplate(ALL_OCCURRENCES.equals(selectedValue) ? stringUsages : new ArrayList<>()))
+      .setItemChosenCallback((selectedValue) -> {
+        RenameUsagesCollector.localSearchInCommentsEvent.log(ALL_OCCURRENCES.equals(selectedValue));
+        runRenameTemplate(ALL_OCCURRENCES.equals(selectedValue) ? stringUsages : new ArrayList<>());
+      })
       .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {

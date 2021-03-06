@@ -9,21 +9,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRule {
+class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
   protected final Project myProject;
   private final DirectoryGroupingRule myDirectoryGroupingRule;
+  private final boolean compactMiddleDirectories;
 
-  DirectoryStructureGroupingRule(@NotNull Project project) {
+  DirectoryStructureGroupingRule(@NotNull Project project, boolean compactMiddleDirectories) {
     myProject = project;
-    myDirectoryGroupingRule = new DirectoryGroupingRule(project, false);
+    this.compactMiddleDirectories = compactMiddleDirectories;
+    myDirectoryGroupingRule = new DirectoryGroupingRule(project, false, compactMiddleDirectories);
   }
 
   @Override
@@ -42,13 +45,24 @@ class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRule {
     }
     VirtualFile dir = file.getParent();
 
-    VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
-    while (dir != null && !dir.equals(baseDir)) {
+    if (compactMiddleDirectories) {
       UsageGroup group = myDirectoryGroupingRule.getGroupForFile(dir);
       result.add(group);
-      dir = dir.getParent();
+    }
+    else {
+      VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+      while (dir != null && !dir.equals(baseDir)) {
+        UsageGroup group = myDirectoryGroupingRule.getGroupForFile(dir);
+        result.add(group);
+        dir = dir.getParent();
+      }
     }
     Collections.reverse(result);
     return result;
+  }
+
+  @Override
+  public @Nullable String getGroupingActionId() {
+    return "UsageGrouping.DirectoryStructure";
   }
 }

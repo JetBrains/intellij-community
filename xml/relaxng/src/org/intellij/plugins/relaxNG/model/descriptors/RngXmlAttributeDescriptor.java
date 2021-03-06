@@ -26,8 +26,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,18 +37,30 @@ import org.xml.sax.Locator;
 import javax.xml.namespace.QName;
 import java.util.*;
 
-public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
+public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   @NonNls
   private static final QName UNKNOWN = new QName("", "#unknown");
 
-  private static final TObjectHashingStrategy<Locator> HASHING_STRATEGY = new TObjectHashingStrategy<Locator>() {
+  private static final Hash.Strategy<Locator> HASHING_STRATEGY = new Hash.Strategy<>() {
     @Override
-    public int computeHashCode(Locator o) {
+    public int hashCode(@Nullable Locator o) {
+      if (o == null) {
+        return 0;
+      }
+
       final String s = o.getSystemId();
       return o.getLineNumber() * 31 + o.getColumnNumber() * 23 + (s != null ? s.hashCode() * 11 : 0);
     }
+
     @Override
-    public boolean equals(Locator o, Locator o1) {
+    public boolean equals(@Nullable Locator o, @Nullable Locator o1) {
+      if (o == o1) {
+        return true;
+      }
+      if (o == null || o1 == null) {
+        return false;
+      }
+
       if ((o.getLineNumber() == o1.getLineNumber() && o.getColumnNumber() == o1.getColumnNumber())) {
         if (Objects.equals(o.getSystemId(), o1.getSystemId())) {
           return true;
@@ -61,7 +73,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private final Map<String, String> myValues;
   private final boolean myOptional;
   private final RngElementDescriptor myElementDescriptor;
-  private final THashSet<Locator> myDeclarations = new THashSet<>(HASHING_STRATEGY);
+  private final Set<Locator> myDeclarations = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
   private final QName myName;
 
   RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor, DAttributePattern pattern, Map<String, String> values, boolean optional) {
@@ -84,13 +96,12 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   public RngXmlAttributeDescriptor mergeWith(RngXmlAttributeDescriptor d) {
     final QName name = d.myName.equals(UNKNOWN) ? myName : d.myName;
 
-    final HashMap<String, String> values = new LinkedHashMap<>(myValues);
+    Map<String, String> values = new LinkedHashMap<>(myValues);
     values.putAll(d.myValues);
 
-    final THashSet<Locator> locations = new THashSet<>(myDeclarations, HASHING_STRATEGY);
+    Set<Locator> locations = new ObjectOpenCustomHashSet<>(myDeclarations, HASHING_STRATEGY);
     locations.addAll(d.myDeclarations);
-
-    return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[locations.size()]));
+    return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[0]));
   }
 
   @Override

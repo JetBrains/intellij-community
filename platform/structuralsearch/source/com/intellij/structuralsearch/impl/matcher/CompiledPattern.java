@@ -15,11 +15,11 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,8 +29,8 @@ import java.util.Map;
  */
 public abstract class CompiledPattern {
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
-  private final Map<Object, MatchingHandler> handlers = new THashMap<>();
-  private final MultiMap<String, PsiElement> variableNodes = MultiMap.createSmart();
+  private final Map<Object, MatchingHandler> handlers = new HashMap<>();
+  private final MultiMap<String, PsiElement> variableNodes = new MultiMap<>();
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;
@@ -42,7 +42,7 @@ public abstract class CompiledPattern {
   public abstract String @NotNull [] getTypedVarPrefixes();
   public abstract boolean isTypedVar(@NotNull String str);
 
-  public void setTargetNode(PsiElement element) {
+  public void setTargetNode(@NotNull PsiElement element) {
     targetNode = element;
   }
 
@@ -113,11 +113,11 @@ public abstract class CompiledPattern {
     return handler;
   }
 
-  public MatchingHandler getHandler(String name) {
+  public MatchingHandler getHandler(@NotNull String name) {
     return handlers.get(name);
   }
 
-  public void setHandler(PsiElement node, MatchingHandler handler) {
+  public void setHandler(@NotNull PsiElement node, @NotNull MatchingHandler handler) {
     last = null;
     handlers.put(node, handler);
   }

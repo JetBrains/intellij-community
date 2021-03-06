@@ -25,10 +25,10 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -67,7 +67,7 @@ public final class IncrementalSearchHandler {
 
   private static class PerEditorSearchData {
     LightweightHint hint;
-    String lastSearch;
+    @NlsContexts.Label String lastSearch;
   }
 
   public static boolean isHintVisible(final Editor editor) {
@@ -288,9 +288,9 @@ public final class IncrementalSearchHandler {
     else {
       data.label.setForeground(JBColor.foreground());
       if (matchLength > 0) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         data.segmentHighlighter = editor.getMarkupModel()
-          .addRangeHighlighter(index, index + matchLength, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+          .addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES, index, index + matchLength, HighlighterLayer.LAST + 1,
+                               HighlighterTargetArea.EXACT_RANGE);
       }
       data.ignoreCaretMove = true;
       editor.getCaretModel().moveToOffset(index);
@@ -314,7 +314,7 @@ public final class IncrementalSearchHandler {
   }
 
   private static class MyLabel extends JLabel {
-    MyLabel(String text) {
+    MyLabel(@NlsContexts.Label String text) {
       super(text);
       this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());

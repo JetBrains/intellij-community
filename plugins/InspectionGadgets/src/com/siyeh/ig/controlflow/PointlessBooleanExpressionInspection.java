@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -261,7 +260,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     buildSimplifiedExpression(operand, out.append(sign.getText()), tracker);
   }
 
-  private void buildSimplifiedAssignmentExpression(PsiAssignmentExpression expression, StringBuilder out, CommentTracker tracker) {
+  private void buildSimplifiedAssignmentExpression(PsiAssignmentExpression expression, @NonNls StringBuilder out, CommentTracker tracker) {
     final IElementType tokenType = expression.getOperationTokenType();
     final PsiExpression lhs = expression.getLExpression();
 
@@ -484,6 +483,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         }
         if (!stopCheckingSideEffects && SideEffectChecker.mayHaveSideEffects(operand)) {
           sideEffectMayBeRemoved = true;
+          continue;
         }
         Boolean value = evaluate(operand);
         if (value != null) {

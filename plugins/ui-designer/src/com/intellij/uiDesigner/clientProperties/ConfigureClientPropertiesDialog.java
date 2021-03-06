@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -85,7 +86,8 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
         if (node.getUserObject() instanceof Class) {
           Class cls = (Class)node.getUserObject();
           if (cls != null) {
-            append(cls.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            @NlsSafe String name = cls.getName();
+            append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
         }
       }

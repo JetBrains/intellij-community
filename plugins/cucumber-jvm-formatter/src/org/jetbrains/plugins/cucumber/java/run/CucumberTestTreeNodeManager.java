@@ -3,7 +3,6 @@ package org.jetbrains.plugins.cucumber.java.run;
 
 import com.intellij.junit4.JUnitTestTreeNodeManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-
 import org.junit.runner.Description;
 
 import java.io.File;
@@ -16,14 +15,17 @@ public class CucumberTestTreeNodeManager implements JUnitTestTreeNodeManager {
   private static final String FILE_COLON_PREFIX = "file:";
   private static final String FILE_URL_PREFIX = "file://";
 
+  @Override
   public JUnitTestTreeNodeManager.TestNodePresentation getRootNodePresentation(String fullName) {
     return new JUnitTestTreeNodeManager.TestNodePresentation(fullName, null);
   }
 
+  @Override
   public String getNodeName(String fqName, boolean splitBySlash) {
     return fqName;
   }
 
+  @Override
   public String getTestLocation(Description description, String className, String methodName) {
     try {
       Field descriptionField = Description.class.getDeclaredField("fUniqueId");

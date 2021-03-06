@@ -1,8 +1,23 @@
-<project name="Test gant invocation from Ant script" default="doGant">
+<project name="Test gant invocation from Ant script" default="doGant" xmlns:resolver="antlib:org.apache.maven.resolver.ant">
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="idea.lib" value="${project.home}/lib"/>
   <property environment="env"/>
+
+  <xmlproperty file="${build.dir}/../.idea/libraries/jps_build_script_dependencies_bootstrap.xml" prefix="jps.bootstrap.library.xml"/>
+  <loadresource property="jps.bootstrap.library.version">
+    <propertyresource name="jps.bootstrap.library.xml.component.library.properties(maven-id)"/>
+    <filterchain>
+      <tokenfilter>
+        <replaceregex pattern="^.*:([0-9.]+)$" replace="\1"/>
+      </tokenfilter>
+    </filterchain>
+  </loadresource>
+
+  <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
+  <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
+  <property name="download.cache.dir" value="${build.dir}/download"/>
+  <property name="maven.resolver.ant.tasks.file.path" value="${download.cache.dir}/${maven.resolver.ant.tasks.file.name}"/>
 
   <condition property="gant.target" value="default">
     <not>
@@ -10,50 +25,58 @@
     </not>
   </condition>
 
-  <target name="init">
-    <property name="gradle.home" value="${project.home}/build/dependencies"/>
-    <condition property="gradle.daemon" value="--daemon" else="--no-daemon">
-      <and>
-        <isset property="intellij.build.use.gradle.daemon"/>
-        <equals arg1="${intellij.build.use.gradle.daemon}" arg2="true"/>
-      </and>
-    </condition>
-    <condition property="gradle.args" value="${intellij.gradle.jdk.build.parameters}" else="--stacktrace">
-      <and>
-        <isset property="intellij.gradle.jdk.build.parameters"/>
-        <not>
-          <equals arg1="${intellij.gradle.jdk.build.parameters}" arg2=""/>
-        </not>
-      </and>
-    </condition>
-    <condition property="gradlew" value="gradlew.bat" else="gradlew">
-      <os family="windows"/>
-    </condition>
-    <condition property="java.path" value="${env.JDK_18_x64}" else="${java.home}">
-      <isset property="env.JDK_18_x64"/>
-    </condition>
-    <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
-      <env key="JAVA_HOME" value="${java.path}"/>
-      <arg value="${gradle.daemon}"/>
-      <arg value="-Djava.io.tmpdir=${java.io.tmpdir}"/>
-      <arg line="${gradle.args}"/>
-      <arg value="setupBuildScriptsDeps"/>
-    </exec>
+  <available file="${maven.resolver.ant.tasks.file.path}" property="maven.resolver.ant.tasks.file.exists"/>
+
+  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+    <mkdir dir="${download.cache.dir}" />
+    <get
+      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}/maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"
+      dest="${maven.resolver.ant.tasks.file.path}.tmp"
+      verbose="true"/>
+    <move
+      file="${maven.resolver.ant.tasks.file.path}.tmp"
+      tofile="${maven.resolver.ant.tasks.file.path}"
+      overwrite="true"/>
   </target>
 
-  <target name="doGant" depends="init">
+  <target name="resolve.buildscript.deps" depends="download.resolver">
+    <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml"
+             classpath="${maven.resolver.ant.tasks.file.path}"/>
+
+    <resolver:remoterepos id="remoterepos.buildscript">
+      <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
+      <resolver:remoterepo id="intellij-third-party-dependencies" url="https://cache-redirector.jetbrains.com/intellij-third-party-dependencies"/>
+      <resolver:remoterepo id="jcenter" url="https://cache-redirector.jetbrains.com/jcenter.bintray.com"/>
+    </resolver:remoterepos>
+
+    <resolver:resolve failOnMissingAttachments="true">
+      <resolver:remoterepos refid="remoterepos.buildscript"/>
+      <resolver:dependencies>
+        <dependency coords="${jps.bootstrap.library.xml.component.library.properties(maven-id)}"/>
+        <dependency coords="com.jetbrains.intellij.platform:test-framework-core:${jps.bootstrap.library.version}"/>
+        <dependency coords="commons-cli:commons-cli:1.2"/>
+        <dependency coords="de.pdark:decentxml:1.4"/>
+      </resolver:dependencies>
+      <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
+    </resolver:resolve>
+
+    <!--
+    <pathconvert property="classpath.buildscripts.property" refid="classpath.buildscripts"/>
+    <echo message="build scripts classpath: ${classpath.buildscripts.property}"/>
+    -->
+  </target>
+
+  <target name="doGant" depends="resolve.buildscript.deps">
     <path id="gant.classpath">
       <pathelement path="${project.home}/platform/build-scripts/groovy"/>
       <pathelement path="${project.home}/build/groovy"/>
-      <fileset dir="${project.home}/build/dependencies/build/build-scripts-deps">
-        <include name="*.jar"/>
-      </fileset>
+      <path refid="classpath.buildscripts" />
     </path>
 
     <taskdef name="gant" classname="org.jetbrains.jps.gant.GantWithClasspathTask">
       <classpath refid="gant.classpath"/>
     </taskdef>
 
-    <gant file="${gant.script}" target="${gant.target}"/>
+    <gant file="${gant.script}" target="${gant.target}" inheritAll="true"/>
   </target>
 </project>

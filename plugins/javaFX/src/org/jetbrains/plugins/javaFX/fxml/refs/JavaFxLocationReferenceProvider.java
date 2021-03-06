@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,8 +31,8 @@ import java.util.List;
 import java.util.Set;
 
 class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
-  private boolean mySupportCommaInValue = false;
-  private final Set<FileType> myAcceptedFileTypes;
+  private final boolean mySupportCommaInValue;
+  private final Set<String> myAcceptedFileTypes;
 
   JavaFxLocationReferenceProvider() {
     this(false);
@@ -42,8 +40,7 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
 
   JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileExtensions) {
     mySupportCommaInValue = supportCommaInValue;
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    myAcceptedFileTypes = ContainerUtil.map2Set(acceptedFileExtensions, fileTypeManager::getFileTypeByExtension);
+    myAcceptedFileTypes = ContainerUtil.newHashSet(acceptedFileExtensions);
   }
 
   @Override
@@ -82,8 +79,7 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
           if (item instanceof PsiDirectory) return true;
           final VirtualFile virtualFile = item.getVirtualFile();
           if (virtualFile == null) return false;
-          final FileType fileType = virtualFile.getFileType();
-          return myAcceptedFileTypes.contains(fileType);
+          return myAcceptedFileTypes.contains(virtualFile.getExtension());
         };
       }
     };

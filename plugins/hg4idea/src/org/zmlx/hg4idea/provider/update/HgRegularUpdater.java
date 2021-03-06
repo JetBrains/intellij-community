@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_CONTINUE_ERROR;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.REBASE_ERROR;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.MERGE;
 import static org.zmlx.hg4idea.provider.update.HgUpdateType.ONLY_UPDATE;
 import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
@@ -193,7 +196,7 @@ public class HgRegularUpdater implements HgUpdater {
           LOG.warn("Couldn't find repository info for " + repoRoot.getName());
           return;
         }
-        new HgCommitCommand(project, hgRepository, "Automated merge").executeInCurrentThread();
+        new HgCommitCommand(project, hgRepository, "Automated merge").executeInCurrentThread(); //NON-NLS
       }
       catch (HgCommandException e) {
         throw new VcsException(e);
@@ -222,12 +225,14 @@ public class HgRegularUpdater implements HgUpdater {
     indicator.setText2(HgBundle.message("hg4idea.progress.rebase"));
     HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
     if (repository == null) {
-      throw new VcsException("Repository not found for root " + repoRoot);
+      throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", repoRoot.getPresentableUrl()));
     }
     HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, repository);
     HgCommandResult result = new HgRebaseCommand(project, repository).startRebase();
     if (HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+      new HgCommandResultNotifier(project).notifyError(REBASE_ERROR,
+                                                       result,
+                                                       HgBundle.message("hg4idea.hg.error"),
                                                        HgBundle.message("action.hg4idea.Rebase.error"));
       return;
     }
@@ -239,7 +244,9 @@ public class HgRegularUpdater implements HgUpdater {
       }
       result = rebaseCommand.continueRebase();
       if (HgErrorUtil.isAbort(result)) {
-        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+        new HgCommandResultNotifier(project).notifyError(REBASE_CONTINUE_ERROR,
+                                                         result,
+                                                         HgBundle.message("hg4idea.hg.error"),
                                                          HgBundle.message("action.hg4idea.Rebase.Continue.error"));
         break;
       }
@@ -285,13 +292,13 @@ public class HgRegularUpdater implements HgUpdater {
     addUpdatedFiles(repo, updatedFiles, parentBeforeUpdate, parentAfterUpdate);
   }
 
-  private static void handlePossibleWarning(List<VcsException> exceptions, String possibleWarning) {
+  private static void handlePossibleWarning(List<VcsException> exceptions, @Nls String possibleWarning) {
     if (!StringUtil.isEmptyOrSpaces(possibleWarning)) {
       reportWarning(exceptions, possibleWarning);
     }
   }
 
-  private static void reportWarning(List<VcsException> exceptions, String warningMessage) {
+  private static void reportWarning(List<VcsException> exceptions, @Nls String warningMessage) {
     VcsException warningException = new VcsException(warningMessage);
     warningException.setIsWarning(true);
     exceptions.add(warningException);

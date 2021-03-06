@@ -1,6 +1,11 @@
 fragment pullRequestReviewThread on PullRequestReviewThread {
     ...nodeInfo
+    diffSide
     isResolved
+    line
+    originalLine
+    startLine
+    originalStartLine
     comments(first: 100) {
         nodes {
             ...pullRequestReviewComment

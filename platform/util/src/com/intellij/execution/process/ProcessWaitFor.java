@@ -16,7 +16,7 @@ public class ProcessWaitFor {
   private static final Logger LOG = Logger.getInstance(ProcessWaitFor.class);
 
   private final Future<?> myWaitForThreadFuture;
-  private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<>(1);
+  private final BlockingQueue<Consumer<? super Integer>> myTerminationCallback = new ArrayBlockingQueue<>(1);
   private volatile boolean myDetached;
 
   /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead */
@@ -45,6 +45,10 @@ public class ProcessWaitFor {
             }
           }
         }
+        catch (Throwable e) {
+          LOG.error(e);
+          throw e;
+        }
         finally {
           if (!myDetached) {
             try {
@@ -64,7 +68,7 @@ public class ProcessWaitFor {
     myWaitForThreadFuture.cancel(true);
   }
 
-  public void setTerminationCallback(@NotNull Consumer<Integer> r) {
+  public void setTerminationCallback(@NotNull Consumer<? super Integer> r) {
     myTerminationCallback.offer(r);
   }
 

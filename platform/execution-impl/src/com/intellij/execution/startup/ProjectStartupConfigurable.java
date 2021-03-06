@@ -102,6 +102,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
   public JComponent createComponent() {
     myModel = new ProjectStartupTasksTableModel();
     myTable = new JBTable(myModel);
+    myTable.setShowGrid(false);
     myTable.getEmptyText().setText(ExecutionBundle.message("settings.project.startup.add.run.configurations.with.the.button"));
     new TableSpeedSearch(myTable);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
@@ -126,12 +127,8 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          selectAndAddConfiguration(button);
-        }
-      })
+      .setAddAction(this::selectAndAddConfiguration)
+      .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -176,8 +173,9 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
     if (myTable.isEmpty()) return;
-    myModel.reValidateConfigurations(new Processor<RunnerAndConfigurationSettings>() {
+    myModel.reValidateConfigurations(new Processor<>() {
       private final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+
       @Override
       public boolean process(RunnerAndConfigurationSettings settings) {
         return runManager.getConfigurationById(settings.getUniqueID()) != null;
@@ -199,7 +197,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
   }
 
   private ChooseRunConfigurationPopup.ItemWrapper<Void> createNewWrapper(final AnActionButton button) {
-    return new ChooseRunConfigurationPopup.ItemWrapper<Void>(null) {
+    return new ChooseRunConfigurationPopup.ItemWrapper<>(null) {
       @Override
       public Icon getIcon() {
         return IconUtil.getAddIcon();
@@ -213,23 +211,26 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        List<ConfigurationType> typesToShow = ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
-          ConfigurationFactory factory = runManager.getFactory(configurationType, null);
-          return factory != null &&
-                 ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
-        });
+        List<ConfigurationType> typesToShow =
+          ContainerUtil.filter(ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), configurationType -> {
+            ConfigurationFactory factory = runManager.getFactory(configurationType, null);
+            return factory != null &&
+                   ProgramRunner.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
+          });
         final JBPopup popup = NewRunConfigurationPopup.createAddPopup(project, typesToShow, "",
-                                                                        factory -> ApplicationManager.getApplication().invokeLater(() -> {
-                                                                          final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
-                                                                          if (dialog.showAndGet()) {
-                                                                            ApplicationManager.getApplication().invokeLater(() -> {
-                                                                              RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-                                                                              if (configuration != null) {
-                                                                                addConfiguration(configuration);
-                                                                              }
-                                                                            }, project.getDisposed());
-                                                                          }
-                                                                        }, project.getDisposed()), null, null, false);
+                                                                      factory -> ApplicationManager.getApplication().invokeLater(() -> {
+                                                                        final EditConfigurationsDialog dialog =
+                                                                          new EditConfigurationsDialog(project, factory);
+                                                                        if (dialog.showAndGet()) {
+                                                                          ApplicationManager.getApplication().invokeLater(() -> {
+                                                                            RunnerAndConfigurationSettings configuration =
+                                                                              RunManager.getInstance(project).getSelectedConfiguration();
+                                                                            if (configuration != null) {
+                                                                              addConfiguration(configuration);
+                                                                            }
+                                                                          }, project.getDisposed());
+                                                                        }
+                                                                      }, project.getDisposed()), null, null, false);
         showPopup(button, popup);
       }
 
@@ -259,7 +260,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
 
   private void selectAndAddConfiguration(final AnActionButton button) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    final List<ChooseRunConfigurationPopup.ItemWrapper> wrappers = new ArrayList<>();
+    final List<ChooseRunConfigurationPopup.ItemWrapper<?>> wrappers = new ArrayList<>();
     wrappers.add(createNewWrapper(button));
     final List<ChooseRunConfigurationPopup.ItemWrapper> allSettings =
       ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
@@ -269,7 +270,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
         }
       }, false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
-    for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
+    for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
         final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
         if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
@@ -279,7 +280,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     }
     final JBPopup popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(wrappers)
-      .setRenderer(SimpleListCellRenderer.<ChooseRunConfigurationPopup.ItemWrapper>create((label, value, index) -> {
+      .setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
         label.setIcon(value.getIcon());
         label.setText(value.getText());
       }))
@@ -358,7 +359,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final TableColumn nameColumn = myTable.getColumnModel().getColumn(ProjectStartupTasksTableModel.NAME_COLUMN);
     nameColumn.setCellRenderer(new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
         final RunnerAndConfigurationSettings settings = myModel.getAllConfigurations().get(row);
         setIcon(settings.getConfiguration().getIcon());
         append(settings.getName());

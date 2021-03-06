@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -82,8 +83,13 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
   @Override
   public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, VirtualFile contextDirectory) {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
-    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName) && SystemInfo.isLinux) {
-      initial = findFile("/usr/share/groovy");
+    if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
+      if (SystemInfo.isLinux) {
+        initial = findFile("/usr/share/groovy");
+      }
+      else if (SystemInfo.isMac) {
+        initial = findFile("/usr/local/opt/groovy/libexec"); // homebrew
+      }
     }
 
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
@@ -95,8 +101,8 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         return findManager(file) != null;
       }
     };
-    descriptor.setTitle(myFrameworkName + " SDK");
-    descriptor.setDescription("Choose a directory containing " + myFrameworkName + " distribution");
+    descriptor.setTitle(GroovyBundle.message("framework.0.sdk.chooser.title", myFrameworkName));
+    descriptor.setDescription(GroovyBundle.message("framework.0.sdk.chooser.description", myFrameworkName));
     final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
     if (dir == null) return null;
 
@@ -107,10 +113,12 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
     final String path = dir.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
-    if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
-      Messages.showErrorDialog(parentComponent,
-                               "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determine version.",
-                               "Failed to Create Library");
+    if (sdkVersion == null) {
+      Messages.showErrorDialog(
+        parentComponent,
+        GroovyBundle.message("framework.0.sdk.chooser.error.message", myFrameworkName),
+        GroovyBundle.message("framework.0.sdk.chooser.error.title")
+      );
       return null;
     }
 

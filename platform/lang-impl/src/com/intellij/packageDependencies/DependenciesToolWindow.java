@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ServiceManager;
@@ -30,15 +31,13 @@ public class DependenciesToolWindow {
     myProject = project;
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      if (toolWindowManager == null) {
-        return;
-      }
 
       ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
                                                                    true,
                                                                    ToolWindowAnchor.BOTTOM,
                                                                    project);
       toolWindow.setHelpId("dependency.viewer.tool.window");
+      toolWindow.setTitle(CodeInsightBundle.message("package.dependencies.toolwindow.display.name"));
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
       myContentManager = toolWindow.getContentManager();
 

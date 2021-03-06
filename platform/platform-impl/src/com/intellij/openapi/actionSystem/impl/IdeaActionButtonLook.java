@@ -2,9 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,17 +14,6 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class IdeaActionButtonLook extends ActionButtonLook {
-
-  /**
-   * @deprecated Don't use this method directly.
-   * Use {@link ActionButtonLook#SYSTEM_LOOK#paintLookBackground(Graphics, Rectangle, Color)} instead
-   */
-  @Deprecated
-  protected static void paintBackground(@NotNull Graphics g, @NotNull Rectangle rect, int state) {
-    paintBackground(g, rect, state == ActionButtonComponent.PUSHED ?
-                             JBUI.CurrentTheme.ActionButton.pressedBackground() :
-                             JBUI.CurrentTheme.ActionButton.hoverBackground());
-  }
 
   @Override
   public void paintLookBackground(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {

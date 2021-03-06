@@ -3,5 +3,5 @@ async def asyncgen():
 
 
 async def run():
-    for i in <warning descr="Expected 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead">asyncgen()</warning>:
+    for i in <warning descr="Expected type 'collections.Iterable', got 'AsyncGenerator[int, Any]' instead">asyncgen()</warning>:
         print(i)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
@@ -35,7 +21,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +30,8 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlPropertiesFileImpl extends XmlPropertiesFile {
-  public static final String ENTRY_TAG_NAME = "entry";
+public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
+  public static final @NonNls String ENTRY_TAG_NAME = "entry";
 
   private static final Key<CachedValue<PropertiesFile>> KEY = Key.create("xml properties file");
   private final XmlFile myFile;
@@ -215,7 +200,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   @NotNull
   @Override
   public Map<String, String> getNamesMap() {
-    Map<String, String> result = new THashMap<>();
+    Map<String, String> result = new HashMap<>();
     for (IProperty property : getProperties()) {
       result.put(property.getUnescapedKey(), property.getValue());
     }

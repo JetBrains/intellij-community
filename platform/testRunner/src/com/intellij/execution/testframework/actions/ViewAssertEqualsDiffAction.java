@@ -130,7 +130,8 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     private class MyTestDiffRequestProcessor extends TestDiffRequestProcessor {
       MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<? extends DiffHyperlink> requests, int index) {
         super(project, requests, index);
-        putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY, "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
+        putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY,
+                           "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");  // NON-NLS
       }
 
       @Override

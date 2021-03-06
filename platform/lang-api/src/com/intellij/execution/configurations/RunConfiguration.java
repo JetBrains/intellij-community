@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
@@ -8,10 +8,13 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +38,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   /**
    * Returns the type of the run configuration.
    */
-  @NotNull
-  default ConfigurationType getType() {
+  default @NotNull ConfigurationType getType() {
     ConfigurationFactory factory = getFactory();
     return factory == null ? UnknownConfigurationType.getInstance() : factory.getType();
   }
@@ -44,14 +46,13 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   /**
    * Returns the factory that has created the run configuration.
    */
-  @Nullable
-  ConfigurationFactory getFactory();
+  @Nullable ConfigurationFactory getFactory();
 
   // do not annotate as Nullable because in this case Kotlin compiler will forbid field style access (because of different nullability for getter and setter).
   /**
    * Sets the name of the configuration.
    */
-  void setName(String name);
+  void setName(@NlsSafe String name);
 
   /**
    * Returns the UI control for editing the run configuration settings. If additional control over validation is required, the object
@@ -61,8 +62,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    *
    * @return the settings editor component.
    */
-  @NotNull
-  SettingsEditor<? extends RunConfiguration> getConfigurationEditor();
+  @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor();
 
   /**
    * Returns the project in which the run configuration exists.
@@ -76,8 +76,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * @param provider source of assorted information about the configuration being edited.
    * @return the per-runner settings.
    */
-  @Nullable
-  default ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
+  default @Nullable ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
     return null;
   }
 
@@ -88,8 +87,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * @param runner the runner the settings for which need to be edited.
    * @return the editor for the per-runner settings.
    */
-  @Nullable
-  default SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
+  default @Nullable SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
     return null;
   }
 
@@ -113,14 +111,12 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * Returns the unique identifier of the run configuration. Return null if not applicable.
    * Used only for non-managed RC type.
    */
-  @Nullable
-  default String getId() {
+  default @Nullable @NonNls String getId() {
     return null;
   }
 
-  @NotNull
   @Transient
-  default String getPresentableType() {
+  default @NotNull @NlsActions.ActionText String getPresentableType() {
     if (PlatformUtils.isPhpStorm()) {
       return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
     }
@@ -154,8 +150,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   default void writeExternal(@NotNull Element element) {
   }
 
-  @NotNull
-  default List<BeforeRunTask<?>> getBeforeRunTasks() {
+  default @NotNull List<BeforeRunTask<?>> getBeforeRunTasks() {
     return Collections.emptyList();
   }
 

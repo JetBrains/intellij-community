@@ -12,6 +12,9 @@ import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import static git4idea.GitNotificationIdsHolder.INIT_ERROR;
+import static git4idea.GitNotificationIdsHolder.REPOSITORY_CREATED;
+
 public final class GitIntegrationEnabler extends VcsIntegrationEnabler {
   private static final Logger LOG = Logger.getInstance(GitIntegrationEnabler.class);
 
@@ -25,11 +28,16 @@ public final class GitIntegrationEnabler extends VcsIntegrationEnabler {
     GitCommandResult result = Git.getInstance().init(myProject, projectDir);
     if (result.success()) {
       refreshVcsDir(projectDir, GitUtil.DOT_GIT);
-      vcsNotifier.notifySuccess(GitBundle.message("git.integration.created.git.repository.in", projectDir.getPresentableUrl()));
+      vcsNotifier.notifySuccess(REPOSITORY_CREATED,
+                                "",
+                                GitBundle.message("git.integration.created.git.repository.in", projectDir.getPresentableUrl()));
       return true;
     }
     else {
-      vcsNotifier.notifyError(GitBundle.message("git.integration.could.not.git.init", projectDir.getPresentableUrl()), result.getErrorOutputAsHtmlString(), true);
+      vcsNotifier.notifyError(INIT_ERROR,
+                              GitBundle.message("git.integration.could.not.git.init", projectDir.getPresentableUrl()),
+                              result.getErrorOutputAsHtmlString(),
+                              true);
       LOG.info(result.getErrorOutputAsHtmlString());
       return false;
     }

@@ -1,24 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcsUtil.VcsFileUtil
+import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 
 const val NUL = "\u0000"
-private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
 
 /*
  * `git status` output format (porcelain version 1):
@@ -53,28 +55,23 @@ private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
  * -------------------------------------------------
  */
 
+@Throws(VcsException::class)
 fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = emptyList(),
-              withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<LightFileStatus.StatusRecord> {
-  val result = mutableListOf<LightFileStatus.StatusRecord>()
-
-  val pathsChunks = if (files.isNotEmpty()) VcsFileUtil.chunkPaths(root, files) else listOf(emptyList()) // empty list to read everything
-  for (pathsChunk in pathsChunks) {
+              withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<GitFileStatus> {
+  val h = GitUtil.createHandlerWithPaths(files) {
     val h = GitLineHandler(project, root, GitCommand.STATUS)
     h.setSilent(true)
     h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
                        withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)
-    h.endOptions()
-    h.addParameters(pathsChunk)
-
-    val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
-    parseGitStatusOutput(output, result=result)
+    h
   }
 
-  return result
+  val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
+  return parseGitStatusOutput(output).map { GitFileStatus(root, it) }
 }
 
 @Throws(VcsException::class)
-fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): LightFileStatus {
+fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: GitExecutable): LightFileStatus {
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
   h.appendParameters(GitExecutableManager.getInstance().getVersion(executable),
@@ -115,7 +112,7 @@ private fun GitLineHandler.appendParameters(gitVersion: GitVersion,
 }
 
 @Throws(VcsException::class)
-fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): String? {
+fun getFilePath(root: VirtualFile, filePath: FilePath, executable: GitExecutable): String? {
   val handler = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root),
                                executable, GitCommand.LS_FILES, emptyList())
   handler.addParameters("--full-name")
@@ -125,26 +122,32 @@ fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): Stri
 }
 
 @Throws(VcsException::class)
-private fun parseGitStatusOutput(output: String, result: MutableList<LightFileStatus.StatusRecord> = mutableListOf()): List<LightFileStatus.StatusRecord> {
+private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRecord> {
+  val result = mutableListOf<LightFileStatus.StatusRecord>()
+
   val split = output.split(NUL).toTypedArray()
   val it = split.iterator()
   while (it.hasNext()) {
     val line = it.next()
-    if (StringUtil.isEmptyOrSpaces(line)) continue
-    if (line.length < 4 || line[2] != ' ') {
-      LOG.error("Could not parse status line '$line'")
-      continue // ignoring broken lines for now
+    if (StringUtil.isEmptyOrSpaces(line)) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
+    // format: XY_filename where _ stands for space.
+    if (line.length < 4 || line[2] != ' ') { // X, Y, space and at least one symbol for the file
+      throwGFE(GitBundle.message("status.exception.message.line.is.too.short"), output, line, '0', '0')
     }
 
     val xStatus = line[0]
     val yStatus = line[1]
+    if (!isKnownStatus(xStatus) || !isKnownStatus(yStatus)) {
+      throwGFE(GitBundle.message("status.exception.message.unexpected"), output, line, xStatus, yStatus)
+    }
+
     val pathPart = line.substring(3) // skipping the space
     if (isRenamed(xStatus) || isRenamed(yStatus)) {
       if (!it.hasNext()) {
-        LOG.error("Missing original path for status line '$line'")
+        throwGFE(GitBundle.message("status.exception.message.missing.path"), output, line, xStatus, yStatus)
         continue
       }
-      val origPath = it.next()
+      val origPath = it.next() // read the "from" filepath which is separated also by NUL character.
       result.add(LightFileStatus.StatusRecord(xStatus, yStatus, pathPart, origPath = origPath))
     }
     else {
@@ -153,6 +156,15 @@ private fun parseGitStatusOutput(output: String, result: MutableList<LightFileSt
   }
 
   return result
+}
+
+private fun throwGFE(@Nls message: String, @NlsSafe output: String, @NlsSafe line: String, @NlsSafe xStatus: Char, @NlsSafe yStatus: Char) {
+  throw VcsException(GitBundle.message("status.exception.message.format.message.xstatus.ystatus.line.output",
+                                       message, xStatus, yStatus, line, output))
+}
+
+private fun isKnownStatus(status: Char): Boolean {
+  return status == ' ' || status == 'M' || status == 'A' || status == 'D' || status == 'C' || status == 'R' || status == 'U' || status == 'T' || status == '!' || status == '?'
 }
 
 @Throws(VcsException::class)
@@ -165,7 +177,7 @@ internal fun getFileStatus(status: StatusCode): FileStatus? {
     'U' -> FileStatus.MERGED_WITH_CONFLICTS
     '!' -> FileStatus.IGNORED
     '?' -> FileStatus.UNKNOWN
-    else -> throw VcsException("Unexpected symbol as status: $status")
+    else -> throw VcsException(GitBundle.message("status.exception.message.unexpected.status", status))
   }
 }
 
@@ -175,10 +187,12 @@ internal fun isIgnored(status: StatusCode) = status == '!'
 internal fun isUntracked(status: StatusCode) = status == '?'
 fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
 internal fun isAdded(status: StatusCode) = status == 'A'
+internal fun isIntendedToBeAdded(index: StatusCode, workTree: StatusCode) = index == ' ' && workTree == 'A'
 internal fun isDeleted(status: StatusCode) = status == 'D'
 internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
   return (index == 'D' && workTree == 'D') ||
          (index == 'A' && workTree == 'A') ||
+         (index == 'T' && workTree == 'T') ||
          (index == 'U' || workTree == 'U')
 }
 

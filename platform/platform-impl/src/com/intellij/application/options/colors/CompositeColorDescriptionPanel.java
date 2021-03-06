@@ -29,14 +29,14 @@ import java.util.List;
 
 public class CompositeColorDescriptionPanel extends JPanel implements ColorDescriptionPanel {
   @NotNull protected final List<ColorDescriptionPanel> myDescriptionPanels = new ArrayList<>();
-  @NotNull protected final List<Condition<EditorSchemeAttributeDescriptor>> myConditions = new ArrayList<>();
+  @NotNull protected final List<Condition<? super EditorSchemeAttributeDescriptor>> myConditions = new ArrayList<>();
 
   @NotNull private final List<Listener> myListeners = new ArrayList<>();
 
   private ColorDescriptionPanel myActive;
 
   public void addDescriptionPanel(@NotNull ColorDescriptionPanel descriptionPanel,
-                                  @NotNull Condition<EditorSchemeAttributeDescriptor> condition) {
+                                  @NotNull Condition<? super EditorSchemeAttributeDescriptor> condition) {
     myDescriptionPanels.add(descriptionPanel);
     myConditions.add(condition);
 
@@ -107,7 +107,7 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
   @Nullable
   private ColorDescriptionPanel getPanelForDescriptor(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     for (int i = myConditions.size() - 1; i >= 0; i--) {
-      Condition<EditorSchemeAttributeDescriptor> condition = myConditions.get(i);
+      Condition<? super EditorSchemeAttributeDescriptor> condition = myConditions.get(i);
       ColorDescriptionPanel panel = myDescriptionPanels.get(i);
       if (condition.value(descriptor)) return panel;
     }

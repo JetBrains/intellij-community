@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ public interface ParameterInfo {
    *
    * @return parameter name.
    */
+  @NlsSafe
   String getName();
 
   /**
@@ -44,6 +46,7 @@ public interface ParameterInfo {
    * @return default value, or null if the parameter wasn't added.
    */
   @Nullable
+  @NlsSafe
   String getDefaultValue();
 
   /**
@@ -58,15 +61,17 @@ public interface ParameterInfo {
 
   /**
    * Set parameter new name (to be changed to during refactoring)
+   *
    * @param name new name
    */
-  void setName(String name);
+  void setName(@NlsSafe String name);
 
   /**
    * Returns parameter type text
    *
    * @return type text
    */
+  @NlsSafe
   String getTypeText();
 
   /**

@@ -1,80 +1,142 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules
 
+import com.intellij.facet.Facet
+import com.intellij.facet.FacetConfiguration
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetType
+import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType
-import com.intellij.openapi.rd.attach
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.createHeavyProject
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.Assume
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
-import java.io.File
+import java.nio.file.Path
 
-class ProjectModelRule : TestRule {
-  val baseProjectDir = TempDirectory()
-  private val projectDelegate = lazy { createHeavyProject(baseProjectDir.root.toPath()) }
-  private val disposableRule = DisposableRule()
-  val project by projectDelegate
-  private val closeProject = object : ExternalResource() {
-    override fun after() {
-      if (projectDelegate.isInitialized()) {
-        runInEdtAndWait {
-          ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-        }
-      }
+class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
+  companion object {
+    @JvmStatic
+    val isWorkspaceModelEnabled: Boolean
+      get() = WorkspaceModel.isEnabled
+
+    @JvmStatic
+    fun ignoreTestUnderWorkspaceModel() {
+      Assume.assumeFalse("Not applicable to workspace model", WorkspaceModel.isEnabled)
     }
   }
-  private val ruleChain = RuleChain(baseProjectDir, closeProject, disposableRule)
+
+  val baseProjectDir = TempDirectory()
+  private val disposableRule = DisposableRule()
+
+  lateinit var project: Project
+  lateinit var projectRootDir: Path
+  lateinit var filePointerTracker: VirtualFilePointerTracker
+
+  private val projectResource = object : ExternalResource() {
+    override fun before() {
+      projectRootDir = baseProjectDir.root.toPath()
+      if (forceEnableWorkspaceModel) {
+        WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
+          project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
+        }
+      }
+      else {
+        project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
+      }
+      filePointerTracker = VirtualFilePointerTracker()
+    }
+
+    override fun after() {
+      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+      filePointerTracker.assertPointersAreDisposed()
+    }
+  }
+
+  private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
 
   override fun apply(base: Statement, description: Description): Statement {
     return ruleChain.apply(base, description)
   }
 
   fun createModule(name: String = "module"): Module {
-    val imlFile = File(baseProjectDir.root, "$name/$name.iml")
+    val imlFile = generateImlPath(name)
+    val manager = moduleManager
     return runWriteActionAndWait {
-      moduleManager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+      manager.newModule(imlFile, EmptyModuleType.EMPTY_MODULE)
     }
   }
 
   fun createModule(name: String, moduleModel: ModifiableModuleModel): Module {
-    val imlFile = baseProjectDir.newFile("$name/$name.iml")
-    return moduleModel.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+    return moduleModel.newModule(generateImlPath(name), EmptyModuleType.EMPTY_MODULE)
   }
 
+  fun addSourceRoot(module: Module, relativePath: String, rootType: JpsModuleSourceRootType<*>): VirtualFile {
+    val srcRoot = baseProjectDir.newVirtualDirectory("${module.name}/$relativePath")
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val contentRootUrl = VfsUtil.pathToUrl(projectRootDir.resolve(module.name).systemIndependentPath)
+      val contentEntry = model.contentEntries.find { it.url == contentRootUrl } ?: model.addContentEntry(contentRootUrl)
+      require(contentEntry.sourceFolders.none { it.url == srcRoot.url }) { "Source folder $srcRoot already exists" }
+      contentEntry.addSourceFolder(srcRoot, rootType)
+    }
+    return srcRoot
+  }
+
+  private fun generateImlPath(name: String) = projectRootDir.resolve("$name/$name.iml")
 
   fun createSdk(name: String = "sdk"): Sdk {
     return ProjectJdkTable.getInstance().createSdk(name, sdkType)
   }
 
-  fun addSdk(sdk: Sdk): Sdk {
+  fun addSdk(sdk: Sdk, setup: (SdkModificator) -> Unit = {}): Sdk {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
+      val sdkModificator = sdk.sdkModificator
+      try {
+        setup(sdkModificator)
+      }
+      finally {
+        sdkModificator.commitChanges()
+      }
     }
     return sdk
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     return addLibrary(name, projectLibraryTable, setup)
+  }
+
+  fun addModuleLevelLibrary(module: Module, name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
+    val library = Ref.create<LibraryEx>()
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      library.set(addLibrary(name, model.moduleLibraryTable, setup))
+    }
+    return library.get()
   }
 
   fun addLibrary(name: String, libraryTable: LibraryTable, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
@@ -97,7 +159,7 @@ class ProjectModelRule : TestRule {
   }
 
   private fun disposeOnTearDown(library: LibraryEx) {
-    disposableRule.disposable.attach {
+    disposableRule.register {
       runWriteActionAndWait {
         if (!library.isDisposed && library.table.getLibraryByName(library.name!!) == library) {
           library.table.removeLibrary(library)
@@ -122,6 +184,23 @@ class ProjectModelRule : TestRule {
     val model = runReadAction { moduleManager.modifiableModel }
     model.renameModule(module, newName)
     runWriteActionAndWait { model.commit() }
+  }
+
+  fun removeModule(module: Module) {
+    runWriteActionAndWait { moduleManager.disposeModule(module) }
+  }
+
+  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C): F {
+    val facetManager = FacetManager.getInstance(module)
+    val model = facetManager.createModifiableModel()
+    val facet = facetManager.createFacet(type, type.defaultFacetName, configuration, null)
+    model.addFacet(facet)
+    runWriteActionAndWait { model.commit() }
+    return facet
+  }
+
+  fun removeFacet(facet: Facet<*>) {
+    FacetUtil.deleteFacet(facet)
   }
 
   val sdkType: SdkTypeId

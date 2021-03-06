@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
@@ -10,6 +11,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -27,6 +29,7 @@ import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -131,6 +134,56 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       projectProfileManager.setRootProfile(profile.getName());
 
       assertThat(profile).isEqualTo(projectProfileManager.getCurrentProfile());
+    }
+    finally {
+      projectProfileManager.deleteProfile(PROFILE);
+    }
+  }
+
+  public void testProfileChangeAdapter() {
+    boolean[] called = new boolean[1];
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
+      @Override
+      public void profileActivated(@Nullable InspectionProfile oldProfile, @Nullable InspectionProfile profile) {
+        called[0] = true;
+      }
+    });
+
+    final InspectionProfileImpl profile1 = createProfile();
+    final BaseInspectionProfileManager applicationProfileManager = getApplicationProfileManager();
+    applicationProfileManager.addProfile(profile1);
+    applicationProfileManager.setRootProfile(PROFILE);
+    assertTrue(called[0]);
+
+    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
+    try {
+      called[0] = false;
+      final InspectionProfileImpl profile2 = createProfile();
+      projectProfileManager.addProfile(profile2);
+      projectProfileManager.setRootProfile(PROFILE);
+      assertTrue(called[0]);
+    }
+    finally {
+      projectProfileManager.deleteProfile(PROFILE);
+    }
+  }
+
+  public void testSetProfileWithSameName() {
+    final InspectionProfileImpl applicationProfile = createProfile();
+    final BaseInspectionProfileManager applicationProfileManager = getApplicationProfileManager();
+    applicationProfileManager.addProfile(applicationProfile);
+
+    ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(getProject());
+    try {
+      applicationProfileManager.setRootProfile(PROFILE);
+      projectProfileManager.useApplicationProfile(PROFILE); // see ProjectInspectionToolsConfigurable.applyRootProfile()
+      assertEquals(applicationProfile, projectProfileManager.getCurrentProfile());
+
+      final InspectionProfileImpl projectProfile = createProfile();
+      projectProfileManager.addProfile(projectProfile);
+      projectProfileManager.setRootProfile(PROFILE);
+
+      assertSame(projectProfile, projectProfileManager.getCurrentProfile());
     }
     finally {
       projectProfileManager.deleteProfile(PROFILE);
@@ -364,7 +417,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     for (ScopeToolState toolState : tools.getTools()) {
       NamedScope scope = toolState.getScope(getProject());
       assertNotNull(scope);
-      String scopeName = scope.getName();
+      String scopeName = scope.getScopeId();
       NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)toolState.getTool().getTool();
       if ("Production".equals(scopeName)) {
         assertTrue(tool.isConventionEnabled(ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME));

@@ -1,4 +1,5 @@
 class Tester {
+    // IDEA-37432
 
     void caller(String v) {
         String g = null;

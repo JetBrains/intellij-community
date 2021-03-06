@@ -34,7 +34,7 @@ import java.util.List;
 public class Py3QuickFixTest extends PyTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PyTestCase.ourPy3Descriptor;
+    return PyTestCase.ourPyLatestDescriptor;
   }
 
   // PY-13685
@@ -111,7 +111,7 @@ public class Py3QuickFixTest extends PyTestCase {
   // PY-16428 
   public void testAddParameterNotAvailableInsideAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
-                                                                    PyBundle.message("QFIX.unresolved.reference.add.param.$0", "unresolved"), false, false));
+                                                                        PyPsiBundle.message("QFIX.unresolved.reference.add.param", "unresolved"), false, false));
   }
 
   // PY-8991
@@ -119,7 +119,7 @@ public class Py3QuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("INTN.remove.leading.$0", "F"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("QFIX.remove.string.prefix", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");
@@ -131,7 +131,7 @@ public class Py3QuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("INTN.remove.leading.$0", "F"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("QFIX.remove.string.prefix", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");

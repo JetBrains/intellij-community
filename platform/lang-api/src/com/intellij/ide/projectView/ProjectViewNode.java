@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +75,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return mySettings;
   }
 
-  public static List<AbstractTreeNode<?>> wrap(Collection objects,
+  public static List<AbstractTreeNode<?>> wrap(Collection<?> objects,
                                             Project project,
                                             Class<? extends AbstractTreeNode<?>> nodeClass,
                                             ViewSettings settings) {
@@ -139,8 +140,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
 
     Collection<? extends AbstractTreeNode<?>> kids = getChildren();
-    for (final AbstractTreeNode kid : kids) {
-      ProjectViewNode node = (ProjectViewNode)kid;
+    for (final AbstractTreeNode<?> kid : kids) {
+      ProjectViewNode<?> node = (ProjectViewNode<?>)kid;
       if (node.contains(file)) return true;
     }
     return false;
@@ -189,17 +190,28 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    *
    * @param condition the condition to check the nodes.
    */
-  public boolean canHaveChildrenMatching(Condition<PsiFile> condition) {
+  public boolean canHaveChildrenMatching(Condition<? super PsiFile> condition) {
     return true;
   }
 
   @Nullable
+  @NlsContexts.PopupTitle
   public String getTitle() {
     return null;
   }
 
   public boolean isSortByFirstChild() {
     return false;
+  }
+
+  /**
+   * This method is intended to separate the sorting of folders and files and
+   * to simplify implementing the {@link #getSortKey} and {@link #getTypeSortKey} methods.
+   *
+   * @return the top-level groups for sorting the tree nodes
+   */
+  public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+    return settings.isManualOrder() ? NodeSortOrder.MANUAL : NodeSortOrder.UNSPECIFIED;
   }
 
   public int getTypeSortWeight(boolean sortByType) {

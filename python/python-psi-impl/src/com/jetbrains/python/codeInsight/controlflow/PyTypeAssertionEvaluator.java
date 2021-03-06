@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
@@ -36,7 +34,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyPrefixExpression(PyPrefixExpression node) {
+  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
     if (node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
       myPositive = !myPositive;
       super.visitPyPrefixExpression(node);
@@ -48,7 +46,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyCallExpression(PyCallExpression node) {
+  public void visitPyCallExpression(@NotNull PyCallExpression node) {
     if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ASSERT_IS_INSTANCE)) {
       final PyExpression[] args = node.getArguments();
       if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
@@ -78,7 +76,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyReferenceExpression(final PyReferenceExpression node) {
+  public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
     if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
       // we could not suggest `None` because it could be a reference to an empty collection
       // so we could push only non-`None` assertions
@@ -90,7 +88,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyBinaryExpression(PyBinaryExpression node) {
+  public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 
@@ -172,8 +170,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return PyUnionType.union(members);
     }
     else if (type instanceof PyUnionType) {
-      final Collection<PyType> members = ((PyUnionType)type).getMembers();
-      return PyUnionType.union(ContainerUtil.map(members, member -> transformTypeFromAssertion(member, transformToDefinition)));
+      return ((PyUnionType)type).map(member -> transformTypeFromAssertion(member, transformToDefinition));
     }
     else if (type instanceof PyInstantiableType) {
       final PyInstantiableType instantiableType = (PyInstantiableType)type;

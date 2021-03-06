@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,19 +14,20 @@ import java.awt.*;
  * @author pegov
  */
 public abstract class MacMessages {
+  public interface MacMessageManagerProvider {
+    @NotNull MacMessages getMessageManager();
+  }
+
   @Messages.YesNoCancelResult
-  public abstract int showYesNoCancelDialog(@NotNull String title,
-                                            String message,
-                                            @NotNull String defaultButton,
-                                            String alternateButton,
-                                            String otherButton,
+  public abstract int showYesNoCancelDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                            @NlsContexts.DialogMessage @NotNull String message,
+                                            @NlsContexts.Button @NotNull String yesText,
+                                            @NlsContexts.Button @NotNull String noText,
+                                            @NlsContexts.Button @NotNull String cancelText,
                                             @Nullable Window window,
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption);
-
-  public static MacMessages getInstance() {
-    return Registry.is("ide.mac.message.sheets.java.emulation.dialogs")
-                  ? ServiceManager.getService(MacMessagesEmulation.class)
-                  : ServiceManager.getService(MacMessages.class);
+  public static @NotNull MacMessages getInstance() {
+    return ApplicationManager.getApplication().getService(MacMessageManagerProvider.class).getMessageManager();
   }
 
   /**
@@ -45,26 +46,25 @@ public abstract class MacMessages {
    *
    * @return number of button pressed: from 0 up to buttons.length-1 inclusive, or -1 for Cancel
    */
-  public abstract int showMessageDialog(@NotNull String title, String message, String @NotNull [] buttons, boolean errorStyle,
+  public abstract int showMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                        @NlsContexts.DialogMessage String message,
+                                        @NlsContexts.Button String @NotNull [] buttons, boolean errorStyle,
                                         @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex,
                                         @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
-  public abstract void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window);
+  public abstract void showOkMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                           @NlsContexts.DialogMessage String message,
+                                           @NlsContexts.Button @NotNull String okText, @Nullable Window window);
 
-  public abstract void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText);
+  public abstract boolean showYesNoDialog(@NlsContexts.DialogTitle@NotNull String title,
+                                          @NlsContexts.DialogMessage@NotNull String message,
+                                          @NlsContexts.Button @NotNull String yesText,
+                                          @NlsContexts.Button @NotNull String noText,
+                                          @Nullable Window window,
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
-  /**
-   * @return {@link Messages#YES} if user pressed "Yes" or {@link Messages#NO} if user pressed "No" button.
-   */
-  @Messages.YesNoResult
-  public abstract int showYesNoDialog(@NotNull String title, String message, @NotNull String yesButton, @NotNull String noButton, @Nullable Window window);
-
-  /**
-   * @return {@link Messages#YES} if user pressed "Yes" or {@link Messages#NO} if user pressed "No" button.
-   */
-  @Messages.YesNoResult
-  public abstract int showYesNoDialog(@NotNull String title, String message, @NotNull String yesButton, @NotNull String noButton, @Nullable Window window,
-                                      @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
-
-  public abstract void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window);
+  public abstract void showErrorDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                       @NlsContexts.DialogMessage String message,
+                                       @NlsContexts.Button @NotNull String okButton,
+                                       @Nullable Window window);
 }

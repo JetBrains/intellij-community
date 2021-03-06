@@ -16,37 +16,36 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.FilteringProcessor;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.Icon;
-import org.jetbrains.annotations.NotNull;
+import java.util.Set;
 
-/**
- * @author yole
- */
-public class FileReferenceCompletionImpl extends FileReferenceCompletion {
-  private static final TObjectHashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiElement>() {
+public final class FileReferenceCompletionImpl extends FileReferenceCompletion {
+  private static final Hash.Strategy<PsiElement> VARIANTS_HASHING_STRATEGY = new Hash.Strategy<>() {
     @Override
-
-    public int computeHashCode(final PsiElement object) {
+    public int hashCode(@Nullable PsiElement object) {
       if (object instanceof PsiNamedElement) {
-        final String name = ((PsiNamedElement)object).getName();
+        String name = ((PsiNamedElement)object).getName();
         if (name != null) {
           return name.hashCode();
         }
       }
-      return object.hashCode();
+      return Objects.hashCode(object);
     }
 
     @Override
-    public boolean equals(final PsiElement o1, final PsiElement o2) {
+    public boolean equals(@Nullable PsiElement o1, @Nullable PsiElement o2) {
       if (o1 instanceof PsiNamedElement && o2 instanceof PsiNamedElement) {
         return Objects.equals(((PsiNamedElement)o1).getName(), ((PsiNamedElement)o2).getName());
       }
-      return o1.equals(o2);
+      return Objects.equals(o1, o2);
     }
   };
 
@@ -59,7 +58,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
 
     final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector =
       new CommonProcessors.CollectUniquesProcessor<>();
-    final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
+    final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
         return new FilteringProcessor<>(reference.getFileReferenceSet().getReferenceCompletionFilter(), collector).process(
@@ -80,7 +79,7 @@ public class FileReferenceCompletionImpl extends FileReferenceCompletion {
     }
 
     final FileType[] types = reference.getFileReferenceSet().getSuitableFileTypes();
-    final THashSet<PsiElement> set = new THashSet<>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
+    final Set<PsiElement> set = new ObjectOpenCustomHashSet<>(collector.getResults(), VARIANTS_HASHING_STRATEGY);
     final PsiElement[] candidates = PsiUtilCore.toPsiElementArray(set);
 
     final Object[] variants = new Object[candidates.length + additionalItems.size()];

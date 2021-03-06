@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +56,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 @NonNls
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 14;
+  private static final int VERSION = 16;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -110,7 +111,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       myNumberOfTasks.put(root, new AtomicInteger());
       myIndexingTime.put(root, new AtomicLong());
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
-      myIndexingErrors.put(root, ContainerUtil.createConcurrentIntObjectMap());
+      myIndexingErrors.put(root, ConcurrentCollectionFactory.createConcurrentIntObjectMap());
     }
 
     mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
@@ -420,7 +421,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
               throw reThrown;
             }
             catch (Throwable t) {
-              LOG.error("Error while indexing", t);
+              request.processException(t);
             }
           }
         }
@@ -532,13 +533,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       }
     }
 
-    private void processException(@NotNull VcsException e) {
+    private void processException(@NotNull Throwable e) {
       int errorHash = ThrowableInterner.computeTraceHashCode(e);
       int errors = myIndexingErrors.get(myRoot).cacheOrGet(errorHash, 0);
       myIndexingErrors.get(myRoot).put(errorHash, errors + 1);
 
       if (errors <= LOGGED_ERRORS_COUNT) {
-        LOG.error(e);
+        LOG.error("Error while indexing " + myRoot.getName(), e);
       }
       else if (errors >= STOPPING_ERROR_COUNT) {
         myBigRepositoriesList.addRepository(myRoot);

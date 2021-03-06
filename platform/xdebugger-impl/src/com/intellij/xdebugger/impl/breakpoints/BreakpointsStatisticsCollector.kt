@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.beans.newCounterMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.progress.ProgressManager
@@ -86,7 +86,7 @@ fun addType(type: XBreakpointType<*, *>, data: FeatureUsageData) {
   data.addData("type", if (info.isDevelopedByJetBrains()) type.getId() else "custom")
 }
 
-class BreakpointsUtilValidator : CustomWhiteListRule() {
+class BreakpointsUtilValidator : CustomValidationRule() {
   override fun acceptRuleId(ruleId: String?): Boolean {
     return "breakpoint" == ruleId
   }

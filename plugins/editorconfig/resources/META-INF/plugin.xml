@@ -18,32 +18,29 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <depends>com.intellij.modules.lang</depends>
 
-  <actions>
+  <actions resource-bundle="messages.EditorConfigBundle">
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
-    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction"
-            text="EditorConfig File" description="Create new EditorConfig file">
+    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!-- Standard support -->
-    <applicationService serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" order="first"/>
-    <applicationService serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
     <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
     <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
     <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
     <stripTrailingSpacesFilterFactory implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesFilterFactory"/>
+    <editorNotificationProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorNotificationProvider"/>
 
     <!-- Language support -->
-    <fileType name="EditorConfig" 
-              language="EditorConfig" 
+    <fileType name="EditorConfig"
+              language="EditorConfig"
               implementationClass="org.editorconfig.language.filetype.EditorConfigFileType"
               fieldName="INSTANCE"
               fileNames=".editorconfig"/>
@@ -58,6 +55,11 @@ To create an EditorConfig file in a directory, right-click this directory and se
         id="EditorConfigCompletionContributor"
         order="last"
         implementationClass="org.editorconfig.language.codeinsight.completion.EditorConfigCompletionContributor"/>
+    <completion.contributor
+        language="EditorConfig"
+        id="EditorConfigUnsetContributor"
+        order="last"
+        implementationClass="org.editorconfig.configmanagement.completion.EditorConfigUnsetCompletionContributor"/>
     <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
     <statementUpDownMover implementation="org.editorconfig.language.codeinsight.actions.EditorConfigStatementUpDownMover"/>
     <moveLeftRightHandler
@@ -87,10 +89,10 @@ To create an EditorConfig file in a directory, right-click this directory and se
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
     <editorFactoryListener implementation="org.editorconfig.configmanagement.EditorSettingsManager"/>
-    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.EncodingManager"/>
+    <fileEncodingProvider implementation="org.editorconfig.configmanagement.ConfigEncodingManager"/>
     <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.LineEndingsManager"/>
 
-    <fileEncodingProvider implementation="org.editorconfig.configmanagement.EditorConfigFileEncodingProvider"/>
+    <utf8BomOptionProvider implementation="org.editorconfig.configmanagement.EditorConfigUtf8BomOptionProvider"/>
 
     <!-- Inspections -->
     <lang.inspectionSuppressor
@@ -384,12 +386,15 @@ To create an EditorConfig file in a directory, right-click this directory and se
     <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
+    <applicationService serviceImplementation="org.editorconfig.configmanagement.EditorConfigEncodingCache"/>
 
     <schemeExporter
-        name="EditorConfig File"
+        nameKey="scheme.exporter.target.name"
+        nameBundle="messages.EditorConfigBundle"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
-    <notificationWhitelist groupIds="EditorConfig;editorconfig"/>
+    <notificationGroup id="editorconfig" displayType="BALLOON"/>
+    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON"/>
   </extensions>
 
 
@@ -453,8 +458,11 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <extensions defaultExtensionNs="editorconfig">
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigBasicOptionDescriptorProvider"/>
-    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigRoslynOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsNamingOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsMiscOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigReSharperOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsFormattingOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsLanguageOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.configmanagement.extended.IntellijConfigOptionDescriptorProvider"/>
   </extensions>
 
@@ -469,4 +477,8 @@ To create an EditorConfig file in a directory, right-click this directory and se
   <applicationListeners>
     <listener class="org.editorconfig.plugincomponents.EditorConfigModificationListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </applicationListeners>
+
+  <projectListeners>
+    <listener class="org.editorconfig.configmanagement.EditorConfigEncodingCache$FileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

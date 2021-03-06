@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.http;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor;
@@ -27,8 +28,7 @@ class HttpFileEditor extends BaseRemoteFileEditor {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel.getMainPanel();
   }
 
@@ -42,9 +42,8 @@ class HttpFileEditor extends BaseRemoteFileEditor {
   }
 
   @Override
-  @NotNull
-  public String getName() {
-    return "Http";
+  public @NotNull String getName() {
+    return IdeBundle.message("http.editor.name");
   }
 
   @Override
@@ -58,8 +57,7 @@ class HttpFileEditor extends BaseRemoteFileEditor {
   }
 
   @Override
-  @Nullable
-  protected TextEditor getTextEditor() {
+  protected @Nullable TextEditor getTextEditor() {
     return myPanel.getFileEditor();
   }
 

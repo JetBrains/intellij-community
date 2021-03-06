@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.builders.BuildTargetRegistry;
-import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
@@ -33,7 +30,7 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "backward-references indexer";
+    return JpsBuildBundle.message("builder.name.backward.references.indexer");
   }
 
   @Override

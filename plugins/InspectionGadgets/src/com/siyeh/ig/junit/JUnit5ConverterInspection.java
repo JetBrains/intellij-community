@@ -48,7 +48,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return "#ref can be JUnit 5 test";
+    return InspectionGadgetsBundle.message("junit5.converter.problem");
   }
 
   @Override
@@ -154,14 +154,11 @@ public class JUnit5ConverterInspection extends BaseInspection {
     }
 
     private static class MyJUnit5MigrationProcessor extends MigrationProcessor {
-
-      private final Project myProject;
       private final Set<? extends PsiFile> myFiles;
 
       MyJUnit5MigrationProcessor(Project project, MigrationMap migrationMap, Set<? extends PsiFile> files) {
         super(project, migrationMap, GlobalSearchScope.filesWithoutLibrariesScope(project, ContainerUtil.map(files, file -> file.getVirtualFile())));
         setPrepareSuccessfulSwingThreadCallback(EmptyRunnable.INSTANCE);
-        myProject = project;
         myFiles = files;
       }
 
@@ -179,8 +176,9 @@ public class JUnit5ConverterInspection extends BaseInspection {
               return true;
             });
             if (!inheritors.isEmpty()) {
-              conflicts.putValue(psiClass, "Class " + RefactoringUIUtil.getDescription(psiClass, true) + " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
-                                           StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
+              @Nls final String problem =
+                InspectionGadgetsBundle.message("junit5.convert.fix.conflict.inheritor", RefactoringUIUtil.getDescription(psiClass, true), StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
+              conflicts.putValue(psiClass, problem);
             }
           }
         }
@@ -218,7 +216,8 @@ public class JUnit5ConverterInspection extends BaseInspection {
           }
         }
         super.performRefactoring(migrateUsages.toArray(UsageInfo.EMPTY_ARRAY));
-        CleanupInspectionUtil.getInstance().applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
+        CleanupInspectionUtil.getInstance().applyFixes(myProject, InspectionGadgetsBundle.message("junit5.converter.fixes.presentation.text"),
+                                                       descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
 
       @Override

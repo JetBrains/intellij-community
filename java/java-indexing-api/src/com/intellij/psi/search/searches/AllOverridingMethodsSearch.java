@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * Searches deeply for all overriding methods of all methods in a class, processing pairs
  * (method in original class, overriding method)
  */
-public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+public final class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.allOverridingMethodsSearch");
   public static final AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
 

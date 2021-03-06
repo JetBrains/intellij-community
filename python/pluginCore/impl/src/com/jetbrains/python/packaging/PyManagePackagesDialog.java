@@ -9,6 +9,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -34,7 +35,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     sdks.sort(new PreferredSdkComparator());
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
-    sdkComboBox.setRenderer(new PySdkListCellRenderer(null));
+    sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
     PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel();
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
@@ -43,7 +44,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     packagesPanel.updateNotifications(sdk);
 
     myMainPanel = new JPanel(new BorderLayout());
-    final LabeledComponent<JComboBox> sdkLabeledComponent = LabeledComponent.create(sdkComboBox, PyBundle.message("interpreter"));
+    final LabeledComponent<JComboBox> sdkLabeledComponent = LabeledComponent.create(sdkComboBox, PySdkBundle.message("python.interpreter.label"));
     sdkLabeledComponent.setLabelLocation(BorderLayout.WEST);
     myMainPanel.add(sdkLabeledComponent, BorderLayout.NORTH);
     myMainPanel.add(packagesPanel, BorderLayout.CENTER);

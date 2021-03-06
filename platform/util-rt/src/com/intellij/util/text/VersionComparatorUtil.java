@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.util.Function;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * This versions comparator is much smarter than StringUtil.compareVersionNumbers
  * E.g: is used for TeamCity plugins and Ruby gems versions
  */
-public class VersionComparatorUtil {
+public final class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
 

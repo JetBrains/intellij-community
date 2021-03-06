@@ -62,7 +62,7 @@ public final class JDOMXIncluder {
    * @deprecated Use {@link #resolveRoot(Element, URL)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static @NotNull Document resolve(Document original, String base) throws XIncludeException, MalformedURLException {
     return new Document(resolveRoot(original.getRootElement(), new URL((base))));
   }

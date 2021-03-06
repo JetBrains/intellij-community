@@ -16,10 +16,13 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +57,14 @@ public class CompletionPolicy {
       return null;
     }
 
-    if (leafText.length() == 1 && 
-        "org.intellij.lang.regexp.RegExpElementType".equals(PsiUtilCore.getElementType(leaf).getClass().getName())) {
-      // regexp has a token for each character: not interesting (and no completion)
-      return null;
+    IElementType leafType = PsiUtilCore.getElementType(leaf);
+    if ("org.intellij.lang.regexp.RegExpElementType".equals(leafType.getClass().getName())) {
+      if (leafText.length() == 1) {
+        return null; // regexp has a token for each character: not interesting (and no completion)
+      }
+      if ("NAME".equals(leafType.toString())) {
+        return null; // group name, no completion expected
+      }
     }
 
     if (isDeclarationName(editor, file, leaf, ref)) return null;
@@ -76,6 +83,10 @@ public class CompletionPolicy {
       if (!SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isEmpty()) {
         return null;
       }
+      if (LanguageWordCompletion.INSTANCE.isEnabledIn(leafType)) {
+        // Looks like plain text. And the word under caret is excluded from word completion anyway.
+        return null;
+      }
       if (!shouldSuggestNonReferenceLeafText(leaf)) return null;
     }
     return leafText;
@@ -87,6 +98,13 @@ public class CompletionPolicy {
 
   public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
     return leaf != null && !isAfterError(file, leaf);
+  }
+
+  /**
+   * @return whether it's OK for two lookup elements at the same place to have the same presentation (e.g. due to errors in the source code)
+   */
+  public boolean areDuplicatesOk(@NotNull LookupElement item1, @NotNull LookupElement item2) {
+    return false;
   }
 
   private static PsiElement getValidResolveResult(@NotNull PsiReference ref) {

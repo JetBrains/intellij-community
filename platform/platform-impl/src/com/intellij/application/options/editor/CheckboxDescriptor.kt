@@ -1,18 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
+import javax.swing.JRadioButton
 import kotlin.reflect.KMutableProperty0
 
-class CheckboxDescriptor(@Nls val name: String,
+class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
                          val binding: PropertyBinding<Boolean>,
-                         @Nls val comment: String? = null,
+                         @NlsContexts.DetailedDescription val comment: String? = null,
                          @Nls val groupName: String? = null) {
-  constructor(name: String, mutableProperty: KMutableProperty0<Boolean>, comment: String? = null, groupName: String? = null)
+  constructor(@NlsContexts.Checkbox name: String, mutableProperty: KMutableProperty0<Boolean>,
+              @NlsContexts.DetailedDescription comment: String? = null, @Nls groupName: String? = null)
     : this(name, mutableProperty.toBinding(), comment, groupName)
 
   fun asUiOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor {
@@ -42,4 +45,8 @@ class CheckboxDescriptor(@Nls val name: String,
 
 fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
   return checkBox(ui.name, ui.binding.get, ui.binding.set, ui.comment)
+}
+
+fun Cell.radioButton(ui: CheckboxDescriptor): CellBuilder<JRadioButton> {
+  return radioButton(ui.name, ui.binding.get, ui.binding.set, ui.comment)
 }

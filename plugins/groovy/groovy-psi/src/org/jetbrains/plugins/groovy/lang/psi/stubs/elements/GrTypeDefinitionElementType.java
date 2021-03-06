@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.PsiNameHelper;
@@ -32,7 +32,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
 
   @NotNull
   @Override
-  public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement parentStub) {
+  public GrTypeDefinitionStub createStub(@NotNull TypeDef psi, StubElement<?> parentStub) {
     final byte flags = GrTypeDefinitionStub.buildFlags(psi);
     return new GrTypeDefinitionStub(
       parentStub, psi.getName(),

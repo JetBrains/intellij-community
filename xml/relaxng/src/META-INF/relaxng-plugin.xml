@@ -27,7 +27,7 @@
     <include.provider implementation="org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeProvider"/>
 
     <externalAnnotator language="XML" implementationClass="org.intellij.plugins.relaxNG.validation.RngSchemaValidator" />
-    <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" />
+    <lang.documentationProvider language="XML" implementationClass="org.intellij.plugins.relaxNG.RngDocumentationProvider" id="rng" />
     <psi.referenceContributor language="XML" implementation="org.intellij.plugins.relaxNG.RelaxNGReferenceContributor"/>
 
     <dom.fileMetaData implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngChoiceDescription" rootTagName="choice"/>
@@ -44,18 +44,18 @@
     <applicationService serviceInterface="com.intellij.xml.Html5SchemaProvider" serviceImplementation="org.intellij.plugins.relaxNG.xml.RngHtml5SchemaProvider"/>
     <metaDataContributor implementation="org.intellij.html.RngHtml5MetaDataContributor"/>
 
-    <localInspection shortName="UnresolvedReference" displayName="Unresolved References" groupName="RELAX NG" enabledByDefault="true"
-                     level="ERROR" implementationClass="org.intellij.plugins.relaxNG.inspections.RngDomInspection"/>
-    <localInspection shortName="UnusedDefine" displayName="Unused Define" groupName="RELAX NG" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection"/>
+    <localInspection shortName="UnresolvedReference" groupKey="relaxng.inspection.group-name" enabledByDefault="true"
+                     level="ERROR" implementationClass="org.intellij.plugins.relaxNG.inspections.RngDomInspection"
+                     key="relaxng.inspection.unresolved-reference.name" bundle="messages.RelaxngBundle"/>
+    <localInspection shortName="UnusedDefine" groupKey="relaxng.inspection.group-name" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.intellij.plugins.relaxNG.inspections.UnusedDefineInspection"
+                     key="relaxng.inspection.unused-define.name" bundle="messages.RelaxngBundle"/>
     <xml.validateHandler implementation="org.intellij.plugins.relaxNG.validation.RngValidateHandler"/>
     <metaDataContributor implementation="org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor" order="first"/>
   </extensions>
 
-  <actions>
-    <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction"
-            text="Convert Schema..."
-            description="Converts the selected Schema document (RNG, RNC, XSD, DTD) into another format">
+  <actions resource-bundle="messages.RelaxngBundle">
+    <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction">
       <add-to-group group-id="ToolsXmlGroup" anchor="after" relative-to-action="GenerateDTD" />
     </action>
   </actions>

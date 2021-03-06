@@ -31,11 +31,6 @@ public class ComplementPackageSet extends PackageSetBase {
   }
 
   @Override
-  public boolean contains(@NotNull VirtualFile file, @NotNull NamedScopesHolder holder) {
-    return contains(file, holder.getProject(), holder);
-  }
-
-  @Override
   public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, project, holder)
                                                         : myComplementarySet.contains(getPsiFile(file, project), holder);

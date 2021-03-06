@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
@@ -21,8 +7,10 @@ import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +23,7 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
 /**
  * @author Roman Chernyatchik
  */
-public class TestsPresentationUtil {
+public final class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
   private static class Holder {
     private static String getNoNameTest() {
@@ -49,14 +37,14 @@ public class TestsPresentationUtil {
   private TestsPresentationUtil() {
   }
 
-  public static String getProgressStatus_Text(final long startTime,
-                                              final long endTime,
-                                              final int testsTotal,
-                                              final int testsCount,
-                                              final int failuresCount,
-                                              @Nullable final Set<String> allCategories,
-                                              final boolean isFinished) {
-    final StringBuilder sb = new StringBuilder();
+  public static @Nls String getProgressStatus_Text(final long startTime,
+                                                   final long endTime,
+                                                   final int testsTotal,
+                                                   final int testsCount,
+                                                   final int failuresCount,
+                                                   @Nullable final Set<String> allCategories,
+                                                   final boolean isFinished) {
+    final @Nls StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
       sb.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
     } else {
@@ -104,7 +92,7 @@ public class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(StringUtil.formatDuration(time, "\u2009")).append(')');
+      sb.append('(').append(NlsMessages.formatDurationApproximateNarrow(time)).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
@@ -266,6 +254,7 @@ public class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final boolean hasErrors = testProxy.hasErrors();
+    final boolean hasPassedTests = testProxy.hasPassedTests();
 
     switch (magnitude) {
       case ERROR_INDEX:
@@ -273,7 +262,7 @@ public class TestsPresentationUtil {
       case FAILED_INDEX:
         return hasErrors ? FAILED_E_ICON : FAILED_ICON;
       case IGNORED_INDEX:
-        return hasErrors ? IGNORED_E_ICON : IGNORED_ICON;
+        return hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
       case NOT_RUN_INDEX:
         return NOT_RAN;
       case COMPLETE_INDEX:

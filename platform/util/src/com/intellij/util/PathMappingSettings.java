@@ -106,12 +106,9 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   }
 
   public void addMappingCheckUnique(@NotNull String local, @NotNull String remote) {
-    for (PathMapping mapping : myPathMappings) {
-      if (pathEquals(local, mapping.getLocalRoot()) && pathEquals(remote, mapping.getRemoteRoot())) {
-        return;
-      }
-    }
-    addMapping(local, remote);
+    PathMapping mapping = new PathMapping(local, remote);
+    if (myPathMappings.contains(mapping)) return;
+    add(mapping);
   }
 
   private static boolean pathEquals(@NotNull String path1, @NotNull String path2) {
@@ -141,7 +138,16 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     path = norm(path);
     String remotePrefix = norm(remoteRoot);
     if (canReplaceRemote(path, remotePrefix)) {
-      path = norm(localRoot) + path.substring(remotePrefix.length());
+      String left = norm(localRoot);
+      String right = path.substring(remotePrefix.length());
+      // Left and right part must be separated
+      if ((left.endsWith("/") || left.endsWith("\\") || right.startsWith("/") || right.startsWith("\\") ||
+           StringUtil.isEmpty(left) || StringUtil.isEmpty(right))) {
+        path = left + right;
+      }
+      else {
+        path = left + "/" + right;
+      }
     }
     return path;
   }

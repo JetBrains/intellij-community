@@ -2,9 +2,7 @@
 package com.siyeh.ig.assignment;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspectionTest extends LightJavaInspectionTestCase {
 
@@ -34,9 +32,4 @@ public class NestedAssignmentInspectionTest extends LightJavaInspectionTestCase 
     return new NestedAssignmentInspection();
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
-  }
 }

@@ -65,6 +65,26 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
   public void testUsedLocalVariables() {
     assertIntentionNotAvailable();
   }
+  
+  public void testAnnotatedLambdaParameter() {
+    doTest();
+  }
+  
+  public void testAnnotatedLambdaParameterType() {
+    doTest();
+  }
+  
+  public void testAnnotatedLambdaParameterType2() {
+    doTest();
+  }
+  
+  public void testAnnotatedLambdaParameterTypeWildcard() {
+    doTest();
+  }
+  
+  public void testAnnotatedLambdaParameterVar() {
+    doTest();
+  }
 
   @Override
   protected String getIntentionName() {
@@ -79,7 +99,7 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_11;
   }
 }
 

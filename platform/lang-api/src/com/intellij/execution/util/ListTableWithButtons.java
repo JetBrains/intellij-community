@@ -2,6 +2,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -67,8 +68,8 @@ public abstract class ListTableWithButtons<T> extends Observable {
         }
       }
     };
+    myTableView.setShowGrid(false);
     myTableView.setIntercellSpacing(JBUI.emptySize());
-    myTableView.setStriped(true);
     myTableView.getTableViewModel().setSortable(false);
     myTableView.getComponent().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -261,10 +262,10 @@ public abstract class ListTableWithButtons<T> extends Observable {
 
   protected abstract boolean canDeleteElement(T selection);
 
-  protected static abstract class ElementsColumnInfoBase<T> extends ColumnInfo<T, String> {
+  protected static abstract class ElementsColumnInfoBase<T> extends ColumnInfo<T, @NlsContexts.ListItem String> {
     private DefaultTableCellRenderer myRenderer;
 
-    protected ElementsColumnInfoBase(String name) {
+    protected ElementsColumnInfoBase(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -281,6 +282,6 @@ public abstract class ListTableWithButtons<T> extends Observable {
     }
 
     @Nullable
-    protected abstract String getDescription(T element);
+    protected abstract @NlsContexts.Tooltip String getDescription(T element);
   }
 }

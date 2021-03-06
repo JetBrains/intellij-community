@@ -51,7 +51,7 @@ public class PyGlobalUndefinedInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyGlobalStatement(PyGlobalStatement node) {
+    public void visitPyGlobalStatement(@NotNull PyGlobalStatement node) {
       final PyTargetExpression[] globals = node.getGlobals();
 
       for (PyTargetExpression global : globals) {
@@ -61,7 +61,7 @@ public class PyGlobalUndefinedInspection extends PyInspection {
         final boolean noTopLevelDeclaration = elements.stream().noneMatch(PyUtil::isTopLevel);
 
         if (noTopLevelDeclaration) {
-          registerProblem(global, PyPsiBundle.message("INSP.NAME.global.$0.undefined", global.getName()));
+          registerProblem(global, PyPsiBundle.message("INSP.global.variable.undefined", global.getName()));
         }
       }
     }

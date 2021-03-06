@@ -60,6 +60,14 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$targetDirectory/bin") {
       fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
     }
+    bundleExternalPlugins(buildContext, targetDirectory)
+  }
+
+  protected void bundleExternalPlugins(BuildContext buildContext, String targetDirectory) {
+    //temporary unbundle VulnerabilitySearch
+    //ExternalPluginBundler.bundle('VulnerabilitySearch',
+    //                             "$buildContext.paths.communityHome/build/dependencies",
+    //                             buildContext, targetDirectory)
   }
 
   @Override
@@ -89,7 +97,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$projectHome/platform/icons/compatibilityResources/icon_CE_128.png"
+        iconPngPath = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
         iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
@@ -131,7 +139,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   }
 
   @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) { "IdeaIC${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
 
   @Override
   String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "ideaIC-$buildNumber" }

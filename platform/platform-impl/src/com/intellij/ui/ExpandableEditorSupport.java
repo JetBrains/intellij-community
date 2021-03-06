@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import static java.util.Arrays.asList;
-
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
@@ -12,14 +10,14 @@ import com.intellij.ui.components.fields.ExpandableSupport;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
-import java.awt.Color;
-import java.awt.Dimension;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.ScrollPaneConstants;
-import org.jetbrains.annotations.NotNull;
+
+import static java.util.Arrays.asList;
 
 public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> {
   public ExpandableEditorSupport(@NotNull EditorTextField field) {
@@ -31,7 +29,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   }
 
   public ExpandableEditorSupport(@NotNull EditorTextField field,
-                                 @NotNull Function<? super String, ? extends java.util.List<String>> parser,
+                                 @NotNull Function<? super String, ? extends List<String>> parser,
                                  @NotNull Function<? super List<String>, String> joiner) {
     super(field, text -> StringUtil.join(parser.fun(text), "\n"),
           text -> joiner.fun(asList(StringUtil.splitByLines(text))));

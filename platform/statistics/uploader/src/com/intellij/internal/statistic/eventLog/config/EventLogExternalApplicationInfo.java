@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.config;
 
-import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,20 +13,26 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
 
   private final String myTemplateUrl;
   private final String myProductCode;
-  private final String myUserAgent;
+  private final String myProductVersion;
+  private final EventLogBasicConnectionSettings myConnectionSettings;
+
   private final boolean myIsInternal;
   private final boolean myIsTest;
+  private final boolean myIsEAP;
 
   public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
-                                         @Nullable String userAgent,
-                                         boolean isInternal, boolean isTest,
+                                         @NotNull String productVersion, @Nullable String userAgent,
+                                         boolean isInternal, boolean isTest, boolean isEAP,
                                          @NotNull DataCollectorDebugLogger logger,
                                          @NotNull DataCollectorSystemEventLogger eventLogger) {
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
-    myUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
+    myProductVersion = productVersion;
+    String externalUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
+    myConnectionSettings = new EventLogBasicConnectionSettings(externalUserAgent);
     myIsInternal = isInternal;
     myIsTest = isTest;
+    myIsEAP = isEAP;
     myLogger = logger;
     myEventLogger = eventLogger;
   }
@@ -43,10 +49,15 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     return myProductCode;
   }
 
+  @Override
+  public @NotNull String getProductVersion() {
+    return myProductVersion;
+  }
+
   @NotNull
   @Override
-  public String getUserAgent() {
-    return myUserAgent;
+  public EventLogConnectionSettings getConnectionSettings() {
+    return myConnectionSettings;
   }
 
   @Override
@@ -57,6 +68,11 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   @Override
   public boolean isTest() {
     return myIsTest;
+  }
+
+  @Override
+  public boolean isEAP() {
+    return myIsEAP;
   }
 
   @NotNull

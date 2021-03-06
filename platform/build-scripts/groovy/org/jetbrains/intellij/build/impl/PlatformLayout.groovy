@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -17,7 +18,8 @@ import java.util.function.Consumer
  * (or prepared to be {@link org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish published}) with the product (except
  * project libraries which are explicitly included into layouts of all plugins depending on them by {@link BaseLayoutSpec#withProjectLibrary}).
  */
-class PlatformLayout extends BaseLayout {
+@CompileStatic
+final class PlatformLayout extends BaseLayout {
   List<String> excludedProjectLibraries = []
   final List<String> projectLibrariesWithRemovedVersionFromJarNames = []
 
@@ -56,7 +58,7 @@ class PlatformLayout extends BaseLayout {
      * will be removed when build scripts automatically compose bootstrap classpath.
      */
     void removeVersionFromProjectLibraryJarNames(String libraryName) {
-      layout.projectLibrariesWithRemovedVersionFromJarNames << libraryName
+      layout.projectLibrariesWithRemovedVersionFromJarNames.add(libraryName)
     }
 
     /**

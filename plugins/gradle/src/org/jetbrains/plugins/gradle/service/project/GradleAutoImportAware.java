@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -65,13 +66,13 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     for (ExternalProjectSettings setting : projectsSettings) {
       if(setting != null) {
         for (String path : setting.getModules()) {
-          rootPaths.put(new File(path).getAbsolutePath(), setting.getExternalProjectPath());
+          rootPaths.put(new File(path).getPath(), setting.getExternalProjectPath());
         }
       }
     }
 
     for (File f = file.getParentFile(); f != null; f = f.getParentFile()) {
-      String dirPath = f.getAbsolutePath();
+      String dirPath = f.getPath();
       if (rootPaths.containsKey(dirPath)) {
         return rootPaths.get(dirPath);
       }
@@ -130,7 +131,7 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       ProgressManager.checkCanceled();
 
       try {
-        Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
             String fileName = path.getFileName().toString();
@@ -149,5 +150,10 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
     }
 
     return files;
+  }
+
+  @Override
+  public boolean isApplicable(@Nullable ProjectResolverPolicy resolverPolicy) {
+    return resolverPolicy == null || !resolverPolicy.isPartialDataResolveAllowed();
   }
 }

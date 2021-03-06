@@ -17,7 +17,11 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.properties.PropertiesHighlighter.PropertiesComponent;
 import com.intellij.lang.properties.editor.PropertiesValueHighlighter;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -27,8 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,19 +41,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author cdr
- */
 public class PropertiesAnnotator implements Annotator {
+  private static final ExtensionPointName<DuplicatePropertyKeyAnnotationSuppressor>
+    EP_NAME = ExtensionPointName.create("com.intellij.properties.duplicatePropertyKeyAnnotationSuppressor");
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!(element instanceof Property)) return;
     final Property property = (Property)element;
     PropertiesFile propertiesFile = property.getPropertiesFile();
-    Collection<IProperty> others = propertiesFile.findPropertiesByKey(property.getUnescapedKey());
+    final String key = property.getUnescapedKey();
+    if (key == null) return;
+    Collection<IProperty> others = propertiesFile.findPropertiesByKey(key);
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
-    if (others.size() != 1) {
+    if (keyNode == null) return;
+    if (others.size() != 1 &&
+      EP_NAME.findFirstSafe(suppressor -> suppressor.suppressAnnotationFor(property)) == null) {
       holder.newAnnotation(HighlightSeverity.ERROR,PropertiesBundle.message("duplicate.property.key.error.message")).range(keyNode)
       .withFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property)).create();
     }
@@ -70,17 +77,16 @@ public class PropertiesAnnotator implements Annotator {
       IElementType elementType = lexer.getTokenType();
       TextAttributesKey[] keys = highlighter.getTokenHighlights(elementType);
       for (TextAttributesKey key : keys) {
-        Pair<String,HighlightSeverity> pair = PropertiesHighlighter.DISPLAY_NAMES.get(key);
-        String displayName = pair.getFirst();
-        HighlightSeverity severity = pair.getSecond();
-        if (severity != null) {
+        final String displayName = PropertiesComponent.getDisplayName(key);
+        final HighlightSeverity severity = PropertiesComponent.getSeverity(key);
+        if (severity != null && displayName != null) {
           int start = lexer.getTokenStart() + node.getTextRange().getStartOffset();
           int end = lexer.getTokenEnd() + node.getTextRange().getStartOffset();
           TextRange textRange = new TextRange(start, end);
           TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
           AnnotationBuilder builder = holder.newAnnotation(severity, displayName).range(textRange).enforcedTextAttributes(attributes);
 
-          if (key == PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE) {
+          if (key == PropertiesComponent.PROPERTIES_INVALID_STRING_ESCAPE.getTextAttributesKey()) {
             builder = builder.withFix(new IntentionAction() {
               @Override
               @NotNull

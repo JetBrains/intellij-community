@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -11,12 +14,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.impl.VcsEP;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
-import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,42 +34,42 @@ import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.*;
 
-public class VcsRootScanner implements AsyncVfsEventsListener {
+@Service
+public final class VcsRootScanner implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsRootScanner.class);
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
   @NotNull private final Project myProject;
-  @NotNull private final ProjectRootManager myProjectManager;
 
   @NotNull private final Alarm myAlarm;
   private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
-  public static void start(@NotNull Project project) {
-    new VcsRootScanner(project).scheduleScan();
+  public static VcsRootScanner getInstance(@NotNull Project project) {
+    return project.getService(VcsRootScanner.class);
   }
 
-  private VcsRootScanner(@NotNull Project project) {
+  public VcsRootScanner(@NotNull Project project) {
     myProject = project;
-    myProjectManager = ProjectRootManager.getInstance(project);
-    myRootProblemNotifier = VcsRootProblemNotifier.getInstance(project);
+    myRootProblemNotifier = VcsRootProblemNotifier.createInstance(project);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-    AsyncVfsEventsPostProcessor.getInstance().addListener(this, project);
-
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-
-    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(() -> scheduleScan(), project);
-    VcsEP.EP_NAME.addChangeListener(() -> scheduleScan(), project);
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this::filesChanged, this);
+    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(this::scheduleScan, this);
+    VcsEP.EP_NAME.addChangeListener(this::scheduleScan, this);
   }
 
   @Override
-  public void filesChanged(@NotNull List<? extends VFileEvent> events) {
+  public void dispose() {
+  }
+
+  private void filesChanged(@NotNull List<? extends VFileEvent> events) {
     List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
     if (checkers.isEmpty()) return;
 
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
       if (file != null && file.isDirectory()) {
-        visitDirsRecursivelyWithoutExcluded(myProject, myProjectManager, file, dir -> {
+        visitDirsRecursivelyWithoutExcluded(myProject, file, true, dir -> {
           if (isVcsDir(checkers, dir.getName())) {
             scheduleScan();
             return skipTo(file);
@@ -77,14 +81,14 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
   }
 
   static void visitDirsRecursivelyWithoutExcluded(@NotNull Project project,
-                                                  @NotNull ProjectRootManager projectRootManager,
                                                   @NotNull VirtualFile root,
-                                                  @NotNull Function<? super VirtualFile, ? extends Result> dirFound) {
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+                                                  boolean visitIgnoredFoldersThemselves,
+                                                  @NotNull Function<? super VirtualFile, Result> processor) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
     Pattern ignorePattern = parseDirIgnorePattern();
 
-    if (isUnderIgnoredDirectory(project, ignorePattern, root)) return;
+    if (isUnderIgnoredDirectory(project, ignorePattern, visitIgnoredFoldersThemselves ? root.getParent() : root)) return;
 
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, depthLimit) {
       @NotNull
@@ -92,6 +96,13 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
       public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {
           return CONTINUE;
+        }
+
+        if (visitIgnoredFoldersThemselves) {
+          Result apply = processor.apply(file);
+          if (apply != CONTINUE) {
+            return apply;
+          }
         }
 
         if (isIgnoredDirectory(project, ignorePattern, file)) {
@@ -102,7 +113,14 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
           return SKIP_CHILDREN;
         }
 
-        return dirFound.apply(file);
+        if (!visitIgnoredFoldersThemselves) {
+          Result apply = processor.apply(file);
+          if (apply != CONTINUE) {
+            return apply;
+          }
+        }
+
+        return CONTINUE;
       }
     });
   }
@@ -111,17 +129,18 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
     return checkers.stream().anyMatch(it -> it.isVcsDir(filePath));
   }
 
-  private void scheduleScan() {
+  public void scheduleScan() {
     if (myAlarm.isDisposed()) return;
     if (VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList().isEmpty()) return;
 
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
-    myAlarm.addRequest(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () ->
-      myRootProblemNotifier.rescanAndNotifyIfNeeded()), WAIT_BEFORE_SCAN);
+    myAlarm.addRequest(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () -> {
+      myRootProblemNotifier.rescanAndNotifyIfNeeded();
+    }), WAIT_BEFORE_SCAN);
   }
 
 
-  static boolean isUnderIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
+  static boolean isUnderIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @Nullable VirtualFile dir) {
     VirtualFile parent = dir;
     while (parent != null) {
       if (isIgnoredDirectory(project, ignorePattern, parent)) return true;
@@ -130,7 +149,7 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
     return false;
   }
 
-  static boolean isIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
+  private static boolean isIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
     if (ProjectLevelVcsManager.getInstance(project).isIgnored(dir)) {
       LOG.debug("Skipping ignored dir: ", dir);
       return true;
@@ -150,6 +169,19 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
     catch (MissingResourceException | PatternSyntaxException e) {
       LOG.warn(e);
       return null;
+    }
+  }
+
+  static final class DetectRootsStartupActivity implements VcsStartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      getInstance(project).scheduleScan();
+    }
+
+    @Override
+    public int getOrder() {
+      return VcsInitObject.AFTER_COMMON.getOrder();
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
@@ -209,7 +210,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   @Override
-  public void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text, @Nullable ActionListener linkListener) {
     myOptionsTree.setEmptyText(text, linkListener);
   }
 }

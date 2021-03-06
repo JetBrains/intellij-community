@@ -15,12 +15,14 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -37,17 +39,17 @@ public abstract class AntDomBuildnumberTask extends AntDomElement implements Pro
 
   @Override
   @NotNull
-  public Iterator<String> getNamesIterator() {
+  public Iterator<@NlsSafe String> getNamesIterator() {
     return Collections.singletonList(PROPERTY_NAME).iterator();
   }
 
   @Override
-  public String getPropertyValue(String propertyName) {
+  public @Nullable @NlsSafe String getPropertyValue(@NlsSafe String propertyName) {
     return PROPERTY_NAME.equals(propertyName)? "" : null;
   }
 
   @Override
-  public PsiElement getNavigationElement(String propertyName) {
+  public PsiElement getNavigationElement(@NlsSafe String propertyName) {
     return PROPERTY_NAME.equals(propertyName)? getXmlElement() : null;
   }
 }

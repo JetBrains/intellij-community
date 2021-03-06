@@ -12,7 +12,10 @@ import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -115,7 +118,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.refreshAndGetPackages(false);
           // TODO: Install Markdown from a local file
-          manager.install(Arrays.asList(pyRequirement("Markdown", PyRequirementRelation.LT, "2.2"), pyRequirement("httplib2")),
+          manager.install(Arrays.asList(pyRequirement("Markdown", PyRequirementRelation.LTE, "3.3.3"), pyRequirement("httplib2")),
                           Collections.emptyList());
           final List<PyPackage> packages2 = manager.refreshAndGetPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);

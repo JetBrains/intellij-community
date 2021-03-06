@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * A {@link com.intellij.openapi.ui.ComboBox}'s model may implement
+ * A {@link ComboBox}'s model may implement
  * that interface to handle a custom sub-popup to be shown for some
  * ComboBox elements.
  * <br />
@@ -26,13 +26,13 @@ public interface ComboBoxPopupState<T> {
    * This method is called on the {@link ComboBoxModel} instance of the
    * combobox to decide if there is next step needed or not.
    * <br/>
-   * Return {@code null} if there is no sup-pupup to be shown. That would
-   * mean the {@link com.intellij.openapi.ui.ComboBox#setSelectedItem(Object)}
+   * Return {@code null} if there is no sup-popup to be shown. That would
+   * mean the {@link ComboBox#setSelectedItem(Object)}
    * is executed with the same {@param selectedValue} parameter.
    * <br/>
    * A non-null value would mean a sub-popup to be created. The sub-popup
    * will use the same element type and the same renderer as the original
-   * {@link com.intellij.openapi.ui.ComboBox}. The returned object will
+   * {@link ComboBox}. The returned object will
    * be checked again to implement this interface.
    *
    * @param selectedValue the selected item.

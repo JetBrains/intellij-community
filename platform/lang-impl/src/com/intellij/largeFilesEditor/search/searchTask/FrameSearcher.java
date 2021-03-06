@@ -20,7 +20,7 @@ class FrameSearcher {
    * Use this field if bordering symbol (beforeFrameStartSymbol, afterFrameEndSymbol) doesn't exist
    */
   static char NOT_EXISTING_BORDERING_SYMBOL = '\n';
-  static char ELLIPSIS = '\u2026';
+  static char ELLIPSIS = '…';
 
   private final SmartStringSearcher smartStringSearcher;
 

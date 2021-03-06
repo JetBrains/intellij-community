@@ -90,7 +90,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
     }
     boolean hasNonStaticFields = hasNonStaticFields(aClass);
     if (!hasNonStaticFields) {
-      HintManager.getInstance().showErrorHint(editor, "No fields to include in equals/hashCode have been found");
+      HintManager.getInstance().showErrorHint(editor, JavaBundle.message("generate.equals.no.fields.for.generation"));
       return null;
     }
 

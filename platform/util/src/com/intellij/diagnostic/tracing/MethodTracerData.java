@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.tracing;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MethodTracerData {
-  public final String id;
+  public final @NotNull MethodTracer.TracerId id;
   public final String className;
   public final String methodName;
   public final long invocationCount;
@@ -16,7 +18,7 @@ public class MethodTracerData {
 
   public final int maxRecursionDepth;
 
-  public MethodTracerData(String id,
+  public MethodTracerData(@NotNull MethodTracer.TracerId id,
                           String className,
                           String methodName,
                           long invocationCount,

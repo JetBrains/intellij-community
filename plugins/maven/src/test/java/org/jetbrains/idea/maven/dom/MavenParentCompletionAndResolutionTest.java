@@ -20,6 +20,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.idea.maven.compatibility.MavenWrapperTestFixture;
+import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection;
+
+import java.util.Collections;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   public void testVariants() {
@@ -203,6 +207,104 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "</parent>");
     checkHighlighting(myProjectPom);
   }
+
+  public void testHighlightParentProperties() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project0</artifactId>" +
+                     "<version>1.${revision}</version>" +
+                     "<packaging>pom</packaging>" +
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>" +
+                     "<properties>" +
+                     "  <revision>0</revision>" +
+                     "  <anotherProperty>0</anotherProperty>" +
+                     "</properties>");
+
+    VirtualFile m1= createModulePom("m1",
+                    "<parent>" +
+                    "<groupId>test</groupId>" +
+                    "<artifactId>project0</artifactId>" +
+                    "<version>1.${revision}</version>" +
+                    "</parent>" +
+                    "<artifactId>m1</artifactId>");
+
+    VirtualFile m2 = createModulePom("m2",
+                                     "<parent>" +
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>project0</artifactId>" +
+                                     "<version>1.${revision}</version>" +
+                                     "</parent>" +
+                                     "<artifactId>m1</artifactId>");
+
+    importProject();
+
+    m2 = createModulePom("m2",
+                         "<parent>\n" +
+                         "<groupId>test</groupId>\n" +
+                         "<artifactId><error descr=\"Properties in parent definition are prohibited\">project${anotherProperty}</error></artifactId>\n" +
+                         "<version>1.${revision}</version>\n" +
+                         "</parent>\n" +
+                         "<artifactId>m1</artifactId>\n");
+
+
+    myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
+    checkHighlighting(m2);
+  }
+
+  public void testHighlightParentPropertiesForMavenLess35() throws Exception {
+
+    MavenWrapperTestFixture fixture = new MavenWrapperTestFixture(myProject, "3.3.9");
+    try {
+      fixture.setUp();
+      createProjectPom("<groupId>test</groupId>" +
+                       "<artifactId>project0</artifactId>" +
+                       "<version>1.${revision}</version>" +
+                       "<packaging>pom</packaging>" +
+                       "<modules>" +
+                       "  <module>m1</module>" +
+                       "  <module>m2</module>" +
+                       "</modules>" +
+                       "<properties>" +
+                       "  <revision>0</revision>" +
+                       "  <anotherProperty>0</anotherProperty>" +
+                       "</properties>");
+
+      VirtualFile m1= createModulePom("m1",
+                                      "<parent>" +
+                                      "<groupId>test</groupId>" +
+                                      "<artifactId>project0</artifactId>" +
+                                      "<version>1.${revision}</version>" +
+                                      "</parent>" +
+                                      "<artifactId>m1</artifactId>");
+
+      VirtualFile m2 = createModulePom("m2",
+                                       "<parent>" +
+                                       "<groupId>test</groupId>" +
+                                       "<artifactId>project0</artifactId>" +
+                                       "<version>1.${revision}</version>" +
+                                       "</parent>" +
+                                       "<artifactId>m1</artifactId>");
+
+      importProject();
+
+      m2 = createModulePom("m2",
+                           "<parent>" +
+                           "<groupId>test</groupId>" +
+                           "<artifactId><error descr=\"Properties in parent definition are prohibited\">project${anotherProperty}</error></artifactId>" +
+                           "<version><error descr=\"Properties in parent definition are prohibited\">1.${revision}</error></version>" +
+                           "</parent>" +
+                           "<artifactId>m1</artifactId>");
+
+      myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
+      checkHighlighting(m2);
+    } finally {
+      fixture.tearDown();
+    }
+
+  }
+
 
   public void testRelativePathCompletion() {
     importProject("<groupId>test</groupId>" +

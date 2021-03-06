@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.migrate;
 
 import com.intellij.diff.DiffDialogHints;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 
-public class MigrateDiffTool implements DiffTool {
+public final class MigrateDiffTool implements DiffTool {
   public static final MigrateDiffTool INSTANCE = new MigrateDiffTool();
 
   private MigrateDiffTool() {
@@ -71,7 +71,7 @@ public class MigrateDiffTool implements DiffTool {
     return request.getContents().length == 2 || request.getContents().length == 3;
   }
 
-  private static boolean isMergeRequest(com.intellij.openapi.diff.DiffRequest request) {
+  private static boolean isMergeRequest(DiffRequest request) {
     return request instanceof MergeRequestImpl && ((MergeRequestImpl)request).getMergeContent() != null;
   }
 

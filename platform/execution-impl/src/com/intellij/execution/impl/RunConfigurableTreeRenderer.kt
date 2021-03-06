@@ -5,8 +5,11 @@ import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.DumbService
 import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.EmptyIcon
@@ -22,14 +25,16 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
     val userObject = value.userObject
     var isShared: Boolean? = null
     val name = getUserObjectName(userObject)
+    val isDumb = DumbService.isDumb(runManager.project)
     when {
       userObject is ConfigurationType -> {
-        append(name, if ((value.parent as DefaultMutableTreeNode).isRoot) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        val simpleTextAttributes = when {
+          (value.parent as DefaultMutableTreeNode).isRoot -> SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+          isDumb && !ConfigurationTypeUtil.isEditableInDumbMode(userObject) -> SimpleTextAttributes.GRAYED_ATTRIBUTES
+          else -> SimpleTextAttributes.REGULAR_ATTRIBUTES
+        }
+        append(name, simpleTextAttributes)
         icon = userObject.icon
-      }
-      userObject === TEMPLATES_NODE_USER_OBJECT -> {
-        append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        icon = AllIcons.General.Settings
       }
       userObject is String -> {
         // folder
@@ -37,7 +42,8 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
         icon = AllIcons.Nodes.Folder
       }
       userObject is ConfigurationFactory -> {
-        append(name)
+        append(name,
+               if (isDumb && !userObject.isEditableInDumbMode) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
         icon = userObject.icon
       }
       else -> {
@@ -46,7 +52,9 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
           val configurationSettings: RunnerAndConfigurationSettings = userObject.settings
           configuration = configurationSettings
           isShared = userObject.isStoredInFile
-          icon = ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !userObject.isValid)
+          icon = IconManager.getInstance().createDeferredIcon(ProgramRunnerUtil.getConfigurationIcon(configurationSettings, false), userObject) {
+            return@createDeferredIcon ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !it.isValid)
+          }
         }
         else if (userObject is RunnerAndConfigurationSettings) {
           isShared = userObject.isShared
@@ -54,7 +62,12 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
           configuration = userObject
         }
         if (configuration != null) {
-          append(name, if (configuration.isTemporary) SimpleTextAttributes.GRAY_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES)
+          val simpleTextAttributes = when {
+            configuration.isTemporary -> SimpleTextAttributes.GRAY_ATTRIBUTES
+            isDumb && !ConfigurationTypeUtil.isEditableInDumbMode(configuration) -> SimpleTextAttributes.GRAY_ATTRIBUTES
+            else -> SimpleTextAttributes.REGULAR_ATTRIBUTES
+          }
+          append(name, simpleTextAttributes)
         }
       }
     }

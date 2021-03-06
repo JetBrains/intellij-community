@@ -6,7 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,8 +20,7 @@ import javax.swing.*;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 
-public class SdkAppearanceServiceImpl extends SdkAppearanceService {
-
+public final class SdkAppearanceServiceImpl extends SdkAppearanceService {
   @Override
   @NotNull
   public CellAppearanceEx forNullSdk(boolean selected) {
@@ -64,7 +65,8 @@ public class SdkAppearanceServiceImpl extends SdkAppearanceService {
                                               ? new SimpleTextAttributes(STYLE_PLAIN, JBColor.WHITE)
                                               : GRAY_ATTRIBUTES;
 
-      ending.addComment(StringUtil.shortenTextWithEllipsis(versionString, 30, 0), textAttributes);
+      @NlsSafe String shortVersion = StringUtil.shortenTextWithEllipsis(versionString, 30, 0);
+      ending.addComment(shortVersion, textAttributes);
     }
 
     return ending.getAppearance();
@@ -74,7 +76,7 @@ public class SdkAppearanceServiceImpl extends SdkAppearanceService {
     if (!valid) {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
     }
-    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
+    else if (selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))) {
       return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
     }
     else {

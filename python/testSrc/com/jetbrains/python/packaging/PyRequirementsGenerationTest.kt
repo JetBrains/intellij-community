@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging
 
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.registerServiceInstance
@@ -69,8 +69,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
       myFixture.configureFromTempProjectFile(settings.requirementsPath)
 
       val action = ActionManager.getInstance().getAction("PySyncPythonRequirements")
-      val parentContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
-      val context = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE.name, myFixture.module, parentContext)
+      val context = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE, myFixture.module, (myFixture.editor as EditorEx).dataContext)
       val event = AnActionEvent.createFromAnAction(action, null, "", context)
       action.actionPerformed(event)
       myFixture.checkResultByFile("$testName/new_${settings.requirementsPath}", true)
@@ -115,7 +114,7 @@ class PyRequirementsGenerationTest : PyTestCase() {
       val packageManager = EasyMock.createMock<PyPackageManager>(PyPackageManager::class.java)
       EasyMock
         .expect(packageManager.refreshAndGetPackages(false))
-        .andReturn(packages.map { PyPackage(it.key, it.value, null, emptyList()) })
+        .andReturn(packages.map { PyPackage(it.key, it.value) })
 
       EasyMock.replay(packageManager)
       return packageManager

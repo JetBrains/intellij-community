@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
-public class OptionalUtil {
+public final class OptionalUtil {
   public static final String OPTIONAL_INT = "java.util.OptionalInt";
   public static final String OPTIONAL_LONG = "java.util.OptionalLong";
   public static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
@@ -19,7 +19,7 @@ public class OptionalUtil {
   public static final CallMatcher GUAVA_OPTIONAL_FROM_NULLABLE = CallMatcher.staticCall(GUAVA_OPTIONAL, "fromNullable").parameterCount(1);
   public static final CallMatcher JDK_OPTIONAL_OF_NULLABLE = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
   public static final CallMatcher OPTIONAL_OF_NULLABLE = CallMatcher.anyOf(JDK_OPTIONAL_OF_NULLABLE, GUAVA_OPTIONAL_FROM_NULLABLE);
-  
+
   public static final CallMatcher JDK_OPTIONAL_GET = CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   public static final CallMatcher JDK_OPTIONAL_INT_GET = CallMatcher.exactInstanceCall(OPTIONAL_INT, "getAsInt").parameterCount(0);
   public static final CallMatcher JDK_OPTIONAL_LONG_GET = CallMatcher.exactInstanceCall(OPTIONAL_LONG, "getAsLong").parameterCount(0);

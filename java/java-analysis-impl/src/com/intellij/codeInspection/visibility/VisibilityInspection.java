@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.visibility;
 
@@ -8,6 +8,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -19,7 +22,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -31,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -47,28 +48,19 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private final Map<String, Boolean> myExtensions = new TreeMap<>();
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
 
-  private class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends InspectionOptionsPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
     private final JCheckBox myPrivateForInnersCheckbox;
     private final JCheckBox myPackageLocalForTopClassesCheckbox;
     private final JCheckBox mySuggestForConstantsCheckbox;
 
     private OptionsPanel() {
-      super(new GridBagLayout());
-
-      GridBagConstraints gc = new GridBagConstraints();
-      gc.fill = GridBagConstraints.HORIZONTAL;
-      gc.weightx = 1;
-      gc.weighty = 0;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-
       myPackageLocalForMembersCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.option.package.private.members"));
       myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
       myPackageLocalForMembersCheckbox.getModel().addItemListener(
         e -> SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected());
 
-      gc.gridy = 0;
-      add(myPackageLocalForMembersCheckbox, gc);
+      add(myPackageLocalForMembersCheckbox);
 
       myPackageLocalForTopClassesCheckbox = new JCheckBox(JavaAnalysisBundle.message(
         "inspection.visibility.package.private.top.level.classes"));
@@ -76,37 +68,29 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       myPackageLocalForTopClassesCheckbox.getModel().addItemListener(
         e -> SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = myPackageLocalForTopClassesCheckbox.isSelected());
 
-      gc.gridy++;
-      add(myPackageLocalForTopClassesCheckbox, gc);
+      add(myPackageLocalForTopClassesCheckbox);
 
       myPrivateForInnersCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.private.inner.members"));
       myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
       myPrivateForInnersCheckbox.getModel().addItemListener(e -> SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected());
 
-      gc.gridy++;
-      add(myPrivateForInnersCheckbox, gc);
+      add(myPrivateForInnersCheckbox);
 
       mySuggestForConstantsCheckbox = new JCheckBox(JavaAnalysisBundle.message("inspection.visibility.option.constants"));
       mySuggestForConstantsCheckbox.setSelected(SUGGEST_FOR_CONSTANTS);
       mySuggestForConstantsCheckbox.getModel().addItemListener(
         e -> SUGGEST_FOR_CONSTANTS = mySuggestForConstantsCheckbox.isSelected());
 
-      gc.gridy++;
-      add(mySuggestForConstantsCheckbox, gc);
+      add(mySuggestForConstantsCheckbox);
 
       for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
         if (entryPoint instanceof EntryPointWithVisibilityLevel) {
-          gc.gridy++;
           final JCheckBox checkBox = new JCheckBox(((EntryPointWithVisibilityLevel)entryPoint).getTitle());
           checkBox.setSelected(isEntryPointEnabled((EntryPointWithVisibilityLevel)entryPoint));
           checkBox.addActionListener(e -> myExtensions.put(((EntryPointWithVisibilityLevel)entryPoint).getId(), checkBox.isSelected()));
-          add(checkBox, gc);
+          add(checkBox);
         }
       }
-
-      gc.gridy++;
-      gc.weighty = 1;
-      add(new VerticalBox(), gc);
     }
   }
 
@@ -239,21 +223,21 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {
       final String message;
-      String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+      String targetVisibility;
       if (access.equals(PsiModifier.PRIVATE)) {
         message = getCanBePrivate();
-        quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+      }
+      else if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+        message = getCanBePackageLocal();
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
       }
       else {
-        if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-          message = getCanBePackageLocal();
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
-        }
-        else {
-          message = getCanBeProtected();
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
-        }
+        message = getCanBeProtected();
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
       }
+      String quickFixName = JavaAnalysisBundle.message(
+        "change.visibility.level", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE), targetVisibility);
       return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
                                                                      message,
                                                                      new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
@@ -632,12 +616,12 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     myExtensions.put(entryPointId, enabled);
   }
 
-  private static class AcceptSuggestedAccess implements LocalQuickFix{
+  private static final class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
-    private final String myName;
+    private final @IntentionName String myName;
 
-    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, String name) {
+    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, @IntentionName String name) {
       myManager = manager;
       myHint = hint;
       myName = name;
@@ -689,15 +673,15 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getCanBePrivate() {
+  private static @InspectionMessage String getCanBePrivate() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
   }
 
-  private static String getCanBePackageLocal() {
+  private static @InspectionMessage String getCanBePackageLocal() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
   }
 
-  private static String getCanBeProtected() {
+  private static @InspectionMessage String getCanBeProtected() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }

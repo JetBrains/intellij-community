@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.config.GitConfigUtil
-import git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE
 import java.io.File
 
 internal class GitAutomaticRebaseEditor(private val project: Project,
@@ -30,20 +29,20 @@ internal class GitAutomaticRebaseEditor(private val project: Project,
 ) : GitInteractiveRebaseEditorHandler(project, root) {
   val LOG = logger<GitAutomaticRebaseEditor>()
 
-  override fun editCommits(path: String): Int {
+  override fun editCommits(file: File): Int {
     try {
       if (!myRebaseEditorShown) {
         myRebaseEditorShown = true
 
-        val file = GitInteractiveRebaseFile(project, root, path)
-        val entries = file.load()
-        file.save(entriesEditor(entries))
+        val rebaseFile = GitInteractiveRebaseFile(project, root, file)
+        val entries = rebaseFile.load()
+        rebaseFile.save(entriesEditor(entries))
       }
       else {
         val encoding = GitConfigUtil.getCommitEncoding(project, root)
-        val originalMessage = FileUtil.loadFile(File(path), encoding)
+        val originalMessage = FileUtil.loadFile(file, encoding)
         val modifiedMessage = plainTextEditor(originalMessage)
-        FileUtil.writeToFile(File(path), modifiedMessage.toByteArray(charset(encoding)))
+        FileUtil.writeToFile(file, modifiedMessage.toByteArray(charset(encoding)))
       }
       return 0
     }

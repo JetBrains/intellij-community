@@ -16,12 +16,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -71,6 +71,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     add(myComponent, BorderLayout.CENTER);
 
     myBrowseButton = new FixedSizeButton(myComponent);
+    if (isBackgroundSet()) {
+      myBrowseButton.setBackground(getBackground());
+    }
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
@@ -85,7 +88,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
     if (ScreenReader.isActive()) {
       myBrowseButton.setFocusable(true);
-      myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
+      myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
     }
     new LazyDisposable(this);
   }
@@ -101,7 +104,12 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   @NotNull
-  protected String getIconTooltip() {
+  protected @NlsContexts.Tooltip String getIconTooltip() {
+    return getTooltip();
+  }
+
+  @NotNull
+  public static @NlsContexts.Tooltip String getTooltip() {
     return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
            KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }
@@ -144,6 +152,14 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   public void setButtonIcon(@NotNull Icon icon) {
     myBrowseButton.setIcon(icon);
     myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
+  }
+
+  @Override
+  public void setBackground(Color color) {
+    super.setBackground(color);
+    if (myBrowseButton != null) {
+      myBrowseButton.setBackground(color);
+    }
   }
 
   /**
@@ -276,6 +292,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @deprecated use {@link #addActionListener(ActionListener)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
     addActionListener(actionListener);
   }
@@ -292,7 +309,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     public void showNotify() {
       ComponentWithBrowseButton<?> component = reference.get();
       if (component == null) return; // component is collected
-      Disposable disposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
+      Disposable disposable = ApplicationManager.getApplication() == null ? null :
+                              UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
       if (disposable == null) return; // parent disposable not found
       Disposer.register(disposable, component);
     }

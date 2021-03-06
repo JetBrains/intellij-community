@@ -3,6 +3,9 @@ package com.intellij.execution.target.local;
 
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.HostPort;
+import com.intellij.execution.target.BaseTargetEnvironmentRequest;
+import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetPlatform;
 import com.intellij.execution.target.value.TargetValue;
@@ -11,13 +14,35 @@ import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
+public class LocalTargetEnvironmentRequest extends BaseTargetEnvironmentRequest {
   private static int nextSyntheticId = 0;
   private Volume myDefaultVolume;
   private final Map<String, LocalDownloadVolume> myDownloadRoots = new LinkedHashMap<>();
   private final Map<String, LocalUploadVolume> myUploadRoots = new LinkedHashMap<>();
+
+  public LocalTargetEnvironmentRequest() {
+    super();
+  }
+
+  private LocalTargetEnvironmentRequest(@NotNull Set<TargetEnvironment.UploadRoot> uploadVolumes,
+                                        @NotNull Set<TargetEnvironment.DownloadRoot> downloadVolumes,
+                                        @NotNull Set<TargetEnvironment.TargetPortBinding> targetPortBindings,
+                                        @NotNull Set<TargetEnvironment.LocalPortBinding> localPortBindings) {
+    super(uploadVolumes, downloadVolumes, targetPortBindings, localPortBindings);
+  }
+
+  @Override
+  public @NotNull TargetEnvironmentRequest duplicate() {
+    return new LocalTargetEnvironmentRequest(
+      new HashSet<>(getUploadVolumes()),
+      new HashSet<>(getDownloadVolumes()),
+      new HashSet<>(getTargetPortBindings()),
+      new HashSet<>(getLocalPortBindings()));
+  }
 
   @NotNull
   private GeneralCommandLine.ParentEnvironmentType myParentEnvironmentType = GeneralCommandLine.ParentEnvironmentType.CONSOLE;
@@ -63,6 +88,11 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
     return TargetValue.fixed(targetPort);
   }
 
+  @Override
+  public @NotNull TargetValue<HostPort> bindLocalPort(int localPort) {
+    return TargetValue.fixed(new HostPort("localhost", localPort));
+  }
+
   @NotNull
   GeneralCommandLine.ParentEnvironmentType getParentEnvironmentType() {
     return myParentEnvironmentType;
@@ -91,10 +121,9 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
       return myVolumeId;
     }
 
-    @NotNull
     @Override
-    public LocalTargetEnvironmentRequest getRequest() {
-      return myRequest;
+    public @NotNull Platform getPlatform() {
+      return myRequest.getTargetPlatform().getPlatform();
     }
 
     @NotNull

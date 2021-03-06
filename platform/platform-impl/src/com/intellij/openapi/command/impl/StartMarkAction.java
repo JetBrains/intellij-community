@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -8,17 +8,23 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class StartMarkAction extends BasicUndoableAction {
+public final class StartMarkAction extends BasicUndoableAction {
   public static final Key<StartMarkAction> START_MARK_ACTION_KEY = Key.create("current.inplace.refactorings.mark");
-  private String myCommandName;
+  private @NlsContexts.Command String myCommandName;
   private boolean myGlobal;
   private Document myDocument;
 
-  private StartMarkAction(Editor editor, String commandName) {
+  private StartMarkAction(Editor editor, @NlsContexts.Command String commandName) {
     super(DocumentReferenceManager.getInstance().create(editor.getDocument()));
     myCommandName = commandName;
     myDocument = editor.getDocument();
@@ -41,11 +47,11 @@ public class StartMarkAction extends BasicUndoableAction {
     return myGlobal;
   }
 
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     return myCommandName;
   }
 
-  public void setCommandName(String commandName) {
+  public void setCommandName(@NlsContexts.Command String commandName) {
     myCommandName = commandName;
   }
 
@@ -54,19 +60,21 @@ public class StartMarkAction extends BasicUndoableAction {
   }
 
   @TestOnly
-  public static void checkCleared(Project project) {
-    if (project == null) return;
+  public static void checkCleared(@Nullable Editor editor) {
+    if (editor == null) {
+      return;
+    }
     try {
-      StartMarkAction markAction = project.getUserData(START_MARK_ACTION_KEY);
+      StartMarkAction markAction = editor.getUserData(START_MARK_ACTION_KEY);
       assert markAction == null : markAction.myDocument;
     }
     finally {
-      project.putUserData(START_MARK_ACTION_KEY, null);
+      editor.putUserData(START_MARK_ACTION_KEY, null);
     }
   }
 
-  public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
-    final StartMarkAction existingMark = project.getUserData(START_MARK_ACTION_KEY);
+  public static StartMarkAction start(Editor editor, Project project, @NlsContexts.Command String commandName) throws AlreadyStartedException {
+    final StartMarkAction existingMark = editor.getUserData(START_MARK_ACTION_KEY);
     if (existingMark != null) {
       throw new AlreadyStartedException(existingMark.myCommandName,
                                         existingMark.myDocument,
@@ -74,18 +82,35 @@ public class StartMarkAction extends BasicUndoableAction {
     }
     final StartMarkAction markAction = new StartMarkAction(editor, commandName);
     UndoManager.getInstance(project).undoableActionPerformed(markAction);
-    project.putUserData(START_MARK_ACTION_KEY, markAction);
+    editor.putUserData(START_MARK_ACTION_KEY, markAction);
     return markAction;
   }
 
-  public static StartMarkAction canStart(Project project) {
-    return project.getUserData(START_MARK_ACTION_KEY);
+  public static StartMarkAction canStart(Editor editor) {
+    return editor.getUserData(START_MARK_ACTION_KEY);
   }
+  
+  /**
+   * @deprecated use {@link StartMarkAction#canStart(com.intellij.openapi.editor.Editor)} instead to allow inplace refactorings in different editors in parallel
+   */
+  @Deprecated
+  public static StartMarkAction canStart(@NotNull Project project) {
+    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+      if (fileEditor instanceof TextEditor) {
+        StartMarkAction startMarkAction = ((TextEditor)fileEditor).getEditor().getUserData(START_MARK_ACTION_KEY);
+        if (startMarkAction != null) {
+          return startMarkAction;
+        }
+      }
+    }
 
-  static void markFinished(Project project) {
-    StartMarkAction existingMark = project.getUserData(START_MARK_ACTION_KEY);
+    return null;
+  }
+  
+  static void markFinished(Editor editor) {
+    StartMarkAction existingMark = editor.getUserData(START_MARK_ACTION_KEY);
     if (existingMark != null) {
-      project.putUserData(START_MARK_ACTION_KEY, null);
+      editor.putUserData(START_MARK_ACTION_KEY, null);
       existingMark.myDocument = null;
     }
   }

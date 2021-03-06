@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -22,6 +23,8 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,13 +86,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfaMemoryStateImpl createClosureState() {
     DfaMemoryStateImpl copy = createCopy();
-    forRecordedVariableTypes((value, dfType) -> {
-      if (dfType instanceof DfReferenceType) {
-        copy.setDfType(value, ((DfReferenceType)dfType).dropLocality());
-      }
-    });
     copy.flushFields();
     copy.emptyStack();
+    for (DfaValue value : getFactory().getValues().toArray(new DfaValue[0])) {
+      if (value instanceof DfaVariableValue) {
+        DfType type = copy.getDfType(value);
+        if (type instanceof DfReferenceType) {
+          DfReferenceType newType = ((DfReferenceType)type).dropLocality();
+          if (newType.getMutability() == Mutability.MUST_NOT_MODIFY) {
+            // If we must not modify parameter inside the method body itself, 
+            // we may still be able to modify it inside nested closures, 
+            // as they could be executed later.
+            newType = newType.dropMutability();
+          }
+          if (newType != type) {
+            copy.setDfType(value, newType);
+          }
+        }
+      }
+    }
     return copy;
   }
 
@@ -209,7 +224,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfTypes.BOTTOM) return; // likely uncompilable code or bad CFG
-    if (value instanceof DfaVariableValue && !ControlFlowAnalyzer.isTempVariable(var) && 
+    if (value instanceof DfaVariableValue && !ControlFlowAnalyzer.isTempVariable(var) &&
         !ControlFlowAnalyzer.isTempVariable((DfaVariableValue)value) &&
         (var.getQualifier() == null || !ControlFlowAnalyzer.isTempVariable(var.getQualifier()))) {
       // assigning a = b when b is known to be null: could be ephemeral
@@ -349,7 +364,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean shouldCompareByEquals(DfaValue dfaLeft, DfaValue dfaRight) {
-    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaBoxedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
+    if (dfaLeft == dfaRight && !(dfaLeft instanceof DfaWrappedValue) && !(dfaLeft.getDfType() instanceof DfConstantType)) {
       return false;
     }
     return !isNull(dfaLeft) && !isNull(dfaRight) &&
@@ -518,13 +533,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean isNull(DfaValue dfaValue) {
-    return getDfType(dfaValue) == DfTypes.NULL;
+  public boolean isNull(DfaValue value) {
+    return getDfType(value) == DfTypes.NULL;
   }
 
   @Override
-  public boolean isNotNull(DfaValue dfaVar) {
-    return !getDfType(dfaVar).isSuperType(DfTypes.NULL);
+  public boolean isNotNull(DfaValue value) {
+    return !getDfType(value).isSuperType(DfTypes.NULL);
   }
 
   @Override
@@ -566,7 +581,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       recordVariableType(var, dfType);
     }
   }
-  
+
   private static @NotNull DfType sanitizeNullability(@NotNull DfType dfType) {
     if (!(dfType instanceof DfReferenceType)) return dfType;
     DfaNullability nullability = ((DfReferenceType)dfType).getNullability();
@@ -579,7 +594,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfType == DfTypes.TOP) return true;
     if (dfType == DfTypes.BOTTOM) return false;
     if (value instanceof DfaBinOpValue) {
-      return propagateRangeBack(DfLongType.extractRange(dfType), (DfaBinOpValue)value);
+      return propagateRangeBack(ObjectUtils.tryCast(dfType, DfIntegralType.class), (DfaBinOpValue)value);
     }
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
@@ -613,38 +628,35 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return value.getDfType().meet(dfType) != DfTypes.BOTTOM;
   }
 
-  private boolean propagateRangeBack(@NotNull LongRangeSet factValue, @NotNull DfaBinOpValue binOp) {
-    boolean isLong = PsiType.LONG.equals(binOp.getType());
-    LongRangeSet appliedRange = isLong ? factValue : factValue.intersect(Objects.requireNonNull(LongRangeSet.fromType(PsiType.INT)));
+  private boolean propagateRangeBack(@Nullable DfIntegralType appliedRange, @NotNull DfaBinOpValue binOp) {
+    if (appliedRange == null) return true;
     DfaVariableValue left = binOp.getLeft();
     DfaValue right = binOp.getRight();
     DfIntegralType leftDfType = ObjectUtils.tryCast(getDfType(left), DfIntegralType.class);
     DfIntegralType rightDfType = ObjectUtils.tryCast(getDfType(right), DfIntegralType.class);
     if(leftDfType == null || rightDfType == null) return true;
-    LongRangeSet leftRange = leftDfType.getRange();
-    LongRangeSet rightRange = rightDfType.getRange();
-    LongRangeSet result = getBinOpRange(binOp);
-    assert result != null;
-    if (!result.intersects(appliedRange)) return false;
-    LongRangeSet leftConstraint = LongRangeSet.all();
-    LongRangeSet rightConstraint = LongRangeSet.all();
+    DfType result = getBinOpRange(binOp);
+    DfType targetRange = result.meet(appliedRange);
+    if (targetRange == DfTypes.BOTTOM) return false;
+    DfType leftConstraint = binOp.getDfType();
+    DfType rightConstraint = binOp.getDfType();
     switch (binOp.getOperation()) {
       case PLUS:
-        leftConstraint = appliedRange.minus(rightRange, isLong);
-        rightConstraint = appliedRange.minus(leftRange, isLong);
+        leftConstraint = appliedRange.eval(rightDfType, LongRangeBinOp.MINUS);
+        rightConstraint = appliedRange.eval(leftDfType, LongRangeBinOp.MINUS);
         break;
       case MINUS:
-        leftConstraint = rightRange.plus(appliedRange, isLong);
-        rightConstraint = leftRange.minus(appliedRange, isLong);
+        leftConstraint = rightDfType.eval(appliedRange, LongRangeBinOp.PLUS);
+        rightConstraint = leftDfType.eval(appliedRange, LongRangeBinOp.MINUS);
         break;
-      case REM:
-        Long value = rightRange.getConstantValue();
+      case MOD:
+        Long value = rightDfType.getRange().getConstantValue();
         if (value != null) {
-          leftConstraint = LongRangeSet.fromRemainder(value, appliedRange.intersect(result));
+          leftConstraint = leftDfType.meetRange(LongRangeSet.fromRemainder(value, DfLongType.extractRange(targetRange)));
         }
         break;
     }
-    return meetDfType(left, leftDfType.meetRange(leftConstraint)) && meetDfType(right, rightDfType.meetRange(rightConstraint));
+    return meetDfType(left, leftDfType.meet(leftConstraint)) && meetDfType(right, rightDfType.meet(rightConstraint));
   }
 
   @Override
@@ -762,17 +774,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
     if (left instanceof DfaBinOpValue) {
       DfaBinOpValue sum = (DfaBinOpValue)left;
-      DfaBinOpValue.BinOp op = sum.getOperation();
-      if (op != DfaBinOpValue.BinOp.PLUS && op != DfaBinOpValue.BinOp.MINUS) return true;
+      LongRangeBinOp op = sum.getOperation();
+      if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS) return true;
       LongRangeSet leftRange = DfLongType.extractRange(getDfType(sum.getLeft()));
       LongRangeSet rightRange = DfLongType.extractRange(getDfType(sum.getRight()));
       boolean isLong = PsiType.LONG.equals(sum.getType());
       LongRangeSet rightNegated = rightRange.negate(isLong);
-      LongRangeSet rightCorrected = op == DfaBinOpValue.BinOp.MINUS ? rightNegated : rightRange;
+      LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
 
       LongRangeSet resultRange = DfLongType.extractRange(getDfType(right));
       RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
-      if (op == DfaBinOpValue.BinOp.MINUS) {
+      if (op == LongRangeBinOp.MINUS) {
         long min = resultRange.min();
         long max = resultRange.max();
         if (min == 0 && max == 0) {
@@ -792,7 +804,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
         }
       }
-      if (op == DfaBinOpValue.BinOp.PLUS && RelationType.EQ == type &&
+      if (op == LongRangeBinOp.PLUS && RelationType.EQ == type &&
           !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
         // a+b == odd => a != b
         if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
@@ -800,16 +812,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (right instanceof DfaVariableValue) {
         // a+b (rel) c && a == c => b (rel) 0
         if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == DfaBinOpValue.BinOp.MINUS ?
+          RelationType finalRelation = op == LongRangeBinOp.MINUS ?
                                        Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
           if (!applyCondition(sum.getRight().cond(finalRelation, myFactory.getInt(0)))) return false;
         }
         // a+b (rel) c && b == c => a (rel) 0
-        if (op == DfaBinOpValue.BinOp.PLUS && areEqual(sum.getRight(), right)) {
+        if (op == LongRangeBinOp.PLUS && areEqual(sum.getRight(), right)) {
           if (!applyCondition(sum.getLeft().cond(correctedRelation, myFactory.getInt(0)))) return false;
         }
 
-        if (!leftRange.subtractionMayOverflow(op == DfaBinOpValue.BinOp.MINUS ? rightRange : rightNegated, isLong)) {
+        if (!leftRange.subtractionMayOverflow(op == LongRangeBinOp.MINUS ? rightRange : rightNegated, isLong)) {
           // a-positiveNumber >= b => a > b
           if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
             if (!applyLessThanRelation(right, sum.getLeft())) return false;
@@ -1101,8 +1113,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static @Nullable RelationType getFloatingConstantRelation(DfType leftType, DfType rightType) {
-    Number value1 = DfConstantType.getConstantOfType(leftType, Number.class);
-    Number value2 = DfConstantType.getConstantOfType(rightType, Number.class);
+    Number value1 = leftType.getConstantOfType(Number.class);
+    Number value2 = rightType.getConstantOfType(Number.class);
     if (value1 == null || value2 == null) return null;
     double double1 = value1.doubleValue();
     double double2 = value2.doubleValue();
@@ -1111,41 +1123,42 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return cmp == 0 ? RelationType.EQ : cmp < 0 ? RelationType.LT : RelationType.GT;
   }
 
-  @Override
-  public boolean checkNotNullable(@NotNull DfaValue value) {
-    DfaNullability nullability = DfaNullability.fromDfType(getDfType(value));
-    return nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
-  }
-
-  public @Nullable LongRangeSet getBinOpRange(DfaBinOpValue binOp) {
-    LongRangeSet left = DfLongType.extractRange(getDfType(binOp.getLeft()));
-    LongRangeSet right = DfLongType.extractRange(getDfType(binOp.getRight()));
+  public @NotNull DfType getBinOpRange(DfaBinOpValue binOp) {
+    DfIntegralType leftType = ObjectUtils.tryCast(getDfType(binOp.getLeft()), DfIntegralType.class);
+    DfIntegralType rightType = ObjectUtils.tryCast(getDfType(binOp.getRight()), DfIntegralType.class);
+    if (leftType == null || rightType == null) return binOp.getDfType();
+    LongRangeSet left = leftType.getRange();
+    LongRangeSet right = rightType.getRange();
     boolean isLong = PsiType.LONG.equals(binOp.getType());
-    LongRangeSet result = left.binOpFromToken(binOp.getTokenType(), right, isLong);
-    if (result != null && binOp.getOperation() == DfaBinOpValue.BinOp.MINUS) {
+    LongRangeBinOp op = binOp.getOperation();
+    DfIntegralType result = ObjectUtils.tryCast(leftType.eval(rightType, op), DfIntegralType.class);
+    if (result == null) {
+      result = binOp.getDfType();
+    }
+    if (op == LongRangeBinOp.MINUS) {
       RelationType rel = getRelation(binOp.getLeft(), binOp.getRight());
       if (rel == RelationType.NE) {
-        return result.without(0);
+        return result.meetRange(LongRangeSet.all().without(0));
       }
       if (!left.subtractionMayOverflow(right, isLong)) {
         if (rel == RelationType.GT) {
-          return result.intersect(LongRangeSet.range(1, isLong ? Long.MAX_VALUE : Integer.MAX_VALUE));
+          return result.meetRange(LongRangeSet.range(1, Long.MAX_VALUE));
         }
         if (rel == RelationType.LT) {
-          return result.intersect(LongRangeSet.range(isLong ? Long.MIN_VALUE : Integer.MIN_VALUE, -1));
+          return result.meetRange(LongRangeSet.range(Long.MIN_VALUE, -1));
         }
       }
     }
-    if (binOp.getOperation() == DfaBinOpValue.BinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
-      return LongRangeSet.point(2).mul(left, isLong);
+    if (op == LongRangeBinOp.PLUS && areEqual(binOp.getLeft(), binOp.getRight())) {
+      return leftType.eval(isLong ? DfTypes.longValue(2) : DfTypes.intValue(2), LongRangeBinOp.MUL);
     }
     return result;
   }
 
   @Override
   public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaBoxedValue) {
-      return getDfType(((DfaBoxedValue)value).getWrappedValue());
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
+      return getDfType(((DfaWrappedValue)value).getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
       return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
@@ -1162,9 +1175,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public @NotNull DfType getDfType(@NotNull DfaValue value) {
     if (value instanceof DfaBinOpValue) {
-      LongRangeSet range = getBinOpRange((DfaBinOpValue)value);
-      if (range == null) range = LongRangeSet.all();
-      return ((DfaBinOpValue)value).getDfType().meetRange(range);
+      return getBinOpRange((DfaBinOpValue)value);
     }
     if (value instanceof DfaVariableValue) {
       DfType type = getRecordedType((DfaVariableValue)value);
@@ -1183,12 +1194,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     } else {
       myVariableTypes.put(dfaVar, type);
     }
+    if (type instanceof DfEphemeralReferenceType) {
+      markEphemeral();
+    }
     myCachedHash = null;
   }
 
   protected void updateEquivalentVariables(DfaVariableValue dfaVar, DfType type) {
     EqClass eqClass = getEqClass(dfaVar);
     if (eqClass != null) {
+      type = sanitizeNullability(type);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
           recordVariableType(value, type);
@@ -1201,10 +1216,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }
-    if (value instanceof DfaBoxedValue) {
-      DfaBoxedValue boxedValue = (DfaBoxedValue)value;
+    if (value instanceof DfaWrappedValue) {
+      DfaWrappedValue boxedValue = (DfaWrappedValue)value;
       DfaValue canonicalized = canonicalize(boxedValue.getWrappedValue());
-      return Objects.requireNonNull(myFactory.getBoxedFactory().createBoxed(canonicalized, boxedValue.getType()));
+      if (canonicalized == boxedValue.getWrappedValue()) return boxedValue;
+      return myFactory.getWrapperFactory().createWrapper(boxedValue.getDfType(), boxedValue.getSpecialField(), canonicalized);
     }
     return value;
   }
@@ -1235,7 +1251,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return canonicalized == var ? null : myVariableTypes.get(canonicalized);
   }
 
-  void forRecordedVariableTypes(BiConsumer<? super DfaVariableValue, ? super DfType> consumer) {
+  public void forRecordedVariableTypes(BiConsumer<? super DfaVariableValue, ? super DfType> consumer) {
     myVariableTypes.forEach(consumer);
   }
 
@@ -1248,7 +1264,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void flushFields() {
     flushFields(new QualifierStatusMap(null));
   }
-  
+
   public void flushFields(@NotNull DfaMemoryStateImpl.QualifierStatusMap qualifierStatusMap) {
     Set<DfaVariableValue> vars = new LinkedHashSet<>();
     for (DfaVariableValue value : myVariableTypes.keySet()) {
@@ -1536,7 +1552,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * thus sum of resulting class sizes is equal to the original class size
    */
   private @NotNull List<EqClass> splitEqClass(EqClass eqClass, DfaMemoryStateImpl other) {
-    TIntObjectHashMap<EqClass> groupsInClasses = new TIntObjectHashMap<>();
+    Int2ObjectMap<EqClass> groupsInClasses = new Int2ObjectOpenHashMap<>();
     List<EqClass> groups = new ArrayList<>();
     for (DfaVariableValue value : eqClass.asList()) {
       int otherClass = other.getEqClassIndex(value);
@@ -1554,7 +1570,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       list.add(value.getID());
     }
-    groupsInClasses.forEachValue(groups::add);
+    groups.addAll(groupsInClasses.values());
     return groups;
   }
 
@@ -1570,7 +1586,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     @Override
     public String toString() {
       final StringBuilder s = new StringBuilder("{");
-      forEachEntry(new TIntObjectProcedure<Integer>() {
+      forEachEntry(new TIntObjectProcedure<>() {
         @Override
         public boolean execute(int id, Integer index) {
           DfaValue value = myFactory.getValue(id);
@@ -1587,7 +1603,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     SHOULD_FLUSH_ALWAYS, SHOULD_FLUSH_CALLS, SHOULD_NOT_FLUSH
   }
 
-  private class QualifierStatusMap {
+  private final class QualifierStatusMap {
     private final TIntObjectHashMap<QualifierStatus> myMap = new TIntObjectHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
 
@@ -1641,5 +1657,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return flushCalls ? QualifierStatus.SHOULD_FLUSH_CALLS : QualifierStatus.SHOULD_NOT_FLUSH;
     }
+  }
+
+  @Override
+  public void widen() {
+    myVariableTypes.replaceAll((var, type) -> type.widen());
   }
 }

@@ -3,12 +3,13 @@ package com.intellij.remoteServer.impl.configuration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.util.CloudDataLoader;
 import com.intellij.remoteServer.util.DelayedRunner;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -23,7 +24,7 @@ import java.awt.*;
 public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
   private final RemoteServerConfigurable myConfigurable;
   private final RemoteServer<?> myServer;
-  private String myServerName;
+  private @NlsSafe String myServerName;
   private boolean myNew;
   private JPanel myMainPanel;
   private JPanel mySettingsPanel;
@@ -37,8 +38,6 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   private boolean myAppliedButNeedsCheck;
 
   private boolean myConnected;
-
-  private CloudDataLoader myDataLoader = CloudDataLoader.NULL;
 
   public <C extends ServerConfiguration> SingleRemoteServerConfigurable(RemoteServer<C> server, Runnable treeUpdater, boolean isNew) {
     super(true, treeUpdater);
@@ -92,40 +91,17 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   }
 
   private static <C extends ServerConfiguration> RemoteServerConfigurable createConfigurable(RemoteServer<C> server, C configuration) {
-    try {
-      return server.getType().createServerConfigurable(configuration);
-    }
-    catch (UnsupportedOperationException e) {
-      return new DelegatingRemoteServerConfigurable(server.getType().createConfigurable(configuration));
-    }
+    return server.getType().createServerConfigurable(configuration);
   }
 
-  private void setConnectionStatus(boolean error, boolean connected, String text) {
-    boolean changed = myConnected != connected;
+  private void setConnectionStatus(boolean error, boolean connected, @NlsContexts.Label String text) {
     myConnected = connected;
     setConnectionStatusText(error, text);
-    if (changed) {
-      notifyDataLoader();
-    }
   }
 
-  protected void setConnectionStatusText(boolean error, String text) {
+  protected void setConnectionStatusText(boolean error, @NlsContexts.Label String text) {
     myConnectionStatusLabel.setText(UIUtil.toHtml(text));
     myConnectionStatusLabel.setVisible(StringUtil.isNotEmpty(text));
-  }
-
-  public void setDataLoader(CloudDataLoader dataLoader) {
-    myDataLoader = dataLoader;
-    notifyDataLoader();
-  }
-
-  private void notifyDataLoader() {
-    if (myConnected) {
-      myDataLoader.loadCloudData();
-    }
-    else {
-      myDataLoader.clearCloudData();
-    }
   }
 
   @Override

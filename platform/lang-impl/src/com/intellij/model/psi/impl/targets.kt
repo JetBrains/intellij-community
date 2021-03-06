@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.codeInsight.TargetElementUtil
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.ReferenceRange
+import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -21,24 +22,35 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
   val (declaredData, referencedData) = declaredReferencedData(file, offset)
-  val data = declaredData
-             ?: referencedData
+  val data = referencedData
+             ?: declaredData
              ?: return emptyList()
-  return data.targets
+  return data.targets.map { it.symbol }
+}
+
+/**
+ * @return two collections: of declared and of referenced symbols
+ */
+@Experimental
+fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Collection<Symbol>, Collection<Symbol>> {
+  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  return (declaredData?.targets?.map { it.symbol } ?: emptyList()) to (referencedData?.targets?.map { it.symbol } ?: emptyList())
 }
 
 private val emptyData = DeclaredReferencedData(null, null)
 
 internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData {
-  val allDeclarationsOrReferences = declarationsOrReferences(file, offset)
+  val allDeclarationsOrReferences: List<DeclarationOrReference> = declarationsOrReferences(file, offset)
   if (allDeclarationsOrReferences.isEmpty()) {
     return emptyData
   }
 
-  val withMinimalRanges = chooseByRange(allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset)
+  val withMinimalRanges: Collection<DeclarationOrReference> = chooseByRange(
+    allDeclarationsOrReferences, offset, DeclarationOrReference::rangeWithOffset
+  )
 
   var declaration: PsiSymbolDeclaration? = null
-  val references = ArrayList<PsiSymbolReference>()
+  val references: MutableList<PsiSymbolReference> = ArrayList()
   var evaluatorData: TargetData.Evaluator? = null
 
   for (dr in withMinimalRanges) {
@@ -58,7 +70,7 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
         }
       }
       is DeclarationOrReference.Reference -> {
-        references += dr.reference
+        references.add(dr.reference)
       }
       is DeclarationOrReference.Evaluator -> {
         LOG.assertTrue(evaluatorData == null)
@@ -106,17 +118,47 @@ private sealed class DeclarationOrReference {
  */
 private fun declarationsOrReferences(file: PsiFile, offset: Int): List<DeclarationOrReference> {
   val result = SmartList<DeclarationOrReference>()
-  file.allDeclarationsAround(offset).mapTo(result, DeclarationOrReference::Declaration)
+
+  var foundNamedElement: PsiElement? = null
+
+  val allDeclarations = file.allDeclarationsAround(offset)
+  if (allDeclarations.isEmpty()) {
+    namedElement(file, offset)?.let { (namedElement, leaf) ->
+      foundNamedElement = namedElement
+      val declaration: PsiSymbolDeclaration = PsiElement2Declaration.createFromDeclaredPsiElement(namedElement, leaf)
+      result += DeclarationOrReference.Declaration(declaration)
+    }
+  }
+  else {
+    allDeclarations.mapTo(result, DeclarationOrReference::Declaration)
+  }
+
   val allReferences = file.allReferencesAround(offset)
   if (allReferences.isEmpty()) {
     fromTargetEvaluator(file, offset)?.let { evaluatorData ->
+      if (foundNamedElement != null && evaluatorData.targetElements.singleOrNull() === foundNamedElement) {
+        return@let // treat self-reference as a declaration
+      }
       result += DeclarationOrReference.Evaluator(offset, evaluatorData)
     }
   }
   else {
     allReferences.mapTo(result, DeclarationOrReference::Reference)
   }
+
   return result
+}
+
+private data class NamedElementAndLeaf(val namedElement: PsiElement, val leaf: PsiElement)
+
+private fun namedElement(file: PsiFile, offset: Int): NamedElementAndLeaf? {
+  for ((leaf, _) in file.leavesAroundOffset(offset)) {
+    val namedElement: PsiElement? = TargetElementUtil.getNamedElement(leaf)
+    if (namedElement != null) {
+      return NamedElementAndLeaf(namedElement, leaf)
+    }
+  }
+  return null
 }
 
 private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluator? {

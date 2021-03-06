@@ -3,10 +3,7 @@ package org.editorconfig.language.schema.parser.handlers.impl
 
 import com.google.gson.JsonObject
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigConstantDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigListDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigNumberDescriptor
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigUnionDescriptor
+import org.editorconfig.language.schema.descriptors.impl.*
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.ALLOW_REPETITIONS
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.LIST
@@ -45,6 +42,7 @@ class EditorConfigListDescriptorParseHandler : EditorConfigDescriptorParseHandle
     is EditorConfigConstantDescriptor -> true
     is EditorConfigNumberDescriptor -> true
     is EditorConfigUnionDescriptor -> true
+    is EditorConfigStringDescriptor -> true
     else -> false
   }
 }

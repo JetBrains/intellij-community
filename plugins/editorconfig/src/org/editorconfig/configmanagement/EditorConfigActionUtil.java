@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -14,19 +15,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditorConfigActionUtil {
+public final class EditorConfigActionUtil {
   public static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("EditorConfig", NotificationDisplayType.STICKY_BALLOON, true);
 
@@ -41,7 +44,7 @@ public class EditorConfigActionUtil {
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static AnAction createDisableAction(@NotNull Project project, @NotNull String message) {
+  public static AnAction createDisableAction(@NotNull Project project, @NotNull @Nls String message) {
     return DumbAwareAction.create(
       message,
       e -> {
@@ -57,7 +60,7 @@ public class EditorConfigActionUtil {
     notification.notify(project);
   }
 
-  private static class EditorConfigDisabledNotification extends Notification {
+  private static final class EditorConfigDisabledNotification extends Notification {
     private EditorConfigDisabledNotification(Project project) {
       super(NOTIFICATION_GROUP.getDisplayId(),
             EditorConfigBundle.message("disabled.notification"), "",
@@ -69,8 +72,8 @@ public class EditorConfigActionUtil {
   }
 
 
-  private static class ShowEditorConfigOption extends DumbAwareAction {
-    private ShowEditorConfigOption(@Nullable String text) {
+  private static final class ShowEditorConfigOption extends DumbAwareAction {
+    private ShowEditorConfigOption(@Nullable @Nls String text) {
       super(text);
     }
 
@@ -80,7 +83,7 @@ public class EditorConfigActionUtil {
     }
   }
 
-  private static class ReEnableAction extends DumbAwareAction {
+  private static final class ReEnableAction extends DumbAwareAction {
     private final Project myProject;
     private final Notification myNotification;
 
@@ -114,10 +117,12 @@ public class EditorConfigActionUtil {
 
   public static void showEditorConfigFiles(@NotNull Project project, @NotNull AnActionEvent event) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(project);
-    String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
+                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
+                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
     if (seManager.isShown()) {
-      if (!searchProviderID.equals(seManager.getSelectedContributorID())) {
-        seManager.setSelectedContributor(searchProviderID);
+      if (!searchProviderID.equals(seManager.getSelectedTabID())) {
+        seManager.setSelectedTabID(searchProviderID);
       }
     }
     seManager.show(searchProviderID, Utils.EDITOR_CONFIG_FILE_NAME, event);

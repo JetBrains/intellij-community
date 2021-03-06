@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -18,7 +18,6 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
@@ -41,14 +40,14 @@ import javax.xml.namespace.QName;
 import java.util.*;
 
 public abstract class XsltContextProviderBase extends ContextProvider {
-  protected static final Set<String> IGNORED_URIS = new THashSet<>();
+  protected static final Set<String> IGNORED_URIS = new HashSet<>();
 
   static {
     IGNORED_URIS.add(XsltSupport.XSLT_NS);
     IGNORED_URIS.addAll(XmlUtil.ourSchemaUrisList);
   }
 
-  private static final SimpleFieldCache<CachedValue<ElementNames>, XsltContextProviderBase> myNamesCache = new SimpleFieldCache<CachedValue<ElementNames>, XsltContextProviderBase>() {
+  private static final SimpleFieldCache<CachedValue<ElementNames>, XsltContextProviderBase> myNamesCache = new SimpleFieldCache<>() {
     @Override
     protected CachedValue<ElementNames> compute(final XsltContextProviderBase xsltContextProvider) {
       return xsltContextProvider.createCachedValue(xsltContextProvider.getFile());
@@ -123,7 +122,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         //noinspection unchecked
         names.dependencies.add(rootDescriptor.getDescriptorFile());
 
-        final Set<XmlElementDescriptor> history = new THashSet<>(150);
+        final Set<XmlElementDescriptor> history = new HashSet<>(150);
 
         final XmlElementDescriptor[] e = rootDescriptor.getRootElementsDescriptors(document);
         try {
@@ -307,7 +306,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   private CachedValue<ElementNames> createCachedValue(final PsiFile file) {
-    return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<ElementNames>() {
+    return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<>() {
       @Override
       public Result<ElementNames> compute() {
         final ElementNames names = new ElementNames();
@@ -315,7 +314,8 @@ public abstract class XsltContextProviderBase extends ContextProvider {
 
         if (associations.length == 0) {
           fillFromSchema(file, names);
-        } else {
+        }
+        else {
           names.validateNames = true;
           //noinspection unchecked
           ContainerUtil.addAll(names.dependencies, associations);

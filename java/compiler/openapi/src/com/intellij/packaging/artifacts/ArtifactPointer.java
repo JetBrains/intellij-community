@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.artifacts;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,13 +28,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ArtifactPointer {
 
-  @NotNull
-  String getArtifactName();
+  @NotNull @NlsSafe String getArtifactName();
 
   @Nullable
   Artifact getArtifact();
 
-  @NotNull
+  @NotNull @NlsSafe
   String getArtifactName(@NotNull ArtifactModel artifactModel);
 
   @Nullable

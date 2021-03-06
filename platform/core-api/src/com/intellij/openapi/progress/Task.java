@@ -7,15 +7,15 @@ import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Intended to run tasks, both modal and non-modal (backgroundable)
+ * Intended to run tasks, both modal and non-modal (backgroundable).
  * Example of use:
  * <pre>
  * new Task.Backgroundable(project, "Synchronizing data", true) {
@@ -35,11 +35,11 @@ public abstract class Task implements TaskInfo, Progressive {
   private static final Logger LOG = Logger.getInstance(Task.class);
 
   protected final Project myProject;
-  protected String myTitle;
-  private final boolean myCanBeCancelled;
+  protected @NlsContexts.ProgressTitle String myTitle;
 
-  private String myCancelText = CoreBundle.message("button.cancel");
-  private String myCancelTooltipText = CoreBundle.message("button.cancel");
+  private final boolean myCanBeCancelled;
+  private @NlsContexts.Button String myCancelText = CoreBundle.message("button.cancel");
+  private @NlsContexts.Tooltip String myCancelTooltipText = CoreBundle.message("button.cancel");
 
   private Task(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
     myProject = project;
@@ -52,14 +52,12 @@ public abstract class Task implements TaskInfo, Progressive {
    *
    * Callback executed when run() throws {@link ProcessCanceledException} or if its {@link ProgressIndicator} was canceled.
    */
-  public void onCancel() {
-  }
+  public void onCancel() { }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
    */
-  public void onSuccess() {
-  }
+  public void onSuccess() { }
 
   /**
    * This callback will be invoked on AWT dispatch thread.
@@ -69,7 +67,8 @@ public abstract class Task implements TaskInfo, Progressive {
    * @deprecated use {@link #onThrowable(Throwable)} instead
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "RedundantSuppression"})
   public void onError(@NotNull Exception error) {
     LOG.error(error);
   }
@@ -91,14 +90,12 @@ public abstract class Task implements TaskInfo, Progressive {
   /**
    * This callback will be invoked on AWT dispatch thread, after other specific handlers.
    */
-  public void onFinished() {
-  }
+  public void onFinished() { }
 
   /**
    * Specifies the thread to run callbacks on. See {@link EdtReplacementThread} documentation for more info.
    */
-  @NotNull
-  public EdtReplacementThread whereToRunCallbacks() {
+  public @NotNull EdtReplacementThread whereToRunCallbacks() {
     return EdtReplacementThread.EDT_WITH_IW;
   }
 
@@ -111,13 +108,11 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @Override
-  @NotNull
-  public final String getTitle() {
+  public final @NotNull String getTitle() {
     return myTitle;
   }
 
-  @NotNull
-  public final Task setTitle(@Nls@NlsContexts.ProgressTitle @NotNull String title) {
+  public final @NotNull Task setTitle(@NlsContexts.ProgressTitle @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -127,19 +122,16 @@ public abstract class Task implements TaskInfo, Progressive {
     return myCancelText;
   }
 
-  @NotNull
-  public final Task setCancelText(@NlsContexts.Button String cancelText) {
+  public final @NotNull Task setCancelText(@NlsContexts.Button String cancelText) {
     myCancelText = cancelText;
     return this;
   }
 
-  @Nullable
-  public NotificationInfo getNotificationInfo() {
+  public @Nullable NotificationInfo getNotificationInfo() {
     return null;
   }
 
-  @Nullable
-  public NotificationInfo notifyFinished() {
+  public @Nullable NotificationInfo notifyFinished() {
     return getNotificationInfo();
   }
 
@@ -147,8 +139,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  @NotNull
-  public final Task setCancelTooltipText(@NlsContexts.Tooltip String cancelTooltipText) {
+  public final @NotNull Task setCancelTooltipText(@NlsContexts.Tooltip String cancelTooltipText) {
     myCancelTooltipText = cancelTooltipText;
     return this;
   }
@@ -165,16 +156,14 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public abstract boolean isModal();
 
-  @NotNull
-  public final Modal asModal() {
+  public final @NotNull Modal asModal() {
     if (isModal()) {
       return (Modal)this;
     }
     throw new IllegalStateException("Not a modal task");
   }
 
-  @NotNull
-  public final Backgroundable asBackgroundable() {
+  public final @NotNull Backgroundable asBackgroundable() {
     if (!isModal()) {
       return (Backgroundable)this;
     }
@@ -182,14 +171,14 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
-    protected final PerformInBackgroundOption myBackgroundOption;
+    private final @NotNull PerformInBackgroundOption myBackgroundOption;
 
     public Backgroundable(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title) {
       this(project, title, true);
     }
 
     public Backgroundable(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
-      this(project, title, canBeCancelled, null);
+      this(project, title, canBeCancelled, ALWAYS_BACKGROUND);
     }
 
     public Backgroundable(@Nullable Project project,
@@ -197,7 +186,7 @@ public abstract class Task implements TaskInfo, Progressive {
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
-      myBackgroundOption = backgroundOption;
+      myBackgroundOption = ObjectUtils.notNull(backgroundOption, ALWAYS_BACKGROUND);
       if (StringUtil.isEmptyOrSpaces(title)) {
         LOG.warn("Empty title for backgroundable task.", new Throwable());
       }
@@ -205,14 +194,12 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @Override
     public boolean shouldStartInBackground() {
-      return myBackgroundOption == null || myBackgroundOption.shouldStartInBackground();
+      return myBackgroundOption.shouldStartInBackground();
     }
 
     @Override
     public void processSentToBackground() {
-      if (myBackgroundOption != null) {
-        myBackgroundOption.processSentToBackground();
-      }
+      myBackgroundOption.processSentToBackground();
     }
 
     @Override
@@ -227,7 +214,8 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   public abstract static class Modal extends Task {
-    public Modal(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
+    public Modal(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
+      //noinspection DialogTitleCapitalization
       super(project, title, canBeCancelled);
     }
 
@@ -253,8 +241,8 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public static class NotificationInfo {
     private final String myNotificationName;
-    private final String myNotificationTitle;
-    private final String myNotificationText;
+    private final @NlsContexts.SystemNotificationTitle String myNotificationTitle;
+    private final @NlsContexts.SystemNotificationText String myNotificationText;
     private final boolean myShowWhenFocused;
 
     public NotificationInfo(@NotNull String notificationName,
@@ -273,20 +261,15 @@ public abstract class Task implements TaskInfo, Progressive {
       myShowWhenFocused = showWhenFocused;
     }
 
-    @NotNull
-    public String getNotificationName() {
+    public @NotNull String getNotificationName() {
       return myNotificationName;
     }
 
-    @NotNull
-    @NlsContexts.SystemNotificationTitle
-    public String getNotificationTitle() {
+    public @NotNull @NlsContexts.SystemNotificationTitle String getNotificationTitle() {
       return myNotificationTitle;
     }
 
-    @NotNull
-    @NlsContexts.SystemNotificationText
-    public String getNotificationText() {
+    public @NotNull @NlsContexts.SystemNotificationText String getNotificationText() {
       return myNotificationText;
     }
 
@@ -296,20 +279,20 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
-    private final Ref<T> myResult = Ref.create();
-    private final Ref<Throwable> myError = Ref.create();
+    private volatile T myResult;
+    private volatile Throwable myError;
 
-    public WithResult(@Nullable Project project, @NlsContexts.ProgressTitle @NotNull String title, boolean canBeCancelled) {
+    public WithResult(@Nullable Project project, @NlsContexts.DialogTitle @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
       try {
-        myResult.set(compute(indicator));
+        myResult = compute(indicator);
       }
       catch (Throwable t) {
-        myError.set(t);
+        myError = t;
       }
     }
 
@@ -317,10 +300,14 @@ public abstract class Task implements TaskInfo, Progressive {
 
     @SuppressWarnings("unchecked")
     public T getResult() throws E {
-      Throwable t = myError.get();
-      ExceptionUtil.rethrowUnchecked(t);
-      if (t != null) throw (E)t;
-      return myResult.get();
+      Throwable t = myError;
+      if (t != null) {
+        ExceptionUtil.rethrowUnchecked(t);
+        throw (E)t;
+      }
+      else {
+        return myResult;
+      }
     }
   }
 }

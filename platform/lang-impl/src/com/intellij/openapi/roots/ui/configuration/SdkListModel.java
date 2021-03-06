@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -6,7 +6,9 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBoxPopupState;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Producer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,10 +21,9 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
   private final boolean myIsSearching;
   private final ImmutableList<SdkListItem> myItems;
   private final Producer<? extends Sdk> myGetProjectSdk;
-  private final ImmutableMap<SdkListItem, String> mySeparators;
+  private final ImmutableMap<SdkListItem, @NlsContexts.Separator String> mySeparators;
 
-  @NotNull
-  public static SdkListModel emptyModel() {
+  public static @NotNull SdkListModel emptyModel() {
     return new SdkListModel(false, ImmutableList.of(), () -> null);
   }
 
@@ -60,19 +61,16 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
     mySeparators = sep.build();
   }
 
-  @Nullable
-  public SdkListItem findProjectSdkItem() {
+  public @Nullable SdkListItem findProjectSdkItem() {
     return findFirstItemOfType(ProjectSdkItem.class);
   }
 
-  @Nullable
-  public SdkListItem findNoneSdkItem() {
+  public @Nullable SdkListItem findNoneSdkItem() {
     return findFirstItemOfType(NoneSdkItem.class);
   }
 
-  @Nullable
-  private SdkListItem findFirstItemOfType(Class<? extends SdkListItem> itemClass) {
-    return getItems().stream().filter(itemClass::isInstance).findFirst().orElse(null);
+  private @Nullable SdkListItem findFirstItemOfType(Class<? extends SdkListItem> itemClass) {
+    return ContainerUtil.find(getItems(), itemClass::isInstance);
   }
 
   @Nullable
@@ -86,16 +84,14 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
   }
 
   @Override
-  @NotNull
-  public SdkListItem getElementAt(int index) {
+  public @NotNull SdkListItem getElementAt(int index) {
     return myItems.get(index);
   }
 
-  @Nullable
   @Override
-  public SdkListModel onChosen(SdkListItem selectedValue) {
+  public @Nullable SdkListModel onChosen(SdkListItem selectedValue) {
     if (!(selectedValue instanceof GroupItem)) return null;
-    return new SdkListModel(myIsSearching, ((GroupItem)selectedValue).mySubItems, myGetProjectSdk);
+    return new SdkListModel(myIsSearching, ((GroupItem)selectedValue).subItems, myGetProjectSdk);
   }
 
   @Override
@@ -107,18 +103,15 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
     return myIsSearching;
   }
 
-  @NotNull
-  public List<SdkListItem> getItems() {
+  public @NotNull List<SdkListItem> getItems() {
     return myItems;
   }
 
-  @Nullable
-  public String getSeparatorTextAbove(@NotNull SdkListItem value) {
+  public @Nullable @NlsContexts.Separator String getSeparatorTextAbove(@NotNull SdkListItem value) {
     return mySeparators.get(value);
   }
 
-  @Nullable
-  public SdkItem findSdkItem(@Nullable Sdk value) {
+  public @Nullable SdkItem findSdkItem(@Nullable Sdk value) {
     if (value == null) return null;
     for (SdkListItem item : myItems) {
       if (!(item instanceof SdkItem)) continue;
@@ -130,13 +123,12 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
     return null;
   }
 
-  @Nullable
-  public SdkItem findSdkItem(@Nullable String sdkName) {
+  public @Nullable SdkItem findSdkItem(@Nullable String sdkName) {
     if (sdkName == null) return null;
     for (SdkListItem item : myItems) {
       if (!(item instanceof SdkItem)) continue;
       SdkItem sdkItem = (SdkItem)item;
-      Sdk sdk = sdkItem.getSdk();
+      Sdk sdk = sdkItem.sdk;
       if (sdkName.equals(sdk.getName())) {
         return sdkItem;
       }

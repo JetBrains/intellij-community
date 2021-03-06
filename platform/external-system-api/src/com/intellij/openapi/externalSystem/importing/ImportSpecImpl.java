@@ -39,6 +39,7 @@ public class ImportSpecImpl implements ImportSpec {
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
+  @Nullable private Runnable myRerunAction;
 
   public ImportSpecImpl(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -76,13 +77,6 @@ public class ImportSpecImpl implements ImportSpec {
   public void setForceWhenUptodate(boolean forceWhenUptodate) {
     this.forceWhenUptodate = forceWhenUptodate;
   }
-
-  /**
-   * @deprecated see {@link com.intellij.openapi.externalSystem.settings.ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public void setWhenAutoImportEnabled(boolean whenAutoImportEnabled) { }
 
   public void setCallback(@Nullable ExternalProjectRefreshCallback callback) {
     myCallback = callback;
@@ -148,5 +142,14 @@ public class ImportSpecImpl implements ImportSpec {
 
   void setProjectResolverPolicy(@Nullable ProjectResolverPolicy projectResolverPolicy) {
     myProjectResolverPolicy = projectResolverPolicy;
+  }
+
+  @Nullable
+  public Runnable getRerunAction() {
+    return myRerunAction;
+  }
+
+  public void setRerunAction(@Nullable Runnable rerunAction) {
+    myRerunAction = rerunAction;
   }
 }

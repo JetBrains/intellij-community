@@ -23,7 +23,7 @@ public abstract class GroovyShellActionBase extends AnAction {
 
   private final GroovyShellConfig myConfig;
 
-  private final Condition<Module> APPLICABLE_MODULE = new Condition<Module>() {
+  private final Condition<Module> APPLICABLE_MODULE = new Condition<>() {
     @Override
     public boolean value(Module module) {
       return myConfig.isSuitableModule(module);
@@ -33,7 +33,7 @@ public abstract class GroovyShellActionBase extends AnAction {
   // non-static to distinguish different module acceptability conditions
   private final Key<CachedValue<Boolean>> APPLICABLE_MODULE_CACHE = Key.create("APPLICABLE_MODULE_CACHE");
 
-  private final Consumer<Module> RUNNER = new Consumer<Module>() {
+  private final Consumer<Module> RUNNER = new Consumer<>() {
     @Override
     public void consume(final Module module) {
       GroovyShellRunnerImpl.doRunShell(myConfig, module);

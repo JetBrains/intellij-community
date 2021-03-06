@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.copy;
 
@@ -8,6 +8,7 @@ import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class CopyHandler {
+public final class CopyHandler {
   private CopyHandler() {
   }
 
@@ -29,7 +30,7 @@ public class CopyHandler {
     return canCopy(elements, null);
   }
 
-  public static boolean canCopy(PsiElement[] elements, @Nullable Ref<String> actionName) {
+  public static boolean canCopy(PsiElement[] elements, @Nullable Ref<@NlsActions.ActionText String> actionName) {
     if (elements.length > 0) {
       for(CopyHandlerDelegate delegate: CopyHandlerDelegate.EP_NAME.getExtensionList()) {
         if (delegate instanceof CopyHandlerDelegateBase ? ((CopyHandlerDelegateBase)delegate).canCopy(elements, true) : delegate.canCopy(elements)) {

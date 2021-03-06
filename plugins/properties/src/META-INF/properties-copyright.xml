@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="com.intellij.lang.properties.copyright">
   <extensions defaultExtensionNs="com.intellij.copyright">
     <updater filetype="Properties" implementationClass="com.maddyhome.idea.copyright.psi.UpdateAnyFileCopyright$Provider"/>
   </extensions>

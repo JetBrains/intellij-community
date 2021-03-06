@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,8 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -44,7 +46,13 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
-    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree)).addToTop(createToolbar(mainPanel, tree));
+    JComponent toolbar = createToolbar(mainPanel, tree);
+    tree.setBackground(UIUtil.getToolTipBackground());
+    toolbar.setBackground(UIUtil.getToolTipActionBackground());
+    WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
+    toolbar.addMouseListener(moveListener);
+    toolbar.addMouseMotionListener(moveListener);
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree, true)).addToBottom(toolbar);
   }
 
   private void updateTree() {
@@ -69,7 +77,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
   }
 
-  private JComponent createToolbar(JPanel parent, Tree tree) {
+  protected final JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SetAsRootAction(tree));
 
@@ -148,7 +156,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
       TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object node = path.getLastPathComponent();
-        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<D>() {
+        myTreeCreator.createDescriptorByNode(node, new ResultConsumer<>() {
           @Override
           public void onSuccess(final D value) {
             if (value != null) {

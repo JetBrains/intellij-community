@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -60,7 +62,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   }
 
   @NotNull
-  protected String getPopupTitle() {
+  protected @NlsContexts.PopupTitle String getPopupTitle() {
     return QuickFixBundle.message("method.to.import.chooser.title");
   }
 
@@ -103,7 +105,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       return;
     }
     final BaseListPopupStep<T> step =
-      new BaseListPopupStep<T>(getPopupTitle(), myCandidates) {
+      new BaseListPopupStep<>(getPopupTitle(), myCandidates) {
 
         @Override
         public boolean isAutoSelectionEnabled() {
@@ -210,7 +212,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     popup.showInBestPositionFor(editor);
   }
 
-  private String getElementPresentableName(T element) {
+  private @NlsSafe String getElementPresentableName(T element) {
     final PsiClass aClass = element.getContainingClass();
     LOG.assertTrue(aClass != null);
     return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();

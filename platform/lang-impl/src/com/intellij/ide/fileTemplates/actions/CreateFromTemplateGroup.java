@@ -9,11 +9,13 @@ import com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.impl.FileTemplateBase;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +84,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     List<AnAction> result = new ArrayList<>();
 
     for (FileTemplate template : templates) {
-      if (canCreateFromTemplate(e, template)) {
+      if (!FileTemplateBase.isChild(template) && canCreateFromTemplate(e, template)) {
         AnAction action = replaceAction(template);
         if (action == null) {
           action = new CreateFromTemplateAction(template);
@@ -127,7 +129,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
 
-    CreateFromTemplatesAction(String title){
+    CreateFromTemplatesAction(@NlsActions.ActionText String title){
       super(title,null,null);
     }
 

@@ -16,7 +16,10 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -48,7 +51,7 @@ import java.util.List;
 public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<List<RangeHighlighter>> TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY");
 
-  private static final TextAttributesKey TAG_TREE_HIGHLIGHTING_KEY = TextAttributesKey.createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY");
+  public static final TextAttributesKey TAG_TREE_HIGHLIGHTING_KEY = TextAttributesKey.createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY");
   private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION,
                                                                                             TAG_TREE_HIGHLIGHTING_KEY);
 
@@ -241,7 +244,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   @NotNull
   private static RangeHighlighter createHighlighter(MarkupModel mm, @NotNull TextRange range, Color color) {
     RangeHighlighter highlighter =
-      mm.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+      mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0, HighlighterTargetArea.LINES_IN_RANGE);
 
     highlighter.setLineMarkerRenderer((__, g, r) -> {
       g.setColor(color);

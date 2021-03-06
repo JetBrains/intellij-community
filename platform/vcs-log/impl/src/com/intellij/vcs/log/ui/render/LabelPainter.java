@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
@@ -264,7 +265,7 @@ public class LabelPainter {
   }
 
   @NotNull
-  private static String shortenRefName(@NotNull String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
+  private static String shortenRefName(@NotNull @NlsSafe String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
     if (fontMetrics.stringWidth(refName) > availableWidth && refName.length() > MAX_LENGTH) {
       int separatorIndex = refName.indexOf(SEPARATOR);
       if (separatorIndex > TWO_DOTS.length()) {

@@ -3,6 +3,7 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabDescriptor;
@@ -10,9 +11,7 @@ import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,8 +27,14 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @NotNull
   private final TabGroupId myId;
 
-  public TabbedContentImpl(JComponent component, @NotNull String displayName, boolean isPinnable, @NotNull String titlePrefix) {
-    this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable);
+  /**
+   * @deprecated use {@link TabbedContentImpl#TabbedContentImpl(TabGroupId, TabDescriptor, boolean)} instead
+   * as it allows to set tab group id separately from display name.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public TabbedContentImpl(JComponent component, @NotNull @NlsContexts.TabTitle String displayName, boolean isPinnable, @NotNull @NonNls String titlePrefix) {
+    this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable); //NON-NLS
   }
 
   public TabbedContentImpl(@NotNull TabGroupId id, @NotNull TabDescriptor tab, boolean isPinnable) {
@@ -98,7 +103,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
   @Override
   public void setComponent(JComponent component) {
     JComponent currentComponent = getComponent();
-    Container parent = currentComponent == null ? null : currentComponent.getParent();
+    Container parent = currentComponent.getParent();
     if (parent != null) {
       parent.remove(currentComponent);
       parent.add(component);

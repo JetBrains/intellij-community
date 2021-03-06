@@ -31,7 +31,7 @@ public class MavenProjectsTreeIgnoresTest extends MavenProjectsTreeTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    myTree.addListener(new MyLoggingListener());
+    myTree.addListener(new MyLoggingListener(), getTestRootDisposable());
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +

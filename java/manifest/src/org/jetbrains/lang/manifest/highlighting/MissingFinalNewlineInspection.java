@@ -61,7 +61,7 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
     return null;
   }
 
-  private static class AddNewlineQuickFix extends AbstractManifestQuickFix {
+  private static final class AddNewlineQuickFix extends AbstractManifestQuickFix {
     private AddNewlineQuickFix(Section section) {
       super(section);
     }

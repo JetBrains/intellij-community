@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -8,19 +7,18 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.CharPattern;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.UnmodifiableIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +30,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 
-public class CompletionUtil {
+public final class CompletionUtil {
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
@@ -47,29 +45,7 @@ public class CompletionUtil {
   @Nullable
   public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
-
-    PsiElement parent = position.getParent();
-    Language language = parent == null ? position.getLanguage() : parent.getLanguage();
-    final FileType fileType = language.getAssociatedFileType();
-    if (fileType != null) {
-      final CompletionData mainData = getCompletionDataByFileType(fileType);
-      if (mainData != null) {
-        return mainData;
-      }
-    }
-
-    final CompletionData mainData = getCompletionDataByFileType(originalFile.getFileType());
-    return mainData != null ? mainData : ourGenericCompletionData;
-  }
-
-  @Nullable
-  private static CompletionData getCompletionDataByFileType(FileType fileType) {
-    for(CompletionDataEP ep: CompletionDataEP.EP_NAME.getExtensionList()) {
-      if (ep.fileType.equals(fileType.getName())) {
-        return ep.getHandler();
-      }
-    }
-    return null;
+    return ourGenericCompletionData;
   }
 
   public static boolean shouldShowFeature(CompletionParameters parameters, @NonNls final String id) {
@@ -84,34 +60,64 @@ public class CompletionUtil {
     return false;
   }
 
-  public static String findJavaIdentifierPrefix(CompletionParameters parameters) {
+  /**
+   * @return a prefix for completion matching, calculated from the given parameters.
+   * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
+   * ending at {@code parameters.getOffset()}, being a valid Java identifier.
+   */
+  @NotNull
+  public static String findJavaIdentifierPrefix(@NotNull CompletionParameters parameters) {
     return findJavaIdentifierPrefix(parameters.getPosition(), parameters.getOffset());
   }
 
-  public static String findJavaIdentifierPrefix(final PsiElement insertedElement, final int offset) {
-    return findIdentifierPrefix(insertedElement, offset, CharPattern.javaIdentifierPartCharacter(), CharPattern.javaIdentifierStartCharacter());
+  /**
+   * @return a prefix for completion matching, calculated from the given parameters.
+   * The prefix is the longest substring from inside {@code position}'s text,
+   * ending at {@code offsetInFile}, being a valid Java identifier.
+   */
+  @NotNull
+  public static String findJavaIdentifierPrefix(@Nullable PsiElement position, int offsetInFile) {
+    return findIdentifierPrefix(position, offsetInFile, CharPattern.javaIdentifierPartCharacter(), CharPattern.javaIdentifierStartCharacter());
   }
 
-  public static String findReferenceOrAlphanumericPrefix(CompletionParameters parameters) {
+  /**
+   * @return the result of {@link #findReferencePrefix}, or {@link #findAlphanumericPrefix} if there's no reference.
+   */
+  @NotNull
+  public static String findReferenceOrAlphanumericPrefix(@NotNull CompletionParameters parameters) {
     String prefix = findReferencePrefix(parameters);
     return prefix == null ? findAlphanumericPrefix(parameters) : prefix;
   }
 
-  public static String findAlphanumericPrefix(CompletionParameters parameters) {
+  /**
+   * @return an alphanumertic prefix for completion matching, calculated from the given parameters.
+   * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
+   * ending at {@code parameters.getOffset()}, consisting of letters and digits.
+   */
+  @NotNull
+  public static String findAlphanumericPrefix(@NotNull CompletionParameters parameters) {
     return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), CharPattern.letterOrDigitCharacter(), CharPattern.letterOrDigitCharacter());
   }
 
-  public static String findIdentifierPrefix(PsiElement insertedElement, int offset, ElementPattern<Character> idPart,
-                                            ElementPattern<Character> idStart) {
-    if (insertedElement == null) return "";
-    int startOffset = insertedElement.getTextRange().getStartOffset();
-    return findInText(offset, startOffset, idPart, idStart, insertedElement.getNode().getChars());
+  /**
+   * @return a prefix for completion matching, calculated from the given element's text and the offsets.
+   * The prefix is the longest substring from inside {@code position}'s text,
+   * ending at {@code offsetInFile}, beginning with a character
+   * satisfying {@code idStart}, and with all other characters satisfying {@code idPart}.
+   */
+  @NotNull
+  public static String findIdentifierPrefix(@Nullable PsiElement position, int offsetInFile,
+                                            @NotNull ElementPattern<Character> idPart,
+                                            @NotNull ElementPattern<Character> idStart) {
+    if (position == null) return "";
+    int startOffset = position.getTextRange().getStartOffset();
+    return findInText(offsetInFile, startOffset, idPart, idStart, position.getNode().getChars());
   }
 
   @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
-    final String text = document.getText();
+    final CharSequence text = document.getImmutableCharSequence();
     return findInText(offset, 0, idPart, idStart, text);
   }
 
@@ -130,11 +136,50 @@ public class CompletionUtil {
     return text.subSequence(start + 1, offsetInElement).toString().trim();
   }
 
+  /**
+   * @return a prefix from completion matching calculated by a reference found at parameters' offset
+   * (the reference text from the beginning until that offset),
+   * or {@code null} if there's no reference there.
+   */
   @Nullable
-  public static String findReferencePrefix(CompletionParameters parameters) {
-    return CompletionData.getReferencePrefix(parameters.getPosition(), parameters.getOffset());
+  public static String findReferencePrefix(@NotNull CompletionParameters parameters) {
+    return findReferencePrefix(parameters.getPosition(), parameters.getOffset());
   }
 
+  /**
+   * @return a prefix from completion matching calculated by a reference found at the given offset
+   * (the reference text from the beginning until that offset),
+   * or {@code null} if there's no reference there.
+   */
+  @Nullable
+  public static String findReferencePrefix(@NotNull PsiElement position, int offsetInFile) {
+    try {
+      PsiUtilCore.ensureValid(position);
+      PsiReference ref = position.getContainingFile().findReferenceAt(offsetInFile);
+      if (ref != null) {
+        PsiElement element = ref.getElement();
+        int offsetInElement = offsetInFile - element.getTextRange().getStartOffset();
+        for (TextRange refRange : ReferenceRange.getRanges(ref)) {
+          if (refRange.contains(offsetInElement)) {
+            int beginIndex = refRange.getStartOffset();
+            String text = element.getText();
+            if (beginIndex < 0 || beginIndex > offsetInElement || offsetInElement > text.length()) {
+              throw new AssertionError("Inconsistent reference range:" +
+                                       " ref=" + ref.getClass() +
+                                       " element=" + element.getClass() +
+                                       " ref.start=" + refRange.getStartOffset() +
+                                       " offset=" + offsetInElement +
+                                       " psi.length=" + text.length());
+            }
+            return text.substring(beginIndex, offsetInElement);
+          }
+        }
+      }
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    return null;
+  }
 
   public static InsertionContext emulateInsertion(InsertionContext oldContext, int newStart, final LookupElement item) {
     final InsertionContext newContext = newContext(oldContext, item);
@@ -204,12 +249,12 @@ public class CompletionUtil {
   }
 
   public static Iterable<String> iterateLookupStrings(@NotNull final LookupElement element) {
-    return new Iterable<String>() {
+    return new Iterable<>() {
       @NotNull
       @Override
       public Iterator<String> iterator() {
         final Iterator<String> original = element.getAllLookupStrings().iterator();
-        return new UnmodifiableIterator<String>(original) {
+        return new UnmodifiableIterator<>(original) {
           @Override
           public boolean hasNext() {
             try {

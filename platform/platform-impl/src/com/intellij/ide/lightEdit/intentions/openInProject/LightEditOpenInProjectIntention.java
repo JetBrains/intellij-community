@@ -43,26 +43,26 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    performOn(file.getVirtualFile());
+    performOn(project, file.getVirtualFile());
   }
 
-  public static void performOn(@NotNull VirtualFile currFile) throws IncorrectOperationException {
+  public static void performOn(@NotNull Project project, @NotNull VirtualFile currentFile) throws IncorrectOperationException {
     LightEditorInfo editorInfo =
-      ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currFile);
+      ((LightEditorManagerImpl)LightEditService.getInstance().getEditorManager()).findOpen(currentFile);
     if (editorInfo != null) {
-      Project openProject = findOpenProject(currFile);
+      Project openProject = findOpenProject(currentFile);
       if (openProject != null) {
-        LightEditFeatureUsagesUtil.logOpenFileInProject(Open);
+        LightEditFeatureUsagesUtil.logOpenFileInProject(project, Open);
       }
       else {
-        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(currFile);
+        VirtualFile projectRoot = ProjectRootSearchUtil.findProjectRoot(project, currentFile);
         if (projectRoot != null) {
-          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot, -1, -1, false);
+          openProject = PlatformProjectOpenProcessor.getInstance().openProjectAndFile(projectRoot.toNioPath(), -1, -1, false);
         }
       }
       if (openProject != null) {
         ((LightEditServiceImpl)LightEditService.getInstance()).closeEditor(editorInfo);
-        OpenFileAction.openFile(currFile, openProject);
+        OpenFileAction.openFile(currentFile, openProject);
       }
     }
   }

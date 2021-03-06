@@ -18,7 +18,6 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +72,7 @@ class CallSequencePredicate implements PsiElementPredicate {
      return null;
    }
    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-   final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+   final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
    if (qualifierExpression instanceof PsiMethodCallExpression) {
      final PsiMethodCallExpression expression = (PsiMethodCallExpression)qualifierExpression;
      return getVariable(expression);

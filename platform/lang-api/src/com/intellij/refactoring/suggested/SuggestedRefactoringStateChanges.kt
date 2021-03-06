@@ -133,7 +133,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     return null
   }
 
-  protected fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
+  protected open fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
     return prevState.parameterMarkers.firstOrNull { it.rangeMarker.range == markerRange }?.parameterId
   }
 

@@ -86,7 +86,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
   protected String buildErrorString(Object... infos) {
     return infos.length > 0
            ? (String)infos[1]
-           : "Class #ref annotated @RunWith(Parameterized.class) lacks data provider";
+           : InspectionGadgetsBundle.message("fix.data.provider.signature.problem");
   }
 
   @Override
@@ -110,8 +110,8 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
                     JavaPsiFacade.getInstance(project).findClass(Collection.class.getName(), GlobalSearchScope.allScope(project));
                   if (AnnotationUtil.isAnnotated(method, PARAMETERS_FQN, 0)) {
                     final PsiModifierList modifierList = method.getModifierList();
-                    String fixMessage = "Make method \'" + method.getName() + "\' ";
-                    String errorString = "Method \'#ref()\' should";
+                    String fixMessage = "Make method '" + method.getName() + "' ";
+                    String errorString = "Method '#ref()' should";
                     String signatureDescription = "";
                     if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
                       signatureDescription += PsiModifier.PUBLIC;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.fileChooser.impl;
 
@@ -48,17 +48,16 @@ public class FileTreeStructure extends AbstractTreeStructure {
     return true;
   }
 
-  public final boolean areHiddensShown() {
+  public final boolean areHiddenShown() {
     return myShowHidden;
   }
 
-  public final void showHiddens(final boolean showHidden) {
+  public final void showHidden(final boolean showHidden) {
     myShowHidden = showHidden;
   }
 
-  @NotNull
   @Override
-  public final Object getRootElement() {
+  public final @NotNull Object getRootElement() {
     return myRootElement;
   }
 
@@ -110,10 +109,8 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
 
   @Override
-  @Nullable
-  public Object getParentElement(@NotNull Object element) {
+  public @Nullable Object getParentElement(@NotNull Object element) {
     if (element instanceof FileElement) {
-
       final FileElement fileElement = (FileElement)element;
 
       final VirtualFile elementFile = getValidFile(fileElement);
@@ -134,25 +131,20 @@ public class FileTreeStructure extends AbstractTreeStructure {
       VirtualFile parent = file.getParent();
       if (parent != null && parent.getFileSystem() instanceof JarFileSystem && parent.getParent() == null) {
         // parent of jar contents should be local jar file
-        String localPath = parent.getPath().substring(0,
-                                                      parent.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
+        String localPath = parent.getPath().substring(0, parent.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
         parent = LocalFileSystem.getInstance().findFileByPath(localPath);
       }
-
-      if (parent != null && parent.isValid() && parent.equals(rootElementFile)) {
+      if (parent == null || parent.isValid() && parent.equals(rootElementFile)) {
         return myRootElement;
       }
 
-      if (parent == null) {
-        return myRootElement;
-      }
       return new FileElement(parent, parent.getName());
     }
+
     return null;
   }
 
-  @Nullable
-  private static VirtualFile getValidFile(FileElement element) {
+  private static @Nullable VirtualFile getValidFile(FileElement element) {
     if (element == null) return null;
     final VirtualFile file = element.getFile();
     return file != null && file.isValid() ? file : null;
@@ -167,14 +159,12 @@ public class FileTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     LOG.assertTrue(element instanceof FileElement, element.getClass().getName());
     VirtualFile file = ((FileElement)element).getFile();
     Icon closedIcon = file == null ? null : myChooserDescriptor.getIcon(file);
     String name = file == null ? null : myChooserDescriptor.getName(file);
     String comment = file == null ? null : myChooserDescriptor.getComment(file);
-
     return new FileNodeDescriptor(myProject, (FileElement)element, parentDescriptor, closedIcon, name, comment);
   }
 }

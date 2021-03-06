@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.testframework.TestSearchScope;
@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathsList;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -28,15 +26,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class TestClassCollector {
-
+public final class TestClassCollector {
   private static final Logger LOG = Logger.getInstance(TestClassCollector.class);
 
   public static String[] collectClassFQNames(String packageName,
                                              @Nullable Path rootPath,
                                              JavaTestConfigurationBase configuration,
                                              Function<? super ClassLoader, ? extends Predicate<Class<?>>> predicateProducer) {
-    Module module = configuration.getConfigurationModule().getModule();
     ClassLoader classLoader = createUsersClassLoader(configuration);
     Set<String> classes = new HashSet<>();
     try {
@@ -56,7 +52,7 @@ public class TestClassCollector {
         if (rootPath != null && !baseDir.startsWith(rootPath)) continue;
 
         String pathSeparator = baseDir.getFileSystem().getSeparator();
-        Files.walkFileTree(baseDir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(baseDir, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             ProgressManager.checkCanceled();
@@ -74,7 +70,7 @@ public class TestClassCollector {
                 int modifiers = aClass.getModifiers();
                 if (Modifier.isAbstract(modifiers) ||
                     !Modifier.isPublic(modifiers) ||
-                   aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
+                    aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
                   return result;
                 }
                 if (classPredicate.test(aClass)) {
@@ -82,7 +78,7 @@ public class TestClassCollector {
                 }
               }
               catch (Throwable e) {
-                LOG.info("error processing: " + fName + " of " + baseDir.toString(), e);
+                LOG.info("error processing: " + fName + " of " + baseDir, e);
               }
             }
             return result;
@@ -102,22 +98,16 @@ public class TestClassCollector {
 
   public static ClassLoader createUsersClassLoader(JavaTestConfigurationBase configuration) {
     Module module = configuration.getConfigurationModule().getModule();
-    List<URL> urls = new ArrayList<>();
+    List<Path> files = new ArrayList<>();
 
     PathsList pathsList = ReadAction
       .compute(() -> (module == null || configuration.getTestSearchScope() == TestSearchScope.WHOLE_PROJECT ? OrderEnumerator
         .orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
       .runtimeOnly().recursively().getPathsList()); //include jdk to avoid NoClassDefFoundError for classes inside tools.jar
     for (VirtualFile file : pathsList.getVirtualFiles()) {
-      try {
-        urls.add(VfsUtilCore.virtualToIoFile(file).toURI().toURL());
-      }
-      catch (MalformedURLException ignored) {
-        LOG.info(ignored);
-      }
+      files.add(file.toNioPath());
     }
-
-    return UrlClassLoader.build().allowLock().useCache().urls(urls).get();
+    return UrlClassLoader.build().useCache().files(files).get();
   }
 
   public static VirtualFile @Nullable [] getRootPath(Module module, final boolean chooseSingleModule) {

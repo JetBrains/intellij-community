@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -13,7 +13,6 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -31,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,14 +45,13 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
@@ -83,7 +82,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  private static String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
+  private static @Nls String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }
@@ -148,7 +147,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  private static String generatePackageInfo(PsiPackage aPackage) {
+  private static @NlsSafe String generatePackageInfo(PsiPackage aPackage) {
     return aPackage.getQualifiedName();
   }
 
@@ -185,21 +184,21 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  public static String generateClassInfo(PsiClass aClass) {
-    StringBuilder buffer = new StringBuilder();
+  public static @Nls String generateClassInfo(PsiClass aClass) {
+    @Nls StringBuilder buffer = new StringBuilder();
 
-    if (aClass instanceof PsiAnonymousClass) return JavaPsiBundle.message("java.terms.anonymous.class");
+    if (aClass instanceof PsiAnonymousClass) return JavaElementKind.ANONYMOUS_CLASS.subject();
 
     generateOrderEntryAndPackageInfo(buffer, aClass);
     generateModifiers(buffer, aClass);
 
-    final String classString = aClass.isAnnotationType() ? "java.terms.annotation.interface"
-                                                         : aClass.isInterface()
-                                                           ? "java.terms.interface"
-                                                           : aClass instanceof PsiTypeParameter
-                                                             ? "java.terms.type.parameter"
-                                                             : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
-    buffer.append(JavaBundle.message(classString)).append(" ");
+    final String classString = aClass.isAnnotationType() ? '@' + PsiKeyword.INTERFACE :
+                               aClass.isInterface() ? PsiKeyword.INTERFACE :
+                               aClass instanceof PsiTypeParameter ? JavaBundle.message("java.terms.type.parameter") :
+                               aClass.isEnum() ? PsiKeyword.ENUM :
+                               aClass.isRecord() ? PsiKeyword.RECORD :
+                               PsiKeyword.CLASS;
+    buffer.append(classString).append(" ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
@@ -278,8 +277,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String generateMethodInfo(PsiMethod method, PsiSubstitutor substitutor) {
+  public static @NlsSafe String generateMethodInfo(PsiMethod method, PsiSubstitutor substitutor) {
     StringBuilder buffer = new StringBuilder();
 
     PsiClass parentClass = method.getContainingClass();
@@ -341,8 +339,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  private static String generateFieldInfo(PsiField field, PsiSubstitutor substitutor) {
-    StringBuilder buffer = new StringBuilder();
+  private static @Nls String generateFieldInfo(PsiField field, PsiSubstitutor substitutor) {
+    @Nls StringBuilder buffer = new StringBuilder();
     PsiClass parentClass = field.getContainingClass();
 
     if (parentClass != null && !(parentClass instanceof PsiAnonymousClass)) {
@@ -362,8 +360,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  private static String generateVariableInfo(PsiVariable variable) {
-    StringBuilder buffer = new StringBuilder();
+  private static @Nls String generateVariableInfo(PsiVariable variable) {
+    @Nls StringBuilder buffer = new StringBuilder();
 
     generateModifiers(buffer, variable);
 
@@ -377,13 +375,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
+  @Nls
   private static String generateModuleInfo(PsiJavaModule module) {
-    StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
 
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    sb.append(JavaBundle.message("java.terms.module")).append(' ').append(module.getName());
+    sb.append(PsiKeyword.MODULE).append(' ').append(module.getName());
 
     return sb.toString();
   }
@@ -590,7 +589,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
     String fileName = file.getName();
     if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName)) {
@@ -616,7 +615,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  private static void collectDocComments(@NotNull PsiClass aClass, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+  private static void collectDocComments(@NotNull PsiClass aClass, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     collectDocComment(aClass, sink);
     List<PsiDocCommentOwner> children = PsiTreeUtil.getChildrenOfTypeAsList(aClass, PsiDocCommentOwner.class);
     for (PsiDocCommentOwner child : children) {
@@ -630,13 +629,16 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   private static void collectDocComment(@NotNull PsiJavaDocumentedElement commentOwner,
-                                        @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+                                        @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     PsiDocComment comment = commentOwner.getDocComment();
     if (comment != null) sink.accept(comment);
   }
 
+  @Contract(value = "null -> null", pure = true)
   @Nullable
-  public static String generateExternalJavadoc(@NotNull final PsiElement element) {
+  public static String generateExternalJavadoc(@Nullable final PsiElement element) {
+    if (element == null) return null;
+
     List<String> docURLs = getExternalJavaDocUrl(element);
     return generateExternalJavadoc(element, docURLs);
   }
@@ -885,7 +887,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     return fetchExternalJavadoc(element, project, docUrls);
   }
 
@@ -913,7 +915,26 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         return JavaDirectoryService.getInstance().getPackage(directory);
       }
     }
-    return null;
+    return getDocumentedElementOfKeyword(contextElement);
+  }
+
+  /**
+   * The method returns either class or interface or method or field or anything with a javadoc that is annotated with the keyword.
+   * The method inspects keywords in the modifier lists, the class-level keywords (e.g. class, interface, implements, record, sealed, permits, etc.)
+   * and primitive types
+   * @param contextElement element that is supposed to be a keyword
+   * @return an instance of {@link PsiJavaDocumentedElement} that has javadoc if the keyword is either on the class or method or field level,
+   * null otherwise
+   */
+  @Contract(value = "null -> null", pure = true)
+  @Nullable
+  private static PsiJavaDocumentedElement getDocumentedElementOfKeyword(@Nullable final PsiElement contextElement) {
+    if (!(contextElement instanceof PsiKeyword)) return null;
+
+    final PsiElement element = PsiTreeUtil.skipParentsOfType(contextElement, PsiModifierList.class, PsiReferenceList.class, PsiTypeElement.class);
+    if (!(element instanceof PsiJavaDocumentedElement)) return null;
+
+    return (PsiJavaDocumentedElement)element;
   }
 
   public static String fetchExternalJavadoc(PsiElement element, Project project, List<String> docURLs) {

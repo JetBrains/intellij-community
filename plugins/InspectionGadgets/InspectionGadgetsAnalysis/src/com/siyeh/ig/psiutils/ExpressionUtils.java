@@ -4,6 +4,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -18,7 +20,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -36,9 +38,9 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExpressionUtils {
-  private static final Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
-    ContainerUtil.immutableSet("append", "format", "print", "printf", "println", "valueOf");
+public final class ExpressionUtils {
+  private static final @NonNls Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
+    Set.of("append", "format", "print", "printf", "println", "valueOf");
   @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
 
   static {
@@ -155,8 +157,7 @@ public class ExpressionUtils {
         if (PsiTreeUtil.isAncestor(variable, expression, true)) {
           return false;
         }
-        final PsiExpression initializer = variable.getInitializer();
-        return variable.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(initializer);
+        return variable.hasModifierProperty(PsiModifier.FINAL) && isEvaluatedAtCompileTime(PsiFieldImpl.getDetachedInitializer(variable));
       }
     }
     if (expression instanceof PsiParenthesizedExpression) {
@@ -188,7 +189,7 @@ public class ExpressionUtils {
 
   @Nullable
   public static PsiLiteralExpression getLiteral(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression) {
       return (PsiLiteralExpression)expression;
     }
@@ -196,7 +197,7 @@ public class ExpressionUtils {
       return null;
     }
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
-    final PsiExpression operand = ParenthesesUtils.stripParentheses(typeCastExpression.getOperand());
+    final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(typeCastExpression.getOperand());
     if (!(operand instanceof PsiLiteralExpression)) {
       return null;
     }
@@ -208,7 +209,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isEmptyStringLiteral(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiLiteralExpression)) {
       return false;
     }
@@ -328,7 +329,7 @@ public class ExpressionUtils {
 
   public static boolean isNegation(@Nullable PsiExpression condition,
                                    boolean ignoreNegatedNullComparison, boolean ignoreNegatedZeroComparison) {
-    condition = ParenthesesUtils.stripParentheses(condition);
+    condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (condition instanceof PsiPrefixExpression) {
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
@@ -336,8 +337,8 @@ public class ExpressionUtils {
     }
     else if (condition instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
       if (lhs == null || rhs == null) {
         return false;
       }
@@ -377,7 +378,7 @@ public class ExpressionUtils {
   public static boolean isOffsetArrayAccess(
     @Nullable PsiExpression expression, @NotNull PsiVariable variable) {
     final PsiExpression strippedExpression =
-      ParenthesesUtils.stripParentheses(expression);
+      PsiUtil.skipParenthesizedExprDown(expression);
     if (!(strippedExpression instanceof PsiArrayAccessExpression)) {
       return false;
     }
@@ -401,7 +402,7 @@ public class ExpressionUtils {
       return true;
     }
     final PsiExpression strippedExpression =
-      ParenthesesUtils.stripParentheses(expression);
+      PsiUtil.skipParenthesizedExprDown(expression);
     if (!(strippedExpression instanceof PsiBinaryExpression)) {
       return false;
     }
@@ -422,7 +423,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isVariableLessThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
     if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.LT) || tokenType.equals(JavaTokenType.LE)) {
@@ -435,7 +436,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isVariableGreaterThanComparison(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    PsiBinaryExpression binaryExpression = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+    PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiBinaryExpression.class);
     if (binaryExpression == null) return false;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.GT) || tokenType.equals(JavaTokenType.GE)) {
@@ -539,12 +540,12 @@ public class ExpressionUtils {
       @NonNls final String name = methodExpression1.getReferenceName();
       final PsiExpression[] expressions = expressionList.getExpressions();
       if ("insert".equals(name)) {
-        if (expressions.length < 2 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[1]))) {
+        if (expressions.length < 2 || !expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[1]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("append".equals(name)) {
-        if (expressions.length != 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
+        if (expressions.length != 1 || !expression.equals(PsiUtil.skipParenthesizedExprDown(expressions[0]))) {
           return true;
         }
         return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
@@ -618,7 +619,7 @@ public class ExpressionUtils {
   @Contract("null, _ -> null")
   @Nullable
   public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiPolyadicExpression)) {
       return null;
     }
@@ -645,7 +646,7 @@ public class ExpressionUtils {
     else if (PsiType.NULL.equals(operands[1].getType())) {
       comparedToNull = operands[0];
     }
-    comparedToNull = ParenthesesUtils.stripParentheses(comparedToNull);
+    comparedToNull = PsiUtil.skipParenthesizedExprDown(comparedToNull);
 
     return comparedToNull instanceof PsiReferenceExpression ? (PsiReferenceExpression)comparedToNull : null;
   }
@@ -709,7 +710,7 @@ public class ExpressionUtils {
   }
 
   private static boolean isAnnotated(PsiExpression expression, boolean nullable) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiReferenceExpression)) {
       return false;
     }
@@ -747,6 +748,12 @@ public class ExpressionUtils {
         expression instanceof PsiClassObjectAccessExpression ||
         isEvaluatedAtCompileTime(expression)) {
       return true;
+    }
+    if (expression instanceof PsiConditionalExpression) {
+      PsiConditionalExpression cond = (PsiConditionalExpression)expression;
+      return isSafelyRecomputableExpression(cond.getCondition()) &&
+             isSafelyRecomputableExpression(cond.getThenExpression()) &&
+             isSafelyRecomputableExpression(cond.getElseExpression());
     }
     if(expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
@@ -924,7 +931,7 @@ public class ExpressionUtils {
    */
   @Nullable
   public static PsiExpression getArrayFromLengthExpression(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (!(expression instanceof PsiReferenceExpression)) return null;
     final PsiReferenceExpression reference =
       (PsiReferenceExpression)expression;
@@ -942,19 +949,19 @@ public class ExpressionUtils {
    * e.g. creating a corresponding {@link PsiThisExpression}.
    *
    * @param ref a reference expression to get an effective qualifier for
-   * @return a qualifier or created (non-physical) {@link PsiThisExpression}. 
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
    *         May return null if reference points to local or member of anonymous class referred from inner class
    */
   @Nullable
   public static PsiExpression getEffectiveQualifier(@NotNull PsiReferenceExpression ref) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) return qualifier;
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiMember member = tryCast(ref.resolve(), PsiMember.class);
     if (member == null) {
       // Reference resolves to non-member: probably variable/parameter/etc.
       return null;
     }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     PsiClass memberClass = member.getContainingClass();
     if (memberClass != null) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
@@ -1026,7 +1033,7 @@ public class ExpressionUtils {
    * @param call to rename
    * @param newName new name
    */
-  public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
+  public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull @NonNls String newName) {
     bindReferenceTo(call.getMethodExpression(), newName);
   }
 
@@ -1057,7 +1064,7 @@ public class ExpressionUtils {
   @Contract("null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
     return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
@@ -1390,48 +1397,6 @@ public class ExpressionUtils {
     return null;
   }
 
-  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
-                                                        PsiExpression replacement) {
-    return replacePolyadicWithParent(expressionToReplace, replacement, new CommentTracker());
-  }
-
-  /**
-   * Flattens second+ polyadic's operand replaced with another polyadic expression of the same type to the parent's operands.
-   * 
-   * Otherwise reparse would produce different expression.
-   *
-   * @return the updated PsiExpression (probably the parent of an expression to replace if it was necessary to update the parent);
-   * or null if no special treatment of given expression is necessary (in this case you can just call
-   * {@code tracker.replace(expressionToReplace, replacement)}.
-   */
-  @Nullable
-  public static PsiExpression replacePolyadicWithParent(PsiExpression expressionToReplace,
-                                                        PsiExpression replacement, 
-                                                        CommentTracker tracker) {
-    PsiElement parent = expressionToReplace.getParent();
-    if (parent instanceof PsiPolyadicExpression && replacement instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression parentPolyadic = (PsiPolyadicExpression)parent;
-      PsiPolyadicExpression childPolyadic = (PsiPolyadicExpression)replacement;
-      IElementType parentTokenType = parentPolyadic.getOperationTokenType();
-      IElementType childTokenType = childPolyadic.getOperationTokenType();
-      if (PsiPrecedenceUtil.getPrecedenceForOperator(parentTokenType) == PsiPrecedenceUtil.getPrecedenceForOperator(childTokenType)) {
-        PsiElement[] children = parentPolyadic.getChildren();
-        int idx = ArrayUtil.indexOf(children, expressionToReplace);
-        if (idx > 0 || (idx == 0 && parentTokenType == childTokenType)) {
-          StringBuilder text = new StringBuilder();
-          for (int i = 0; i < children.length; i++) {
-            PsiElement child = children[i];
-            text.append(tracker.text((i == idx) ? replacement : child));
-          }
-          PsiExpression newExpression =
-            JavaPsiFacade.getElementFactory(parent.getProject()).createExpressionFromText(text.toString(), parent);
-          return (PsiExpression)tracker.replaceAndRestoreComments(parent, newExpression);
-        }
-      }
-    }
-    return null;
-  }
-
   /**
    * Returns true if expression is evaluated in void context (i.e. its return value is not used)
    * @param expression expression to check
@@ -1487,7 +1452,7 @@ public class ExpressionUtils {
 
   /**
    * Returns ancestor expression for given subexpression which parent is not an expression anymore (except lambda)
-   * 
+   *
    * @param expression an expression to find its ancestor
    * @return a top-level expression for given expression (may return an expression itself)
    */
@@ -1508,7 +1473,7 @@ public class ExpressionUtils {
   public static PsiElement getPassThroughParent(@NotNull PsiExpression expression) {
     return getPassThroughExpression(expression).getParent();
   }
-  
+
   public static @NotNull PsiExpression getPassThroughExpression(@NotNull PsiExpression expression) {
     while (true) {
       final PsiElement parent = expression.getParent();
@@ -1599,7 +1564,7 @@ public class ExpressionUtils {
   }
 
   private static boolean hasCharArrayParameter(PsiMethod method) {
-    final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
+    @NonNls final PsiParameter parameter = ArrayUtil.getFirstElement(method.getParameterList().getParameters());
     return parameter == null || parameter.getType().equalsToText("char[]");
   }
 
@@ -1699,7 +1664,10 @@ public class ExpressionUtils {
           return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, declaration)).getExpression();
         }
         finally {
-          initializer.delete();
+          initializer = var.getInitializer();
+          if (initializer != null) {
+            initializer.delete();
+          }
         }
       }
     }
@@ -1707,5 +1675,30 @@ public class ExpressionUtils {
       ((PsiLocalVariable)declaration.getDeclaredElements()[0]).normalizeDeclaration();
     }
     return null;
+  }
+
+  /**
+   * @param expression expression to test
+   * @param loopStatement loop statement
+   * @return true if given expression is likely to be a loop invariant. False if it's not invariant, or not known.
+   */
+  public static boolean isLoopInvariant(PsiExpression expression, @SuppressWarnings("unused") PsiLoopStatement loopStatement) {
+    if (PsiUtil.isConstantExpression(expression)) return true;
+    if (SideEffectChecker.mayHaveSideEffects(expression)) return false;
+    Collection<PsiReferenceExpression> refs = PsiTreeUtil.collectElementsOfType(expression, PsiReferenceExpression.class);
+    for (PsiReferenceExpression ref : refs) {
+      PsiElement target = ref.resolve();
+      // TODO: more sophisticated analysis
+      if (target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL)) continue;
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+        PsiVariable var = (PsiVariable)target;
+        if (var.hasModifierProperty(PsiModifier.FINAL) ||
+            HighlightControlFlowUtil.isEffectivelyFinal(var, PsiUtil.getVariableCodeBlock(var, null), null)) {
+          continue;
+        }
+      }
+      return false;
+    }
+    return true;
   }
 }

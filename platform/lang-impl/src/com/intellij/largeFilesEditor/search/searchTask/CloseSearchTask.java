@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class CloseSearchTask extends SearchTaskBase {
   private static final Logger logger = Logger.getInstance(CloseSearchTask.class);
@@ -178,6 +179,6 @@ public class CloseSearchTask extends SearchTaskBase {
 
     void tellSearchWasCatchedException(CloseSearchTask caller, IOException e);
 
-    void tellClosestResultFound(CloseSearchTask caller, ArrayList<SearchResult> allMatchesAtFrame, int index);
+    void tellClosestResultFound(CloseSearchTask caller, List<? extends SearchResult> allMatchesAtFrame, int index);
   }
 }

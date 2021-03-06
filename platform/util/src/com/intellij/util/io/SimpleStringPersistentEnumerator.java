@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import it.unimi.dsi.fastutil.objects.Object2ShortMap;
+import it.unimi.dsi.fastutil.objects.Object2ShortMaps;
+import it.unimi.dsi.fastutil.objects.Object2ShortOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,8 +13,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Simple version of string enumerator:
@@ -24,89 +26,88 @@ import java.util.List;
  * </ul>
  */
 @ApiStatus.Internal
-public class SimpleStringPersistentEnumerator {
+public final class SimpleStringPersistentEnumerator {
   public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   @NotNull
   private final Path myFile;
-  @NotNull
-  private final TObjectIntHashMap<String> myState;
+  private final @NotNull Object2ShortMap<String> myState;
 
   public SimpleStringPersistentEnumerator(@NotNull Path file) {
     myFile = file;
-    myState = new TObjectIntHashMap<>();
-
-    readStorageFromDisk();
+    myState = readStorageFromDisk(file);
   }
 
   public synchronized short enumerate(@Nullable String value) {
     if (myState.containsKey(value)) {
-      return (short) myState.get(value);
+      return myState.getShort(value);
     }
 
     int n = myState.size() + 1;
     assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded: "+n;
 
-    myState.put(value, n);
-    writeStorageToDisk();
+    myState.put(value, (short)n);
+    writeStorageToDisk(myState, myFile);
     return (short)n;
+  }
+
+  public synchronized @NotNull Collection<String> entries() {
+    return new ArrayList<>(myState.keySet());
   }
 
   @Nullable
   public synchronized String valueOf(short idx) {
-    String[] result = {null};
-    myState.forEachEntry(new TObjectIntProcedure<String>() {
-      @Override
-      public boolean execute(String data, int dataId) {
-        if (dataId == idx) {
-          result[0] = data;
-          return false;
-        }
-        return true;
+    for (Object2ShortMap.Entry<String> entry : myState.object2ShortEntrySet()) {
+      if (entry.getShortValue() == idx) {
+        return entry.getKey();
       }
-    });
-    return result[0];
+    }
+    return null;
   }
 
   public synchronized void forceDiskSync() {
-    writeStorageToDisk();
+    writeStorageToDisk(myState, myFile);
   }
-  
-  private synchronized void readStorageFromDisk() {
+
+  public synchronized boolean isEmpty() {
+    return myState.isEmpty();
+  }
+
+  @NotNull
+  public String dumpToString() {
+    return myState
+      .object2ShortEntrySet()
+      .stream()
+      .sorted(Comparator.comparing(e -> e.getShortValue()))
+      .map(e -> e.getKey() + "->" + e.getShortValue()).collect(Collectors.joining("\n"));
+  }
+
+  private static @NotNull Object2ShortMap<String> readStorageFromDisk(@NotNull Path file) {
     try {
-      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
-      List<String> lines = Files.readAllLines(myFile, Charset.defaultCharset());
+      Object2ShortMap<String> nameToIdRegistry = new Object2ShortOpenHashMap<>();
+      List<String> lines = Files.readAllLines(file, Charset.defaultCharset());
       for (int i = 0; i < lines.size(); i++) {
         String name = lines.get(i);
-        nameToIdRegistry.put(name, i + 1);
+        nameToIdRegistry.put(name, (short)(i + 1));
       }
-
-      synchronized (myState) {
-        myState.ensureCapacity(nameToIdRegistry.size());
-        nameToIdRegistry.forEachEntry((name, index) -> {
-          myState.put(name, index);
-          return true;
-        });
-      }
+      return nameToIdRegistry;
     }
     catch (IOException e) {
-      synchronized (myState) {
-        myState.clear();
-        writeStorageToDisk();
-      }
+      writeStorageToDisk(Object2ShortMaps.emptyMap(), file);
+      return new Object2ShortOpenHashMap<>();
     }
   }
-  
-  private void writeStorageToDisk() {
-    try {
-      final String[] names = new String[myState.size()];
-      myState.forEachEntry((key, value) -> {
-        names[value - 1] = key;
-        return true;
-      });
 
-      Files.createDirectories(myFile.getParent());
-      Files.write(myFile, Arrays.asList(names), Charset.defaultCharset());
+  private static void writeStorageToDisk(@NotNull Object2ShortMap<String> state, @NotNull Path file) {
+    try {
+      String[] names = new String[state.size()];
+      for (ObjectIterator<Object2ShortMap.Entry<String>> iterator = Object2ShortMaps.fastIterator(state); iterator.hasNext(); ) {
+        Object2ShortMap.Entry<String> entry = iterator.next();
+        names[entry.getShortValue() - 1] = entry.getKey();
+      }
+
+      Files.createDirectories(file.getParent());
+      Files.write(file, Arrays.asList(names), Charset.defaultCharset());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

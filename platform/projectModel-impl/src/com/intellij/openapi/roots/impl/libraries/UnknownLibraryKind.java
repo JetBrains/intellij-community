@@ -11,7 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnknownLibraryKind extends PersistentLibraryKind<UnknownLibraryKind.UnknownLibraryProperties> implements TemporaryLibraryKind {
+public final class UnknownLibraryKind extends PersistentLibraryKind<UnknownLibraryKind.UnknownLibraryProperties> implements TemporaryLibraryKind {
   private static final Logger LOG = Logger.getInstance(UnknownLibraryKind.class);
 
   private UnknownLibraryKind(@NotNull String kindId) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -50,6 +50,9 @@ fun <T> commitProperty(key: Key<T>, defaultValue: T): ReadWriteProperty<CommitCo
 
 private val IS_AMEND_COMMIT_MODE_KEY = Key.create<Boolean>("Vcs.Commit.IsAmendCommitMode")
 var CommitContext.isAmendCommitMode: Boolean by commitProperty(IS_AMEND_COMMIT_MODE_KEY)
+
+private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCleanupCommitMessage")
+var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
 
 interface CommitWorkflowListener : EventListener {
   fun vcsesChanged()
@@ -176,12 +179,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   protected open fun processExecuteDefaultChecksResult(result: CheckinHandler.ReturnResult) = Unit
 
   protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    eventDispatcher.multicaster.beforeCommitChecksStarted()
+    fireBeforeCommitChecksStarted()
     val result = runBeforeCommitChecks(executor)
-    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
+    fireBeforeCommitChecksEnded(isDefaultCommit, result)
 
     return result
   }
+
+  protected fun fireBeforeCommitChecksStarted() = eventDispatcher.multicaster.beforeCommitChecksStarted()
+
+  protected fun fireBeforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) =
+    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
 
   private fun runBeforeCommitChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     var result: CheckinHandler.ReturnResult? = null
@@ -189,7 +197,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     var checks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(executor)
+      result = runBeforeCommitHandlersChecks(executor, commitHandlers)
     }
 
     commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
@@ -199,6 +207,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     val task = Runnable {
       try {
         checks.run()
+        if (result == null) LOG.warn("No commit handlers result. Seems CheckinMetaHandler returned before invoking its callback.")
       }
       catch (ignore: ProcessCanceledException) {
       }
@@ -208,18 +217,19 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
     doRunBeforeCommitChecks(task)
 
-    return result ?: CheckinHandler.ReturnResult.CANCEL
+    return result ?: CheckinHandler.ReturnResult.CANCEL.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
 
   protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
 
-  private fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
-    return Runnable {
+  protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
+    Runnable {
       try {
         LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
         metaHandler.runCheckinHandlers(task)
       }
       catch (e: ProcessCanceledException) {
+        LOG.debug("CheckinMetaHandler cancelled $metaHandler")
         throw e
       }
       catch (e: Throwable) {
@@ -227,24 +237,27 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         task.run()
       }
     }
-  }
 
-  private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    commitHandlers.forEachLoggingErrors(LOG) { handler ->
+  protected fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+    handlers.forEachLoggingErrors(LOG) { handler ->
       try {
-        if (handler.acceptExecutor(executor)) {
-          LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-          val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-          if (result != CheckinHandler.ReturnResult.COMMIT) return result
-        }
+        val result = runBeforeCommitHandler(handler, executor)
+        if (result != CheckinHandler.ReturnResult.COMMIT) return result
       }
       catch (e: ProcessCanceledException) {
+        LOG.debug("CheckinHandler cancelled $handler")
         return CheckinHandler.ReturnResult.CANCEL
       }
     }
 
     return CheckinHandler.ReturnResult.COMMIT
+  }
+
+  protected open fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
+    if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
+    LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+    return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
   }
 
   open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
@@ -313,7 +326,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 }
 
-private class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
+class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
   override fun onSuccess(commitMessage: String) = runInEdt { handler.onSuccess(commitMessage) }
   override fun onCancel() = runInEdt { handler.onCancel() }
   override fun onFailure(errors: List<VcsException>) = runInEdt { handler.onFailure(errors) }

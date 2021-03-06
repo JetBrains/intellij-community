@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -68,6 +69,6 @@ public class NegateComparisonIntention extends MutablyNamedIntention {
     CommentTracker tracker = new CommentTracker();
     tracker.markUnchanged(lhs);
     tracker.markUnchanged(rhs);
-    replaceExpressionWithNegatedExpressionString(lhsText + negatedOperator + rhsText, expression, tracker);
+    PsiReplacementUtil.replaceExpressionWithNegatedExpression(expression, lhsText + negatedOperator + rhsText, tracker);
   }
 }

@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionsReportConverter;
 import com.intellij.codeInspection.InspectionsResultUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.URLUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -18,14 +17,10 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.*;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Roman.Chernyatchik
- */
-public class PlainTextFormatter implements InspectionsReportConverter {
+public final class PlainTextFormatter implements InspectionsReportConverter {
   public static final String NAME = "plain";
   private static final String FILE_ELEMENT = "file";
   private static final String LINE_ELEMENT = "line";
@@ -49,14 +44,12 @@ public class PlainTextFormatter implements InspectionsReportConverter {
                       @Nullable final String outputPath,
                       @NotNull final Map<String, Tools> tools,
                       @NotNull final List<? extends File> inspectionsResults) throws ConversionException {
-
     final SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
 
-    final URL descrExtractorXsltUrl = getClass().getResource("description-text.xsl");
-    final Source xslSource;
-    final Transformer transformer;
-    try {
-      xslSource = new StreamSource(URLUtil.openStream(descrExtractorXsltUrl));
+    Source xslSource;
+    Transformer transformer;
+    try (InputStream descrExtractorXsltStream = getClass().getResourceAsStream("description-text.xsl")) {
+      xslSource = new StreamSource(descrExtractorXsltStream);
       transformer = transformerFactory.newTransformer(xslSource);
     }
     catch (IOException e) {
@@ -152,14 +145,13 @@ public class PlainTextFormatter implements InspectionsReportConverter {
     }
     catch (IOException e) {
       throw new ConversionException("Cannot write inspection results: " + e.getMessage());
-    } finally {
-      if (w != null) {
-        try {
-          w.close();
-        }
-        catch (IOException e) {
-          warn("Cannot save inspection results: " + e.getMessage());
-        }
+    }
+    finally {
+      try {
+        w.close();
+      }
+      catch (IOException e) {
+        warn("Cannot save inspection results: " + e.getMessage());
       }
     }
   }

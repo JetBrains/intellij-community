@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
+public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull private final ContentRevision myContentRevision;
 
   private volatile byte[] myContent;
@@ -59,18 +59,7 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
 
   private void loadContent() {
     try {
-      byte[] bytes;
-      if (myContentRevision instanceof ByteBackedContentRevision) {
-        bytes = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
-      }
-      else {
-        final String content = myContentRevision.getContent();
-        bytes = content != null ? content.getBytes(getCharset()) : null;
-      }
-
-      if (bytes == null) {
-        throw new VcsException("Could not load content");
-      }
+      byte[] bytes = ChangesUtil.loadContentRevision(myContentRevision);
 
       synchronized (LOCK) {
         myContent = bytes;

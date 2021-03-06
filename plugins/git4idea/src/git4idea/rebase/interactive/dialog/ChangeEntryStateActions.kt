@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.keymap.KeymapUtil
@@ -10,7 +9,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.AnActionButton
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.TableUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntry
@@ -120,8 +118,7 @@ internal abstract class ChangeEntryStateButtonAction(
     init {
       adjustForToolbar()
       addActionListener {
-        val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, this)
-        val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(this)
+        val dataContext = ActionToolbar.getDataContextFor(this)
         actionPerformed(
           AnActionEvent.createFromAnAction(this@ChangeEntryStateButtonAction, null, GitInteractiveRebaseDialog.PLACE, dataContext)
         )
@@ -150,13 +147,36 @@ internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateS
 }
 
 // squash = reword + fixup
-internal class SquashAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.SQUASH, null, table) {
+internal class SquashAction(private val table: GitRebaseCommitsTableView) :
+  ChangeEntryStateSimpleAction(GitRebaseEntry.Action.SQUASH, null, table) {
+
   override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) =
     getIndicesToUnite(selection, rebaseTodoModel) != null
 
   override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
-    val root = rebaseTodoModel.unite(getIndicesToUnite(selection, rebaseTodoModel)!!)
-    rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
+    val indicesToUnite = getIndicesToUnite(selection, rebaseTodoModel)!!
+    val currentRoot = indicesToUnite.firstOrNull()?.let { rebaseTodoModel.elements[it] }?.let { element ->
+      when (element) {
+        is GitRebaseTodoModel.Element.UniteRoot -> element
+        is GitRebaseTodoModel.Element.UniteChild -> element.root
+        is GitRebaseTodoModel.Element.Simple -> null
+      }
+    }
+    val currentChildrenCount = currentRoot?.children?.size
+
+    val root = rebaseTodoModel.unite(indicesToUnite)
+    if (currentRoot != null) {
+      // added commits to already squashed
+      val newChildren = root.children.drop(currentChildrenCount!!)
+      val model = table.model
+      rebaseTodoModel.reword(
+        root.index,
+        (listOf(root) + newChildren).joinToString("\n".repeat(3)) { model.getCommitMessage(it.index) }
+      )
+    }
+    else {
+      rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
+    }
     reword(root.index)
   }
 }
@@ -208,7 +228,7 @@ internal class DropAction(table: GitRebaseCommitsTableView) :
 }
 
 internal class ShowGitRebaseCommandsDialog(private val project: Project, private val table: GitRebaseCommitsTableView) :
-  DumbAwareAction(GitBundle.getString("rebase.interactive.dialog.view.git.commands.text")) {
+  DumbAwareAction(GitBundle.messagePointer("rebase.interactive.dialog.view.git.commands.text")) {
 
   private fun getEntries(): List<GitRebaseEntry> = table.model.rebaseTodoModel.convertToEntries()
 

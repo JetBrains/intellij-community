@@ -4,13 +4,11 @@ package com.intellij.psi;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 /**
  * Representation of Java type (primitive type, array or class type).
@@ -84,7 +82,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Returns text of the type that can be presented to a user (references normally non-qualified).
    */
   @NotNull
-  public String getPresentableText(boolean annotated) {
+  public @NlsSafe String getPresentableText(boolean annotated) {
     return getPresentableText();
   }
 
@@ -92,7 +90,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Same as {@code getPresentableText(false)}.
    */
   @NotNull
-  public abstract String getPresentableText();
+  public abstract @NlsSafe String getPresentableText();
 
   /**
    * Returns canonical representation of the type (all references fully-qualified).
@@ -106,7 +104,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Same as {@code getCanonicalText(false)}.
    */
   @NotNull
-  public abstract String getCanonicalText();
+  public abstract @NlsSafe String getCanonicalText();
 
   /**
    * Return canonical text of the type with some internal details added for presentational purposes. Use with care.
@@ -146,7 +144,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @param text the text to compare with.
    * @return true if the string is equivalent to the type, false otherwise
    */
-  public abstract boolean equalsToText(@NotNull String text);
+  public abstract boolean equalsToText(@NotNull @NonNls String text);
 
   /**
    * Returns the class type for qualified class name.

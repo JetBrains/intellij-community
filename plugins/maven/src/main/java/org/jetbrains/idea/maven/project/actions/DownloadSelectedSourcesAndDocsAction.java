@@ -3,9 +3,7 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -40,7 +38,6 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
 
   @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs,
-                                         (AsyncPromise<MavenArtifactDownloader.DownloadResult>)null);
+    manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs, null);
   }
 }

@@ -89,7 +89,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
                                      @Nullable final Path projectPath,
                                      @Nullable final String projectName,
                                      @NotNull final Timeout timeout) {
-    final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
+    final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
         ProjectFrameHelper helper = ProjectFrameHelper.getFrameHelper(frame);
@@ -616,7 +616,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    */
   @Nullable
   private EditorNotificationPanel findNotificationPanel(@Nullable String message) {
-    Collection<EditorNotificationPanel> panels = robot().finder().findAll(target(), new GenericTypeMatcher<EditorNotificationPanel>(
+    Collection<EditorNotificationPanel> panels = robot().finder().findAll(target(), new GenericTypeMatcher<>(
       EditorNotificationPanel.class, true) {
       @Override
       protected boolean isMatching(@NotNull EditorNotificationPanel panel) {
@@ -656,7 +656,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     final List<String> allText = new ArrayList<>();
     final Collection<JLabel> labels = robot().finder().findAll(panel, JLabelMatcher.any().andShowing());
     for (final JLabel label : labels) {
-      String text = execute(new GuiQuery<String>() {
+      String text = execute(new GuiQuery<>() {
         @Override
         @Nullable
         protected String executeInEDT() throws Throwable {
@@ -693,7 +693,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     invokeMenuPath("Analyze", "Inspect Code...");
 
     //final Ref<FileChooserDialogImpl> wrapperRef = new Ref<FileChooserDialogImpl>();
-    JDialog dialog = robot().finder().find(new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = robot().finder().find(new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return "Specify Inspection Scope".equals(dialog.getTitle());
@@ -702,7 +702,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     JButton button = robot().finder().find(dialog, JButtonMatcher.withText("OK").andShowing());
     robot().click(button);
 
-    final InspectionTree tree = GuiTestUtil.INSTANCE.waitUntilFound(robot(), new GenericTypeMatcher<InspectionTree>(InspectionTree.class) {
+    final InspectionTree tree = GuiTestUtil.INSTANCE.waitUntilFound(robot(), new GenericTypeMatcher<>(InspectionTree.class) {
       @Override
       protected boolean isMatching(@NotNull InspectionTree component) {
         return true;
@@ -799,7 +799,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   public void selectApp(@NotNull String appName) {
     final ActionButtonFixture runButton = findRunApplicationButton();
-    Container actionToolbarContainer = execute(new GuiQuery<Container>() {
+    Container actionToolbarContainer = execute(new GuiQuery<>() {
       @Override
       protected Container executeInEDT() throws Throwable {
         return runButton.target().getParent();
@@ -853,11 +853,9 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   // is 1 more than their parent.
   private static void printNode(XDebuggerTreeNode node, StringBuilder builder, int level, int numIndentSpaces) {
     if (builder.length() > 0) {
-      builder.append(System.getProperty("line.separator"));
+      builder.append(System.lineSeparator());
     }
-    for (int i = 0; i < level * numIndentSpaces; ++i) {
-      builder.append(' ');
-    }
+    builder.append(" ".repeat(level * numIndentSpaces));
     builder.append(node.getText().toString());
     Enumeration<XDebuggerTreeNode> children = node.children();
     while (children.hasMoreElements()) {

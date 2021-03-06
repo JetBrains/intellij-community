@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.OptionGroup;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +135,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myCbLineNumbers.setSelected(exportToHTMLSettings.PRINT_LINE_NUMBERS);
     myCbOpenInBrowser.setSelected(exportToHTMLSettings.OPEN_IN_BROWSER);
 
-    myTargetDirectoryField.setText(exportToHTMLSettings.OUTPUT_DIRECTORY);
+    myTargetDirectoryField.setText(FileUtil.toSystemDependentName(StringUtil.notNullize(exportToHTMLSettings.OUTPUT_DIRECTORY)));
 
     for (UnnamedConfigurable printOption : myExtensions) {
       printOption.reset();
@@ -164,7 +166,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     exportToHTMLSettings.setIncludeSubpackages(myCbIncludeSubpackages.isSelected());
     exportToHTMLSettings.PRINT_LINE_NUMBERS = myCbLineNumbers.isSelected();
     exportToHTMLSettings.OPEN_IN_BROWSER = myCbOpenInBrowser.isSelected();
-    exportToHTMLSettings.OUTPUT_DIRECTORY = myTargetDirectoryField.getText();
+    exportToHTMLSettings.OUTPUT_DIRECTORY = FileUtil.toSystemIndependentName(myTargetDirectoryField.getText());
     for (UnnamedConfigurable printOption : myExtensions) {
       printOption.apply();
     }

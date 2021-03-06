@@ -1,12 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class LookForBranchOriginTask extends BaseMergeTask {
+  private static final Logger LOG = Logger.getInstance(LookForBranchOriginTask.class);
 
   private final boolean myFromSource;
   @NotNull private final Consumer<? super SvnBranchPointsCalculator.WrapperInvertor> myCallback;
@@ -31,7 +35,9 @@ public class LookForBranchOriginTask extends BaseMergeTask {
       myCallback.consume(copyPoint);
     }
     else {
-      myMergeProcess.end("Merge start wasn't found", true);
+      LOG.info("Error: Merge start wasn't found");
+
+      myMergeProcess.end(message("notification.content.merge.start.was.not.found"), true);
     }
   }
 }

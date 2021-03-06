@@ -10,6 +10,7 @@ import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -84,7 +85,7 @@ public final class TodoPackageNode extends PackageElementNode {
     }
     catch (IndexNotReadyException e) {
       LOG.info(e);
-      data.setPresentableText("N/A");
+      data.setPresentableText(JavaBundle.message("todo.index.not.available"));
     }
   }
 

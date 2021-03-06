@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class DebuggerTreeAction extends XDebuggerTreeActionBase {
   @Nullable
-  protected ObjectReference getObjectReference(@NotNull XValueNodeImpl node) {
+  public static ObjectReference getObjectReference(@NotNull XValueNodeImpl node) {
     XValue valueContainer = node.getValueContainer();
     if (valueContainer instanceof NodeDescriptorProvider) {
       NodeDescriptor descriptor = ((NodeDescriptorProvider) valueContainer).getDescriptor();

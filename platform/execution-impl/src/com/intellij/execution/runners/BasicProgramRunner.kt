@@ -8,9 +8,11 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.ui.RunContentDescriptor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.resolvedPromise
 
 @Deprecated(message = "Do not use and do not extend. Use DefaultProgramRunner instead.", level = DeprecationLevel.ERROR)
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 abstract class BasicProgramRunner : ProgramRunner<RunnerSettings> {
   @Throws(ExecutionException::class)
   override fun execute(environment: ExecutionEnvironment) {

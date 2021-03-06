@@ -34,7 +34,7 @@ internal class ProjectCommittedChangesPanel(
         browser.setItems(changeLists, CommittedChangesBrowserUseCase.COMMITTED)
       }
       val errorHandler = { errors: List<VcsException> ->
-        AbstractVcsHelper.getInstance(project).showErrors(errors, "Error refreshing VCS history")
+        AbstractVcsHelper.getInstance(project).showErrors(errors, message("changes.error.refreshing.vcs.history"))
       }
       cache.getProjectChangesAsync(provider.createDefaultSettings(), 0, true, changeListsConsumer, errorHandler)
     }

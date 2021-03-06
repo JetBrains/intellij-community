@@ -2,12 +2,12 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIdentityHashingStrategy;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +22,7 @@ import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class AnimatedIcon implements Icon {
+  private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
   /**
    * This key is used to allow animated icons in lists, tables and trees.
    * If the corresponding client property is set to {@code true} the corresponding component
@@ -178,7 +179,7 @@ public class AnimatedIcon implements Icon {
 
 
   private final Frame[] frames;
-  private final Set<Component> requested = new SmartHashSet<>(new TObjectIdentityHashingStrategy<>());
+  private final Set<Component> requested = new ReferenceOpenHashSet<>();
   private long time;
   private int index;
 
@@ -257,8 +258,13 @@ public class AnimatedIcon implements Icon {
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Icon icon = getUpdatedIcon();
-    CellRendererPane pane = ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, c);
-    requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
+    if (EventQueue.isDispatchThread()) {
+      CellRendererPane pane = ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, c);
+      requestRefresh(pane == null ? c : getRendererOwner(pane.getParent()));
+    }
+    else if (LOG.isDebugEnabled()) {
+      LOG.debug(new IllegalStateException("Unexpected thread " + Thread.currentThread().getName()));
+    }
     icon.paintIcon(c, g, x, y);
   }
 

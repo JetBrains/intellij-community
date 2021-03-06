@@ -1,18 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Nullable;
 
-public class EditScopesDialog extends SettingsDialog {
+public final class EditScopesDialog extends SettingsDialog {
   private NamedScope mySelectedScope;
   private final Project myProject;
   private final ScopeChooserConfigurable myConfigurable;
@@ -36,13 +36,14 @@ public class EditScopesDialog extends SettingsDialog {
     if (myCheckShared && mySelectedScope != null) {
       final Project project = myProject;
       final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
-      NamedScope scope = manager.getScope(mySelectedScope.getName());
+      NamedScope scope = manager.getScope(mySelectedScope.getScopeId());
       if (scope == null) {
-        if (Messages.showYesNoDialog(IdeBundle.message("scope.unable.to.save.scope.message"),
-                                     IdeBundle.message("scope.unable.to.save.scope.title"), Messages.getErrorIcon()) == Messages.YES) {
+        if (MessageDialogBuilder
+              .yesNo(IdeBundle.message("scope.unable.to.save.scope.title"), IdeBundle.message("scope.unable.to.save.scope.message"))
+              .icon(Messages.getErrorIcon()).ask(project)) {
           final String newName = Messages.showInputDialog(project, IdeBundle.message("add.scope.name.label"),
                                                           IdeBundle.message("scopes.save.dialog.title.shared"), Messages.getQuestionIcon(),
-                                                          mySelectedScope.getName(), new InputValidator() {
+                                                          mySelectedScope.getScopeId(), new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
               return inputString != null && inputString.length() > 0 && manager.getScope(inputString) == null;

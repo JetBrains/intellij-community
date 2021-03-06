@@ -1,24 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.search;
 
+import com.intellij.BundleBase;
 import com.intellij.application.options.SkipSelfSearchComponent;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +44,8 @@ public final class SearchUtil {
 
   private SearchUtil() { }
 
-  public static void processProjectConfigurables(Project project, Map<SearchableConfigurable, Set<OptionDescription>> options) {
-    processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
-  }
-
-  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  static void processConfigurables(@NotNull List<? extends Configurable> configurables,
+                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
@@ -66,7 +61,7 @@ public final class SearchUtil {
       Set<OptionDescription> configurableOptions = new TreeSet<>();
       options.put(searchableConfigurable, configurableOptions);
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeConfigurable(searchableConfigurable, configurableOptions);
       }
 
@@ -99,14 +94,13 @@ public final class SearchUtil {
         }
       }
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterConfigurable(searchableConfigurable, configurableOptions);
       }
     }
   }
 
-  @NotNull
-  private static Configurable unwrapConfigurable(@NotNull Configurable configurable) {
+  private static @NotNull Configurable unwrapConfigurable(@NotNull Configurable configurable) {
     if (configurable instanceof ConfigurableWrapper) {
       final UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
       if (wrapped instanceof SearchableConfigurable) {
@@ -114,8 +108,8 @@ public final class SearchUtil {
       }
     }
     if (DEBUGGER_CONFIGURABLE_CLASS.equals(configurable.getClass().getName())) {
-      final Class<?> clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS);
-      final Configurable rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable.class, "myRootConfigurable");
+      Class<?> clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS);
+      Configurable rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable.class, "myRootConfigurable");
       if (rootConfigurable != null) {
         return rootConfigurable;
       }
@@ -123,22 +117,22 @@ public final class SearchUtil {
     return configurable;
   }
 
-  private static void processComponent(SearchableConfigurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
+  private static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeComponent(configurable, component, configurableOptions);
       }
 
       processUILabel(configurable.getDisplayName(), configurableOptions, null);
       processComponent(component, configurableOptions, null);
 
-      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensions()) {
+      for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterComponent(configurable, component, configurableOptions);
       }
     }
   }
 
-  private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path) {
+  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path) {
     if (component instanceof SkipSelfSearchComponent) {
       return;
     }
@@ -212,18 +206,18 @@ public final class SearchUtil {
     else if (component instanceof JButton) {
       label = ((JButton)component).getText();
     }
-    return StringUtil.nullize(label, true);
+    return Strings.nullize(label, true);
   }
 
-  @NotNull
-  private static List<String> getItemsFromComboBox(@NotNull JComboBox<?> comboBox) {
+  private static @NotNull List<String> getItemsFromComboBox(@NotNull JComboBox<?> comboBox) {
     @SuppressWarnings("unchecked")
     ListCellRenderer<Object> renderer = (ListCellRenderer<Object>)comboBox.getRenderer();
     if (renderer == null) {
       renderer = new DefaultListCellRenderer();
     }
 
-    JList<?> jList = new BasicComboPopup(comboBox).getList();
+    @SuppressWarnings("unchecked")
+    JList<?> jList = new BasicComboPopup((JComboBox<Object>)comboBox).getList();
 
     List<String> result = new ArrayList<>();
 
@@ -240,11 +234,21 @@ public final class SearchUtil {
     return result;
   }
 
-  private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path) {
+  private static void processUILabel(String title,
+                                     Set<OptionDescription> configurableOptions,
+                                     String path) {
+    int headStart = title.indexOf("<head>");
+    int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
+    if (headEnd > headStart) {
+      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length());
+    }
+
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
-    final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
+    Set<String> words = new HashSet<>();
+    SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, Collections.emptySet());
+    title = title.replace(BundleBase.MNEMONIC_STRING, "");
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
-    for (String option : words) {
+    for (@NlsSafe String option : words) {
       configurableOptions.add(new OptionDescription(option, title, path));
     }
   }
@@ -255,7 +259,7 @@ public final class SearchUtil {
     }
   }
 
-  private static int getSelection(String tabIdx, int tabCount, Function<Integer,String> titleGetter) {
+  private static int getSelection(String tabIdx, int tabCount, Function<? super Integer, String> titleGetter) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     for (int i = 0; i < tabCount; i++) {
       final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);
@@ -293,9 +297,10 @@ public final class SearchUtil {
     }
     else if (rootComponent instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox(((JComboBox<?>)rootComponent));
-      if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
+      if (labels.stream().anyMatch(t -> isComponentHighlighted(t, option, force, configurable))) {
         highlightComponent(rootComponent, option);
-        return true; // do not visit children of highlighted component
+        // do not visit children of highlighted component
+        return true;
       }
     }
     else if (rootComponent instanceof JTabbedPane) {
@@ -356,13 +361,13 @@ public final class SearchUtil {
     final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options = configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
     if (options.isEmpty()) {
-      return StringUtil.toLowerCase(text).contains(StringUtil.toLowerCase(option));
+      return Strings.toLowerCase(text).contains(Strings.toLowerCase(option));
     }
     final Set<String> tokens = searchableOptionsRegistrar.getProcessedWords(text);
     if (!force) {
       options.retainAll(tokens);
       final boolean highlight = !options.isEmpty();
-      return highlight || StringUtil.toLowerCase(text).contains(StringUtil.toLowerCase(option));
+      return highlight || Strings.toLowerCase(text).contains(Strings.toLowerCase(option));
     }
     else {
       options.removeAll(tokens);
@@ -415,7 +420,7 @@ public final class SearchUtil {
 
   private static String quoteStrictOccurrences(final String textToMarkup, final String filter) {
     StringBuilder cur = new StringBuilder();
-    final String s = StringUtil.toLowerCase(textToMarkup);
+    final String s = Strings.toLowerCase(textToMarkup);
     for (String part : filter.split(" ")) {
       if (s.contains(part)) {
         cur.append("\"").append(part).append("\" ");
@@ -441,7 +446,7 @@ public final class SearchUtil {
     StringBuilder result = new StringBuilder();
     int beg = 0;
     int idx;
-    while ((idx = StringUtil.indexOfIgnoreCase(textToMarkup, option, beg)) != -1) {
+    while ((idx = Strings.indexOfIgnoreCase(textToMarkup, option, beg)) != -1) {
       final String prefix = textToMarkup.substring(beg, idx);
       final String toMark = textToMarkup.substring(idx, idx + option.length());
       if (insideHtmlTagPattern.matcher(prefix).matches()) {
@@ -459,7 +464,7 @@ public final class SearchUtil {
   }
 
   public static void appendFragments(String filter,
-                                     String text,
+                                     @NlsSafe String text,
                                      @SimpleTextAttributes.StyleAttributeConstant int style,
                                      final Color foreground,
                                      final Color background,
@@ -468,17 +473,19 @@ public final class SearchUtil {
       return;
     }
     if (filter == null || filter.length() == 0) {
+      textRenderer.setDynamicSearchMatchHighlighting(false);
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
     else {
+      textRenderer.setDynamicSearchMatchHighlighting(true);
       //markup
-      ObjectOpenHashSet<String> quoted = new ObjectOpenHashSet<>();
+      Set<String> quoted = new HashSet<>();
       filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
       final Int2ObjectRBTreeMap<String> indexToString = new Int2ObjectRBTreeMap<>();
       for (String stripped : quoted) {
         int beg = 0;
         int idx;
-        while ((idx = StringUtil.indexOfIgnoreCase(text, stripped, beg)) != -1) {
+        while ((idx = Strings.indexOfIgnoreCase(text, stripped, beg)) != -1) {
           indexToString.put(idx, text.substring(idx, idx + stripped.length()));
           beg = idx + stripped.length();
         }
@@ -507,7 +514,7 @@ public final class SearchUtil {
       int idx = 0;
       for (String word : selectedWords) {
         text = text.substring(idx);
-        final String before = text.substring(0, text.indexOf(word));
+        @NlsSafe final String before = text.substring(0, text.indexOf(word));
         if (before.length() > 0) {
           textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         }
@@ -517,7 +524,7 @@ public final class SearchUtil {
                                                                                                style |
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
-      final String after = text.substring(idx);
+      @NlsSafe final String after = text.substring(idx);
       if (after.length() > 0) {
         textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
       }
@@ -533,7 +540,7 @@ public final class SearchUtil {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
       final String[] words = text.substring(pos, end).split("[\\W&&[^-]]+");
       for (String word : words) {
-        if (filters.contains(PorterStemmerUtil.stem(StringUtil.toLowerCase(word)))) {
+        if (filters.contains(PorterStemmerUtil.stem(Strings.toLowerCase(word)))) {
           selectedWords.add(word);
         }
       }
@@ -541,7 +548,7 @@ public final class SearchUtil {
   }
 
   public static @NotNull List<Set<String>> findKeys(String filter, Set<? super String> quoted) {
-    filter = processFilter(StringUtil.toLowerCase(filter), quoted);
+    filter = processFilter(Strings.toLowerCase(filter), quoted);
     List<Set<String>> keySetList = new ArrayList<>();
     SearchableOptionsRegistrarImpl optionsRegistrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
     for (String word : optionsRegistrar.getProcessedWords(filter)) {
@@ -554,7 +561,7 @@ public final class SearchUtil {
       }
       keySetList.add(keySet);
     }
-    if (keySetList.isEmpty() && !StringUtil.isEmptyOrSpaces(filter)) {
+    if (keySetList.isEmpty() && !Strings.isEmptyOrSpaces(filter)) {
       keySetList.add(Collections.singleton(filter));
     }
     return keySetList;
@@ -596,7 +603,7 @@ public final class SearchUtil {
   public static void processExpandedGroups(@NotNull ConfigurableGroup group, @NotNull Consumer<? super Configurable> consumer) {
     Configurable[] configurables = group.getConfigurables();
     List<Configurable> result = new ArrayList<>();
-    ContainerUtil.addAll(result, configurables);
+    Collections.addAll(result, configurables);
     for (Configurable each : configurables) {
       addChildren(each, result);
     }

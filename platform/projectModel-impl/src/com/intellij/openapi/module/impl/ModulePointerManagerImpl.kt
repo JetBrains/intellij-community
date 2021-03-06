@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ProjectTopics
@@ -14,18 +14,18 @@ import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Function
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
-import gnu.trove.THashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 @State(name = "ModuleRenamingHistory", storages = [(Storage("modules.xml"))])
 class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager(), PersistentStateComponent<ModuleRenamingHistoryState> {
-  private val unresolved = MultiMap.createSmart<String, ModulePointerImpl>()
-  private val pointers = MultiMap.createSmart<Module, ModulePointerImpl>()
+  private val unresolved = MultiMap<String, ModulePointerImpl>()
+  private val pointers = MultiMap<Module, ModulePointerImpl>()
   private val lock = ReentrantReadWriteLock()
-  private val oldToNewName = THashMap<String, String>()
+  private val oldToNewName = CollectionFactory.createSmallMemoryFootprintMap<String, String>()
 
   init {
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
@@ -37,12 +37,17 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         moduleAppears(module)
       }
 
-      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<Module, String>) {
+      override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
         for (module in modules) {
           moduleAppears(module)
         }
         val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
-        oldToNewName.transformValues { newName -> renamedOldToNew[newName] ?: newName }
+        for (entry in oldToNewName.entries) {
+          val newValue = renamedOldToNew.get(entry.value)
+          if (newValue != null) {
+            entry.setValue(newValue)
+          }
+        }
       }
     })
   }

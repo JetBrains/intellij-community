@@ -41,44 +41,52 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
 
   @Override
   @NotNull
-  public PsiComment createLineCommentFromText(@NotNull final LanguageFileType fileType,
+  public PsiComment createLineCommentFromText(@NotNull LanguageFileType fileType,
+                                              @NotNull String text) throws IncorrectOperationException {
+    return createLineCommentFromText(fileType.getLanguage(), text);
+  }
+
+  @Override
+  @NotNull
+  public PsiComment createLineCommentFromText(@NotNull final Language language,
                                               @NotNull final String text) throws IncorrectOperationException {
-    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(fileType.getLanguage());
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null;
     String prefix = commenter.getLineCommentPrefix();
     if (prefix == null) {
-      throw new IncorrectOperationException("No line comment prefix defined for language " + fileType.getLanguage().getID());
+      throw new IncorrectOperationException("No line comment prefix defined for language " + language.getID());
     }
 
-    PsiFile aFile = createDummyFile(prefix + text, fileType);
+    PsiFile aFile = createDummyFile(language, prefix + text);
     return findPsiCommentChild(aFile);
   }
 
   @NotNull
   @Override
-  public PsiComment createBlockCommentFromText(@NotNull Language language, @NotNull String text) throws IncorrectOperationException {
+  public PsiComment createBlockCommentFromText(@NotNull Language language,
+                                               @NotNull String text) throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null : language;
     final String blockCommentPrefix = commenter.getBlockCommentPrefix();
     final String blockCommentSuffix = commenter.getBlockCommentSuffix();
+    assert blockCommentPrefix != null && blockCommentSuffix != null;
 
-    PsiFile aFile = PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", language,
-                                                                                          (blockCommentPrefix + text + blockCommentSuffix));
+    PsiFile aFile = createDummyFile(language, blockCommentPrefix + text + blockCommentSuffix);
     return findPsiCommentChild(aFile);
   }
 
   @Override
   @NotNull
-  public PsiComment createLineOrBlockCommentFromText(@NotNull Language lang, @NotNull String text)
-    throws IncorrectOperationException {
-    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(lang);
-    assert commenter != null:lang;
+  public PsiComment createLineOrBlockCommentFromText(@NotNull Language language,
+                                                     @NotNull String text) throws IncorrectOperationException {
+    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+    assert commenter != null : language;
     String prefix = commenter.getLineCommentPrefix();
     final String blockCommentPrefix = commenter.getBlockCommentPrefix();
     final String blockCommentSuffix = commenter.getBlockCommentSuffix();
     assert prefix != null || (blockCommentPrefix != null && blockCommentSuffix != null);
 
-    PsiFile aFile = PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", lang, prefix != null ? (prefix + text) : (blockCommentPrefix + text + blockCommentSuffix));
+    PsiFile aFile = createDummyFile(language, prefix != null ? (prefix + text) : (blockCommentPrefix + text + blockCommentSuffix));
     return findPsiCommentChild(aFile);
   }
 
@@ -92,10 +100,7 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
     return comment;
   }
 
-  private PsiFile createDummyFile(String text, final LanguageFileType fileType) {
-    String ext = fileType.getDefaultExtension();
-    @NonNls String fileName = "_Dummy_." + ext;
-
-    return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(fileType, fileName, text, 0, text.length());
+  private PsiFile createDummyFile(final Language language, String text) {
+    return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", language, text);
   }
 }

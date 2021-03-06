@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -112,22 +111,23 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final Project project,
                                         @Nullable PsiElement highlighted,
                                         final int elementStart,
-                                        final ParameterInfoHandler handler,
+                                        final ParameterInfoHandler<?, ?> handler,
                                         final boolean requestFocus,
                                         boolean singleParameterInfo) {
-    if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
+    //if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
-      if (editor.isDisposed() || DumbService.isDumb(project) || !element.isValid() ||
-          (!ApplicationManager.getApplication().isUnitTestMode() &&
-           !EditorActivityManager.getInstance().isVisible(editor))) return;
+      //if (editor.isDisposed() || !element.isValid() ||
+      //    (!ApplicationManager.getApplication().isUnitTestMode() /*&&
+      //     !EditorActivityManager.getInstance().isVisible(editor)*/)) return;
 
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;
 
-      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, elementStart);
+      ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(editor, elementStart);
       if (controller == null) {
-        new ParameterInfoController(project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
+        ParameterInfoControllerBase.createParameterInfoController(
+          project, editor, elementStart, descriptors, highlighted, element, handler, true, requestFocus);
       }
       else {
         controller.setDescriptors(descriptors);

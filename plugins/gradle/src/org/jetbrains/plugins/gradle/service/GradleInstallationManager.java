@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -11,10 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -82,7 +79,7 @@ public class GradleInstallationManager {
   }
 
   public static GradleInstallationManager getInstance() {
-    return ServiceManager.getService(GradleInstallationManager.class);
+    return ApplicationManager.getApplication().getService(GradleInstallationManager.class);
   }
 
   @Nullable private Ref<File> myCachedGradleHomeFromPath;
@@ -276,6 +273,7 @@ public class GradleInstallationManager {
    * @param homePath expected path to gradle home
    * @return proper in terms of {@link #isGradleSdkHome(File)} path or {@code null} if it is impossible to fix path
    */
+    @NlsSafe
     public String suggestBetterGradleHomePath(@NotNull String homePath) {
     Path path = Paths.get(homePath);
     if (path.startsWith(BREW_GRADLE_LOCATION)) {
@@ -632,7 +630,7 @@ public class GradleInstallationManager {
     }
     else if (distributionType == DistributionType.DEFAULT_WRAPPED) {
       WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(settings.getExternalProjectPath());
-      GradleInstallationManager installationManager = ServiceManager.getService(GradleInstallationManager.class);
+      GradleInstallationManager installationManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
       File gradleHome = installationManager.getWrappedGradleHome(settings.getExternalProjectPath(), wrapperConfiguration);
       if (gradleHome != null) {
         String gradleVersion = getGradleVersion(gradleHome.getPath());
@@ -668,7 +666,7 @@ public class GradleInstallationManager {
   }
 
   @Nullable
-  private static GradleVersion getGradleVersionSafe(String gradleVersion) {
+  public static GradleVersion getGradleVersionSafe(String gradleVersion) {
     try {
       return GradleVersion.version(gradleVersion);
     }

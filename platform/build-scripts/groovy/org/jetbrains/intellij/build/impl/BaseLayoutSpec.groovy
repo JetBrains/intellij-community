@@ -23,17 +23,6 @@ class BaseLayoutSpec {
   }
 
   /**
-   * @deprecated use explicit resource name instead of boolean or null. To be removed in IDEA 2018.3.
-   */
-  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", boolean localizableResourcesInCommonJar) {
-    if (localizableResourcesInCommonJar) {
-      withModule(moduleName, relativeJarPath)
-    } else {
-      withModule(moduleName, relativeJarPath, null)
-    }
-  }
-
-  /**
    * Register an additional module to be included into the plugin distribution into a separate JAR file. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
@@ -64,7 +53,7 @@ class BaseLayoutSpec {
    * @relativeOutputPath path relative to 'lib' plugin directory
    */
   void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
-    layout.includedProjectLibraries << new ProjectLibraryData(libraryName, relativeOutputPath)
+    layout.includedProjectLibraries.add(new ProjectLibraryData(libraryName, relativeOutputPath))
   }
 
   /**
@@ -74,8 +63,8 @@ class BaseLayoutSpec {
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   void withModuleLibrary(String libraryName, String moduleName, String relativeOutputPath) {
-    layout.includedModuleLibraries << new ModuleLibraryData(moduleName: moduleName, libraryName: libraryName,
-                                                            relativeOutputPath: relativeOutputPath)
+    layout.includedModuleLibraries.add(new ModuleLibraryData(moduleName: moduleName, libraryName: libraryName,
+                                                            relativeOutputPath: relativeOutputPath))
   }
 
   /**
@@ -98,7 +87,7 @@ class BaseLayoutSpec {
 
   /**
    * Include an artifact output to the plugin distribution.
-   * @param artifactName name of the project configuration  
+   * @param artifactName name of the project configuration
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   void withArtifact(String artifactName, String relativeOutputPath) {

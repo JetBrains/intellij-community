@@ -1,18 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
-class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  private val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(project) {
+  private val vcsManager get() = ProjectLevelVcsManager.getInstance(project)
+  private val changeListManager get() = ChangeListManagerEx.getInstanceEx(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
@@ -52,7 +53,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
       addResultHandler(getCommitEventDispatcher())
       addResultHandler(ShowNotificationCommitResultHandler(this))
 
-      runCommit("Commit Changes", false)
+      runCommit(VcsBundle.message("commit.changes"), false)
     }
   }
 

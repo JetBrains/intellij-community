@@ -27,6 +27,7 @@ import java.rmi.server.Unreferenced;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RemoteObject implements Remote, Unreferenced {
@@ -79,12 +80,14 @@ public class RemoteObject implements Remote, Unreferenced {
         list.add(element);
       }
     }
-    myChildren.keySet().removeAll(list);
+    Set<RemoteObject> childrenKeys = myChildren.keySet();
     for (RemoteObject child : list) {
+      childrenKeys.remove(child);
       child.unreferenced();
     }
   }
 
+  @Override
   public synchronized void unreferenced() {
     if (IN_PROCESS) return;
     if (myParent != null) {
@@ -113,9 +116,8 @@ public class RemoteObject implements Remote, Unreferenced {
     }
 
     if (foreignException) {
-      final RuntimeException wrapper = new RuntimeException(ex.toString());
+      final RuntimeException wrapper = new RuntimeException(ex.toString(), wrapException(ex.getCause()));
       wrapper.setStackTrace(ex.getStackTrace());
-      wrapper.initCause(wrapException(ex.getCause()));
       ex = wrapper;
     }
     return ex;

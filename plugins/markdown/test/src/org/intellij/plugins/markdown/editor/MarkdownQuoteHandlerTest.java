@@ -43,7 +43,7 @@ public class MarkdownQuoteHandlerTest extends BasePlatformTestCase {
   }
 
   public void testSingleQuoteAsApostrophe() {
-    doTest("Hello dear<caret> world", '\'', "Hello dear\'<caret> world");
+    doTest("Hello dear<caret> world", '\'', "Hello dear'<caret> world");
   }
 
   public void testBacktickAsAccent() {

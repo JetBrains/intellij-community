@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,10 +37,10 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
     ThrowableComputable<PsiCodeBlock, RuntimeException> bodyGenerator = 
       () -> generateBody(project, block, ProgressManager.getInstance().getProgressIndicator());
     PsiCodeBlock replacement = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.compute(bodyGenerator), StringUtil.toTitleCase(getFamilyName()), true, project);
+      () -> ReadAction.compute(bodyGenerator), JavaBundle.message("intention.convert.to.single.return.progress.title"), true, project);
     if (replacement != null) {
       Runnable action = () -> CodeStyleManager.getInstance(project).reformat(block.replace(replacement));
-      WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, action, element.getContainingFile());
+      WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("intention.convert.to.single.return.command.text"), null, action, element.getContainingFile());
     }
   }
 

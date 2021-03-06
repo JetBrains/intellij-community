@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
@@ -29,7 +28,7 @@ public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
   boolean containsFile(@NotNull FilePath file);
 
   @NotNull
-  List<FilePath> removeIgnoredFiles(@NotNull Collection<? extends FilePath> files);
+  Collection<FilePath> removeIgnoredFiles(@NotNull Collection<? extends FilePath> files);
 
   @NotNull
   Set<FilePath> getIgnoredFilePaths();

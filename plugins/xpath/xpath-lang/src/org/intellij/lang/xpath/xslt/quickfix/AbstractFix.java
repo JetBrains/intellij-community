@@ -20,11 +20,11 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -37,12 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class AbstractFix implements IntentionAction {
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    final String name = getClass().getSimpleName();
-    return "XSLT " + name.replaceAll("Fix$", "").replaceAll("(\\p{Lower}+)(\\p{Upper})", "$1 $2");
-  }
 
   @Override
   public boolean startInWriteAction() {
@@ -55,7 +49,7 @@ public abstract class AbstractFix implements IntentionAction {
 
   protected static TemplateBuilderImpl createTemplateBuilder(XmlTag xmlTag) {
     final PsiFile psiFile = PsiFileFactory.getInstance(xmlTag.getProject())
-      .createFileFromText("dummy.xml", StdFileTypes.XML, xmlTag.getText(), LocalTimeCounter.currentTime(), true, false);
+      .createFileFromText("dummy.xml", XmlFileType.INSTANCE, xmlTag.getText(), LocalTimeCounter.currentTime(), true, false);
     return new TemplateBuilderImpl(psiFile);
   }
 

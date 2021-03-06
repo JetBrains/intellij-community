@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,13 +21,13 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class UIUtils {
+public final class UIUtils {
   private UIUtils() {}
 
   public static void configureBrowseButton(final Project myProject,
                                        final TextFieldWithBrowseButton wsdlUrl,
                                        final String[] _extensions,
-                                       final String selectFileDialogTitle,
+                                       final @DialogTitle String selectFileDialogTitle,
                                        final boolean multipleFileSelection) {
     wsdlUrl.getButton().setToolTipText(XmlBundle.message("browse.button.tooltip"));
     wsdlUrl.getButton().addActionListener(

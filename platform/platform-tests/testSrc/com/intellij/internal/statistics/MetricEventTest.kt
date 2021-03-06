@@ -1,15 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.junit.Assert
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
-class MetricEventTest : HeavyPlatformTestCase() {
+@RunWith(JUnit4::class)
+class MetricEventTest : BasePlatformTestCase() {
 
   @Test
   fun `test create new metric`() {
@@ -99,88 +102,6 @@ class MetricEventTest : HeavyPlatformTestCase() {
     Assert.assertTrue(newMetric.data.build().size == 2)
     Assert.assertTrue(newMetric.data.build()["count"] == 23)
     Assert.assertTrue(newMetric.data.build()["language"] == "Java")
-  }
-
-  @Test
-  fun `test create new counter range metric`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 23)
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == 23)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "15+")
-  }
-
-  @Test
-  fun `test create new counter range metric with data`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 23, FeatureUsageData().addData("language", "Java"))
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 3)
-    Assert.assertTrue(newMetric.data.build()["count"] == 23)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "15+")
-    Assert.assertTrue(newMetric.data.build()["language"] == "Java")
-  }
-
-  @Test
-  fun `test create new big counter range metric`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", Int.MAX_VALUE - 3)
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == Int.MAX_VALUE - 3)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "MANY")
-  }
-
-  @Test
-  fun `test create new negative counter range metric`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", -3)
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == -3)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "<0")
-  }
-
-  @Test
-  fun `test create new small counter range metric`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 2)
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == 2)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "2")
-  }
-
-  @Test
-  fun `test create new big counter range metric with steps`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 23, listOf(1, 5, 10))
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == 23)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "10+")
-  }
-
-  @Test
-  fun `test create new middle counter range metric with steps`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 7, listOf(1, 5, 10))
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == 7)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "5+")
-  }
-
-  @Test
-  fun `test create new exact counter range metric with steps`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 5, listOf(1, 5, 10))
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == 5)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "5+")
-  }
-
-  @Test
-  fun `test create new small counter range metric with steps`() {
-    val newMetric = newCounterRangeMetric("metric.with.value", 1, listOf(2, 5, 10))
-    Assert.assertTrue(newMetric.eventId == "metric.with.value")
-    Assert.assertTrue(newMetric.data.build().size == 2)
-    Assert.assertTrue(newMetric.data.build()["count"] == 1)
-    Assert.assertTrue(newMetric.data.build()["count_group"] == "<2")
   }
 
   @Test
@@ -404,98 +325,6 @@ class MetricEventTest : HeavyPlatformTestCase() {
     for (event in result) {
       Assert.assertTrue(event.eventId == "metric.count")
       Assert.assertTrue(event.data.build()["count"] == 23)
-      Assert.assertTrue(event.data.build()["place"] == "MainMenu")
-    }
-  }
-
-  @Test
-  fun `test add count range default metric`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    val default = MetricEventTestObj()
-
-    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range")
-    Assert.assertTrue(result.isEmpty())
-  }
-
-  @Test
-  fun `test add count range not default metric`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    obj.intValue = 23
-
-    val default = MetricEventTestObj()
-
-    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range")
-    Assert.assertTrue(result.size == 1)
-    for (event in result) {
-      Assert.assertTrue(event.eventId == "metric.range")
-      Assert.assertTrue(event.data.build()["count"] == 23)
-      Assert.assertTrue(event.data.build()["count_group"] == "15+")
-    }
-  }
-
-  @Test
-  fun `test add count range not default metric with data`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    obj.intValue = 23
-
-    val default = MetricEventTestObj()
-    val data = FeatureUsageData().addPlace("MainMenu")
-
-    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", data)
-    Assert.assertTrue(result.size == 1)
-    for (event in result) {
-      Assert.assertTrue(event.eventId == "metric.range")
-      Assert.assertTrue(event.data.build()["count"] == 23)
-      Assert.assertTrue(event.data.build()["count_group"] == "15+")
-      Assert.assertTrue(event.data.build()["place"] == "MainMenu")
-    }
-  }
-
-  @Test
-  fun `test add count range default metric with steps`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    val default = MetricEventTestObj()
-
-    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", listOf(1, 5, 10))
-    Assert.assertTrue(result.isEmpty())
-  }
-
-  @Test
-  fun `test add count range not default metric with steps`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    obj.intValue = 7
-
-    val default = MetricEventTestObj()
-
-    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", listOf(1, 5, 10))
-    Assert.assertTrue(result.size == 1)
-    for (event in result) {
-      Assert.assertTrue(event.eventId == "metric.range")
-      Assert.assertTrue(event.data.build()["count"] == 7)
-      Assert.assertTrue(event.data.build()["count_group"] == "5+")
-    }
-  }
-
-  @Test
-  fun `test add count range not default metric with steps and data`() {
-    val result = HashSet<MetricEvent>()
-    val obj = MetricEventTestObj()
-    obj.intValue = 7
-
-    val default = MetricEventTestObj()
-    val data = FeatureUsageData().addPlace("MainMenu")
-
-    addCounterRangeIfDiffers(result, obj, default, { o -> o.intValue }, "metric.range", listOf(1, 5, 10), data)
-    Assert.assertTrue(result.size == 1)
-    for (event in result) {
-      Assert.assertTrue(event.eventId == "metric.range")
-      Assert.assertTrue(event.data.build()["count"] == 7)
-      Assert.assertTrue(event.data.build()["count_group"] == "5+")
       Assert.assertTrue(event.data.build()["place"] == "MainMenu")
     }
   }

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,29 +13,36 @@ import java.io.OutputStream;
  * This class is intended to manage Stub Serializers {@link ObjectStubSerializer} and stub serialization/deserialization algorithm.
  */
 @ApiStatus.Internal
-public abstract class SerializationManagerEx extends SerializationManager {
-
+public abstract class SerializationManagerEx implements StubTreeSerializer {
   public static SerializationManagerEx getInstanceEx() {
-    return (SerializationManagerEx) SerializationManager.getInstance();
+    return ServiceManager.getService(SerializationManagerEx.class);
   }
 
-  public abstract void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream);
-
-  @NotNull
-  public abstract Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException;
-
-  @ApiStatus.Experimental
+  /**
+   * @deprecated only kept to support prebuilt stubs
+   */
+  @Deprecated
   public abstract void reSerialize(@NotNull InputStream inStub,
                                    @NotNull OutputStream outStub,
-                                   @NotNull SerializationManagerEx newSerializationManager) throws IOException;
+                                   @NotNull StubTreeSerializer newSerializationManager) throws IOException;
 
   protected abstract void initSerializers();
 
   public abstract boolean isNameStorageCorrupted();
 
-  public abstract void repairNameStorage();
+  public abstract void repairNameStorage(@NotNull Exception corruptionCause);
 
-  public abstract void flushNameStorage();
+  /**
+   * @deprecated use {@link SerializationManagerEx#repairNameStorage(Exception)}
+   * with specified corruption cause
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public void repairNameStorage() {
+    repairNameStorage(new Exception());
+  }
+
+  public abstract void flushNameStorage() throws IOException;
 
   public abstract void reinitializeNameStorage();
 }

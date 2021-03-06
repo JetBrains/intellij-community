@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Handler for expression search. The pattern for an expression includes an unnecessary {@code PsiExpressionStatement},
@@ -11,7 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
  */
 public class ExpressionHandler extends MatchingHandler {
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     if (!super.match(patternNode,matchedNode, context)) {
       return false;
     }

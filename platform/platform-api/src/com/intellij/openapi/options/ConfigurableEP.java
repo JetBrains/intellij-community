@@ -1,21 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.AbstractBundle;
+import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionInstantiationException;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,6 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   private PluginDescriptor pluginDescriptor;
 
   @Transient
-  @NotNull
   public final PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }
@@ -72,6 +72,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   public String bundle;
 
   @NotNull
+  @NlsContexts.ConfigurableName
   public String getDisplayName() {
     if (displayName != null) {
       return displayName;
@@ -87,14 +88,16 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       }
 
       if (providerClass == null) {
+        //noinspection HardCodedStringLiteral
         return instanceClass == null ? implementationClass : instanceClass;
       }
       else {
+        //noinspection HardCodedStringLiteral
         return providerClass;
       }
     }
     else {
-      return AbstractBundle.message(resourceBundle, key);
+      return BundleBase.messageOrDefault(resourceBundle, key, null);
     }
   }
 
@@ -231,6 +234,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    * @deprecated use '{@link #instanceClass instance}' or '{@link #providerClass provider}' attribute instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Attribute("implementation")
   public String implementationClass;
 
@@ -262,11 +266,18 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("treeRenderer")
   public String treeRendererClass;
 
-  private final AtomicNotNullLazyValue<ObjectProducer> myProducer = AtomicNotNullLazyValue.createValue(this::createProducer);
+  private final NotNullLazyValue<ObjectProducer> myProducer = NotNullLazyValue.atomicLazy(this::createProducer);
   private ComponentManager componentManager;
   private Project myProject;
 
-  public ConfigurableEP() {
+  @NonInjectable
+  public ConfigurableEP(@NotNull PluginDescriptor pluginDescriptor) {
+    this(ApplicationManager.getApplication());
+
+    setPluginDescriptor(pluginDescriptor);
+  }
+
+  protected ConfigurableEP() {
     this(ApplicationManager.getApplication());
   }
 
@@ -285,7 +296,8 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   protected ObjectProducer createProducer() {
     try {
       if (providerClass != null) {
-        return new ProviderProducer(instantiateConfigurableProvider());
+        ConfigurableProvider provider = instantiateConfigurableProvider();
+        return provider == null ? new ObjectProducer() : new ProviderProducer(provider);
       }
       else if (instanceClass != null) {
         return new ClassProducer(componentManager, instanceClass, pluginDescriptor);
@@ -306,7 +318,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Nullable
   public final ConfigurableProvider instantiateConfigurableProvider() {
     return providerClass != null
-           ? componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(providerClass, pluginDescriptor)
+           ? componentManager.instantiateClass(providerClass, pluginDescriptor)
            : null;
   }
 
@@ -316,7 +328,12 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return Class.forName(className, true, classLoader);
     }
     catch (Throwable t) {
-      LOG.error(new ExtensionInstantiationException(t, pluginDescriptor));
+      if (pluginDescriptor == null) {
+        LOG.error(t);
+      }
+      else {
+        LOG.error(new PluginException(t, pluginDescriptor.getPluginId()));
+      }
       return null;
     }
   }
@@ -338,7 +355,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       return null;
     }
     try {
-      return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(treeRendererClass, pluginDescriptor);
+      return componentManager.instantiateClass(treeRendererClass, pluginDescriptor);
     }
     catch (ProcessCanceledException exception) {
       throw exception;
@@ -366,7 +383,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
    * Returns the type of configurable to create or {@code null},
    * if it cannot be determined.
    *
-   * @return the the configurable's type or {@code null}
+   * @return the configurable's type or {@code null}
    */
   @Nullable
   public Class<?> getConfigurableType() {
@@ -388,20 +405,21 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   }
 
   private static final class ProviderProducer extends ObjectProducer {
+    @NotNull
     private final ConfigurableProvider myProvider;
 
-    private ProviderProducer(ConfigurableProvider provider) {
+    private ProviderProducer(@NotNull ConfigurableProvider provider) {
       myProvider = provider;
     }
 
     @Override
     protected Object createElement() {
-      return myProvider == null ? null : myProvider.createConfigurable();
+      return myProvider.createConfigurable();
     }
 
     @Override
     protected boolean canCreateElement() {
-      return myProvider != null && myProvider.canCreateConfigurable();
+      return myProvider.canCreateConfigurable();
     }
   }
 
@@ -419,7 +437,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected Object createElement() {
       try {
-        return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(className, pluginDescriptor);
+        return componentManager.instantiateClass(className, pluginDescriptor);
       }
       catch (ProcessCanceledException exception) {
         throw exception;

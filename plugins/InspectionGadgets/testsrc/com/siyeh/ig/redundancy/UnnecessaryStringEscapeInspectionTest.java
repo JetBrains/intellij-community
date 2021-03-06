@@ -18,8 +18,10 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   public void testSingleQuoteInString() { doQuickFixTest(); }
   public void testMultipleProblemsInSingleString() { doQuickFixTest(); }
 
+  public void testBrokenCode() { doTest(); }
+
   protected void doQuickFixTest() {
-    super.doTest();
+    doTest();
     checkQuickFixAll();
   }
 
@@ -39,6 +41,6 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return JAVA_15;
   }
 }

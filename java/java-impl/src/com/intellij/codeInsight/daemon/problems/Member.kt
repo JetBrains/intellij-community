@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.psi.*
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 
 internal class ScopedMember(val member: Member, val scope: SearchScope) {
@@ -19,7 +20,8 @@ internal class ScopedMember(val member: Member, val scope: SearchScope) {
   }
 
   companion object {
-    internal fun create(psiMember: PsiMember, scope: SearchScope = psiMember.useScope): ScopedMember? {
+    internal fun create(psiMember: PsiMember,
+                        scope: SearchScope = PsiSearchHelper.getInstance(psiMember.project).getUseScope(psiMember)): ScopedMember? {
       val member = Member.create(psiMember) ?: return null
       return ScopedMember(member, scope)
     }
@@ -48,9 +50,14 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
       return PsiModifier.MODIFIERS.filterTo(mutableSetOf()) { psiModifierList.hasModifierProperty(it) }
     }
 
-    private fun getParentClasses(referenceList: PsiReferenceList?): Set<String> {
+    private fun getReferencedClassesNames(referenceList: PsiReferenceList?): Set<String> {
       if (referenceList == null) return emptySet()
       return referenceList.referenceElements.mapTo(mutableSetOf()) { it.qualifiedName }
+    }
+
+    private fun getTypeParameters(typeParametersList: PsiTypeParameterList?): List<String> {
+      if (typeParametersList == null) return emptyList()
+      return typeParametersList.typeParameters.map { it.text }
     }
   }
 
@@ -90,14 +97,19 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
   internal data class Method(override val name: String,
                              override val modifiers: Set<String>,
                              val returnType: String?,
-                             val paramTypes: List<String>) : Member(name, modifiers) {
+                             val paramTypes: List<String>,
+                             val throwsTypes: List<String>,
+                             val typeParametersList: List<String>) : Member(name, modifiers) {
 
     override fun hasChanged(other: Member): Boolean {
-      return other !is Method || super.hasChanged(other) || returnType != other.returnType || paramTypes != other.paramTypes
+      return other !is Method || super.hasChanged(other) || returnType != other.returnType ||
+             paramTypes != other.paramTypes || throwsTypes != other.throwsTypes ||
+             typeParametersList != other.typeParametersList
     }
 
     override fun copy(modifiers: MutableSet<String>): Member = copy(name = name, modifiers = modifiers, returnType = returnType,
-                                                                    paramTypes = paramTypes)
+                                                                    paramTypes = paramTypes, throwsTypes = throwsTypes,
+                                                                    typeParametersList = typeParametersList)
 
     companion object {
       internal fun create(psiMethod: PsiMethod): Method? {
@@ -106,7 +118,9 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
         val name = psiMethod.name
         val modifiers = extractModifiers(psiMethod.modifierList)
         val paramTypes = psiMethod.parameterList.parameters.map { it.type.canonicalText }
-        return Method(name, modifiers, returnType, paramTypes)
+        val throwsTypes = psiMethod.throwsList.referencedTypes.map { it.canonicalText }
+        val typeParameterList = getTypeParameters(psiMethod.typeParameterList)
+        return Method(name, modifiers, returnType, paramTypes, throwsTypes, typeParameterList)
       }
     }
   }
@@ -117,17 +131,21 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
                             val isInterface: Boolean,
                             val isAnnotationType: Boolean,
                             val extendsList: Set<String>,
-                            val implementsList: Set<String>) : Member(name, modifiers) {
+                            val implementsList: Set<String>,
+                            val permitsList: Set<String>,
+                            val typeParametersList: List<String>) : Member(name, modifiers) {
 
     override fun hasChanged(other: Member): Boolean {
       return other !is Class || super.hasChanged(other) ||
              isEnum != other.isEnum || isInterface != other.isInterface || isAnnotationType != other.isAnnotationType ||
-             extendsList != other.extendsList || implementsList != other.implementsList
+             extendsList != other.extendsList || implementsList != other.implementsList || permitsList != other.permitsList ||
+             typeParametersList != other.typeParametersList
     }
 
     override fun copy(modifiers: MutableSet<String>): Member = copy(name = name, modifiers = modifiers, isEnum = isEnum,
                                                                     isInterface = isInterface, isAnnotationType = isAnnotationType,
-                                                                    extendsList = extendsList, implementsList = implementsList)
+                                                                    extendsList = extendsList, implementsList = implementsList,
+                                                                    typeParametersList = typeParametersList)
 
     companion object {
       internal fun create(psiClass: PsiClass): Class? {
@@ -136,9 +154,11 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
         val isEnum = psiClass.isEnum
         val isInterface = psiClass.isInterface
         val isAnnotationType = psiClass.isAnnotationType
-        val extendsList: Set<String> = getParentClasses(psiClass.extendsList)
-        val implementsList: Set<String> = getParentClasses(psiClass.implementsList)
-        return Class(name, modifiers, isEnum, isInterface, isAnnotationType, extendsList, implementsList)
+        val extendsList = getReferencedClassesNames(psiClass.extendsList)
+        val implementsList = getReferencedClassesNames(psiClass.implementsList)
+        val permitsList = getReferencedClassesNames(psiClass.permitsList)
+        val typeParametersList = getTypeParameters(psiClass.typeParameterList)
+        return Class(name, modifiers, isEnum, isInterface, isAnnotationType, extendsList, implementsList, permitsList, typeParametersList)
       }
     }
   }

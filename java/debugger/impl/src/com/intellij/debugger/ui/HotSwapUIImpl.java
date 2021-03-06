@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
@@ -22,16 +22,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -40,7 +39,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class HotSwapUIImpl extends HotSwapUI {
+public final class HotSwapUIImpl extends HotSwapUI {
   /**
    * There are cases when the hotswap of the changed classes is not needed.
    * E.g. for a tomcat application redeploy there's no need to even try reloading classes and it's only can cause hotswap failure UX issue.
@@ -123,45 +122,42 @@ public class HotSwapUIImpl extends HotSwapUI {
       return;
     }
 
-    final boolean shouldPerformScan = generatedPaths == null;
+    final List<DebuggerSession> toScan = new ArrayList<>(sessions); // by default scan all sessions
+    final List<DebuggerSession> toUseGenerated = new ArrayList<>();
 
-    final HotSwapProgressImpl findClassesProgress;
-    if (shouldPerformScan) {
-      findClassesProgress = createHotSwapProgress(callbackWrapper, sessions);
+    if (generatedPaths != null) {
+      toScan.clear();
+      for (DebuggerSession session : sessions) {
+        if (session.isModifiedClassesScanRequired()) {
+          toScan.add(session);
+        }
+        else {
+          toUseGenerated.add(session);
+        }
+        session.setModifiedClassesScanRequired(false);
+      }
     }
-    else {
-      boolean createProgress = sessions.stream().anyMatch(DebuggerSession::isModifiedClassesScanRequired);
-      findClassesProgress = createProgress ? createHotSwapProgress(callbackWrapper, sessions) : null;
-    }
+
+    final HotSwapProgressImpl findClassesProgress = !toScan.isEmpty() ? createHotSwapProgress(callbackWrapper, sessions) : null;
+    final HotSwapProgressImpl outputPathsProgress =
+      !toUseGenerated.isEmpty() && outputPaths != null ? createHotSwapProgress(callbackWrapper, sessions) : null;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses;
-      if (shouldPerformScan) {
-        modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress);
+      Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<>();
+      if (!toUseGenerated.isEmpty()) {
+        modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
+        if (outputPathsProgress != null) {
+          scanForModifiedClassesWithProgress(toUseGenerated, outputPaths, outputPathsProgress)
+            .forEach(
+              (session, map) -> modifiedClasses.merge(session, map, (map1, map2) -> {
+                map1.putAll(map2);
+                return map1;
+              })
+            );
+        }
       }
-      else {
-        final List<DebuggerSession> toScan = new ArrayList<>();
-        final List<DebuggerSession> toUseGenerated = new ArrayList<>();
-        for (DebuggerSession session : sessions) {
-          (session.isModifiedClassesScanRequired() ? toScan : toUseGenerated).add(session);
-          session.setModifiedClassesScanRequired(false);
-        }
-        modifiedClasses = new HashMap<>();
-        if (!toUseGenerated.isEmpty()) {
-          modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
-          if (outputPaths != null) {
-            scanForModifiedClassesWithProgress(toUseGenerated, outputPaths, createHotSwapProgress(callbackWrapper, sessions))
-              .forEach(
-                (session, map) -> modifiedClasses.merge(session, map, (map1, map2) -> {
-                  map1.putAll(map2);
-                  return map1;
-                })
-              );
-          }
-        }
-        if (!toScan.isEmpty()) {
-          modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, Objects.requireNonNull(findClassesProgress)));
-        }
+      if (findClassesProgress != null) {
+        modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress));
       }
 
       final Application application = ApplicationManager.getApplication();
@@ -195,7 +191,8 @@ public class HotSwapUIImpl extends HotSwapUI {
             final int answer = Messages.showCheckboxMessageDialog(
               JavaDebuggerBundle.message("hotswap.dialog.hang.warning"),
               JavaDebuggerBundle.message("hotswap.dialog.title"),
-              new String[]{"Perform &Reload Classes", "&Skip Reload Classes"},
+              new String[]{JavaDebuggerBundle.message("button.perform.reload.classes"),
+                JavaDebuggerBundle.message("button.skip.reload.classes")},
               UIBundle.message("dialog.options.do.not.show"),
               false, 1, 1, Messages.getWarningIcon(),
               (exitCode, cb) -> {
@@ -322,14 +319,13 @@ public class HotSwapUIImpl extends HotSwapUI {
     myAskBeforeHotswap = false;
   }
 
-  private static class MyCompilationStatusListener implements ProjectTaskListener {
-
-    private final THashSet<File> myOutputRoots;
+  private static final class MyCompilationStatusListener implements ProjectTaskListener {
+    private final Set<File> myOutputRoots;
     private final Project myProject;
 
     private MyCompilationStatusListener(Project project) {
       myProject = project;
-      myOutputRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      myOutputRoots = FileCollectionFactory.createCanonicalFileSet();
       for (final String path : CompilerPaths.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
         myOutputRoots.add(new File(path));
       }

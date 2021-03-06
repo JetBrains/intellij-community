@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.junit;
 
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -7,41 +7,38 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * Before rename or move
- *  @see com.intellij.execution.junit.JUnitConfiguration#JUNIT_START_CLASS
- *  @noinspection HardCodedStringLiteral
+ *
+ * @noinspection HardCodedStringLiteral
+ * @see com.intellij.execution.junit.JUnitConfiguration#JUNIT_START_CLASS
  */
-public class JUnitStarter {
+public final class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
 
   public static final String JUNIT3_PARAMETER = "-junit3";
   public static final String JUNIT4_PARAMETER = "-junit4";
   public static final String JUNIT5_PARAMETER = "-junit5";
-  public static final String JUNIT5_KEY = "idea.is.junit5";
+  private static final String JUNIT5_KEY = "idea.is.junit5";
 
   private static final String SOCKET = "-socket";
-  public static final String JUNIT3_RUNNER_NAME = "com.intellij.junit3.JUnit3IdeaTestRunner";
-  public static final String JUNIT4_RUNNER_NAME = "com.intellij.junit4.JUnit4IdeaTestRunner";
-  public static final String JUNIT5_RUNNER_NAME = "com.intellij.junit5.JUnit5IdeaTestRunner";
+  private static final String JUNIT3_RUNNER_NAME = "com.intellij.junit3.JUnit3IdeaTestRunner";
+  private static final String JUNIT4_RUNNER_NAME = "com.intellij.junit4.JUnit4IdeaTestRunner";
+  private static final String JUNIT5_RUNNER_NAME = "com.intellij.junit5.JUnit5IdeaTestRunner";
   private static String ourForkMode;
   private static String ourCommandFileName;
   private static String ourWorkingDirs;
-  protected static int    ourCount = 1;
-  public static String ourRepeatCount = null;
+  protected static int ourCount = 1;
+  public static String ourRepeatCount;
 
-  public static void main(String[] args) throws IOException {
-    Vector argList = new Vector();
-    for (int i = 0; i < args.length; i++) {
-      String arg = args[i];
-      argList.addElement(arg);
-    }
+  public static void main(String[] args) {
+    List<String> argList = new ArrayList<String>(Arrays.asList(args));
 
-    final ArrayList listeners = new ArrayList();
+    final ArrayList<String> listeners = new ArrayList<String>();
     final String[] name = new String[1];
 
     String agentName = processParameters(argList, listeners, name);
@@ -53,21 +50,19 @@ public class JUnitStarter {
       System.exit(-3);
     }
 
-    String[] array = new String[argList.size()];
-    argList.copyInto(array);
+    String[] array = argList.toArray(new String[0]);
     int exitCode = prepareStreamsAndStart(array, agentName, listeners, name[0]);
     System.exit(exitCode);
   }
 
-  private static String processParameters(Vector args, final List listeners, String[] params) {
+  private static String processParameters(List<String> args, final List<? super String> listeners, String[] params) {
     String agentName = isJUnit5Preferred() ? JUNIT5_RUNNER_NAME : JUNIT4_RUNNER_NAME;
-    Vector result = new Vector(args.size());
-    for (int i = 0; i < args.size(); i++) {
-      String arg = (String)args.get(i);
+    List<String> result = new ArrayList<String>(args.size());
+    for (String arg : args) {
       if (arg.startsWith(IDE_VERSION)) {
         //ignore
       }
-      else if (arg.equals(JUNIT3_PARAMETER)){
+      else if (arg.equals(JUNIT3_PARAMETER)) {
         agentName = JUNIT3_RUNNER_NAME;
       }
       else if (arg.equals(JUNIT4_PARAMETER)) {
@@ -80,15 +75,18 @@ public class JUnitStarter {
         if (arg.startsWith("@name")) {
           params[0] = arg.substring("@name".length());
           continue;
-        } else if (arg.startsWith("@w@")) {
+        }
+        else if (arg.startsWith("@w@")) {
           ourWorkingDirs = arg.substring(3);
           continue;
-        } else if (arg.startsWith("@@@")) {
+        }
+        else if (arg.startsWith("@@@")) {
           final int pos = arg.indexOf(',');
           ourForkMode = arg.substring(3, pos);
           ourCommandFileName = arg.substring(pos + 1);
           continue;
-        } else if (arg.startsWith("@@")) {
+        }
+        else if (arg.startsWith("@@")) {
           if (new File(arg.substring(2)).exists()) {
             try {
               final BufferedReader reader = new BufferedReader(new FileReader(arg.substring(2)));
@@ -102,7 +100,8 @@ public class JUnitStarter {
             }
           }
           continue;
-        } else if (arg.startsWith(SOCKET)) {
+        }
+        else if (arg.startsWith(SOCKET)) {
           final int port = Integer.parseInt(arg.substring(SOCKET.length()));
           try {
             final Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), port);  //start collecting tests
@@ -128,14 +127,11 @@ public class JUnitStarter {
           continue;
         }
 
-        result.addElement(arg);
+        result.add(arg);
       }
     }
-    args.removeAllElements();
-    for (int i = 0; i < result.size(); i++) {
-      String arg = (String)result.get(i);
-      args.addElement(arg);
-    }
+    args.clear();
+    args.addAll(result);
     if (JUNIT3_RUNNER_NAME.equals(agentName)) {
       try {
         Class.forName("org.junit.runner.Computer");
@@ -157,34 +153,27 @@ public class JUnitStarter {
 
     try {
       final String forceJUnit3 = System.getProperty("idea.force.junit3");
-      if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return JUNIT3_RUNNER_NAME;
+      if (Boolean.parseBoolean(forceJUnit3)) return JUNIT3_RUNNER_NAME;
     }
-    catch (SecurityException ignored) {}
+    catch (SecurityException ignored) {
+    }
     return agentName;
   }
 
-  public static boolean isJUnit5Preferred() {
-    final String useJUnit5 = System.getProperty(JUNIT5_KEY);
-    if (useJUnit5 == null) {
-      return false;
-    }
-    else {
-      final Boolean boolValue = Boolean.valueOf(useJUnit5);
-      return boolValue != null && boolValue.booleanValue();
-    }
+  private static boolean isJUnit5Preferred() {
+    return Boolean.parseBoolean(System.getProperty(JUNIT5_KEY));
   }
 
   public static boolean checkVersion(String[] args, PrintStream printStream) {
-    for (int i = 0; i < args.length; i++) {
-      String arg = args[i];
+    for (String arg : args) {
       if (arg.startsWith(IDE_VERSION)) {
         int ideVersion = Integer.parseInt(arg.substring(IDE_VERSION.length()));
         if (ideVersion != VERSION) {
           printStream.println("Wrong agent version: " + VERSION + ". IDE expects version: " + ideVersion);
           printStream.flush();
           return false;
-        } else
-          return true;
+        }
+        return true;
       }
     }
     return false;
@@ -193,13 +182,15 @@ public class JUnitStarter {
   private static boolean canWorkWithJUnitVersion(PrintStream printStream, String agentName) {
     try {
       junitVersionChecks(agentName);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       printStream.println("!!! JUnit version 3.8 or later expected:");
       printStream.println();
       e.printStackTrace(printStream);
       printStream.flush();
       return false;
-    } finally {
+    }
+    finally {
       printStream.flush();
     }
     return true;
@@ -209,18 +200,18 @@ public class JUnitStarter {
     Class.forName("junit.framework.ComparisonFailure");
     getAgentClass(agentName);
     //noinspection UnnecessaryFullyQualifiedName
-    new junit.textui.TestRunner().setPrinter(null); //
+    new junit.textui.TestRunner().setPrinter(null);
   }
 
   private static int prepareStreamsAndStart(String[] args,
                                             final String agentName,
-                                            ArrayList listeners,
+                                            ArrayList<String> listeners,
                                             String name) {
     try {
-      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(agentName).newInstance();
+      IdeaTestRunner<?> testRunner = (IdeaTestRunner<?>)getAgentClass(agentName).newInstance();
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          final List newArgs = new ArrayList();
+          final List<String> newArgs = new ArrayList<String>();
           newArgs.add(agentName);
           newArgs.addAll(listeners);
           return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, newArgs)
@@ -233,22 +224,22 @@ public class JUnitStarter {
       e.printStackTrace(System.err);
       return -2;
     }
-
   }
 
-  static Class getAgentClass(String agentName) throws ClassNotFoundException {
+  static Class<?> getAgentClass(String agentName) throws ClassNotFoundException {
     return Class.forName(agentName);
   }
 
-  public static void printClassesList(List classNames, String packageName, String category, String filters, File tempFile) throws IOException {
+  public static void printClassesList(List<String> classNames, String packageName, String category, String filters, File tempFile)
+    throws IOException {
     final PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
 
     try {
       writer.println(packageName); //package name
       writer.println(category); //category
       writer.println(filters); //patterns
-      for (int i = 0; i < classNames.size(); i++) {
-        writer.println(classNames.get(i));
+      for (String name : classNames) {
+        writer.println(name);
       }
     }
     finally {

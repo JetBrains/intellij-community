@@ -14,7 +14,7 @@ public class GitRebaseContinue extends GitAbstractRebaseAction {
   @Nls
   @Override
   protected String getProgressTitle() {
-    return GitBundle.getString("rebase.progress.indicator.continue.title");
+    return GitBundle.message("rebase.progress.indicator.continue.title");
   }
 
   @Override

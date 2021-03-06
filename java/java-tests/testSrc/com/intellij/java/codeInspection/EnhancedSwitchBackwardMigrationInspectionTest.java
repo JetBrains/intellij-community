@@ -20,6 +20,6 @@ public class EnhancedSwitchBackwardMigrationInspectionTest extends LightQuickFix
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_13_PREVIEW;
+    return LanguageLevel.JDK_14;
   }
 }

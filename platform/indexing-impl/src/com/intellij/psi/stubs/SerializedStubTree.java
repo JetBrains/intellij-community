@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,12 +13,14 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class SerializedStubTree {
-  private static final MessageDigest HASHER = DigestUtil.sha256();
-
   // serialized tree
   final byte[] myTreeBytes;
   final int myTreeByteLength;
@@ -30,7 +30,7 @@ public final class SerializedStubTree {
   final int myIndexedStubByteLength;
   private Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> myIndexedStubs;
 
-  private final @NotNull SerializationManagerEx mySerializationManager;
+  private final @NotNull StubTreeSerializer mySerializationManager;
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
   public SerializedStubTree(byte @NotNull [] treeBytes,
@@ -39,7 +39,7 @@ public final class SerializedStubTree {
                             int indexedStubByteLength,
                             @Nullable Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs,
                             @NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
-                            @NotNull SerializationManagerEx serializationManager) {
+                            @NotNull StubTreeSerializer serializationManager) {
     myTreeBytes = treeBytes;
     myTreeByteLength = treeByteLength;
     myIndexedStubBytes = indexedStubBytes;
@@ -50,7 +50,7 @@ public final class SerializedStubTree {
   }
 
   public static @NotNull SerializedStubTree serializeStub(@NotNull Stub rootStub,
-                                                          @NotNull SerializationManagerEx serializationManager,
+                                                          @NotNull StubTreeSerializer serializationManager,
                                                           @NotNull StubForwardIndexExternalizer<?> forwardIndexExternalizer) throws IOException {
     final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     serializationManager.serialize(rootStub, bytes);
@@ -73,10 +73,10 @@ public final class SerializedStubTree {
     );
   }
 
-  public @NotNull SerializedStubTree reSerialize(@NotNull SerializationManagerEx newSerializationManager,
+  public @NotNull SerializedStubTree reSerialize(@NotNull StubTreeSerializer newSerializationManager,
                                                  @NotNull StubForwardIndexExternalizer<?> newForwardIndexSerializer) throws IOException {
     BufferExposingByteArrayOutputStream outStub = new BufferExposingByteArrayOutputStream();
-    mySerializationManager.reSerialize(new ByteArrayInputStream(myTreeBytes, 0, myTreeByteLength), outStub, newSerializationManager);
+    ((SerializationManagerEx)mySerializationManager).reSerialize(new ByteArrayInputStream(myTreeBytes, 0, myTreeByteLength), outStub, newSerializationManager);
 
     byte[] reSerializedIndexBytes;
     int reSerializedIndexByteLength;
@@ -103,6 +103,12 @@ public final class SerializedStubTree {
     );
   }
 
+  @ApiStatus.Internal
+  @NotNull
+  public StubForwardIndexExternalizer<?> getStubIndexesExternalizer() {
+    return myStubIndexesExternalizer;
+  }
+
   void restoreIndexedStubs() throws IOException {
     if (myIndexedStubs == null) {
       myIndexedStubs = myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)));
@@ -127,7 +133,20 @@ public final class SerializedStubTree {
   }
 
   public @NotNull Stub getStub() throws SerializerNotFoundException {
+    if (myTreeByteLength == 0) {
+      return NO_STUB;
+    }
     return mySerializationManager.deserialize(new UnsyncByteArrayInputStream(myTreeBytes, 0, myTreeByteLength));
+  }
+
+  public @NotNull SerializedStubTree withoutStub() {
+    return new SerializedStubTree(ArrayUtil.EMPTY_BYTE_ARRAY,
+                                  0,
+                                  myIndexedStubBytes,
+                                  myIndexedStubByteLength,
+                                  myIndexedStubs,
+                                  myStubIndexesExternalizer,
+                                  mySerializationManager);
   }
 
   @Override
@@ -189,8 +208,36 @@ public final class SerializedStubTree {
   private byte[] myTreeHash;
   public synchronized byte @NotNull [] getTreeHash() {
     if (myTreeHash == null) {
-      myTreeHash = DigestUtil.calculateContentHash(HASHER, myTreeBytes, 0, myTreeByteLength);
+      // Probably we don't need to hash the length and "\0000".
+      MessageDigest digest = DigestUtil.sha256();
+      digest.update(String.valueOf(myTreeByteLength).getBytes(StandardCharsets.UTF_8));
+      digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
+      digest.update(myTreeBytes, 0, myTreeByteLength);
+      myTreeHash = digest.digest();
     }
     return myTreeHash;
   }
+
+  // TODO replace it with separate StubTreeLoader implementation
+  public static final Stub NO_STUB = new Stub() {
+    @Override
+    public Stub getParentStub() {
+      return null;
+    }
+
+    @Override
+    public @NotNull List<? extends Stub> getChildrenStubs() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    public ObjectStubSerializer<?, ?> getStubType() {
+      return null;
+    }
+
+    @Override
+    public String toString() {
+      return "<no stub>";
+    }
+  };
 }

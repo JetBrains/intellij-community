@@ -17,7 +17,11 @@ package com.theoryinpractice.testng.configuration.testDiscovery;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironment;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +32,8 @@ import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestPattern;
 import com.theoryinpractice.testng.model.TestType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -49,7 +55,12 @@ public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
   }
 
   @Override
-  public SearchingForTestsTask createSearchingForTestsTask() {
+  public @Nullable SearchForTestsTask createSearchingForTestsTask() {
+    return createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest()));
+  }
+
+  @Override
+  public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
     return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
       @Override
       protected void search() throws CantRunException {

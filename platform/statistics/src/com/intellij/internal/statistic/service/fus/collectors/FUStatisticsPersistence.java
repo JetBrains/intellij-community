@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Paths;
 
-public class FUStatisticsPersistence {
+public final class FUStatisticsPersistence {
   private static final Logger LOG = Logger.getInstance(FUStatisticsPersistence.class);
 
   private static final String LEGACY_PERSISTENCE_STATE_FILE = "fus-previous-state.data";
@@ -24,6 +25,22 @@ public class FUStatisticsPersistence {
     deleteCaches(getPersistenceStateFile());
     deleteCaches(getStatisticsCacheDirectory());
     deleteCaches(getStatisticsLegacyCacheDirectory());
+    deleteSystemEventIdsFiles();
+  }
+
+  private static void deleteSystemEventIdsFiles() {
+    try {
+      File[] files = EventLogConfiguration.getEventLogSettingsPath().toFile()
+        .listFiles((directory, name) -> name.endsWith("_system_event_id"));
+      if (files != null) {
+        for (File file : files) {
+          FileUtil.delete(file);
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
   }
 
   private static void deleteCaches(@Nullable File dir) {

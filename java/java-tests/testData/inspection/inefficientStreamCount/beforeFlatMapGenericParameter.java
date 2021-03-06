@@ -1,4 +1,4 @@
-// "Replace Stream.flatMap().count() with Stream.mapToLong().sum()" "true"
+// "Replace 'Stream.flatMap().count()' with 'Stream.mapToLong().sum()'" "true"
 
 import java.util.List;
 import java.util.Map;

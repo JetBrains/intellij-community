@@ -5,35 +5,43 @@
   "editorScheme": "/themes/Light.xml",
 
   "colors": {
+    "foreground": "#000000",
+    "infoPanelForeground": "#808080",
+    "infoInputForeground": "#999999",
+    "disabledForeground": "#8C8C8C",
+    "selectionForeground": "#FFFFFF",
+    "linkForeground": "#2470B3",
+
     "border": "#D1D1D1",
-    "lightBorder": "#d9d9d9",
     "componentBorder": "#C4C4C4",
+    "lightBorder": "#d9d9d9",
     "windowsPopupBorder": "#adadad",
 
-    "panel": "#F2F2F2",
-
-    "link": "#2470B3",
-
-    "white": "#FFFFFF"
+    "panel": "#F2F2F2"
   },
 
   "ui": {
     "*": {
+      "foreground": "foreground",
+      "acceleratorForeground": "foreground",
+      "caretForeground": "foreground",
+      "selectedForeground": "foreground",
+      "selectionInactiveForeground": "foreground",
+
       "selectionBackground":  "#2675BF",
       "selectionBackgroundInactive": "#D5D5D5",
       "selectionInactiveBackground": "#D5D5D5",
 
-      "disabledForeground": "#8C8C8C",
-      "disabledText": "#8C8C8C",
-      "inactiveForeground": "#8C8C8C",
+      "disabledForeground": "disabledForeground",
+      "disabledText": "disabledForeground",
+      "inactiveForeground": "disabledForeground",
 
-      "infoForeground": "#808080",
       "modifiedItemForeground": "#005ad9",
 
-      "acceleratorSelectionForeground": "white",
+      "acceleratorSelectionForeground": "selectionForeground",
 
-      "separatorColor": "#d1d1d1",
-      "separatorForeground": "#999999"
+      "separatorColor": "border",
+      "separatorForeground": "infoInputForeground"
     },
 
     "Borders": {
@@ -42,16 +50,16 @@
     },
 
     "Button": {
-      "shadowColor": "#A6A6A620",
+      "shadowColor": "#A6A6A600",
       "startBorderColor": "componentBorder",
       "endBorderColor": "componentBorder",
       "default": {
-        "foreground": "white",
+        "foreground": "selectionForeground",
         "startBackground": "#528CC7",
         "endBackground": "#4989CC",
         "startBorderColor": "#487EB8",
         "endBorderColor": "#346DAD",
-        "shadowColor": "#A6A6A650",
+        "shadowColor": "#A6A6A600",
         "focusedBorderColor": "#A9C9F5"
       }
     },
@@ -62,14 +70,17 @@
       "ArrowButton.background": "#fafafa"
     },
 
-    "ComboBoxButton.background": "white",
+    "ComboBoxButton.background": "#FFFFFF",
 
     "CompletionPopup": {
       "selectionBackground": "#c5dffc",
       "selectionInactiveBackground": "#e0e0e0"
     },
 
-    "Component.borderColor": "componentBorder",
+    "Component": {
+      "borderColor": "componentBorder",
+      "infoForeground": "infoInputForeground"
+    },
 
     "DefaultTabs.background": "panel",
 
@@ -81,13 +92,16 @@
       "shortcutForeground": "#4274A6"
     },
 
-    "Label.errorForeground": "#C7222D",
+    "Label": {
+      "errorForeground": "#C7222D",
+      "infoForeground": "infoPanelForeground"
+    },
 
     "Link": {
-      "activeForeground": "link",
-      "hoverForeground": "link",
-      "pressedForeground": "link",
-      "visitedForeground": "link",
+      "activeForeground": "linkForeground",
+      "hoverForeground": "linkForeground",
+      "pressedForeground": "linkForeground",
+      "visitedForeground": "linkForeground",
       "secondaryForeground": "#77a8d9"
     },
 
@@ -99,12 +113,15 @@
 
     "Panel.background": "panel",
 
-    "PasswordField.background": "white",
+    "PasswordField.background": "#FFFFFF",
 
     "Popup": {
       "separatorColor": "lightBorder",
-      "Advertiser.borderColor": "border",
-      "borderColor": "windowsPopupBorder"
+      "borderColor": "windowsPopupBorder",
+      "Advertiser": {
+        "borderColor": "border",
+        "foreground": "infoPanelForeground"
+      }
     },
 
     "ProgressBar": {
@@ -114,6 +131,32 @@
       "indeterminateEndColor": "#1E82E6"
     },
 
+    "AvailableMnemonic": {
+      "foreground": "#000000",
+      "background": "#FFFFFF",
+      "borderColor": "#C4C4C4"
+    },
+    "AssignedMnemonic": {
+      "foreground": "#000000",
+      "background": "#F7C777",
+      "borderColor": "#F7C777"
+    },
+    "CurrentMnemonic": {
+      "foreground": "#FFFFFF",
+      "background": "#389FD6",
+      "borderColor": "#389FD6"
+    },
+    "BookmarkIcon": {
+      "background": "#F7C777"
+    },
+    "MnemonicIcon": {
+      "foreground": "#000000",
+      "background": "#FEF7EC",
+      "borderColor": "#F4AF3D"
+    },
+
+    "SearchEverywhere.Advertiser.foreground": "infoPanelForeground",
+
     "StatusBar.borderColor": "border",
 
     "ToolWindow.Header.inactiveBackground": "panel",
@@ -122,7 +165,6 @@
   },
 
   "icons": {
-
     "ColorPalette": {
       "Checkbox.Border.Default": "#b0b0b0",
       "Checkbox.Background.Selected": "#4F9EE3",

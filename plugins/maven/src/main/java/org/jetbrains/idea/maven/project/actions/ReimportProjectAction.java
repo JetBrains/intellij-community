@@ -20,13 +20,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 
 public class ReimportProjectAction extends MavenProjectsAction {
   @Override
   protected void perform(@NotNull MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    manager.forceUpdateProjects(mavenProjects);
+    if (MavenUtil.isProjectTrustedEnoughToImport(manager.getProject(), true)) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      manager.forceUpdateProjects(mavenProjects);
+    }
   }
 }

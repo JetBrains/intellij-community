@@ -40,10 +40,10 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     super.setUp();
 
     ExtensionsArea rootArea = ApplicationManager.getApplication().getExtensionArea();
-    blockUntil(rootArea.getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
-    blockUntil(rootArea.getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
-    blockUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
-    blockUntil(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockExtensionUntil(rootArea.getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
+    blockExtensionUntil(rootArea.getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
+    blockExtensionUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockExtensionUntil(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentions();  // hack to avoid slowdowns in PyExtensionFactory
     PathManagerEx.getTestDataPath(); // to cache stuff
@@ -54,7 +54,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return IdeaTestUtil.getMockJdk17(); // has to have awt
   }
 
-  private static <T> void blockUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
+  private static <T> void blockExtensionUntil(@NotNull ExtensionPoint<T> extensionPoint, @NotNull Disposable parent) {
     ((ExtensionPointImpl<T>)extensionPoint).maskAll(Collections.emptyList(), parent, false);
   }
 
@@ -74,7 +74,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .reattemptUntilJitSettlesDown()
       .usesAllCPUCores().assertTiming();
 
     return highlightErrors();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TypeConstraints {
+import static com.intellij.psi.util.TypeConversionUtil.canConvertSealedTo;
+
+public final class TypeConstraints {
   /**
    * Top constraint (no restriction; any non-primitive value satisfies this)
    */
@@ -82,7 +84,7 @@ public class TypeConstraints {
 
   /**
    * @param type PsiType
-   * @return a constraint for the object that has exactly given PsiType; 
+   * @return a constraint for the object that has exactly given PsiType;
    * {@link #BOTTOM} if the object of given type cannot be instantiated.
    */
   @NotNull
@@ -103,6 +105,9 @@ public class TypeConstraints {
   public static TypeConstraint instanceOf(@NotNull PsiType type) {
     if (type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) return TOP;
     type = normalizeType(type);
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
+    }
     if (type instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
       TypeConstraint result = TOP;
@@ -324,8 +329,15 @@ public class TypeConstraints {
     @NotNull
     @Override
     public String toString() {
-      // TODO: support anonymous classes
-      return String.valueOf(myClass.getQualifiedName());
+      String name = myClass.getQualifiedName();
+      if (name == null) {
+        name = myClass.getName();
+      }
+      if (name == null && myClass instanceof PsiAnonymousClass) {
+        PsiClassType baseClassType = ((PsiAnonymousClass)myClass).getBaseClassType();
+        name = "anonymous " + createExact(baseClassType);
+      }
+      return String.valueOf(name);
     }
 
     @Override
@@ -349,9 +361,7 @@ public class TypeConstraints {
     public boolean isAssignableFrom(@NotNull Exact other) {
       if (equals(other) || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
-        String name = myClass.getQualifiedName();
-        if (name == null) return false;
-        return InheritanceUtil.isInheritor(((ExactClass)other).myClass, name);
+        return InheritanceUtil.isInheritorOrSelf(((ExactClass)other).myClass, myClass, true);
       }
       return false;
     }
@@ -366,13 +376,17 @@ public class TypeConstraints {
       }
       if (other instanceof ExactClass) {
         PsiClass otherClass = ((ExactClass)other).myClass;
+        if (myClass.isInterface() || otherClass.isInterface()) {
+          if (otherClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(otherClass, myClass);
+          if (myClass.hasModifierProperty(PsiModifier.SEALED)) return canConvertSealedTo(myClass, otherClass);
+        }
         if (myClass.isInterface() && otherClass.isInterface()) return true;
         if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
-        String otherName = otherClass.getQualifiedName();
-        String myName = myClass.getQualifiedName();
-        return otherName != null && InheritanceUtil.isInheritor(myClass, otherName) ||
-               myName != null && InheritanceUtil.isInheritor(otherClass, myName);
+        PsiManager manager = myClass.getManager();
+        return manager.areElementsEquivalent(myClass, otherClass) || 
+               otherClass.isInheritor(myClass, true) ||
+               myClass.isInheritor(otherClass, true);
       }
       return false;
     }
@@ -423,7 +437,7 @@ public class TypeConstraints {
       if (!(other instanceof ExactArray)) return false;
       return myComponent.isAssignableFrom(((ExactArray)other).myComponent);
     }
-    
+
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
       if (other instanceof ExactArray) {
@@ -447,6 +461,11 @@ public class TypeConstraints {
 
     private Unresolved(@NotNull String reference) {
       myReference = reference;
+    }
+
+    @Override
+    public boolean isResolved() {
+      return false;
     }
 
     @Override

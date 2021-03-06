@@ -12,6 +12,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
@@ -301,7 +302,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
                                                           SimpleTextAttributes attribs,
                                                           EditorColorsScheme colorScheme) {
     SimpleTextAttributes escapeAttribs = null;
-    final StringBuilder buf = new StringBuilder();
+    final @NlsSafe StringBuilder buf = new StringBuilder();
     boolean slashFound = false;
     for (int idx= 0; idx < valueText.length(); idx++) {
       final char ch = valueText.charAt(idx);

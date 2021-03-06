@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -38,7 +38,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author ven
  */
-public class InlineUtil {
+public final class InlineUtil {
   private static final Logger LOG = Logger.getInstance(InlineUtil.class);
 
   private InlineUtil() {}
@@ -218,18 +218,24 @@ public class InlineUtil {
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
-        while (lastInitializerSibling != null) {
+        while (true) {
           final PsiElement nextSibling = lastInitializerSibling.getNextSibling();
           if (nextSibling == null) {
             break;
           }
-          if (nextSibling.getNode().getElementType() == JavaTokenType.RBRACE) break;
+          if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.RBRACE)) break;
           lastInitializerSibling = nextSibling;
         }
         if (lastInitializerSibling instanceof PsiWhiteSpace) {
-          lastInitializerSibling = PsiTreeUtil.skipWhitespacesBackward(lastInitializerSibling);
+          lastInitializerSibling = lastInitializerSibling.getPrevSibling();
         }
-        if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
+        if (lastInitializerSibling instanceof PsiComment) {
+          final PsiElement possibleComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(lastInitializerSibling);
+          if (PsiUtil.isJavaToken(possibleComma, JavaTokenType.COMMA)) {
+            possibleComma.delete();
+          }
+        }
+        else if (PsiUtil.isJavaToken(lastInitializerSibling, JavaTokenType.COMMA)) {
           lastInitializerSibling = lastInitializerSibling.getPrevSibling();
         }
         PsiElement firstElement = initializers[0];
@@ -398,14 +404,12 @@ public class InlineUtil {
           if (!result.equals(inferenceResult)) {
             final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
                                                             psiType -> psiType.getCanonicalText(), ", ");
-            final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-            if (argumentList != null) {
-              final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
-              LOG.assertTrue(classReference != null);
-              final PsiExpression expression = JavaPsiFacade.getElementFactory(initializer.getProject())
-                .createExpressionFromText("new " + classReference.getReferenceName() + "<" + inferredTypeText + ">" + argumentList.getText(), initializer);
-              return ref.replace(expression);
-            }
+            final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
+            final PsiNewExpression expandedDiamond = (PsiNewExpression)JavaPsiFacade.getElementFactory(initializer.getProject())
+              .createExpressionFromText("new " + Objects.requireNonNull(classReference).getReferenceName() + "<" + inferredTypeText + ">()", initializer);
+            PsiNewExpression newExpression = (PsiNewExpression)initializer.copy();
+            Objects.requireNonNull(newExpression.getClassOrAnonymousClassReference()).replace(Objects.requireNonNull(expandedDiamond.getClassReference()));
+            return ref.replace(newExpression);
           }
         }
       }
@@ -755,8 +759,8 @@ public class InlineUtil {
       if (shouldBeFinal) {
         declareUsedLocalsFinal(initializer, true);
       }
-      for (PsiReference ref : refs) {
-        initializer = inlineInitializer(variable, initializer, (PsiJavaCodeReferenceElement)ref);
+      for (PsiJavaCodeReferenceElement ref : refs) {
+        initializer = inlineInitializer(variable, initializer, ref);
       }
       variable.getParent().delete();
     }

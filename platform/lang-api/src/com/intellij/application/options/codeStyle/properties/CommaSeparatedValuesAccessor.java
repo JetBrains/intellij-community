@@ -33,4 +33,9 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
     return fromExternal(value);
   }
 
+
+  @Override
+  public boolean isEmptyListAllowed() {
+    return true;
+  }
 }

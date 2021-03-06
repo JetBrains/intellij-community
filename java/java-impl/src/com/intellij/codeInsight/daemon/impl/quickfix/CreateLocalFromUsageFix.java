@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -40,8 +41,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return getMessage(varName);
   }
 
-  public @NotNull
-  static String getMessage(String varName) {
+  public static @NotNull @IntentionName String getMessage(String varName) {
     return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.LOCAL_VARIABLE.object(), varName);
   }
 
@@ -110,7 +110,9 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     TypeExpression expression = new TypeExpression(project, expectedTypes);
 
     if (isInline) {
-      decl = (PsiDeclarationStatement)new CommentTracker().replaceAndRestoreComments(anchor, decl);
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(initializer);
+      decl = (PsiDeclarationStatement)tracker.replaceAndRestoreComments(anchor, decl);
     }
     else {
       decl = (PsiDeclarationStatement)anchor.getParent().addBefore(decl, anchor);

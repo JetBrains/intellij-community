@@ -19,12 +19,15 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +38,7 @@ import java.util.function.Supplier;
 public final class BackgroundTaskUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
 
-  @CalledInAwt
+  @RequiresEdt
   public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                              @Nullable Runnable onSlowAction) {
     return executeAndTryWait(backgroundTask, onSlowAction, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
@@ -62,7 +65,7 @@ public final class BackgroundTaskUtil {
     * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
     * This period can be very short and looks like 'jumping' if background operation is fast.
     */
-  @CalledInAwt
+  @RequiresEdt
   public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                     @Nullable Runnable onSlowAction,
                                                     long waitMillis,
@@ -103,7 +106,7 @@ public final class BackgroundTaskUtil {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private static void finish(@NotNull Runnable result, @NotNull ProgressIndicator indicator) {
     if (!indicator.isCanceled()) result.run();
   }
@@ -115,7 +118,7 @@ public final class BackgroundTaskUtil {
    * <li> If the computation is slow, abort computation (cancel ProgressIndicator).
    * </ul>
    */
-  @CalledInAwt
+  @CalledInAny
   public static @Nullable <T> T tryComputeFast(@NotNull Function<? super ProgressIndicator, ? extends T> backgroundTask,
                                      long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
@@ -222,7 +225,7 @@ public final class BackgroundTaskUtil {
   }
 
   @CalledInAny
-  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Supplier<T> task) {
+  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Supplier<? extends T> task) {
     Ref<T> ref = new Ref<>();
     runUnderDisposeAwareIndicator(parent, () -> {
       ref.set(task.get());
@@ -260,20 +263,7 @@ public final class BackgroundTaskUtil {
       return false;
     }
 
-    return ReadAction.compute(() -> {
-      if (Disposer.isDisposed(parent)) {
-        return false;
-      }
-
-      try {
-        Disposer.register(parent, disposable);
-        return true;
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return false;
-      }
-    });
+    return Disposer.tryRegister(parent, disposable);
   }
 
   /**

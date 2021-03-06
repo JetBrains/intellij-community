@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
@@ -28,6 +30,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
@@ -39,7 +43,6 @@ private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*
 private const val MAX_SSH_CONNECTIONS = 10 // by default SSH server has a limit of 10 multiplexed ssh connection
 
 internal class GitFetchSupportImpl(private val project: Project) : GitFetchSupport {
-
   private val git get() = Git.getInstance() as GitImpl
   private val progressManager get() = ProgressManager.getInstance()
 
@@ -88,7 +91,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     return fetch(listOf(RemoteRefCoordinates(repository, remote)))
   }
 
-  override fun fetch(repository: GitRepository, remote: GitRemote, refspec: String): GitFetchResult {
+  override fun fetch(repository: GitRepository, remote: GitRemote, refspec: @NonNls String): GitFetchResult {
     return fetch(listOf(RemoteRefCoordinates(repository, remote, refspec)))
   }
 
@@ -102,9 +105,15 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         val results = waitForFetchTasks(tasks)
 
         val mergedResults = mutableMapOf<GitRepository, RepoResult>()
+        val succeedResults = mutableListOf<SingleRemoteResult>()
         for (result in results) {
           val res = mergedResults[result.repository]
           mergedResults[result.repository] = mergeRepoResults(res, result)
+          if (result.success()) succeedResults.add(result)
+        }
+        val successFetchesMap = succeedResults.groupBy({ it.repository }, { it.remote })
+        if (successFetchesMap.isNotEmpty()) {
+          GitFetchHandler.afterSuccessfulFetch(project, successFetchesMap, progressManager.progressIndicator ?: EmptyProgressIndicator())
         }
         activity.finished()
         FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)
@@ -187,7 +196,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       }
       catch (e: ExecutionException) {
         if (e.cause is ProcessCanceledException) throw e.cause as ProcessCanceledException
-        results.add(SingleRemoteResult(task.repository, task.remote, e.cause?.message ?: "Error", emptyList()))
+        results.add(SingleRemoteResult(task.repository, task.remote, e.cause?.message ?: GitBundle.message("error.dialog.title"), emptyList()))
         LOG.error(e)
       }
     }
@@ -260,7 +269,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       MultiMessage(results.keys, GitRemote::getName, GitRemote::getName, remoteInPrefix)
   }
 
-  private class SingleRemoteResult(val repository: GitRepository, val remote: GitRemote, val error: String?, val prunedRefs: List<String>) {
+  private class SingleRemoteResult(val repository: GitRepository, val remote: GitRemote, val error: @Nls String?, val prunedRefs: List<String>) {
     fun success() = error == null
   }
 
@@ -275,15 +284,16 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
 
     override fun showNotificationIfFailed(): Boolean {
-      return showNotificationIfFailed("Fetch Failed")
+      if (isFailed) doShowNotification(null)
+      return !isFailed
     }
 
-    override fun showNotificationIfFailed(title: String): Boolean {
+    override fun showNotificationIfFailed(title: @Nls String): Boolean {
       if (isFailed) doShowNotification(title)
       return !isFailed
     }
 
-    private fun doShowNotification(failureTitle: String = "Fetch Failed") {
+    private fun doShowNotification(failureTitle: @Nls String? = null) {
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
       val message = buildMessage(failureTitle)
       val notification = STANDARD_NOTIFICATION.createNotification("", message, type, null)
@@ -291,10 +301,10 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
 
     override fun throwExceptionIfFailed() {
-      if (isFailed) throw VcsException(buildMessage())
+      if (isFailed) throw VcsException(buildMessage(null))
     }
 
-    private fun buildMessage(failureTitle: String = "Fetch Failed"): String {
+    private fun buildMessage(failureTitle: @Nls String?): @Nls String {
       val roots = results.keys.map { it.root }
       val errorMessage = MultiRootMessage(project, roots, true)
       val prunedRefs = MultiRootMessage(project, roots)
@@ -308,11 +318,26 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         prunedRefs.append(repo.root, result.prunedRefs())
       }
 
-      val mentionFailedRepos = if (failed.size == roots.size) "" else mention(failed.keys)
-      val title = if (!isFailed) "<b>Fetch Successful</b>" else "<b>$failureTitle</b>$mentionFailedRepos"
-      return title + prefixWithBr(errorMessage.asString()) + prefixWithBr(prunedRefs.asString())
+      val sb = HtmlBuilder()
+      if (!isFailed) {
+        sb.append(HtmlChunk.text(GitBundle.message("notification.title.fetch.success")).bold())
+      }
+      else {
+        sb.append(HtmlChunk.text(failureTitle ?: GitBundle.message("notification.title.fetch.failure")).bold())
+        if (failed.size != roots.size) {
+          sb.append(mention(failed.keys))
+        }
+      }
+      appendDetails(sb, errorMessage)
+      appendDetails(sb, prunedRefs)
+      return sb.toString()
     }
 
-    private fun prefixWithBr(text: String): String = if (text.isNotEmpty()) "<br/>$text" else ""
+    private fun appendDetails(sb: HtmlBuilder, details: MultiRootMessage) {
+      val text = details.asString()
+      if (text.isNotEmpty()) {
+        sb.br().append(text)
+      }
+    }
   }
 }

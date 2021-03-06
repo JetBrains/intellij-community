@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.actions.CreateFileAction;
@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -31,7 +32,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PackageUtil {
+public final class PackageUtil {
   private static final Logger LOG = Logger.getInstance(PackageUtil.class);
 
   @Nullable
@@ -81,6 +82,7 @@ public class PackageUtil {
    * @deprecated use {@link #findOrCreateDirectoryForPackage(Module, String, PsiDirectory, boolean)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
                                                              String packageName,

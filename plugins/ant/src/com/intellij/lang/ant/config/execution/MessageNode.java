@@ -20,16 +20,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
 final class MessageNode extends DefaultMutableTreeNode {
-  private String[] myText;
+  private @Nls String[] myText;
   private AntMessage myMessage;
   @Nullable
   private RangeMarker myRangeMarker;
@@ -60,7 +62,7 @@ final class MessageNode extends DefaultMutableTreeNode {
     });
   }
 
-  public String[] getText() {
+  public @Nls String[] getText() {
     return myText;
   }
 
@@ -79,15 +81,15 @@ final class MessageNode extends DefaultMutableTreeNode {
     return myMessage.getType();
   }
 
-  public String getPositionString() {
-    if(myRangeMarker == null || !myAllowToShowPosition) {
+  public @NlsSafe String getPositionString() {
+    if (myRangeMarker == null || !myAllowToShowPosition) {
       return "";
     }
     return "(" + myMessage.getLine() + ", " + myMessage.getColumn() + ") ";
   }
 
   @Nullable
-  public String getTypeString() {
+  public @Nls String getTypeString() {
     AntBuildMessageView.MessageType type = myMessage.getType();
     if (type == AntBuildMessageView.MessageType.BUILD) {
       return AntBundle.message("ant.build.message.node.prefix.text");

@@ -1,6 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.commandLine.Command;
@@ -9,6 +11,8 @@ import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -38,14 +42,14 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   private static Version parseVersion(@NotNull ProcessOutput output) throws SvnBindException {
     // TODO: This or similar check should likely go to CommandRuntime - to be applied for all commands
     if (output.isTimeout()) {
-      throw new SvnBindException(String.format("Exit code: %d, Error: %s", output.getExitCode(), output.getStderr()));
+      throw new SvnBindException(message("error.could.not.get.svn.version", output.getExitCode(), output.getStderr()));
     }
 
     return parseVersion(output.getStdout());
   }
 
   @NotNull
-  public static Version parseVersion(@NotNull String versionText) throws SvnBindException {
+  public static Version parseVersion(@NlsSafe @NotNull String versionText) throws SvnBindException {
     Version result = null;
     Exception cause = null;
 
@@ -62,7 +66,7 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
     }
 
     if (!found || cause != null) {
-      throw new SvnBindException(String.format("Could not parse svn version: %s", versionText), cause);
+      throw new SvnBindException(message("error.could.not.parse.svn.version", versionText), cause);
     }
 
     return result;

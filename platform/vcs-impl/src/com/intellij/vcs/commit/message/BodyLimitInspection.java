@@ -4,17 +4,15 @@ package com.intellij.vcs.commit.message;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +22,6 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.TextRange.EMPTY_RANGE;
 import static com.intellij.util.DocumentUtil.getLineTextRange;
-import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.IntStream.range;
 
@@ -51,9 +48,12 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                                                      @NotNull InspectionManager manager,
                                                      boolean isOnTheFly) {
     return range(1, document.getLineCount())
-      .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
-                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix(),
-                                         new ReformatCommitMessageQuickFix()))
+      .mapToObj(line -> {
+        String problemText = VcsBundle.message("commit.message.inspection.message.body.lines.should.not.exceed.characters", RIGHT_MARGIN);
+        return checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
+                                problemText, new WrapLineQuickFix(),
+                                new ReformatCommitMessageQuickFix());
+      })
       .filter(Objects::nonNull)
       .toArray(ProblemDescriptor[]::new);
   }
@@ -71,7 +71,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return "Wrap line";
+      return VcsBundle.message("commit.message.intention.family.name.wrap.line");
     }
 
     @Override
@@ -99,15 +99,9 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                            @NotNull Document document,
                            int rightMargin,
                            @NotNull TextRange range) {
-      CodeFormatterFacade codeFormatter = new CodeFormatterFacade(new CodeStyleSettings(false) {
-        @Override
-        public int getRightMargin(@Nullable Language language) {
-          return rightMargin;
-        }
-      }, null);
       List<TextRange> enabledRanges = singletonList(TextRange.create(0, document.getTextLength()));
-
-      codeFormatter.doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(), enabledRanges);
+      EditorFacade.getInstance().doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(),
+                                                            enabledRanges, rightMargin);
     }
   }
 }

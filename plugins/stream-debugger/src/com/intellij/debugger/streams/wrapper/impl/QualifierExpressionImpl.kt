@@ -3,12 +3,13 @@ package com.intellij.debugger.streams.wrapper.impl
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.QualifierExpression
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 
 /**
  * @author Vitaliy.Bibaev
  */
-class QualifierExpressionImpl(override val text: String,
+class QualifierExpressionImpl(override val text: @NlsSafe String,
                               override val textRange: TextRange,
                               private val typeAfter: GenericType) : QualifierExpression {
   override fun getTypeAfter(): GenericType = typeAfter

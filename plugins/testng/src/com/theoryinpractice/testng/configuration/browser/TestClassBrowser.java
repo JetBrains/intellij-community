@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
 import com.theoryinpractice.testng.model.TestClassFilter;
@@ -40,7 +41,8 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
       message.showNow();
       return null;
     }
-    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createWithInnerClassesScopeChooser("Choose Test Class", filter.getScope(), filter, null);
+    TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject()).createWithInnerClassesScopeChooser(
+      TestngBundle.message("test.class.browser.dialog.title.choose.test.class"), filter.getScope(), filter, null);
     init(chooser);
     chooser.showDialog();
     PsiClass psiclass = chooser.getSelected();

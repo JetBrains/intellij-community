@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.*;
@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -32,13 +31,18 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.*;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,8 +50,6 @@ import java.util.List;
 import java.util.*;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
-
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;
   @NotNull private final ApplyPatchRequest myPatchRequest;
@@ -110,7 +112,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     List<EditorEx> editors = Arrays.asList(myResultEditor, myPatchEditor);
     JComponent resultTitle = DiffUtil.createTitle(myPatchRequest.getResultTitle());
     JComponent patchTitle = DiffUtil.createTitle(myPatchRequest.getPatchTitle());
-    List<JComponent> titleComponents = DiffUtil.createSyncHeightComponents(Arrays.asList(resultTitle, patchTitle));
+    List<JComponent> titleComponents = Arrays.asList(resultTitle, patchTitle);
 
     myContentPanel = TwosideContentPanel.createFromHolders(holders);
     myContentPanel.setTitles(titleComponents);
@@ -266,7 +268,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   //
 
   protected void initPatchViewer() {
-  myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myPatchRequest));
+    myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(null, myContext, myPatchRequest));
     final Document outputDocument = myResultEditor.getDocument();
     boolean success =
       DiffUtil.executeWriteCommand(outputDocument, myProject, DiffBundle.message("message.init.merge.content.command"), () -> {
@@ -291,12 +293,10 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
                                                      new LineNumberConverterAdapter(convertor2.createConvertor()));
 
-    TIntArrayList lines = builder.getSeparatorLines();
-    for (int i = 0; i < lines.size(); i++) {
-      int offset = patchDocument.getLineStartOffset(lines.get(i));
+    for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
+      int offset = patchDocument.getLineStartOffset(iterator.nextInt());
       DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset, BooleanGetter.TRUE);
     }
-
 
     List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
 
@@ -391,7 +391,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myContentPanel.repaintDivider();
   }
 
-  public boolean executeCommand(@Nullable String commandName,
+  public boolean executeCommand(@Nullable @NlsContexts.Command String commandName,
                                 @NotNull final Runnable task) {
     return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
   }
@@ -450,7 +450,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     markChangeResolved(change);
   }
 
-  private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
+  private final class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
     private ApplySelectedChangesAction() {
       getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.ApplySelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Checked);
@@ -470,7 +470,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
   }
 
-  private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
+  private final class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
     private IgnoreSelectedChangesAction() {
       getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.IgnoreSelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
@@ -533,7 +533,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @NotNull
-    @CalledInAwt
+    @RequiresEdt
     private List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
       BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -550,7 +550,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     protected abstract boolean isEnabled(@NotNull ApplyPatchChange change);
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void apply(@NotNull List<? extends ApplyPatchChange> changes);
   }
 
@@ -610,12 +610,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     MyToggleExpandByDefaultAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void expandAll(boolean expand) {
-      myFoldingModel.expandAll(expand);
+      super(getTextSettings(), myFoldingModel);
     }
   }
 
@@ -700,7 +695,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
         // do not abort - ranges are ordered in patch order, but they can be not ordered in terms of resultRange
         handler.processResolvable(resultRange.start, resultRange.end, patchRange.start, patchRange.end,
-                                  myPatchEditor, change.getDiffType(), change.isResolved());
+                                  change.getDiffType(), change.isResolved());
       }
     }
   }

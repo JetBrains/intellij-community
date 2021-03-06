@@ -16,10 +16,10 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +27,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class VcsDescriptor implements Comparable<VcsDescriptor> {
+public class VcsDescriptor {
 
   private final String myName;
   private final boolean myCrawlUpToCheckUnderVcs;
   private final boolean myAreChildrenValidMappings;
   private final String myDisplayName;
   private final List<String> myAdministrativePatterns;
-  private boolean myIsNone;
 
   public VcsDescriptor(String administrativePattern,
                        String displayName,
@@ -97,17 +96,17 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
     return myAdministrativePatterns.contains(dirName);
   }
 
+  /**
+   * @deprecated Prefer {@link AbstractVcs#getDisplayName()}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getDisplayName() {
     return myDisplayName == null ? myName : myDisplayName;
   }
 
   public String getName() {
     return myName;
-  }
-
-  @Override
-  public int compareTo(VcsDescriptor o) {
-    return Comparing.compare(myDisplayName, o.myDisplayName);
   }
 
   @Override
@@ -119,16 +118,6 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
     return Objects.equals(myName, that.myName);
   }
 
-  public boolean isNone() {
-    return myIsNone;
-  }
-
-  public static VcsDescriptor createFictive() {
-    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false, false);
-    vcsDescriptor.myIsNone = true;
-    return vcsDescriptor;
-  }
-
   @Override
   public int hashCode() {
     return myName != null ? myName.hashCode() : 0;
@@ -136,6 +125,6 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
 
   @Override
   public String toString() {
-    return getDisplayName();
+    return myName;
   }
 }

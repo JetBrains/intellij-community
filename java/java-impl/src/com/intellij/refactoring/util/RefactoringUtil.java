@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -12,9 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
@@ -29,6 +27,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -39,15 +38,16 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.text.UniqueNameGenerator;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class RefactoringUtil {
+public final class RefactoringUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringUtil.class);
   public static final int EXPR_COPY_SAFE = 0;
   public static final int EXPR_COPY_UNSAFE = 1;
@@ -66,14 +66,6 @@ public class RefactoringUtil {
 
   public static boolean isInStaticContext(PsiElement element, @Nullable final PsiClass aClass) {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
-  }
-
-  /**
-   * @deprecated use {@link PsiTypesUtil#hasUnresolvedComponents(PsiType)}
-   */
-  @Deprecated
-  public static boolean isResolvableType(PsiType type) {
-    return !PsiTypesUtil.hasUnresolvedComponents(type);
   }
 
   public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass)
@@ -314,7 +306,7 @@ public class RefactoringUtil {
   public static boolean canBeDeclaredFinal(@NotNull PsiVariable variable) {
     LOG.assertTrue(variable instanceof PsiLocalVariable || variable instanceof PsiParameter);
     final boolean isReassigned = HighlightControlFlowUtil
-      .isReassigned(variable, new THashMap<>());
+      .isReassigned(variable, new HashMap<>());
     return !isReassigned;
   }
 
@@ -535,18 +527,17 @@ public class RefactoringUtil {
   public static List<RangeHighlighter> highlightAllOccurrences(Project project, PsiElement[] occurrences, Editor editor) {
     ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     if (occurrences.length > 1) {
       for (PsiElement occurrence : occurrences) {
         final RangeMarker rangeMarker = occurrence.getUserData(ElementToWorkOn.TEXT_RANGE);
         if (rangeMarker != null && rangeMarker.isValid()) {
-          highlightManager
-            .addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), attributes, true, highlighters);
+          highlightManager.addRangeHighlight(editor, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
+                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
         }
         else {
           final TextRange textRange = occurrence.getTextRange();
-          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, highlighters);
+          highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(),
+                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
         }
       }
     }
@@ -728,7 +719,7 @@ public class RefactoringUtil {
   }
 
   public static void visitImplicitSuperConstructorUsages(PsiClass subClass,
-                                                         final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor,
+                                                         final ImplicitConstructorUsageVisitor implicitConstructorUsageVisitor,
                                                          PsiClass superClass) {
     final PsiMethod baseDefaultConstructor = findDefaultConstructor(superClass);
     final PsiMethod[] constructors = subClass.getConstructors();
@@ -738,12 +729,12 @@ public class RefactoringUtil {
         if (body == null) continue;
         final PsiStatement[] statements = body.getStatements();
         if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
-          implicitConstructorUsageVistor.visitConstructor(constructor, baseDefaultConstructor);
+          implicitConstructorUsageVisitor.visitConstructor(constructor, baseDefaultConstructor);
         }
       }
     }
     else {
-      implicitConstructorUsageVistor.visitClassWithoutConstructors(subClass);
+      implicitConstructorUsageVisitor.visitClassWithoutConstructors(subClass);
     }
   }
 
@@ -976,7 +967,7 @@ public class RefactoringUtil {
     final PsiElement body = lambdaExpression.getBody();
     if (!(body instanceof PsiExpression)) return (PsiCodeBlock)body;
 
-    String newLambdaText = "{";
+    @NonNls String newLambdaText = "{";
     if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
     newLambdaText += "a;}";
 
@@ -998,6 +989,7 @@ public class RefactoringUtil {
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
+  @NlsContexts.DialogMessage
   public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
@@ -1024,7 +1016,7 @@ public class RefactoringUtil {
    * Returns subset of {@code graph.getVertices()} that is a transitive closure (by <code>graph.getTargets()<code>)
    * of the following property: initialRelation.value() of vertex or {@code graph.getTargets(vertex)} is true.
    * <p/>
-   * Note that {@code graph.getTargets()} is not neccesrily a subset of {@code graph.getVertex()}
+   * Note that {@code graph.getTargets()} is not necessarily a subset of {@code graph.getVertex()}
    *
    * @param graph
    * @param initialRelation
@@ -1197,16 +1189,18 @@ public class RefactoringUtil {
   @NotNull
   public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
     throws IncorrectOperationException {
-    final PsiDirectory[] directories = aPackage.getDirectories();
-    for (PsiDirectory directory : directories) {
-      if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
-        return directory;
-      }
+    PsiDirectory[] existing = aPackage.getDirectories(
+        GlobalSearchScopes.directoryScope(aPackage.getManager().getProject(), sourceRoot, true));
+    if (existing.length > 0) {
+      return existing[0];
     }
     String qNameToCreate = qNameToCreateInSourceRoot(aPackage, sourceRoot);
-    final String[] shortNames = qNameToCreate.split("\\.");
     PsiDirectory current = aPackage.getManager().findDirectory(sourceRoot);
     LOG.assertTrue(current != null);
+    if (qNameToCreate.isEmpty()) {
+      return current;
+    }
+    final String[] shortNames = qNameToCreate.split("\\.");
     for (String shortName : shortNames) {
       PsiDirectory subdirectory = current.findSubdirectory(shortName);
       if (subdirectory == null) {

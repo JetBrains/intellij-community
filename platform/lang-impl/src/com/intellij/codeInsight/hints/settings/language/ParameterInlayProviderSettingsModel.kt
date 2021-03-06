@@ -32,6 +32,7 @@ class ParameterInlayProviderSettingsModel(
 
   override val cases: List<ImmediateConfigurable.Case> = provider.supportedOptions.mapIndexed { index, option ->
     val state = optionStates[index]
+    @Suppress("HardCodedStringLiteral") // inspection is unable to understand that extendedDescription.get() is safe
     ImmediateConfigurable.Case(option.name,
                                id = option.id,
                                loadFromSettings = { state.state },

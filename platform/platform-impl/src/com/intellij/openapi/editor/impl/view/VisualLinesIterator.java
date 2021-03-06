@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+
 /**
  * If one needs to perform some actions for a continuous range of visual lines, using this class would be most surely faster than
  * calculating various values (e.g. start/end offsets) for all visual lines in the range individually.
@@ -175,7 +177,7 @@ public final class VisualLinesIterator {
       int inlayOffset = inlay.getOffset() - (inlay.isRelatedToPrecedingText() ? 0 : 1);
       int foldIndex = myLocation.foldRegion;
       while (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getEndOffset() <= inlayOffset) foldIndex++;
-      if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset) continue;
+      if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset && !showWhenFolded(inlay)) continue;
       (inlay.getPlacement() == Inlay.Placement.ABOVE_LINE ? myInlaysAbove : myInlaysBelow).add(inlay);
     }
   }

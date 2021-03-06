@@ -23,14 +23,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public abstract class ForkedSplitter extends ForkedByModuleSplitter {
+public abstract class ForkedSplitter<T> extends ForkedByModuleSplitter {
 
-  private Object myRootDescription;
+  private T myRootDescription;
 
   public ForkedSplitter(String workingDirsPath, String forkMode, List newArgs) {
     super(workingDirsPath, forkMode, newArgs);
   }
 
+  @Override
   protected int startSplitting(String[] args,
                                String configName,
                                String repeatCount) throws Exception {
@@ -41,7 +42,7 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final String classpath = System.getProperty("java.class.path");
       final String modulePath = System.getProperty("jdk.module.path");
-      final List moduleOptions = new ArrayList();
+      final List<String> moduleOptions = new ArrayList<String>();
       if (modulePath != null && modulePath.length() > 0) {
         moduleOptions.add("-p");
         moduleOptions.add(modulePath);
@@ -49,7 +50,7 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
       if (repeatCount != null && RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {
         return startChildFork(createChildArgs(myRootDescription), null, classpath, moduleOptions, repeatCount);
       }
-      final List children = getChildren(myRootDescription);
+      final List<T> children = getChildren(myRootDescription);
       final boolean forkTillMethod = myForkMode.equalsIgnoreCase("method");
       return splitChildren(children, 0, forkTillMethod, null, classpath, moduleOptions, repeatCount);
     }
@@ -58,22 +59,23 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     }
   }
 
+  @Override
   protected int startPerModuleFork(String moduleName,
-                                   List classNames,
+                                   List<String> classNames,
                                    String packageName,
                                    String workingDir,
                                    String classpath,
-                                   List moduleOptions,
+                                   List<String> moduleOptions,
                                    String repeatCount,
                                    int result,
                                    String filters) throws Exception {
     if (myForkMode.equals("none")) {
-      final List childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription, filters);
+      final List<String> childArgs = createPerModuleArgs(packageName, workingDir, classNames, myRootDescription, filters);
       return startChildFork(childArgs, new File(workingDir), classpath, moduleOptions, repeatCount);
     }
     else {
-      final List children = new ArrayList(getChildren(myRootDescription));
-      for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
+      final List<T> children = new ArrayList<T>(getChildren(myRootDescription));
+      for (Iterator<T> iterator = children.iterator(); iterator.hasNext(); ) {
         if (!classNames.contains(getTestClassName(iterator.next()))) {
           iterator.remove();
         }
@@ -83,16 +85,15 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     }
   }
 
-  protected int splitChildren(List children,
+  protected int splitChildren(List<T> children,
                               int result,
                               boolean forkTillMethod,
                               File workingDir,
                               String classpath,
-                              List moduleOptions,
+                              List<String> moduleOptions,
                               String repeatCount) throws IOException, InterruptedException {
-    for (int i = 0, argsLength = children.size(); i < argsLength; i++) {
-      final Object child = children.get(i);
-      final List childTests = getChildren(child);
+    for (final T child : children) {
+      final List<T> childTests = getChildren(child);
       final int childResult;
       if (childTests.isEmpty() || !forkTillMethod) {
         childResult = startChildFork(createChildArgs(child), workingDir, classpath, moduleOptions, repeatCount);
@@ -105,17 +106,17 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     return result;
   }
 
-  protected abstract List createPerModuleArgs(String packageName,
-                                              String workingDir,
-                                              List classNames,
-                                              Object rootDescriptor,
-                                              String filters) throws IOException;
+  protected abstract List<String> createPerModuleArgs(String packageName,
+                                                      String workingDir,
+                                                      List<String> classNames,
+                                                      T rootDescriptor,
+                                                      String filters) throws IOException;
 
-  protected abstract Object createRootDescription(String[] args, String configName) throws Exception;
+  protected abstract T createRootDescription(String[] args, String configName) throws Exception;
 
-  protected abstract String getTestClassName(Object child);
+  protected abstract String getTestClassName(T child);
 
-  protected abstract List createChildArgs(Object child);
+  protected abstract List<String> createChildArgs(T child);
 
-  protected abstract List getChildren(Object child);
+  protected abstract List<T> getChildren(T child);
 }

@@ -10,15 +10,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.PyBundle;
@@ -29,23 +31,26 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
+import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
 
 /**
  * Communication with Python console backend using Thrift services.
@@ -63,21 +68,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   /**
    * Response that should be sent back to the shell.
    */
-  protected volatile InterpreterResponse nextResponse;
-  /**
-   * Helper to keep on busy loop.
-   */
-  private final Object lock2 = new Object();
-  /**
-   * Keeps a flag indicating that we were able to communicate successfully with the shell at least once
-   * (if we haven't we may retry more than once the first time, as jython can take a while to initialize
-   * the communication)
-   */
-  private volatile boolean firstCommWorked = false;
+  @Nullable protected volatile InterpreterResponse nextResponse;
 
   private boolean myExecuting;
   private PythonDebugConsoleCommunication myDebugCommunication;
   private boolean myNeedsMore = false;
+  /**
+   * UI sends a lot of repeated requests for the same expression
+   * Store result of the previous request to avoid sending the same command several times
+   */
+  @Nullable private Pair<String, String> myPrevNameToDescription = null;
 
   private int myFullValueSeq = 0;
   private final Map<Integer, List<PyFrameAccessor.PyAsyncValue<String>>> myCallbackHashMap = new ConcurrentHashMap<>();
@@ -130,7 +130,9 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         throw new RuntimeException(e);
       }
     }
-    return false;
+    else {
+      return false;
+    }
   }
 
   /**
@@ -140,7 +142,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
     myCallbackHashMap.clear();
 
-    new Task.Backgroundable(myProject, PyBundle.message("console.close.console.communication"), true) {
+    new Task.Backgroundable(myProject, PyBundle.message("console.close.console.communication"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -185,7 +187,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @NotNull
   protected abstract Future<?> closeCommunication();
 
-  protected abstract boolean isCommunicationClosed();
+  public abstract boolean isCommunicationClosed();
 
   /*
    * Variables that control when we're expecting to give some input to the server or when we're
@@ -263,7 +265,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * @param command
    * @return a Pair with (null, more) or (error, false)
    */
-  protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) {
+  protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws PythonUnhandledException {
     setExecuting(true);
 
     boolean more;
@@ -275,7 +277,12 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         more = getPythonConsoleBackendClient().execMultipleLines(command.getText());
       }
     }
+    catch (PythonUnhandledException e) {
+      setExecuting(false);
+      throw e;
+    }
     catch (TException e) {
+      setExecuting(false);
       throw new RuntimeException(e);
     }
 
@@ -284,6 +291,10 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
 
     return Pair.create(null, more);
+  }
+
+  private static String createRuntimeMessage(String taskName) {
+    return PyBundle.message("console.getting.from.runtime", taskName);
   }
 
   /**
@@ -295,30 +306,85 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     if (waitingForInput || isExecuting()) {
       return Collections.emptyList();
     }
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.completion")));
     return ApplicationUtil.runWithCheckCanceled(
-      () ->
-      {
-        try {
-          if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
-            return myDebugCommunication.getCompletions(text, actTok);
-          }
-          else {
-            List<CompletionOption> fromServer = getPythonConsoleBackendClient().getCompletions(text, actTok);
-            return ContainerUtil.map(fromServer, option -> toPydevCompletionVariant(option));
-          }
-        }
-        catch (PythonUnhandledException e) {
-          LOG.warn("Completion error in Python Console: " + e.traceback);
-          return Collections.emptyList();
-        }
+      () -> {
+        return doGetCompletions(text, actTok);
       },
-      ProgressManager.getInstance().getProgressIndicator());
+      indicator);
+  }
+
+  private List<PydevCompletionVariant> doGetCompletions(String text, String actTok) throws Exception {
+    try {
+      if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
+        return myDebugCommunication.getCompletions(text, actTok);
+      }
+      else {
+        List<CompletionOption> fromServer = getPythonConsoleBackendClient().getCompletions(text, actTok);
+        return ContainerUtil.map(fromServer, option -> toPydevCompletionVariant(option));
+      }
+    }
+    catch (PythonUnhandledException e) {
+      LOG.warn("Completion error in Python Console: " + e.traceback);
+      return Collections.emptyList();
+    }
+  }
+
+  @TestOnly
+  public List<PydevCompletionVariant> gerCompletionVariants(String text, String actTok) throws Exception {
+    return doGetCompletions(text, actTok);
   }
 
   @NotNull
   private static PydevCompletionVariant toPydevCompletionVariant(@NotNull CompletionOption option) {
     String args = String.join(" ", option.arguments);
     return new PydevCompletionVariant(option.name, option.documentation, args, option.type.getValue());
+  }
+
+  private void executeBackgroundTaskSuppressException(Callable<?> task,
+                                                      @NlsContexts.ProgressTitle String userVisibleMessage,
+                                                      String errorLogMessage) {
+    try {
+      executeBackgroundTask(task, false, userVisibleMessage, errorLogMessage);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  @Nullable
+  private <T> T executeBackgroundTask(Callable<T> task,
+                                      boolean waitForResult,
+                                      @NlsContexts.ProgressTitle String userVisibleMessage,
+                                      String errorLogMessage)
+    throws PyDebuggerException {
+    final FutureResult<T> future = new FutureResult<>();
+    new Task.Backgroundable(myProject, userVisibleMessage, false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          T result = task.call();
+          future.set(result);
+        }
+        catch (PythonUnhandledException e) {
+          LOG.error(errorLogMessage + e.traceback);
+          future.set(null);
+        }
+        catch (Exception e) {
+          future.setException(e);
+        }
+      }
+    }.queue();
+    if (waitForResult) {
+      try {
+        return future.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new PyDebuggerException(errorLogMessage, e);
+      }
+    }
+    return null;
   }
 
   /**
@@ -332,15 +398,27 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-
-    ThrowableComputable<String, Exception> doGetDesc = () -> getPythonConsoleBackendClient().getDescription(text);
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, PyBundle.message("console.getting.description"), true, myProject);
+    if (myPrevNameToDescription != null) {
+      if (myPrevNameToDescription.first.equals(text)) return myPrevNameToDescription.second;
     }
     else {
-      // note that the thread would still wait for the response after the timeout occurs
-      return ApplicationManager.getApplication().executeOnPooledThread(() -> doGetDesc.compute()).get(5, TimeUnit.SECONDS);
+      // add temporary value to avoid repeated requests for the same expression
+      myPrevNameToDescription = Pair.create(text, "");
     }
+    if (ApplicationManager.getApplication().isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
+    }
+
+    return executeBackgroundTask(
+      () ->
+      {
+        final String resultDescription = getPythonConsoleBackendClient().getDescription(text);
+        myPrevNameToDescription = Pair.create(text, resultDescription);
+        return resultDescription;
+      },
+      true,
+      createRuntimeMessage(PyBundle.message("console.getting.documentation")),
+      "Error when Getting Description in Python Console: ");
   }
 
   /**
@@ -362,108 +440,34 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
     else {
       //create a thread that'll keep locked until an answer is received from the server.
-      new Task.Backgroundable(myProject, PyBundle.message("console.repl.communication"), true) {
-
+      new Task.Backgroundable(myProject, PyBundle.message("console.waiting.execution.result"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          boolean needInput = false;
           try {
-
-            Pair<String, Boolean> executed = null;
-
-            //the 1st time we'll do a connection attempt, we can try to connect n times (until the 1st time the connection
-            //is accepted) -- that's mostly because the server may take a while to get started.
-            int commAttempts = 0;
-            while (true) {
-              if (indicator.isCanceled()) {
-                return;
-              }
-
-              executed = exec(command);
-
-              //executed.o1 is not null only if we had an error
-
-              String refusedConnPattern = "Failed to read servers response";
-              // Was "refused", but it didn't
-              // work on non English system
-              // (in Spanish localized systems
-              // it is "rechazada")
-              // This string always works,
-              // because it is hard-coded in
-              // the XML-RPC library)
-              if (executed.first != null && executed.first.contains(refusedConnPattern)) {
-                if (firstCommWorked) {
-                  break;
-                }
-                else {
-                  if (commAttempts < MAX_ATTEMPTS) {
-                    commAttempts += 1;
-                    Thread.sleep(250);
-                    executed = Pair.create("", executed.second);
-                  }
-                  else {
-                    break;
-                  }
-                }
-              }
-              else {
-                break;
-              }
-
-              //unreachable code!! -- commented because eclipse will complain about it
-              //throw new RuntimeException("Can never get here!");
-            }
-
-            firstCommWorked = true;
-
-            boolean more = executed.second;
-
-            nextResponse = new InterpreterResponse(more, needInput);
+            if (indicator.isCanceled()) return;
+            Pair<String, Boolean> executed = exec(command);
+            nextResponse = new InterpreterResponse(executed.second, false);
           }
           catch (ProcessCanceledException e) {
             //ignore
           }
+          catch (PythonUnhandledException e) {
+            LOG.error("Error in execInterpreter():" + e.traceback);
+            nextResponse = new InterpreterResponse(false, false);
+          }
           catch (Exception e) {
-            nextResponse = new InterpreterResponse(false, needInput);
+            nextResponse = new InterpreterResponse(false, false);
+          }
+          finally {
+            InterpreterResponse response = nextResponse;
+            if (response != null && response.more) {
+              myNeedsMore = true;
+            }
+            notifyCommandExecuted(true);
+            onResponseReceived.fun(response);
           }
         }
       }.queue();
-
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("console.waiting.for.repl.response")) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          progressIndicator.setText(PyBundle.message("console.waiting.for.repl.response.with.timeout", (int)(TIMEOUT / 10e8)));
-          progressIndicator.setIndeterminate(false);
-          final long startTime = System.nanoTime();
-          while (nextResponse == null) {
-            if (progressIndicator.isCanceled()) {
-              LOG.debug("Canceled");
-              nextResponse = new InterpreterResponse(false, false);
-            }
-
-            final long time = System.nanoTime() - startTime;
-            progressIndicator.setFraction(((double)time) / TIMEOUT);
-            if (time > TIMEOUT) {
-              LOG.debug("Timeout exceeded");
-              nextResponse = new InterpreterResponse(false, false);
-            }
-            synchronized (lock2) {
-              try {
-                lock2.wait(20);
-              }
-              catch (InterruptedException e) {
-                LOG.error(e);
-              }
-            }
-          }
-          if (nextResponse.more) {
-            myNeedsMore = true;
-            notifyCommandExecuted(true);
-          }
-          onResponseReceived.fun(nextResponse);
-        }
-      });
     }
   }
 
@@ -475,12 +479,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       keyboardInterruption = true;
       return;
     }
-    try {
-      getPythonConsoleBackendClient().interrupt();
-    }
-    catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
-      LOG.error(e);
-    }
+    executeBackgroundTaskSuppressException(
+      () ->
+      {
+        getPythonConsoleBackendClient().interrupt();
+        return null;
+      },
+      PyBundle.message("console.interrupting.execution"),
+      "");
   }
 
   @Override
@@ -496,30 +502,38 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      try {
-        List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
-        return createPyDebugValue(debugValues.iterator().next(), this);
-      }
-      catch (Exception e) {
-        throw new PyDebuggerException("Evaluate in console failed", e);
-      }
+      return executeBackgroundTask(
+        () -> {
+          List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
+          return createPyDebugValue(debugValues.iterator().next(), this);
+        },
+        true,
+        PyBundle.message("console.evaluating.expression.in.console"),
+        "Error in evaluate():"
+      );
     }
-    return null;
+    else {
+      return null;
+    }
   }
 
   @Nullable
   @Override
-  public XValueChildrenList loadFrame() throws PyDebuggerException {
+  public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      try {
-        List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
-        return parseVars(frame, null, this);
-      }
-      catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
-        throw new PyDebuggerException("Get frame from console failed", e);
-      }
+      return executeBackgroundTask(
+        () -> {
+          List<DebugValue> frame = getPythonConsoleBackendClient().getFrame();
+          return parseVars(frame, null, this);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.frame.variables")),
+        "Error in loadFrame():"
+      );
     }
-    return new XValueChildrenList();
+    else {
+      return new XValueChildrenList();
+    }
   }
 
   public synchronized int getNextFullValueSeq() {
@@ -528,7 +542,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public void loadAsyncVariablesValues(@NotNull List<PyAsyncValue<String>> pyAsyncValues) {
+  public void loadAsyncVariablesValues(@Nullable XStackFrame frame, @NotNull List<PyAsyncValue<String>> pyAsyncValues) {
     PyDebugValueExecutionService.getInstance(myProject).submitTask(this, () -> {
       try {
         List<String> evaluationExpressions = new ArrayList<>();
@@ -545,13 +559,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
         for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
           PyDebugValue value = asyncValue.getDebugValue();
-          XValueNode node = value.getLastNode();
-          if (node != null && !node.isObsolete()) {
-            if (e.getMessage().startsWith("Timeout") || e.getMessage().startsWith("Console already exited")) {
-              value.updateNodeValueAfterLoading(node, " ", "", PyVariableViewSettings.LOADING_TIMED_OUT);
-            }
-            else {
-              LOG.error(e);
+          for (XValueNode node : value.getValueNodes()) {
+            if (node != null && !node.isObsolete()) {
+              if (e.getMessage().startsWith("Timeout") || e.getMessage().startsWith("Console already exited")) {
+                value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
+              }
+              else {
+                LOG.error(e);
+              }
             }
           }
         }
@@ -562,20 +577,21 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      try {
-        final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
-                                                 : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
-        List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
-        return parseVars(ret, var, this);
-      }
-      catch (CommunicationClosedException | PyConsoleProcessFinishedException e) {
-        throw new PyDebuggerException(e.getLocalizedMessage(), e);
-      }
-      catch (TException e) {
-        throw new PyDebuggerException("Get variable from console failed", e);
-      }
+      return executeBackgroundTask(
+        () -> {
+          final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
+                                                   : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
+          List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
+          return parseVars(ret, var, this);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
+        "Error in loadVariable():"
+      );
     }
-    return new XValueChildrenList();
+    else {
+      return new XValueChildrenList();
+    }
   }
 
   @Override
@@ -595,16 +611,18 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public void changeVariable(PyDebugValue variable, String value) throws PyDebuggerException {
+  public void changeVariable(PyDebugValue variable, String value) {
     if (!isCommunicationClosed()) {
-      try {
-        // NOTE: The actual change is being scheduled in the exec_queue in main thread
-        // This method is async now
-        getPythonConsoleBackendClient().changeVariable(variable.getEvaluationExpression(), value);
-      }
-      catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
-        throw new PyDebuggerException("Get change variable", e);
-      }
+      executeBackgroundTaskSuppressException(
+        () -> {
+          // NOTE: The actual change is being scheduled in the exec_queue in main thread
+          // This method is async now
+          getPythonConsoleBackendClient().changeVariable(variable.getEvaluationExpression(), value);
+          return null;
+        },
+        PyBundle.message("console.changing.variable"),
+        "Error in changeVariable():"
+      );
     }
   }
 
@@ -618,21 +636,45 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   public ArrayChunk getArrayItems(PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format)
     throws PyDebuggerException {
     if (!isCommunicationClosed()) {
-      try {
-        GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
-        return createArrayChunk(ret, this);
-      }
-      catch (UnsupportedArrayTypeException e) {
-        throw new IllegalArgumentException(var.getType() + " is not supported", e);
-      }
-      catch (ExceedingArrayDimensionsException e) {
-        throw new IllegalArgumentException(var.getName() + " has more than two dimensions", e);
-      }
-      catch (Exception e) {
-        throw new PyDebuggerException("Evaluate in console failed", e);
-      }
+      return executeBackgroundTask(
+        () -> {
+          GetArrayResponse ret = getPythonConsoleBackendClient().getArray(var.getName(), rowOffset, colOffset, rows, cols, format);
+          return createArrayChunk(ret, this);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.array")),
+        "Error in getArrayItems():"
+      );
     }
-    return null;
+    else {
+      return null;
+    }
+  }
+
+  @Override
+  public DataViewerCommandResult executeDataViewerCommand(DataViewerCommandBuilder builder) throws PyDebuggerException {
+    if (!isCommunicationClosed()) {
+      return executeBackgroundTask(
+        () -> {
+          try {
+            getPythonConsoleBackendClient().execDataViewerAction(
+              builder.getVar().getName(),
+              builder.getAction().name(),
+              builder.getArgs() == null? "" :String.join("\t", builder.getArgs())
+            );
+
+            return DataViewerCommandResult.makeSuccessResult("Export successful");
+          }
+          catch (PythonUnhandledException e) {
+            return DataViewerCommandResult.errorFromExportTraceback(e.getTraceback());
+          }
+        },
+        true,
+        PyBundle.message("console.executing.dataviewer.command"),
+        "Error in DataViewer command:"
+      );
+    }
+    return DataViewerCommandResult.makeErrorResult(UNHANDLED_ERROR, "Console communication is closed");
   }
 
   @Nullable
@@ -655,20 +697,25 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort, @Nullable String debuggerHost, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
+  public void connectToDebugger(int localPort,
+                                @Nullable String debuggerHost,
+                                @NotNull Map<String, Boolean> dbgOpts,
+                                @NotNull Map<String, String> extraEnvs)
     throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");
     }
-    try {
-      // though `connectToDebugger` returns "connect complete" string, let us just ignore it
-      getPythonConsoleBackendClient().connectToDebugger(localPort, debuggerHost, dbgOpts, extraEnvs);
-    }
-    catch (CommunicationClosedException | PyConsoleProcessFinishedException | TException e) {
-      throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", e);
-    }
+    executeBackgroundTask(
+      () -> {
+        // though `connectToDebugger` returns "connect complete" string, let us just ignore it
+        getPythonConsoleBackendClient().connectToDebugger(localPort, debuggerHost, dbgOpts, extraEnvs);
+        return null;
+      },
+      true,
+      PyBundle.message("console.connecting.to.debugger"),
+      "Error in connectToDebugger():"
+    );
   }
-
 
   @Override
   public void notifyCommandExecuted(boolean more) {
@@ -733,9 +780,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     public void returnFullValue(int requestSeq, List<DebugValue> response) {
       final List<PyAsyncValue<String>> values = myCallbackHashMap.remove(requestSeq);
       try {
-        List<PyDebugValue> debugValues = response.stream()
-          .map(value -> createPyDebugValue(value, PydevConsoleCommunication.this))
-          .collect(Collectors.toList());
+        List<PyDebugValue> debugValues = ContainerUtil.map(response, value -> createPyDebugValue(value, PydevConsoleCommunication.this));
         for (int i = 0; i < debugValues.size(); ++i) {
           PyDebugValue resultValue = debugValues.get(i);
           values.get(i).getCallback().ok(resultValue.getValue());

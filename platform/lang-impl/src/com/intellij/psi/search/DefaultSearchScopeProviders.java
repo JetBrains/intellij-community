@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.WeighedItem;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -27,13 +28,13 @@ import java.util.List;
 /**
  * @author gregsh
  */
-public class DefaultSearchScopeProviders {
+public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 
   public static class Favorites implements SearchScopeProvider {
     @Override
     public String getDisplayName() {
-      return "Favorites";
+      return LangBundle.message("default.search.scope.favourites.display.name");
     }
 
     @NotNull
@@ -49,7 +50,7 @@ public class DefaultSearchScopeProviders {
           @NotNull
           @Override
           public String getDisplayName() {
-            return "Favorite \'" + favorite + "\'";
+            return LangBundle.message("default.search.scope.favourite.display.name", favorite);
           }
 
           @Override
@@ -75,7 +76,7 @@ public class DefaultSearchScopeProviders {
   public static class CustomNamed implements SearchScopeProvider {
     @Override
     public String getDisplayName() {
-      return "Other";
+      return LangBundle.message("default.search.scope.custom.named.display.name");
     }
 
     @NotNull
@@ -100,7 +101,7 @@ public class DefaultSearchScopeProviders {
     int weight = namedScope instanceof WeighedItem ? ((WeighedItem)namedScope).getWeight() : -1;
     Color color = !colored ? null :
                   //namedScope instanceof ColoredItem ? ((ColoredItem)namedScope).getColor() :
-                  FileColorManager.getInstance(project).getScopeColor(namedScope.getName());
+                  FileColorManager.getInstance(project).getScopeColor(namedScope.getScopeId());
     return new MyWeightedScope(scope, weight, color);
   }
 

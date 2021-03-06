@@ -15,6 +15,7 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
+import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -24,7 +25,6 @@ import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCase {
@@ -49,39 +49,34 @@ public abstract class FrameworkSupportProviderTestCase extends JavaProjectTestCa
   }
 
   protected void addSupport() {
-    try {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-        final VirtualFile root = getVirtualFile(createTempDir("contentRoot"));
-        PsiTestUtil.addContentRoot(myModule, root);
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        try {
-          List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<>();
-          final IdeaModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
-          for (FrameworkSupportNode node : myNodes.values()) {
-            if (node.isChecked()) {
-              final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getUserObject());
-              configurable.addSupport(myModule, model, modelsProvider);
-              if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
-                selectedConfigurables
-                  .add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());
-              }
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      VirtualFile root = getTempDir().createVirtualDir();
+      PsiTestUtil.addContentRoot(myModule, root);
+      final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+      try {
+        List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<>();
+        ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
+        for (FrameworkSupportNode node : myNodes.values()) {
+          if (node.isChecked()) {
+            final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getUserObject());
+            configurable.addSupport(myModule, model, modelsProvider);
+            if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
+              selectedConfigurables
+                .add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());
             }
           }
-          for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
-            communicator.onFrameworkSupportAdded(myModule, model, selectedConfigurables, myFrameworkSupportModel);
-          }
         }
-        finally {
-          model.commit();
+        for (FrameworkSupportCommunicator communicator : FrameworkSupportCommunicator.EP_NAME.getExtensions()) {
+          communicator.onFrameworkSupportAdded(myModule, model, selectedConfigurables, myFrameworkSupportModel);
         }
-        for (FrameworkSupportInModuleConfigurable configurable : myConfigurables.values()) {
-          Disposer.dispose(configurable);
-        }
-      });
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+      }
+      finally {
+        model.commit();
+      }
+      for (FrameworkSupportInModuleConfigurable configurable : myConfigurables.values()) {
+        Disposer.dispose(configurable);
+      }
+    });
   }
 
   protected FrameworkSupportInModuleConfigurable selectFramework(@NotNull FacetTypeId<?> id) {

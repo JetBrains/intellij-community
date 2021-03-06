@@ -2,10 +2,9 @@
 package com.intellij.java.codeInsight.folding
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaFolding14Test : JavaFoldingTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_14
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_15
 
   fun testRecord() {
     val text = """

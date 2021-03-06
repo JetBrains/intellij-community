@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -26,6 +27,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReferenceInjector;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +40,7 @@ import java.util.List;
 */
 class AntReferenceInjector implements DomReferenceInjector {
   @Override
-  public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
+  public @Nullable @NlsSafe String resolveString(@Nullable @NonNls String unresolvedText, @NotNull ConvertContext context) {
     // todo: speed optimization: disable string resolution in places where it is not applicable
     if (unresolvedText == null) {
       return null;

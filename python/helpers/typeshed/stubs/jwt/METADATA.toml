@@ -1,0 +1,2 @@
+version = "0.1"
+requires = ["types-cryptography"]

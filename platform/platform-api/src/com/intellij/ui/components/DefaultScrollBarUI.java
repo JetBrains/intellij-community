@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.*;
 
 import javax.swing.Timer;
@@ -352,7 +353,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   private static int adjust(int value, int min, int max) {
-    return value < min ? min : value > max ? max : value;
+    return Math.max(min, Math.min(value, max));
   }
 
   private final class Listener extends MouseAdapter implements ActionListener, FocusListener, ChangeListener, PropertyChangeListener {
@@ -554,7 +555,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (VERTICAL == myScrollBar.getOrientation()) {
         thumbMin = myTrack.bounds.y;
         thumbMax = myTrack.bounds.y + myTrack.bounds.height - myThumb.bounds.height;
-        thumbPos = Math.min(thumbMax, Math.max(thumbMin, (y - myOffset)));
+        thumbPos = MathUtil.clamp(y - myOffset, thumbMin, thumbMax);
         if (myThumb.bounds.y != thumbPos) {
           int minY = Math.min(myThumb.bounds.y, thumbPos);
           int maxY = Math.max(myThumb.bounds.y, thumbPos) + myThumb.bounds.height;
@@ -566,7 +567,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       else {
         thumbMin = myTrack.bounds.x;
         thumbMax = myTrack.bounds.x + myTrack.bounds.width - myThumb.bounds.width;
-        thumbPos = Math.min(thumbMax, Math.max(thumbMin, (x - myOffset)));
+        thumbPos = MathUtil.clamp(x - myOffset, thumbMin, thumbMax);
         if (myThumb.bounds.x != thumbPos) {
           int minX = Math.min(myThumb.bounds.x, thumbPos);
           int maxX = Math.max(myThumb.bounds.x, thumbPos) + myThumb.bounds.width;

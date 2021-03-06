@@ -58,7 +58,7 @@ public class DollarSignInNameInspection extends BaseInspection {
       if (name == null) {
         return;
       }
-      if (name.indexOf((int)'$') < 0) {
+      if (name.indexOf('$') < 0) {
         return;
       }
       registerVariableError(variable);
@@ -68,7 +68,7 @@ public class DollarSignInNameInspection extends BaseInspection {
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final String name = method.getName();
-      if (name.indexOf((int)'$') < 0) {
+      if (name.indexOf('$') < 0) {
         return;
       }
       registerMethodError(method);
@@ -81,7 +81,7 @@ public class DollarSignInNameInspection extends BaseInspection {
       if (name == null) {
         return;
       }
-      if (name.indexOf((int)'$') < 0) {
+      if (name.indexOf('$') < 0) {
         return;
       }
       registerClassError(aClass);

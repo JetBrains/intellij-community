@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -20,12 +20,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -76,10 +75,7 @@ import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -100,7 +96,7 @@ import java.util.function.BiPredicate;
  */
 public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private static final Logger LOG = Logger.getInstance(FileStructurePopup.class);
-  private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
+  private static final @NonNls String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
   private final Project myProject;
   private final FileEditor myFileEditor;
@@ -109,7 +105,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final TreeStructureActionsOwner myTreeActionsOwner;
 
   private JBPopup myPopup;
-  private String myTitle;
+  private @NlsContexts.PopupTitle String myTitle;
 
   private final Tree myTree;
   private final SmartTreeStructure myTreeStructure;
@@ -136,6 +132,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
    * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public FileStructurePopup(@NotNull Project project,
                             @NotNull FileEditor fileEditor,
                             @NotNull StructureView structureView,
@@ -266,7 +263,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   public void show() {
     JComponent panel = createCenterPanel();
-    MnemonicHelper.init(panel);
     myTree.addTreeSelectionListener(__ -> {
       if (myPopup.isVisible()) {
         PopupUpdateProcessor updateProcessor = myPopup.getUserData(PopupUpdateProcessor.class);
@@ -406,7 +402,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       TreeUtil.ensureSelection(myTree);
       return Promises.resolvedPromise(path);
     };
-    Function<TreePath, Promise<TreePath>> fallback = new Function<TreePath, Promise<TreePath>>() {
+    Function<TreePath, Promise<TreePath>> fallback = new Function<>() {
       @Override
       public Promise<TreePath> fun(TreePath path) {
         if (path == null && stage[0] == 2) {
@@ -508,15 +504,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
     CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(F4, ENTER));
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        boolean succeeded = navigateSelectedElement();
-        if (succeeded) {
-          unregisterCustomShortcutSet(panel);
-        }
-      }
-    }.registerCustomShortcutSet(shortcutSet, panel);
+    new NavigateSelectedElementAction(panel).registerCustomShortcutSet(shortcutSet, panel);
 
     DumbAwareAction.create(e -> {
       if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
@@ -633,20 +621,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         //addGroupers(group);
         //addFilters(group);
 
-        group.add(new ToggleAction(IdeBundle.message("checkbox.narrow.down.on.typing")) {
-          @Override
-          public boolean isSelected(@NotNull AnActionEvent e) {
-            return isShouldNarrowDown();
-          }
-
-          @Override
-          public void setSelected(@NotNull AnActionEvent e, boolean state) {
-            PropertiesComponent.getInstance().setValue(NARROW_DOWN_PROPERTY_KEY, Boolean.toString(state));
-            if (mySpeedSearch.isPopupActive() && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
-              rebuild(true);
-            }
-          }
-        });
+        group.add(new ToggleNarrowDownAction());
 
         DataManager dataManager = DataManager.getInstance();
         ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -879,7 +854,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), state, Sorter.ALPHA_SORTER.equals(action));
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
   }
 
@@ -1064,7 +1039,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  static class MyTree extends DnDAwareTree implements PlaceProvider<String> {
+  static class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
       super(treeModel);
@@ -1080,6 +1055,41 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public String getPlace() {
       return ActionPlaces.STRUCTURE_VIEW_POPUP;
+    }
+  }
+
+  private class NavigateSelectedElementAction extends DumbAwareAction {
+    private final JPanel myPanel;
+
+    private NavigateSelectedElementAction(JPanel panel) {
+      myPanel = panel;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      boolean succeeded = navigateSelectedElement();
+      if (succeeded) {
+        unregisterCustomShortcutSet(myPanel);
+      }
+    }
+  }
+
+  private class ToggleNarrowDownAction extends ToggleAction {
+    private ToggleNarrowDownAction() {
+      super(IdeBundle.message("checkbox.narrow.down.on.typing"));
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return isShouldNarrowDown();
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      PropertiesComponent.getInstance().setValue(NARROW_DOWN_PROPERTY_KEY, Boolean.toString(state));
+      if (mySpeedSearch.isPopupActive() && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())) {
+        rebuild(true);
+      }
     }
   }
 }

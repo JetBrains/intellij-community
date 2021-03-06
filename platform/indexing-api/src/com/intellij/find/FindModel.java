@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -22,6 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +82,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private String directoryName;
   private boolean isWithSubdirectories = true;
   private String fileFilter;
-  private String customScopeName;
+  private @Nls String customScopeName;
   private SearchScope customScope;
   private boolean isCustomScope;
   private boolean isMultiline;
@@ -513,23 +502,13 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   /**
-   * Gets the Open in New Tab flag.
-   *
-   * @return the value of the Open in New Tab flag.
-   * @deprecated and not used anymore
-   */
-  @Deprecated
-  public boolean isOpenInNewTab() {
-    return true;
-  }
-
-  /**
    * Sets the Open in New Tab flag.
    *
    * @param showInNewTab the value of the Open in New Tab flag.
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenInNewTab(boolean showInNewTab) {
   }
 
@@ -540,6 +519,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isOpenInNewTabEnabled() {
     return true;
   }
@@ -551,6 +531,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenInNewTabEnabled(boolean showInNewTabEnabled) {
   }
 
@@ -558,6 +539,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isOpenInNewTabVisible() {
     return true;
   }
@@ -566,6 +548,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @deprecated and not used anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
   }
 
@@ -575,7 +558,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return the directory used as a scope, or null if the selected scope is not "Directory".
    */
   @Nullable
-  public String getDirectoryName() {
+  public @NlsSafe String getDirectoryName() {
     return directoryName;
   }
 
@@ -584,7 +567,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param directoryName the directory scope.
    */
-  public void setDirectoryName(@Nullable String directoryName) {
+  public void setDirectoryName(@NlsSafe @Nullable String directoryName) {
     boolean changed = !StringUtil.equals(directoryName, directoryName);
     this.directoryName = directoryName;
     if (changed) {
@@ -735,7 +718,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return the module name, or null if the selected scope is not "Module".
    */
   @Nullable
-  public String getModuleName() {
+  public @NlsSafe String getModuleName() {
     return moduleName;
   }
 
@@ -745,7 +728,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param moduleName the name of the module used as the scope.
    */
-  public void setModuleName(String moduleName) {
+  public void setModuleName(@NlsSafe String moduleName) {
     boolean changed = !StringUtil.equals(moduleName, this.moduleName);
     this.moduleName = moduleName;
     if (changed) {
@@ -799,11 +782,11 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  public String getCustomScopeName() {
+  public @Nls String getCustomScopeName() {
     return customScopeName;
   }
 
-  public void setCustomScopeName(String customScopeName) {
+  public void setCustomScopeName(@Nls String customScopeName) {
     boolean changed = !StringUtil.equals(customScopeName, this.customScopeName);
     this.customScopeName = customScopeName;
     if (changed) {
@@ -922,14 +905,14 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (pattern == PatternUtil.NOTHING) {
       int flags = isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
 
-      // SOE during matching regular expressions is considered to be feature 
+      // SOE during matching regular expressions is considered to be feature
       // http://bugs.java.com/view_bug.do?bug_id=6882582
       // http://bugs.java.com/view_bug.do?bug_id=5050507
       // IDEA-175066 / https://stackoverflow.com/questions/31676277/stackoverflowerror-in-regular-expression
       if (toFind.contains("\\n") && Registry.is("jdk.regex.soe.workaround")) { // if needed use DOT_ALL for modified pattern to avoid SOE
         String modifiedStringToFind = StringUtil.replace(toFind, "\\n|.", ".");
         modifiedStringToFind = StringUtil.replace(modifiedStringToFind, ".|\\n", ".");
-        
+
         if (!modifiedStringToFind.equals(toFind)) {
           flags |= Pattern.DOTALL;
           toFind = modifiedStringToFind;

@@ -11,12 +11,12 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT, \
-    NUMPY_NUMERIC_TYPES
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, NUMPY_NUMERIC_TYPES
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, pandas_to_str, is_string
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
+    should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
-    get_column_formatter_by_type, DEFAULT_DF_FORMAT
+    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 
@@ -226,23 +226,6 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
 
-def is_builtin(x):
-    return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
-
-
-def is_numpy(x):
-    if not getattr(x, '__module__', None) == 'numpy':
-        return False
-    type_name = x.__name__
-    return type_name == 'dtype' or type_name == 'bool_' or type_name == 'str_' or 'int' in type_name or 'uint' in type_name \
-           or 'float' in type_name or 'complex' in type_name
-
-
-def should_evaluate_full_value(val):
-    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
-                                                       and not isinstance(val, (list, tuple, dict, set, frozenset)))
-
-
 def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
     """Returns frame variables as the list of `DebugValue` structures
     """
@@ -351,14 +334,15 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
         pass
 
     if is_pandas_container(type_qualifier, typeName, v):
-        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+        value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     debug_value.value = value
 
     try:
-        if is_numeric_container(type_qualifier, typeName, v):
-            debug_value.shape = str(v.shape)
-        elif hasattr(v, '__len__') and not is_string(v):
-            debug_value.shape = str(len(v))
+        if should_evaluate_shape():
+            if hasattr(v, 'shape') and not callable(v.shape):
+                debug_value.shape = str(tuple(v.shape))
+            elif hasattr(v, '__len__') and not is_string(v):
+                debug_value.shape = str(len(v))
     except:
         pass
 
@@ -483,7 +467,7 @@ def array_to_meta_thrift_struct(array, name, format):
         slice += reslice
 
     bounds = (0, 0)
-    if type in NUMPY_NUMERIC_TYPES:
+    if type in NUMPY_NUMERIC_TYPES and array.size != 0:
         bounds = (array.min(), array.max())
     array_chunk = GetArrayResponse()
     array_chunk.slice = slice
@@ -508,6 +492,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
 
     """
+    original_df = df
     dim = len(df.axes)
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
@@ -526,7 +511,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except IndexError:
+                except (IndexError, KeyError):
                     kind = "O"
             format = array_default_format(kind)
         else:
@@ -535,6 +520,14 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols
+
+    elif (rows, cols) == (0, 0):
+        # return header only
+        r = min(num_rows, DATAFRAME_HEADER_LOAD_MAX_SIZE)
+        c = min(num_cols, DATAFRAME_HEADER_LOAD_MAX_SIZE)
+        array_chunk.headers = header_data_to_thrift_struct(r, c, [""] * num_cols, [(0, 0)] * num_cols, lambda x: DEFAULT_DF_FORMAT, original_df, dim)
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, format)
+        return array_chunk
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE, num_cols)
@@ -545,7 +538,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         for col in range(cols):
             dtype = df.dtypes.iloc[coffset + col].kind
             dtypes[col] = dtype
-            if dtype in NUMPY_NUMERIC_TYPES:
+            if dtype in NUMPY_NUMERIC_TYPES and df.size != 0:
                 cvalues = df.iloc[:, coffset + col]
                 bounds = (cvalues.min(), cvalues.max())
             else:
@@ -554,7 +547,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
-        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES else (0, 0)
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
     df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
     rows = df.shape[0]
@@ -565,10 +558,11 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
     iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
 
+    def formatted_row_elements(row):
+        return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
+
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    array_chunk.data = array_data_to_thrift_struct(rows, cols,
-                                                   lambda r: (("%" + col_to_format(c)) % (iat[r, c] if dim > 1 else iat[r])
-                                                              for c in range(cols)), format)
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format)
     return array_chunk
 
 
@@ -611,8 +605,13 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
     return array_headers
 
 
-TYPE_TO_THRIFT_STRUCT_CONVERTERS = {"ndarray": array_to_thrift_struct, "DataFrame": dataframe_to_thrift_struct,
-                                    "Series": dataframe_to_thrift_struct}
+TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
+    "ndarray": array_to_thrift_struct,
+    "DataFrame": dataframe_to_thrift_struct,
+    "Series": dataframe_to_thrift_struct,
+    "GeoDataFrame": dataframe_to_thrift_struct,
+    "GeoSeries": dataframe_to_thrift_struct
+}
 
 
 def table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):

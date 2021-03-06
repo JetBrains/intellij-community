@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface QuickFixActionRegistrar {
@@ -21,5 +22,6 @@ public interface QuickFixActionRegistrar {
    * instead of filtering it with this method
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void unregister(@NotNull Condition<? super IntentionAction> condition) {}
 }

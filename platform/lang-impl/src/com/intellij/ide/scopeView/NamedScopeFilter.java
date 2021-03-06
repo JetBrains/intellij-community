@@ -48,9 +48,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
   }
 
   @Override
-  public boolean accept(VirtualFile file) {
-    if (file == null) return false;
-
+  public boolean accept(@NotNull VirtualFile file) {
     PackageSet set = scope.getValue();
     if (set == null) return false;
 
@@ -73,7 +71,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     NamedScope scratchesScope = null;
     for (NamedScopesHolder holder : holders) {
       for (NamedScope scope : holder.getScopes()) {
-        String name = scope.getName();
+        String name = scope.getScopeId();
         if (null == scope.getValue()) {
           LOG.debug("ignore scope without package set: ", name, "; holder: ", holder);
         }

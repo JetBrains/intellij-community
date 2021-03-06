@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getInstance;
 
 public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
-
   public void testMigrateInfo() throws Exception {
     doTest();
   }
@@ -50,7 +50,6 @@ public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
     VirtualFile afterDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(afterFile);
     File shelfFile = new File(myProject.getBasePath(), ".shelf");
     FileUtil.createDirectory(shelfFile);
-    myFilesToDelete.add(shelfFile);
     FileUtil.copyDir(beforeFile, shelfFile);
     VirtualFile shelfDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(shelfFile);
     assertNotNull(shelfDir);
@@ -73,7 +72,7 @@ public class ShelveChangesManagerMigrationTest extends HeavyPlatformTestCase {
   private static void checkAndMigrateOldPatchResourcesToNewSchemeStorage(@NotNull ShelveChangesManager shelveChangesManager)
     throws IOException {
     for (ShelvedChangeList list : shelveChangesManager.getAllLists()) {
-      File newPatchDir = new File(shelveChangesManager.getShelfResourcesDirectory(), list.getName());
+      Path newPatchDir = shelveChangesManager.getShelfResourcesDirectory().toPath().resolve(list.getName());
       ShelvedChangeList migrated = shelveChangesManager.createChangelistCopyWithChanges(list, newPatchDir);
       shelveChangesManager.saveListAsScheme(migrated);
       shelveChangesManager.clearShelvedLists(Collections.singletonList(list), false);

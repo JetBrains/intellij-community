@@ -17,11 +17,13 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.util.ReportFormat;
 import jetbrains.coverage.report.ClassInfo;
 import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.SourceCodeProvider;
 import jetbrains.coverage.report.html.HTMLReportBuilder;
 import jetbrains.coverage.report.idea.IDEACoverageData;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     final File tempFile = FileUtil.createTempFile("temp", "");
     tempFile.deleteOnExit();
-    new SaveHook(tempFile, true, new IdeaClassFinder(project, suite)).save(projectData);
+    new SaveHook(tempFile, true, new IdeaClassFinder(project, suite), ReportFormat.BINARY).save(projectData);
     final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
     builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
     final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
@@ -109,7 +111,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     return JavaExecutionUtil.handleSpacesInAgentPath(agentPath, "testAgent", JAVA_COVERAGE_AGENT_AGENT_PATH);
   }
 
-  protected static void write2file(File tempFile, String arg) throws IOException {
+  protected static void write2file(File tempFile, @NonNls String arg) throws IOException {
     FileUtil.writeToFile(tempFile, (arg + "\n").getBytes(StandardCharsets.UTF_8), true);
   }
 

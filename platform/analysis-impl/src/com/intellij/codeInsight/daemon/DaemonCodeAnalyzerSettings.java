@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NonNls;
 
 public class DaemonCodeAnalyzerSettings {
   private boolean myNextErrorActionGoesToErrorsFirst = true;
@@ -13,7 +14,7 @@ public class DaemonCodeAnalyzerSettings {
   private boolean mySuppressWarnings = true;
 
   public static DaemonCodeAnalyzerSettings getInstance() {
-    return ServiceManager.getService(DaemonCodeAnalyzerSettings.class);
+    return ApplicationManager.getApplication().getService(DaemonCodeAnalyzerSettings.class);
   }
 
   @OptionTag("NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST")
@@ -45,7 +46,7 @@ public class DaemonCodeAnalyzerSettings {
   }
 
   protected boolean myShowAddImportHints = true;
-  public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
+  public @NonNls String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
   public boolean SHOW_METHOD_SEPARATORS;
 
   @Transient

@@ -16,25 +16,46 @@
 package com.intellij.slicer;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class JavaSliceUsage extends SliceUsage {
   private final PsiSubstitutor mySubstitutor;
   final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
   @NotNull final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
+  final boolean requiresAssertionViolation;
 
+  JavaSliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+    this(element, parent, parent.params, substitutor, 0, "");
+  }
 
   JavaSliceUsage(@NotNull PsiElement element,
                  @NotNull SliceUsage parent,
+                 @NotNull SliceAnalysisParams params,
                  @NotNull PsiSubstitutor substitutor,
                  int indexNesting,
                  @NotNull String syntheticField) {
-    super(element, parent);
+    super(simplify(element), parent, params);
     mySubstitutor = substitutor;
     this.syntheticField = syntheticField;
     this.indexNesting = indexNesting;
+    requiresAssertionViolation =
+      params.valueFilter instanceof JavaValueFilter && ((JavaValueFilter)params.valueFilter).requiresAssertionViolation(getJavaElement());
+  }
+
+  static @NotNull PsiElement simplify(PsiElement element) {
+    if (element instanceof PsiExpression) {
+      PsiExpression stripped = PsiUtil.deparenthesizeExpression((PsiExpression)element);
+      if (stripped != null) {
+        return stripped;
+      }
+    }
+    return element;
   }
 
   // root usage
@@ -43,6 +64,7 @@ public class JavaSliceUsage extends SliceUsage {
     mySubstitutor = PsiSubstitutor.EMPTY;
     indexNesting = 0;
     syntheticField = "";
+    requiresAssertionViolation = false;
   }
 
   @NotNull
@@ -57,15 +79,19 @@ public class JavaSliceUsage extends SliceUsage {
 
   @Override
   protected void processUsagesFlownDownTo(PsiElement element, Processor<? super SliceUsage> uniqueProcessor) {
-    SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, this, mySubstitutor, indexNesting, syntheticField);
+    SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, JavaSliceBuilder.create(this));
   }
 
   @Override
   @NotNull
   protected SliceUsage copy() {
-    PsiElement element = getUsageInfo().getElement();
+    PsiElement element = getJavaElement();
     return getParent() == null ? createRootUsage(element, params) :
-           new JavaSliceUsage(element, getParent(), mySubstitutor, indexNesting, syntheticField);
+           new JavaSliceUsage(element, getParent(), params, mySubstitutor, indexNesting, syntheticField);
+  }
+
+  @NotNull PsiElement getJavaElement() {
+    return Objects.requireNonNull(getUsageInfo().getElement());
   }
 
   @NotNull

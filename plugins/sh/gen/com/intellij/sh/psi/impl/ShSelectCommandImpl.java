@@ -16,10 +16,12 @@ public class ShSelectCommandImpl extends ShCommandImpl implements ShSelectComman
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitSelectCommand(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);
@@ -83,6 +85,12 @@ public class ShSelectCommandImpl extends ShCommandImpl implements ShSelectComman
   @NotNull
   public List<ShVariable> getVariableList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ShVariable.class);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getIn() {
+    return findChildByType(IN);
   }
 
   @Override

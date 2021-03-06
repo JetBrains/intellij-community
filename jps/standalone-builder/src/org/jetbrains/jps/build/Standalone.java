@@ -147,12 +147,6 @@ public class Standalone {
     return consoleMessageHandler.hasErrors() ? 1 : 0;
   }
 
-  @Deprecated
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
-                              List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
-    runBuild(loader, dataStorageRoot, forceBuild, modulesSet, modulesSet.isEmpty(), artifactsList, includeTests, messageHandler);
-  }
-
   public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
                               final boolean allModules, List<String> artifactsList, final boolean includeTests,
                               final MessageHandler messageHandler) throws Exception {

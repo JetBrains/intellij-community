@@ -18,6 +18,7 @@ package git4idea.validators;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.ValidationInfo;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -36,7 +37,7 @@ import java.util.Collection;
 public final class GitNewBranchNameValidator implements InputValidatorEx {
 
   private final Collection<? extends GitRepository> myRepositories;
-  private String myErrorText;
+  private @Nls String myErrorText;
 
   private GitNewBranchNameValidator(@NotNull Collection<? extends GitRepository> repositories) {
     myRepositories = repositories;

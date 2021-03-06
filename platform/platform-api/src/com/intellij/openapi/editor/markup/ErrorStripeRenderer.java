@@ -15,13 +15,8 @@
  */
 package com.intellij.openapi.editor.markup;
 
-import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-
 public interface ErrorStripeRenderer {
-  void paint(@NotNull Component c, Graphics g, @NotNull Rectangle r);
-
-  default @NotNull AnalyzerStatus getStatus(@NotNull Editor editor) { return AnalyzerStatus.getDEFAULT(); }
+  @NotNull AnalyzerStatus getStatus();
 }

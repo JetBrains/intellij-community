@@ -41,8 +41,8 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,14 +85,14 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     installEditorListeners();
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyEditorListeners();
     super.onDispose();
@@ -120,14 +120,14 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @NotNull
   @Override
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSyncHeightComponents(DiffUtil.createTextTitles(myRequest, getEditors()));
+    return DiffUtil.createTextTitles(this, myRequest, getEditors());
   }
 
   //
   // Listeners
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
 
@@ -145,7 +145,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void destroyEditorListeners() {
     getEditor(ThreeSide.LEFT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
@@ -200,7 +200,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   @NotNull
-  protected List<? extends DocumentContent> getContents() {
+  public List<? extends DocumentContent> getContents() {
     //noinspection unchecked
     return (List)myRequest.getContents();
   }
@@ -240,7 +240,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
     DiffUtil.scrollEditor(getEditor(side), line, false);
     setCurrentSide(side);
@@ -249,7 +249,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   @Nullable
   protected abstract SyncScrollSupport.SyncScrollable getSyncScrollable(@NotNull Side side);
 
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   protected LogicalPosition transferPosition(@NotNull ThreeSide baseSide,
                                              @NotNull ThreeSide targetSide,

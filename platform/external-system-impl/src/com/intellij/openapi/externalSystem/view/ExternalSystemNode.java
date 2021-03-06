@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -27,6 +28,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Vladislav.Soroka
@@ -38,7 +40,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   public static final int BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER = BUILTIN_DEPENDENCIES_DATA_NODE_ORDER + 10;
   public static final int BUILTIN_MODULE_DATA_NODE_ORDER = BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER + 10;
 
-  @NotNull public static final Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<ExternalSystemNode<?>>() {
+  @NotNull public static final Comparator<? super ExternalSystemNode<?>> ORDER_AWARE_COMPARATOR = new Comparator<>() {
     @Override
     public int compare(@NotNull ExternalSystemNode<?> o1, @NotNull ExternalSystemNode<?> o2) {
       int order1 = getOrder(o1);
@@ -107,7 +109,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     String displayName = getExternalProjectsView().getDisplayName(myDataNode);
     return displayName == null ? super.getName() : displayName;
   }
@@ -197,7 +199,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   private ExternalSystemNode<?> @NotNull [] buildChildren() {
-    List<? extends ExternalSystemNode<?>> newChildrenCandidates = doBuildChildren();
+    List<? extends ExternalSystemNode<?>> newChildrenCandidates = new ArrayList<ExternalSystemNode<?>>(doBuildChildren());
     if (newChildrenCandidates.isEmpty()) return NO_CHILDREN;
 
     addAll(newChildrenCandidates, true);
@@ -233,7 +235,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     if (externalSystemNodes.isEmpty()) return false;
 
     if (myChildrenList == NO_CHILDREN_LIST) {
-      myChildrenList = new ArrayList<>();
+      myChildrenList = new CopyOnWriteArrayList<>();
     }
 
     for (ExternalSystemNode<?> externalSystemNode : externalSystemNodes) {

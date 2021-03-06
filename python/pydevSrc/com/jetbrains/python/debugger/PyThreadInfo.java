@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.jetbrains.python.debugger.pydev.AbstractCommand;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -13,7 +14,7 @@ public class PyThreadInfo {
   }
 
   private final String myId;
-  private final String myName;
+  private @NonNls final String myName;
   private List<PyStackFrameInfo> myFrames;
   private State myState;
   private int myStopReason;
@@ -39,7 +40,7 @@ public class PyThreadInfo {
     return "-1".equals(myId);
   }
 
-  public String getName() {
+  public @NonNls String getName() {
     return myName;
   }
 

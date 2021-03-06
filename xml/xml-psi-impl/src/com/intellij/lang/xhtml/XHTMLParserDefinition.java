@@ -21,13 +21,12 @@ public class XHTMLParserDefinition extends XMLParserDefinition {
   }
 
   @Override
-  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    final Lexer lexer = createLexer(left.getPsi().getProject());
-    return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+  public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    return canStickTokensTogether(left, right);
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider viewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new XmlFileImpl(viewProvider, XmlElementType.XHTML_FILE);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,7 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,15 +24,15 @@ abstract class FoldRegionsTree {
   private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
-  static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
+  static final Hash.Strategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new Hash.Strategy<>() {
     @Override
-    public int computeHashCode(FoldRegion o) {
-      return o.getStartOffset() * 31 + o.getEndOffset();
+    public int hashCode(@Nullable FoldRegion o) {
+      return o == null ? 0 : o.getStartOffset() * 31 + o.getEndOffset();
     }
 
     @Override
-    public boolean equals(FoldRegion o1, FoldRegion o2) {
-      return o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset();
+    public boolean equals(@Nullable FoldRegion o1, @Nullable FoldRegion o2) {
+      return o1 == o2 || (o1 != null && o2 != null && o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset());
     }
   };
 
@@ -63,11 +63,14 @@ abstract class FoldRegionsTree {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
 
     SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
-    SweepProcessor.sweep(generator, new SweepProcessor<FoldRegionImpl>() {
+    SweepProcessor.sweep(generator, new SweepProcessor<>() {
       FoldRegionImpl lastCollapsedRegion;
 
       @Override
-      public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<? extends FoldRegionImpl> overlapping) {
+      public boolean process(int offset,
+                             @NotNull FoldRegionImpl region,
+                             boolean atStart,
+                             @NotNull Collection<? extends FoldRegionImpl> overlapping) {
         if (atStart) {
           if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset()) {
             if (!region.isExpanded()) {
@@ -82,8 +85,12 @@ abstract class FoldRegionsTree {
 
       private void hideContainedRegions(FoldRegion region) {
         for (int i = visible.size() - 1; i >= 0; i--) {
-          if (region.getStartOffset() == visible.get(i).getStartOffset()) visible.remove(i);
-          else break;
+          if (region.getStartOffset() == visible.get(i).getStartOffset()) {
+            visible.remove(i);
+          }
+          else {
+            break;
+          }
         }
       }
     });
@@ -243,6 +250,14 @@ abstract class FoldRegionsTree {
     return toFoldArray(regions);
   }
 
+
+  List<FoldRegion> fetchOverlapping(int startOffset, int endOffset) {
+    if (!isFoldingEnabled()) return Collections.emptyList();
+    List<FoldRegion> regions = new ArrayList<>();
+    myMarkerTree.processOverlappingWith(startOffset, endOffset, new CommonProcessors.CollectProcessor<>(regions));
+    return regions;
+  }
+
   private void forEach(@NotNull Consumer<? super FoldRegion> consumer) {
     myMarkerTree.processAll(region -> { consumer.consume(region); return true; });
   }
@@ -316,7 +331,7 @@ abstract class FoldRegionsTree {
     forEach(region -> ((FoldRegionImpl)region).resetDocumentRegionChanged());
   }
 
-  private class CachedData {
+  private final class CachedData {
     private final FoldRegion[] visibleRegions;  // all foldings outside collapsed regions
     private final FoldRegion[] topLevelRegions; // all visible regions which are collapsed
     private final int[] topStartOffsets;

@@ -21,7 +21,7 @@ import static org.junit.Assert.fail;
  * A UI Interceptor which intercepts every known UI component shown and performs random activity within it
  * logging that activity.
  */
-class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Object> {
+public class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Object> {
   /**
    * A sentinel UI component which is activated at dispose to remove the last interceptor
    * from an interception queue.
@@ -29,7 +29,7 @@ class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Object> {
   private static final Object SINK = ObjectUtils.sentinel("RandomActivityInterceptor.SINK");
   private final ImperativeCommand.Environment myEnvironment;
 
-  RandomActivityInterceptor(ImperativeCommand.Environment env, Disposable disposable) {
+  public RandomActivityInterceptor(ImperativeCommand.Environment env, Disposable disposable) {
     super(Object.class);
     myEnvironment = env;
     Disposer.register(disposable, () -> UiInterceptors.tryIntercept(SINK));

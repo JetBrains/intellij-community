@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.VetoableProjectManagerListener;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -25,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public abstract class BaseContentCloseListener implements VetoableProjectManagerListener,
-                                                          ContentManagerListener {
+                                                          ContentManagerListener,
+                                                          Disposable {
   private static final Key<Boolean> PROJECT_DISPOSING = Key.create("Project disposing is in progress");
   private static final Logger LOG = Logger.getInstance(BaseContentCloseListener.class);
 
@@ -33,6 +36,10 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   private final Project myProject;
 
   public BaseContentCloseListener(@NotNull Content content, @NotNull Project project) {
+    this(content, project, project);
+  }
+
+  public BaseContentCloseListener(@NotNull Content content, @NotNull Project project, @NotNull Disposable parentDisposable) {
     myContent = content;
     myProject = project;
     final ContentManager contentManager = content.getManager();
@@ -40,13 +47,14 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
       contentManager.addContentManagerListener(this);
     }
     ProjectManager.getInstance().addProjectManagerListener(myProject, this);
+    Disposer.register(parentDisposable, this);
   }
 
   @Override
   public void contentRemoved(@NotNull final ContentManagerEvent event) {
     final Content content = event.getContent();
     if (content == myContent) {
-      dispose();
+      Disposer.dispose(this);
     }
   }
 
@@ -88,7 +96,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
       contentManager.removeContent(myContent, true);
     }
     // dispose content even if content manager refused to
-    dispose();
+    Disposer.dispose(this);
   }
 
   @Override

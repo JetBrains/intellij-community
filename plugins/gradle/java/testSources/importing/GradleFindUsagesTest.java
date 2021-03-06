@@ -240,14 +240,14 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   @SafeVarargs
-  private final void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
+  private void assertUsages(Trinity<String, GlobalSearchScope, Integer>... classUsageCount) throws Exception {
     for (Trinity<String, GlobalSearchScope, Integer> trinity : classUsageCount) {
       assertUsages(trinity.first, trinity.second, trinity.third);
     }
   }
 
   @SafeVarargs
-  private final void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
+  private void assertUsages(Pair<String, Integer>... classUsageCount) throws Exception {
     for (Pair<String, Integer> pair : classUsageCount) {
       assertUsages(Trinity.create(pair.first, GlobalSearchScope.projectScope(myProject), pair.second));
     }

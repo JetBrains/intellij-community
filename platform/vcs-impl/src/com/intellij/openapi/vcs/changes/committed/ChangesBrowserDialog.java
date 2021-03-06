@@ -49,7 +49,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     if ((mode != Mode.Choose) && (ModalityState.NON_MODAL.equals(currentState))) {
       setModal(false);
     }
-    myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
+    myAppender = new AsynchConsumer<>() {
 
       @Override
       public void finished() {

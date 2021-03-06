@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -14,10 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructField;
-import org.jetbrains.java.decompiler.struct.StructMember;
-import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.*;
 import org.jetbrains.java.decompiler.struct.attr.*;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
@@ -28,6 +25,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ClassWriter {
   private final PoolInterceptor interceptor;
@@ -43,7 +41,7 @@ public class ClassWriter {
     InitializerProcessor.extractInitializers(wrapper);
 
     if (node.type == ClassNode.CLASS_ROOT &&
-        !cl.isVersionGE_1_5() &&
+        !cl.isVersion5() &&
         DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4)) {
       ClassReference14Processor.processClassReferences(node);
     }
@@ -162,10 +160,18 @@ public class ClassWriter {
 
       dummy_tracer.incrementCurrentSourceLine(buffer.countLines(start_class_def));
 
+      List<StructRecordComponent> components = cl.getRecordComponents();
+
       for (StructField fd : cl.getFields()) {
         boolean hide = fd.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
                        wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
         if (hide) continue;
+
+        if (components != null && fd.getAccessFlags() == (CodeConstants.ACC_FINAL | CodeConstants.ACC_PRIVATE) &&
+            components.stream().anyMatch(c -> c.getName().equals(fd.getName()) && c.getDescriptor().equals(fd.getDescriptor()))) {
+          // Record component field: skip it
+          continue;
+        }
 
         boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
         if (isEnum) {
@@ -256,6 +262,117 @@ public class ClassWriter {
     DecompilerContext.getLogger().endWriteClass();
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
+  private static boolean isSyntheticRecordMethod(StructClass cl, StructMethod mt, TextBuffer code) {
+    if (cl.getRecordComponents() != null) {
+      String name = mt.getName(), descriptor = mt.getDescriptor();
+      if (name.equals("equals") && descriptor.equals("(Ljava/lang/Object;)Z") ||
+          name.equals("hashCode") && descriptor.equals("()I") ||
+          name.equals("toString") && descriptor.equals("()Ljava/lang/String;")) {
+        if (code.countLines() == 1) {
+          String str = code.toString().trim();
+          return str.startsWith("return this." + name + "<invokedynamic>(this");
+        }
+      }
+    }
+    return false;
+  }
+
+  public static void packageInfoToJava(StructClass cl, TextBuffer buffer) {
+    appendAnnotations(buffer, 0, cl, -1);
+
+    int index = cl.qualifiedName.lastIndexOf('/');
+    String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
+    buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
+  }
+
+  public static void moduleInfoToJava(StructClass cl, TextBuffer buffer) {
+    appendAnnotations(buffer, 0, cl, -1);
+
+    StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+
+    if ((moduleAttribute.moduleFlags & CodeConstants.ACC_OPEN) != 0) {
+      buffer.append("open ");
+    }
+
+    buffer.append("module ").append(moduleAttribute.moduleName).append(" {").appendLineSeparator();
+
+    writeModuleInfoBody(buffer, moduleAttribute);
+
+    buffer.append('}').appendLineSeparator();
+  }
+
+  private static void writeModuleInfoBody(TextBuffer buffer, StructModuleAttribute moduleAttribute) {
+    boolean newLineNeeded = false;
+
+    List<StructModuleAttribute.RequiresEntry> requiresEntries = moduleAttribute.requires;
+    if (!requiresEntries.isEmpty()) {
+      for (StructModuleAttribute.RequiresEntry requires : requiresEntries) {
+        if (!isGenerated(requires.flags)) {
+          buffer.appendIndent(1).append("requires ").append(requires.moduleName.replace('/', '.')).append(';').appendLineSeparator();
+          newLineNeeded = true;
+        }
+      }
+    }
+
+    List<StructModuleAttribute.ExportsEntry> exportsEntries = moduleAttribute.exports;
+    if (!exportsEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (StructModuleAttribute.ExportsEntry exports : exportsEntries) {
+        if (!isGenerated(exports.flags)) {
+          buffer.appendIndent(1).append("exports ").append(exports.packageName.replace('/', '.'));
+          List<String> exportToModules = exports.exportToModules;
+          if (exportToModules.size() > 0) {
+            buffer.append(" to").appendLineSeparator();
+            appendFQClassNames(buffer, exportToModules);
+          }
+          buffer.append(';').appendLineSeparator();
+          newLineNeeded = true;
+        }
+      }
+    }
+
+    List<StructModuleAttribute.OpensEntry> opensEntries = moduleAttribute.opens;
+    if (!opensEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (StructModuleAttribute.OpensEntry opens : opensEntries) {
+        if (!isGenerated(opens.flags)) {
+          buffer.appendIndent(1).append("opens ").append(opens.packageName.replace('/', '.'));
+          List<String> opensToModules = opens.opensToModules;
+          if (opensToModules.size() > 0) {
+            buffer.append(" to").appendLineSeparator();
+            appendFQClassNames(buffer, opensToModules);
+          }
+          buffer.append(';').appendLineSeparator();
+          newLineNeeded = true;
+        }
+      }
+    }
+
+    List<String> usesEntries = moduleAttribute.uses;
+    if (!usesEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (String uses : usesEntries) {
+        buffer.appendIndent(1).append("uses ").append(ExprProcessor.buildJavaClassName(uses)).append(';').appendLineSeparator();
+      }
+      newLineNeeded = true;
+    }
+
+    List<StructModuleAttribute.ProvidesEntry> providesEntries = moduleAttribute.provides;
+    if (!providesEntries.isEmpty()) {
+      if (newLineNeeded) buffer.appendLineSeparator();
+      for (StructModuleAttribute.ProvidesEntry provides : providesEntries) {
+        buffer.appendIndent(1).append("provides ").append(ExprProcessor.buildJavaClassName(provides.interfaceName)).append(" with").appendLineSeparator();
+        appendFQClassNames(buffer, provides.implementationNames.stream().map(ExprProcessor::buildJavaClassName).collect(Collectors.toList()));
+        buffer.append(';').appendLineSeparator();
+      }
+    }
+  }
+
+  private static boolean isGenerated(int flags) {
+    return (flags & (CodeConstants.ACC_SYNTHETIC | CodeConstants.ACC_MANDATED)) != 0;
+  }
+
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
     StructLineNumberTableAttribute table = method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
@@ -302,6 +419,13 @@ public class ClassWriter {
       flags &= ~CodeConstants.ACC_FINAL;
     }
 
+    List<StructRecordComponent> components = cl.getRecordComponents();
+
+    if (components != null) {
+      // records are implicitly final
+      flags &= ~CodeConstants.ACC_FINAL;
+    }
+
     appendModifiers(buffer, flags, CLASS_ALLOWED, isInterface, CLASS_EXCLUDED);
 
     if (isEnum) {
@@ -313,10 +437,12 @@ public class ClassWriter {
       }
       buffer.append("interface ");
     }
+    else if (components != null) {
+      buffer.append("record ");
+    }
     else {
       buffer.append("class ");
     }
-
     buffer.append(node.simpleName);
 
     GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
@@ -324,9 +450,22 @@ public class ClassWriter {
       appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds);
     }
 
+    if (components != null) {
+      buffer.append('(');
+      for (int i = 0; i < components.size(); i++) {
+        StructRecordComponent cd = components.get(i);
+        if (i > 0) {
+          buffer.append(", ");
+        }
+        boolean varArgComponent = i == components.size() - 1 && isVarArgRecord(cl);
+        recordComponentToJava(cd, buffer, varArgComponent);
+      }
+      buffer.append(')');
+    }
+
     buffer.append(' ');
 
-    if (!isEnum && !isInterface && cl.superClass != null) {
+    if (!isEnum && !isInterface && components == null && cl.superClass != null) {
       VarType supertype = new VarType(cl.superClass.getString(), true);
       if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
         buffer.append("extends ");
@@ -362,6 +501,13 @@ public class ClassWriter {
     buffer.append('{').appendLineSeparator();
   }
 
+  private static boolean isVarArgRecord(StructClass cl) {
+    String canonicalConstructorDescriptor = 
+      cl.getRecordComponents().stream().map(c -> c.getDescriptor()).collect(Collectors.joining("", "(", ")V"));
+    StructMethod init = cl.getMethod(CodeConstants.INIT_NAME, canonicalConstructorDescriptor);
+    return init != null && init.hasModifier(CodeConstants.ACC_VARARGS);
+  }
+
   private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
     int start = buffer.length();
     boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
@@ -389,15 +535,9 @@ public class ClassWriter {
       appendModifiers(buffer, fd.getAccessFlags(), FIELD_ALLOWED, isInterface, FIELD_EXCLUDED);
     }
 
-    VarType fieldType = new VarType(fd.getDescriptor(), false);
-
-    GenericFieldDescriptor descriptor = null;
-    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-      StructGenericSignatureAttribute attr = fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_SIGNATURE);
-      if (attr != null) {
-        descriptor = GenericMain.parseFieldSignature(attr.getSignature());
-      }
-    }
+    Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(fd);
+    VarType fieldType = fieldTypeData.getKey();
+    GenericFieldDescriptor descriptor = fieldTypeData.getValue();
 
     if (!isEnum) {
       if (descriptor != null) {
@@ -450,6 +590,27 @@ public class ClassWriter {
       buffer.append(";").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
+  }
+
+  private static void recordComponentToJava(StructRecordComponent cd, TextBuffer buffer, boolean varArgComponent) {
+    appendAnnotations(buffer, -1, cd, TypeAnnotation.FIELD);
+
+    Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(cd);
+    VarType fieldType = fieldTypeData.getKey();
+    GenericFieldDescriptor descriptor = fieldTypeData.getValue();
+
+    if (descriptor != null) {
+      buffer.append(GenericMain.getGenericCastTypeName(varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type));
+    }
+    else {
+      buffer.append(ExprProcessor.getCastTypeName(varArgComponent ? fieldType.decreaseArrayDim() : fieldType));
+    }
+    if (varArgComponent) {
+      buffer.append("...");
+    }
+    buffer.append(' ');
+
+    buffer.append(cd.getName());
   }
 
   private static void methodLambdaToJava(ClassNode lambdaNode,
@@ -579,7 +740,7 @@ public class ClassWriter {
       boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
       boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
-      boolean clinit = false, init = false, dinit = false;
+      boolean clInit = false, init = false, dInit = false;
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
@@ -624,7 +785,7 @@ public class ClassWriter {
       if (CodeConstants.INIT_NAME.equals(name)) {
         if (node.type == ClassNode.CLASS_ANONYMOUS) {
           name = "";
-          dinit = true;
+          dInit = true;
         }
         else {
           name = node.simpleName;
@@ -633,7 +794,7 @@ public class ClassWriter {
       }
       else if (CodeConstants.CLINIT_NAME.equals(name)) {
         name = "";
-        clinit = true;
+        clInit = true;
       }
 
       GenericMethodDescriptor descriptor = null;
@@ -662,7 +823,7 @@ public class ClassWriter {
       boolean throwsExceptions = false;
       int paramCount = 0;
 
-      if (!clinit && !dinit) {
+      if (!clInit && !dInit) {
         boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
         if (descriptor != null && !descriptor.typeParameters.isEmpty()) {
@@ -801,7 +962,7 @@ public class ClassWriter {
         buffer.appendLineSeparator();
       }
       else {
-        if (!clinit && !dinit) {
+        if (!clInit && !dInit) {
           buffer.append(' ');
         }
 
@@ -817,7 +978,8 @@ public class ClassWriter {
             BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
-            hideMethod = (code.length() == 0) && (clinit || dinit || hideConstructor(node, init, throwsExceptions, paramCount, flags));
+            hideMethod = code.length() == 0 && (clInit || dInit || hideConstructor(node, init, throwsExceptions, paramCount, flags)) ||
+                         isSyntheticRecordMethod(cl, mt, code);
 
             buffer.append(code);
 
@@ -857,7 +1019,6 @@ public class ClassWriter {
   }
 
   private static boolean hideConstructor(ClassNode node, boolean init, boolean throwsExceptions, int paramCount, int methodAccessFlags) {
-
     if (!init || throwsExceptions || paramCount > 0 || !DecompilerContext.getOption(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR)) {
       return false;
     }
@@ -865,11 +1026,11 @@ public class ClassWriter {
     ClassWrapper wrapper = node.getWrapper();
 	  StructClass cl = wrapper.getClassStruct();
 
-	  int classAccesFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
+	  int classAccessFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
     boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
     // default constructor requires same accessibility flags. Exception: enum constructor which is always private
-  	if(!isEnum && ((classAccesFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
+  	if(!isEnum && ((classAccessFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
   	  return false;
   	}
 
@@ -883,6 +1044,20 @@ public class ClassWriter {
     }
 
     return true;
+  }
+
+  private static Map.Entry<VarType, GenericFieldDescriptor> getFieldTypeData(StructField fd) {
+    VarType fieldType = new VarType(fd.getDescriptor(), false);
+
+    GenericFieldDescriptor descriptor = null;
+    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute attr = fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_SIGNATURE);
+      if (attr != null) {
+        descriptor = GenericMain.parseFieldSignature(attr.getSignature());
+      }
+    }
+
+    return new AbstractMap.SimpleImmutableEntry<>(fieldType, descriptor);
   }
 
   private static void appendDeprecation(TextBuffer buffer, int indent) {
@@ -943,11 +1118,11 @@ public class ClassWriter {
     buffer.appendIndent(indent).append("// $FF: ").append(comment).appendLineSeparator();
   }
 
-  private static final StructGeneralAttribute.Key[] ANNOTATION_ATTRIBUTES = {
+  private static final StructGeneralAttribute.Key<?>[] ANNOTATION_ATTRIBUTES = {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
-  private static final StructGeneralAttribute.Key[] PARAMETER_ANNOTATION_ATTRIBUTES = {
+  private static final StructGeneralAttribute.Key<?>[] PARAMETER_ANNOTATION_ATTRIBUTES = {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
-  private static final StructGeneralAttribute.Key[] TYPE_ANNOTATION_ATTRIBUTES = {
+  private static final StructGeneralAttribute.Key<?>[] TYPE_ANNOTATION_ATTRIBUTES = {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS};
 
   private static void appendAnnotations(TextBuffer buffer, int indent, StructMember mb, int targetType) {
@@ -959,7 +1134,13 @@ public class ClassWriter {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
           String text = annotation.toJava(indent, BytecodeMappingTracer.DUMMY).toString();
           filter.add(text);
-          buffer.append(text).appendLineSeparator();
+          buffer.append(text);
+          if (indent < 0) {
+            buffer.append(' ');
+          }
+          else {
+            buffer.appendLineSeparator();
+          }
         }
       }
     }
@@ -1084,5 +1265,15 @@ public class ClassWriter {
     }
 
     buffer.append('>');
+  }
+
+  private static void appendFQClassNames(TextBuffer buffer, List<String> names) {
+    for (int i = 0; i < names.size(); i++) {
+      String name = names.get(i);
+      buffer.appendIndent(2).append(name);
+      if (i < names.size() - 1) {
+        buffer.append(',').appendLineSeparator();
+      }
+    }
   }
 }

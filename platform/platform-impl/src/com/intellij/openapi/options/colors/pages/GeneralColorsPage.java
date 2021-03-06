@@ -21,10 +21,13 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +55,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "<folded_text>Folded text</folded_text>\n" +
     "<folded_text_with_highlighting>" + STRING_TO_FOLD + "</folded_text_with_highlighting>\n" +
     "<deleted_text>Deleted text</deleted_text>\n" +
-    "Template <template_var>VARIABLE</template_var>\n" +
+    "Live Template: <template_active>active</template_active> <template_inactive>inactive</template_inactive> <template_var>$VARIABLE$</template_var>\n" +
     "Injected language: <injected_lang>\\.(gif|jpg|png)$</injected_lang>\n" +
     "\n" +
     "Code Inspections:\n" +
@@ -79,7 +82,8 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptior.identifier.under.caret.write"), EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.text.search.result"), EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES),
 
-    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.live.template"), EditorColors.LIVE_TEMPLATE_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.live.template.active"), EditorColors.LIVE_TEMPLATE_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.live.template.inactive"), EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT),
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.template.variable"), TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.injected.language.fragment"), EditorColors.INJECTED_LANGUAGE_FRAGMENT),
 
@@ -112,26 +116,47 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.background.in.readonly.files"), EditorColors.READONLY_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.readonly.fragment.background"), EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.gutter.background"), EditorColors.GUTTER_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.notification.background"), EditorColors.NOTIFICATION_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.readonly.fragment.background"),
+                        EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.gutter.background"), EditorColors.GUTTER_BACKGROUND,
+                        ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.notification.background"),
+                        EditorColors.NOTIFICATION_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
 
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.background"), EditorColors.SELECTION_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.foreground"), EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb.while.scrolling"), EditorColors.SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb"), EditorColors.SCROLLBAR_THUMB_COLOR, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.selected.underline"), EditorColors.TAB_UNDERLINE, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.selected.underline.inactive"), EditorColors.TAB_UNDERLINE_INACTIVE, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret"), EditorColors.CARET_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret.row"), EditorColors.CARET_ROW_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.right.margin"), EditorColors.RIGHT_MARGIN_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.whitespaces"), EditorColors.WHITESPACES_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs"), EditorColors.TABS_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide"), EditorColors.INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide.selected"), EditorColors.SELECTED_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number"), EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number.on.caret.row"), EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline"), EditorColors.TEARLINE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.background"),
+                        EditorColors.SELECTION_BACKGROUND_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.foreground"),
+                        EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb.while.scrolling"),
+                        EditorColors.SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb"), EditorColors.SCROLLBAR_THUMB_COLOR,
+                        ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.selected.underline"), EditorColors.TAB_UNDERLINE,
+                        ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.selected.underline.inactive"),
+                        EditorColors.TAB_UNDERLINE_INACTIVE, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.modified.icon.color"),
+                        EditorColors.MODIFIED_TAB_ICON_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret"), EditorColors.CARET_COLOR,
+                        ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.caret.row"), EditorColors.CARET_ROW_COLOR,
+                        ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.right.margin"), EditorColors.RIGHT_MARGIN_COLOR,
+                        ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.whitespaces"), EditorColors.WHITESPACES_COLOR,
+                        ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs"), EditorColors.TABS_COLOR,
+                        ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide"), EditorColors.INDENT_GUIDE_COLOR,
+                        ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide.selected"),
+                        EditorColors.SELECTED_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number"), EditorColors.LINE_NUMBERS_COLOR,
+                        ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number.on.caret.row"),
+                        EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline"), EditorColors.TEARLINE_COLOR,
+                        ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline.selected"), EditorColors.SELECTED_TEARLINE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.separator.above"), EditorColors.SEPARATOR_ABOVE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.separator.below"), EditorColors.SEPARATOR_BELOW_COLOR, ColorDescriptor.Kind.FOREGROUND),
@@ -163,6 +188,10 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("identifier", EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("identifier_write", EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES);
 
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("template_active", EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
+    if (Registry.is("live.templates.highlight.all.variables")) {
+      ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("template_inactive", EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT);
+    }
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("template_var", TemplateColors.TEMPLATE_VARIABLE_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("injected_lang", EditorColors.INJECTED_LANGUAGE_FRAGMENT);
 
@@ -208,6 +237,11 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   @Override
   public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
+    if (!Registry.is("live.templates.highlight.all.variables")) {
+      return ContainerUtil
+        .filter(ATT_DESCRIPTORS, descriptor -> !EditorColors.LIVE_TEMPLATE_INACTIVE_SEGMENT.equals(descriptor.getKey()))
+        .toArray(new AttributesDescriptor[0]);
+    }
     return ATT_DESCRIPTORS;
   }
 
@@ -275,7 +309,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     return highlightInfoType.getSeverity(null).myName;
   }
 
-  public static String getDisplayNameText() {
+  public static @NlsContexts.ConfigurableName String getDisplayNameText() {
     return OptionsBundle.message("options.general.display.name");
   }
 }

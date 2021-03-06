@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -40,17 +39,11 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private boolean myHoveringEnabled;
 
   public InplaceButton(@Tooltip String tooltip, Icon icon, ActionListener listener) {
-    this(new IconButton(tooltip, icon, icon), listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
+    this(new IconButton(tooltip, icon, icon), listener, null, TimedDeadzone.DEFAULT);
   }
 
   public InplaceButton(IconButton source, ActionListener listener) {
-    this(source, listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
-  }
-
-  /** @deprecated use {@link #InplaceButton(IconButton, ActionListener, Consumer, TimedDeadzone.Length)} */
-  @Deprecated
-  public InplaceButton(IconButton source, ActionListener listener, Pass<? super MouseEvent> pass, TimedDeadzone.Length mouseDeadzone) {
-    this(source, listener, (Consumer<? super MouseEvent>)pass, mouseDeadzone);
+    this(source, listener, null, TimedDeadzone.DEFAULT);
   }
 
   public InplaceButton(IconButton source, ActionListener listener, Consumer<? super MouseEvent> consumer, TimedDeadzone.Length mouseDeadzone) {

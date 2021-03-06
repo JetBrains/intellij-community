@@ -23,7 +23,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,6 +35,7 @@ import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,18 +45,10 @@ import org.jetbrains.annotations.NotNull;
  * Helps to specify type  in annotations in python3
  */
 public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
-  private String myText = PyPsiBundle.message("INTN.specify.type.in.annotation");
-
-  @Override
-  @NotNull
-  public String getText() {
-    return myText;
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.specify.type.in.annotation");
+    return PyPsiBundle.message("INTN.NAME.specify.type.in.annotation");
   }
 
   @Override
@@ -100,7 +92,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
                                                    boolean createTemplate) {
     final PyExpression defaultParamValue = parameter.getDefaultValue();
 
-    final String paramName = StringUtil.notNullize(parameter.getName());
+    final String paramName = ParamHelper.getNameInSignature(parameter);
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     final String defaultParamText = defaultParamValue == null ? null : defaultParamValue.getText();
@@ -212,7 +204,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = isReturn ? PyPsiBundle.message("INTN.specify.return.type.in.annotation") : PyPsiBundle
-      .message("INTN.specify.type.in.annotation");
+    setText(isReturn ? PyPsiBundle.message("INTN.specify.return.type.in.annotation")
+                     : PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 }

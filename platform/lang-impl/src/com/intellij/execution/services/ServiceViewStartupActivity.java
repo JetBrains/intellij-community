@@ -9,14 +9,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.execution.services.ServiceViewContributor.CONTRIBUTOR_EP_NAME;
+
 public class ServiceViewStartupActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
 
-    if (ServiceModel.CONTRIBUTOR_EP_NAME.getExtensionList().isEmpty()) {
-      ServiceModel.CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ExtensionPointListener<ServiceViewContributor<?>>() {
+    if (CONTRIBUTOR_EP_NAME.getExtensionList().isEmpty()) {
+      CONTRIBUTOR_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull ServiceViewContributor<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
           ServiceViewManager.getInstance(project);

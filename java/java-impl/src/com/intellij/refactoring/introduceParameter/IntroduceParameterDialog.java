@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -17,7 +18,7 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
 
-  private final Project myProject;
   private final PsiFile myFile;
   private final List<? extends UsageInfo> myClassMembersList;
   private final int myOccurenceNumber;
@@ -62,11 +62,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
                            @NotNull TypeSelectorManager typeSelectorManager,
                            @NotNull PsiMethod methodToSearchFor,
                            @NotNull PsiMethod methodToReplaceIn,
-                           @NotNull TIntArrayList parametersToRemove,
+                           @NotNull IntList parametersToRemove,
                            final boolean mustBeFinal) {
     super(project, true);
     myPanel = new IntroduceParameterSettingsPanel(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
-    myProject = project;
     myFile = methodToReplaceIn.getContainingFile();
     myClassMembersList = classMembersList;
     myOccurenceNumber = occurences.length;
@@ -269,7 +268,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if (myCbCollapseToLambda.isVisible() && myCbCollapseToLambda.isSelected() && parameterInitializer != null) {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, selectedType);
       if (lambda != null) {
-        lambda = LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)lambda);
+        if (lambda instanceof PsiLambdaExpression) {
+          lambda = LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)lambda);
+        }
         processor.setParameterInitializer(lambda);
       }
     }
@@ -290,7 +291,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     String name = getParameterName();
     if (!PsiNameHelper.getInstance(myProject).isIdentifier(name)) {
-      throw new ConfigurationException("\'" + name + "\' is invalid parameter name");
+      throw new ConfigurationException(RefactoringBundle.message("refactoring.introduce.parameter.invalid.name", name));
     }
   }
 
@@ -305,7 +306,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
     IntroduceParameterSettingsPanel(PsiLocalVariable onLocalVariable,
                                            PsiExpression onExpression,
-                                           PsiMethod methodToReplaceIn, TIntArrayList parametersToRemove) {
+                                           PsiMethod methodToReplaceIn, IntList parametersToRemove) {
       super(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     }
 
@@ -325,7 +326,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

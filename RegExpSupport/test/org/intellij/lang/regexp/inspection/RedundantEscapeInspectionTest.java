@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("RegExpRedundantEscape")
+@SuppressWarnings({"RegExpRedundantEscape", "RegExpDuplicateCharacterInClass"})
 public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
@@ -26,7 +26,7 @@ public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testEscapedU() {
     quickfixTest("<warning descr=\"Redundant character escape '\\u' in RegExp\">\\u</warning>", "u", "Remove redundant escape",
-                 new RegExpFileType(EcmaScriptRegexpLanguage.INSTANCE));
+                 RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
   public void testPoundSign() {

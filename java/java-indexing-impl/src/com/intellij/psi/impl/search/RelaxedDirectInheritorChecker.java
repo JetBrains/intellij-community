@@ -3,8 +3,8 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCompiledElement;
@@ -31,23 +31,23 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * To avoid expensive super type resolve, if there's only one suitable class with the required name in the project anyway
  */
-public class RelaxedDirectInheritorChecker {
+public final class RelaxedDirectInheritorChecker {
   private final String myBaseClassName;
   private final PsiClass myBaseClass;
-  private final VolatileNotNullLazyValue<Pair<PsiClass[], Boolean>> myClasses;
+  private final NotNullLazyValue<Pair<PsiClass[], Boolean>> myClasses;
   private final ProjectFileIndex myFileIndex;
 
   public RelaxedDirectInheritorChecker(@NotNull PsiClass baseClass) {
     myBaseClass = baseClass;
     myBaseClassName = Objects.requireNonNull(baseClass.getName());
-    myClasses = VolatileNotNullLazyValue.createValue(() -> getClassesAndTheirAmbiguities(myBaseClass.getProject(), myBaseClassName));
+    myClasses = NotNullLazyValue.volatileLazy(() -> getClassesAndTheirAmbiguities(myBaseClass.getProject(), myBaseClassName));
     myFileIndex = ProjectFileIndex.getInstance(myBaseClass.getProject());
   }
 
   private static @NotNull Pair<PsiClass[], Boolean> getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
     Map<String, Reference<Pair<PsiClass[],Boolean>>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<String, Reference<Pair<PsiClass[], Boolean>>> map = new ConcurrentHashMap<>();
-      return CachedValueProvider.Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
     });
     Pair<PsiClass[], Boolean> result = SoftReference.dereference(cache.get(classShortName));
     if (result == null) {

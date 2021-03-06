@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,12 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RefactoringMessageDialog extends DialogWrapper {
-  private final String myMessage;
+  private final @NlsContexts.DialogMessage String myMessage;
   private final String myHelpTopic;
   private final Icon myIcon;
   private final boolean myIsCancelButtonVisible;
 
-  public RefactoringMessageDialog(@NlsContexts.DialogTitle String title, @Nls String message,
+  public RefactoringMessageDialog(@NlsContexts.DialogTitle String title, @NlsContexts.DialogMessage String message,
                                   @NonNls String helpTopic, @NonNls String iconId, boolean showCancelButton, Project project) {
     super(project, false);
     setTitle(title);

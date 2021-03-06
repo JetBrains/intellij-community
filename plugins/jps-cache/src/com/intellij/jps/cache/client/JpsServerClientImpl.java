@@ -1,0 +1,214 @@
+package com.intellij.jps.cache.client;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.jps.cache.JpsCacheBundle;
+import com.intellij.jps.cache.JpsCachesPluginUtil;
+import com.intellij.jps.cache.git.GitRepositoryUtil;
+import com.intellij.jps.cache.model.AffectedModule;
+import com.intellij.jps.cache.model.OutputLoadResult;
+import com.intellij.jps.cache.ui.JpsLoaderNotifications;
+import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileService;
+import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+
+public final class JpsServerClientImpl implements JpsServerClient {
+  private static final Logger LOG = Logger.getInstance(JpsServerClientImpl.class.getCanonicalName());
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  static final JpsServerClientImpl INSTANCE = new JpsServerClientImpl();
+  private final String stringThree;
+
+  private JpsServerClientImpl() {
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
+    stringThree = new String(decodedBytes, StandardCharsets.UTF_8);
+  }
+
+  @NotNull
+  @Override
+  public Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project) {
+    Map<String, List<String>> response = doGetRequest(project, getRequestHeaders());
+    if (response == null) return Collections.emptyMap();
+    Map<String, Set<String>> result = new HashMap<>();
+    response.forEach((key, value) -> result.put(GitRepositoryUtil.getRemoteRepoName(key), new HashSet<>(value)));
+    return result;
+  }
+
+  @Nullable
+  @Override
+  public File downloadMetadataById(@NotNull String metadataId, @NotNull File targetDir) {
+    String downloadUrl = stringThree + "/metadata/" + metadataId;
+    DownloadableFileService service = DownloadableFileService.getInstance();
+    String fileName = "metadata.json";
+    DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
+    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description),
+                                                             new SegmentedProgressIndicatorManager(progressIndicator));
+
+    LOG.debug("Downloading JPS metadata from: " + downloadUrl);
+    File metadataFile;
+    try {
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders());
+      Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
+      metadataFile = first != null ? first.first : null;
+      if (metadataFile == null) {
+        LOG.warn("Failed to download JPS metadata");
+        return null;
+      }
+      return metadataFile;
+    }
+    catch (ProcessCanceledException | IOException e) {
+      //noinspection InstanceofCatchParameter
+      if (e instanceof IOException) LOG.warn("Failed to download JPS metadata from URL: " + downloadUrl, e);
+      return null;
+    }
+  }
+
+  @Nullable
+  @Override
+  public File downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager, @NotNull String cacheId,
+                                @NotNull File targetDir) {
+    String downloadUrl = stringThree + "/caches/" + cacheId;
+    String fileName = "portable-build-cache.zip";
+    DownloadableFileService service = DownloadableFileService.getInstance();
+    DownloadableFileDescription description = service.createFileDescription(downloadUrl, fileName);
+    JpsCachesDownloader downloader = new JpsCachesDownloader(Collections.singletonList(description), downloadIndicatorManager);
+
+    LOG.debug("Downloading JPS caches from: " + downloadUrl);
+    File zipFile;
+    try {
+      List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir, getRequestHeaders());
+      downloadIndicatorManager.finished(this);
+
+      Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
+      zipFile = first != null ? first.first : null;
+      if (zipFile != null) return zipFile;
+      LOG.warn("Failed to download JPS caches");
+    }
+    catch (ProcessCanceledException | IOException e) {
+      //noinspection InstanceofCatchParameter
+      if (e instanceof IOException) LOG.warn("Failed to download JPS caches from URL: " + downloadUrl, e);
+    }
+    return null;
+  }
+
+  @Override
+  public List<OutputLoadResult> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
+                                                        @NotNull List<AffectedModule> affectedModules) {
+    File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesPluginUtil.PLUGIN_NAME);
+    if (targetDir.exists()) FileUtil.delete(targetDir);
+    targetDir.mkdirs();
+
+    Map<String, AffectedModule> urlToModuleNameMap = affectedModules.stream().collect(Collectors.toMap(
+                            module -> stringThree + "/" + module.getType() + "/" + module.getName() + "/" + module.getHash(),
+                            module -> module));
+
+    DownloadableFileService service = DownloadableFileService.getInstance();
+    List<DownloadableFileDescription> descriptions = ContainerUtil.map(urlToModuleNameMap.entrySet(),
+                                                                       entry -> service.createFileDescription(entry.getKey(),
+                                                                       entry.getValue().getOutPath().getName() + ".zip"));
+    JpsCachesDownloader downloader = new JpsCachesDownloader(descriptions, downloadIndicatorManager);
+
+    List<File> downloadedFiles = new ArrayList<>();
+    try {
+      // Downloading process
+      List<Pair<File, DownloadableFileDescription>> download = downloader.download(targetDir, getRequestHeaders());
+      downloadIndicatorManager.finished(this);
+
+      downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
+      return ContainerUtil.map(download, pair -> {
+        String downloadUrl = pair.second.getDownloadUrl();
+        return new OutputLoadResult(pair.first, downloadUrl, urlToModuleNameMap.get(downloadUrl));
+      });
+    }
+    catch (ProcessCanceledException | IOException e) {
+      //noinspection InstanceofCatchParameter
+      if (e instanceof IOException) LOG.warn("Failed to download JPS compilation outputs", e);
+      if (targetDir.exists()) FileUtil.delete(targetDir);
+      downloadedFiles.forEach(zipFile -> FileUtil.delete(zipFile));
+      return null;
+    }
+  }
+
+  private Map<String, List<String>> doGetRequest(@NotNull Project project, @NotNull Map<String, String> headers) {
+    try {
+      return HttpRequests.request(stringThree + "/commit_history.json")
+        .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
+        .connect(it -> {
+          URLConnection connection = it.getConnection();
+          if (connection instanceof HttpURLConnection) {
+            HttpURLConnection httpConnection = (HttpURLConnection)connection;
+            if (httpConnection.getResponseCode() == 200) {
+              return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<>() {
+              });
+            }
+            else {
+              String statusLine = httpConnection.getResponseCode() + ' ' + httpConnection.getRequestMethod();
+              String errorText = StreamUtil.readText(new InputStreamReader(httpConnection.getErrorStream(), StandardCharsets.UTF_8));
+              LOG.info("Request: " + httpConnection.getRequestMethod() + httpConnection.getURL() + " : Error " + statusLine + " body: " + errorText);
+            }
+          }
+          return null;
+        });
+    }
+    catch (IOException e) {
+      LOG.warn("Failed request to cache server", e);
+      Notification notification = JpsLoaderNotifications.ATTENTION
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
+                            JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR, null);
+      Notifications.Bus.notify(notification, project);
+    }
+    return null;
+  }
+
+  private static @NotNull Map<String, String> getRequestHeaders() {
+    JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
+    if (authExtension == null) {
+      String message = JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
+      throw new RuntimeException(message);
+    }
+    Map<String, String> authHeader = authExtension.getAuthHeader();
+    if (authHeader == null) {
+      String message = JpsCacheBundle.message("internal.authentication.plugin.missing.token");
+      throw new RuntimeException(message);
+    }
+    return authHeader;
+  }
+
+  private static InputStream getInputStream(HttpURLConnection httpConnection) throws IOException {
+    String contentEncoding = httpConnection.getContentEncoding();
+    InputStream inputStream = httpConnection.getInputStream();
+    if (contentEncoding != null && StringUtil.toLowerCase(contentEncoding).contains("gzip")) {
+      return new GZIPInputStream(inputStream);
+    }
+    return inputStream;
+  }
+}

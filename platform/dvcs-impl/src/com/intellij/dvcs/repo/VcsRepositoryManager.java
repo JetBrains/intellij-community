@@ -21,8 +21,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -114,7 +118,7 @@ public final class VcsRepositoryManager implements Disposable {
     myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoriesCollection(null), 0);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public @Nullable Repository getRepositoryForFile(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, false);
   }

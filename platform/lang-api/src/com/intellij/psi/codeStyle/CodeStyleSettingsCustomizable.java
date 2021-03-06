@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.application.ApplicationBundle;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.*;
 
 public interface CodeStyleSettingsCustomizable {
   enum OptionAnchor {NONE, BEFORE, AFTER}
@@ -216,67 +201,120 @@ public interface CodeStyleSettingsCustomizable {
     ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS,
     ALIGN_CONSECUTIVE_ASSIGNMENTS,
     ALIGN_SUBSEQUENT_SIMPLE_METHODS,
-    INDENT_BREAK_FROM_CASE
+    INDENT_BREAK_FROM_CASE,
+    BUILDER_METHODS,
+    KEEP_BUILDER_METHODS_INDENTS
   }
-  
+
   enum CommenterOption {
     LINE_COMMENT_ADD_SPACE,
     LINE_COMMENT_AT_FIRST_COLUMN,
     BLOCK_COMMENT_AT_FIRST_COLUMN
   }
-  
 
-  String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
-  String SPACES_BEFORE_PARENTHESES = ApplicationBundle.message("group.spaces.before.parentheses");
-  String SPACES_BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
-  String SPACES_BEFORE_KEYWORD = ApplicationBundle.message("group.spaces.after.right.brace");
-  String SPACES_WITHIN = ApplicationBundle.message("group.spaces.within");
-  String SPACES_IN_TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
-  String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
-  String SPACES_IN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments.block");
-  String SPACES_IN_TYPE_PARAMETERS = ApplicationBundle.message("group.spaces.in.type.parameters.block");
-  String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
+  /**
+   * @deprecated Options blow are not locale-friendly, please use ones from  {@link CodeStyleSettingsCustomizableOptions#getInstance()} instead
+   */
+  @Deprecated
+  @Nls String SPACES_AROUND_OPERATORS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_AROUND_OPERATORS;
+  @Deprecated
+  @Nls String SPACES_BEFORE_PARENTHESES = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_PARENTHESES;
+  @Deprecated
+  @Nls String SPACES_BEFORE_LEFT_BRACE = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_LEFT_BRACE;
+  @Deprecated
+  @Nls String SPACES_BEFORE_KEYWORD = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_BEFORE_KEYWORD;
+  @Deprecated
+  @Nls String SPACES_WITHIN = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_WITHIN;
+  @Deprecated
+  @Nls String SPACES_IN_TERNARY_OPERATOR = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TERNARY_OPERATOR;
+  @Deprecated
+  @Nls String SPACES_WITHIN_TYPE_ARGUMENTS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_WITHIN_TYPE_ARGUMENTS;
+  @Deprecated
+  @Nls String SPACES_IN_TYPE_ARGUMENTS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_ARGUMENTS;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String SPACES_IN_TYPE_PARAMETERS = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS;
+  @Deprecated
+  @Nls String SPACES_OTHER = CodeStyleSettingsCustomizableOptions.getInstance().SPACES_OTHER;
 
-  String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
-  String BLANK_LINES = ApplicationBundle.message("title.minimum.blank.lines");
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String BLANK_LINES_KEEP = CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP;
+  @Deprecated
+  @Nls String BLANK_LINES = CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES;
 
-  String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
-  String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");
-  String WRAPPING_COMMENTS = ApplicationBundle.message("wrapping.comments");
-  String WRAPPING_METHOD_PARAMETERS = ApplicationBundle.message("wrapping.method.parameters");
-  String WRAPPING_METHOD_PARENTHESES = ApplicationBundle.message("wrapping.method.parentheses");
-  String WRAPPING_METHOD_ARGUMENTS_WRAPPING = ApplicationBundle.message("wrapping.method.arguments");
-  String WRAPPING_CALL_CHAIN = ApplicationBundle.message("wrapping.chained.method.calls");
-  String WRAPPING_IF_STATEMENT = ApplicationBundle.message("wrapping.if.statement");
-  String WRAPPING_FOR_STATEMENT = ApplicationBundle.message("wrapping.for.statement");
-  String WRAPPING_WHILE_STATEMENT = ApplicationBundle.message("wrapping.while.statement");
-  String WRAPPING_DOWHILE_STATEMENT = ApplicationBundle.message("wrapping.dowhile.statement");
-  String WRAPPING_SWITCH_STATEMENT = ApplicationBundle.message("wrapping.switch.statement");
-  String WRAPPING_TRY_STATEMENT = ApplicationBundle.message("wrapping.try.statement");
-  String WRAPPING_TRY_RESOURCE_LIST = ApplicationBundle.message("wrapping.try.resources");
-  String WRAPPING_BINARY_OPERATION = ApplicationBundle.message("wrapping.binary.operations");
-  String WRAPPING_EXTENDS_LIST = ApplicationBundle.message("wrapping.extends.implements.list");
-  String WRAPPING_EXTENDS_KEYWORD = ApplicationBundle.message("wrapping.extends.implements.keyword");
-  String WRAPPING_THROWS_LIST = ApplicationBundle.message("wrapping.throws.list");
-  String WRAPPING_THROWS_KEYWORD = ApplicationBundle.message("wrapping.throws.keyword");
-  String WRAPPING_TERNARY_OPERATION = ApplicationBundle.message("wrapping.ternary.operation");
-  String WRAPPING_ASSIGNMENT = ApplicationBundle.message("wrapping.assignment.statement");
-  String WRAPPING_FIELDS_VARIABLES_GROUPS = ApplicationBundle.message("checkbox.align.multiline.fields.groups");
-  String WRAPPING_ARRAY_INITIALIZER = ApplicationBundle.message("wrapping.array.initializer");
-  String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
-  String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
+  @Deprecated
+  @Nls String WRAPPING_KEEP = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP;
+  @Deprecated
+  @Nls String WRAPPING_BRACES = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_BRACES;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_COMMENTS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_COMMENTS;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_METHOD_PARAMETERS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARAMETERS;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_METHOD_PARENTHESES = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARENTHESES;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_METHOD_ARGUMENTS_WRAPPING = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_ARGUMENTS_WRAPPING;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_CALL_CHAIN = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_CALL_CHAIN;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_IF_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_IF_STATEMENT;
+  @Deprecated
+  @Nls String WRAPPING_FOR_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_FOR_STATEMENT;
+  @Deprecated
+  @Nls String WRAPPING_WHILE_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_WHILE_STATEMENT;
+  @Deprecated
+  @Nls String WRAPPING_DOWHILE_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_DOWHILE_STATEMENT;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_SWITCH_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_SWITCH_STATEMENT;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_TRY_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_TRY_STATEMENT;
+  @Deprecated
+  @Nls String WRAPPING_TRY_RESOURCE_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_TRY_RESOURCE_LIST;
+  @Deprecated
+  @Nls String WRAPPING_BINARY_OPERATION = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_BINARY_OPERATION;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_EXTENDS_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_EXTENDS_LIST;
+  @Deprecated
+  @Nls String WRAPPING_EXTENDS_KEYWORD = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_EXTENDS_KEYWORD;
+  @Deprecated
+  @Nls String WRAPPING_THROWS_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_THROWS_LIST;
+  @Deprecated
+  @Nls String WRAPPING_THROWS_KEYWORD = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_THROWS_KEYWORD;
+  @Deprecated
+  @Nls String WRAPPING_TERNARY_OPERATION = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_TERNARY_OPERATION;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_ASSIGNMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ASSIGNMENT;
+  @Deprecated
+  @Nls String WRAPPING_FIELDS_VARIABLES_GROUPS = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_FIELDS_VARIABLES_GROUPS;
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String WRAPPING_ARRAY_INITIALIZER = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ARRAY_INITIALIZER;
+  @Deprecated
+  @Nls String WRAPPING_MODIFIER_LIST = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_MODIFIER_LIST;
+  @Deprecated
+  @Nls String WRAPPING_ASSERT_STATEMENT = CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_ASSERT_STATEMENT;
 
-  String[] WRAP_OPTIONS = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.chop.down.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
-  };
-  String[] WRAP_OPTIONS_FOR_SINGLETON = {
-    ApplicationBundle.message("wrapping.do.not.wrap"),
-    ApplicationBundle.message("wrapping.wrap.if.long"),
-    ApplicationBundle.message("wrapping.wrap.always")
-  };
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_OPTIONS} instead
+   */
+  @Deprecated
+  @Nls String[] WRAP_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().WRAP_OPTIONS;
+
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_OPTIONS_FOR_SINGLETON} instead
+   */
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String[] WRAP_OPTIONS_FOR_SINGLETON = CodeStyleSettingsCustomizableOptions.getInstance().WRAP_OPTIONS_FOR_SINGLETON;
+
   int[] WRAP_VALUES = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_AS_NEEDED |
@@ -286,23 +324,26 @@ public interface CodeStyleSettingsCustomizable {
   int[] WRAP_VALUES_FOR_SINGLETON = {CommonCodeStyleSettings.DO_NOT_WRAP,
     CommonCodeStyleSettings.WRAP_AS_NEEDED,
     CommonCodeStyleSettings.WRAP_ALWAYS};
-  String[] BRACE_OPTIONS = {
-    ApplicationBundle.message("wrapping.force.braces.do.not.force"),
-    ApplicationBundle.message("wrapping.force.braces.when.multiline"),
-    ApplicationBundle.message("wrapping.force.braces.always")
-  };
+
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#BRACE_OPTIONS} instead
+   */
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String[] BRACE_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().BRACE_OPTIONS;
+
   int[] BRACE_VALUES = {
     CommonCodeStyleSettings.DO_NOT_FORCE,
     CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-  String[] BRACE_PLACEMENT_OPTIONS = {
-    ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.shifted"),
-    ApplicationBundle.message("wrapping.brace.placement.next.line.each.shifted")
-  };
+
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#BRACE_PLACEMENT_OPTIONS} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String[] BRACE_PLACEMENT_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().BRACE_PLACEMENT_OPTIONS;
+
   int[] BRACE_PLACEMENT_VALUES = {
     CommonCodeStyleSettings.END_OF_LINE,
     CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED,
@@ -311,12 +352,14 @@ public interface CodeStyleSettingsCustomizable {
     CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
   };
 
-  String[] WRAP_ON_TYPING_OPTIONS = {
-    ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"),
-    ApplicationBundle.message("wrapping.wrap.on.typing.wrap"),
-    ApplicationBundle.message("wrapping.wrap.on.typing.default")
-  };
-  int [] WRAP_ON_TYPING_VALUES = {
+  /**
+   * @deprecated use {@link CodeStyleSettingsCustomizableOptions#WRAP_ON_TYPING_OPTIONS} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Nls String[] WRAP_ON_TYPING_OPTIONS = CodeStyleSettingsCustomizableOptions.getInstance().WRAP_ON_TYPING_OPTIONS;
+
+  int[] WRAP_ON_TYPING_VALUES = {
     CommonCodeStyleSettings.WrapOnTyping.NO_WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue,
     CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue
@@ -326,30 +369,31 @@ public interface CodeStyleSettingsCustomizable {
 
   void showStandardOptions(@NonNls String... optionNames);
 
-  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                        String fieldName,
-                        String title,
-                        @Nullable String groupName,
-                        Object... options) {
+  default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                @NonNls @NotNull String fieldName,
+                                @NlsContexts.Label @NotNull String title,
+                                @NlsContexts.Label @Nullable String groupName,
+                                Object... options) {
   }
 
-  default void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                        String fieldName,
-                        String title,
-                        @Nullable String groupName,
-                        @Nullable OptionAnchor anchor,
-                        @Nullable String anchorFieldName,
-                        Object... options) {
+  default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                @NonNls @NotNull String fieldName,
+                                @NlsContexts.Label @NotNull String title,
+                                @NlsContexts.Label @Nullable String groupName,
+                                @Nullable OptionAnchor anchor,
+                                @NonNls @Nullable String anchorFieldName,
+                                Object... options) {
   }
 
-  default void renameStandardOption(String fieldName, String newTitle) {
+  default void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
   }
 
   /**
    * Moves a standard option to another group.
+   *
    * @param fieldName The field name of the option to move (as defined in {@code CommonCodeStyleSettings} class).
    * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
    */
-  default void moveStandardOption(String fieldName, String newGroup) {
+  default void moveStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newGroup) {
   }
 }

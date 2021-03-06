@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class InitializationUtils {
+public final class InitializationUtils {
 
   private InitializationUtils() {}
 
@@ -240,7 +240,7 @@ public class InitializationUtils {
         initializedInTryAndCatch &= ExceptionUtils.blockThrowsException(catchBlock);
       }
       else {
-        initializedInTryAndCatch &= blockAssignsVariableOrFails(catchBlock, variable, checkedMethods, strict);
+        initializedInTryAndCatch &= blockAssignsVariableOrFails(catchBlock, variable, checkedMethods, false);
       }
     }
     return initializedInTryAndCatch || blockAssignsVariableOrFails(tryStatement.getFinallyBlock(), variable, checkedMethods, strict);

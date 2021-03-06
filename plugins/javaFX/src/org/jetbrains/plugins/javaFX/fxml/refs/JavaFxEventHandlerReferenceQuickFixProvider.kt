@@ -10,7 +10,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
@@ -54,8 +53,6 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
     val parameter = expectedParameter(eventType)
     return listOf(parameter)
   }
-
-  override fun getParameters(): List<Pair<SuggestedNameInfo, List<ExpectedType>>> = getParameters(expectedParameters, myProject)
 
   override fun getModifiers(): Set<JvmModifier> = setOf(myVisibility)
 

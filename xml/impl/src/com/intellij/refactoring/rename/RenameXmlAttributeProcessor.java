@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -15,9 +15,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenameXmlAttributeProcessor.class);
@@ -76,7 +78,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static void renameAll(PsiElement originalElement, UsageInfo[] infos, String newName,
                                 String originalName) throws IncorrectOperationException {
     if (newName.equals(originalName)) return;
-    Queue<PsiReference> queue = new Queue<>(infos.length);
+    Deque<PsiReference> queue = new ArrayDeque<>(infos.length);
     for (UsageInfo info : infos) {
       if (info.getElement() == null) continue;
       PsiReference ref = info.getReference();
@@ -85,7 +87,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
     }
 
     while(!queue.isEmpty()) {
-      final PsiReference reference = queue.pullFirst();
+      final PsiReference reference = queue.removeFirst();
       final PsiElement oldElement = reference.getElement();
       if (!oldElement.isValid() || oldElement == originalElement) continue;
       final PsiElement newElement = reference.handleElementRename(newName);
@@ -96,5 +98,4 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
       }
     }
   }
-
 }

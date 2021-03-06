@@ -12,7 +12,7 @@ public class ConditionalInstructionImpl extends InstructionImpl implements Condi
   private final PsiElement myCondition;
   private final boolean myResult;
 
-  public ConditionalInstructionImpl(final ControlFlowBuilder builder,
+  public ConditionalInstructionImpl(@NotNull final ControlFlowBuilder builder,
                                     @Nullable final PsiElement element,
                                     @Nullable final PsiElement condition,
                                     final boolean result) {

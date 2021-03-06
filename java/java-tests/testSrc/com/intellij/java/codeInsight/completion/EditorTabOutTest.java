@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -97,6 +97,52 @@ public class EditorTabOutTest extends AbstractParameterInfoTestCase {
     type('1');
     tabOut();
     checkResult("class C { void m() { System.exit(1);<caret> } }");
+  }
+
+  public void testScopeRange() {
+    configureJava("class C { static { new HashM<caret> }}");
+    complete("HashMap");
+    checkResult("import java.util.HashMap;\n\nclass C { static { new HashMap<<caret>>()\n}}");
+    tabOut();
+    checkResult("import java.util.HashMap;\n\nclass C { static { new HashMap<>(<caret>)\n}}");
+    tabOut();
+    checkResult("import java.util.HashMap;\n\nclass C { static { new HashMap<>()<caret>\n}}");
+  }
+
+  public void testScopeRangeInjected() {
+    configureJava("import org.intellij.lang.annotations.Language;" +
+                  "class Main { " +
+                  "  static {" +
+                  "    injected(\"class C { static { new HashM<caret> }}\");" +
+                  "  } " +
+                  "  static void injected(@Language(\"JAVA\") String value){}" +
+                  "}");
+    complete("HashMap");
+    checkResult("import org.intellij.lang.annotations.Language;" +
+                "class Main { " +
+                "  static {" +
+                "    injected(\"import java.util.HashMap;class C { static { new HashMap<<caret>>() }}\");" +
+                "  } " +
+                "  static void injected(@Language(\"JAVA\") String value){}" +
+                "}");
+    tabOut();
+    checkResult("import org.intellij.lang.annotations.Language;" +
+                "class Main { " +
+                "  static {" +
+                "    injected(\"import java.util.HashMap;class C { static { new HashMap<>(<caret>) }}\");" +
+                "  } " +
+                "  static void injected(@Language(\"JAVA\") String value){}" +
+                "}"
+    );
+    tabOut();
+    checkResult("import org.intellij.lang.annotations.Language;" +
+                "class Main { " +
+                "  static {" +
+                "    injected(\"import java.util.HashMap;class C { static { new HashMap<>()<caret> }}\");" +
+                "  } " +
+                "  static void injected(@Language(\"JAVA\") String value){}" +
+                "}"
+    );
   }
 
   private void tabOut() {

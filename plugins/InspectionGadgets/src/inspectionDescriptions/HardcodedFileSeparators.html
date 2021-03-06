@@ -2,7 +2,7 @@
 <body>
 Reports the forward (/) or backward (\) slash in a string or
 character literal. These characters are commonly used as file separators, and portability may suffer if their use is hardcoded.
-This will not report a forward slash immediately following a '&lt;' character,
+This will not report backward slash inside escape sequences, or forward slash immediately following a '&lt;' character,
 or immediately preceding a '&gt;' character, as those often indicate XML or HTML tags rather than file names,
 strings representing a <b>java.util.TimeZone</b> ID, strings that are a valid regular expression or strings that equal an IANA-registered MIME media type.
 <p>

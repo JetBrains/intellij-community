@@ -4,7 +4,7 @@ PyFile:magicError.py
       PsiElement(Py:IDENTIFIER)('b')
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
-    PsiErrorElement:Multiline magic can't be used as an expression
+    PsiErrorElement:Multiline magic cannot be used as an expression
       <empty list>
     PsiWhiteSpace(' ')
     PyEmptyExpression

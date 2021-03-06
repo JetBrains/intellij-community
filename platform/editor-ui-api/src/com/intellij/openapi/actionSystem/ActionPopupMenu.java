@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,7 @@ public interface ActionPopupMenu {
    * Returns the place where the action group is displayed (the first parameter of {@link ActionManager#createActionPopupMenu(String, ActionGroup)}.
    */
   @NotNull
+  @NonNls
   String getPlace();
 
   /**

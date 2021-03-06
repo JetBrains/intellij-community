@@ -19,7 +19,7 @@ public class JsonElementGenerator {
   }
 
   /**
-   * Create lightweight in-memory {@link com.intellij.json.psi.JsonFile} filled with {@code content}.
+   * Create lightweight in-memory {@link JsonFile} filled with {@code content}.
    *
    * @param content content of the file to be created
    * @return created file
@@ -49,7 +49,6 @@ public class JsonElementGenerator {
   @NotNull
   public JsonObject createObject(@NotNull String content) {
     final PsiFile file = createDummyFile("{" + content + "}");
-    // noinspection ConstantConditions
     return (JsonObject) file.getFirstChild();
   }
 
@@ -67,7 +66,6 @@ public class JsonElementGenerator {
   @NotNull
   public JsonProperty createProperty(@NotNull final String name, @NotNull final String value) {
     final PsiFile file = createDummyFile("{\"" + name + "\": " + value + "}");
-    // noinspection ConstantConditions
     return ((JsonObject) file.getFirstChild()).getPropertyList().get(0);
   }
 

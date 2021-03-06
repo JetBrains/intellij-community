@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
@@ -19,17 +20,18 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware {
+public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
+                                                     Comparable<IntentionAction> {
   private final IntentionActionBean myExtension;
   private String myFullFamilyName;
-  private String myFamilyName;
+  private @IntentionFamilyName String myFamilyName;
 
   public IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     myExtension = extension;
   }
 
   @NotNull
-  String getDescriptionDirectoryName() {
+  public String getDescriptionDirectoryName() {
     return getDescriptionDirectoryName(getImplementationClassName());
   }
 
@@ -134,5 +136,18 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   public ShortcutSet getShortcut() {
     IntentionAction delegate = getDelegate();
     return delegate instanceof ShortcutProvider ? ((ShortcutProvider)delegate).getShortcut() : null;
+  }
+
+  @Override
+  public int compareTo(@NotNull IntentionAction other) {
+    if (other instanceof IntentionActionWrapper) {
+      IntentionAction action1 = getDelegate();
+      IntentionAction action2 = ((IntentionActionWrapper)other).getDelegate();
+      if (action1 instanceof Comparable && action2 instanceof Comparable) {
+        //noinspection rawtypes,unchecked
+        return ((Comparable)action1).compareTo(action2);
+      }
+    }
+    return 0;
   }
 }

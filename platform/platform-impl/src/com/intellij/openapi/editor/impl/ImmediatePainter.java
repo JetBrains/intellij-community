@@ -188,6 +188,11 @@ class ImmediatePainter {
                                                    g, PaintUtil.RoundingMode.FLOOR);
     float clipEndX = (float)PaintUtil.alignToInt(p2x + width2 - caretShift + caretWidth,
                                                  g, PaintUtil.RoundingMode.CEIL);
+    if (clipEndX > editor.getContentComponent().getWidth()) {
+      // we cannot paint beyond component bounds (this will go beyond dev clip in graphics anyway)
+      return;
+    }
+
     g.setClip(new Rectangle2D.Float(clipStartX, p2y, clipEndX - clipStartX, lineHeight));
     // at the moment, lines in editor are not aligned to dev pixel grid along Y axis, when fractional scale is used,
     // so double buffering is disabled (as it might not produce the same result as direct painting, and will case text jitter)
@@ -317,7 +322,7 @@ class ImmediatePainter {
                                        final TextAttributes attributes,
                                        final List<? extends RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
-      ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
+      ContainerUtil.quickSort(highlighters, IterationState.createByLayerThenByAttributesComparator(editor.getColorsScheme()));
     }
 
     TextAttributes syntax = attributes;
@@ -328,7 +333,7 @@ class ImmediatePainter {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = highlighters.get(i);
-      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+      if (highlighter.getTextAttributes(editor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
         syntax = null;
       }
     }
@@ -349,7 +354,7 @@ class ImmediatePainter {
         syntax = null;
       }
 
-      TextAttributes textAttributes = highlighter.getTextAttributes();
+      TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
         cachedAttributes.add(textAttributes);
       }

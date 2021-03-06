@@ -15,6 +15,7 @@
  */
 package com.intellij.appengine.cloud;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.appengine.actions.AppEngineUploader;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.openapi.options.SettingsEditor;
@@ -31,6 +32,7 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import icons.GoogleAppEngineIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -47,7 +49,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Google App Engine";
+    return JavaGoogleAppEngineBundle.message("plugin.name");
   }
 
   @Override
@@ -108,7 +110,8 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
 
     @Override
-    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<AppEngineServerConfiguration> server) {
+    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source,
+                                                                     @Nullable RemoteServer<AppEngineServerConfiguration> server) {
       return null;
     }
   }

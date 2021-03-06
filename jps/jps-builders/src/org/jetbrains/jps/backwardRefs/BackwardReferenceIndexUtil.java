@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BackwardReferenceIndexUtil {
+public final class BackwardReferenceIndexUtil {
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexUtil.class);
 
   static void registerFile(String filePath,
@@ -78,7 +78,7 @@ public class BackwardReferenceIndexUtil {
           final CompilerRef
             ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
           final CompilerRef.JavaCompilerClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
-          if (ref != null && returnType != null) {
+          if (ref != null) {
             final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).getIteratorKind(), ((JavacDef.JavacMemberDef)def).isStatic());
             signatureData.computeIfAbsent(data, element -> new SmartList<>()).add(ref);
           }
@@ -125,13 +125,13 @@ public class BackwardReferenceIndexUtil {
     }
   }
 
-  private static class AnonymousClassEnumerator {
-    private THashMap<String, CompilerRef.CompilerClassHierarchyElementDef> myAnonymousName2Id = null;
+  private static final class AnonymousClassEnumerator {
+    private Map<String, CompilerRef.CompilerClassHierarchyElementDef> myAnonymousName2Id = null;
 
     private CompilerRef.JavaCompilerAnonymousClassRef addAnonymous(String internalName,
                                                                    CompilerRef.JavaCompilerClassRef base) {
       if (myAnonymousName2Id == null) {
-        myAnonymousName2Id = new THashMap<>();
+        myAnonymousName2Id = new HashMap<>();
       }
       final int anonymousIdx = myAnonymousName2Id.size();
       myAnonymousName2Id.put(internalName, base);

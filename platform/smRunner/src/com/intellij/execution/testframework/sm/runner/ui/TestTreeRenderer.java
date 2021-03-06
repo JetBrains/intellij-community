@@ -4,8 +4,12 @@ package com.intellij.execution.testframework.sm.runner.ui;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,13 +17,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
-import static com.intellij.ide.ui.UISettings.setupAntialiasing;
-import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
-import static com.intellij.util.ui.UIUtil.getTreeSelectionForeground;
-
-/**
- * @author: Roman Chernyatchik
- */
 public class TestTreeRenderer extends ColoredTreeCellRenderer {
   @NonNls private static final String SPACE_STRING = " ";
 
@@ -72,7 +69,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
           myDurationOffset = metrics.getHeight() / 2; // an empty area before and after the text
-          myDurationColor = selected ? getTreeSelectionForeground(hasFocus) : GRAYED_ATTRIBUTES.getFgColor();
+          myDurationColor = selected ? UIUtil.getTreeSelectionForeground(hasFocus) : SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
         }
       }
       //Done
@@ -80,9 +77,9 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     }
 
     //strange node
-    final String text = node.toString();
+    final @NlsSafe String text = node.toString();
     //no icon
-    append(text != null ? text : SPACE_STRING, GRAYED_ATTRIBUTES);
+    append(text != null ? text : SPACE_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   @NotNull
@@ -107,7 +104,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   protected void paintComponent(Graphics g) {
-    setupAntialiasing(g);
+    UISettings.setupAntialiasing(g);
     Shape clip = null;
     int width = getWidth();
     int height = getHeight();

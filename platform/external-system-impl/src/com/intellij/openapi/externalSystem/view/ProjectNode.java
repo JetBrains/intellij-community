@@ -4,8 +4,11 @@ package com.intellij.openapi.externalSystem.view;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +19,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class ProjectNode extends ExternalSystemNode<ProjectData> {
-  private String myTooltipCache;
+  private @Nls String myTooltipCache;
   private ModuleNode effectiveRoot = null;
 
   public ProjectNode(ExternalProjectsView externalProjectsView, DataNode<ProjectData> projectDataNode) {
@@ -67,15 +70,19 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     setNameAndTooltip(getName(), myTooltipCache);
   }
 
-  private String makeDescription() {
-    StringBuilder desc = new StringBuilder();
+  private @NlsSafe String makeDescription() {
     final ProjectData projectData = getData();
-    desc
-      .append("Project: ").append(getName())
-      .append(projectData != null ?
-              "\n\rLocation: " + projectData.getLinkedExternalProjectPath() : "")
-      .append(projectData != null && !StringUtil.isEmptyOrSpaces(projectData.getDescription()) ?
-              "\n\r" + projectData.getDescription() : "");
+    StringBuilder desc = new StringBuilder();
+    desc.append(ExternalSystemBundle.message("external.project.structure.project"))
+      .append(": ").append(getName());
+    if (projectData != null) {
+      desc.append("\n\r").append(ExternalSystemBundle.message("external.project.structure.project.location"))
+        .append(": ").append(projectData.getLinkedExternalProjectPath());
+      String description = projectData.getDescription();
+      if (!StringUtil.isEmptyOrSpaces(description)) {
+        desc.append("\n\r").append(description);
+      }
+    }
     return desc.toString();
   }
 

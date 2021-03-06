@@ -63,6 +63,7 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
@@ -71,5 +72,11 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jaxb-api" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
 </module>

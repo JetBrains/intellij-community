@@ -19,6 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 public interface BundledDictionaryProvider {
   ExtensionPointName<BundledDictionaryProvider> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.bundledDictionaryProvider");
-  
+
   String[] getBundledDictionaries();
 }

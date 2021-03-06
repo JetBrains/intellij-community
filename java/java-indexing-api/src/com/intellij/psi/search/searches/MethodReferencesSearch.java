@@ -9,12 +9,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.methodReferencesSearch");
+public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
+  public static final ExtensionPointName<QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters>> EP_NAME = new ExtensionPointName<>("com.intellij.methodReferencesSearch");
   public static final MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
   public static class SearchParameters implements DumbAwareSearchParameters {
@@ -76,6 +76,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
      * @deprecated Same as {@link #getScopeDeterminedByUser()}. Searchers most likely need to use {@link #getEffectiveSearchScope()}.
      */
     @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     @NotNull
     public SearchScope getScope() {
       return getScopeDeterminedByUser();
@@ -135,6 +136,6 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   }
 
   private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
-    return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ReferenceDescriptor.MAPPER);
   }
 }

@@ -1,9 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +17,14 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SetKeywordsDialog extends DialogWrapper {
+  private static final List<@NlsSafe String> KNOWN_KEYWORDS =
+    newArrayList("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
 
-  private static final List<String> KNOWN_KEYWORDS =
-    ContainerUtil.newArrayList("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
-
-  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = ContainerUtil.<String, String>immutableMapBuilder()
+  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = ContainerUtil.<@NlsSafe String, @NlsSafe String>immutableMapBuilder()
     .put("URL", "HeadURL")
     .put("Date", "LastChangedDate")
     .put("Revision", "LastChangedRevision")
@@ -36,7 +40,7 @@ public class SetKeywordsDialog extends DialogWrapper {
     myKeywordOptions = new ArrayList<>();
     myKeywordsValue = keywordsValue;
 
-    setTitle("SVN Keywords");
+    setTitle(message("dialog.title.svn.keywords"));
     setResizable(false);
     init();
   }
@@ -52,10 +56,10 @@ public class SetKeywordsDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Select keywords to set: "), BorderLayout.NORTH);
+    panel.add(new JBLabel(message("label.select.keywords.to.set")), BorderLayout.NORTH);
     JPanel buttonsPanel = new JPanel(new GridLayout(5, 1));
 
-    for (String keyword : KNOWN_KEYWORDS) {
+    for (@NlsSafe String keyword : KNOWN_KEYWORDS) {
       JCheckBox keywordOption = new JCheckBox(keyword);
 
       myKeywordOptions.add(keywordOption);

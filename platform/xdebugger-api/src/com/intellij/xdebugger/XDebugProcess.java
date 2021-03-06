@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -92,14 +93,6 @@ public abstract class XDebugProcess {
   public void startStepOver(@Nullable XSuspendContext context) {
     //noinspection deprecation
     startStepOver();
-  }
-
-  /**
-   * @deprecated Use {@link #startForceStepInto(XSuspendContext)} instead
-   */
-  @Deprecated
-  public void startForceStepInto(){
-    startStepInto();
   }
 
   /**
@@ -263,7 +256,7 @@ public abstract class XDebugProcess {
   /**
    * @return message to show in Variables View when debugger isn't paused
    */
-  public String getCurrentStateMessage() {
+  public @Nls String getCurrentStateMessage() {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
   }
 

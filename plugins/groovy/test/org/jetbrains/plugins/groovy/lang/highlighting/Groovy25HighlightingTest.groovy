@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -17,11 +18,15 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
   final String basePath = TestUtils.testDataPath + 'highlighting/v25/'
 
   void 'test duplicating named params'() { fileHighlightingTest() }
+
   void 'test duplicating named params with setter'() { fileHighlightingTest() }
+
   void 'test two identical named delegates'() { fileHighlightingTest() }
+
   void 'test duplicating named delegates with usual parameter'() { fileHighlightingTest() }
 
   void 'test named params type check'() { fileHighlightingTest() }
+
   void 'test named params type check with setter'() { fileHighlightingTest() }
 
   void 'test named params unused check'() {
@@ -53,7 +58,7 @@ class C {
   }
 
   void 'test getter in immutable'() {
-    highlightingTest'''\
+    highlightingTest '''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -68,7 +73,7 @@ class A {
   }
 
   void 'test getter in immutable 2'() {
-    highlightingTest'''\
+    highlightingTest '''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -81,7 +86,7 @@ class A {
   }
 
   void 'test tuple constructor in immutable'() {
-    highlightingTest'''\
+    highlightingTest '''\
 @groovy.transform.Immutable 
 class Foo { int a; String b }
 
@@ -95,7 +100,7 @@ def m() {
   }
 
 
-  void  'test copy with in immutable'(){
+  void 'test copy with in immutable'() {
     highlightingTest '''
 @groovy.transform.ImmutableBase(copyWith = true)
 class CopyWith {
@@ -130,6 +135,83 @@ def m() {
 }
 
 m()
+'''
+  }
+
+  void 'test @MapConstructor from raw map'() {
+    highlightingTest '''
+@groovy.transform.MapConstructor
+class Rr {
+    String actionType
+}
+
+
+static void main(String[] args) {
+    def x = [actionType: "kik"] as Rr
+    println x.actionType
+}
+''', GroovyConstructorNamedArgumentsInspection
+  }
+
+  void 'test @NamedVariant'() {
+    highlightingTest """
+class Rr {
+    @groovy.transform.NamedVariant
+    Rr(String s1, Integer s2) {
+        
+    }
+}
+
+@groovy.transform.CompileStatic
+def foo() {
+    new Rr(s1: "a", s2: 10)
+}
+"""
+  }
+
+  void 'test @NamedVariant with autodelegate'() {
+    highlightingTest """
+class Foo {
+    int aaa
+    boolean bbb
+}
+
+@groovy.transform.NamedVariant(autoDelegate = true)
+static def bar(Foo a) {}
+
+@groovy.transform.CompileStatic
+static def foo() {
+    bar(aaa: 10, bbb: true)
+}"""
+  }
+
+  void 'test visibility options for @NamedVariant'() {
+    fixture.addFileToProject 'other.groovy', """
+import groovy.transform.options.Visibility
+
+@groovy.transform.CompileStatic
+class Cde {
+    @groovy.transform.NamedVariant
+    @groovy.transform.VisibilityOptions(method = Visibility.PUBLIC)
+    private static def foo(String s) {}
+}"""
+    highlightingTest """
+class X {
+
+    @groovy.transform.CompileStatic
+    static void main(String[] args) {
+        Cde.foo(s : "")
+        Cde.<error>foo</error>("")
+    }
+
+}"""
+  }
+
+  void testTraitAsAnonymous() {
+    highlightingTest'''
+trait T {}
+
+new T(){}
 '''
   }
 }

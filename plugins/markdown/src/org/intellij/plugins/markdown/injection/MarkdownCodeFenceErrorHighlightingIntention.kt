@@ -23,7 +23,7 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 
-class MarkdownCodeFenceErrorHighlightingIntention() : IntentionAction {
+class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
 
   companion object SettingsListener : MarkdownApplicationSettings.SettingsChangedListener {
     override fun settingsChanged(settings: MarkdownApplicationSettings) =

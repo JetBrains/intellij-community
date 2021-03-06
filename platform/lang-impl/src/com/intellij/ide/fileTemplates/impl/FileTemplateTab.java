@@ -17,7 +17,9 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +33,10 @@ import java.util.List;
  */
 abstract class FileTemplateTab {
   protected final List<FileTemplateBase> myTemplates = new ArrayList<>();
-  private final String myTitle;
+  private final @NlsContexts.TabTitle String myTitle;
   protected static final Color MODIFIED_FOREGROUND = JBColor.BLUE;
 
-  protected FileTemplateTab(String title) {
+  protected FileTemplateTab(@NlsContexts.TabTitle String title) {
     myTitle = title;
   }
 
@@ -53,15 +55,19 @@ abstract class FileTemplateTab {
     final String oldSelectionName = oldSelection != null? ((FileTemplateBase)oldSelection).getQualifiedName() : null;
 
     myTemplates.clear();
-    FileTemplate newSelection = null;
     for (FileTemplate original : templates) {
-      final FileTemplateBase copy = (FileTemplateBase)original.clone();
-      if (oldSelectionName != null && oldSelectionName.equals(copy.getQualifiedName())) {
-        newSelection = copy;
-      }
-      myTemplates.add(copy);
+      if (FileTemplateBase.isChild(original))
+        continue;
+      FileTemplate copy = addCopy(original);
+      copy.setChildren(ContainerUtil.map2Array(original.getChildren(), FileTemplate.class, template -> addCopy(template)));
     }
-    initSelection(newSelection);
+    initSelection(ContainerUtil.find(myTemplates, base -> base.getQualifiedName().equals(oldSelectionName)));
+  }
+
+  private FileTemplate addCopy(FileTemplate original) {
+    final FileTemplateBase copy = (FileTemplateBase)original.clone();
+    myTemplates.add(copy);
+    return copy;
   }
 
   protected abstract void initSelection(FileTemplate selection);
@@ -74,8 +80,9 @@ abstract class FileTemplateTab {
 
   public abstract void addTemplate(FileTemplate newTemplate);
 
-  public String getTitle() {
+  public abstract void insertTemplate(FileTemplate newTemplate, int index);
+
+  public @NlsContexts.TabTitle String getTitle() {
     return myTitle;
   }
-
 }

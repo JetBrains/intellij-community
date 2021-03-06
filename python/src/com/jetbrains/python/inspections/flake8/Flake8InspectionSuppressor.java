@@ -9,9 +9,10 @@ import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,7 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
       return false;
     }
 
-    final PsiComment comment = findSameLineComment(element);
+    final PsiComment comment = PyPsiUtils.findSameLineComment(element);
     if (comment != null) {
       final Set<String> givenCodes = extractNoqaCodes(comment);
       if (givenCodes != null) {
@@ -82,7 +83,11 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
    */
   @Nullable
   public static Set<String> extractNoqaCodes(@NotNull PsiComment comment) {
-    final Matcher matcher = NOQA_COMMENT_PATTERN.matcher(comment.getText());
+    String commentText = comment.getText();
+    if (commentText == null) return null;
+    int noqaOffset = StringUtils.lowerCase(commentText).indexOf("# noqa");
+    String noqaSuffix = StringUtils.substring(commentText, noqaOffset);
+    final Matcher matcher = NOQA_COMMENT_PATTERN.matcher(noqaSuffix);
     if (matcher.matches()) {
       final String codeList = matcher.group("codes");
       if (codeList != null) {
@@ -97,22 +102,5 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
   @Override
   public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     return SuppressQuickFix.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  private static PsiComment findSameLineComment(@NotNull PsiElement elem) {
-    // If `elem` is a compound multi-line element, stick to its first line nonetheless
-    PsiElement next = PsiTreeUtil.getDeepestFirst(elem);
-    do {
-      if (next instanceof PsiComment) {
-        return (PsiComment)next;
-      }
-      if (next != elem && next.textContains('\n')) {
-        break;
-      }
-      next = PsiTreeUtil.nextLeaf(next);
-    }
-    while (next != null);
-    return null;
   }
 }

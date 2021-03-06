@@ -2,8 +2,11 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.JBUI;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class TabLayout {
@@ -17,7 +20,8 @@ public abstract class TabLayout {
   }
 
   public boolean isDragOut(@NotNull TabLabel tabLabel, int deltaX, int deltaY) {
-    return Math.abs(deltaY) > tabLabel.getSize().height * getDragOutMultiplier();
+    return Math.abs(deltaY) > tabLabel.getHeight() * getDragOutMultiplier()
+           || Math.abs(deltaX) > tabLabel.getWidth() * getDragOutMultiplier();
   }
 
   public boolean isSideComponentOnTabs() {
@@ -29,4 +33,11 @@ public abstract class TabLayout {
   }
 
   public abstract int getDropIndexFor(Point point);
+
+  public static int getMaxPinnedTabWidth() {
+    return JBUI.scale(Registry.intValue("ide.editor.max.pinned.tab.width", 2000));
+  }
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public abstract int getDropSideFor(@NotNull Point point);
 }

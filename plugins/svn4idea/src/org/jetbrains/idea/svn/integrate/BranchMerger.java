@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +13,8 @@ import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 
 import java.io.File;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class BranchMerger implements IMerger {
 
@@ -49,10 +51,14 @@ public class BranchMerger implements IMerger {
   }
 
   @Override
-  public String getComment() {
-    return "Merge all from " + myBranchName +
-           (!mySupportsMergeInfo ? " at " + mySourceLatestRevision : "") +
-           (myReintegrate ? " (reintegration)" : "");
+  public @NotNull String getComment() {
+    return mySupportsMergeInfo
+           ? myReintegrate
+             ? message("label.merge.all.from.branch.reintegrate", myBranchName)
+             : message("label.merge.all.from.branch", myBranchName)
+           : myReintegrate
+             ? message("label.merge.all.from.branch.at.revision.reintegrate", myBranchName, mySourceLatestRevision)
+             : message("label.merge.all.from.branch.at.revision", myBranchName, mySourceLatestRevision);
   }
 
   @Override

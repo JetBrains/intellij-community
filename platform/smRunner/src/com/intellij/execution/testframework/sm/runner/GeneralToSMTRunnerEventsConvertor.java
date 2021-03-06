@@ -58,7 +58,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeEnded(String suiteName) {
-    myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
+    myBuildTreeRunnables.add(() -> {
+      mySuitesStack.popSuite(suiteName);
+      myEventPublisher.onSuiteTreeEnded(myTestsRootProxy, suiteName);
+    });
     super.onSuiteTreeEnded(suiteName);
   }
 
@@ -296,6 +299,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onUncapturedOutput(final @NotNull String text, final Key outputType) {
     final SMTestProxy currentProxy = findCurrentTestOrSuite();
     currentProxy.addOutput(text, outputType);
+    myEventPublisher.onUncapturedOutput(currentProxy, text, outputType);
   }
 
   @Override
@@ -424,6 +428,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       return;
     }
     testProxy.addOutput(text, outputType);
+    myEventPublisher.onTestOutput(testProxy, testOutputEvent);
   }
 
   @Override

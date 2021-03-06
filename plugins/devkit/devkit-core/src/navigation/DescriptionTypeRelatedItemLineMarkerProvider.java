@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -29,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import icons.DevkitIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
@@ -46,8 +33,12 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
   private static final NotNullFunction<PsiFile, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
     psiFile -> GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
 
-  private final Option myDescriptionOption = new Option("devkit.description", "Description", DevkitIcons.Gutter.DescriptionFile);
-  private final Option myBeforeAfterOption = new Option("devkit.beforeAfter", "Before/After templates", DevkitIcons.Gutter.Diff);
+  private final Option myDescriptionOption = new Option("devkit.description",
+                                                        DevKitBundle.message("gutter.related.option.description"),
+                                                        DevkitIcons.Gutter.DescriptionFile);
+  private final Option myBeforeAfterOption = new Option("devkit.beforeAfter",
+                                                        DevKitBundle.message("gutter.related.option.before.after.templates"),
+                                                        DevkitIcons.Gutter.Diff);
 
   @Override
   public Option @NotNull [] getOptions() {
@@ -56,7 +47,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
 
   @Override
   public String getName() {
-    return "Description / Before|After templates";
+    return DevKitBundle.message("gutter.related.option.name");
   }
 
   @Override
@@ -116,7 +107,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
-      .setTooltipText("Description")
+      .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.description.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(highlightingElement);
     result.add(info);
@@ -137,11 +128,12 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     }
     if (templateFiles.isEmpty()) return;
 
+    //noinspection DialogTitleCapitalization
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
-      .setPopupTitle("Select Template")
-      .setTooltipText("Before/After Templates")
+      .setPopupTitle(DevKitBundle.message("gutter.related.navigation.popup.template.title"))
+      .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.template.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(highlightingElement);
     result.add(info);

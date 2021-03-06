@@ -36,7 +36,7 @@ public class UsesAndInterfacesDependencyMemberInfoModel<T extends PsiMember, M e
   public UsesAndInterfacesDependencyMemberInfoModel(PsiClass aClass, @Nullable PsiClass superClass, boolean recursive,
                                                     @NotNull final InterfaceContainmentVerifier interfaceContainmentVerifier) {
     super(new ANDCombinedMemberInfoModel<>(
-      new UsesDependencyMemberInfoModel<T, PsiClass, M>(aClass, superClass, recursive) {
+      new UsesDependencyMemberInfoModel<>(aClass, superClass, recursive) {
         @Override
         public int checkForProblems(@NotNull M memberInfo) {
           final int problem = super.checkForProblems(memberInfo);

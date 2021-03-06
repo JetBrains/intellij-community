@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
 import com.intellij.application.options.codeStyle.properties.MagicIntegerConstAccessor;
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,8 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
                                                   @NotNull CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, "Properties Files") {
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
+                                             PropertiesBundle.message("properties.files.code.style.node.title")) {
       @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.codestyle.properties";
@@ -31,7 +33,6 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
     };
   }
 
-  @Nullable
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return new PropertiesCodeStyleSettings(settings);
@@ -48,13 +49,13 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
                                 @NotNull SettingsType settingsType) {
     consumer.showStandardOptions("ALIGN_GROUP_FIELD_DECLARATIONS");
     consumer.showCustomOption(PropertiesCodeStyleSettings.class, "SPACES_AROUND_KEY_VALUE_DELIMITER",
-                              "Insert space around key-value delimiter", null);
+                              PropertiesBundle.message("insert.space.around.key.value.delimiter.code.style.settings.name"), null);
     consumer.showCustomOption(PropertiesCodeStyleSettings.class,
                               "KEY_VALUE_DELIMITER_CODE",
-                              "Key-value delimiter", null,
-                              new String[]{"=", ":", "whitespace symbol"}, new int[]{0, 1, 2});
+                              PropertiesBundle.message("key.value.delimiter.code.style.settings.name"), null,
+                              new String[]{"=", ":", PropertiesBundle.message("whitespace.symbol.delimeter.combobox.presentation")}, new int[]{0, 1, 2});
     consumer.showCustomOption(PropertiesCodeStyleSettings.class, "KEEP_BLANK_LINES",
-                              "Keep blank lines", null);
+                              PropertiesBundle.message("keep.blank.lines.code.style.setting.name"), null);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.jdkEx.JdkEx;
@@ -17,8 +17,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.VolatileImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -42,8 +42,13 @@ public class HwFacadeHelper {
   private ComponentAdapter myTargetListener;
   private VolatileImage myBackBuffer;
 
+  @NotNull Consumer<? super JBCefBrowser> myOnBrowserMoveResizeCallback =
+    browser -> {
+      if (!isActive()) activateIfNeeded(Collections.singletonList(browser.getCefBrowser()));
+    };
+
   // [tav] todo: export visible browser bounds from jcef instead
-  private static class JCEFAccessor {
+  private static final class JCEFAccessor {
     private static FieldAccessor<CefApp, HashSet<CefClient>> clientsField;
     private static FieldAccessor<CefClient, HashMap<Integer, CefBrowser>> browsersField;
     private static CefApp ourCefApp;
@@ -85,7 +90,7 @@ public class HwFacadeHelper {
   }
 
   private static boolean isCefAppActive() {
-    return JCEFAccessor.getCefApp() != null;
+    return JCEFAccessor.getCefApp() != null && !JBCefApp.isOffScreenRenderingMode();
   }
 
   private void onShowing() {
@@ -101,7 +106,7 @@ public class HwFacadeHelper {
           myHwFacade.setSize(myTarget.getSize());
         }
         else {
-          activateIfNeeded();
+          activateIfNeeded(JCEFAccessor.getBrowsers());
         }
       }
       @Override
@@ -110,24 +115,25 @@ public class HwFacadeHelper {
           if (myHwFacade.isVisible()) myHwFacade.setLocation(myTarget.getLocationOnScreen());
         }
         else {
-          activateIfNeeded();
+          activateIfNeeded(JCEFAccessor.getBrowsers());
         }
       }
     });
 
-    activateIfNeeded();
+    activateIfNeeded(JCEFAccessor.getBrowsers());
   }
 
-  private void activateIfNeeded() {
-    if (SystemInfo.isLinux) return;
-    if (!isCefAppActive()) return;
+  private void activateIfNeeded(@NotNull List<CefBrowser> browsers) {
+    if (SystemInfo.isLinux || !isCefAppActive() || !myTarget.isShowing()) return;
 
     Rectangle targetBounds = new Rectangle(myTarget.getLocationOnScreen(), myTarget.getSize());
     boolean overlaps = false;
-    for (CefBrowser browser : JCEFAccessor.getBrowsers()) {
-      Component comp = browser.getUIComponent();
-      if (comp != null && comp.isVisible() && comp.isShowing() &&
-          new Rectangle(comp.getLocationOnScreen(), comp.getSize()).intersects(targetBounds))
+    // [tav] todo: still won't work for JCEF component in a popup above another popup, need a smarter and faster way to check z-order
+    for (CefBrowser browser : browsers) {
+      Component browserComp = browser.getUIComponent();
+      if (browserComp != null && browserComp.isVisible() && browserComp.isShowing() &&
+          !SwingUtilities.isDescendingFrom(browserComp, myTarget) &&
+          new Rectangle(browserComp.getLocationOnScreen(), browserComp.getSize()).intersects(targetBounds))
       {
         overlaps = true;
         break;
@@ -168,6 +174,7 @@ public class HwFacadeHelper {
     if (myTarget.isVisible()) {
       onShowing();
     }
+    if (!SystemInfo.isLinux) JBCefBrowser.addOnBrowserMoveResizeCallback(myOnBrowserMoveResizeCallback);
   }
 
   public void show() {
@@ -193,6 +200,7 @@ public class HwFacadeHelper {
       assert owner != null;
       owner.removeComponentListener(myOwnerListener);
     }
+    if (!SystemInfo.isLinux) JBCefBrowser.removeOnBrowserMoveResizeCallback(myOnBrowserMoveResizeCallback);
   }
 
   public void hide() {
@@ -201,7 +209,7 @@ public class HwFacadeHelper {
     }
   }
 
-  public void paint(Graphics g, Consumer<Graphics> targetPaint) {
+  public void paint(Graphics g, Consumer<? super Graphics> targetPaint) {
     if (isActive()) {
       Dimension size = myTarget.getSize();
       if (myBackBuffer == null || myBackBuffer.getWidth() != size.width || myBackBuffer.getHeight() != size.height) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.integer;
 
 import com.intellij.codeInsight.intention.numeric.NumberConverter;
@@ -12,7 +12,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-public class JavaNumberConverters {
+public final class JavaNumberConverters {
   static final NumberConverter INTEGER_TO_HEX = new NumberConverter() {
     @Override
     @Contract(pure = true)
@@ -147,7 +147,7 @@ public class JavaNumberConverters {
   };
   static final NumberConverter FLOAT_TO_SCIENTIFIC = new NumberConverter() {
     private final DecimalFormat FORMAT = new DecimalFormat("0.0#############E00", new DecimalFormatSymbols(Locale.US));
-    
+
     @Override
     @Contract(pure = true)
     public @Nullable String getConvertedText(@NotNull String text, @NotNull Number number) {

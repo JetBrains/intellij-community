@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,10 +16,12 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
   }
 
   public VirtualFilePattern ofType(final FileType type) {
+    // Avoid capturing FileType instance if plugin providing the file type is unloaded
+    String fileTypeName = type.getName();
     return with(new PatternCondition<VirtualFile>("ofType") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
-        return FileTypeRegistry.getInstance().isFileOfType(virtualFile, type);
+        return virtualFile.getFileType().getName().equals(fileTypeName);
       }
     });
   }
@@ -31,7 +33,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     return withName(StandardPatterns.string().equalTo(name));
   }
 
-  public VirtualFilePattern withExtension(final String @NotNull ... alternatives) {
+  public VirtualFilePattern withExtension(@NotNull @NonNls String @NotNull ... alternatives) {
     return with(new PatternCondition<VirtualFile>("withExtension") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
@@ -46,7 +48,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
-  public VirtualFilePattern withExtension(@NotNull final String extension) {
+  public VirtualFilePattern withExtension(@NonNls @NotNull final String extension) {
     return with(new PatternCondition<VirtualFile>("withExtension") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {

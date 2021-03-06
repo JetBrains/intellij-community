@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -254,7 +255,7 @@ public class RainbowHighlighter {
     return rainbowColors.toArray(new Color[0]);
   }
 
-  private static Color resolveConflict(@NotNull final List<Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
+  private static Color resolveConflict(final @NotNull List<? extends Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
     if (nestLevel > 4) {
       return sampleColor;
     }
@@ -281,7 +282,7 @@ public class RainbowHighlighter {
   }
 
   private static int normalize(double b) {
-    return Math.min(Math.max(1, (int)b), 254);
+    return MathUtil.clamp((int)b, 1, 254);
   }
 
   public static double colorDistance01(@NotNull Color c1, @NotNull Color c2) {

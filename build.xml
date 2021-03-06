@@ -22,6 +22,7 @@
     </exec>
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>
+      <propertyref name="compile.parallel"/>
       <propertyref prefix="intellij.build."/>
     </propertyset>
   </target>
@@ -31,7 +32,7 @@
     <attribute name="target" default="default"/>
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx912m"/>
+        <jvmarg line="-Xmx1500m"/>
         <sysproperty key="jna.nosys" value="true" />
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>

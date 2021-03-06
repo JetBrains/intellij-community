@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.facet;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class FacetLibraryConfigurator {
+public final class FacetLibraryConfigurator {
   private FacetLibraryConfigurator() {
   }
 
@@ -44,7 +44,7 @@ public class FacetLibraryConfigurator {
           // update existing
           Library lib = orderEntry.getLibrary();
           if (lib != null) {
-            if (lib instanceof LibraryImpl && ((LibraryImpl)lib).getKind() == null) {   // replace old python libraries with python specific ones
+            if (lib instanceof LibraryEx && ((LibraryEx)lib).getKind() == null) {   // replace old python libraries with python specific ones
               model.removeOrderEntry(orderEntry);
               LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject()).removeLibrary(lib);
               createNewLibrary(model);

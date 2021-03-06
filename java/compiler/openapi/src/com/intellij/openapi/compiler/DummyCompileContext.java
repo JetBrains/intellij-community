@@ -25,8 +25,12 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public class DummyCompileContext implements CompileContext {
   private final Project myProject;
@@ -35,6 +39,7 @@ public class DummyCompileContext implements CompileContext {
    * @deprecated use {@link #create(Project)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public DummyCompileContext() {
     this(ProjectManager.getInstance().getDefaultProject());
   }
@@ -48,6 +53,7 @@ public class DummyCompileContext implements CompileContext {
    * @return
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static DummyCompileContext getInstance() {
     return new DummyCompileContext(ProjectManager.getInstance().getDefaultProject());
@@ -65,17 +71,10 @@ public class DummyCompileContext implements CompileContext {
   }
 
   @Override
-  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-  }
-
-
-  @Override
   public void addMessage(@NotNull CompilerMessageCategory category,
-                         String message,
-                         @Nullable String url,
-                         int lineNum,
-                         int columnNum,
-                         Navigatable navigatable) {
+                         @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                         @Nullable String url, int lineNum, int columnNum, @Nullable Navigatable navigatable,
+                         Collection<String> moduleNames) {
   }
 
   @Override

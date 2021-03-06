@@ -1270,13 +1270,13 @@
         <!--
        <button name="Release Notes" url="https://blog.jetbrains.com/pycharm/2015/10/announcing-pycharm-edu-2-0-2-checkio-integration/"/>
        -->
-        <button name="What's New" url="https://www.jetbrains.com/pycharm-edu/whatsnew/index.html"/>
+        <button name="What's New" url="https://www.jetbrains.com/pycharm-edu/whatsnew/"/>
         <patch from="143.1363" size="10"/>
       </build>
       <build number="162.1740" version="3.0">
         <message>PyCharm Edu 3.0 is available.</message>
         <button name="Download" url="https://www.jetbrains.com/pycharm-edu/download/" download="true"/>
-        <button name="What's New" url="https://www.jetbrains.com/pycharm-edu/whatsnew/index.html"/>
+        <button name="What's New" url="https://www.jetbrains.com/pycharm-edu/whatsnew/"/>
       </build>
     </channel>
     <channel id="pycharmEdu3" name="PyCharm Edu 3.0.1" status="release" url="https://www.jetbrains.com/pycharm-edu/whatsnew" majorVersion="3">
@@ -1292,7 +1292,7 @@
         <message>PyCharm Edu 3.5 EAP is available.</message>
         <button name="Download" url="https://confluence.jetbrains.com/display/PYH/PyCharm+Edu+Early+Access+Program" download="true"/>
         <button name="More Information" url="https://blog.jetbrains.com/pycharm/2016/12/pycharm-edu-3-5-eap/"/>
-        <button name="What's New" url="https://www.jetbrains.com/pycharm-edu/whatsnew/index.html"/>
+        <button name="What's New" url="https://www.jetbrains.com/pycharm-edu/whatsnew/"/>
       </build>
     </channel>
     <channel id="pycharmEdu35Release" name="PyCharm Edu 3.5" status="release" url="https://www.jetbrains.com/pycharm-edu/whatsnew" majorVersion="3">

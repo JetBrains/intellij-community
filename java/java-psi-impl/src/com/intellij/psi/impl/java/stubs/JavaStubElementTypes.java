@@ -7,6 +7,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.tree.IStubFileElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface JavaStubElementTypes {
@@ -92,6 +93,14 @@ public interface JavaStubElementTypes {
       return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
     }
   };
+
+  JavaClassReferenceListElementType PERMITS_LIST = new JavaClassReferenceListElementType("PERMITS_LIST") {
+    @NotNull
+    @Override
+    public ASTNode createCompositeNode() {
+      return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, PsiKeyword.PERMITS);
+    }
+  };
   JavaClassReferenceListElementType IMPLEMENTS_LIST = new JavaClassReferenceListElementType("IMPLEMENTS_LIST") {
     @NotNull
     @Override
@@ -139,6 +148,6 @@ public interface JavaStubElementTypes {
   /**
    * @deprecated use {@link JavaParserDefinition#JAVA_FILE}
    */
-  @Deprecated
-  IStubFileElementType JAVA_FILE = JavaParserDefinition.JAVA_FILE;
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  IStubFileElementType<?> JAVA_FILE = JavaParserDefinition.JAVA_FILE;
 }

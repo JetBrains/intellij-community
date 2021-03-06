@@ -31,6 +31,7 @@ import java.util.*;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class XSDModelLoader implements ModelLoader {
   private static final boolean TEXT_ELEMENTS_ARE_COMPLEX = false;
 

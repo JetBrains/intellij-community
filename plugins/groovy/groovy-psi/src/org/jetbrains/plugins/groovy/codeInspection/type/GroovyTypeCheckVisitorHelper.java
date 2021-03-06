@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class GroovyTypeCheckVisitorHelper {
+public final class GroovyTypeCheckVisitorHelper {
 
   @Contract("null -> false")
   protected static boolean hasTupleInitializer(@Nullable GrExpression initializer) {

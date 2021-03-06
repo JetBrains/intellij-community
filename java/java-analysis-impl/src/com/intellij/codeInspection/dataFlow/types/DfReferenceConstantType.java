@@ -7,8 +7,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
@@ -19,26 +19,38 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   private final @NotNull Mutability myMutability;
   private final @Nullable SpecialField mySpecialField;
   private final @NotNull DfType mySpecialFieldType;
+  private final boolean myDropConstantOnWiden;
   
-  DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type) {
+  DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
     super(constant);
     myPsiType = psiType;
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
     mySpecialField = SpecialField.fromQualifierType(psiType);
     mySpecialFieldType = mySpecialField == null ? BOTTOM : mySpecialField.fromConstant(constant);
+    myDropConstantOnWiden = dropConstantOnWiden;
+  }
+
+  @Override
+  public DfType widen() {
+    if (myDropConstantOnWiden) {
+      return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability, 
+                                     mySpecialField, mySpecialFieldType.widen(), false);
+    }
+    return this;
   }
 
   @NotNull
   @Override
   public DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
+    if (other instanceof DfEphemeralReferenceType) return BOTTOM;
     if (other instanceof DfGenericObjectType) {
       DfReferenceType type = ((DfReferenceType)other).dropMutability();
       if (type.isSuperType(this)) return this;
       TypeConstraint constraint = type.getConstraint().meet(myConstraint);
       if (constraint != TypeConstraints.BOTTOM) {
-        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint);
+        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint, myDropConstantOnWiden);
         if (type.isSuperType(subConstant)) return subConstant;
       }
     }
@@ -83,7 +95,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
 
   @Override
   public DfType tryNegate() {
-    return new DfGenericObjectType(Collections.singleton(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
+    return new DfGenericObjectType(Set.of(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
                                    null, BOTTOM, false);
   }
 
@@ -96,7 +108,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {
-    if (other instanceof DfGenericObjectType) {
+    if (other instanceof DfGenericObjectType || other instanceof DfEphemeralReferenceType) {
       return other.join(this);
     }
     if (isSuperType(other)) return this;
@@ -109,6 +121,6 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     boolean locality = isLocal() && type.isLocal();
     SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
-    return new DfGenericObjectType(Collections.emptySet(), constraint, nullability, mutability, sf, sfType, locality);
+    return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
   }
 }

@@ -11,6 +11,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 class DebuggerInstructionVisitor extends StandardInstructionVisitor {
+  private static final TokenSet BOOLEAN_TOKENS = TokenSet.create(
+    JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR, JavaTokenType.EQEQ, JavaTokenType.NE);
+  
   private final Map<PsiExpression, DfaHint> myHints = new HashMap<>();
 
   DebuggerInstructionVisitor() {
@@ -74,18 +79,21 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected boolean checkNotNullable(DfaMemoryState state,
-                                     @NotNull DfaValue value,
-                                     @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+  protected ThreeState checkNotNullable(DfaMemoryState state,
+                                        @NotNull DfaValue value,
+                                        @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression != null && problem.thrownException() != null) {
+        DfaHint hint;
         if (state.isNull(value)) {
-          DfaHint hint = problem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
-                         ? DfaHint.NPE
-                         : DfaHint.NULL_AS_NOT_NULL;
-          addHint(expression, hint);
+          hint = problem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
+                 ? DfaHint.NPE
+                 : DfaHint.NULL_AS_NOT_NULL;
+        } else {
+          hint = DfaHint.NONE;
         }
+        addHint(expression, hint);
       }
     }
     return super.checkNotNullable(state, value, problem);
@@ -102,9 +110,12 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
     }
     if (expr instanceof PsiPolyadicExpression) {
       IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-        // For polyadic let's report components only, otherwise the report gets cluttered
-        return false;
+      if (BOOLEAN_TOKENS.contains(tokenType)) {
+        PsiExpression firstOperand = ((PsiPolyadicExpression)expr).getOperands()[0];
+        if (firstOperand != null && PsiType.BOOLEAN.equals(firstOperand.getType())) {
+          // For polyadic boolean expression let's report components only, otherwise the report gets cluttered
+          return false;
+        }
       }
     }
     return true;

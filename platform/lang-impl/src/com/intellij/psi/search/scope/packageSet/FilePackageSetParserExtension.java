@@ -29,7 +29,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
   public String parseScope(Lexer lexer) {
     if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return null;
     String id = getTokenText(lexer);
-    if (FilePatternPackageSet.SCOPE_FILE.equals(id)) {
+    if (FilePatternPackageSet.SCOPE_FILE.equals(id) || FilePatternPackageSet.SCOPE_EXT.equals(id)) {
 
       final CharSequence buf = lexer.getBufferSequence();
       final int end = lexer.getTokenEnd();
@@ -40,17 +40,16 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
       }
 
       lexer.advance();
-      return FilePatternPackageSet.SCOPE_FILE;
+      return FilePatternPackageSet.SCOPE_FILE.equals(id) ? FilePatternPackageSet.SCOPE_FILE : FilePatternPackageSet.SCOPE_EXT;
     }
-
     return null;
   }
 
   @Override
   @Nullable
   public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
-    if (scope != FilePatternPackageSet.SCOPE_FILE) return null;
-    return new FilePatternPackageSet(modulePattern, parseFilePattern(lexer));
+    if (!FilePatternPackageSet.SCOPE_FILE.equals(scope) && !FilePatternPackageSet.SCOPE_EXT.equals(scope)) return null;
+    return new FilePatternPackageSet(modulePattern, parseFilePattern(lexer), FilePatternPackageSet.SCOPE_FILE.equals(scope));
   }
 
   private static String parseFilePattern(Lexer lexer) throws ParsingException {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.execution.ExecutionException;
@@ -32,7 +18,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.console.BuildAndRestartConsoleAction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
@@ -46,7 +34,7 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
 
   private final GroovyShellConfig myShellRunner;
   private final Module myModule;
-  private final Consumer<Module> myStarter = new Consumer<Module>() {
+  private final Consumer<Module> myStarter = new Consumer<>() {
     @Override
     public void consume(Module module) {
       doRunShell(myShellRunner, module);
@@ -54,7 +42,7 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
   };
   private GeneralCommandLine myCommandLine;
 
-  public GroovyShellRunnerImpl(@NotNull String consoleTitle,
+  public GroovyShellRunnerImpl(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String consoleTitle,
                                @NotNull GroovyShellConfig shellRunner,
                                @NotNull Module module) {
     super(module.getProject(), consoleTitle, shellRunner.getWorkingDirectory(module));
@@ -116,7 +104,7 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
     }
     catch (ExecutionException e) {
       LOG.info(e);
-      Messages.showErrorDialog(module.getProject(), e.getMessage(), "Cannot Run " + config.getTitle());
+      Messages.showErrorDialog(module.getProject(), e.getMessage(), GroovyBundle.message("shell.cannot.run.title"));
     }
   }
 }

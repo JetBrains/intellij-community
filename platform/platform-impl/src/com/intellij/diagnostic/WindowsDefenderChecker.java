@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.execution.ExecutionException;
@@ -9,11 +9,12 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl;
 import com.intellij.util.Restarter;
@@ -38,7 +39,7 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10000;
   private static final int POWERSHELL_COMMAND_TIMEOUT_MS = 10000;
   private static final int MAX_POWERSHELL_STDERR_LENGTH = 500;
-  private static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
+  static final String IGNORE_VIRUS_CHECK = "ignore.virus.scanning.warn.message";
 
   public enum RealtimeScanningStatus {
     SCANNING_DISABLED,
@@ -47,7 +48,7 @@ public class WindowsDefenderChecker {
   }
 
   public static WindowsDefenderChecker getInstance() {
-    return ServiceManager.getService(WindowsDefenderChecker.class);
+    return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
   public static class CheckResult {
@@ -96,6 +97,10 @@ public class WindowsDefenderChecker {
           LOG.info("Windows Defender status: all relevant paths excluded from real-time scanning");
         }
         return new CheckResult(scanningStatus, pathStatuses);
+      }
+      else {
+        LOG.info("Windows Defender status: Failed to get excluded patterns");
+        return new CheckResult(RealtimeScanningStatus.ERROR, Collections.emptyMap());
       }
     }
     if (scanningStatus == RealtimeScanningStatus.ERROR) {
@@ -170,6 +175,13 @@ public class WindowsDefenderChecker {
   private static List<Pattern> getExcludedPatterns() {
     final Collection<String> paths = getWindowsDefenderProperty("ExclusionPath");
     if (paths == null) return null;
+    if (paths.size() > 0) {
+      String path = paths.iterator().next();
+      if (path.length() > 0 && path.indexOf('\\') < 0) {
+        // "N/A: Must be admin to view exclusions"
+        return null;
+      }
+    }
     return ContainerUtil.map(paths, path -> wildcardsToRegex(expandEnvVars(path)));
   }
 
@@ -233,7 +245,7 @@ public class WindowsDefenderChecker {
   @NotNull
   private static String expandEnvVars(@NotNull String path) {
     Matcher m = WINDOWS_ENV_VAR_PATTERN.matcher(path);
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     while (m.find()) {
       String value = System.getenv(m.group(1));
       if (value != null) {
@@ -245,7 +257,7 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@link path}.
+   * Produces a {@link Pattern} that approximates how Windows Defender interprets the exclusion path {@code path}.
    * The path is split around wildcards; the non-wildcard portions are quoted, and regex equivalents of
    * the wildcards are inserted between them. See
    * https://docs.microsoft.com/en-us/windows/security/threat-protection/windows-defender-antivirus/configure-extension-file-exclusions-windows-defender-antivirus
@@ -271,11 +283,11 @@ public class WindowsDefenderChecker {
   }
 
   /**
-   * Checks whether each of the given paths in {@link paths} is matched by some pattern in {@link excludedPatterns},
+   * Checks whether each of the given paths in {@code paths} is matched by some pattern in {@code excludedPatterns},
    * returning a map of the results.
    */
   @NotNull
-  private static Map<Path, Boolean> checkPathsExcluded(@NotNull List<Path> paths, @NotNull List<Pattern> excludedPatterns) {
+  private static Map<Path, Boolean> checkPathsExcluded(@NotNull List<? extends Path> paths, @NotNull List<Pattern> excludedPatterns) {
     Map<Path, Boolean> result = new HashMap<>();
     for (Path path : paths) {
       if (!path.toFile().exists()) continue;
@@ -284,7 +296,7 @@ public class WindowsDefenderChecker {
         String canonical = path.toRealPath().toString();
         boolean found = false;
         for (Pattern pattern : excludedPatterns) {
-          if (pattern.matcher(canonical).matches()) {
+          if (pattern.matcher(canonical).matches() || pattern.matcher(path.toString()).matches()) {
             found = true;
             result.put(path, true);
             break;
@@ -310,14 +322,10 @@ public class WindowsDefenderChecker {
         PropertiesComponent.getInstance().setValue(IGNORE_VIRUS_CHECK, "true");
       }
     });
-    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again.this.project")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        PropertiesComponent.getInstance(project).setValue(IGNORE_VIRUS_CHECK, "true");
-      }
-    });
+  }
 
+  public @NlsContexts.NotificationContent String getNotificationText(Set<? extends Path> nonExcludedPaths) {
+    return DiagnosticBundle.message("virus.scanning.warn.message", StringUtil.join(nonExcludedPaths, "<br/>"));
   }
 
   public String getConfigurationInstructionsUrl() {

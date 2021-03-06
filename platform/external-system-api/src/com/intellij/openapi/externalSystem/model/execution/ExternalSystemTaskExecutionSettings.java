@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.execution;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,6 @@ import java.util.*;
  */
 @Tag("ExternalSystemSettings")
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
-
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
   @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
@@ -29,7 +29,7 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
   @NotNull
   private List<String> myTaskDescriptions = new ArrayList<>();
 
-  @Nullable private String myExecutionName;
+  @Nullable @Nls private String myExecutionName;
   private String myExternalSystemIdString;
   private String myExternalProjectPath;
   private String myVmOptions;
@@ -55,20 +55,20 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     myTaskNames = ContainerUtil.copyList(source.myTaskNames);
     myTaskDescriptions = ContainerUtil.copyList(source.myTaskDescriptions);
 
-    myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new THashMap<>(source.myEnv);
+    myEnv = source.myEnv.isEmpty() ? Collections.emptyMap() : new HashMap<>(source.myEnv);
     myPassParentEnvs = source.myPassParentEnvs;
   }
 
   @Nullable
-  public String getExecutionName() {
+  public @Nls String getExecutionName() {
     return myExecutionName;
   }
 
-  public void setExecutionName(@Nullable String executionName) {
+  public void setExecutionName(@Nullable @Nls String executionName) {
     myExecutionName = executionName;
   }
 
-  public String getExternalSystemIdString() {
+  public @NonNls String getExternalSystemIdString() {
     return myExternalSystemIdString;
   }
 
@@ -76,49 +76,49 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
     return new ProjectSystemId(myExternalSystemIdString);
   }
 
-  public void setExternalSystemIdString(String externalSystemIdString) {
+  public void setExternalSystemIdString(@NonNls String externalSystemIdString) {
     myExternalSystemIdString = externalSystemIdString;
   }
 
-  public String getExternalProjectPath() {
+  public @NlsSafe String getExternalProjectPath() {
     return myExternalProjectPath;
   }
 
-  public void setExternalProjectPath(String externalProjectPath) {
+  public void setExternalProjectPath(@NlsSafe String externalProjectPath) {
     myExternalProjectPath = externalProjectPath;
   }
 
-  public String getVmOptions() {
+  public @NlsSafe String getVmOptions() {
     return myVmOptions;
   }
 
-  public void setVmOptions(String vmOptions) {
+  public void setVmOptions(@NlsSafe String vmOptions) {
     myVmOptions = vmOptions;
   }
 
-  public String getScriptParameters() {
+  public @NlsSafe String getScriptParameters() {
     return myScriptParameters;
   }
 
-  public void setScriptParameters(String scriptParameters) {
+  public void setScriptParameters(@NlsSafe String scriptParameters) {
     myScriptParameters = scriptParameters;
   }
 
   @NotNull
-  public List<String> getTaskNames() {
+  public List<@NlsSafe String> getTaskNames() {
     return myTaskNames;
   }
 
-  public void setTaskNames(@NotNull List<String> taskNames) {
+  public void setTaskNames(@NotNull List<@NlsSafe String> taskNames) {
     myTaskNames = taskNames;
   }
 
   @NotNull
-  public List<String> getTaskDescriptions() {
+  public List<@Nls String> getTaskDescriptions() {
     return myTaskDescriptions;
   }
 
-  public void setTaskDescriptions(@NotNull List<String> taskDescriptions) {
+  public void setTaskDescriptions(@NotNull List<@Nls String> taskDescriptions) {
     myTaskDescriptions = taskDescriptions;
   }
 

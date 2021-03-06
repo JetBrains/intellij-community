@@ -21,6 +21,7 @@ import java.util.*;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class JetBrainsEmitter implements Emitter {
   static final boolean NOT_COMPARE_MODE = true; // compare mode: skip package decl & all comments/javadoc
   static final boolean JB_OFF = false;

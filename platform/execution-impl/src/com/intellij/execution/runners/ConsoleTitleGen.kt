@@ -3,11 +3,12 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionHelper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.TabTitle
 
 open class ConsoleTitleGen @JvmOverloads constructor(private val myProject: Project,
-                                                     private val consoleTitle: String,
+                                                     @TabTitle private val consoleTitle: String,
                                                      private val shouldAddNumberToTitle: Boolean = true) {
-
+  @TabTitle
   fun makeTitle(): String {
 
     if (shouldAddNumberToTitle) {

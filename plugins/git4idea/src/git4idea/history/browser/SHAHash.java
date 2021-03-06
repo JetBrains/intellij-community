@@ -15,10 +15,13 @@
  */
 package git4idea.history.browser;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Use {@link com.intellij.vcs.log.Hash}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class SHAHash {
   private final String myValue;
 

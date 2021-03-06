@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -472,7 +472,7 @@ public class FlattenStatementsHelper {
     return mapDestinationNodes;
   }
 
-  public static class FinallyPathWrapper {
+  public static final class FinallyPathWrapper {
     public final String source;
     public final String destination;
     public final String entry;

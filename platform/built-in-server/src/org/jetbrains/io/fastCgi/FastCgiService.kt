@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.fastCgi
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.addChannelListener
 import com.intellij.util.io.handler
 import io.netty.bootstrap.Bootstrap
@@ -14,7 +14,10 @@ import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.SingleConnectionNetService
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.errorIfNotMessage
-import org.jetbrains.io.*
+import org.jetbrains.io.ChannelExceptionHandler
+import org.jetbrains.io.MessageDecoder
+import org.jetbrains.io.NettyUtil
+import org.jetbrains.io.send
 import java.util.concurrent.atomic.AtomicInteger
 
 internal val LOG = logger<FastCgiService>()
@@ -22,7 +25,7 @@ internal val LOG = logger<FastCgiService>()
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
 abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
   private val requestIdCounter = AtomicInteger()
-  private val requests = ContainerUtil.createConcurrentIntObjectMap<ClientInfo>()
+  private val requests = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ClientInfo>()
 
   override fun configureBootstrap(bootstrap: Bootstrap, errorOutputConsumer: Consumer<String>) {
     bootstrap.handler {
@@ -126,7 +129,6 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     val httpResponse = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buffer)
     try {
       parseHeaders(httpResponse, buffer)
-      httpResponse.addServer()
       if (!HttpUtil.isContentLengthSet(httpResponse)) {
         HttpUtil.setContentLength(httpResponse, buffer.readableBytes().toLong())
       }
@@ -158,6 +160,7 @@ private fun sendBadGateway(channel: Channel, extraHeaders: HttpHeaders) {
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
   val builder = StringBuilder()
   while (buffer.isReadable) {
@@ -192,7 +195,7 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
 
     // skip standard headers
     @Suppress("SpellCheckingInspection")
-    if (key.isNullOrEmpty() || key!!.startsWith("http", ignoreCase = true) || key.startsWith("X-Accel-", ignoreCase = true)) {
+    if (key.isNullOrEmpty() || key.startsWith("http", ignoreCase = true) || key.startsWith("X-Accel-", ignoreCase = true)) {
       continue
     }
 

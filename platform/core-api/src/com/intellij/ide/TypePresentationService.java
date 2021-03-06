@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +17,7 @@ import javax.swing.*;
 public abstract class TypePresentationService {
 
   public static TypePresentationService getService() {
-    return ServiceManager.getService(TypePresentationService.class);
+    return ApplicationManager.getApplication().getService(TypePresentationService.class);
   }
 
   @Nullable
@@ -26,17 +27,17 @@ public abstract class TypePresentationService {
   public abstract Icon getTypeIcon(Class type);
 
   @Nullable
-  public abstract String getTypePresentableName(Class type);
+  public abstract @NlsSafe String getTypePresentableName(Class type);
 
   @Nullable
-  public abstract String getTypeName(@NotNull Object o);
+  public abstract @NlsSafe String getTypeName(@NotNull Object o);
 
   @ApiStatus.Internal
   @Nullable
-  public abstract String getObjectName(@NotNull Object o);
+  public abstract @NlsSafe String getObjectName(@NotNull Object o);
 
   @NotNull
-  public static String getDefaultTypeName(@NotNull Class aClass) {
+  public static @NlsSafe String getDefaultTypeName(@NotNull Class aClass) {
     String simpleName = aClass.getSimpleName();
     final int i = simpleName.indexOf('$');
     if (i >= 0) {

@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.lang.Language;
@@ -14,7 +14,7 @@ import kotlin.Triple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class LiveTemplateRunLogger {
+final class LiveTemplateRunLogger {
   private static final String GROUP = "live.templates";
 
   static void log(@NotNull Project project, @NotNull TemplateImpl template, @NotNull Language language) {
@@ -55,6 +55,7 @@ class LiveTemplateRunLogger {
       data.addPluginInfo(plugin);
     }
     data.addData("key", keyGroupPluginToLog.getFirst());
+    data.addData("changedByUser", TemplateSettings.getInstance().differsFromDefault(template));
     return data;
   }
 
@@ -62,7 +63,7 @@ class LiveTemplateRunLogger {
     return StringUtil.isEmpty(key) || StringUtil.isEmpty(groupName);
   }
 
-  public static class LiveTemplateValidator extends CustomWhiteListRule {
+  public static class LiveTemplateValidator extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "live_template".equals(ruleId) || "live_template_group".equals(ruleId) ;

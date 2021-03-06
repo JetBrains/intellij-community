@@ -20,4 +20,4 @@ def foo(value):
 foo(None)
 foo(5)
 foo("5")
-foo(<warning descr="Unexpected type(s):(object)Possible types:(None)(int)(str)">object()</warning>)
+foo(<warning descr="Unexpected type(s):(object)Possible type(s):(None)(int)(str)">object()</warning>)

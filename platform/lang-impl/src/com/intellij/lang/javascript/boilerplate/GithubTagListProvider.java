@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.ImmutableSet;
@@ -24,6 +10,7 @@ import com.google.gson.JsonParser;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.util.ui.UIUtil;
@@ -80,9 +67,9 @@ public class GithubTagListProvider {
         return;
       }
       final String[] urls = formatTagListDownloadUrls();
-      String firstErrorMessage = null;
+      @NlsContexts.DialogMessage String firstErrorMessage = null;
       for (String url : urls) {
-        String errorMessage;
+        @NlsContexts.DialogMessage String errorMessage;
         try {
           final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
           LOG.info(getGeneratorName() + "Cache has been successfully updated");
@@ -90,11 +77,11 @@ public class GithubTagListProvider {
           return;
         }
         catch (IOException e) {
-          errorMessage = "Can not fetch tags from " + url;
+          errorMessage = LangBundle.message("dialog.message.can.not.fetch.tags.from", url);
           LOG.warn(getGeneratorName() + errorMessage, e);
         }
         catch (GeneratorException e) {
-          errorMessage = "Malformed JSON received from " + url;
+          errorMessage = LangBundle.message("dialog.message.malformed.json.received.from", url);
           LOG.warn(getGeneratorName() + errorMessage, e);
         }
         if (firstErrorMessage == null) {
@@ -196,7 +183,7 @@ public class GithubTagListProvider {
   private String @NotNull [] formatTagListDownloadUrls() {
     return new String[] {
       "https://api.github.com/repos/" + myUserName + "/" + myRepositoryName + "/tags",
-      "http://download.jetbrains.com/idea/project_templates/github-tags/" + myUserName + "-" + myRepositoryName + "-tags.json"
+      "https://download.jetbrains.com/idea/project_templates/github-tags/" + myUserName + "-" + myRepositoryName + "-tags.json"
     };
   }
 

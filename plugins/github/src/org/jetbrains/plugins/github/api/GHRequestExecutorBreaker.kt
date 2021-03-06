@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.NlsSafe
 
 @Service
 class GHRequestExecutorBreaker {
@@ -14,13 +15,18 @@ class GHRequestExecutorBreaker {
   @Volatile
   var isRequestsShouldFail = false
 
-  class Action : ToggleAction("Break GitHub API Requests"), DumbAware, UpdateInBackground {
+  class Action : ToggleAction(actionText), DumbAware, UpdateInBackground {
     override fun isSelected(e: AnActionEvent) =
       service<GHRequestExecutorBreaker>().isRequestsShouldFail
 
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       service<GHRequestExecutorBreaker>().isRequestsShouldFail = state
+    }
+
+    companion object {
+      @NlsSafe
+      private val actionText = "Break GitHub API Requests"
     }
   }
 }

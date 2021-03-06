@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -11,7 +12,7 @@ import java.util.List;
 /**
  * @author Sergey Simonchik
  */
-public class MarkdownUtil {
+public final class MarkdownUtil {
 
   private MarkdownUtil() {}
 
@@ -135,7 +136,7 @@ public class MarkdownUtil {
     new CodeBlockProcessor(lines).process();
   }
 
-  private static class CodeBlockProcessor {
+  private static final class CodeBlockProcessor {
 
     private static final String START_TAGS = "<pre><code>";
     private static final String END_TAGS = "</code></pre>";
@@ -201,7 +202,7 @@ public class MarkdownUtil {
     new ListItemProcessor(lines).process();
   }
 
-  private static class ListItemProcessor {
+  private static final class ListItemProcessor {
 
     private final List<String> myLines;
 
@@ -302,7 +303,7 @@ public class MarkdownUtil {
     return null;
   }
 
-  private static class ListItem {
+  private static final class ListItem {
 
     private final boolean myUnordered;
     private final String myBody;

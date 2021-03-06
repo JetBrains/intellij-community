@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference
 class CurrentBranchConditionCache(private val logData: VcsLogData, parent: Disposable) : Disposable {
   private val executor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("VcsLog Current Branch Condition",
                                                                                                1)
-  private var conditions: Map<VirtualFile, AtomicReference<ConditionHolder>> = logData.roots.associateWith {
+  private val conditions: Map<VirtualFile, AtomicReference<ConditionHolder>> = logData.roots.associateWith {
     AtomicReference(ConditionHolder(Conditions.alwaysFalse(), State.OUTDATED))
   }
 
@@ -30,7 +30,7 @@ class CurrentBranchConditionCache(private val logData: VcsLogData, parent: Dispo
     if (oldCondition.isOutdated()) {
       val inProgress = oldCondition.inProgress()
       if (holder.compareAndSet(oldCondition, inProgress)) {
-        executor.submit {
+        executor.execute {
           if (holder.get() == inProgress) {
             holder.compareAndSet(inProgress, ConditionHolder(doGetContainedInCurrentBranchCondition(root), State.VALID))
           }

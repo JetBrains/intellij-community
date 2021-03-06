@@ -14,12 +14,13 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.NonNls
 import javax.swing.JList
 import javax.swing.ScrollPaneConstants
 
@@ -29,14 +30,16 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   companion object {
     private const val DIALOG_WIDTH = 600
     private const val DIALOG_HEIGHT = 400
-    private const val DIMENSION_KEY = "Vcs.Multiple.Commit.Info.Dialog.Key" // NON-NLS
-    private const val CHANGES_SPLITTER = "Vcs.Multiple.Commit.Info.Dialog.Changes.Splitter" // NON-NLS
+    @NonNls
+    private const val DIMENSION_KEY = "Vcs.Multiple.Commit.Info.Dialog.Key"
+    @NonNls
+    private const val CHANGES_SPLITTER = "Vcs.Multiple.Commit.Info.Dialog.Changes.Splitter"
   }
 
   private val commitsList = JBList<VcsCommitMetadata>()
   private val modalityState = ModalityState.stateForComponent(window)
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
-    @CalledInBackground
+    @RequiresBackgroundThread
     @Throws(VcsException::class)
     override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> = this@MultipleCommitInfoDialog.loadChanges(commits)
   }
@@ -81,7 +84,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
 
   override fun getPreferredFocusedComponent() = commitsList
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(VcsException::class)
   protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
 

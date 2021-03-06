@@ -17,46 +17,42 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Maintains an atomic immutable array of listeners of type {@code T} in sorted order according to {@link #comparator}
  * N.B. internal array is exposed for faster iterating listeners in to- and reverse order, so care should be taken for not mutating it by clients
  */
-class LockFreeCOWSortedArray<T> {
+class LockFreeCOWSortedArray<T> extends AtomicReference<T @NotNull []> {
   @NotNull private final Comparator<? super T> comparator;
-  private final ArrayFactory<T> arrayFactory;
-  /** changed by {@link #UPDATER} only */
-  @SuppressWarnings("FieldMayBeFinal")
-  private volatile T @NotNull [] listeners;
-  private static final AtomicFieldUpdater<LockFreeCOWSortedArray, Object[]> UPDATER = AtomicFieldUpdater.forFieldOfType(LockFreeCOWSortedArray.class, Object[].class);
+  private final @NotNull ArrayFactory<? extends T> arrayFactory;
 
-  LockFreeCOWSortedArray(@NotNull Comparator<? super T> comparator, @NotNull ArrayFactory<T> arrayFactory) {
+  LockFreeCOWSortedArray(@NotNull Comparator<? super T> comparator, @NotNull ArrayFactory<? extends T> arrayFactory) {
     this.comparator = comparator;
     this.arrayFactory = arrayFactory;
-    listeners = arrayFactory.create(0);
+    set(arrayFactory.create(0));
   }
 
   // returns true if changed
-  void add(@NotNull T listener) {
+  void add(@NotNull T element) {
     while (true) {
-      T[] oldListeners = listeners;
-      int i = insertionIndex(oldListeners, listener);
-      T[] newListeners = ArrayUtil.insert(oldListeners, i, listener);
-      if (UPDATER.compareAndSet(this, oldListeners, newListeners)) break;
+      T[] oldArray = get();
+      int i = insertionIndex(oldArray, element);
+      T[] newArray = ArrayUtil.insert(oldArray, i, element);
+      if (compareAndSet(oldArray, newArray)) break;
     }
   }
 
   boolean remove(@NotNull T listener) {
     while (true) {
-      T[] oldListeners = listeners;
-      T[] newListeners = ArrayUtil.remove(oldListeners, listener, arrayFactory);
+      T[] oldArray = get();
+      T[] newArray = ArrayUtil.remove(oldArray, listener, arrayFactory);
       //noinspection ArrayEquality
-      if (oldListeners == newListeners) return false;
-      if (UPDATER.compareAndSet(this, oldListeners, newListeners)) break;
+      if (oldArray == newArray) return false;
+      if (compareAndSet(oldArray, newArray)) break;
     }
     return true;
   }
@@ -72,6 +68,6 @@ class LockFreeCOWSortedArray<T> {
   }
 
   T @NotNull [] getArray() {
-    return listeners;
+    return get();
   }
 }

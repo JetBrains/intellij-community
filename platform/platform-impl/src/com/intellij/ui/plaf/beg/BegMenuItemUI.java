@@ -1,5 +1,5 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -9,10 +9,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -33,7 +37,7 @@ import java.lang.reflect.Method;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public class BegMenuItemUI extends BasicMenuItemUI {
+public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle b = new Rectangle(0, 0, 0, 0);
   private static final Rectangle j = new Rectangle();
   private static final Rectangle d = new Rectangle();
@@ -106,12 +110,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     g.setFont(font1);
     FontMetrics fontmetrics = g.getFontMetrics(font1);
     FontMetrics fontmetrics1 = g.getFontMetrics(acceleratorFont);
-    String keyStrokeText;
-    if (jmenuitem instanceof ActionMenuItem) {
-      keyStrokeText = ((ActionMenuItem)jmenuitem).getFirstShortcutText();
-    }else{
-      keyStrokeText = getKeyStrokeText(jmenuitem.getAccelerator());
-    }
+    String keyStrokeText = getKeyStrokeText(jmenuitem);
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
     if (comp.isOpaque() || (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
@@ -136,8 +135,8 @@ public class BegMenuItemUI extends BasicMenuItemUI {
       else{
         g.setColor(jmenuitem.getForeground());
       }
-      if (useCheckAndArrow()){
-        icon2.paintIcon(comp, g, h.x, h.y);
+      if (useCheckAndArrow()) {
+        IconUtil.paintSelectionAwareIcon(icon2, jmenuitem, g, h.x, h.y, isSelected(jmenuitem));
       }
       g.setColor(color2);
       if (menuItem.isArmed()){
@@ -155,8 +154,8 @@ public class BegMenuItemUI extends BasicMenuItemUI {
             icon1 = jmenuitem.getIcon();
           }
         }
-      if (icon1 != null){
-        icon1.paintIcon(comp, g, l.x, l.y);
+      if (icon1 != null) {
+        IconUtil.paintSelectionAwareIcon(icon1, jmenuitem, g, l.x, l.y, isSelected(jmenuitem));
       }
     }
     if (s1 != null && s1.length() > 0){
@@ -223,24 +222,26 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     g.setFont(font);
   }
 
+  private static @NlsSafe String getKeyStrokeText(@NotNull JMenuItem item) {
+    return item instanceof ActionMenuItem
+           ? ((ActionMenuItem)item).getFirstShortcutText()
+           : getKeyStrokeText(item.getAccelerator());
+  }
+
+  @NlsSafe
   private static String getKeyStrokeText(KeyStroke keystroke) {
     String s1 = "";
     if (keystroke != null){
       int j1 = keystroke.getModifiers();
       if (j1 > 0){
-        if (SystemInfo.isMac) {
+        if (SystemInfoRt.isMac) {
           try {
             Class<?> appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
             Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT, int.class, boolean.class);
             s1 = (String)getModifiers.invoke(appleLaf, new Object[] {new Integer(j1), Boolean.FALSE});
           }
           catch (Exception e) {
-            if (SystemInfo.isMacOSLeopard) {
-              s1 = KeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
-            }
-            else {
-              s1 = KeyEvent.getKeyModifiersText(j1) + '+';
-            }
+            s1 = KeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
           }
         }
         else {
@@ -296,9 +297,9 @@ public class BegMenuItemUI extends BasicMenuItemUI {
 
   private String layoutMenuItem(
     FontMetrics fontmetrics,
-    String text,
+    @NlsContexts.Command String text,
     FontMetrics fontmetrics1,
-    String keyStrokeText,
+    @NlsContexts.Label String keyStrokeText,
     Icon icon,
     Icon checkIcon,
     Icon arrowIcon,
@@ -387,12 +388,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     Icon icon1 = getIcon();
     Icon icon2 = getAllowedIcon();
     String text = jmenuitem.getText();
-    String keyStrokeText;
-    if (jmenuitem instanceof ActionMenuItem) {
-      keyStrokeText = ((ActionMenuItem)jmenuitem).getFirstShortcutText();
-    }else{
-      keyStrokeText = getKeyStrokeText(jmenuitem.getAccelerator());
-    }
+    String keyStrokeText = getKeyStrokeText(jmenuitem);
     Font font = jmenuitem.getFont();
     FontMetrics fontmetrics = comp.getFontMetrics(font);
     FontMetrics fontmetrics1 = comp.getFontMetrics(acceleratorFont);
@@ -495,7 +491,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
           // pass off firing the Action to a utility method
           BasicLookAndFeel lf=(BasicLookAndFeel)UIManager.getLookAndFeel();
           // It's a hack. The method BasicLookAndFeel.playSound has protected access, so
-          // it's imposible to mormally invoke it.
+          // it's impossible to normally invoke it.
           try {
             Method playSoundMethod=BasicLookAndFeel.class.getDeclaredMethod(PLAY_SOUND_METHOD, Action.class);
             playSoundMethod.setAccessible(true);
@@ -513,7 +509,9 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
-    msm.clearSelectedPath();
+    if (action == null || !action.getTemplatePresentation().isMultipleChoice()) {
+      msm.clearSelectedPath();
+    }
     item.fireActionPerformed(
       new ActionEvent(
         menuItem,
@@ -523,6 +521,14 @@ public class BegMenuItemUI extends BasicMenuItemUI {
         e.getModifiers()
       )
     );
+    if (action != null && action.getTemplatePresentation().isMultipleChoice()) {
+      Container parent = item.getParent();
+      if (parent instanceof JComponent) {
+        //Fake event to trigger update in ActionPopupMenuImpl.MyMenu
+        //noinspection HardCodedStringLiteral
+        ((JComponent)parent).putClientProperty("updateChildren", System.currentTimeMillis());
+      }
+    }
   }
 
   @Override

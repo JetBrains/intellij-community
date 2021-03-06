@@ -17,14 +17,18 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
+import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 /**
  * Represents the application-level settings (JDKs and global libraries) required for an external build.
  *
- * @see org.jetbrains.jps.model.JpsModel#getGlobal()
+ * @see JpsModel#getGlobal()
  */
 public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<JpsGlobal> {
   @NotNull
@@ -43,4 +47,9 @@ public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<
 
   @NotNull
   JpsFileTypesConfiguration getFileTypesConfiguration();
+
+  @NotNull
+  JpsPathMapper getPathMapper();
+
+  void setPathMapper(@NotNull JpsPathMapper pathMapper);
 }

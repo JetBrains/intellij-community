@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
+import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -9,16 +10,21 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ResourceUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import static com.intellij.DynamicBundle.findLanguageBundle;
 
 /**
  * @author Dmitry Avdeev
@@ -98,7 +104,31 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public boolean isApplicable(@NotNull Language language) {
     String langId = getLanguage();
-    return langId == null || language.getID().equals(langId) || applyToDialects() && language.isKindOf(langId);
+    return isApplicable(language, langId);
+  }
+
+  private boolean isApplicable(@NotNull Language language, String toolLang) {
+    if (toolLang == null) {
+      return true;
+    }
+    if (language.getID().equals(toolLang)) {
+      return true;
+    }
+    if (applyToDialects()) {
+      if (language.isKindOf(toolLang)) {
+        return true;
+      }
+
+      Language toolLanguage = Language.findLanguageByID(toolLang);
+      if (toolLanguage instanceof MetaLanguage) {
+        for (Language lang : ((MetaLanguage)toolLanguage).getMatchingLanguages()) {
+          if (isApplicable(language, lang.getID())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public boolean isCleanupTool() {
@@ -115,6 +145,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getDisplayName() {
     if (myEP == null) {
       return getTool().getDisplayName();
@@ -126,6 +157,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @NotNull
+  @Nls
   public String getGroupDisplayName() {
     if (myEP == null) {
       return getTool().getGroupDisplayName();
@@ -145,7 +177,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();
   }
 
-  public String @NotNull [] getGroupPath() {
+  public @Nls String @NotNull [] getGroupPath() {
     if (myEP == null) {
       return getTool().getGroupPath();
     }
@@ -155,15 +187,16 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
-  public String getStaticDescription() {
+  public @Nls String getStaticDescription() {
     return myEP == null || myEP.hasStaticDescription ? getTool().getStaticDescription() : null;
   }
 
-  public String loadDescription() {
+  public @Nls String loadDescription() {
     final String description = getStaticDescription();
     if (description != null) return description;
     try {
       InputStream descriptionStream = getDescriptionStream();
+      //noinspection HardCodedStringLiteral(IDEA-249976)
       return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) { }
@@ -175,11 +208,28 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     Application app = ApplicationManager.getApplication();
     String fileName = getDescriptionFileName();
 
+    InputStream langStream = getLanguagePluginStream(fileName);
+    if (langStream != null) return langStream;
+
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
     }
 
     return myEP.getPluginDescriptor().getPluginClassLoader().getResourceAsStream("inspectionDescriptions/" + fileName);
+  }
+
+  @Nullable
+  private static InputStream getLanguagePluginStream(@NotNull String fileName) {
+    DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
+    if (langBundle == null) return null;
+
+    PluginDescriptor langPluginDescriptor = langBundle.pluginDescriptor;
+    if (langPluginDescriptor == null) return null;
+
+    ClassLoader classLoader = langPluginDescriptor.getPluginClassLoader();
+    if (classLoader == null) return null;
+
+    return classLoader.getResourceAsStream("inspectionDescriptions/" + fileName);
   }
 
   @NotNull

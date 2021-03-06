@@ -11,7 +11,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,22 +46,6 @@ public class JsonBlock implements ASTBlock {
 
   private final Alignment myPropertyValueAlignment;
   private final Wrap myChildWrap;
-
-  /**
-   * @deprecated Please use overload with settings JsonCodeStyleSettings and spacingBuilder.
-   * Getting settings should be done only for the root block.
-   */
-  @Deprecated
-  @SuppressWarnings("unused") //used externally
-  public JsonBlock(@Nullable JsonBlock parent,
-                   @NotNull ASTNode node,
-                   @NotNull CodeStyleSettings settings,
-                   @Nullable Alignment alignment,
-                   @NotNull Indent indent,
-                   @Nullable Wrap wrap) {
-    this(parent, node, settings.getCustomSettings(JsonCodeStyleSettings.class), alignment, indent, wrap,
-         JsonFormattingBuilderModel.createSpacingBuilder(settings));
-  }
 
   public JsonBlock(@Nullable JsonBlock parent,
                    @NotNull ASTNode node,

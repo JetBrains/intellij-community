@@ -12,9 +12,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.ParseException;
 import java.util.Objects;
@@ -27,7 +31,7 @@ import java.util.regex.Pattern;
  * The class is able to distinct MSYS and CYGWIN Gits under Windows assuming that msysgit adds the 'msysgit' suffix to the output
  * of the 'git version' command.
  * This is not a very good way to distinguish msys and cygwin since in old versions of msys they didn't add the suffix.
- *
+ * <p>
  * Note: this class has a natural ordering that is inconsistent with equals.
  */
 public final class GitVersion implements Comparable<GitVersion> {
@@ -40,7 +44,11 @@ public final class GitVersion implements Comparable<GitVersion> {
     UNIX,
     MSYS,
     CYGWIN,
-    /** The type doesn't matter or couldn't be detected. */
+    WSL1,
+    WSL2,
+    /**
+     * The type doesn't matter or couldn't be detected.
+     */
     UNDEFINED,
     /**
      * Information about Git version is unavailable because the GitVcs hasn't fully initialized yet, or because Git executable is invalid.
@@ -52,7 +60,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * The minimal supported version
    */
   public static final GitVersion MIN = SystemInfo.isWindows ? new GitVersion(2, 4, 0, 0)
-                                                              : new GitVersion(1, 8, 0, 0);
+                                                            : new GitVersion(1, 8, 0, 0);
 
   /**
    * Special version with a special Type which indicates, that Git version information is unavailable.
@@ -89,11 +97,16 @@ public final class GitVersion implements Comparable<GitVersion> {
     this(major, minor, revision, patchLevel, Type.UNDEFINED);
   }
 
+  @NotNull
+  public static GitVersion parse(@NotNull String output) throws ParseException {
+    return parse(output, null);
+  }
+
   /**
    * Parses output of "git version" command.
    */
   @NotNull
-  public static GitVersion parse(@NotNull String output) throws ParseException {
+  public static GitVersion parse(@NotNull String output, @Nullable Type type) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
     }
@@ -106,19 +119,20 @@ public final class GitVersion implements Comparable<GitVersion> {
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
 
-    Type type;
-    if (SystemInfo.isWindows) {
-      String suffix = getStringGroup(m, 5);
-      if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
-          StringUtil.toLowerCase(suffix).contains("windows")) {
-        type = Type.MSYS;
+    if (type == null) {
+      if (SystemInfo.isWindows) {
+        String suffix = getStringGroup(m, 5);
+        if (StringUtil.toLowerCase(suffix).contains("msysgit") || //NON-NLS
+            StringUtil.toLowerCase(suffix).contains("windows")) { //NON-NLS
+          type = Type.MSYS;
+        }
+        else {
+          type = Type.CYGWIN;
+        }
       }
       else {
-        type = Type.CYGWIN;
+        type = Type.UNIX;
       }
-    }
-    else {
-      type = Type.UNIX;
     }
 
     return new GitVersion(major, minor, rev, patch, type);
@@ -155,6 +169,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * or {@link GitExecutableManager#getVersion(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -179,8 +194,7 @@ public final class GitVersion implements Comparable<GitVersion> {
       try {
         parse(result.getStdout());
       } catch (ParseException pe) {
-        throw new ExecutionException("Errors while executing git --version. exitCode=" + result.getExitCode() +
-                                     " errors: " + result.getStderr());
+        throw new ExecutionException(GitBundle.message("error.git.version.check.failed", result.getExitCode(), result.getStderr()), pe);
       }
     }
     return parse(result.getStdout());
@@ -190,7 +204,10 @@ public final class GitVersion implements Comparable<GitVersion> {
    * @return true if the version is supported by the plugin
    */
   public boolean isSupported() {
-    return getType() != Type.NULL && compareTo(MIN) >= 0;
+    Type type = getType();
+    return type != Type.NULL &&
+           (Registry.is("git.allow.wsl1.executables") || type != Type.WSL1) &&
+           compareTo(MIN) >= 0;
   }
 
   /**

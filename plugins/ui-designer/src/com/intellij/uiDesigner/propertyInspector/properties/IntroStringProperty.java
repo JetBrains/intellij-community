@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.IProperty;
@@ -14,7 +15,6 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -201,7 +201,8 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
       if (delegee instanceof JLabel) {
         final JLabel label = (JLabel)delegee;
-        label.setText(textWithMnemonic.myText);
+        @NlsSafe String text = textWithMnemonic.myText;
+        label.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
           label.setDisplayedMnemonic(textWithMnemonic.getMnemonicChar());
           label.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
@@ -212,7 +213,8 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       }
       else if (delegee instanceof AbstractButton) {
         final AbstractButton button = (AbstractButton)delegee;
-        button.setText(textWithMnemonic.myText);
+        @NlsSafe String text = textWithMnemonic.myText;
+        button.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
           button.setMnemonic(textWithMnemonic.getMnemonicChar());
           button.setDisplayedMnemonicIndex(textWithMnemonic.myMnemonicIndex);
@@ -275,17 +277,5 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,
                                  UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
                                  UIFormXmlConstants.ATTRIBUTE_KEY);
-  }
-
-  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    try {
-      Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      if (value != null) {
-        setValue(radComponent, stringDescriptorFromValue(null, component));
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
   }
 }

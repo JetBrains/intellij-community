@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
@@ -10,13 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Cloner;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +25,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiPredicate;
 
-public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
-  private static final Namer<Couple<TemplateResource>> NAMER = new Namer<Couple<TemplateResource>>() {
+public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
+  private static final Namer<Couple<TemplateResource>> NAMER = new Namer<>() {
 
     @Override
     public String getName(Couple<TemplateResource> couple) {
@@ -52,7 +49,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   private static final Factory<Couple<TemplateResource>> FACTORY = () -> Couple.of(new TemplateResource(), new TemplateResource());
 
-  private static final Cloner<Couple<TemplateResource>> CLONER = new Cloner<Couple<TemplateResource>>() {
+  private static final Cloner<Couple<TemplateResource>> CLONER = new Cloner<>() {
     @Override
     public Couple<TemplateResource> cloneOf(Couple<TemplateResource> couple) {
       if (couple.first.isDefault()) return couple;
@@ -73,16 +70,17 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     }
   };
 
-  private static final Equality<Couple<TemplateResource>> COMPARER = new Equality<Couple<TemplateResource>>() {
-    @Override
-    public boolean equals(Couple<TemplateResource> o1, Couple<TemplateResource> o2) {
-      return equals(o1.first, o2.first) && equals(o1.second, o2.second);
-    }
+  private static final BiPredicate<Pair<TemplateResource, TemplateResource>, Pair<TemplateResource, TemplateResource>> COMPARER =
+    new BiPredicate<>() {
+      @Override
+      public boolean test(Pair<TemplateResource, TemplateResource> o1, Pair<TemplateResource, TemplateResource> o2) {
+        return equals(o1.first, o2.first) && equals(o1.second, o2.second);
+      }
 
-    private boolean equals(TemplateResource r1, TemplateResource r2) {
-      return Objects.equals(r1.getTemplate(), r2.getTemplate()) && Objects.equals(r1.getFileName(), r2.getFileName());
-    }
-  };
+      private boolean equals(TemplateResource r1, TemplateResource r2) {
+        return Objects.equals(r1.getTemplate(), r2.getTemplate()) && Objects.equals(r1.getFileName(), r2.getFileName());
+      }
+    };
   private final Project myProject;
   private final EqualsHashCodeTemplatesManager myManager;
 
@@ -99,8 +97,18 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   }
 
   @Override
-  protected String subjDisplayName() {
-    return "template";
+  protected String getCopyDialogTitle() {
+    return JavaBundle.message("dialog.title.copy.template");
+  }
+
+  @Override
+  protected String getCreateNewDialogTitle() {
+    return JavaBundle.message("dialog.title.create.new.template");
+  }
+
+  @Override
+  protected @NlsContexts.Label String getNewLabelText() {
+    return JavaBundle.message("label.new.template.name");
   }
 
   @Override
@@ -125,9 +133,8 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     final GenerateTemplateConfigurable equalsConfigurable = new GenerateTemplateConfigurable(item.first, GenerateEqualsHelper.getEqualsImplicitVars(myProject), myProject);
     final GenerateTemplateConfigurable hashCodeConfigurable = new GenerateTemplateConfigurable(item.second, GenerateEqualsHelper.getHashCodeImplicitVars(), myProject);
     return new UnnamedConfigurable() {
-      @Nullable
       @Override
-      public JComponent createComponent() {
+      public @NotNull JComponent createComponent() {
         final Splitter splitter = new Splitter(true);
 
         final JPanel eqPanel = new JPanel(new BorderLayout());

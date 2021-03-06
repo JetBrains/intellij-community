@@ -2,6 +2,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -11,6 +12,7 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A method visitor to be used in [UastVisitor].
  */
 interface UMethod : UDeclaration, PsiMethod {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiMethod
 
   override val javaPsi: PsiMethod
@@ -88,6 +90,7 @@ interface UMethod : UDeclaration, PsiMethod {
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnnotationMethod
 
   /**
@@ -110,4 +113,5 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
 }
 
 @Deprecated("no more needed, use UMethod", ReplaceWith("UMethod"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 interface UMethodTypeSpecific : UMethod

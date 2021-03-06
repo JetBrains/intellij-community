@@ -1,16 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -23,45 +27,47 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes 
- * (font style, foreground and background color, effect type and color).  
+ * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes
+ * (font style, foreground and background color, effect type and color).
  */
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
 
-  public static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = (o1, o2) -> {
-    final int result = LayerComparator.INSTANCE.compare(o1, o2);
-    if (result != 0) {
+  public static Comparator<RangeHighlighterEx> createByLayerThenByAttributesComparator(EditorColorsScheme scheme) {
+    return (o1, o2) -> {
+      final int result = LayerComparator.INSTANCE.compare(o1, o2);
+      if (result != 0) {
+        return result;
+      }
+
+      // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
+      // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
+      // while the other one has only foreground color). See IDEA-85697 for concrete example.
+      final TextAttributes a1 = o1.getTextAttributes(scheme);
+      final TextAttributes a2 = o2.getTextAttributes(scheme);
+      if (a1 == null ^ a2 == null) {
+        return a1 == null ? 1 : -1;
+      }
+
+      if (a1 == null) {
+        return result;
+      }
+
+      final Color fore1 = a1.getForegroundColor();
+      final Color fore2 = a2.getForegroundColor();
+      if (fore1 == null ^ fore2 == null) {
+        return fore1 == null ? 1 : -1;
+      }
+
+      final Color back1 = a1.getBackgroundColor();
+      final Color back2 = a2.getBackgroundColor();
+      if (back1 == null ^ back2 == null) {
+        return back1 == null ? 1 : -1;
+      }
+
       return result;
-    }
-
-    // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
-    // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
-    // while the other one has only foreground color). See IDEA-85697 for concrete example.
-    final TextAttributes a1 = o1.getTextAttributes();
-    final TextAttributes a2 = o2.getTextAttributes();
-    if (a1 == null ^ a2 == null) {
-      return a1 == null ? 1 : -1;
-    }
-
-    if (a1 == null) {
-      return result;
-    }
-
-    final Color fore1 = a1.getForegroundColor();
-    final Color fore2 = a2.getForegroundColor();
-    if (fore1 == null ^ fore2 == null) {
-      return fore1 == null ? 1 : -1;
-    }
-
-    final Color back1 = a1.getBackgroundColor();
-    final Color back2 = a2.getBackgroundColor();
-    if (back1 == null ^ back2 == null) {
-      return back1 == null ? 1 : -1;
-    }
-
-    return result;
-  };
+    };
+  }
 
   private static final Comparator<RangeHighlighterEx> BY_AFFECTED_END_OFFSET_REVERSED =
     (r1, r2) -> r2.getAffectedAreaEndOffset() - r1.getAffectedAreaEndOffset();
@@ -140,10 +146,11 @@ public class IterationState {
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
-    myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    myView = new HighlighterSweep(scheme, editorMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
     MarkupModelEx docMarkup = editor.getFilteredDocumentMarkupModel();
-    myDoc = new HighlighterSweep(docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
+    myDoc = new HighlighterSweep(scheme, docMarkup, start, myEnd, useOnlyFullLineHighlighters, useOnlyFontOrForegroundAffectingHighlighters);
 
     myEndOffset = myStartOffset;
 
@@ -188,16 +195,22 @@ public class IterationState {
     advance();
   }
 
-  private class HighlighterSweep {
+  private final class HighlighterSweep {
     private final MarkupModelEx myMarkupModel;
+    private final EditorColorsScheme myColorsScheme;
     private final boolean myOnlyFullLine;
     private final boolean myOnlyFontOrForegroundAffecting;
     private RangeHighlighterEx myNextHighlighter;
     int i;
     private final RangeHighlighterEx[] highlighters;
 
-    private HighlighterSweep(@NotNull MarkupModelEx markupModel, int start, int end, 
-                             final boolean onlyFullLine, final boolean onlyFontOrForegroundAffecting) {
+    private HighlighterSweep(@NotNull EditorColorsScheme scheme,
+                             @NotNull MarkupModelEx markupModel,
+                             int start,
+                             int end,
+                             final boolean onlyFullLine,
+                             final boolean onlyFontOrForegroundAffecting) {
+      myColorsScheme = scheme;
       myMarkupModel = markupModel;
       myOnlyFullLine = onlyFullLine;
       myOnlyFontOrForegroundAffecting = onlyFontOrForegroundAffecting;
@@ -205,13 +218,14 @@ public class IterationState {
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<>();
       markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, myReverseIteration ? start : end,
-                                                          new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
+                                                          new CommonProcessors.CollectProcessor<>(list) {
                                                             @Override
                                                             protected boolean accept(RangeHighlighterEx ex) {
-                                                              return (!onlyFullLine || 
-                                                                      ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) && 
+                                                              return (!onlyFullLine ||
+                                                                      ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
                                                                      (!onlyFontOrForegroundAffecting ||
-                                                                      EditorUtil.attributesImpactFontStyleOrColor(ex.getTextAttributes()));
+                                                                      EditorUtil.attributesImpactFontStyleOrColor(
+                                                                        ex.getTextAttributes(myColorsScheme)));
                                                             }
                                                           });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(RangeHighlighterEx.EMPTY_ARRAY);
@@ -268,7 +282,7 @@ public class IterationState {
       }
       myMarkupModel.processRangeHighlightersOverlappingWith(offset, offset, h -> {
         if ((!myOnlyFullLine || h.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) &&
-            (!myOnlyFontOrForegroundAffecting || EditorUtil.attributesImpactFontStyleOrColor(h.getTextAttributes())) &&
+            (!myOnlyFontOrForegroundAffecting || EditorUtil.attributesImpactFontStyleOrColor(h.getTextAttributes(myColorsScheme))) &&
             !skipHighlighter(h)) {
           myCurrentHighlighters.add(h);
         }
@@ -285,7 +299,7 @@ public class IterationState {
   }
 
   private boolean skipHighlighter(@NotNull RangeHighlighterEx highlighter) {
-    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes() == null) return true;
+    if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes(myEditor.getColorsScheme()) == null) return true;
     final FoldRegion region = myFoldingModel == null ? null :
                               myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
     if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
@@ -555,13 +569,13 @@ public class IterationState {
 
     final int size = myCurrentHighlighters.size();
     if (size > 1) {
-      ContainerUtil.quickSort(myCurrentHighlighters, BY_LAYER_THEN_ATTRIBUTES);
+      ContainerUtil.quickSort(myCurrentHighlighters, createByLayerThenByAttributesComparator(myEditor.getColorsScheme()));
     }
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
-      if (highlighter.getTextAttributes() == TextAttributes.ERASE_MARKER) {
+      if (highlighter.getTextAttributes(myEditor.getColorsScheme()) == TextAttributes.ERASE_MARKER) {
         syntax = null;
       }
     }
@@ -601,7 +615,7 @@ public class IterationState {
         syntax = null;
       }
 
-      TextAttributes textAttributes = highlighter.getTextAttributes();
+      TextAttributes textAttributes = highlighter.getTextAttributes(myEditor.getColorsScheme());
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
         cachedAttributes.add(textAttributes);
       }
@@ -738,7 +752,7 @@ public class IterationState {
     }
   }
 
-  public static class CaretData {
+  public static final class CaretData {
     private final int caretRowStart;
     private final int caretRowEnd;
     private final int[] selectionStarts;

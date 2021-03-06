@@ -17,6 +17,7 @@ package com.intellij.remoteServer.configuration.deployment;
 
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
   public abstract D createDefaultConfiguration(@NotNull DeploymentSource source);
 
   @Nullable
-  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<S> server);
+  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source, @Nullable RemoteServer<S> server);
 
   /**
    * @see LocatableConfiguration#isGeneratedName()
@@ -40,16 +41,6 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
   public boolean isGeneratedConfigurationName(@NotNull String name,
                                               @NotNull DeploymentSource deploymentSource,
                                               @NotNull D deploymentConfiguration) {
-    return isGeneratedConfigurationName(name, deploymentSource);
-  }
-
-  /**
-   * @see LocatableConfiguration#isGeneratedName()
-   * @deprecated Since 2017.3, subclasses should directly override {@link
-   * #isGeneratedConfigurationName(String, DeploymentSource, DeploymentConfiguration)}
-   */
-  @Deprecated
-  protected boolean isGeneratedConfigurationName(@NotNull String name, @NotNull DeploymentSource deploymentSource) {
     return false;
   }
 
@@ -57,18 +48,7 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, 
    * @see LocatableConfiguration#suggestedName()
    */
   @Nullable
-  public String suggestConfigurationName(@NotNull DeploymentSource deploymentSource, @NotNull D deploymentConfiguration) {
-    return suggestConfigurationName(deploymentSource);
-  }
-
-  /**
-   * @see LocatableConfiguration#suggestedName()
-   * @deprecated Since 2017.3, subclasses should directly override {@link
-   * {@link #suggestConfigurationName(DeploymentSource, DeploymentConfiguration)}
-   */
-  @Deprecated
-  @Nullable
-  protected String suggestConfigurationName(@NotNull DeploymentSource deploymentSource) {
+  public @NlsActions.ActionText String suggestConfigurationName(@NotNull DeploymentSource deploymentSource, @NotNull D deploymentConfiguration) {
     return null;
   }
 }

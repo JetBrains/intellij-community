@@ -1,29 +1,52 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.util.*
 
-interface GHListLoader : Disposable {
-  @get:CalledInAwt
+interface GHListLoader<T> : Disposable {
+  @get:RequiresEdt
   val loading: Boolean
-  @get:CalledInAwt
+
+  @get:RequiresEdt
   val error: Throwable?
-  @get:CalledInAwt
+
+  @get:RequiresEdt
+  val loadedData: List<T>
+
+  @Deprecated("Use loadedData", replaceWith = ReplaceWith("loadedData.isNotEmpty()"))
+  @get:RequiresEdt
   val hasLoadedItems: Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun canLoadMore(): Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadMore(update: Boolean = false)
 
-  @CalledInAwt
+  @RequiresEdt
+  fun updateData(item: T)
+
+  @RequiresEdt
+  fun removeData(predicate: (T) -> Boolean)
+
+  @RequiresEdt
   fun reset()
 
-  @CalledInAwt
+  @RequiresEdt
   fun addLoadingStateChangeListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
+  fun addDataListener(disposable: Disposable, listener: ListDataListener)
+
+  @RequiresEdt
   fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit)
+
+  interface ListDataListener : EventListener {
+    fun onDataAdded(startIdx: Int) {}
+    fun onDataUpdated(idx: Int) {}
+    fun onDataRemoved(data: Any) {}
+    fun onAllDataRemoved() {}
+  }
 }

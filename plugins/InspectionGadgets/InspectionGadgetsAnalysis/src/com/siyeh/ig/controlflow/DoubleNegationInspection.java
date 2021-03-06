@@ -18,6 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,7 +26,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +63,7 @@ public class DoubleNegationInspection extends BaseInspection {
       CommentTracker tracker = new CommentTracker();
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
-        final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
+        final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
         PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker), tracker);
       } else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
@@ -117,7 +117,7 @@ public class DoubleNegationInspection extends BaseInspection {
       if (!isNegation(operand)) {
         return;
       }
-      PsiExpression nestedOperand = ParenthesesUtils.stripParentheses(operand);
+      PsiExpression nestedOperand = PsiUtil.skipParenthesizedExprDown(operand);
       if (nestedOperand instanceof PsiPrefixExpression) {
         PsiExpression nestedPrefixOperand = ((PsiPrefixExpression)nestedOperand).getOperand();
         if (nestedPrefixOperand == null || !LambdaUtil.isSafeLambdaReturnValueReplacement(expression, nestedPrefixOperand)) {
@@ -150,7 +150,7 @@ public class DoubleNegationInspection extends BaseInspection {
   }
 
   public static boolean isNegation(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiPrefixExpression) return isUnaryNegation((PsiPrefixExpression)expression);
     if (expression instanceof PsiPolyadicExpression) return isBinaryNegation((PsiPolyadicExpression)expression);
     return false;

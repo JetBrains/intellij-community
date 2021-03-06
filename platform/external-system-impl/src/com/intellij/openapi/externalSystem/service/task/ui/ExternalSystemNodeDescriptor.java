@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +29,9 @@ import javax.swing.*;
 public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
 
   @NotNull private final T myElement;
-  @NotNull private final String myDescription;
+  @NotNull private final @Nls String myDescription;
 
-  public ExternalSystemNodeDescriptor(@NotNull T element, @NotNull String name, @NotNull String description, @Nullable Icon icon) {
+  public ExternalSystemNodeDescriptor(@NotNull T element, @NotNull String name, @NotNull @Nls String description, @Nullable Icon icon) {
     super(null, null);
     myElement = element;
     myName = name;

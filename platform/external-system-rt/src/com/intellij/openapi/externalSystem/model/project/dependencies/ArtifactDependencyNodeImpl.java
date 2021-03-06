@@ -39,16 +39,13 @@ public class ArtifactDependencyNodeImpl extends AbstractDependencyNode implement
   @NotNull
   @Override
   public String getDisplayName() {
-    return group + ':' + module + ':' + version;
+    return group + ':' + module + ':' + version; //NON-NLS
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    ArtifactDependencyNodeImpl node = (ArtifactDependencyNodeImpl)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    ArtifactDependencyNodeImpl node = (ArtifactDependencyNodeImpl)dependencyNode;
     if (!group.equals(node.group)) return false;
     if (!module.equals(node.module)) return false;
     if (!version.equals(node.version)) return false;

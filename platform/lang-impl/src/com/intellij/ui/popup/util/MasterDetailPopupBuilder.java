@@ -1,12 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -27,8 +30,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
-public class MasterDetailPopupBuilder implements MasterController {
-
+public final class MasterDetailPopupBuilder implements MasterController {
   private static final Color BORDER_COLOR = Gray._135;
 
   private final Project myProject;
@@ -132,10 +134,8 @@ public class MasterDetailPopupBuilder implements MasterController {
   }
 
   private void chooseItems(boolean withEnterOrDoubleClick) {
-    for (Object item : getSelectedItems()) {
-      if (item instanceof ItemWrapper) {
-        myDelegate.itemChosen((ItemWrapper)item, myProject, myPopup, withEnterOrDoubleClick);
-      }
+    for (ItemWrapper item : getSelectedItems()) {
+      myDelegate.itemChosen(item, myProject, myPopup, withEnterOrDoubleClick);
     }
   }
 
@@ -185,8 +185,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   @NotNull
   public JBPopup createMasterDetailPopup() {
     if (myChooserComponent instanceof JList) {
-      //noinspection unchecked
-      ((JList)myChooserComponent).setCellRenderer(new ListItemRenderer(myProject, myDelegate));
+      ((JList<?>)myChooserComponent).setCellRenderer(new ListItemRenderer(myProject, myDelegate));
     }
 
     if (myDetailView == null) {
@@ -244,8 +243,8 @@ public class MasterDetailPopupBuilder implements MasterController {
         }
       };
 
-      if ((SystemInfo.isMacOSLion || SystemInfo.isMacOSMountainLion) && !StartupUiUtil.isUnderDarcula()) {
-        final JButton done = new JButton("Done");
+      if (SystemInfoRt.isMac && !StartupUiUtil.isUnderDarcula()) {
+        JButton done = new JButton(LangBundle.message("button.done"));
         done.setOpaque(false);
         done.setMnemonic('o');
         done.addActionListener(actionListener);
@@ -258,7 +257,8 @@ public class MasterDetailPopupBuilder implements MasterController {
         });
       }
       else {
-        IconButton close = new IconButton("Close", AllIcons.Actions.Close, AllIcons.Actions.CloseHovered);
+        IconButton close = new IconButton(LangBundle.message("button.close"),
+                                          AllIcons.Actions.Close, AllIcons.Actions.CloseHovered);
         builder.setCommandButton(new InplaceButton(close, actionListener));
       }
     }
@@ -326,7 +326,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
 
   public interface Delegate {
-    @Nullable
+    @Nullable @NlsContexts.PopupTitle
     String getTitle();
 
     void handleMnemonic(KeyEvent e, Project project, JBPopup popup);
@@ -341,24 +341,20 @@ public class MasterDetailPopupBuilder implements MasterController {
     void removeSelectedItemsInTree();
   }
 
-  private static class ListItemRenderer extends JPanel implements ListCellRenderer {
-    private final Project myProject;
+  private static final class ListItemRenderer extends JPanel implements ListCellRenderer {
     private final ColoredListCellRenderer myRenderer;
-    private final Delegate myDelegate;
 
     private ListItemRenderer(Project project, Delegate delegate) {
       super(new BorderLayout());
-      myProject = project;
-      myDelegate = delegate;
 
       setBackground(UIUtil.getListBackground());
 
-      JComponent accessory = myDelegate.createAccessoryView(project);
+      JComponent accessory = delegate.createAccessoryView(project);
       if (accessory != null) {
         add(accessory, BorderLayout.WEST);
       }
 
-      myRenderer = new ItemWrapperListRenderer(myProject, accessory);
+      myRenderer = new ItemWrapperListRenderer(project, accessory);
       add(myRenderer, BorderLayout.CENTER);
     }
 

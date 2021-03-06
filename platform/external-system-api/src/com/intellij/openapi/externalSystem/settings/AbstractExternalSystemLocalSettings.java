@@ -1,19 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,16 +106,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     state.availableProjects = projects;
   }
 
-  /**
-   * @deprecated use {@link com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil#findProjectTasks(Project, ProjectSystemId, String)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  @NotNull
-  public Map<String, Collection<ExternalTaskPojo>> getAvailableTasks() {
-    return Collections.emptyMap();
-  }
-
   @NotNull
   public List<ExternalTaskExecutionInfo> getRecentTasks() {
     return ContainerUtil.notNullize(state.recentTasks);
@@ -178,6 +167,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void fillState(@NotNull State otherState) {
     otherState.recentTasks.clear();
     otherState.availableProjects = state.availableProjects;
@@ -188,10 +178,10 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
 
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
-    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = new THashMap<>();
-    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = new THashMap<>();
-    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = new THashMap<>();
-    public Map<String/* linked project path */, SyncType> projectSyncType = new THashMap<>();
+    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createSmallMemoryFootprintMap();
+    public Map<String/* linked project path */, Long/* last config modification stamp */> modificationStamps = CollectionFactory.createSmallMemoryFootprintMap();
+    public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = CollectionFactory.createSmallMemoryFootprintMap();
+    public Map<String/* linked project path */, SyncType> projectSyncType = CollectionFactory.createSmallMemoryFootprintMap();
   }
 
   public enum SyncType {

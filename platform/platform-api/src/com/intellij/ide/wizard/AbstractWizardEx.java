@@ -4,22 +4,24 @@ package com.intellij.ide.wizard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
-  private final String myTitle;
-  private final Map<Object, Integer> myStepId2Index = new HashMap<>();
-  private final Int2ObjectOpenHashMap<AbstractWizardStepEx> myIndex2Step = new Int2ObjectOpenHashMap<>();
+  private final @NlsContexts.DialogTitle String myTitle;
+  private final Object2IntMap<Object> myStepId2Index = new Object2IntOpenHashMap<>();
+  private final Int2ObjectMap<AbstractWizardStepEx> myIndex2Step = new Int2ObjectOpenHashMap<>();
 
-  public AbstractWizardEx(String title, @Nullable Project project, List<? extends AbstractWizardStepEx> steps) {
+  public AbstractWizardEx(@NlsContexts.DialogTitle String title, @Nullable Project project, List<? extends AbstractWizardStepEx> steps) {
     super(title, project);
     myTitle = title;
 
@@ -94,14 +96,14 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
   protected int getNextStep(final int step) {
     AbstractWizardStepEx stepObject = myIndex2Step.get(step);
     Object nextStepId = stepObject.getNextStepId();
-    return myStepId2Index.get(nextStepId);
+    return myStepId2Index.getInt(nextStepId);
   }
 
   @Override
   protected int getPreviousStep(final int step) {
     AbstractWizardStepEx stepObject = myIndex2Step.get(step);
     Object previousStepId = stepObject.getPreviousStepId();
-    return myStepId2Index.get(previousStepId);
+    return myStepId2Index.getInt(previousStepId);
   }
 
   @Override

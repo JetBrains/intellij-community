@@ -5,8 +5,18 @@ envy is defined as occurring when a method calls methods on another class three
 or more times. Calls to library classes, parent classes, contained or containing
 classes are not counted for purposes of this inspection. Feature
 envy is often an indication that functionality is located in the wrong class.
+<p>Example:</p>
+<pre>
+class JobManager {
+  // Warning: this method calls three methods of the Job class
+  // It would be better to move this chain of calls to the Job class itself.
+  void performJob(Job job) {
+    job.beforeStart();
+    job.process();
+    job.afterProcessing();
+  }
+}
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

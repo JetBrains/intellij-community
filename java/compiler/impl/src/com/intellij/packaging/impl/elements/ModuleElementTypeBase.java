@@ -28,15 +28,17 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ModuleElementTypeBase<E extends ModulePackagingElementBase> extends PackagingElementType<E> {
-  public ModuleElementTypeBase(String id, String presentableName) {
+  public ModuleElementTypeBase(String id, Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     super(id, presentableName);
   }
 

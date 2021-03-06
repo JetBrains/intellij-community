@@ -16,7 +16,9 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,7 +69,7 @@ interface AbstractDialog extends Disposable {
 
   Dimension getSize();
 
-  String getTitle();
+  @NlsContexts.DialogTitle String getTitle();
 
   void pack();
 
@@ -79,7 +81,7 @@ interface AbstractDialog extends Disposable {
 
   void setSize(int width, int height);
 
-  void setTitle(String title);
+  void setTitle(@NlsContexts.DialogTitle String title);
 
   boolean isResizable();
 

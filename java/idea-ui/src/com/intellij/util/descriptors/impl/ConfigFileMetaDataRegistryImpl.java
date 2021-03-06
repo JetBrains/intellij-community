@@ -63,4 +63,14 @@ public class ConfigFileMetaDataRegistryImpl implements ConfigFileMetaDataRegistr
     }
     myCachedMetaData = null;
   }
+
+  @Override
+  public void unregisterMetaData(@NotNull ConfigFileMetaData metaData) {
+    boolean changed = myMetaData.remove(metaData);
+    ConfigFileMetaData actual = myId2MetaData.remove(metaData.getId());
+    changed |= (actual != null);
+    if (changed) {
+      myCachedMetaData = null;
+    }
+  }
 }

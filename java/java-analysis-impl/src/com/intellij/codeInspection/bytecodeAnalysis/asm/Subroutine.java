@@ -28,8 +28,7 @@ public class Subroutine {
   public Subroutine copy() {
     Subroutine result = new Subroutine();
     result.start = start;
-    result.access = new boolean[access.length];
-    System.arraycopy(access, 0, result.access, 0, access.length);
+    result.access = access.clone();
     result.callers = new ArrayList<>(callers);
     return result;
   }

@@ -24,7 +24,7 @@ import com.jetbrains.toolWindowWithActions.WindowWithActions
 
 /**
  * Displays command-line console for user.
- * Start with [createConsole]
+ * Start with ``createConsole``.
  * @author Ilya.Kazakevich
  */
 

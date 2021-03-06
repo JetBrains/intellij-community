@@ -38,7 +38,7 @@ componentConstrains:
     spanX: INF
     wrap: true
   'JBTextField #3':
-    hideMode: 0
+    hideMode: 3
     horizontal:
       gapBefore:
         min: &id007 {horizontal: true, value: 20.0}

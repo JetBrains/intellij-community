@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -15,6 +15,8 @@ import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,16 +45,18 @@ public abstract class IntroduceParameterSettingsUI {
   public IntroduceParameterSettingsUI(PsiLocalVariable onLocalVariable,
                                       PsiExpression onExpression,
                                       PsiMethod methodToReplaceIn,
-                                      TIntArrayList parametersToRemove) {
+                                      IntList parametersToRemove) {
     myHasInitializer = onLocalVariable != null && onLocalVariable.getInitializer() != null;
     myIsInvokedOnDeclaration = onExpression == null;
     final PsiParameter[] parameters = methodToReplaceIn.getParameterList().getParameters();
     myParametersToRemove = new PsiParameter[parameters.length];
     myParametersToRemoveChecked = new boolean[parameters.length];
-    parametersToRemove.forEach(paramNum -> {
+
+    IntListIterator iterator = parametersToRemove.iterator();
+    while (iterator.hasNext()) {
+      int paramNum = iterator.nextInt();
       myParametersToRemove[paramNum] = parameters[paramNum];
-      return true;
-    });
+    }
     myIsLocalVariable = onLocalVariable != null;
   }
 

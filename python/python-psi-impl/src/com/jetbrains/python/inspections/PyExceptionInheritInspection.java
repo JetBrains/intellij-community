@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyAddExceptionSuperClassQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -45,7 +46,7 @@ public class PyExceptionInheritInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyRaiseStatement(PyRaiseStatement node) {
+    public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();
       if (expressions.length == 0) {
         return;
@@ -67,7 +68,9 @@ public class PyExceptionInheritInspection extends PyInspection {
                 return;
               }
             }
-            registerProblem(expression, "Exception doesn't inherit from base 'Exception' class", new PyAddExceptionSuperClassQuickFix());
+            registerProblem(expression,
+                            PyPsiBundle.message("INSP.exception.inheritance.exception.does.not.inherit.from.base.exception.class"),
+                            new PyAddExceptionSuperClassQuickFix());
           }
         }
       }

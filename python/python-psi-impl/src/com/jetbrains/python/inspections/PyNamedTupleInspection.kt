@@ -116,15 +116,14 @@ class PyNamedTupleInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      if (node != null &&
-          LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
+      if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
           PyNamedTupleTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
         inspectFieldsOrder(node, { it == node }, false,
-                                                                                                                myTypeEvalContext,
-                                                                                                                this::registerProblem)
+                           myTypeEvalContext,
+                           this::registerProblem)
       }
     }
   }

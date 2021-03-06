@@ -15,22 +15,25 @@
  */
 package com.intellij.dvcs.push;
 
+import com.intellij.dvcs.ui.DvcsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsError {
-  @NotNull String myErrorText;
+  @NotNull private final @Nls String myErrorText;
   @Nullable private final VcsErrorHandler myErrorHandleListener;
 
-  public VcsError(@NotNull String text) {
+  public VcsError(@NotNull @Nls String text) {
     this(text, null);
   }
 
-  public VcsError(@NotNull String text, @Nullable VcsErrorHandler listener) {
+  public VcsError(@NotNull @Nls String text, @Nullable VcsErrorHandler listener) {
     myErrorText = text;
     myErrorHandleListener = listener;
   }
 
+  @Nls
   public String getText() {
     return myErrorText;
   }
@@ -41,7 +44,7 @@ public class VcsError {
     }
   }
 
-  public static VcsError createEmptyTargetError(@NotNull String name) {
-    return new VcsError("Please, specify not empty remote push path for repository " + name + ".");
+  public static VcsError createEmptyTargetError(@NotNull @Nls String name) {
+    return new VcsError(DvcsBundle.message("push.error.specify.not.empty.remote.push.path.0", name));
   }
 }

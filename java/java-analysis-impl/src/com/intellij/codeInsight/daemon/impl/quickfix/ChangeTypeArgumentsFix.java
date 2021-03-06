@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author cdr
- */
 public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(ChangeTypeArgumentsFix.class);
 

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.ButtonGroup
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JPanel
 
 /**
@@ -71,7 +70,7 @@ class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nl
     }
   }
 
-  private fun createRadioButtonPanel(panels: List<PyAddSdkPanel>, defaultPanel: PyAddSdkPanel): JPanel? {
+  private fun createRadioButtonPanel(panels: List<PyAddSdkPanel>, defaultPanel: PyAddSdkPanel): JPanel {
     val buttonMap = panels.map { JBRadioButton(it.panelName) to it }.toMap(linkedMapOf())
     ButtonGroup().apply {
       for (button in buttonMap.keys) {
@@ -81,15 +80,13 @@ class PyAddSdkGroupPanel(private val nameGetter: java.util.function.Supplier<@Nl
     val formBuilder = FormBuilder.createFormBuilder()
     for ((button, panel) in buttonMap) {
       panel.border = JBUI.Borders.emptyLeft(30)
-      val name: JComponent = panel.nameExtensionComponent?.let {
-        JPanel(BorderLayout()).apply {
-          val inner = JPanel().apply {
-            add(button)
-            add(it)
-          }
-          add(inner, BorderLayout.WEST)
+      val name = JPanel(BorderLayout()).apply {
+        val inner = JPanel().apply {
+          add(button)
+          panel.nameExtensionComponent?.also { add(it) }
         }
-      } ?: button
+        add(inner, BorderLayout.WEST)
+      }
       formBuilder.addComponent(name)
       formBuilder.addComponent(panel)
       button.addItemListener {

@@ -26,7 +26,7 @@ public class SslTrustStore extends DelegateKeyStore {
 
   private void appendUserCert() {
     try {
-      List<X509Certificate> certs = SslSocketFactory.loadCertificates(System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH));
+      List<X509Certificate> certs = SslUtil.loadCertificates(System.getProperty(SslUtil.SSL_CA_CERT_PATH));
       for (int i = 0; i < certs.size(); i++) {
         delegate.setCertificateEntry("user-provided-ca" + (i == 0 ? "" : "-" + i), certs.get(i));
       }

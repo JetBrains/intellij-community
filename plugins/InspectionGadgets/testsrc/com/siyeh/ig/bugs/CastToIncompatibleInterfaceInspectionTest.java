@@ -26,6 +26,24 @@ public class CastToIncompatibleInterfaceInspectionTest extends LightJavaInspecti
            "}");
   }
 
+  /** @noinspection InstanceofIncompatibleInterface*/
+  public void testNullOrInstance() {
+    doTest("class X { static I foo(X x) {if (x == null || x instanceof I) return (I)x;return null;}} interface I {}");
+  }
+
+  /** @noinspection InstanceofIncompatibleInterface*/
+  public void testOrNot() {
+    doTest("class A {\n" +
+           "  public boolean check(final boolean flag) {\n" +
+           "    return flag || !(getDelegate() instanceof Bar) ||\n" +
+           "           Boolean.TRUE.equals(((Bar)getDelegate()).getValue());\n" +
+           "  }\n" +
+           "  native Foo getDelegate();\n" +
+           "  static class Foo {}\n" +
+           "  interface Bar { Boolean getValue();}\n" +
+           "}");
+  }
+
   public void testCastToIncompatibleInterface() {
     doTest();
   }

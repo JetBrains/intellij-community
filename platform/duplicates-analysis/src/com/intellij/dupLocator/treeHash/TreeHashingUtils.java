@@ -7,7 +7,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 
 import java.util.List;
 
-public class TreeHashingUtils {
+public final class TreeHashingUtils {
   public static TreeHashResult hashCodeBlockForIndexing(AbstractTreeHasher treeHasher, FragmentsCollector callBack,
                                                            List<? extends PsiElement> statements,
                                                            PsiFragment upper,

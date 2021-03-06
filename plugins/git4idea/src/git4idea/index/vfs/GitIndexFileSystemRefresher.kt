@@ -3,23 +3,31 @@ package git4idea.index.vfs
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.vcs.log.submitSafe
+import com.intellij.vcsUtil.VcsUtil
+import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
-import org.jetbrains.annotations.CalledWithWriteLock
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
-  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Index Read/Write Thread for " + project.name, 1)
+  private val cache = GitIndexVirtualFileCache(project)
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
@@ -29,66 +37,122 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
           events.any { e -> GitUntrackedFilesHolder.indexChanged(repo, e.path) }
         }.map { it.root }
         if (roots.isNotEmpty()) {
-          LOG.debug("Scheduling refresh for ${roots.joinToString { it.name }}")
-          refresh(roots)
+          LOG.debug("Scheduling refresh for roots ${roots.joinToString { it.name }}")
+          refresh { roots.contains(it.root) }
         }
       }
     })
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
+      LOG.debug("Scheduling refresh for repository ${repository.root.name}")
+      refresh { it.root == repository.root }
+    })
   }
 
-  private fun refresh(roots: List<VirtualFile>) {
-    executor.submitSafe(LOG) {
-      val refreshRunnables = mutableListOf<GitIndexVirtualFile.Refresh>()
-      project.serviceIfCreated<GitIndexVirtualFileCache>()?.forEachFile { file ->
-        if (roots.contains(file.root)) {
-          file.getRefresh()?.let { refreshRunnables.add(it) }
-          LOG.debug("Preparing refresh for $file")
+  fun getFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile {
+    return cache.get(root, filePath)
+  }
+
+  fun refresh(condition: (GitIndexVirtualFile) -> Boolean) {
+    val filesToRefresh = cache.filesMatching(condition)
+    if (filesToRefresh.isEmpty()) return
+    refresh(filesToRefresh)
+  }
+
+  internal fun refresh(filesToRefresh: List<GitIndexVirtualFile>, async: Boolean = true, postRunnable: Runnable? = null) {
+    LOG.debug("Creating ${if (async) "async" else "sync"} refresh session for ${filesToRefresh.joinToString { it.path }}")
+    val session = RefreshSession(filesToRefresh, postRunnable)
+    if (async || !ApplicationManager.getApplication().isDispatchThread) {
+      val refresh = AppExecutorUtil.getAppExecutorService().submit {
+        session.read()
+        writeInEdt {
+          session.apply()
         }
       }
-      if (refreshRunnables.isNotEmpty()) execute(refreshRunnables)
+      if (!async) refresh.get()
     }
-  }
-
-  internal fun execute(refreshList: List<GitIndexVirtualFile.Refresh>, postRunnable: Runnable? = null) {
-    val events = refreshList.map { it.event }
-    writeInEdt {
-      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-      refreshList.forEach { it.run() }
-      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
-      postRunnable?.run()
-    }
-  }
-
-  internal fun runTask(asynchronous: Boolean, task: () -> Unit) {
-    if (ApplicationManager.getApplication().isDispatchThread || asynchronous) {
-      executor.submitSafe(LOG, task)
+    else if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+      PotemkinProgress(GitBundle.message("stage.vfs.refresh.process"), project, null, null).runInBackground {
+        session.read()
+      }
+      session.apply()
     }
     else {
-      task()
+      ProgressManager.getInstance().runProcessWithProgressSynchronously({ session.read() }, GitBundle.message("stage.vfs.refresh.process"),
+                                                                        false, project)
+      ApplicationManager.getApplication().runWriteAction { session.apply() }
     }
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   internal fun changeContent(file: GitIndexVirtualFile, requestor: Any?, modificationStamp: Long, writeCommand: () -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     val event = VFileContentChangeEvent(requestor, file, file.modificationStamp, modificationStamp, false)
     ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
-    executor.submitSafe(LOG) {
-      try {
-        writeCommand()
-      }
-      finally {
-        writeInEdt { ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event)) }
-      }
+    PotemkinProgress(GitBundle.message("stage.vfs.write.process", file.name), project, null, null).runInBackground {
+      writeCommand()
     }
+    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
   }
 
   override fun dispose() {
+    Disposer.dispose(cache)
   }
 
   companion object {
     private val LOG = Logger.getInstance(GitIndexFileSystemRefresher::class.java)
+
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<GitIndexFileSystemRefresher>()
+
+    @JvmStatic
+    fun refreshFilePaths(project: Project, paths: Collection<FilePath>) {
+      val pathsSet = paths.toSet()
+      project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh { pathsSet.contains(it.filePath) }
+    }
+
+    @JvmStatic
+    fun refreshFilePaths(project: Project, paths: Map<VirtualFile, Collection<FilePath>>) {
+      project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh {
+        paths[it.root]?.contains(it.filePath) == true
+      }
+    }
+
+    @JvmStatic
+    fun refreshVirtualFiles(project: Project, paths: Collection<VirtualFile>) {
+      refreshFilePaths(project, paths.map(VcsUtil::getFilePath))
+    }
+
+    @JvmStatic
+    fun refreshRoots(project: Project, roots: Collection<VirtualFile>) {
+      project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh {
+        roots.contains(it.root)
+      }
+    }
+  }
+
+  private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>, private val postRunnable: Runnable?) {
+    private val refreshList = mutableListOf<GitIndexVirtualFile.Refresh>()
+
+    fun read() {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
+      for (file in filesToRefresh) {
+        file.getRefresh()?.let { refreshList.add(it) }
+      }
+    }
+
+    fun apply() {
+      ApplicationManager.getApplication().assertWriteAccessAllowed()
+      if (refreshList.isEmpty()) {
+        postRunnable?.run()
+        return
+      }
+      val events = refreshList.map { it.event }
+      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
+      refreshList.forEach { it.run() }
+      ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
+      postRunnable?.run()
+    }
   }
 }
 

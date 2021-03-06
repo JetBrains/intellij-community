@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -9,12 +9,11 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -38,7 +37,7 @@ import java.util.Map;
 /**
  * @author ven
  */
-public class MissingReturnInspection extends GroovySuppressableInspectionTool {
+public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
   public enum ReturnStatus {
     mustReturnValue, shouldReturnValue, shouldNotReturnValue;
@@ -109,13 +108,12 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean onTheFly) {
-    return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+  public @NotNull GroovyElementVisitor buildGroovyVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new GroovyElementVisitor() {
       @Override
       public void visitClosure(@NotNull GrClosableBlock closure) {
         super.visitClosure(closure);
-        check(closure, problemsHolder, ReturnStatus.getReturnStatus(closure));
+        check(closure, holder, ReturnStatus.getReturnStatus(closure));
       }
 
       @Override
@@ -124,10 +122,10 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
 
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
-          check(block, problemsHolder, ReturnStatus.getReturnStatus(method));
+          check(block, holder, ReturnStatus.getReturnStatus(method));
         }
       }
-    });
+    };
   }
 
   private static void check(GrCodeBlock block, ProblemsHolder holder, ReturnStatus returnStatus) {
@@ -188,7 +186,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     if (!lastChild.isValid() || !lastChild.isPhysical() || range.getStartOffset() >= range.getEndOffset()) {
       return;
     }
-    holder.registerProblem(lastChild, GroovyInspectionBundle.message("no.return.message"));
+    holder.registerProblem(lastChild, GroovyBundle.message("no.return.message"));
   }
 
   @Override

@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -96,6 +97,7 @@ public abstract class ShowFilterAction extends ToggleAction implements DumbAware
   }
 
   @NotNull
+  @NonNls
   public String getDimensionServiceKey() {
     return "ShowFilterAction_Filter_Popup";
   }

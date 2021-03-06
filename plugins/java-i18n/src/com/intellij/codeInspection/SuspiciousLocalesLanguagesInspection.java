@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.java.i18n.JavaI18nBundle;
@@ -34,7 +34,7 @@ import java.util.*;
 
 public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
   private static final String ADDITIONAL_LANGUAGES_ATTR_NAME = "additionalLanguages";
-  private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<Set<String>>() {
+  private final static SoftLazyValue<Set<String>> JAVA_LOCALES = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Set<String> compute() {
@@ -107,7 +107,7 @@ public class SuspiciousLocalesLanguagesInspection extends LocalInspectionTool {
     return new ProblemDescriptor[] {descriptor};
   }
 
-  private static class DissociateResourceBundleQuickFix implements LocalQuickFix {
+  private static final class DissociateResourceBundleQuickFix implements LocalQuickFix {
     private final ResourceBundle myResourceBundle;
 
     private DissociateResourceBundleQuickFix(ResourceBundle bundle) {

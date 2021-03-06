@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,7 +144,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   }
 
   @NotNull
-  InspectionGroupNode createGroupNode(String group, @NotNull InspectionTreeNode parent) {
+  InspectionGroupNode createGroupNode(@Nls String group, @NotNull InspectionTreeNode parent) {
     return getOrAdd(group, () -> new InspectionGroupNode(group, parent), parent);
   }
 
@@ -161,7 +162,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     return getOrAdd(entity, () -> ReadAction.compute(supplier::get), parent);
   }
 
-  public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<T> supplier, @NotNull InspectionTreeNode parent) {
+  public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<? extends T> supplier, @NotNull InspectionTreeNode parent) {
     return getOrAdd(userObject, supplier, parent);
   }
 

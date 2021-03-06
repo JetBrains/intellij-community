@@ -1,43 +1,39 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.tags.TagManager;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.DarculaColors;
 import com.intellij.ui.DirtyUI;
+import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.FontUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
-class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
+final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(UsageViewTreeCellRenderer.class);
-  private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-  private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
-  private static final SimpleTextAttributes ourReadOnlyAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.READONLY_PREFIX));
-  private static final SimpleTextAttributes ourNumberOfUsagesAttribute = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES));
-  private static final SimpleTextAttributes ourInvalidAttributesDarcula = new SimpleTextAttributes(null, DarculaColors.RED, null, ourInvalidAttributes.getStyle());
   private static final Insets STANDARD_IPAD_NOWIFI = JBUI.insets(1, 2);
-  private static final TextChunk[] ourLoadingText = {new TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(), "loading...")};
   private boolean myRowBoundsCalled;
 
   private final UsageViewPresentation myPresentation;
@@ -65,11 +61,15 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       return;
     }
 
+    SlowOperations.allowSlowOperations(() -> doCustomizeCellRenderer(tree, value, expanded, row));
+  }
+
+  private void doCustomizeCellRenderer(@NotNull JTree tree, Object value, boolean expanded, int row) {
     boolean showAsReadOnly = false;
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        append(UsageViewBundle.message("node.invalid") + " ", StartupUiUtil.isUnderDarcula() ? ourInvalidAttributesDarcula : ourInvalidAttributes);
+        append(UsageViewBundle.message("node.invalid") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
@@ -104,7 +104,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         LOG.assertTrue(treeNode instanceof Node);
         if (!((Node)treeNode).isValid()) {
           if (!getCharSequence(false).toString().contains(UsageViewBundle.message("node.invalid"))) {
-            append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+            append(UsageViewBundle.message("node.invalid"), UsageTreeColors.INVALID_ATTRIBUTES);
           }
           return;
         }
@@ -113,7 +113,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         final ItemPresentation presentation = usageTarget.getPresentation();
         LOG.assertTrue(presentation != null);
         if (showAsReadOnly) {
-          append(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
+          append(UsageViewBundle.message("node.readonly") + " ", UsageTreeColors.INVALID_ATTRIBUTES);
         }
         final String text = presentation.getPresentableText();
         append(text == null ? "" : text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -123,24 +123,31 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          append(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+          append("<root>", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)); //NON-NLS root is invisible
         }
         else {
-          append(node.getGroup().getText(myView),
-                 patchAttrs(node, showAsReadOnly ? ourReadOnlyAttributes : SimpleTextAttributes.REGULAR_ATTRIBUTES));
-          setIcon(node.getGroup().getIcon(expanded));
+          UsageGroup group = node.getGroup();
+          PsiElement element = group instanceof DataProvider ? CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group) : null;
+          Icon tagIcon = TagManager.appendTags(element, this);
+          append(group.getText(myView),
+                 patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
+          Icon icon = node.getGroup().getIcon(expanded);
+          if (tagIcon != null) {
+            icon = new RowIcon(tagIcon, icon);
+          }
+          setIcon(icon);
         }
 
         int count = node.getRecursiveUsageCount();
-        SimpleTextAttributes attributes = patchAttrs(node, ourNumberOfUsagesAttribute);
-        append(FontUtil.spaceAndThinSpace() + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count),
+        SimpleTextAttributes attributes = patchAttrs(node, UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES);
+        append(FontUtil.spaceAndThinSpace() + UsageViewBundle.message("usage.view.counter", count),
                SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
         setIcon(node.getUsage().getPresentation().getIcon());
         if (showAsReadOnly) {
-          append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, ourReadOnlyAttributes));
+          append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, UsageTreeColors.READ_ONLY_ATTRIBUTES));
         }
 
         if (node.isValid()) {
@@ -151,7 +158,8 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
             //   2. the usage presentation have dropped the cached text by itself
             //      (i.e. it was stored by a soft reference and was gc-ed).
             //  In either case, `myView.updateLater()` will eventually re-update the visible nodes.
-            text = ourLoadingText;
+            text = new TextChunk[]{new TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(),
+                                                 UsageViewBundle.message("loading"))};
             // Since "loading..." text is not reflected in the node's cached state
             // we must force the node to recalculate it's bounds on the next view update
             node.forceUpdate();
@@ -168,10 +176,12 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else {
+        //noinspection HardCodedStringLiteral
         append(userObject == null ? "" : userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
     else {
+      //noinspection HardCodedStringLiteral
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
@@ -215,14 +225,13 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          result.append(StringUtil.capitalize(myPresentation.getUsagesWord()));
+          result.append("<root>");
         }
         else {
           result.append(node.getGroup().getText(myView));
         }
 
-        int count = node.getRecursiveUsageCount();
-        result.append(" (").append(StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count)).append(")");
+        result.append(" (").append(node.getRecursiveUsageCount()).append(")");
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
@@ -300,7 +309,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     return original;
   }
 
-  static String getTooltipFromPresentation(final Object value) {
+  static @NlsContexts.Tooltip String getTooltipFromPresentation(final Object value) {
     if (value instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
       if (treeNode instanceof UsageNode) {

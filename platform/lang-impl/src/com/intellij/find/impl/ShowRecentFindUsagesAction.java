@@ -35,9 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author cdr
- */
 public class ShowRecentFindUsagesAction extends AnAction {
   @Override
   public void update(@NotNull final AnActionEvent e) {
@@ -69,7 +66,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
     }
 
     BaseListPopupStep<ConfigurableUsageTarget> step =
-      new BaseListPopupStep<ConfigurableUsageTarget>(FindBundle.message("recent.find.usages.action.title"), history) {
+      new BaseListPopupStep<>(FindBundle.message("recent.find.usages.action.title"), history) {
         @Override
         public Icon getIconFor(final ConfigurableUsageTarget data) {
           return null;

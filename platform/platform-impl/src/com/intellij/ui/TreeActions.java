@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,7 +23,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class Home extends TreeActions {
-    @NonNls public static final String ID = "selectFirst";
+    public static final @NonNls String ID = "selectFirst";
 
     public Home() {
       super(ID);
@@ -31,7 +31,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftHome extends TreeActions {
-    @NonNls public static final String ID = "selectFirstExtendSelection";
+    public static final @NonNls String ID = "selectFirstExtendSelection";
 
     public ShiftHome() {
       super(ID);
@@ -39,7 +39,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class End extends TreeActions {
-    @NonNls public static final String ID = "selectLast";
+    public static final @NonNls String ID = "selectLast";
 
     public End() {
       super(ID);
@@ -47,7 +47,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftEnd extends TreeActions {
-    @NonNls public static final String ID = "selectLastExtendSelection";
+    public static final @NonNls String ID = "selectLastExtendSelection";
 
     public ShiftEnd() {
       super(ID);
@@ -55,7 +55,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class Up extends TreeActions {
-    @NonNls public static final String ID = "selectPrevious";
+    public static final @NonNls String ID = "selectPrevious";
 
     public Up() {
       super(ID);
@@ -63,7 +63,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftUp extends TreeActions {
-    @NonNls public static final String ID = "selectPreviousExtendSelection";
+    public static final @NonNls String ID = "selectPreviousExtendSelection";
 
     public ShiftUp() {
       super(ID);
@@ -71,7 +71,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class Down extends TreeActions {
-    @NonNls public static final String ID = "selectNext";
+    public static final @NonNls String ID = "selectNext";
 
     public Down() {
       super(ID);
@@ -79,15 +79,23 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftDown extends TreeActions {
-    @NonNls public static final String ID = "selectNextExtendSelection";
+    public static final @NonNls String ID = "selectNextExtendSelection";
 
     public ShiftDown() {
       super(ID);
     }
   }
 
+  public static final class SelectParent extends TreeActions {
+    public static final @NonNls String ID = "selectParentNoCollapse";
+
+    public SelectParent() {
+      super(ID);
+    }
+  }
+
   public static final class Left extends TreeActions {
-    @NonNls public static final String ID = "selectParent";
+    public static final @NonNls String ID = "selectParent";
 
     public Left() {
       super(ID);
@@ -95,7 +103,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftLeft extends TreeActions {
-    @NonNls public static final String ID = "selectParentExtendSelection";
+    public static final @NonNls String ID = "selectParentExtendSelection";
 
     public ShiftLeft() {
       super(ID);
@@ -103,7 +111,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class Right extends TreeActions {
-    @NonNls public static final String ID = "selectChild";
+    public static final @NonNls String ID = "selectChild";
 
     public Right() {
       super(ID);
@@ -111,7 +119,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftRight extends TreeActions {
-    @NonNls public static final String ID = "selectChildExtendSelection";
+    public static final @NonNls String ID = "selectChildExtendSelection";
 
     public ShiftRight() {
       super(ID);
@@ -119,7 +127,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class PageUp extends TreeActions {
-    @NonNls public static final String ID = "scrollUpChangeSelection";
+    public static final @NonNls String ID = "scrollUpChangeSelection";
 
     public PageUp() {
       super(ID);
@@ -127,7 +135,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftPageUp extends TreeActions {
-    @NonNls public static final String ID = "scrollUpExtendSelection";
+    public static final @NonNls String ID = "scrollUpExtendSelection";
 
     public ShiftPageUp() {
       super(ID);
@@ -135,7 +143,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class PageDown extends TreeActions {
-    @NonNls public static final String ID = "scrollDownChangeSelection";
+    public static final @NonNls String ID = "scrollDownChangeSelection";
 
     public PageDown() {
       super(ID);
@@ -143,9 +151,25 @@ public abstract class TreeActions extends SwingActionDelegate {
   }
 
   public static final class ShiftPageDown extends TreeActions {
-    @NonNls public static final String ID = "scrollDownExtendSelection";
+    public static final @NonNls String ID = "scrollDownExtendSelection";
 
     public ShiftPageDown() {
+      super(ID);
+    }
+  }
+
+  public static final class NextSibling extends TreeActions {
+    public static final @NonNls String ID = "selectNextSibling";
+
+    public NextSibling() {
+      super(ID);
+    }
+  }
+
+  public static final class PreviousSibling extends TreeActions {
+    public static final @NonNls String ID = "selectPreviousSibling";
+
+    public PreviousSibling() {
       super(ID);
     }
   }

@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -28,7 +27,8 @@ import javax.swing.JComponent
 internal class EpBasedConfigurableGroup(private val project: Project?, delegate: Supplier<ConfigurableGroup?>) : NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
   private val value = ClearableLazyValue.createAtomic(delegate)
   private val listeners = CopyOnWriteArrayList<MutableConfigurableGroup.Listener>()
-  private val extendableEp: MutableList<ConfigurableWrapper>
+  private val extendableConfigurableWrappers: MutableList<ConfigurableWrapper> = ArrayList()
+  private val configurablesWithEpDependencies: MutableList<WithEpDependencies> = ArrayList()
 
   override fun getDisplayName(): String = value.value.displayName
 
@@ -50,7 +50,7 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
       val epListener = createListener()
       Configurable.APPLICATION_CONFIGURABLE.addChangeListener(epListener, this)
       Configurable.PROJECT_CONFIGURABLE.getPoint(project).addChangeListener(epListener, this)
-      for (wrapper in extendableEp) {
+      for (wrapper in extendableConfigurableWrappers) {
         val ep = wrapper.extensionPoint
         val area = wrapper.project?.extensionArea ?: ApplicationManager.getApplication().extensionArea
         if (ep.childrenEPName != null) {
@@ -73,6 +73,11 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
           }
         }
       }
+      for (withEpDependency in configurablesWithEpDependencies) {
+        for (it in withEpDependency.dependencies) {
+          findExtensionPoint(project.extensionArea, it.name).addChangeListener(epListener, this)
+        }
+      }
     }
     listeners.add(listener)
   }
@@ -87,8 +92,9 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   private fun createListener(): Runnable {
     return Runnable {
       value.drop()
-      extendableEp.clear()
-      collect(extendableEp, value.value.configurables)
+      extendableConfigurableWrappers.clear()
+      configurablesWithEpDependencies.clear()
+      collect(extendableConfigurableWrappers, configurablesWithEpDependencies, value.value.configurables)
 
       for (listener in listeners) {
         listener.handleUpdate()
@@ -102,8 +108,7 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   }
 
   init {
-    extendableEp = ArrayList()
-    collect(extendableEp, value.value.configurables)
+    collect(extendableConfigurableWrappers, configurablesWithEpDependencies, value.value.configurables)
   }
 }
 
@@ -117,28 +122,30 @@ private fun findExtensionPoint(area: ExtensionsArea, name: String): ExtensionPoi
 }
 
 @ApiStatus.Internal
-private fun collect(list: MutableList<ConfigurableWrapper>, configurables: Array<Configurable>) {
+private fun collect(configurableWrappers: MutableList<ConfigurableWrapper>, configurablesWithEpDependencies: MutableList<WithEpDependencies>, configurables: Array<Configurable>) {
   for (configurable in configurables) {
     if (configurable is ConfigurableWrapper) {
       val ep = configurable.extensionPoint
       if (ep.childrenEPName != null || ep.dynamic) {
-        list.add(configurable)
+        configurableWrappers.add(configurable)
       }
       if (configurable.providerClass != null) {
         val providerClass = ep.findClassOrNull(configurable.providerClass)
         if (providerClass != null) {
           if (WithEpDependencies::class.java.isAssignableFrom(providerClass)) {
-            list.add(configurable)
+            configurableWrappers.add(configurable)
           }
         }
       }
+    }
+    else if (configurable is WithEpDependencies) {
+      configurablesWithEpDependencies.add(configurable)
     }
     if (configurable !is Configurable.Composite) {
       continue
     }
 
-    var children: Array<Configurable>
-    children = try {
+    val children: Array<Configurable> = try {
       configurable.configurables
     }
     catch (e: ProcessCanceledException) {
@@ -148,6 +155,6 @@ private fun collect(list: MutableList<ConfigurableWrapper>, configurables: Array
       ConfigurableWrapper.LOG.error("Cannot get children $configurable", e)
       continue
     }
-    collect(list, children)
+    collect(configurableWrappers, configurablesWithEpDependencies, children)
   }
 }

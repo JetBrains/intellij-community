@@ -16,10 +16,12 @@ public class ShUntilCommandImpl extends ShCommandImpl implements ShUntilCommand 
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitUntilCommand(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof ShVisitor) accept((ShVisitor)visitor);
     else super.accept(visitor);

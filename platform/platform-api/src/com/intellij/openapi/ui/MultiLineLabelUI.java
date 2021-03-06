@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
@@ -325,9 +326,9 @@ public class MultiLineLabelUI extends BasicLabelUI {
     }
   }
 
-  public static Dimension computeMultiLineDimension(FontMetrics fm, String[] strs) {
+  public static Dimension computeMultiLineDimension(FontMetrics fm, @Nls String [] strs) {
     int width = 0;
-    for (String str : strs) {
+    for (@Nls String str : strs) {
       width = Math.max(width, SwingUtilities.computeStringWidth(fm, str));
     }
     return new Dimension(width, fm.getHeight() * strs.length);
@@ -343,8 +344,8 @@ public class MultiLineLabelUI extends BasicLabelUI {
     return myLines;
   }
 
-  public static String convertTabs(String text, final int tabLength) {
-    StringBuilder buf = new StringBuilder(text.length());
+  public static String convertTabs(@Nls String text, final int tabLength) {
+    @Nls StringBuilder buf = new StringBuilder(text.length());
     for (int idx = 0; idx < text.length(); idx++) {
       char ch = text.charAt(idx);
       if (ch == '\t') {

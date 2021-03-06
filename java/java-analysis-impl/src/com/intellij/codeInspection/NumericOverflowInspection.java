@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author cdr
- */
 public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
@@ -51,7 +48,19 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
     return new JavaElementVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitExpression(expression);
+        if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+          visitExpression(expression);
+        }
+      }
+
+      @Override
+      public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+        // never constant
+      }
+
+      @Override
+      public void visitCallExpression(PsiCallExpression callExpression) {
+        // never constant
       }
 
       @Override

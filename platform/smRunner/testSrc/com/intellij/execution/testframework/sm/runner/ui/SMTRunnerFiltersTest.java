@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
@@ -38,7 +39,9 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, false);
     TestConsoleProperties.HIDE_IGNORED_TEST.set(myProperties, false);
     TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.set(myProperties, true);
-    myResultsForm = new SMTestRunnerResultsForm(new JLabel(), myProperties);
+    ConsoleView console = myProperties.createConsole();
+    myResultsForm = new SMTestRunnerResultsForm(console, myProperties, null);
+    Disposer.register(myResultsForm, console);
     Disposer.register(myResultsForm, myProperties);
     myResultsForm.initUI();
 

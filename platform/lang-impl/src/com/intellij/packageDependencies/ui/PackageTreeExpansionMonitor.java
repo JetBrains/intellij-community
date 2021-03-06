@@ -1,51 +1,36 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
-public class PackageTreeExpansionMonitor {
+public final class PackageTreeExpansionMonitor {
   private PackageTreeExpansionMonitor() {
   }
 
   public static TreeExpansionMonitor<PackageDependenciesNode> install(final JTree tree, final Project project) {
-    return new TreeExpansionMonitor<PackageDependenciesNode>(tree) {
+    return new TreeExpansionMonitor<>(tree) {
       @Override
       protected TreePath findPathByNode(final PackageDependenciesNode node) {
-         if (node.getPsiElement() == null){
-           return new TreePath(node.getPath());
-         }
-          Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            final Object nextElement = enumeration.nextElement();
-            if (nextElement instanceof PackageDependenciesNode) { //do not include root
-              PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
-              if (child.equals(node)) {
-                return new TreePath(child.getPath());
-              }
+        if (node.getPsiElement() == null) {
+          return new TreePath(node.getPath());
+        }
+        Enumeration enumeration = ((DefaultMutableTreeNode)tree.getModel().getRoot()).breadthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          final Object nextElement = enumeration.nextElement();
+          if (nextElement instanceof PackageDependenciesNode) { //do not include root
+            PackageDependenciesNode child = (PackageDependenciesNode)nextElement;
+            if (child.equals(node)) {
+              return new TreePath(child.getPath());
             }
           }
-          return null;
+        }
+        return null;
       }
     };
   }

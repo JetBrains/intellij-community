@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class IntroduceTargetChooser {
+public final class IntroduceTargetChooser {
   private IntroduceTargetChooser() {
   }
 
@@ -63,7 +63,7 @@ public class IntroduceTargetChooser {
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
     List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer));
-    Pass<MyIntroduceTarget<T>> callbackWrapper = new Pass<MyIntroduceTarget<T>>() {
+    Pass<MyIntroduceTarget<T>> callbackWrapper = new Pass<>() {
       @Override
       public void pass(MyIntroduceTarget<T> target) {
         callback.pass(target.getPlace());

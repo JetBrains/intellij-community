@@ -5,6 +5,8 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -219,7 +221,8 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     myCurrentUpdaterMarker = currentUpdaterMarker;
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final Set<MavenArchetype> archetypes = MavenIndicesManager.getInstance().getArchetypes();
+      MavenIndicesManager mavenIndicesManager = MavenIndicesManager.getInstance(findProject());
+      final Set<MavenArchetype> archetypes = mavenIndicesManager.getArchetypes();
 
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -242,6 +245,14 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
         updateArchetypeDescription();
       });
     });
+  }
+
+  // todo DefaultProject usage may lead to plugin classloader leak on the plugin unload
+  @NotNull
+  private static Project findProject() {
+    ProjectManager projectManager = ProjectManager.getInstance();
+    Project[] openProjects = projectManager.getOpenProjects();
+    return openProjects.length != 0 ? openProjects[0] : projectManager.getDefaultProject();
   }
 
   public boolean isSkipUpdateUI() {
@@ -272,7 +283,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     }
 
     MavenArchetype archetype = dialog.getArchetype();
-    MavenIndicesManager.getInstance().addArchetype(archetype);
+    MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
     updateArchetypesList(archetype);
   }
 

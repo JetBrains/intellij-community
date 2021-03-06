@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -224,7 +225,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
   }
 
   private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
-    private final String myModuleShortName;
+    private final @NlsSafe String myModuleShortName;
     private final Module myModule;
     private final boolean appendModuleName;
     private final boolean isSourceSetModule;
@@ -246,14 +247,16 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
 
     @Override
     protected boolean shouldShowModuleName() {
-      return !(appendModuleName || isSourceSetModule);
+      return !(appendModuleName || isSourceSetModule) || canRealModuleNameBeHidden();
     }
 
     @Override
     protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
       if (appendModuleName) {
-        data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        if (!canRealModuleNameBeHidden()) {
+          data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        }
       }
       else if (isSourceSetModule) {
         List<ColoredFragment> fragments = data.getColoredText();
@@ -268,6 +271,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
 
   private static class GradleProjectViewModuleNode extends ProjectViewModuleNode {
     @NotNull
+    @NlsSafe
     private final String myModuleShortName;
 
     GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {

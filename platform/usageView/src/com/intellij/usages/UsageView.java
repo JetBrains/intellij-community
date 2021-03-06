@@ -3,8 +3,10 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,14 +46,16 @@ public interface UsageView extends Disposable {
    * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
    */
   @Deprecated
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
-  void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text, char mnemonic);
+  void addButtonToLowerPane(@NotNull Runnable runnable, @NlsContexts.Button @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
 
   /**
    * @deprecated see {@link UsageView#setRerunAction(Action)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void setReRunActivity(@NotNull Runnable runnable) {}
 
   /**
@@ -61,12 +65,15 @@ public interface UsageView extends Disposable {
 
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription);
+  void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                 @Nullable @NlsContexts.Command String commandName,
+                                 @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                 @NotNull @NlsContexts.Button String shortDescription);
 
   /**
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @Nullable String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();
@@ -100,7 +107,7 @@ public interface UsageView extends Disposable {
    */
   void removeUsagesBulk(@NotNull Collection<? extends Usage> usages);
 
-  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener){}
+  default void addExcludeListener(@NotNull Disposable disposable, @NotNull ExcludeListener listener) {}
 
   @FunctionalInterface
   interface ExcludeListener {

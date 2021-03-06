@@ -7,7 +7,7 @@ import com.intellij.grazie.remote.GrazieRemote
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ConcurrentMultiMap
+import com.intellij.util.containers.MultiMap
 import java.lang.ref.WeakReference
 
 object GrazieToastNotifications {
@@ -15,7 +15,7 @@ object GrazieToastNotifications {
     LANGUAGES
   }
 
-  private val shownNotifications = ConcurrentMultiMap<Group, WeakReference<Notification>>()
+  private val shownNotifications = MultiMap.createConcurrent<Group, WeakReference<Notification>>()
 
   private val MISSED_LANGUAGES_GROUP = NotificationGroup("Proofreading missing languages information",
                                                          NotificationDisplayType.STICKY_BALLOON, true, null, null,

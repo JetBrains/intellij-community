@@ -1,30 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,9 +23,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
@@ -55,7 +49,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
     assertSame(ideEventQueue, Toolkit.getDefaultToolkit().getSystemEventQueue());
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    Set<AWTEvent> isDispatched = new THashSet<>();
+    Set<AWTEvent> isDispatched = new HashSet<>();
     ideEventQueue.addDispatcher(e -> {
       isDispatched.add(e);
       LOG.debug("dispatch: "+e);
@@ -76,7 +70,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     postCarefully(pressX);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
-    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(pressX) || isConsumed(pressX));
 
@@ -89,7 +83,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and dispatched all events via IdeEventQueue.pumpEventsForHierarchy by itself
     assertTrue(isDispatched.contains(ev2));
 
@@ -102,7 +96,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
 
-    dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue);
+    dispatchAllInvocationEventsUntilOtherEvent();
     // either it's dispatched by this method or the f*@$ing VCSRefresh activity stomped in, started modal progress and consumed all events via IdeEventQueue.pumpEventsForHierarchy
     assertTrue(isDispatched.contains(keyRelease) || isConsumed(keyRelease));
 
@@ -124,17 +118,17 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   // need this because everybody can post some crazy stuff to IdeEventQueue, so we have to filter InvocationEvents out
-  private static AWTEvent dispatchAllInvocationEventsUntilOtherEvent(IdeEventQueue ideEventQueue) throws InterruptedException {
+  private static void dispatchAllInvocationEventsUntilOtherEvent() throws InterruptedException {
     while (true) {
-      AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue);
+      AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny();
       LOG.debug("event dispatched in dispatchAll() "+event+"; -"+(event instanceof InvocationEvent ? "continuing" : "returning"));
-      if (!(event instanceof InvocationEvent)) return event;
+      if (!(event instanceof InvocationEvent)) break;
     }
   }
 
   private static class MyException extends RuntimeException {
   }
-  private void throwMyException() {
+  private static void throwMyException() {
     throw new MyException();
   }
 
@@ -175,5 +169,41 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() {
     EdtExecutorService.getScheduledExecutorInstance().schedule(()->throwMyException(), 1, TimeUnit.MILLISECONDS);
     checkMyExceptionThrownImmediately();
+  }
+
+  public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {
+    assert SwingUtilities.isEventDispatchThread();
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    throwInIdeEventQueueDispatch(ExtensionNotApplicableException.INSTANCE, null); // ControlFlowException silently ignored
+    throwInIdeEventQueueDispatch(new ProcessCanceledException(), null);  // ControlFlowException silently ignored
+    Error error = new Error();
+    throwInIdeEventQueueDispatch(error, error);
+  }
+
+  private void throwInIdeEventQueueDispatch(@NotNull Throwable toThrow, Throwable expectedToBeLogged) {
+    AtomicBoolean run = new AtomicBoolean();
+    InvocationEvent event = new InvocationEvent(this, () -> {
+      run.set(true);
+      ExceptionUtil.rethrow(toThrow);
+    });
+    AtomicReference<Throwable> error = new AtomicReference<>();
+    LoggedErrorProcessor old = LoggedErrorProcessor.getInstance();
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public void processError(String message, Throwable t, String[] details, @NotNull org.apache.log4j.Logger logger) {
+        assertNull(error.get());
+        error.set(t);
+      }
+    });
+
+    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
+    try {
+      ideEventQueue.executeInProductionModeEvenThoughWeAreInTests(() -> ideEventQueue.dispatchEvent(event));
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(old);
+    }
+    assertTrue(run.get());
+    assertSame(expectedToBeLogged, error.get());
   }
 }

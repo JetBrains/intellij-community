@@ -20,8 +20,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
   protected JavaMethodNode(PsiMethod method,
@@ -48,7 +52,7 @@ public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
         final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
         if (enclosingContext instanceof PsiMethod && !result.contains(enclosingContext) &&
             !getMember().equals(enclosingContext) && !myCalled.contains(getMember()) &&  //do not add recursive methods
-            Arrays.stream(((PsiMethod)enclosingContext).findDeepestSuperMethods()).anyMatch(method -> !method.isWritable())) { //do not add library inheritances
+            noLibraryInheritors((PsiMethod)enclosingContext)) {
           result.add((PsiMethod)enclosingContext);
         }
         else if (element instanceof PsiClass) {
@@ -61,5 +65,10 @@ public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
       }
     }
     return result;
+  }
+
+  private static boolean noLibraryInheritors(PsiMethod enclosingContext) {
+    PsiMethod[] superMethods = enclosingContext.findDeepestSuperMethods();
+    return superMethods.length == 0 || ContainerUtil.exists(superMethods, method -> !method.isWritable());
   }
 }

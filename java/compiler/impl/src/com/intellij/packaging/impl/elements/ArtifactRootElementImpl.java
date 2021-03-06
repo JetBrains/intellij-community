@@ -4,6 +4,7 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
@@ -20,7 +21,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new PackagingElementPresentation() {
       @Override
-      public String getPresentableName() {
+      public @NlsContexts.Label String getPresentableName() {
         return JavaCompilerBundle.message("packaging.element.text.output.root");
       }
 

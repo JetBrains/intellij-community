@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.ide.IdeBundle
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
@@ -17,33 +19,45 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
-import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-const val NOTIFICATION_GROUP_ID = "Load Error"
+@NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
 
 @TestOnly
+@NonNls
 var DEBUG_LOG: String? = null
 
 @ApiStatus.Internal
 fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
-  val productName = ApplicationNamesInfo.getInstance().productName
-  val content = "<p><i>${macros.joinToString(", ")}</i> ${if (macros.size == 1) "is" else "are"} undefined. <a href=\"define\">Fix it</a></p>" +
-                "<br>Path variables are used to substitute absolute paths in " + productName + " project files " +
-                "and allow project file sharing in version control systems.<br>" +
-                "Some of the files describing the current project settings contain unknown path variables " +
-                "and " + productName + " cannot restore those paths."
-  UnknownMacroNotification(NOTIFICATION_GROUP_ID, "Load error: undefined path variables", content, NotificationType.ERROR,
-                           { _, _ -> checkUnknownMacros(project, true, macros, substitutorToStore) }, macros)
-    .notify(project)
+  val joinedMacros = HtmlChunk.text(macros.joinToString(", ")).italic().toString()
+  val mainMessage =
+    if (macros.size == 1) {
+      IdeBundle.message("notification.content.unknown.macros.error.one.macros.undefined", joinedMacros)
+    }
+    else {
+      IdeBundle.message("notification.content.unknown.macros.error.many.macroses.undefined", joinedMacros)
+    }
+
+  val description = IdeBundle.message("notification.content.unknown.macros.error.description",
+                                      ApplicationNamesInfo.getInstance().productName)
+  val message = HtmlBuilder().appendRaw(mainMessage).br().br().appendRaw(description).toString()
+  val title = IdeBundle.message("notification.title.unknown.macros.error")
+  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
+    addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
+      checkUnknownMacros(project, true, macros, substitutorToStore)
+    })
+  }.notify(project)
 }
 
 @ApiStatus.Internal
@@ -72,7 +86,7 @@ private fun checkUnknownMacros(project: Project,
                                showDialog: Boolean,
                                unknownMacros: MutableSet<String>,
                                substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
-  if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, THashSet(unknownMacros)))) {
+  if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, HashSet(unknownMacros)))) {
     return
   }
 
@@ -96,7 +110,8 @@ private fun checkUnknownMacros(project: Project,
 
       store.reloadStates(components, project.messageBus)
     }
-    else if (Messages.showYesNoDialog(project, "Component could not be reloaded. Reload project?", "Configuration Changed",
+    else if (Messages.showYesNoDialog(project, IdeBundle.message("dialog.message.component.could.not.be.reloaded"),
+                                      IdeBundle.message("dialog.title.configuration.changed"),
                                       Messages.getQuestionIcon()) == Messages.YES) {
       StoreReloadManager.getInstance().reloadProject(project)
     }

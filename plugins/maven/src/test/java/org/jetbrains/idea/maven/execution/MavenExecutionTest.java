@@ -20,22 +20,12 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import javax.swing.*;
 import java.io.File;
@@ -43,54 +33,11 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @SuppressWarnings({"ConstantConditions"})
-public class MavenExecutionTest extends MavenImportingTestCase {
-
-  private static final String JDK_NAME = "MavenExecutionTestJDK";
-  private String myJdkHome;
+public class MavenExecutionTest extends MavenExecutionTestCase {
 
   @Override
   protected boolean runInDispatchThread() {
     return false;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    edt(() -> {
-      myJdkHome = IdeaTestUtil.requireRealJdkHome();
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), myJdkHome);
-      super.setUp();
-
-      WriteAction.runAndWait(() -> {
-        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(JDK_NAME);
-        if (oldJdk != null) {
-          ProjectJdkTable.getInstance().removeJdk(oldJdk);
-        }
-        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, JDK_NAME);
-        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-        ProjectJdkTable.getInstance().addJdk(jdk);
-        ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-        if (projectRootManager.getProjectSdk() == null) {
-          projectRootManager.setProjectSdk(jdk);
-        }
-      });
-    });
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    edt(() -> {
-      if (myJdkHome == null) {
-        //super.setUp() wasn't called
-        return;
-      }
-      Sdk jdk = ProjectJdkTable.getInstance().findJdk(JDK_NAME);
-      if (jdk != null) {
-        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
-      }
-
-      super.tearDown();
-    });
   }
 
   public void testExternalExecutor() throws Exception {

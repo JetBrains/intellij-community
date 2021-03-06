@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributesUtil;
@@ -95,7 +94,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     stopEditing();
     TodoConfiguration.getInstance().setMultiLine(myMultiLineCheckBox.isSelected());
     if (arePatternsModified()) {
@@ -123,6 +122,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
     myMultiLineCheckBox = new JCheckBox(IdeBundle.message("label.todo.multiline"));
 
     myPatternsTable = new JBTable(myPatternsModel);
+    myPatternsTable.setShowGrid(false);
     myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
     TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
     JTableHeader tableHeader = myPatternsTable.getTableHeader();
@@ -221,6 +221,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
     // Panel with filters
     myFiltersTable = new JBTable(myFiltersModel);
+    myFiltersTable.setShowGrid(false);
     myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
 
     // Column "Name"

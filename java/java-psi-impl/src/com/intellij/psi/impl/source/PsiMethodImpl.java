@@ -11,7 +11,6 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
 import com.intellij.psi.impl.light.LightCompactConstructorParameter;
@@ -177,10 +176,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
       if (type == null) {
-        String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
-        assert typeText != null : stub;
-        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
+        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getReturnTypeText());
         myCachedType = new SoftReference<>(type);
       }
       return type;
@@ -208,7 +204,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     PsiParameterList list = getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
     if (list == null) {
       return CachedValuesManager.getCachedValue(this, () -> {
-        final LightParameterListBuilder lightList = new LightParameterListBuilder(this.getManager(), this.getLanguage());
+        final LightParameterListBuilder lightList = new LightParameterListBuilder(this.getManager(), this.getLanguage()) {
+          @Override
+          public String getText() {
+            return null;
+          }
+        };
         PsiClass aClass = this.getContainingClass();
         if (aClass != null) {
           PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
@@ -309,7 +310,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     if (substitutor == PsiSubstitutor.EMPTY) {
       return CachedValuesManager.getCachedValue(this, () -> {
         MethodSignature signature = MethodSignatureBackedByPsiMethod.create(this, PsiSubstitutor.EMPTY);
-        return CachedValueProvider.Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return CachedValueProvider.Result.create(signature, PsiModificationTracker.MODIFICATION_COUNT);
       });
     }
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
@@ -354,7 +355,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     info.put("methodName", getName());
   }
 

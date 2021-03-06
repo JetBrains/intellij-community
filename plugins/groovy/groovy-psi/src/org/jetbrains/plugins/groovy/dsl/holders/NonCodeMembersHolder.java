@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
@@ -96,7 +97,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   @Nullable
-  private static ClosureDescriptor createClosureDescriptor(Map prop) {
+  private static ClosureDescriptor createClosureDescriptor(@NonNls Map prop) {
     final ClosureDescriptor closure = new ClosureDescriptor();
 
     final Object method = prop.get("method");
@@ -120,7 +121,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
     return closure;
   }
 
-  private static GrLightMethodBuilder createMethod(Map prop, PsiElement place, PsiManager manager) {
+  private static GrLightMethodBuilder createMethod(@NonNls Map prop, PsiElement place, PsiManager manager) {
     String name = String.valueOf(prop.get("name"));
 
     final GrLightMethodBuilder method = new GrLightMethodBuilder(manager, name).addModifier(PsiModifier.PUBLIC);

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,4 +122,12 @@ public interface DfReferenceType extends DfType {
     }
     return this;
   }
+
+  @Override
+  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
+    return dropTypeConstraint().isSuperType(constant);
+  }
+
+  @Override
+  @NlsSafe String toString();
 }

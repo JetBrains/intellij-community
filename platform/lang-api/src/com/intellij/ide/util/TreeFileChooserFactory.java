@@ -19,6 +19,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,14 +33,14 @@ public abstract class TreeFileChooserFactory {
   }
 
   @NotNull
-  public abstract TreeFileChooser createFileChooser(@NotNull String title,
+  public abstract TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
                                                     @Nullable PsiFile initialFile,
                                                     @Nullable FileType fileType,
                                                     @Nullable TreeFileChooser.PsiFileFilter filter);
 
 
   @NotNull
-  public abstract TreeFileChooser createFileChooser(@NotNull String title,
+  public abstract TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
                                                     @Nullable PsiFile initialFile,
                                                     @Nullable FileType fileType,
                                                     @Nullable TreeFileChooser.PsiFileFilter filter,
@@ -47,7 +48,7 @@ public abstract class TreeFileChooserFactory {
 
 
   @NotNull
-  public abstract TreeFileChooser createFileChooser(@NotNull String title,
+  public abstract TreeFileChooser createFileChooser(@NlsContexts.DialogTitle @NotNull String title,
                                                     @Nullable PsiFile initialFile,
                                                     @Nullable FileType fileType,
                                                     @Nullable TreeFileChooser.PsiFileFilter filter,

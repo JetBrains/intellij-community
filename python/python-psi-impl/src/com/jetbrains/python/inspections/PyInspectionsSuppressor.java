@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
 import com.jetbrains.python.psi.*;
@@ -25,13 +26,13 @@ public class PyInspectionsSuppressor implements InspectionSuppressor {
   public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     if (PY_INCORRECT_DOCSTRING_INSPECTION_ID.equals(toolId) || PY_MISSING_OR_EMPTY_DOCSTRING_INSPECTION_ID.equals(toolId)) {
       return new SuppressQuickFix[]{
-        new PySuppressInspectionFix(toolId, "Suppress for function", PyFunction.class),
-        new PySuppressInspectionFix(toolId, "Suppress for class", PyClass.class)
+        new PySuppressInspectionFix(toolId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.function"), PyFunction.class),
+        new PySuppressInspectionFix(toolId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.class"), PyClass.class)
       };
     }
     else {
       return new SuppressQuickFix[]{
-        new PySuppressInspectionFix(toolId, "Suppress for statement", PyStatement.class) {
+        new PySuppressInspectionFix(toolId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.statement"), PyStatement.class) {
           @Override
           public PsiElement getContainer(PsiElement context) {
             if (PsiTreeUtil.getParentOfType(context, PyStatementList.class, false, ScopeOwner.class) != null ||
@@ -41,8 +42,8 @@ public class PyInspectionsSuppressor implements InspectionSuppressor {
             return null;
           }
         },
-        new PySuppressInspectionFix(toolId, "Suppress for function", PyFunction.class),
-        new PySuppressInspectionFix(toolId, "Suppress for class", PyClass.class)
+        new PySuppressInspectionFix(toolId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.function"), PyFunction.class),
+        new PySuppressInspectionFix(toolId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.class"), PyClass.class)
       };
     }
   }

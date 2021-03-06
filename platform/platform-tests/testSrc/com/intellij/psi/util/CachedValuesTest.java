@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.TimeoutUtil;
@@ -74,7 +73,7 @@ public class CachedValuesTest extends BasePlatformTestCase {
           assertEquals("result", getCached.get());
         }
       })).toList();
-      for (Future j : jobs) {
+      for (Future<?> j : jobs) {
         j.get();
       }
 
@@ -92,13 +91,13 @@ public class CachedValuesTest extends BasePlatformTestCase {
     for (int r = 0; r < 1_000; r++) {
       //      System.out.println("r = " + r)
 
-      ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();
+      getPsiManager().dropPsiCaches();
 
       List<? extends Future<?>> jobs = IntStreamEx
         .range(0, 8)
         .mapToObj(__ -> ApplicationManager.getApplication().executeOnPooledThread(() -> assertEquals(getPsiModCount(), cv.getValue())))
         .toList();
-      for (Future j : jobs) {
+      for (Future<?> j : jobs) {
         j.get();
       }
     }

@@ -6,6 +6,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +24,9 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
   protected abstract void fillActions(DefaultActionGroup group);
 
-  protected abstract String getTextForEmpty();
+  protected abstract @NlsActions.ActionText String getTextForEmpty();
 
-  protected abstract String getCaption();
+  protected abstract @NlsContexts.PopupTitle String getCaption();
 
   /**
    * When there is only one option to choose from, this method is called to determine whether

@@ -4,6 +4,9 @@ package com.intellij.internal.statistic.utils
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import java.text.SimpleDateFormat
+import java.time.ZoneOffset
+import java.util.*
 
 fun addPluginInfoTo(info: PluginInfo, data: MutableMap<String, Any>) {
   data["plugin_type"] = info.type.name
@@ -24,20 +27,37 @@ object StatisticsUtil {
   private const val mega = kilo * kilo
 
   @JvmStatic
-  fun getProjectId(project: Project): String {
-    return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
+  fun getProjectId(project: Project, recorderId: String): String {
+    return EventLogConfiguration.getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
   }
 
   /**
    * Anonymizes sensitive project properties by rounding it to the next power of two
-   * @see com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
+   * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
+   * Anonymizes value by finding upper bound in provided bounds.
+   * Allows more fine tuning then `com.intellij.internal.statistic.utils.StatisticsUtil#getNextPowerOfTwo`
+   * but requires manual maintaining.
+   *
+   * @param bounds is an integer array sorted in ascending order (required, but not checked)
+   * @return value upper bound or next power of two if no bounds were provided (as fallback)
+   * */
+  @JvmStatic
+  fun getUpperBound(value: Int, bounds: IntArray): Int {
+    if (bounds.isEmpty()) return getNextPowerOfTwo(value)
+
+    for (bound in bounds)
+      if (value <= bound) return bound
+    return bounds.last()
+  }
+
+  /**
    * Anonymizes sensitive project properties by rounding it to the next value in steps list.
-   * @see com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
+   * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   fun getCountingStepName(value: Int, steps: List<Int>): String {
     if (steps.isEmpty()) return value.toString()
@@ -52,6 +72,16 @@ object StatisticsUtil {
     val step = steps[stepIndex]
     val addPlus = stepIndex == steps.size - 1 || steps[stepIndex + 1] != step + 1
     return humanize(step) + if (addPlus) "+" else ""
+  }
+
+  /**
+   * Returns current hour in UTC as "yyMMddHH"
+   */
+  fun getCurrentHourInUTC(calendar: Calendar = Calendar.getInstance(Locale.ENGLISH)): String {
+    calendar[Calendar.YEAR] = calendar[Calendar.YEAR].coerceIn(2000, 2099)
+    val format = SimpleDateFormat("yyMMddHH", Locale.ENGLISH)
+    format.timeZone = TimeZone.getTimeZone(ZoneOffset.UTC)
+    return format.format(calendar.time)
   }
 
   private fun humanize(number: Int): String {

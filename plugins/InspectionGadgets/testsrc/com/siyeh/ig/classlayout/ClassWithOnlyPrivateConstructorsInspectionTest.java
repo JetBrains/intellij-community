@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -32,7 +32,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
            "  private X() {}" +
            "}");
   }
-  
+
   public void testNoWarnOnAnonymInheritor() {
     doTest("class X {" +
            "  private X() {}" +
@@ -41,6 +41,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightJavaIns
   }
 
   public void testEnum() {
+    //noinspection UnnecessaryEnumModifier
     doTest("enum Currencies {\n" +
            "    EURO, DOLLAR;\n" +
            "    private Currencies() {\n" +

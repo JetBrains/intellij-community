@@ -43,7 +43,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("xml.inspections.replace.tag.empty.body.with.empty.end");
+    return XmlAnalysisBundle.message("xml.intention.replace.tag.empty.body.with.empty.end");
   }
 
   @Nls

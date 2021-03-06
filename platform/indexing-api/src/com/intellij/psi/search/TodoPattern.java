@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,7 @@ public final class TodoPattern implements Cloneable {
   }
 
   @NotNull
+  @NlsSafe
   public String getPatternString() {
     return myIndexPattern.getPatternString();
   }

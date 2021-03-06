@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-public class FunctionalInterfaceSuggester {
+public final class FunctionalInterfaceSuggester {
   public static final String[] FUNCTIONAL_INTERFACES = {
     //old jdk without annotations
     CommonClassNames.JAVA_LANG_RUNNABLE,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ public class ToolRunProfile implements ModuleRunProfile{
     return expandMacrosInName(myTool, myContext);
   }
 
-  public static String expandMacrosInName(Tool tool, DataContext context) {
+  public static @NlsSafe String expandMacrosInName(Tool tool, DataContext context) {
     String name = tool.getName();
     if (name != null && name.contains("$")) {
       try {

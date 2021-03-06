@@ -8,7 +8,18 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="debugger-memory-agent" level="project" />
+    <orderEntry type="module-library">
+      <library name="debugger-memory-agent" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:debugger-memory-agent:1.0.32" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.32/debugger-memory-agent-1.0.32.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-memory-agent/1.0.32/debugger-memory-agent-1.0.32-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
   </component>

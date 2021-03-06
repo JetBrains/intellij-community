@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -408,12 +409,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return myAddNonJavaEntries;
   }
 
-  public void addAllPersistentEntries(EntryPointsManagerBase manager) {
+  public void addAllPersistentEntries(@NotNull EntryPointsManagerBase manager) {
     myPersistentEntryPoints.putAll(manager.myPersistentEntryPoints);
     myPatterns.addAll(manager.getPatterns());
   }
 
-  static void convert(Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
+  static void convert(@NotNull Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
     List<Element> content = element.getChildren();
     for (final Element entryElement : content) {
       if (ENTRY_POINT_ATTR.equals(entryElement.getName())) {
@@ -429,7 +430,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
           while (lastDotIdx > parenIndex) lastDotIdx = fqName.lastIndexOf('.', lastDotIdx - 1);
 
           boolean notype = false;
-          if (spaceIdx < 0 || spaceIdx + 1 > lastDotIdx || spaceIdx > parenIndex) {
+          if (spaceIdx < 0 || spaceIdx + 1 > lastDotIdx) {
             notype = true;
           }
 
@@ -547,7 +548,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @Tag("pattern")
   public static class ClassPattern {
     @Attribute("value")
-    public String pattern = "";
+    public @NlsSafe String pattern = "";
     @Attribute("hierarchically")
     public boolean hierarchically = false;
 
@@ -558,7 +559,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     private Pattern regexp;
     private Pattern methodRegexp;
 
-    public ClassPattern(ClassPattern classPattern) {
+    public ClassPattern(@NotNull ClassPattern classPattern) {
       hierarchically = classPattern.hierarchically;
       pattern = classPattern.pattern;
       method = classPattern.method;

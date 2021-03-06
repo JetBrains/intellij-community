@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnProgressCanceller;
@@ -29,20 +30,22 @@ import java.util.Objects;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
 import static org.jetbrains.idea.svn.properties.ExternalsDefinitionParser.parseExternalsProperty;
 
 public class CreateExternalAction extends DumbAwareAction {
   public CreateExternalAction() {
-    super(message("svn.create.external.below.action"), message("svn.create.external.below.description"), null);
+    super(messagePointer("svn.create.external.below.action"),
+          messagePointer("svn.create.external.below.description"),
+          null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = Objects.requireNonNull(getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+    VirtualFile file = Objects.requireNonNull(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
     SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, file);
 
     if (dialog.showAndGet()) {
@@ -50,7 +53,7 @@ public class CreateExternalAction extends DumbAwareAction {
       boolean checkout = dialog.isCheckout();
       String target = dialog.getLocalTarget().trim();
 
-      new Task.Backgroundable(project, "Creating External") {
+      new Task.Backgroundable(project, message("progress.title.creating.external")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           doInBackground(project, file, url, checkout, target);
@@ -76,7 +79,7 @@ public class CreateExternalAction extends DumbAwareAction {
       }
     }
     catch (VcsException e) {
-      AbstractVcsHelper.getInstance(project).showError(e, "Create External");
+      AbstractVcsHelper.getInstance(project).showError(e, message("tab.title.create.external"));
     }
   }
 
@@ -91,7 +94,7 @@ public class CreateExternalAction extends DumbAwareAction {
       String externalsForTarget = parseExternalsProperty(propertyValue.toString()).get(target);
 
       if (externalsForTarget != null) {
-        throw new VcsException("Selected destination conflicts with existing: " + externalsForTarget);
+        throw new VcsException(message("error.selected.destination.conflicts.with.existing", externalsForTarget));
       }
 
       newExternals = propertyValue.toString().trim() + "\n";
@@ -106,7 +109,7 @@ public class CreateExternalAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     boolean visible = project != null && isSvnActive(project);
-    boolean enabled = visible && isEnabled(project, getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)));
+    boolean enabled = visible && isEnabled(project, JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
 
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(enabled);

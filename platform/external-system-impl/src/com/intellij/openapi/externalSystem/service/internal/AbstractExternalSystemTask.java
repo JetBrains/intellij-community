@@ -1,7 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.build.events.ProgressBuildEvent;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
@@ -16,6 +17,7 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -99,7 +101,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     if (getState() != ExternalSystemTaskState.IN_PROGRESS) {
       return;
     }
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+    final ExternalSystemFacadeManager manager = ApplicationManager.getApplication().getService(ExternalSystemFacadeManager.class);
     try {
       final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject, myExternalProjectPath, myExternalSystemId);
       setState(facade.isTaskInProgress(getId()) ? ExternalSystemTaskState.IN_PROGRESS : ExternalSystemTaskState.FAILED);
@@ -137,11 +139,13 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   public void execute(ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     if (!compareAndSetState(ExternalSystemTaskState.NOT_STARTED, ExternalSystemTaskState.IN_PROGRESS)) return;
 
-    ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemProgressNotificationManager progressManager =
+      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
-    ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
+    ExternalSystemProcessingManager processingManager =
+      ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
     try {
       processingManager.add(this);
       doExecute();
@@ -158,9 +162,6 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       setState(ExternalSystemTaskState.FAILED);
     }
     finally {
-      for (ExternalSystemTaskNotificationListener listener : listeners) {
-        progressManager.removeNotificationListener(listener);
-      }
       processingManager.release(getId());
     }
   }
@@ -192,21 +193,20 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     ExternalSystemTaskState currentTaskState = getState();
     if (currentTaskState.isStopped()) return true;
 
-    ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemProgressNotificationManager progressManager =
+      ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
 
     if (!compareAndSetState(currentTaskState, ExternalSystemTaskState.CANCELING)) return false;
-
-    boolean result = false;
     try {
-      result = doCancel();
-      return result;
+      return doCancel();
     }
     catch (NotSupportedException e) {
       NotificationData notification =
-        new NotificationData("Cancellation failed", e.getMessage(), NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+        new NotificationData(ExternalSystemBundle.message("progress.cancel.failed"), e.getMessage(),
+                             NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
       notification.setBalloonNotification(true);
       ExternalSystemNotificationManager.getInstance(getIdeProject()).showNotification(getExternalSystemId(), notification);
     }
@@ -215,19 +215,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       myError.set(e);
       LOG.warn(e);
     }
-    finally {
-      for (ExternalSystemTaskNotificationListener listener : listeners) {
-        progressManager.removeNotificationListener(listener);
-      }
-    }
-    return result;
+    return false;
   }
 
   protected abstract boolean doCancel() throws Exception;
 
 
   @NotNull
-  protected String wrapProgressText(@NotNull String text) {
+  protected @NlsContexts.ProgressText String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);
   }
 

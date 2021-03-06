@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
@@ -12,18 +13,25 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.*
+import com.intellij.psi.augment.PsiAugmentProvider
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.impl.light.LightMethodBuilder
+import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.ServiceContainerUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+
+import java.util.stream.Collectors
 
 @CompileStatic
 class NormalCompletionTest extends NormalCompletionTestCase {
@@ -84,6 +92,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     doTest 'a\n'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSimpleVariable() throws Exception { doTest('\n') }
 
   void testTypeParameterItemPresentation() {
@@ -103,8 +112,8 @@ class NormalCompletionTest extends NormalCompletionTestCase {
   void testDisplayDefaultValueInAnnotationMethods() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
-    assert "myBool" == presentation.itemText
-    assert presentation.tailText == " default false"
+    assert "myInt" == presentation.itemText
+    assert presentation.tailText == " default 42"
     assert presentation.tailFragments[0].grayed
     assert !presentation.typeText
     assert !presentation.itemTextBold
@@ -114,6 +123,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert presentation.tailText == ' default "unknown"'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMethodItemPresentation() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
@@ -125,10 +135,6 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert presentation.itemTextBold
   }
 
-  private static LookupElementPresentation renderElement(LookupElement element) {
-    return LookupElementPresentation.renderElement(element)
-  }
-
   void testFieldItemPresentationGenerics() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
@@ -137,6 +143,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert "String" == presentation.typeText
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMethodItemPresentationGenerics() {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[1])
@@ -175,18 +182,21 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     configureByFile("SCR7208.java")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testProtectedFromSuper() throws Exception {
     configureByFile("ProtectedFromSuper.java")
     Arrays.sort(myItems)
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testBeforeInitialization() throws Exception {
     configureByFile("BeforeInitialization.java")
     assertNotNull(myItems)
     assertTrue(myItems.length > 0)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testProtectedFromSuper2() throws Exception {
 
     configureByFile("ProtectedFromSuper.java")
@@ -207,7 +217,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
   @Override
   protected void tearDown() throws Exception {
     CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    CodeInsightSettings.instance.setCompletionCaseSensitive(CodeInsightSettings.FIRST_LETTER)
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true
     super.tearDown()
   }
@@ -224,6 +234,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert 'ABCDE' in myFixture.lookupElementStrings
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testObjectsInThrowsBlock() throws Exception {
     configureByFile("InThrowsCompletion.java")
     assert "C" == myFixture.lookupElementStrings[0]
@@ -286,6 +297,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
   void testSecondSwitchCaseWithEnumConstant() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testInsideSwitchCaseWithEnumConstant() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'compareTo', 'equals'
@@ -321,6 +333,8 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     configureByFile("Annotation4.java")
     checkResultByFile("Annotation4_after.java")
   }
+
+  void testEnumInTypeAnnotation() { doTest() }
 
   void testSecondAttribute() throws Exception {
     configureByFile("Annotation6.java")
@@ -374,16 +388,25 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
   void testFieldType() { doTest() }
 
+  void testFieldOfLocalClass() {
+    configure()
+    assert renderElement(myItems[0]).itemText == 'field'
+    type('\t')
+    checkResult()
+  }
+
   void testPackageInAnnoParam() throws Throwable {
     doTest()
   }
 
   void testAnonymousTypeParameter() throws Throwable { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testClassLiteralInAnnoParam() throws Throwable {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoForceBraces() {
     codeStyleSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
     doTest('\n')
@@ -395,6 +418,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert !('StringBuffer' in myFixture.lookupElementStrings)
   }
 
+  @NeedsIndex.Full
   void testExcludeInstanceInnerClasses() throws Throwable {
     JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
@@ -404,6 +428,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert myFixture.lookupElementStrings == ['Inner']
   }
 
+  @NeedsIndex.Full
   void testExcludedInstanceInnerClassCreation() throws Throwable {
     JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
@@ -413,6 +438,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert myFixture.lookupElementStrings == ['Inner']
   }
 
+  @NeedsIndex.Full
   void testExcludedInstanceInnerClassQualifiedReference() throws Throwable {
     JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
@@ -422,6 +448,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert myFixture.lookupElementStrings == ['Inner']
   }
 
+  @NeedsIndex.Full
   void testStaticMethodOfExcludedClass() {
     JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public static void method() {} }'
@@ -429,6 +456,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert myFixture.lookupElementStrings == ['method']
   }
 
+  @NeedsIndex.Full
   void testExcludeWildcards() {
     JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo.Outer.*1*")
     myFixture.addClass '''
@@ -444,6 +472,7 @@ public class Outer {
     assert myFixture.lookupElementStrings == ['method2', 'method42']
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for int hashCode lookup preventing autocompletion and additional \n)")
   void testAtUnderClass() throws Throwable {
     doTest('\n')
   }
@@ -462,16 +491,19 @@ public class Outer {
     assert 'K' in myFixture.lookupElementStrings
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testLocalClassTwice() throws Throwable {
     configure()
     assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testLocalTopLevelConflict() throws Throwable {
     configure()
     assertOrderedEquals myFixture.lookupElementStrings, 'Zoooz', 'Zooooo', 'ZipOutputStream'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testFinalBeforeMethodCall() throws Throwable {
     configure()
     assertStringItems 'final', 'finalize'
@@ -484,7 +516,7 @@ public class Outer {
   void testStaticMethodFromOuterClass() {
     configure()
     assertStringItems 'foo', 'A.foo', 'for'
-    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.foo'
+    assert renderElement(myItems[1]).itemText == 'A.foo'
     selectItem(myItems[1])
     checkResult()
   }
@@ -492,7 +524,7 @@ public class Outer {
   void testInstanceMethodFromOuterClass() {
     configure()
     assertStringItems 'foo', 'A.this.foo', 'for'
-    assert LookupElementPresentation.renderElement(myItems[1]).itemText == 'A.this.foo'
+    assert renderElement(myItems[1]).itemText == 'A.this.foo'
     selectItem(myItems[1])
     checkResult()
   }
@@ -522,9 +554,13 @@ public class Outer {
     myFixture.assertPreferredCompletionItems 0, 'getAnnotationsAreaOffset'
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "On emptly indices 'foo' is the only item, so is not filtered out in  JavaCompletionProcessor.dispreferStaticAfterInstance")
   void testAccessStaticViaInstanceSecond() throws Throwable {
     configure()
+    assert !('foo' in myFixture.lookupElementStrings)
     myFixture.complete(CompletionType.BASIC, 2)
+    myFixture.assertPreferredCompletionItems 0, 'foo'
+    myFixture.type('\n')
     checkResult()
   }
 
@@ -564,6 +600,7 @@ public class Outer {
       }}""".stripIndent())
   }
 
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   void testAnonymousProcess() {
     myFixture.addClass 'package java.lang; public class Process {}'
     myFixture.addClass '''
@@ -594,6 +631,7 @@ public class ListUtils {
     assertStringItems("case", "default")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testBooleanLiterals() throws Throwable {
     doTest('\n')
   }
@@ -605,13 +643,14 @@ public class ListUtils {
 
   void testDoubleConstant() throws Throwable {
     configure()
-    assertStringItems("XFOO")
+    assertStringItems("Intf.XFOO", "XFOO")
   }
 
   void testNotOnlyKeywordsInsideSwitch() throws Throwable {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testChainedCallOnNextLine() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     selectItem(myItems[0])
@@ -626,6 +665,7 @@ public class ListUtils {
 
   void testEnclosingThis() throws Throwable { doTest() }
 
+  @NeedsIndex.Full
   void testSeamlessConstant() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     selectItem(myItems[0])
@@ -641,6 +681,7 @@ public class ListUtils {
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoSpaceInParensWithoutParams() throws Throwable {
     codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     try {
@@ -651,25 +692,30 @@ public class ListUtils {
     }
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testTwoSpacesInParensWithParams() throws Throwable {
     codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testQualifierAsPackage() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     selectItem(myItems[0])
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testQualifierAsPackage2() throws Throwable {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testQualifierAsPackage3() throws Throwable {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testPreselectEditorSelection() {
     configure()
     assert lookup.currentItem != myFixture.lookupElements[0]
@@ -681,8 +727,10 @@ public class ListUtils {
     assertStringItems("*")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMembersInStaticImports() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testPackageNamedVariableBeforeAssignment() throws Throwable {
     doTest()
   }
@@ -708,6 +756,7 @@ public class ListUtils {
     assert myFixture.lookupElementStrings == ['MyParam']
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMethodReturnType() { doTest('\n') }
 
   void testMethodReturnTypeNoSpace() throws Throwable {
@@ -720,6 +769,7 @@ public class ListUtils {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testDoWhileMethodCall() throws Throwable {
     doTest()
   }
@@ -728,6 +778,7 @@ public class ListUtils {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testGetterWithExistingNonEmptyParameterList() throws Throwable {
     doTest()
   }
@@ -752,6 +803,7 @@ public class ListUtils {
     doTest('.')
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testFinishClassNameWithLParen() throws Throwable {
     doTest('(')
   }
@@ -764,6 +816,7 @@ public class ListUtils {
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCompletionInsideClassLiteral() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     type('\n')
@@ -780,6 +833,7 @@ public class ListUtils {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuperInConstructorWithParams() throws Throwable {
     doTest()
   }
@@ -835,16 +889,19 @@ public class ListUtils {
     assertStringItems("fofoo", "fofoo")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMethodMergingMinimalTail() { doTest() }
 
   void testAnnotationQualifiedName() throws Throwable {
     doTest()
   }
 
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   void testClassNameAnonymous() throws Throwable {
     doTest('\n')
   }
 
+  @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
   void testClassNameWithInner() throws Throwable {
     configure()
     assertStringItems 'Zzoo', 'Zzoo.Impl'
@@ -856,19 +913,24 @@ public class ListUtils {
 
   void testClassNameWithInstanceInner() throws Throwable { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     assertFirstStringItems("false", "fefefef", "float", "finalize")
   }
 
   void testSameNamedVariableInNestedClasses() throws Throwable {
-    doTest()
+    configure()
+    myFixture.assertPreferredCompletionItems 0, "ffid", "Beda.this.ffid"
+    selectItem(myItems[1])
+    checkResult()
   }
 
   void testHonorUnderscoreInPrefix() throws Throwable {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() throws Throwable { doTest() }
 
   void testReturningTypeVariable() throws Throwable { doTest() }
@@ -877,6 +939,7 @@ public class ListUtils {
 
   void testReturningTypeVariable3() throws Throwable { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testImportInGenericType() throws Throwable {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
@@ -897,6 +960,7 @@ public class ListUtils {
     assertStringItems 'final'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testFinalInForLoop2() throws Throwable {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'finalize', 'final'
@@ -947,6 +1011,7 @@ public class ListUtils {
     assertStringItems("fai1", "fai2")
   }
 
+  @NeedsIndex.Full
   void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)
@@ -959,6 +1024,7 @@ public class ListUtils {
     doAntiTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSecondAnonymousClassParameter() { doTest() }
 
   void testSpaceAfterReturn() throws Throwable {
@@ -987,6 +1053,7 @@ public class ListUtils {
 
   void testSmartEnterWithNewLine() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
 
+  @NeedsIndex.SmartMode(reason = "MethodCallFixer.apply needs smart mode to count number of parameters")
   void testSmartEnterGuessArgumentCount() throws Throwable { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
 
   void testSmartEnterInsideArrayBrackets() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
@@ -995,6 +1062,7 @@ public class ListUtils {
 
   void testMethodParameterAnnotationClass() throws Throwable { doTest() }
 
+  @NeedsIndex.Full
   void testInnerAnnotation() {
     configure()
     assert myFixture.lookupElementStrings == ['Dependency']
@@ -1009,7 +1077,7 @@ public class ListUtils {
   void testClassReferenceInFor2() throws Throwable { doTest ' ' }
 
   void testClassReferenceInFor3() throws Throwable {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.instance.setCompletionCaseSensitive(CodeInsightSettings.NONE)
     doTest ' '
   }
 
@@ -1036,17 +1104,20 @@ public class ListUtils {
 
   void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
 
+  @NeedsIndex.Full
   void testExpectedTypeMembersVersusStaticImports() throws Throwable {
     configure()
     assertStringItems('XFOO', 'XFOX')
   }
 
+  @NeedsIndex.Full
   void testSuggestExpectedTypeMembersNonImported() throws Throwable {
     myFixture.addClass("package foo; public class Super { public static final Super FOO = null; }")
     myFixture.addClass("package foo; public class Usage { public static void foo(Super s) {} }")
     doTest('\n')
   }
 
+  @NeedsIndex.Full
   void testStaticallyImportedInner() throws Throwable {
     configure()
     assertStringItems('AIOInner', 'ArrayIndexOutOfBoundsException')
@@ -1065,6 +1136,7 @@ public class ListUtils {
 
   void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyAnnotationsAfterAt2() throws Throwable { doTest('\n') }
 
   void testAnnotationBeforeIdentifier() { doTest('\n') }
@@ -1073,12 +1145,16 @@ public class ListUtils {
 
   void testAnnotationBeforeIdentifierFinishWithSpace() { doTest(' ') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyExceptionsInCatch2() throws Exception { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyExceptionsInCatch3() throws Exception { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyExceptionsInCatch4() throws Exception { doTest('\n') }
 
   void testCommaAfterVariable() throws Throwable { doTest(',') }
@@ -1097,6 +1173,7 @@ public class ListUtils {
 
   void testMethodParameterTypeDot() throws Throwable { doAntiTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testNewGenericClass() throws Throwable { doTest('\n') }
 
   void testNewGenericInterface() throws Throwable { doTest() }
@@ -1119,6 +1196,7 @@ public class ListUtils {
     assertStringItems("MyParameter", "MySecondParameter")
   }
 
+  @NeedsIndex.Full
   void testSuperProtectedMethod() throws Throwable {
     myFixture.addClass """package foo;
       public class Bar {
@@ -1127,9 +1205,10 @@ public class ListUtils {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testOuterSuperMethodCall() {
     configure()
-    assert 'Class2.super.put' == LookupElementPresentation.renderElement(myItems[0]).itemText
+    assert 'Class2.super.put' == renderElement(myItems[0]).itemText
     type '\n'
     checkResult() }
 
@@ -1147,6 +1226,7 @@ public class ListUtils {
     assertStringItems("myField1", "myField2")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testAfterCommonPrefix() throws Throwable {
     configure()
     type 'eq'
@@ -1157,6 +1237,7 @@ public class ListUtils {
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testClassNameInsideIdentifierInIf() throws Throwable {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
@@ -1172,6 +1253,7 @@ public class ListUtils {
   }
   void testSynchronizedArgumentSmartEnter() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
 
+  @NeedsIndex.Full
   void testImportStringValue() throws Throwable {
     myFixture.addClass("package foo; public class StringValue {}")
     myFixture.addClass("package java.lang; class StringValue {}")
@@ -1183,6 +1265,7 @@ public class ListUtils {
 
   void testPrimitiveArrayWithRBrace() throws Throwable { doTest '[' }
 
+  @NeedsIndex.Full
   void testSuggestMembersOfStaticallyImportedClasses() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {
@@ -1193,6 +1276,7 @@ public class ListUtils {
     doTest('\n')
   }
 
+  @NeedsIndex.Full
   void testSuggestMembersOfStaticallyImportedClassesUnqualifiedOnly() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {
@@ -1207,6 +1291,7 @@ public class ListUtils {
     checkResult()
   }
 
+  @NeedsIndex.Full
   void testSuggestMembersOfStaticallyImportedClassesConflictWithLocalMethod() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {
@@ -1216,12 +1301,13 @@ public class ListUtils {
     """)
     configure()
     myFixture.assertPreferredCompletionItems 0, 'bar', 'bar'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).itemText == 'Foo.bar'
+    assert renderElement(myFixture.lookupElements[1]).itemText == 'Foo.bar'
     myFixture.lookup.currentItem = myFixture.lookupElements[1]
     myFixture.type '\t'
     checkResult()
   }
 
+  @NeedsIndex.Full
   void testSuggestMembersOfStaticallyImportedClassesConflictWithLocalField() throws Exception {
     myFixture.addClass("""package foo;
     public class Foo {
@@ -1269,10 +1355,13 @@ public class ListUtils {
     assertFirstStringItems "final", "float"
   }
 
+  @NeedsIndex.Full
   void testNonImportedClassInAnnotation() {
     myFixture.addClass("package foo; public class XInternalTimerServiceController {}")
     myFixture.configureByText "a.java", """
 class XInternalError {}
+
+@interface Anno { Class value(); }
 
 @Anno(XInternal<caret>)
 """
@@ -1280,6 +1369,7 @@ class XInternalError {}
     assertFirstStringItems "XInternalError", "XInternalTimerServiceController"
   }
 
+  @NeedsIndex.Full
   void testNonImportedAnnotationClass() {
     myFixture.addClass("package foo; public @interface XAnotherAnno {}")
     configure()
@@ -1287,6 +1377,7 @@ class XInternalError {}
     assertFirstStringItems "XAnno", "XAnotherAnno"
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMetaAnnotation() {
     myFixture.configureByText "a.java", "@<caret> @interface Anno {}"
     myFixture.complete(CompletionType.BASIC)
@@ -1295,6 +1386,7 @@ class XInternalError {}
 
   void testAnnotationClassFromWithinAnnotation() { doTest() }
 
+  @NeedsIndex.Full
   void testStaticallyImportedFieldsTwice() {
     myFixture.addClass("""
       class Foo {
@@ -1349,7 +1441,7 @@ class XInternalError {}
   }
 
   void testDontPreselectCaseInsensitivePrefixMatch() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.instance.setCompletionCaseSensitive(CodeInsightSettings.NONE)
     myFixture.configureByText "a.java", "import java.io.*; class Foo {{ int fileSize; fil<caret>x }}"
     myFixture.completeBasic()
     assert lookup.currentItem.lookupString == 'fileSize'
@@ -1360,21 +1452,26 @@ class XInternalError {}
     assert lookup.currentItem == lookup.items[1]
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoGenericsWhenChoosingWithParen() { doTest('Ma(') }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
 
   void testPackageInMemberType() { doTest() }
   void testPackageInMemberTypeGeneric() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testConstantInAnno() { doTest('\n') }
 
+  @NeedsIndex.SmartMode(reason = "Smart mode needed for EncodingReferenceInjector to provide EncodingReference with variants")
   void testCharsetName() {
     myFixture.addClass("package java.nio.charset; public class Charset { public static Charset forName(String s) {} }")
     configureByTestName()
     assert myFixture.lookupElementStrings.contains('UTF-8')
   }
 
+  @NeedsIndex.Full
   void testInnerClassInExtendsGenerics() {
     def text = "package bar; class Foo extends List<Inne<caret>> { public static class Inner {} }"
     myFixture.configureFromExistingVirtualFile(myFixture.addClass(text).containingFile.virtualFile)
@@ -1383,8 +1480,10 @@ class XInternalError {}
     myFixture.checkResult(text.replace('Inne<caret>', 'Foo.Inner<caret>'))
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testClassNameDot() { doTest('.') }
 
+  @NeedsIndex.Full
   void testClassNameDotBeforeCall() {
     myFixture.addClass("package foo; public class FileInputStreamSmth {}")
     myFixture.configureByFile(getTestName(false) + ".java")
@@ -1402,13 +1501,15 @@ class XInternalError {}
     assert !('return' in myFixture.lookupElementStrings)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testDuplicateExpectedTypeInTypeArgumentList() {
     configure()
     def items = myFixture.lookupElements.findAll { it.lookupString == 'String' }
     assert items.size() == 1
-    assert LookupElementPresentation.renderElement(items[0]).tailText == ' (java.lang)'
+    assert renderElement(items[0]).tailText == ' (java.lang)'
   }
 
+  @NeedsIndex.Full
   void testDuplicateInnerClass() {
     configure()
     def items = myFixture.lookupElements.findAll { it.lookupString == 'Inner' }
@@ -1423,8 +1524,10 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoParenthesesAroundCallQualifier() { doTest() }
 
+  @NeedsIndex.Full
   void testAllAssertClassesMethods() {
     myFixture.addClass 'package foo; public class Assert { public static boolean foo() {} }'
     myFixture.addClass 'package bar; public class Assert { public static boolean bar() {} }'
@@ -1434,14 +1537,16 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.Full
   void testCastVisually() {
     configure()
-    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    def p = renderElement(myFixture.lookupElements[0])
     assert p.itemText == 'getValue'
     assert p.itemTextBold
     assert p.typeText == 'Foo'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestEmptySet() {
     configure()
     assert 'emptySet' == myFixture.lookupElementStrings[0]
@@ -1449,26 +1554,30 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestAllTypeArguments() {
     configure()
     assert 'String, List<String>' == lookup.items[0].lookupString
-    assert 'String, List<String>' == LookupElementPresentation.renderElement(lookup.items[0]).itemText
+    assert 'String, List<String>' == renderElement(lookup.items[0]).itemText
     type '\n'
     checkResult()
   }
 
   void testNoFinalInAnonymousConstructor() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testListArrayListCast() { doTest('\n') }
 
   void testInterfaceImplementationNoCast() { doTest() }
 
+  @NeedsIndex.Full
   void testStaticallyImportedMethodsBeforeExpression() { doTest() }
 
+  @NeedsIndex.Full
   void testInnerChainedReturnType() { doTest() }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
   }
 
   void testCompatibleInterfacesCast() {
@@ -1482,12 +1591,13 @@ class XInternalError {}
     assert lookup.items.size() == 1
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for method implementations)")
   void testImplementViaCompletion() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'private', 'protected', 'public', 'public void run'
     def item = lookup.items[3]
 
-    def p = LookupElementPresentation.renderElement(item)
+    def p = renderElement(item)
     assert p.itemText == 'public void run'
     assert p.tailText == '(String t, int myInt) {...}'
     assert p.typeText == 'Foo'
@@ -1497,45 +1607,64 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for implementing methods)")
   void testImplementViaCompletionWithGenerics() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'public void methodWithGenerics', 'public void methodWithTypeParam'
-    assert LookupElementPresentation.renderElement(lookup.items[0]).tailText == '(List k) {...}'
-    assert LookupElementPresentation.renderElement(lookup.items[1]).tailText == '(K k) {...}'
+    assert renderElement(lookup.items[0]).tailText == '(List k) {...}'
+    assert renderElement(lookup.items[1]).tailText == '(K k) {...}'
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override', 'public void run'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...', 'public void run'
     lookup.currentItem = lookup.items[2]
     myFixture.type('\n')
     checkResult()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
     checkResult()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
+  void testSuggestToOverrideMethodsInMulticaretMode() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override', 'Override/Implement methods...'
+    lookup.currentItem = lookup.items[1]
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for implementing methods)")
   void testStrikeOutDeprecatedSuperMethods() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'void foo1', 'void foo2'
-    assert !LookupElementPresentation.renderElement(lookup.items[0]).strikeout
-    assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
+    assert !renderElement(lookup.items[0]).strikeout
+    assert renderElement(lookup.items[1]).strikeout
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
   void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
   void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters and setters)")
   void testAccessorViaCompletion() {
     configure()
 
@@ -1544,12 +1673,12 @@ class XInternalError {}
     assert getter : myFixture.lookupElementStrings
     assert setter : myFixture.lookupElementStrings
 
-    def p = LookupElementPresentation.renderElement(getter)
+    def p = renderElement(getter)
     assert p.itemText == getter.lookupString
     assert p.tailText == '() {...}'
     assert !p.typeText
 
-    p = LookupElementPresentation.renderElement(setter)
+    p = renderElement(setter)
     assert p.itemText == setter.lookupString
     assert p.tailText == '(int field) {...}'
     assert !p.typeText
@@ -1559,6 +1688,7 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters and setters)")
   void testNoSetterForFinalField() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'public', 'public int getFinalField'
@@ -1580,10 +1710,12 @@ class XInternalError {}
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMulticaretMethodWithParen() {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMulticaretTyping() {
     configure()
     assert lookup
@@ -1593,6 +1725,7 @@ class XInternalError {}
     checkResult()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testMulticaretCompletionFromNonPrimaryCaret() {
     configure()
     myFixture.assertPreferredCompletionItems(0, "arraycopy")
@@ -1602,6 +1735,7 @@ class XInternalError {}
     doTest '\t'
   }
 
+  @NeedsIndex.Full
   void "test complete lowercase class name"() {
     myFixture.addClass("package foo; public class myClass {}")
     myFixture.configureByText "a.java", """
@@ -1614,6 +1748,20 @@ class Foo extends myClass
 '''
   }
 
+  void testNoClassesWithDollar() {
+    myFixture.addClass('package some; public class $WithDollarNonImported {}')
+    myFixture.addClass('package imported; public class $WithDollarImported {}')
+    doAntiTest()
+  }
+
+  void testClassesWithDollarInTheMiddle() {
+    myFixture.addClass('package imported; public class Foo$WithDollarImported {}')
+    configureByTestName()
+    myFixture.completeBasic()
+    assert 'Foo$WithDollarImported' in myFixture.lookupElementStrings
+  }
+
+  @NeedsIndex.ForStandardLibrary
   void "test don't show static inner class after instance qualifier"() {
     myFixture.configureByText "a.java", """
 class Foo {
@@ -1629,6 +1777,7 @@ class Bar {
     assert !('Inner' in myFixture.lookupElementStrings)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test show static member after instance qualifier when nothing matches"() {
     myFixture.configureByText "a.java", "class Foo{{ \"\".<caret> }}"
     myFixture.completeBasic()
@@ -1641,6 +1790,7 @@ class Bar {
 
   void testNoMathTargetMethods() { doAntiTest() }
 
+  @NeedsIndex.Full
   void testNoLowercaseClasses() {
     myFixture.addClass("package foo; public class abcdefgXxx {}")
     doAntiTest()
@@ -1648,11 +1798,13 @@ class Bar {
     assertStringItems('abcdefgXxx')
   }
 
+  @NeedsIndex.Full
   void testProtectedFieldInAnotherPackage() {
     myFixture.addClass("package foo; public class Super { protected String myString; }")
     doTest()
   }
 
+  @NeedsIndex.Full
   void testUnimportedStaticInnerClass() {
     myFixture.addClass("package foo; public class Super { public static class Inner {} }")
     doTest()
@@ -1660,6 +1812,7 @@ class Bar {
 
   void testNoJavaLangPackagesInImport() { doAntiTest() }
 
+  @NeedsIndex.Full
   void testNoStaticDuplicatesFromExpectedMemberFactories() {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
@@ -1674,6 +1827,7 @@ class Bar {
     assertNull(getLookup())
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters)")
   void "test code cleanup during completion generation"() {
     myFixture.configureByText "a.java", "class Foo {int i; ge<caret>}"
     myFixture.enableInspections(new UnqualifiedFieldAccessInspection())
@@ -1691,12 +1845,13 @@ class Bar {
 
   void testShowMostSpecificOverride() {
     configure()
-    assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+    assert 'B' == renderElement(myFixture.lookup.items[0]).typeText
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testShowMostSpecificOverrideOnlyFromClass() {
     configure()
-    assert 'Door' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+    assert 'Door' == renderElement(myFixture.lookup.items[0]).typeText
   }
 
   void testNoOverrideWithMiddleMatchedName() {
@@ -1708,44 +1863,50 @@ class Bar {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
     def items = myFixture.lookup.items
-    assert items.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x")', '("y") {...}', null, ' ( = 42)']
-    assert LookupElementPresentation.renderElement(items[3]).tailFragments[0].italic
+    assert items.collect { renderElement(it).tailText } == ['( "x")', '("y") {...}', null, ' ( = 42)']
+    assert renderElement(items[3]).tailFragments[0].italic
   }
 
+  @NeedsIndex.Full
   void testShowNonImportedVarInitializers() {
     configure()
     myFixture.assertPreferredCompletionItems 1, 'Field', 'FIELD1', 'FIELD2', 'FIELD3', 'FIELD4'
     def fieldItems = myFixture.lookup.items[1..4]
-    assert fieldItems.collect { LookupElementPresentation.renderElement(it).tailText } == ['( "x") in E', '("y") {...} in E', null, ' ( = 42) in E']
-    assert LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[0].italic
-    assert !LookupElementPresentation.renderElement(fieldItems[3]).tailFragments[1].italic
+    assert fieldItems.collect { renderElement(it).tailText } == ['( "x") in E', '("y") {...} in E', null, ' ( = 42) in E']
+    assert renderElement(fieldItems[3]).tailFragments[0].italic
+    assert !renderElement(fieldItems[3]).tailFragments[1].italic
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestInterfaceArrayWhenObjectIsExpected() {
     configure()
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+    assert renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSuggestInterfaceArrayWhenObjectArrayIsExpected() {
     configure()
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
+    assert renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
+    assert renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
 
   void testDispreferPrimitiveTypesInCallArgs() throws Throwable {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.instance.setCompletionCaseSensitive(CodeInsightSettings.NONE)
     configure()
     myFixture.assertPreferredCompletionItems 0, "dx", "doo", "Doo", "double"
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCopyConstructor() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testGetClassType() {
     configure()
-    assert 'Class<? extends Number>' == LookupElementPresentation.renderElement(myFixture.lookupElements[0]).typeText
+    assert 'Class<? extends Number>' == renderElement(myFixture.lookupElements[0]).typeText
   }
 
+  @NeedsIndex.Full
   void testNonImportedClassAfterNew() {
     def uClass = myFixture.addClass('package foo; public class U {}')
     myFixture.configureByText('a.java', 'class X {{ new U<caret>x }}')
@@ -1756,7 +1917,7 @@ class Bar {
   void testSuggestClassNamesForLambdaParameterTypes() { doTest('\n') }
 
   void testOnlyExtendsSuperInWildcard() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.instance.setCompletionCaseSensitive(CodeInsightSettings.NONE)
 
     configure()
     assert myFixture.lookupElementStrings == ['extends', 'super']
@@ -1768,12 +1929,14 @@ class Bar {
     checkResultByFile(getTestName(false) + ".java")
   }
 
+  @NeedsIndex.Full
   void testChainInLambdaBinary() {
     codeStyleSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     myFixture.addClass("package pkg; public class PathUtil { public static String toSystemDependentName() {} }")
     doTest('\n')
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testPairAngleBracketDisabled() {
     CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
     doTest('<')
@@ -1784,9 +1947,10 @@ class Bar {
     assert myFixture.lookupElementStrings == ['indexOf']
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testDuplicateEnumValueOf() {
     configure()
-    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement((LookupElement)it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
+    assert myFixture.lookupElements.collect { renderElement((LookupElement)it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
   }
 
   void testTypeArgumentInCast() {
@@ -1796,6 +1960,7 @@ class Bar {
 
   void testNoCallsInPackageStatement() { doAntiTest() }
 
+  @NeedsIndex.Full
   void testTypeParameterShadowingClass() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'Tttt', 'Tttt'
@@ -1818,7 +1983,7 @@ class Bar {{
 }}""")
     myFixture.configureFromExistingVirtualFile(cls.containingFile.virtualFile)
     def item = myFixture.completeBasic()[0]
-    assert LookupElementPresentation.renderElement(item).tailText.contains('local class')
+    assert renderElement(item).tailText.contains('local class')
   }
 
   void testNoDuplicateInCast() {
@@ -1828,31 +1993,41 @@ class Bar {{
 
   void testNoNonAnnotationMethods() { doAntiTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testPreferBigDecimalToJavaUtilInner() {
     configure()
     myFixture.assertPreferredCompletionItems 0, 'BigDecimal', 'BigDecimalLayoutForm'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyExceptionsInMultiCatch1() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyExceptionsInMultiCatch2() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyResourcesInResourceList1() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyResourcesInResourceList2() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyResourcesInResourceList3() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyResourcesInResourceList4() { doTest('\n') }
 
   void testOnlyResourcesInResourceList5() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testMethodReferenceNoStatic() { doTest('\n') }
 
   void testMethodReferenceCallContext() { doTest('\n') }
 
+  @NeedsIndex.Full
   void testDestroyingCompletedClassDeclaration() { doTest('\n') }
 
+  @NeedsIndex.ForStandardLibrary
   void testResourceParentInResourceList() {
     configureByTestName()
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
@@ -1873,6 +2048,7 @@ class Bar {{
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  @NeedsIndex.Full
   void testCompletingClassWithSameNameAsPackage() {
     myFixture.addClass("package Apple; public class Apple {}")
     doTest('\n')
@@ -1880,6 +2056,7 @@ class Bar {{
 
   void testSuggestGetInstanceMethodName() { doTest() }
 
+  @NeedsIndex.Full(reason = "AllClassesSearchExecutor.processClassNames from JavaNoVariantsDelegator.suggestNonImportedClasses uses stub indices to provide completion, so matching Scratch class is ignored, ant so is its inner class")
   void testTabOnNewInnerClass() {
     configureByTestName()
     lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
@@ -1887,6 +2064,7 @@ class Bar {{
     checkResult()
   }
 
+  @NeedsIndex.Full
   void testRemoveUnusedImportOfSameName() {
     myFixture.addClass("package foo; public class List {}")
     configureByTestName()
@@ -1926,6 +2104,7 @@ class Abc {
 
   void testSuggestCurrentClassInSecondSuperGenericParameter() { doTest('\n') }
 
+  @NeedsIndex.Full
   void "test after new editing prefix back and forth when sometimes there are expected type suggestions and sometimes not"() {
     myFixture.addClass("class Super {}")
     myFixture.addClass("class Sub extends Super {}")
@@ -1959,6 +2138,7 @@ class Abc {
     myFixture.checkResult("enum X ex")
   }
 
+  @NeedsIndex.Full
   void testAddImportWhenCompletingInnerAfterNew() {
     myFixture.addClass("package p; public class Outer { public static class Inner {} }")
     configureByTestName()
@@ -1974,6 +2154,7 @@ class Abc {
     myFixture.checkResult("class C implements java.util.List<caret>")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test suggest Object methods when super is unresolved"() {
     def checkGetClassPresent = { String text ->
       myFixture.configureByText("a.java", text)
@@ -1984,6 +2165,217 @@ class Abc {
     checkGetClassPresent("class C implements Unresolved {{ getCl<caret>x }}")
     checkGetClassPresent("class C extends Unresolved implements Runnable {{ getCl<caret>x }}")
     checkGetClassPresent("class C extends Unresolved1 implements Unresolved2 {{ getCl<caret>x }}")
+  }
 
+  void testSuggestInverseOfDefaultAnnoParamValueForBoolean() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems(0, 'smth = true', 'value = false')
+
+    def smthDefault = myItems.find { it.lookupString == 'smth = false' }
+    def presentation = renderElement(smthDefault)
+    assert presentation.tailText == ' (default)'
+    assert presentation.tailFragments[0].grayed
+
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testCaseColonAfterStringConstant() { doTest() }
+
+  void testOneElementArray() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'aaa', 'aaa[0]'
+    selectItem(myItems[1])
+    checkResult()
+  }
+
+  void testSuggestChainsOfExpectedType() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'bar', 'bar().getGoo'
+    selectItem(myItems[1])
+    checkResult()
+  }
+
+  void testTopLevelPublicClass() { doTest() }
+  void testTopLevelPublicClassIdentifierExists() { doTest() }
+  void testTopLevelPublicClassBraceExists() { doTest() }
+
+  void testPerformanceWithManyNonMatchingDeclarations() {
+    def importedNumbers = 0..<10
+    for (i in (importedNumbers)) {
+      myFixture.addClass("class Foo$i {\n" +
+                         (0..100).collect { "static int FOO$it = 3;\n" }.join("") +
+                         "}")
+    }
+    String text = importedNumbers.collect { "import static Foo${it}.*;\n" }.join("") +
+                  "class C {\n" +
+                  (0..100).collect { "String method$it() {}\n" } +
+                  "{ " +
+                  "int localVariable = 2;\n" +
+                  "localV<caret>x }" +
+                  "}"
+    myFixture.configureByText("a.java", text)
+    PlatformTestUtil.startPerformanceTest(name, 300, {
+      assert myFixture.completeBasic().length == 1
+    }).setup {
+      lookup?.hideLookup(true)
+      myFixture.type("\bV")
+      psiManager.dropPsiCaches()
+      assert !lookup
+    }.assertTiming()
+  }
+
+  void "test performance with many matching statically-imported declarations"() {
+    def fieldCount = 7000
+
+    myFixture.addClass("interface Constants {" +
+            (0..<fieldCount).collect { "String field$it = \"x\";\n" } +
+    "}")
+    myFixture.configureByText("a.java", "import static Constants.*; class C { { field<caret>x } }")
+    PlatformTestUtil.startPerformanceTest(name, 10_000, {
+      assert myFixture.completeBasic().length > 100
+    }).setup {
+      lookup?.hideLookup(true)
+      myFixture.type("\bd")
+      psiManager.dropPsiCaches()
+      assert !lookup
+    }.assertTiming()
+  }
+
+  void testNoExceptionsWhenCompletingInapplicableClassNameAfterNew() { doTest('\n') }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test type cast completion"() {
+    myFixture.configureByText("a.java", "class X { StringBuilder[] s = (Stri<caret>)}")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class X { StringBuilder[] s = (StringBuilder[]) <caret>}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test type cast completion no closing parenthesis"() {
+    myFixture.configureByText("a.java", "class X { StringBuilder[] s = (Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult("class X { StringBuilder[] s = (StringBuilder[]) <caret>}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test type cast completion generic"() {
+    myFixture.configureByText("a.java", "import java.util.*; class X { Map<String, Object> getMap() { return (Ma<caret>)}}")
+    def elements = myFixture.completeBasic()
+    assert elements.length > 0
+    LookupElementPresentation presentation = renderElement(elements[0])
+    assert presentation.getItemText() == "(Map<String, Object>)"
+    myFixture.type('\n')
+    myFixture.checkResult("import java.util.*; class X { Map<String, Object> getMap() { return (Map<String, Object>) <caret>}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test no extra space after modifier"() {
+    myFixture.configureByText("a.java", "import java.util.*; class X { prot<caret> @NotNull String foo() {}}")
+    myFixture.completeBasic()
+    myFixture.checkResult("import java.util.*; class X { protected<caret> @NotNull String foo() {}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test suggest UTF8 Charset"() {
+    myFixture.configureByText("a.java", "import java.nio.charset.Charset; class X { Charset test() {return U<caret>;}}")
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems(0, "StandardCharsets.UTF_8", "StandardCharsets.US_ASCII",
+                                             "StandardCharsets.UTF_16", "StandardCharsets.UTF_16BE", "StandardCharsets.UTF_16LE")
+    myFixture.type('\n')
+    myFixture.checkResult("import java.nio.charset.Charset;\n" +
+                          "import java.nio.charset.StandardCharsets;\n" +
+                          "\n" +
+                          "class X { Charset test() {return StandardCharsets.UTF_8;}}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test static fields in enum initializer"() {
+    myFixture.configureByText("a.java", "enum MyEnum {\n" +
+                                        "    A, B, C, D, E, F;\n" +
+                                        "    static int myEnumField;\n" +
+                                        "    static int myEnumField2;\n" +
+                                        "    static final int myEnumField3 = 10;\n" +
+                                        "    static final String myEnumField4 = \"\";\n" +
+                                        "    {\n" +
+                                        "        System.out.println(myE<caret>);\n" +
+                                        "    }\n" +
+                                        "}");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["myEnumField3", "myEnumField4"]
+  }
+
+  void "test qualified outer class name"() {
+    myFixture.configureByText("a.java", "class A {\n" +
+                                        "    private static final long sss = 0L;\n" +
+                                        "    static class B {\n" +
+                                        "        private static final long sss = 0L;\n" +
+                                        "        {\n" +
+                                        "            <caret>int i = 0;\n" +
+                                        "        }\n" +
+                                        "    }\n" +
+                                        "}\n")
+    myFixture.completeBasic()
+    assert myFixture.getLookupElementStrings().stream().filter({ it.contains("sss") }).collect(Collectors.toList()) == 
+           ["A.sss", "sss"]
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test private constructor"() {
+    myFixture.configureByText("A.java", "class A {{new Syst<caret>}}")
+    myFixture.completeBasic()
+    assert ContainerUtil.filter(myFixture.getLookupElementStrings(), {it.startsWith("S")}) == ['System.Logger', 'System.LoggerFinder']
+  }
+  
+  @NeedsIndex.SmartMode // looks like augments don't work in dumb mode
+  void "test member as Java keyword"() {
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), PsiAugmentProvider.EP_NAME, new PsiAugmentProvider() {
+      @Override
+      protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                               @NotNull Class<Psi> type,
+                                                               @Nullable String nameHint) {
+        if (element instanceof PsiExtensibleClass && element.getName() == "A" && type == PsiMethod.class) {
+          PsiMethod method1 = new LightMethodBuilder(getPsiManager(), "default").setMethodReturnType(PsiType.VOID)
+          PsiMethod method2 = new LightMethodBuilder(getPsiManager(), "define").setMethodReturnType(PsiType.VOID)
+          return List.of(type.cast(method1), type.cast(method2))
+        }
+        return Collections.emptyList()
+      }
+    }, getTestRootDisposable());
+    myFixture.configureByText("A.java", "class A {\n  void test() {\n    Runnable r = A::def<caret>\n  }\n}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class A {\n" +
+                          "  void test() {\n" +
+                          "    Runnable r = A::define;\n" +
+                          "  }\n" +
+                          "}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test no final library classes in extends"() {
+    myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == [
+      "StriFoo", // non-final project class
+      "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter", // non-final library classes
+      "StriBar", // final project class (red)
+      "StringBufferInputStream"] // deprecated library class
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void "test primitive type after annotation"() {
+    myFixture.configureByText("X.java", "class C {\n" +
+                                        "  void m() {\n" +
+                                        "    @SuppressWarnings(\"x\") boo<caret>\n" +
+                                        "  }\n" +
+                                        "}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class C {\n" +
+                          "  void m() {\n" +
+                          "    @SuppressWarnings(\"x\") boolean\n" +
+                          "  }\n" +
+                          "}")
   }
 }

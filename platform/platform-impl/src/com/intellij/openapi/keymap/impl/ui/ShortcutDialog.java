@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -10,6 +11,7 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -174,7 +176,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     return newShortcut == null ? oldShortcut == null : newShortcut.equals(oldShortcut);
   }
 
-  private static void fill(SimpleColoredComponent component, String id, String path) {
+  private static void fill(SimpleColoredComponent component, @NlsSafe String id, @NlsSafe String path) {
     if (path == null) {
       component.append(id, SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
     }
@@ -185,8 +187,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
       }
       else {
         component.append(path.substring(index + 3), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        component.append(" in ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        component.append(path.substring(0, index), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        component.append(" " + IdeBundle.message("shortcut.in.group.text", path.substring(0, index)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
   }

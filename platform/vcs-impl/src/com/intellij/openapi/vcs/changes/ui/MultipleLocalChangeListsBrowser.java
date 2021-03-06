@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -32,8 +32,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY;
@@ -62,7 +63,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   private final boolean myEnableUnversioned;
   private final boolean myEnablePartialCommit;
-  @Nullable private JComponent myBottomDiffComponent;
+  @Nullable private Supplier<? extends JComponent> myBottomDiffComponent;
 
   @NotNull private final ChangeListChooser myChangeListChooser;
   @NotNull private final DeleteProvider myDeleteProvider = new VirtualFileDeleteProvider();
@@ -85,14 +86,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myEnableUnversioned = enableUnversioned;
     myEnablePartialCommit = enablePartialCommit;
 
-    myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    myChangeList = changeListManager.getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
 
     myRollbackDialogAction = new RollbackDialogAction();
     myRollbackDialogAction.registerCustomShortcutSet(this, null);
 
-    if (Registry.is("vcs.skip.single.default.changelist")) {
-      List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
+    if (!changeListManager.areChangeListsEnabled()) {
+      myChangeListChooser.setVisible(false);
+    }
+    else if (Registry.is("vcs.skip.single.default.changelist")) {
+      List<LocalChangeList> allChangeLists = changeListManager.getChangeLists();
       if (allChangeLists.size() == 1 && allChangeLists.get(0).isBlank()) {
         myChangeListChooser.setVisible(false);
       }
@@ -102,7 +107,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     Disposer.register(this, myInclusionModel);
     getViewer().setInclusionModel(myInclusionModel);
 
-    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
+    changeListManager.addChangeListListener(new MyChangeListListener(), this);
     init();
 
     updateDisplayedChangeLists();
@@ -184,13 +189,15 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   protected void updateDiffContext(@NotNull DiffRequestChain chain) {
     super.updateDiffContext(chain);
-    chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
+    if (myBottomDiffComponent != null) {
+      chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent.get());
+    }
     chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, myEnablePartialCommit);
     chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
   }
 
 
-  public void setBottomDiffComponent(@NotNull JComponent value) {
+  public void setBottomDiffComponent(@Nullable Supplier<? extends JComponent> value) {
     myBottomDiffComponent = value;
   }
 
@@ -244,7 +251,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myChanges.addAll(myChangeList.getChanges());
 
     if (myEnableUnversioned) {
-      List<FilePath> unversioned = ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFilesPaths();
+      List<FilePath> unversioned = ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
       if (isShowUnversioned()) {
         myUnversioned.addAll(unversioned);
       }
@@ -360,7 +367,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
     Optional<ChangesBrowserNode<?>> node = treeModelData.nodesStream()
       .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
-    if (!node.isPresent()) return false;
+    if (node.isEmpty()) return false;
 
     ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
     return unversionedFilesNode.isManyFiles();
@@ -372,7 +379,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     ChangeListChooser() {
       myChooser.setEditable(false);
-      myChooser.setRenderer(new ColoredListCellRenderer<LocalChangeList>() {
+      myChooser.setRenderer(new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends LocalChangeList> list, LocalChangeList value,
                                              int index, boolean selected, boolean hasFocus) {
@@ -426,7 +433,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
 
-  private class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
+  private final class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
     private ShowHideUnversionedFilesAction() {
       super(VcsBundle.messagePointer("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
             AllIcons.Vcs.ShowUnversionedFiles);
@@ -481,12 +488,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private class MyChangeListListener extends ChangeListAdapter {
     @Override
     public void changeListsChanged() {
-      myUpdateQueue.queue(new Update("updateChangeLists") {
-        @Override
-        public void run() {
-          updateDisplayedChangeLists();
-        }
-      });
+      myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "updateChangeLists", () -> {
+        updateDisplayedChangeLists();
+      }));
     }
   }
 }

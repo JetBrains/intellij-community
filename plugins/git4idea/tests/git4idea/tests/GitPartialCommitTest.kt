@@ -1,18 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vcs.Executor.child
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.ui.UIUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertCommitted
 import git4idea.test.gitAsBytes
@@ -99,6 +95,8 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   fun `test partial commit with changelists & don't commit staged change`() {
     tac("a.java", "A\nB\nC")
     tac("b.java", "A\nB\nC")
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    changeListManager.ensureUpToDate()
 
     val testChangeList = changeListManager.addChangeList("Test", null)
 
@@ -200,33 +198,14 @@ class GitPartialCommitTest : GitSingleRepoTest() {
   }
 
   private fun withTrackedDocument(fileName: String, newContent: String, task: (Document, PartialLocalLineStatusTracker) -> Unit) {
-    invokeAndWaitIfNeeded {
-      val lstm = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(child(fileName))!!
 
-      val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(child(fileName))!!
-      val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
+    withPartialTracker(file, newContent) { document, tracker ->
+      // Assume that initial changes are included into commit
+      tracker.setExcludedFromCommit(false)
 
-      runWriteAction {
-        document.setText(newContent)
-      }
-      changeListManager.waitUntilRefreshed()
-      UIUtil.dispatchAllInvocationEvents() // ensure `fileStatusesChanged` events are fired
-
-      lstm.requestTrackerFor(document, this)
-      try {
-        val tracker = lstm.getLineStatusTracker(file) as PartialLocalLineStatusTracker
-        lstm.waitUntilBaseContentsLoaded()
-
-        // Assume that initial changes are included into commit
-        tracker.setExcludedFromCommit(false)
-
-        task(document, tracker)
-
-        FileDocumentManager.getInstance().saveAllDocuments()
-      }
-      finally {
-        lstm.releaseTrackerFor(document, this)
-      }
+      task(document, tracker)
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
   }
 }

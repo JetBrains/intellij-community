@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.Facet;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -13,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzerListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -20,17 +20,15 @@ import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +37,13 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
 
   protected final Project myProject;
+  protected final ProjectStructureConfigurable myProjectStructureConfigurable;
 
   protected boolean myUiDisposed = true;
 
@@ -51,13 +51,18 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   protected boolean myAutoScrollEnabled = true;
 
-  protected BaseStructureConfigurable(Project project, MasterDetailsState state) {
+  protected BaseStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable, MasterDetailsState state) {
     super(state);
-    myProject = project;
+    myProject = projectStructureConfigurable.getProject();
+    myProjectStructureConfigurable = projectStructureConfigurable;
   }
 
-  protected BaseStructureConfigurable(@NotNull Project project) {
-    myProject = project;
+  protected BaseStructureConfigurable(@NotNull ProjectStructureConfigurable projectStructureConfigurable) {
+    this(projectStructureConfigurable, new MasterDetailsState());
+  }
+
+  public ProjectStructureConfigurable getProjectStructureConfigurable() {
+    return myProjectStructureConfigurable;
   }
 
   public void init(StructureConfigurableContext context) {
@@ -71,6 +76,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
         myTree.repaint();
       }
     });
+    Disposer.register(myProjectStructureConfigurable, this);
   }
 
   @Override
@@ -92,15 +98,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
     if (node == null && nodeByName == null) return ActionCallback.DONE;
 
-    final NamedConfigurable config;
-    if (node != null) {
-      config = node.getConfigurable();
-    } else {
-      config = nodeByName.getConfigurable();
-    }
-
-    final ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
-
+    NamedConfigurable<?> config = Objects.requireNonNullElse(node, nodeByName).getConfigurable();
+    ActionCallback result = new ActionCallback().doWhenDone(() -> myAutoScrollEnabled = true);
     myAutoScrollEnabled = false;
     myAutoScrollHandler.cancelAllRequests();
     final MyNode nodeToSelect = node != null ? node : nodeByName;
@@ -156,27 +155,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected void addCollapseExpandActions(final List<? super AnAction> result) {
-    final TreeExpander expander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    final TreeExpander expander = new DefaultTreeExpander(myTree);
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     result.add(actionsManager.createExpandAllAction(expander, myTree));
     result.add(actionsManager.createCollapseAllAction(expander, myTree));
@@ -198,7 +177,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
 
     MyFindUsagesAction(JComponent parentComponent) {
-      super(parentComponent, myProject);
+      super(parentComponent, myProjectStructureConfigurable);
     }
 
     @Override
@@ -210,11 +189,6 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       } else {
         return false;
       }
-    }
-
-    @Override
-    protected StructureConfigurableContext getContext() {
-      return myContext;
     }
 
     @Override
@@ -267,7 +241,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected abstract void loadTree();
- 
+
 
   @Override
   @NotNull
@@ -311,7 +285,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
-    MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<>();
+    MultiMap<RemoveConfigurableHandler, MyNode> grouped = MultiMap.createLinked();
     for (MyNode node : nodes) {
       final NamedConfigurable<?> configurable = node.getConfigurable();
       if (configurable == null) continue;
@@ -333,12 +307,11 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return null;
   }
 
-  protected class MyRemoveAction extends MyDeleteAction {
-    public MyRemoveAction() {
-      //noinspection Convert2Lambda
-      super(new Condition<Object[]>() {
+  final class MyRemoveAction extends MyDeleteAction {
+    MyRemoveAction() {
+      super(new Predicate<>() {
         @Override
-        public boolean value(final Object[] objects) {
+        public boolean test(final Object[] objects) {
           List<MyNode> nodes = new ArrayList<>();
           for (Object object : objects) {
             if (!(object instanceof MyNode)) return false;
@@ -402,7 +375,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected abstract static class AbstractAddGroup extends ActionGroup implements ActionGroupWithPreselection {
-    protected AbstractAddGroup(String text, Icon icon) {
+    protected AbstractAddGroup(@NlsActions.ActionText String text, Icon icon) {
       super(text, true);
 
       final Presentation presentation = getTemplatePresentation();
@@ -416,7 +389,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       }
     }
 
-    public AbstractAddGroup(@Nls String text) {
+    public AbstractAddGroup(@NlsActions.ActionText String text) {
       this(text, IconUtil.getAddIcon());
     }
 

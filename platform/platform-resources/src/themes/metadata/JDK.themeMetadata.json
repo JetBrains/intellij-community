@@ -403,7 +403,7 @@
     },
     {
       "key": "DragAndDrop.areaBackground",
-      "description": "Drag and drop area on the Welcome screen"
+      "description": "Drag and drop area background"
     },
     {
       "key": "DragAndDrop.areaBorderColor"
@@ -658,6 +658,14 @@
     {
       "key": "menuText",
       "deprecated": true
+    },
+    {
+      "key": "OptionButton.default.separatorColor",
+      "description": "JBOptionButton separator color in default state."
+    },
+    {
+      "key": "OptionButton.separatorColor",
+      "description": "JBOptionButton separator color."
     },
     {
       "key": "OptionPane.background"

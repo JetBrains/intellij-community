@@ -25,6 +25,7 @@ import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.psi.PrefixedName;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,9 @@ public class CheckNodeTest extends XPathInspection {
             }
 
             final LocalQuickFix[] fixes = contextProvider.getQuickFixFactory().createUnknownNodeTestFixes(nodeTest);
-            addProblem(myManager.createProblemDescriptor(nodeTest, "<html>Unknown " + type + " name " + name + "</html>", myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+            addProblem(myManager.createProblemDescriptor(nodeTest,
+                                                         XPathBundle.message("inspection.message.html.unknown.name.html", type, name),
+                                                         myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
 
         private static boolean matches(@Nullable PrefixedName prefixedName,

@@ -127,7 +127,7 @@ Groovy script
     PsiElement(volatile)('volatile')
   PsiElement(new line)('\n')
   PsiComment(line comment)('// primitive types')
-  PsiWhiteSpace('\n')
+  PsiElement(new line)('\n')
   Reference expression
     Reference expression
       PsiElement(identifier)('foo')
@@ -183,7 +183,7 @@ Groovy script
     PsiElement(void)('void')
   PsiElement(new line)('\n')
   PsiComment(line comment)('// keywords')
-  PsiWhiteSpace('\n')
+  PsiElement(new line)('\n')
   Reference expression
     Reference expression
       PsiElement(identifier)('foo')

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.images.util;
 
 import com.intellij.util.ImageLoader;
@@ -30,10 +16,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 
-/**
- * @author spleaner
- */
-public class ImageInfoReader {
+public final class ImageInfoReader {
   @Nullable
   public static Info getInfo(byte @NotNull [] data) {
     Info info = getSvgInfo(data);
@@ -61,7 +44,7 @@ public class ImageInfoReader {
 
   private static Info getSvgSize(byte[] data) {
     try {
-      ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(null, new ByteArrayInputStream(data), 1.0f);
+      ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(new ByteArrayInputStream(data), 1.0f);
       return new Info((int)Math.round(size.getWidth()), (int)Math.round(size.getHeight()), 32, true);
     }
     catch (Throwable e) {

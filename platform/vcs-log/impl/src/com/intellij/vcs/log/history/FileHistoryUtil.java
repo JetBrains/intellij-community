@@ -27,7 +27,7 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 
-public class FileHistoryUtil {
+public final class FileHistoryUtil {
   @Nullable
   public static VirtualFile createVcsVirtualFile(@Nullable VcsFileRevision revision) {
     if (!VcsHistoryUtil.isEmpty(revision)) {
@@ -97,7 +97,7 @@ public class FileHistoryUtil {
     return diffHandler.createContentRevision(path, commitHash);
   }
 
-  private static class MyVcsChangesMerger extends VcsChangesMerger {
+  private static final class MyVcsChangesMerger extends VcsChangesMerger {
     @NotNull private final Hash myCommit;
     @NotNull private final Hash myFirstParent;
     @NotNull private final VcsLogDiffHandler myDiffHandler;

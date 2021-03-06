@@ -15,6 +15,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -52,6 +54,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +64,9 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
-
+/**
+ * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
+ */
 public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
@@ -84,9 +88,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
+  private boolean myShowPlaceholderWhenFocused;
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
-  private CharSequence myHintText;
+  private @Nls CharSequence myHintText;
   private boolean myIsRendererWithSelection;
   private Color myRendererBg;
   private Color myRendererFg;
@@ -154,6 +159,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void setFontInheritedFromLAF(boolean b) {
     myInheritSwingFont = b;
     setDocument(myDocument); // reinit editor.
+  }
+
+  public void setShowPlaceholderWhenFocused(boolean b) {
+    myShowPlaceholderWhenFocused = b;
+    if (myEditor != null) {
+      myEditor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
+    }
   }
 
   @NotNull
@@ -298,7 +310,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
    *
    * @param text    {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder} text to use
    */
-  public void setPlaceholder(@Nullable CharSequence text) {
+  public void setPlaceholder(@Nls @Nullable CharSequence text) {
     myHintText = text;
     if (myEditor != null) {
       myEditor.setPlaceholder(text);
@@ -357,7 +369,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void addNotify() {
-    Disposable uiDisposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
+    Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
       // then we have to release the editor simultaneously on close.
@@ -377,7 +389,15 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
       Disposer.register(myDisposable, ()->ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
     }
-
+    Disposer.register(myDisposable, () -> {
+      // remove traces of this editor from UndoManager to avoid leaks
+      if (myDocument != null) {
+        if (getProject() != null) {
+          ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearDocumentReferences(myDocument);
+        }
+        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(myDocument);
+      }
+    });
     if (myEditor != null) {
       releaseEditorLater();
     }
@@ -505,6 +525,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
   }
 
+  @NotNull
   protected EditorEx createEditor() {
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
@@ -552,6 +573,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     editor.getContentComponent().addMouseListener(this);
 
     editor.setPlaceholder(myHintText);
+    editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
     initOneLineMode(editor);
 
@@ -640,12 +662,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       super.setEnabled(enabled);
       setFocusTraversalPolicyProvider(enabled);
       setViewerEnabled(enabled);
-      EditorEx editor = myEditor;
-      if (editor != null) {
-        releaseEditor(editor);
-        initEditor();
-        revalidate();
-      }
+      resetEditor();
     }
   }
 
@@ -653,8 +670,26 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     myIsViewer = !enabled;
   }
 
+  private void resetEditor() {
+    final EditorEx editor = myEditor;
+
+    if (editor != null) {
+      releaseEditor(editor);
+      initEditor();
+      revalidate();
+    }
+  }
+
   public boolean isViewer() {
     return myIsViewer;
+  }
+
+  public void setViewer(boolean viewer) {
+    if (myIsViewer != viewer) {
+      myIsViewer = viewer;
+
+      resetEditor();
+    }
   }
 
   @Override

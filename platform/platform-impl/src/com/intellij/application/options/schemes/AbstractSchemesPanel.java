@@ -1,23 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,12 +193,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@NotNull String message, @NotNull MessageType messageType) {
+  public final void showInfo(@NotNull @Nls String message, @NotNull MessageType messageType) {
     myToolbar.setVisible(false);
     showMessage(message, messageType);
   }
 
-  protected abstract void showMessage(@Nullable String message, @NotNull MessageType messageType);
+  protected abstract void showMessage(@NlsContexts.Label @Nullable String message, @NotNull MessageType messageType);
 
   final void clearInfo() {
     myToolbar.setVisible(true);
@@ -215,11 +219,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return a string label to place before the combobox or {@code null} if it is not needed
    */
   @Nullable
-  protected String getComboBoxLabel() {
+  protected @NlsContexts.Label String getComboBoxLabel() {
     return getSchemeTypeName() + ":";
   }
 
   @NotNull
+  @Nls
   protected String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }
@@ -264,7 +269,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   public abstract boolean useBoldForNonRemovableSchemes();
 
-  public void showStatus(@NotNull String message, @NotNull MessageType messageType) {
+  public void showStatus(@NotNull @NlsContexts.PopupContent String message, @NotNull MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
                                     messageType.getPopupBackground(), null);
@@ -272,10 +277,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final Balloon balloon = balloonBuilder.createBalloon();
     Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
     balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+    Disposer.register(ApplicationManager.getApplication(), balloon);
   }
 
-  private static class ShowSchemesActionsListAction extends DefaultActionGroup {
+  private static class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
     private final AbstractSchemeActions<?> mySchemeActions;
 
     ShowSchemesActionsListAction(AbstractSchemeActions<?> schemeActions) {
@@ -287,8 +292,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
 
     @Override
-    public boolean isDumbAware() {
-      return true;
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return mySchemeActions.getActions().toArray(EMPTY_ARRAY);
     }
 
     @Override
@@ -298,10 +303,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DefaultActionGroup group = new DefaultActionGroup();
-      group.addAll(mySchemeActions.getActions());
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, group, e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();
@@ -314,7 +317,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
-  protected static void showMessage(@Nullable String message,
+  protected static void showMessage(@NlsContexts.Label @Nullable String message,
                                     @NotNull MessageType messageType,
                                     @NotNull JLabel infoComponent) {
     infoComponent.setText(message);

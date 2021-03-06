@@ -3,6 +3,8 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
 import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
@@ -13,19 +15,24 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
 
@@ -69,6 +76,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals(1, annotations.length);
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testWhenInferenceIsBoundedByEqualsBound() {
     EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
@@ -101,6 +109,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     doTest2CandidatesWithPreselection();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testOverloadWithErrorOnTheTopLevel() {
     doTest2CandidatesWithPreselection();
     PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
@@ -134,6 +143,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals("<html><b>String s</b>, int... p</html>", hintFixture.getCurrentHintText());
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testCompletionPolicyWithLowerBounds() {
     EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
     myFixture.configureByText("x.java",
@@ -149,6 +159,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals("<html>String[] args, <b>int l</b></html>", hintFixture.getCurrentHintText());
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testPreselectionOfCandidatesInNestedMethod() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
@@ -288,7 +299,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testParameterAnnotation() {
     myFixture.addClass("import java.lang.annotation.*;\n@Documented @Target({ElementType.PARAMETER}) @interface TA { }");
     myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals("<html>@TA String s</html>", parameterPresentation(-1));
+    assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
   }
 
   public void testParameterUndocumentedAnnotation() {
@@ -300,9 +311,10 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testParameterTypeAnnotation() {
     myFixture.addClass("import java.lang.annotation.*;\n@Documented @Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
     myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals("<html>@TA String s</html>", parameterPresentation(-1));
+    assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testInferredParametersInNestedCallsNoOverloads() {
     myFixture.configureByText("a.java", "import java.util.function.Consumer;\n" +
                                         "class A {\n" +
@@ -324,7 +336,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testParameterUndocumentedTypeAnnotation() {
     myFixture.addClass("import java.lang.annotation.*;\n@Target({ElementType.PARAMETER, ElementType.TYPE_USE}) @interface TA { }");
     myFixture.configureByText("a.java", "class C {\n void m(@TA String s) { }\n void t() { m(<caret>\"test\"); }\n}");
-    assertEquals("<html>@TA String s</html>", parameterPresentation(-1));
+    assertEquals(removeAnnotationsIfDumb("<html>@TA String s</html>"), parameterPresentation(-1));
   }
 
   public void testHighlightMethodJustChosenInCompletion() {
@@ -371,11 +383,13 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     checkHighlighted(0);
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testNoStrikeoutForSingleDeprecatedMethod() {
     myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.runFinalizersOnExit(true<caret>); } }");
     assertEquals("<html>boolean b</html>", parameterPresentation(-1));
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testInferredWithVarargs() {
     @Language("JAVA")
     String text =
@@ -402,6 +416,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals(itemsToShow[lineIndex], updateParameterInfo(handler, list, itemsToShow).getHighlightedParameter());
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testTypeInvalidationByCompletion() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
@@ -443,31 +458,39 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "<html>int a, <b>int b</b>, int c</html>");
   }
 
+  private String removeAnnotationsIfDumb(String s) {
+    return DumbService.isDumb(getProject()) ? s.replaceAll("@\\p{Alnum}* ", "") : s;
+  }
+
+  @NeedsIndex.ForStandardLibrary
   public void testOverloadIsChangedAfterCompletion() {
     configureJava("class C { void m() { System.out.pr<caret> } }");
     complete("print(int i)");
     type("'a");
     checkResult("class C { void m() { System.out.print('a<caret>'); } }");
     showParameterInfo();
-    checkHintContents("<html><b>boolean b</b></html>\n" +
-                      "-\n" +
-                      "[<html><b>char c</b></html>]\n" +
-                      "-\n" +
-                      "<html><b>int i</b></html>\n" +
-                      "-\n" +
-                      "<html><b>long l</b></html>\n" +
-                      "-\n" +
-                      "<html><b>float v</b></html>\n" +
-                      "-\n" +
-                      "<html><b>double v</b></html>\n" +
-                      "-\n" +
-                      "<html><b>@NotNull char[] chars</b></html>\n" +
-                      "-\n" +
-                      "<html><b>@Nullable String s</b></html>\n" +
-                      "-\n" +
-                      "<html><b>@Nullable Object o</b></html>");
+    checkHintContents(removeAnnotationsIfDumb(
+      "<html><b>boolean b</b></html>\n" +
+      "-\n" +
+      "[<html><b>char c</b></html>]\n" +
+      "-\n" +
+      "<html><b>int i</b></html>\n" +
+      "-\n" +
+      "<html><b>long l</b></html>\n" +
+      "-\n" +
+      "<html><b>float v</b></html>\n" +
+      "-\n" +
+      "<html><b>double v</b></html>\n" +
+      "-\n" +
+      "<html><b>@NotNull char[] chars</b></html>\n" +
+      "-\n" +
+      "<html><b>@Nullable String s</b></html>\n" +
+      "-\n" +
+      "<html><b>@Nullable Object o</b></html>"
+    ));
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testParameterInfoIsAvailableAtMethodName() {
     configureJava("class C { void m() { System.ex<caret>it(0); } }");
     showParameterInfo();
@@ -497,16 +520,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   public void testCustomHandlerHighlighterWithEscaping() {
     myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
-    LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new ParameterInfoHandler<PsiElement, Object>() {
-      @Override
-      public boolean couldShowInLookup() {
-        return false;
-      }
 
-      @Override
-      public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-        return null;
-      }
+    class CustomHandler implements ParameterInfoHandler<PsiElement, Object>, DumbAware {
 
       @NotNull
       @Override
@@ -533,8 +548,24 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
       public void updateUI(Object p, @NotNull ParameterInfoUIContext context) {
         context.setupUIComponentPresentation("<ABC>, DEF", 7, 10, true, true, false, context.getDefaultParameterColor());
       }
-    }, getTestRootDisposable());
+    }
+
+    LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new CustomHandler(), getTestRootDisposable());
     showParameterInfo();
     checkHintContents("<html><strike>&lt;ABC&gt;, <b>DEF</b></strike></html>");
   }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    if (getIndexingMode() != IndexingMode.SMART) {
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+      FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
+        super.runTestRunnable(testRunnable);
+        return null;
+      });
+    } else {
+      super.runTestRunnable(testRunnable);
+    }
+  }
+
 }

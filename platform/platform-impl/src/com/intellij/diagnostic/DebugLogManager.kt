@@ -66,7 +66,13 @@ class DebugLogManager {
 
   private fun fromString(text: String?, level: DebugLogLevel): List<Category> {
     return when {
-      text != null -> text.lineSequence().mapNotNull { if (it.isBlank()) null else Category(it, level) }.toList()
+      text != null -> {
+        val byNewlines = text.lineSequence().toList()
+        val byCommas = text.split(",")
+        if (byCommas.size > 1 && byNewlines.size > 1) error("Do not mix commas and newlines as category separators: $text")
+        val categories = if (byCommas.size > byNewlines.size) byCommas else byNewlines
+        categories.mapNotNull { if (it.isBlank()) null else Category(it, level) }.toList()
+      }
       else -> emptyList()
     }
   }

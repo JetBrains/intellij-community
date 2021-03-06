@@ -1,9 +1,14 @@
 <html>
 <body>
-Reports numeric literals without underscores that may be hard to read due to their length
-<p>This inspection only reports if the language level of the project or module is 7 or higher</p>
+Reports long numeric literals without underscores.
+<p>
+  Underscores make long numeric literals easier to read.
+</p>
+<p>
+  The quick-fix adds underscores to the literal, for example, <code>1000000</code> becomes <code>1_000_000</code>.
+</p>
 <!-- tooltip end -->
-<p>Quick fix: adds underscores into numeric literals. E.g. 1000000 will be converted to 1_000_000.</p>
+<p>This inspection only applies to language level 7 or higher.</p>
 <p><small>New in 2020.2</small></p>
 </body>
 </html>

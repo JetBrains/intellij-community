@@ -194,7 +194,7 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
   }
 
   @NotNull
-  private static <T> List<T> joinPolling(@NotNull Queue<T> queue) {
+  private static <T> List<T> joinPolling(@NotNull Queue<? extends T> queue) {
     ArrayList<T> builder = new ArrayList<>();
     while (!queue.isEmpty()) {
       builder.add(queue.poll());
@@ -223,7 +223,7 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
                                     long duration) {
     ClassLoader loader = runnableClass.getClassLoader();
     String pluginId = loader instanceof PluginClassLoader ?
-                      ((PluginClassLoader)loader).getPluginIdString() :
+                      ((PluginClassLoader)loader).getPluginId().getIdString() :
                       PluginManagerCore.CORE_PLUGIN_ID;
 
     StartUpMeasurer.addPluginCost(
@@ -289,7 +289,7 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
       appendToFile(kind, entities.values().stream().sorted());
     }
 
-    private static <E> void putAllTo(@NotNull Collection<E> entities,
+    private static <E> void putAllTo(@NotNull Collection<? extends E> entities,
                                      @NotNull Function<? super E, String> mapper,
                                      @NotNull Map<String, E> map) {
       Map<String, E> entitiesMap = entities

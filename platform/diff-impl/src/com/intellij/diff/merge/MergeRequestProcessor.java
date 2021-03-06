@@ -35,11 +35,11 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +112,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Update
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public void init(@NotNull MergeRequest request) {
     setTitle(request.getTitle());
 
@@ -122,7 +122,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     installCallbackListener(myRequest);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void init(@NotNull MergeRequestProducer request) {
     setTitle(request.getName());
     initViewer();
@@ -133,6 +133,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         MergeRequest mergeRequest = request.process(myContext, ProgressManager.getInstance().getProgressIndicator());
         ApplicationManager.getApplication().invokeLater(
           () -> {
+            if (myDisposed) return;
             myRequest = mergeRequest;
             swapViewer(createViewerFor(mergeRequest));
             installCallbackListener(myRequest);
@@ -142,7 +143,10 @@ public abstract class MergeRequestProcessor implements Disposable {
       catch (Throwable e) {
         LOG.warn(e);
         ApplicationManager.getApplication().invokeLater(
-          () -> swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage()))),
+          () -> {
+            if (myDisposed) return;
+            swapViewer(new MessageMergeViewer(myContext, DiffBundle.message("label.cant.show.merge.with.description", e.getMessage())));
+          },
           modality);
       }
     });
@@ -159,7 +163,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initViewer() {
     myContentPanel.setContent(myViewer.getComponent());
 
@@ -172,7 +176,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     updateBottomActions();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void destroyViewer() {
     Disposer.dispose(myViewer);
 
@@ -322,7 +326,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void applyRequestResult(@NotNull MergeResult result) {
     if (myConflictResolved || myRequest == null) return;
     myConflictResolved = true;
@@ -335,7 +339,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void reopenWithTool(@NotNull MergeTool tool) {
     if (myRequest == null) return;
     if (myConflictResolved) {
@@ -372,7 +376,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
@@ -418,7 +422,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     return myContext;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean checkCloseAction() {
     return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
   }
@@ -580,7 +584,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void reopenWithTool(@NotNull MergeTool tool) {
       MergeRequestProcessor.this.reopenWithTool(tool);
     }

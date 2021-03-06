@@ -18,6 +18,8 @@ package com.intellij.junit5;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.platform.runner.JUnitPlatform;
+import org.junit.runner.RunWith;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,7 +28,8 @@ import java.lang.annotation.Target;
 import java.util.Arrays;
 
 @SuppressWarnings("NewClassNamingConvention")
-class JUnit5ConditionsTest {
+@RunWith(JUnitPlatform.class)
+public class JUnit5ConditionsTest {
   @Test
   void disabledConditions() {
     String[] disabledClasses = {DisabledClass.class.getName(), MetaDisabledClass.class.getName()};

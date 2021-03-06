@@ -1,28 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
+import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import java.io.File;
+import java.util.List;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-
-import java.io.File;
-import java.util.List;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
-import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
-import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
 
 public class QuickMerge extends BackgroundTaskGroup {
 
@@ -33,7 +36,7 @@ public class QuickMerge extends BackgroundTaskGroup {
   @NotNull private final Semaphore mySemaphore = new Semaphore();
 
   public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
-    super(mergeContext.getProject(), mergeContext.getTitle());
+    super(mergeContext.getProject(), mergeContext.getMergeTitle());
     myMergeContext = mergeContext;
     myInteraction = interaction;
   }
@@ -51,7 +54,7 @@ public class QuickMerge extends BackgroundTaskGroup {
   @Override
   public void showErrors() {
     if (!myExceptions.isEmpty()) {
-      myInteraction.showErrors(myMergeContext.getTitle(), myExceptions);
+      myInteraction.showErrors(myMergeContext.getMergeTitle(), myExceptions);
     }
   }
 
@@ -68,9 +71,7 @@ public class QuickMerge extends BackgroundTaskGroup {
   }
 
   @CalledInAny
-  public void end(@NotNull String message, boolean isError) {
-    LOG.info((isError ? "Error: " : "Info: ") + message);
-
+  public void end(@Nls(capitalization = Sentence) @NotNull String message, boolean isError) {
     clear();
     getApplication().invokeLater(() -> {
       myInteraction.showErrors(message, isError);
@@ -82,17 +83,19 @@ public class QuickMerge extends BackgroundTaskGroup {
     return myMergeContext.getWcInfo().getFormat().isOrGreater(ONE_DOT_EIGHT);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void execute() {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     mySemaphore.down();
     runInEdt(() -> {
       if (areInSameHierarchy(myMergeContext.getSourceUrl(), myMergeContext.getWcInfo().getUrl())) {
-        end("Cannot merge from self", true);
+        LOG.info("Error: Cannot merge from self");
+
+        end(message("notification.content.can.not.merge.from.self"), true);
       }
       else if (!hasSwitchedRoots() || myInteraction.shouldContinueSwitchedRootFound()) {
-        runInBackground("Checking repository capabilities", indicator -> {
+        runInBackground(message("progress.title.checking.repository.capabilities"), indicator -> {
           if (supportsMergeInfo()) {
             runInEdt(this::selectMergeVariant);
           }
@@ -110,13 +113,22 @@ public class QuickMerge extends BackgroundTaskGroup {
         mergeAll(true);
         break;
       case showLatest:
-        runInBackground("Loading recent " + myMergeContext.getBranchName() + " revisions", new MergeCalculatorTask(this, null, task ->
-          runInEdt(() -> selectRevisionsToMerge(task, false))));
+        runInBackground(
+          message("progress.title.loading.recent.branch.revisions", myMergeContext.getBranchName()),
+          new MergeCalculatorTask(this, null, task ->
+            runInEdt(() -> selectRevisionsToMerge(task, false))
+          )
+        );
         break;
       case select:
-        runInBackground("Looking for branch origin", new LookForBranchOriginTask(this, false, copyPoint ->
-          runInBackground("Filtering " + myMergeContext.getBranchName() + " revisions", new MergeCalculatorTask(this, copyPoint, task ->
-            runInEdt(() -> selectRevisionsToMerge(task, true))))));
+        runInBackground(message("progress.title.looking.for.branch.origin"), new LookForBranchOriginTask(this, false, copyPoint ->
+          runInBackground(
+            message("progress.title.filtering.branch.revisions", myMergeContext.getBranchName()),
+            new MergeCalculatorTask(this, copyPoint, task ->
+              runInEdt(() -> selectRevisionsToMerge(task, true))
+            )
+          )
+        ));
       case cancel:
         break;
     }
@@ -147,7 +159,7 @@ public class QuickMerge extends BackgroundTaskGroup {
       runInEdt(() -> checkReintegrateIsAllowedAndMergeAll(null, true));
     }
     else {
-      runInBackground("Looking for branch origin", new LookForBranchOriginTask(this, true, copyPoint ->
+      runInBackground(message("progress.title.looking.for.branch.origin"), new LookForBranchOriginTask(this, true, copyPoint ->
         runInEdt(() -> checkReintegrateIsAllowedAndMergeAll(copyPoint, supportsMergeInfo))));
     }
   }
@@ -157,7 +169,9 @@ public class QuickMerge extends BackgroundTaskGroup {
 
     if (!reintegrate || myInteraction.shouldReintegrate(copyPoint.inverted().getTarget())) {
       MergerFactory mergerFactory = createMergeAllFactory(reintegrate, copyPoint, supportsMergeInfo);
-      String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
+      String title = reintegrate
+                     ? message("progress.title.merging.all.from.branch.reintegrate", myMergeContext.getBranchName())
+                     : message("progress.title.merging.all.from.branch", myMergeContext.getBranchName());
 
       merge(title, mergerFactory, null);
     }
@@ -167,18 +181,20 @@ public class QuickMerge extends BackgroundTaskGroup {
     if (!changeLists.isEmpty()) {
       ChangeListsMergerFactory mergerFactory = new ChangeListsMergerFactory(changeLists, false, false, true);
 
-      merge(myMergeContext.getTitle(), mergerFactory, changeLists);
+      merge(myMergeContext.getMergeTitle(), mergerFactory, changeLists);
     }
   }
 
-  private void merge(@NotNull String title, @NotNull MergerFactory mergerFactory, @Nullable List<SvnChangeList> changeLists) {
+  private void merge(@ProgressTitle @NotNull String title,
+                     @NotNull MergerFactory mergerFactory,
+                     @Nullable List<SvnChangeList> changeLists) {
     runInEdt(new LocalChangesPromptTask(this, changeLists, () ->
       runInEdt(new MergeTask(this, () ->
         newIntegrateTask(title, mergerFactory).queue()))));
   }
 
   @NotNull
-  private Task newIntegrateTask(@NotNull String title, @NotNull MergerFactory mergerFactory) {
+  private Task newIntegrateTask(@ProgressTitle @NotNull String title, @NotNull MergerFactory mergerFactory) {
     return new SvnIntegrateChangesTask(myMergeContext.getVcs(), new WorkingCopyInfo(myMergeContext.getWcInfo().getPath(), true),
                                        mergerFactory, myMergeContext.getSourceUrl(), title, false,
                                        myMergeContext.getBranchName()) {

@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.Executor;
+import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.AppIcon;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -69,9 +68,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         }
       }
     }
-    XDebugSessionTab tab = Registry.is("debugger.new.debug.tool.window.view") ?
-                           new XDebugSessionTab2(session, icon, environment) :
-                           new XDebugSessionTab(session, icon, environment, true);
+    XDebugSessionTab tab;
+    if (Registry.is("debugger.new.debug.tool.window.view")) {
+      tab = new XDebugSessionTab2(session, icon, environment);
+    }
+    else if (Registry.is("debugger.new.tool.window.layout")) {
+      tab = new XDebugSessionTab3(session, icon, environment);
+    }
+    else {
+      tab = new XDebugSessionTab(session, icon, environment, true);
+    }
 
     tab.init(session);
     tab.myRunContentDescriptor.setActivateToolWindowWhenAdded(contentToReuse == null || contentToReuse.isActivateToolWindowWhenAdded());
@@ -128,7 +134,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }, myRunContentDescriptor);
   }
 
-  private void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
+  protected void addVariablesAndWatches(@NotNull XDebugSessionImpl session) {
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
       myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false);
@@ -186,8 +192,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
       variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
-    }
-    else {
+    } else {
       variablesView = new XVariablesView(session);
     }
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
@@ -259,16 +264,21 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       return;
     }
 
+    consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
+    initToolbars(session);
+
+    if (myEnvironment != null) {
+      initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
+    }
+  }
+
+  protected void initToolbars(@NotNull XDebugSessionImpl session) {
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
-    final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
-    consoleContent.setHelpId(debugExecutor.getHelpId());
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
-      List<AnAction> additionalRestartActions = session.getRestartActions();
-      if (!additionalRestartActions.isEmpty()) {
-        leftToolbar.addAll(additionalRestartActions);
-        leftToolbar.addSeparator();
-      }
+      leftToolbar.addAll(session.getRestartActions());
+      leftToolbar.add(new CreateAction());
+      leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
     leftToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP));
@@ -298,10 +308,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
     myUi.getOptions().setTopLeftToolbar(topLeftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
-
-    if (myEnvironment != null) {
-      initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
-    }
   }
 
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {
@@ -339,6 +345,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void setWatchesInVariablesImpl() {
+    if (mySession == null) return;
+
     removeContent(DebuggerContentInfo.VARIABLES_CONTENT);
     removeContent(DebuggerContentInfo.WATCHES_CONTENT);
     addVariablesAndWatches(mySession);
@@ -408,11 +416,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     if (focus) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-        ProjectUtil.focusProjectWindow(myProject, focusWnd);
-        if (!focusWnd) {
-          AppIcon.getInstance().requestAttention(myProject, true);
-        }
+        boolean stealFocus = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+        ProjectUtil.focusProjectWindow(myProject, stealFocus);
       });
     }
   }

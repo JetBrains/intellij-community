@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -166,7 +167,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction) {
       PyFunction function = (PyFunction)owner;
-      return "Function '" + function.getName() + "' does not have a parameter '" + getCanonicalText() + "'";
+      return PyPsiBundle.message("unresolved.docstring.param.reference", function.getName(), getCanonicalText());
     }
     return null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.google.common.annotations.VisibleForTesting
@@ -8,10 +8,10 @@ import com.intellij.lang.LighterASTNode
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.cache.RecordUtil
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
-import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.LightTreeUtil
@@ -24,15 +24,17 @@ import com.intellij.util.gist.GistManager
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.EnumeratorStringDescriptor
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.io.DataInput
 import java.io.DataOutput
 
-fun getFieldOfGetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, true)
+fun getFieldOfGetter(method: PsiMethod): PsiField? = resolveFieldFromIndexValue(method, true)
 
-fun getFieldOfSetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, false)
+fun getFieldOfSetter(method: PsiMethod): PsiField? = resolveFieldFromIndexValue(method, false)
 
-private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean): PsiField? {
+private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): PsiField? {
   val file = method.containingFile
   if (file.fileType != JavaFileType.INSTANCE) return null
   val id = JavaStubImplUtil.getMethodStubIndex(method)
@@ -49,18 +51,16 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
 }
 
 @VisibleForTesting
-val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property",
-                                                                      1,
-                                                                      SimplePropertiesExternalizer()) { file ->
+val javaSimplePropertyGist = GistManager.getInstance().newPsiFileGist("java.simple.property", 2, SimplePropertiesExternalizer()) { file ->
   findSimplePropertyCandidates(file.node.lighterAST)
 }
 
 private val allowedExpressions by lazy {
-  TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
+  TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION, ElementType.PARENTH_EXPRESSION)
 }
 
-private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<PropertyIndexValue> {
-  val result = TIntObjectHashMap<PropertyIndexValue>()
+private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<PropertyIndexValue> {
+  val result = Int2ObjectOpenHashMap<PropertyIndexValue>()
 
   object : RecursiveLighterASTNodeWalkingVisitor(tree) {
     var methodIndex = 0
@@ -116,8 +116,7 @@ private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<Pr
           JavaTokenType.IDENTIFIER -> {
             if (isConstructor) return null
             val name = RecordUtil.intern(tree.charTable, child)
-            val flavour = PropertyUtil.getMethodNameGetterFlavour(name)
-            when (flavour) {
+            when (PropertyUtil.getMethodNameGetterFlavour(name)) {
               PropertyUtilBase.GetterFlavour.NOT_A_GETTER -> {
                 if (PropertyUtil.isSetterName(name)) {
                   isGetter = false
@@ -145,8 +144,10 @@ private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<Pr
         ?.takeIf { it.tokenType == JavaElementType.EXPRESSION_STATEMENT }
         ?.let { LightTreeUtil.firstChildOfType(tree, it, JavaElementType.ASSIGNMENT_EXPRESSION) }
       if (assignment == null || LightTreeUtil.firstChildOfType(tree, assignment, JavaTokenType.EQ) == null) return null
-      val operands = LightTreeUtil.getChildrenOfType(tree, assignment, ElementType.EXPRESSION_BIT_SET)
-      if (operands.size != 2 || LightTreeUtil.toFilteredString(tree, operands[1], null) != setterParameterName) return null
+      val operands = JavaLightTreeUtil.getExpressionChildren(tree, assignment)
+      if (operands.size != 2) return null
+      val unwrapped = JavaLightTreeUtil.skipParenthesesDown(tree, operands[1])
+      if (unwrapped == null || LightTreeUtil.toFilteredString(tree, unwrapped, null) != setterParameterName) return null
       val lhsText = LightTreeUtil.toFilteredString(tree, operands[0], null)
       if (lhsText == setterParameterName) return null
       return lhsText
@@ -176,25 +177,27 @@ private fun findSimplePropertyCandidates(tree: LighterAST): TIntObjectHashMap<Pr
 @VisibleForTesting
 data class PropertyIndexValue(val propertyRefText: String, val getter: Boolean)
 
-private class SimplePropertiesExternalizer : DataExternalizer<TIntObjectHashMap<PropertyIndexValue>> {
-  override fun save(out: DataOutput, values: TIntObjectHashMap<PropertyIndexValue>) {
-    DataInputOutputUtil.writeINT(out, values.size())
-    values.forEachEntry { id, value ->
-      DataInputOutputUtil.writeINT(out, id)
-      EnumeratorStringDescriptor.INSTANCE.save(out, value.propertyRefText)
-      out.writeBoolean(value.getter)
-      return@forEachEntry true
+private class SimplePropertiesExternalizer : DataExternalizer<Int2ObjectMap<PropertyIndexValue>> {
+  override fun save(out: DataOutput, values: Int2ObjectMap<PropertyIndexValue>) {
+    DataInputOutputUtil.writeINT(out, values.size)
+    for (entry in Int2ObjectMaps.fastIterable(values)) {
+      DataInputOutputUtil.writeINT(out, entry.intKey)
+      EnumeratorStringDescriptor.INSTANCE.save(out, entry.value.propertyRefText)
+      out.writeBoolean(entry.value.getter)
     }
   }
 
-  override fun read(input: DataInput): TIntObjectHashMap<PropertyIndexValue> {
+  override fun read(input: DataInput): Int2ObjectMap<PropertyIndexValue> {
     val size = DataInputOutputUtil.readINT(input)
-    if (size == 0) return TIntObjectHashMap()
-    val values = TIntObjectHashMap<PropertyIndexValue>(size)
+    if (size == 0) {
+      return Int2ObjectOpenHashMap()
+    }
+
+    val values = Int2ObjectOpenHashMap<PropertyIndexValue>(size)
     repeat(size) {
       val id = DataInputOutputUtil.readINT(input)
       val value = PropertyIndexValue(EnumeratorStringDescriptor.INSTANCE.read(input), input.readBoolean())
-      values.put(id, value)
+      values[id] = value
     }
     return values
   }

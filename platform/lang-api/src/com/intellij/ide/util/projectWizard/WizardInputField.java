@@ -2,6 +2,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,7 +34,7 @@ public abstract class WizardInputField<T extends JComponent> {
     return myDefaultValue;
   }
 
-  public abstract String getLabel();
+  public abstract @NlsContexts.Label String getLabel();
 
   public abstract T getComponent();
 

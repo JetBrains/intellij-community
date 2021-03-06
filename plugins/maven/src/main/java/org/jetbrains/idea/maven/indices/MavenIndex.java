@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.jarRepository.services.bintray.BintrayModel;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -543,7 +544,9 @@ public class MavenIndex implements MavenSearchIndex {
   }
 
   public synchronized Collection<String> getGroupIds() {
-    return doIndexTask(() -> myData.groupToArtifactMap.getAllDataObjects(null), Collections.emptySet());
+    return doIndexTask(() -> {
+      return getGroupIdsRaw();
+    }, Collections.emptySet());
   }
 
   public synchronized Set<String> getArtifactIds(final String groupId) {
@@ -553,8 +556,8 @@ public class MavenIndex implements MavenSearchIndex {
   @TestOnly
   public synchronized void printInfo() {
     doIndexTask(() -> {
-      MavenLog.LOG.debug("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
-      MavenLog.LOG.debug("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
+      MavenLog.LOG.debug("BaseFile: " + myData.groupToArtifactMap);
+      MavenLog.LOG.debug("All data objects: " + getGroupIdsRaw());
       return null;
     }, null);
   }
@@ -587,7 +590,7 @@ public class MavenIndex implements MavenSearchIndex {
   }
 
   private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
-    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.tryEnumerate(v) != 0, false));
+    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.containsMapping(v), false));
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
@@ -724,6 +727,13 @@ public class MavenIndex implements MavenSearchIndex {
     public Set<MavenArtifactInfo> search(Query query, int maxResult) throws MavenServerIndexerException {
       return myNexusIndexer.search(indexId, query, maxResult);
     }
+  }
+
+  @NotNull
+  private Collection<String> getGroupIdsRaw() throws IOException {
+    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
+    myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
+    return processor.getResults();
   }
 
   private static class SetDescriptor implements DataExternalizer<Set<String>> {

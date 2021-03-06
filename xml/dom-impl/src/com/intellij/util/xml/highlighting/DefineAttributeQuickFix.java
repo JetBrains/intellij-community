@@ -43,13 +43,13 @@ public class DefineAttributeQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return XmlDomBundle.message("define.0.attribute", myAttrName);
+    return XmlDomBundle.message("dom.quickfix.define.attribute.text", myAttrName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlDomBundle.message("define.attribute");
+    return XmlDomBundle.message("dom.quickfix.define.attribute.family");
   }
 
   @Override

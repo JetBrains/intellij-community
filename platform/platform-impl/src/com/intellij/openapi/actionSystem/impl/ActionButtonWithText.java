@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,7 +72,7 @@ public class ActionButtonWithText extends ActionButton {
     }
     else {
       AnAction action = getAction();
-      setFont(action != null && action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
+      setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
     }
   }
 
@@ -100,6 +101,10 @@ public class ActionButtonWithText extends ActionButton {
       }
       windowInputMap.put(KeyStroke.getKeyStroke(mnemonic, mask, false), "doClick");
     }
+  }
+
+  protected Insets getMargins() {
+    return JBUI.insets(0);
   }
 
   @Override
@@ -132,6 +137,9 @@ public class ActionButtonWithText extends ActionButton {
       rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }
 
+    Insets m = getMargins();
+    JBInsets.addTo(rv, m);
+
     rv.width = Math.max(rv.width, basicSize.width);
     rv.height = Math.max(rv.height, basicSize.height);
     return rv;
@@ -160,6 +168,7 @@ public class ActionButtonWithText extends ActionButton {
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
+    JBInsets.removeFrom(viewRect, getMargins());
 
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
@@ -175,7 +184,7 @@ public class ActionButtonWithText extends ActionButton {
       iconRect.x -= dx;
       textRect.x -= dx;
     }
-    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
+    ActionButtonLook look = getButtonLook();
     look.paintBackground(g, this);
     look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
@@ -227,7 +236,7 @@ public class ActionButtonWithText extends ActionButton {
     return icon instanceof EmptyIcon || icon == null ? 0 : JBUI.scale(ICON_TEXT_SPACE);
   }
 
-  private int getMnemonicCharIndex(String text) {
+  protected int getMnemonicCharIndex(String text) {
     final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
     if (mnemonicIndex != -1) {
       return mnemonicIndex;
@@ -252,6 +261,7 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @NotNull
+  @NlsActions.ActionText
   private String getText() {
     final String text = myPresentation.getText();
     return text != null ? text : "";

@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
-import gnu.trove.THashMap;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -17,11 +17,10 @@ public enum RebuildStatus {
   REQUIRES_REBUILD,
   DOING_REBUILD;
 
-  private static final Map<ID<?, ?>, AtomicReference<RebuildStatus>> ourRebuildStatus = new THashMap<>();
-  private static volatile boolean ourRebuildAfterInitialization;
+  private static final Map<ID<?, ?>, AtomicReference<RebuildStatus>> ourRebuildStatus = new HashMap<>();
 
   public static void registerIndex(ID<?, ?> indexId) {
-    ourRebuildStatus.put(indexId, new AtomicReference<>(ourRebuildAfterInitialization ? REQUIRES_REBUILD : OK));
+    ourRebuildStatus.put(indexId, new AtomicReference<>(OK));
   }
 
   static boolean isOk(ID<?, ?> indexId) {
@@ -60,11 +59,6 @@ public enum RebuildStatus {
   }
 
   static void reset() {
-    ourRebuildAfterInitialization = false;
     ourRebuildStatus.clear();
-  }
-
-  static void rebuildAfterInitialization() {
-    ourRebuildAfterInitialization = true;
   }
 }

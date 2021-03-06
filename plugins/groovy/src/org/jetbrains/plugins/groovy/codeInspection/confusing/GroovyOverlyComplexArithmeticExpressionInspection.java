@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
 
@@ -23,7 +24,7 @@ public class GroovyOverlyComplexArithmeticExpressionInspection extends GroovyOve
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
-        this, "m_limit");
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"),
+                                              this, "m_limit");
   }
 }

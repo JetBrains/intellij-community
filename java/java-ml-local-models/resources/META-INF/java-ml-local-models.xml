@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <ml.local.models.factory language="JAVA" implementationClass="com.intellij.java.ml.local.JavaMethodsFrequencyModelFactory"/>
+    <ml.local.models.factory language="JAVA" implementationClass="com.intellij.java.ml.local.JavaClassesFrequencyModelFactory"/>
+
+    <completion.ml.contextFeatures language="JAVA" implementationClass="com.intellij.java.ml.local.JavaFrequencyContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="JAVA" implementationClass="com.intellij.java.ml.local.JavaFrequencyElementFeatureProvider"/>
+  </extensions>
+  <depends>com.intellij.ml.local.models</depends>
+</idea-plugin>

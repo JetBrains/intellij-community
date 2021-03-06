@@ -31,7 +31,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +159,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
     }
 
     private boolean isSafeOperand(PsiExpression operand) {
-      operand = ParenthesesUtils.stripParentheses(operand);
+      operand = PsiUtil.skipParenthesizedExprDown(operand);
       if (operand instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
         return methodMatcher.matches(methodCallExpression);

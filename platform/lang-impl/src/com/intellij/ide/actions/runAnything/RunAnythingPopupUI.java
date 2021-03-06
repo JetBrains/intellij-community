@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -55,6 +56,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +66,9 @@ import javax.swing.border.Border;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -91,7 +94,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
-  private final Project myProject;
   private final Module myModule;
 
   private RunAnythingContext mySelectedExecutingContext;
@@ -465,13 +467,13 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   @NotNull
   private DataContext getDataContext() {
-    HashMap<String, Object> dataMap = new HashMap<>();
-    dataMap.put(CommonDataKeys.PROJECT.getName(), getProject());
-    dataMap.put(LangDataKeys.MODULE.getName(), getModule());
-    dataMap.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory());
-    dataMap.put(RunAnythingAction.EXECUTOR_KEY.getName(), getExecutor());
-    dataMap.put(RunAnythingProvider.EXECUTING_CONTEXT.getName(), myChooseContextAction.getSelectedContext());
-    return SimpleDataContext.getSimpleContext(dataMap, null);
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, getProject())
+      .add(LangDataKeys.MODULE, getModule())
+      .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
+      .add(RunAnythingAction.EXECUTOR_KEY, getExecutor())
+      .add(RunAnythingProvider.EXECUTING_CONTEXT, myChooseContextAction.getSelectedContext())
+      .build();
   }
 
   public void initMySearchField() {
@@ -517,16 +519,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   public static void adjustEmptyText(@NotNull JBTextField textEditor,
-                                     @NotNull BooleanFunction<JBTextField> function,
-                                     @NotNull String leftText,
-                                     @NotNull String rightText) {
+                                     @NotNull BooleanFunction<? super JBTextField> function,
+                                     @NotNull @NlsContexts.StatusText String leftText,
+                                     @NotNull @NlsContexts.StatusText String rightText) {
 
     textEditor.putClientProperty("StatusVisibleFunction", function);
     StatusText statusText = textEditor.getEmptyText();
-    statusText.setIsVerticalFlow(false);
     statusText.setShowAboveCenter(false);
     statusText.setText(leftText, SimpleTextAttributes.GRAY_ATTRIBUTES);
-    statusText.appendSecondaryText(rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
+    statusText.appendText(false, 0, rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
     statusText.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
@@ -586,8 +587,9 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
 
-  public void setAdText(@NotNull final String s) {
-    myHintLabel.setText(s);
+  public void setAdText(@NlsContexts.PopupAdvertisement @NotNull final String s) {
+    myHintLabel.clearAdvertisements();
+    myHintLabel.addAdvertisement(s, null);
   }
 
   @NotNull
@@ -680,7 +682,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myCurrentWorker = ActionCallback.DONE;
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = Objects.requireNonNull(actionEvent.getData(CommonDataKeys.PROJECT));
     myModule = actionEvent.getData(LangDataKeys.MODULE);
 
     init();
@@ -798,16 +799,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return res;
   }
 
+
   @NotNull
   @Override
-  protected String getInitialHint() {
-    return IdeBundle.message("run.anything.hint.initial.text",
-                             KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
-                             KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE));
+  protected @NlsContexts.PopupAdvertisement String[] getInitialHints() {
+    return new String[]{IdeBundle.message("run.anything.hint.initial.text",
+                                          KeymapUtil.getKeystrokeText(UP_KEYSTROKE),
+                                          KeymapUtil.getKeystrokeText(DOWN_KEYSTROKE))};
   }
 
   @Override
-  protected @NotNull String getAccessibleName() {
+  @Nls
+  protected String getAccessibleName() {
     return IdeBundle.message("run.anything.accessible.name");
   }
 
@@ -827,7 +830,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     resetFields();
   }
 
-  private class RunAnythingShowFilterAction extends ShowFilterAction {
+  private final class RunAnythingShowFilterAction extends ShowFilterAction {
     @NotNull private final Collection<RunAnythingGroup> myTemplateGroups;
 
     private RunAnythingShowFilterAction() {
@@ -853,7 +856,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     @Override
     protected ElementsChooser<?> createChooser() {
       ElementsChooser<RunAnythingGroup> res =
-        new ElementsChooser<RunAnythingGroup>(new ArrayList<>(myTemplateGroups), false) {
+        new ElementsChooser<>(new ArrayList<>(myTemplateGroups), false) {
           @Override
           protected String getItemText(@NotNull RunAnythingGroup value) {
             return value.getTitle();

@@ -1,6 +1,9 @@
 <html>
 <body>
-Reports unnecessary creation of array expression
-to be passed as an argument to varargs parameter.
+Reports arrays that are created specifically to be passed as a varargs parameter.
+<p>The quick-fix replaces the array initializer with individual arguments, for example:</p>
+<p><code>Arrays.asList(new String[]{"Hello", "world"})</code></p>
+<p>is replaced with:</p>
+<p><code>Arrays.asList("Hello", "world")</code></p>
 </body>
 </html>

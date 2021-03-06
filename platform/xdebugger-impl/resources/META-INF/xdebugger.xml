@@ -1,0 +1,123 @@
+<idea-plugin>
+  <applicationListeners>
+    <listener topic="com.intellij.execution.ExecutionListener"
+              class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
+              os="windows"
+              activeInHeadlessMode="false"/>
+  </applicationListeners>
+
+  <extensionPoints>
+    <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings" dynamic="true"/>
+    <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType" dynamic="true"/>
+    <extensionPoint name="xdebugger.debuggerSupport" interface="com.intellij.xdebugger.impl.DebuggerSupport" dynamic="true"/>
+    <extensionPoint name="xdebugger.configurableProvider" interface="com.intellij.xdebugger.settings.DebuggerConfigurableProvider" dynamic="true"/>
+
+    <extensionPoint name="xdebugger.attachHostProvider" interface="com.intellij.xdebugger.attach.XAttachHostProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.attachDebuggerProvider" interface="com.intellij.xdebugger.attach.XAttachDebuggerProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.localAttachDebuggerProvider" interface="com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <colorSettingsPage implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.settings.XDebuggerSettingsManager"
+                        serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
+
+    <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
+                        serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
+
+    <projectService serviceInterface="com.intellij.ui.XDebugSessionService"
+                    serviceImplementation="com.intellij.xdebugger.impl.ui.XDebugSessionServiceImpl"/>
+
+    <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
+                    serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
+                    preload="notLightEdit"/>
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager"/>
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.XDebuggerHistoryManager"/>
+
+    <applicationConfigurable groupId="build" dynamic="true" groupWeight="120" key="debugger.configurable.display.name" bundle="messages.XDebuggerBundle"
+                             id="project.propDebugger" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
+
+    <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
+
+    <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first" id="XDebuggerSupport"/>
+    <xdebugger.configurableProvider implementation="com.intellij.xdebugger.impl.settings.XDebuggerConfigurableProvider" order="first"/>
+    <editor.linePainter implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter"/>
+
+    <executor implementation="com.intellij.execution.executors.DefaultDebugExecutor" order="first,after run" id="debug"/>
+
+    <stateWidgetProcess implementation="com.intellij.xdebugger.impl.stateWidget.StateWidgetDebugProcess"/>
+
+    <copyPastePreProcessor implementation="com.intellij.xdebugger.impl.ui.DebuggerCopyPastePreprocessor"/>
+
+    <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
+
+    <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
+    <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="2"/>
+    <statistics.counterUsagesCollector groupId="debugger.evaluate.usage" version="2"/>
+
+    <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
+                         id="smart-step-into-up"/>
+    <editorActionHandler action="EditorDown" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$DownHandler"
+                         id="smart-step-into-down"/>
+    <editorActionHandler action="EditorLeft" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
+                         id="smart-step-into-left"/>
+    <editorActionHandler action="PrevParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$LeftHandler"
+                         id="smart-step-into-previous"/>
+    <editorActionHandler action="EditorRight" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
+                         id="smart-step-into-right"/>
+    <editorActionHandler action="NextParameter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$RightHandler"
+                         id="smart-step-into-next"/>
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EnterHandler"
+                         order="first" id="smart-step-into-enter"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$EscHandler"
+                         order="before hide-search" id="smart-step-into-escape"/>
+    <applicationService serviceImplementation="com.intellij.xdebugger.memory.component.MemoryViewManager"/>
+
+    <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
+
+    <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
+    <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
+    <notificationGroup id="Breakpoint hit" displayType="NONE" toolWindowId="Debug" isLogByDefault="false"/>
+    <notificationGroup id="Attach to Process action" displayType="BALLOON"/>
+  </extensions>
+
+  <actions>
+    <group id="XDebugger.AttachGroup">
+      <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
+    </group>
+
+    <group id="StateWidgetDebugMoreActionGroupName">
+      <separator text="Debug"/>
+      <group id="StateWidgetDebugMoreActionSubGroupName"/>
+      <reference ref="XDebugger.AttachGroup"/>
+      <add-to-group group-id="StateWidgetMoreActionGroup"/>
+    </group>
+
+    <group id="StateWidgetDebuggerAdditionalActions">
+      <action id="StateWidgetResumeAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action id="StateWidgetPauseAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetPauseAction" icon="AllIcons.Actions.Pause"/>
+      <add-to-group group-id="StateWidgetAdditionalActions"/>
+    </group>
+
+    <group id="MemoryView.SettingsPopupActionGroup">
+      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction" id="MemoryView.ShowOnlyWithDiff"/>
+      <separator/>
+      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction" id="MemoryView.SwitchUpdateMode"/>
+    </group>
+
+    <action id="XDebugger.PinToTop" class="com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction">
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+    </action>
+
+    <action class="com.intellij.execution.actions.ActivateDebugToolWindowAction" id="ActivateDebugToolWindow">
+      <add-to-group group-id="ActivateToolWindowActions"/>
+    </action>
+  </actions>
+</idea-plugin>

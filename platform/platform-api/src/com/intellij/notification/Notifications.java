@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.openapi.application.Application;
@@ -16,46 +16,43 @@ import javax.swing.*;
 
 /**
  * Manage and show top-level notifications.
- * <p/>
+ * <p>
  * Use {@link Bus#notify(Notification)} or {@link Bus#notify(Notification, Project)} (when Project is known) to show notification.
  * <p>
- * See <a href="www.jetbrains.org/intellij/sdk/docs/user_interface_components/notifications.html#top-level-notifications">Notifications</a>.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/notifications.html#top-level-notifications">Notifications</a>.
  */
 public interface Notifications {
   Topic<Notifications> TOPIC = Topic.create("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
-  default void notify(@NotNull Notification notification) {
-  }
+  default void notify(@NotNull Notification notification) { }
 
-  default void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-  }
+  default void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) { }
 
-  default void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType, boolean shouldLog) {
-  }
+  default void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType, boolean shouldLog) { }
 
   default void register(@NotNull String groupDisplayName,
                         @NotNull NotificationDisplayType defaultDisplayType,
                         boolean shouldLog,
-                        boolean shouldReadAloud) {
-  }
+                        boolean shouldReadAloud) { }
 
-  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-  class Bus {
+  final class Bus {
+    private Bus() { }
+
     /**
      * Registration is OPTIONAL: BALLOON display type will be used by default.
      *
      * @deprecated use {@link NotificationGroup}
      */
     @Deprecated
-    public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    public static void register(@NotNull String groupId, @NotNull NotificationDisplayType defaultDisplayType) {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         Application app = ApplicationManager.getApplication();
         if (!app.isDisposed()) {
-          app.getMessageBus().syncPublisher(TOPIC).register(group_id, defaultDisplayType);
+          app.getMessageBus().syncPublisher(TOPIC).register(groupId, defaultDisplayType);
         }
       });
     }
@@ -63,12 +60,13 @@ public interface Notifications {
     /**
      * Use {@link #notify(Notification, Project)} when project is known to show it in its associated frame.
      */
-    public static void notify(@NotNull final Notification notification) {
+    public static void notify(@NotNull Notification notification) {
       notify(notification, null);
     }
 
-    public static void notify(@NotNull final Notification notification, @Nullable final Project project) {
+    public static void notify(@NotNull Notification notification, @Nullable Project project) {
       notification.assertHasTitleOrContent();
+      //noinspection SSBasedInspection
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         doNotify(notification, project);
       }
@@ -90,12 +88,12 @@ public interface Notifications {
     }
 
     @ApiStatus.Experimental
-    public static void notifyAndHide(@NotNull final Notification notification) {
+    public static void notifyAndHide(@NotNull Notification notification) {
       notifyAndHide(notification, null);
     }
 
     @ApiStatus.Experimental
-    public static void notifyAndHide(@NotNull final Notification notification, @Nullable Project project) {
+    public static void notifyAndHide(@NotNull Notification notification, @Nullable Project project) {
       notify(notification);
       Alarm alarm = new Alarm(project == null ? ApplicationManager.getApplication() : project);
       alarm.addRequest(() -> {

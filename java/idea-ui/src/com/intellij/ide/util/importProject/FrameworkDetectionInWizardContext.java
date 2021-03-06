@@ -26,7 +26,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
   @NotNull
   @Override
   public <F extends Facet, C extends FacetConfiguration> List<? extends DetectedFrameworkDescription> createDetectedFacetDescriptions(@NotNull FacetBasedFrameworkDetector<F, C> detector,
-                                                                                                                                      @NotNull Collection<VirtualFile> files) {
+                                                                                                                                      @NotNull Collection<? extends VirtualFile> files) {
     final List<ModuleDescriptor> descriptors = getModuleDescriptors();
     MultiMap<ModuleDescriptor, VirtualFile> filesByModule = new MultiMap<>();
     for (VirtualFile file : files) {
@@ -57,7 +57,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
   protected abstract List<ModuleDescriptor> getModuleDescriptors();
 
   @Nullable
-  private static ModuleDescriptor findDescriptorByFile(List<ModuleDescriptor> descriptors, File file) {
+  private static ModuleDescriptor findDescriptorByFile(List<? extends ModuleDescriptor> descriptors, File file) {
     ModuleDescriptor result = null;
     File nearestRoot = null;
     for (ModuleDescriptor descriptor : descriptors) {

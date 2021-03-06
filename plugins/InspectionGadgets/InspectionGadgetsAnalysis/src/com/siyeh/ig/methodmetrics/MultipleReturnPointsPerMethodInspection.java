@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -26,7 +26,6 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class MultipleReturnPointsPerMethodInspection
   extends MethodMetricInspection {
@@ -64,41 +63,15 @@ public class MultipleReturnPointsPerMethodInspection
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     final JLabel label = new JLabel(InspectionGadgetsBundle.message(
       "return.point.limit.option"));
     final JFormattedTextField termLimitTextField =
       prepareNumberEditor("m_limit");
-    final CheckBox ignoreGuardClausesCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "ignore.guard.clauses.option"),
-                   this, "ignoreGuardClauses");
-    final CheckBox ignoreEqualsMethodCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "ignore.for.equals.methods.option"),
-                   this, "ignoreEqualsMethod");
 
-    final GridBagConstraints constraints = new GridBagConstraints();
-
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    panel.add(label, constraints);
-
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.gridx = 1;
-    panel.add(termLimitTextField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    constraints.weightx = 1.0;
-    panel.add(ignoreGuardClausesCheckBox, constraints);
-
-    constraints.gridy = 2;
-    constraints.weighty = 1.0;
-    panel.add(ignoreEqualsMethodCheckBox, constraints);
+    panel.addRow(label, termLimitTextField);
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.guard.clauses.option"), "ignoreGuardClauses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.for.equals.methods.option"), "ignoreEqualsMethod");
 
     return panel;
   }

@@ -22,7 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * To be used together with {@link com.intellij.util.xml.ExtendClass}.
+ * To be used together with {@link ExtendClass}.
  *
  * If specified, a 'create from usage' quick fix will create class based on the {@link #value()} template.
  *

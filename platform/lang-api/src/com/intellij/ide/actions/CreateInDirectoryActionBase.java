@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +25,9 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
     super(text, description, icon);
   }
 
-  protected CreateInDirectoryActionBase(Supplier<String> dynamicText, Supplier<String> dynamicDescription, Icon icon) {
+  protected CreateInDirectoryActionBase(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                                        @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                                        Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 

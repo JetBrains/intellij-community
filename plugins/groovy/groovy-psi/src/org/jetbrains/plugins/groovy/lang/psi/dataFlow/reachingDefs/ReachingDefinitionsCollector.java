@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.psi.PsiElement;
@@ -6,10 +6,10 @@ import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -19,9 +19,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
@@ -31,13 +31,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 
 import java.util.*;
+import java.util.function.IntConsumer;
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
 /**
  * @author ven
  */
-public class ReachingDefinitionsCollector {
+public final class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }
 
@@ -132,7 +133,7 @@ public class ReachingDefinitionsCollector {
 
   @NotNull
   private static DefinitionMap inferDfaResult(@NotNull GrControlFlowOwner owner, Instruction @NotNull [] flow) {
-    TObjectIntHashMap<VariableDescriptor> varIndexes = UtilKt.getVarIndexes(owner);
+    Object2IntMap<VariableDescriptor> varIndexes = UtilKt.getVarIndexes(owner);
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
@@ -363,23 +364,19 @@ public class ReachingDefinitionsCollector {
     return insn instanceof ReadWriteVariableInstruction && !((ReadWriteVariableInstruction)insn).isWrite();
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
-  private static String dumpDfaResult(ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
-    final StringBuffer buffer = new StringBuffer();
+  @SuppressWarnings("UnusedDeclaration")
+  @NonNls
+  private static String dumpDfaResult(ArrayList<Int2ObjectMap<IntSet>> dfaResult, ReachingDefinitionsDfaInstance dfa) {
+    @NonNls final StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < dfaResult.size(); i++) {
-      TIntObjectHashMap<TIntHashSet> map = dfaResult.get(i);
+      Int2ObjectMap<IntSet> map = dfaResult.get(i);
       buffer.append("At ").append(i).append(":\n");
-      map.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-        @Override
-        public boolean execute(int i, TIntHashSet defs) {
-          buffer.append(i).append(" -> ");
-          defs.forEach(i1 -> {
-            buffer.append(i1).append(" ");
-            return true;
-          });
-          return true;
-        }
-      });
+      for (IntSet v : map.values()) {
+        buffer.append(i).append(" -> ");
+        v.forEach((IntConsumer)i1 -> {
+          buffer.append(i1).append(" ");
+        });
+      }
       buffer.append("\n");
     }
 
@@ -433,14 +430,14 @@ public class ReachingDefinitionsCollector {
   @NotNull
   private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
                                            Instruction @NotNull [] flow,
-                                           @NotNull TObjectIntHashMap<VariableDescriptor> varIndexes) {
+                                           @NotNull Object2IntMap<VariableDescriptor> varIndexes) {
     DefinitionMap result = new DefinitionMap();
     for (int i = 0; i < flow.length; i++) {
       Instruction insn = flow[i];
       if (insn instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rwInsn = (ReadWriteVariableInstruction)insn;
         if (!rwInsn.isWrite()) {
-          int idx = varIndexes.get(rwInsn.getDescriptor());
+          int idx = varIndexes.getInt(rwInsn.getDescriptor());
           result.copyFrom(dfaResult.get(i), idx, i);
         }
       }

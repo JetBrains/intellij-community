@@ -32,7 +32,7 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (!(parent instanceof PsiLambdaExpression)) return false;
     if (((PsiLambdaExpression)parent).getParameterList().getParametersCount() != 1) return false;
-    parent = parent.getParent();
+    parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
 
     if (!(parent instanceof PsiExpressionList)) return false;
     final PsiElement gParent = parent.getParent();

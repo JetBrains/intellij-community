@@ -13,7 +13,7 @@ XmlFile:test.xml
         PsiWhiteSpace(' ')
         PsiElement(XML_ATTRIBUTE)
           XmlToken:XML_NAME('a')
-          PsiErrorElement:'=' expected
+          PsiErrorElement:= expected
             <empty list>
       XmlToken:XML_END_TAG_START('</')
       XmlToken:XML_NAME('a')

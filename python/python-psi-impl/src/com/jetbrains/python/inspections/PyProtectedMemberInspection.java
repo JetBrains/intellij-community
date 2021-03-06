@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
@@ -62,7 +62,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportElement(PyImportElement node) {
+    public void visitPyImportElement(@NotNull PyImportElement node) {
       final PyStatement statement = node.getContainingImportStatement();
       if (!(statement instanceof PyFromImportStatement)) return;
       final PyReferenceExpression importReferenceExpression = node.getImportReferenceExpression();
@@ -92,7 +92,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
       if (qualifier == null || ArrayUtil.contains(qualifier.getText(), PyNames.CANONICAL_SELF, PyNames.CANONICAL_CLS)) return;
@@ -161,9 +161,10 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
-        final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
-        registerProblem(node, PyPsiBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
-          LocalQuickFix.EMPTY_ARRAY));
+        final @InspectionMessage String message = type instanceof PyModuleType
+                                 ? PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.module", name)
+                                 : PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.class", name);
+        registerProblem(node, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
 
@@ -184,7 +185,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       final PyReferenceExpression source = node.getImportSource();
       if (source == null) return;
 
@@ -200,7 +201,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         )
         .forEach(
           referenceExpression -> {
-            final String message = "'" + referenceExpression.getName() + "' is not declared in __all__";
+            final String message = PyPsiBundle.message("INSP.protected.member.name.not.declared.in.all", referenceExpression.getName());
             registerProblem(referenceExpression, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         );
@@ -237,9 +238,10 @@ public class PyProtectedMemberInspection extends PyInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
-    panel.addCheckbox(PyPsiBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
+    final PythonUiService uiService = PythonUiService.getInstance();
+    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
     return panel;
   }
 }

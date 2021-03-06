@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.psi.impl;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import icons.XpathIcons;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.xml.namespace.QName;
+import java.util.Arrays;
 
 public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
 
@@ -48,7 +50,7 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
         return buildSignature();
     }
 
-    public String buildSignature() {
+    public @NlsSafe String buildSignature() {
         final StringBuilder sb = new StringBuilder(getName());
         final XsltParameter[] parameters = getParameters();
         if (parameters.length > 0) {
@@ -77,10 +79,7 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
     public XsltParameter @NotNull [] getParameters() {
         final PsiElement[] elements = ResolveUtil.collect(new ParamMatcher(getTag(), null));
 
-        final XsltParameter[] xsltParameters = new XsltParameter[elements.length];
-        //noinspection SuspiciousSystemArraycopy
-        System.arraycopy(elements, 0, xsltParameters, 0, elements.length);
-        return xsltParameters;
+        return Arrays.copyOf(elements, elements.length, XsltParameter[].class);
     }
 
     @Override

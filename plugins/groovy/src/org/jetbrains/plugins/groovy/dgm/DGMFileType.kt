@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dgm
 
 import com.intellij.lang.properties.PropertiesFileType
@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.dgm.DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE
 import javax.swing.Icon
 
@@ -14,7 +15,7 @@ object DGMFileType : LanguageFileType(PropertiesLanguage.INSTANCE, true), FileTy
 
   override fun getName(): String = "DGM"
   override fun getDefaultExtension(): String = ""
-  override fun getDescription(): String = "Groovy extension module descriptor file"
+  override fun getDescription(): String = GroovyBundle.message("file.type.dgm")
   override fun getIcon(): Icon? = PropertiesFileType.INSTANCE.icon
 
   override fun isMyFileType(file: VirtualFile): Boolean {

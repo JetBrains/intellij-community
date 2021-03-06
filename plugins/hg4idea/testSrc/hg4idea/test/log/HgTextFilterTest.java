@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -26,7 +26,7 @@ public class HgTextFilterTest extends HgPlatformTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    cd(myProject.getBaseDir());
+    cd(getOrCreateProjectBaseDir());
   }
 
   public void testSubstringCaseSensitivity() throws Exception {
@@ -79,7 +79,7 @@ public class HgTextFilterTest extends HgPlatformTest {
   @NotNull
   private List<String> getFilteredCommits(@NotNull HgLogProvider provider, @NotNull VcsLogTextFilter filter) throws VcsException {
     VcsLogFilterCollection filterCollection = VcsLogFilterObject.collection(filter);
-    List<TimedVcsCommit> commits = provider.getCommitsMatchingFilter(myProject.getBaseDir(), filterCollection, -1);
+    List<TimedVcsCommit> commits = provider.getCommitsMatchingFilter(getOrCreateProjectBaseDir(), filterCollection, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
@@ -87,9 +87,9 @@ public class HgTextFilterTest extends HgPlatformTest {
   private String commit(@NotNull String message) throws IOException {
     String file = "file.txt";
     overwrite(file, "content" + Math.random());
-    myProject.getBaseDir().refresh(false, true);
+    getOrCreateProjectBaseDir().refresh(false, true);
     hg("add " + file);
     hg("commit -m '" + message + "'");
-    return new HgWorkingCopyRevisionsCommand(myProject).tip(myProject.getBaseDir()).getChangeset();
+    return new HgWorkingCopyRevisionsCommand(myProject).tip(getOrCreateProjectBaseDir()).getChangeset();
   }
 }

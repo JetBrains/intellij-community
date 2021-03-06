@@ -5,6 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
@@ -19,6 +21,9 @@ import java.util.function.Consumer;
 import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
 
 abstract class SourceOperation extends Operation {
+  private static final CallMatcher ITERABLE_SPLITERATOR =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "spliterator").parameterCount(0);
+  
   @Contract(value = " -> true", pure = true)
   @Override
   final boolean changesVariable() {
@@ -86,6 +91,19 @@ abstract class SourceOperation extends Operation {
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
       if (qualifier != null) {
         return new ForEachSource(qualifier);
+      }
+    }
+    if (name.equals("stream") && args.length == 2 &&
+        method.getModifierList().hasExplicitModifier(PsiModifier.STATIC) &&
+        "java.util.stream.StreamSupport".equals(className) &&
+        ExpressionUtils.isLiteral(PsiUtil.skipParenthesizedExprDown(args[1]), false)) {
+      PsiMethodCallExpression spliteratorExpr =
+        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiMethodCallExpression.class);
+      if (ITERABLE_SPLITERATOR.test(spliteratorExpr)) {
+        PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(spliteratorExpr.getMethodExpression());
+        if (qualifier != null) {
+          return new ForEachSource(qualifier);
+        }
       }
     }
     if (name.equals("stream") && args.length == 1 &&

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -13,7 +14,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 final class TouchBar implements NSTLibrary.ItemCreator {
-  private static final boolean ourAsyncUpdate = Registry.is("actionSystem.update.touchbar.actions.asynchronously");
   private static final boolean ourUseCached = Registry.is("actionSystem.update.touchbar.actions.use.cached");
   private static final boolean ourCollectStats = Boolean.getBoolean("touchbar.collect.stats");
   private static final Logger LOG = Logger.getInstance(TouchBar.class);
@@ -43,7 +42,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
   private final TBItemButton myCustomEsc;
   private final ActionGroup myActionGroup;
   private final @Nullable String mySkipSubgroupsPrefix;
-  private final @NotNull Updater myUpdateTimer = new Updater(500);
+  private final @NotNull Updater myUpdateTimer = new Updater();
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private String[] myVisibleIds;
   private long myStartShowNs = 0;
@@ -101,7 +100,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
     myStats = ourCollectStats ? TouchBarStats.getStats(touchbarName) : null;
     myItems = new ItemsContainer(touchbarName);
     if (replaceEsc) {
-      final Icon ic = IconLoader.getIcon("/mac/touchbar/popoverClose_dark.svg");
+      final Icon ic = AllIcons.Mac.Touchbar.PopoverClose;
       myCustomEsc = new TBItemButton(myItemListener, null).setIcon(ic).setWidth(64).setTransparentBg(true).setAction(() -> {
         _closeSelf();
         if (emulateESC) {
@@ -152,7 +151,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
   @Override
   public String toString() {
-    return myItems.toString() + "_" + myNativePeer;
+    return myItems + "_" + myNativePeer;
   }
 
   @Override
@@ -446,21 +445,19 @@ final class TouchBar implements NSTLibrary.ItemCreator {
     }
 
     if (myActionGroup != null) {
-      DataContext dctx = DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent());
+      DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent()));
       BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
-      if (ourAsyncUpdate) {
-        //System.out.printf("%s:\t start update %s\n", new SimpleDateFormat("hhmmss.SSS").format(new Date()), myItems.toString());
+      if (Utils.isAsyncDataContext(dataContext)) {
         if (myLastUpdate != null) myLastUpdate.cancel();
-        myLastUpdate = Utils
-          .expandActionGroupAsync(LaterInvocator.isInModalContext(), myActionGroup, myFactory, dctx, ActionPlaces.TOUCHBAR_GENERAL,
-                                  visitor);
+        myLastUpdate = Utils.expandActionGroupAsync(LaterInvocator.isInModalContext(), myActionGroup, myFactory,
+                                                    dataContext, ActionPlaces.TOUCHBAR_GENERAL, visitor);
         myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
       }
       else {
         List<AnAction> actions = Utils.expandActionGroupWithTimeout(
           LaterInvocator.isInModalContext(),
           myActionGroup,
-          myFactory, dctx,
+          myFactory, dataContext,
           ActionPlaces.TOUCHBAR_GENERAL,
           visitor, Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
         _applyPresentationChanges(actions);
@@ -511,17 +508,14 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
   private void _closeSelf() {
     if (myBarContainer == null) {
-      LOG.error("can't perform _closeSelf for touchbar '" + toString() + "' because parent container wasn't set");
+      LOG.error("can't perform _closeSelf for touchbar '" + this + "' because parent container wasn't set");
       return;
     }
     TouchBarsManager.hideContainer(myBarContainer);
   }
 
   private final class Updater {
-    private final int myDelay;
     private @Nullable TimerListener myTimerImpl;
-
-    Updater(int delay) { myDelay = delay; }
 
     void start() {
       if (myTimerImpl != null) {
@@ -539,7 +533,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
           updateActionItems();
         }
       };
-      ActionManager.getInstance().addTransparentTimerListener(myDelay/*delay param doesn't affect anything*/, myTimerImpl);
+      ActionManager.getInstance().addTimerListener(-1, myTimerImpl);
     }
 
     void stop() {
@@ -547,7 +541,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
         return;
       }
 
-      ActionManager.getInstance().removeTransparentTimerListener(myTimerImpl);
+      ActionManager.getInstance().removeTimerListener(myTimerImpl);
       myTimerImpl = null;
     }
 

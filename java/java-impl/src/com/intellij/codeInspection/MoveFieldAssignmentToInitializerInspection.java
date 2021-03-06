@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * @author cdr
  * @author Tagir Valeev
  */
 public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -43,6 +42,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
         if (assignment.getParent() instanceof PsiExpressionList || !ExpressionUtils.isVoidContext(assignment)) return;
         PsiField field = getAssignedField(assignment);
         if (field == null || field.hasInitializer()) return;
+        if (field instanceof SyntheticElement) return;
         PsiClass psiClass = field.getContainingClass();
 
         if (psiClass == null || psiClass.isInterface()) return;

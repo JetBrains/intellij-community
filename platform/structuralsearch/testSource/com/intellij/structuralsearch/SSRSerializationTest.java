@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -34,7 +34,7 @@ public class SSRSerializationTest extends LightPlatformTestCase {
     myInspection = new SSBasedInspection();
     final SearchConfiguration configuration = new SearchConfiguration("i", "user defined");
     final MatchOptions options = configuration.getMatchOptions();
-    options.setFileType(StdFileTypes.JAVA);
+    options.setFileType(JavaFileType.INSTANCE);
     options.setSearchPattern("int i;");
     myInspection.addConfiguration(configuration);
     final InspectionToolsSupplier supplier = new InspectionToolsSupplier() {

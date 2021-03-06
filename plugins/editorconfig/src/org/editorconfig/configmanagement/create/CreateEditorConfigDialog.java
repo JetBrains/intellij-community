@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
 import org.editorconfig.language.messages.EditorConfigBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,5 +56,10 @@ public class CreateEditorConfigDialog extends DialogWrapper {
 
   public List<Language> getLanguages() {
     return myForm.getSelectedLanguages();
+  }
+
+  @Override
+  protected @NonNls @Nullable String getHelpId() {
+    return "reference.code.style.editorconfig";
   }
 }

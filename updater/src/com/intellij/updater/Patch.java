@@ -57,9 +57,18 @@ public class Patch {
 
     File olderDir = new File(spec.getOldFolder());
     File newerDir = new File(spec.getNewFolder());
-    Map<String, Long> oldChecksums = digestFiles(olderDir, spec.getIgnoredFiles(), isNormalized());
-    Map<String, Long> newChecksums = digestFiles(newerDir, spec.getIgnoredFiles(), false);
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, spec.getCriticalFiles(), spec.getOptionalFiles(), true);
+
+    Set<String> ignored = new HashSet<>(spec.getIgnoredFiles());
+    Set<String> critical = new HashSet<>(spec.getCriticalFiles());
+    Set<String> optional = new HashSet<>(spec.getOptionalFiles());
+    Set<String> strict = new HashSet<>(spec.getStrictFiles());
+
+    Map<String, Long> oldChecksums = digestFiles(olderDir, ignored, isNormalized());
+    Map<String, Long> newChecksums = digestFiles(newerDir, ignored, false);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldChecksums, newChecksums, critical, optional, true);
+
+    Runner.logger().info("Preparing actions...");
+    ui.startProcess("Preparing actions...");
 
     List<PatchAction> tempActions = new ArrayList<>();
 
@@ -89,16 +98,14 @@ public class Patch {
       }
     }
 
-    Runner.logger().info("Preparing actions...");
-    ui.startProcess("Preparing actions...");
-
     List<PatchAction> actions = new ArrayList<>();
     for (PatchAction action : tempActions) {
       Runner.logger().info(action.getPath());
       if (action.calculate(olderDir, newerDir)) {
         actions.add(action);
-        action.setCritical(spec.getCriticalFiles().contains(action.getPath()));
-        action.setOptional(spec.getOptionalFiles().contains(action.getPath()));
+        action.setCritical(critical.contains(action.getPath()));
+        action.setOptional(optional.contains(action.getPath()));
+        action.setStrict(strict.contains(action.getPath()));
       }
     }
     return actions;
@@ -244,19 +251,22 @@ public class Patch {
 
     List<ValidationResult> results = new ArrayList<>();
 
-    Set<String> deletedPaths = new HashSet<>();
+    Set<String> deletedPaths = new HashSet<>(), deletedLinks = new HashSet<>();
     forEach(myActions, "Validating installation...", ui, action -> {
       ValidationResult result = action.validate(toDir);
 
       if (action instanceof DeleteAction) {
-        deletedPaths.add(mapPath(action.getPath()));
+        String path = mapPath(action.getPath());
+        deletedPaths.add(path);
+        if (Digester.isSymlink(action.getChecksum())) {
+          deletedLinks.add(path);
+        }
       }
-      else if (action instanceof CreateAction &&
-               result != null &&
+      else if (result != null &&
+               action instanceof CreateAction &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
-               deletedPaths.contains(mapPath(action.getPath()))) {
-        // do not warn about files going to be deleted
-        result = null;
+               toBeDeleted(mapPath(action.getPath()), deletedPaths, deletedLinks)) {
+        result = null;  // do not warn about files going to be deleted
       }
 
       if (result != null) results.add(result);
@@ -266,7 +276,24 @@ public class Patch {
   }
 
   private static String mapPath(String path) {
-    return Runner.isCaseSensitiveFs() ? path : path.toLowerCase(Locale.getDefault());
+    if (!Runner.isCaseSensitiveFs()) {
+      path = path.toLowerCase(Locale.getDefault());
+    }
+    if (path.endsWith("/")) {
+      path = path.substring(0, path.length() - 1);
+    }
+    return path;
+  }
+
+  private static boolean toBeDeleted(String path, Set<String> deletedPaths, Set<String> deletedLinks) {
+    if (deletedPaths.contains(path)) return true;
+    if (!deletedLinks.isEmpty()) {
+      int p = path.length();
+      while ((p = path.lastIndexOf('/', p - 1)) > 0) {
+        if (deletedLinks.contains(path.substring(0, p))) return true;
+      }
+    }
+    return false;
   }
 
   public PatchFileCreator.ApplicationResult apply(ZipFile patchFile,
@@ -311,31 +338,19 @@ public class Patch {
     }
 
     List<PatchAction> appliedActions = new ArrayList<>(actionsToApply.size());
-    List<File> createdDirectories = new ArrayList<>();
-    Set<File> createdOptionalFiles = new HashSet<>();
 
     try {
       File _backupDir = backupDir;
       forEach(actionsToApply, "Applying patch...", ui, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
+          Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else if (action instanceof UpdateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
-          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
+          Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent directory is absent.");
         }
         else {
           appliedActions.add(action);
           action.apply(patchFile, _backupDir, toDir);
-
-          if (action instanceof CreateAction) {
-            File file = action.getFile(toDir);
-            if (file.isDirectory()) {
-              createdDirectories.add(0, file);
-            }
-            else if (action.isOptional()) {
-              createdOptionalFiles.add(file);
-            }
-          }
         }
       });
     }
@@ -346,19 +361,6 @@ public class Patch {
     catch (Throwable t) {
       Runner.logger().error("apply failed", t);
       return new PatchFileCreator.ApplicationResult(false, appliedActions, t);
-    }
-
-    for (File directory : createdDirectories) {
-      File[] children = directory.listFiles();
-      if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
-        Runner.logger().info("Pruning empty directory: " + directory);
-        try {
-          Utils.delete(directory);
-        }
-        catch (IOException e) {
-          Runner.logger().warn("pruning: " + directory, e);
-        }
-      }
     }
 
     try {
@@ -413,14 +415,19 @@ public class Patch {
     }
   }
 
-  public Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, boolean normalize) throws IOException {
+  public Map<String, Long> digestFiles(File dir, Set<String> ignoredFiles, boolean normalize) throws IOException {
     Map<String, Long> result = new LinkedHashMap<>();
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir.toPath());
-    for (String each : paths) {
-      if (!ignoredFiles.contains(each)) {
-        result.put(each, digestFile(new File(dir, each), normalize));
+    Utils.collectRelativePaths(dir.toPath()).parallelStream().forEachOrdered(path -> {
+      if (!ignoredFiles.contains(path)) {
+        try {
+          long hash = digestFile(new File(dir, path), normalize);
+          synchronized (result) {
+            result.put(path, hash);
+          }
+        }
+        catch (IOException e) { throw new UncheckedIOException(e); }
       }
-    }
+    });
     return result;
   }
 

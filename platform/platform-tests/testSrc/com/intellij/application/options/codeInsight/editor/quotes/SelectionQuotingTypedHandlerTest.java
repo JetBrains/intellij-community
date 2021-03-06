@@ -63,7 +63,7 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
   }
 
   public void testChangeQuotes() {
-    doTest("\'", "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "'aaa'\nbbb\n\n");
+    doTest("'", "<selection><caret>\"aaa\"</selection>\nbbb\n\n", "'aaa'\nbbb\n\n");
   }
 
   public void testChangeBrackets() {

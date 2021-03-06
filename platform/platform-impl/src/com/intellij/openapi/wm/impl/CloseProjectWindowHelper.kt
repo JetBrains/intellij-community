@@ -9,11 +9,19 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 
 open class CloseProjectWindowHelper {
+  companion object {
+    /** This key may be used to for a specific behaviour when project is closing for particular projects */
+    @JvmStatic
+    val SHOW_WELCOME_FRAME_FOR_PROJECT: Key<Boolean> = Key.create("Show.Welcome.Frame.For.Project")
+  }
+
   protected open val isMacSystemMenu: Boolean
     get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
 
@@ -28,7 +36,7 @@ open class CloseProjectWindowHelper {
     // Exit on Linux and Windows if the only opened project frame is closed.
     // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
     // If welcome screen is disabled, behaviour on all OS is the same.
-    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isShowWelcomeScreen)) {
+    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && couldReturnToWelcomeScreen(project))) {
       closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
     }
     else {
@@ -55,5 +63,10 @@ open class CloseProjectWindowHelper {
 
   protected open fun quitApp() {
     ApplicationManager.getApplication().exit()
+  }
+
+  private fun couldReturnToWelcomeScreen(project: Project?): Boolean {
+    return project?.let { SHOW_WELCOME_FRAME_FOR_PROJECT.get(project) }
+           ?: (isShowWelcomeScreen && !PlatformUtils.isPyCharmDs() && !PlatformUtils.isDataGrip())
   }
 }

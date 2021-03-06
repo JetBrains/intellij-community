@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -27,7 +28,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * Provides members from extension classes referenced in {@code META-INF/services/org.codehaus.groovy.runtime.ExtensionModule}.
  */
-public class DGMMemberContributor {
+public final class DGMMemberContributor {
 
   public static boolean processDgmMethods(@NotNull PsiType qualifierType,
                                           @NotNull PsiScopeProcessor processor,
@@ -92,7 +93,7 @@ public class DGMMemberContributor {
                                           @NotNull GlobalSearchScope resolveScope,
                                           @NotNull List<String> instanceClasses,
                                           @NotNull List<String> staticClasses,
-                                          @NotNull String packageName) {
+                                          @NlsSafe @NotNull String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
     if (aPackage == null) return;
 

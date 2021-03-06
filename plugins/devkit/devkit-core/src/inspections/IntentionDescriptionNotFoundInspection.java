@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 
@@ -20,11 +20,6 @@ public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundI
   }
 
   @Override
-  protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
-    return new CreateHtmlDescriptionFix(descriptionDir, module, DescriptionType.INTENTION);
-  }
-
-  @Override
   protected boolean skipIfNotRegistered(PsiClass epClass) {
     final List<ExtensionCandidate> registrations = ExtensionLocatorKt.locateExtensionsByPsiClass(epClass);
     return registrations.isEmpty();
@@ -32,13 +27,13 @@ public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundI
 
   @Override
   @NotNull
-  protected String getHasNotDescriptionError() {
-    return "Intention does not have a description";
+  protected String getHasNotDescriptionError(Module module, PsiClass psiClass) {
+    return DevKitBundle.message("inspections.intention.description.not.found");
   }
 
   @Override
   @NotNull
   protected String getHasNotBeforeAfterError() {
-    return "Intention must have 'before.*.template' and 'after.*.template' beside 'description.html'";
+    return DevKitBundle.message("inspections.intention.description.no.before.after.template");
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,11 +39,13 @@ public final class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
+  @Nls
   public static <B extends XBreakpoint> String getShortText(B breakpoint) {
     //noinspection unchecked
     return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(breakpoint.getType().getShortText(breakpoint)), 70, 5);
   }
 
+  @Nls
   public static <B extends XBreakpoint> String getDisplayText(@NotNull B breakpoint) {
     //noinspection unchecked
     return breakpoint.getType().getDisplayText(breakpoint);

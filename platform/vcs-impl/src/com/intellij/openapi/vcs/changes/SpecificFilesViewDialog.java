@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -21,7 +22,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
@@ -41,12 +40,11 @@ import static com.intellij.util.containers.ContainerUtil.set;
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
   protected final ChangesListView myView;
-  protected final ChangeListManager myChangeListManager;
   protected final Project myProject;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull @NlsContexts.DialogTitle String title,
-                                    @NotNull DataKey<Stream<FilePath>> shownDataKey,
+                                    @NotNull DataKey<Iterable<FilePath>> shownDataKey,
                                     @NotNull List<? extends FilePath> initDataFiles) {
     super(project, true);
     setTitle(title);
@@ -57,14 +55,13 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       @Override
       public Object getData(@NotNull String dataId) {
         if (shownDataKey.is(dataId)) {
-          return getSelectedVirtualFiles(null);
+          return getSelectedFilePaths(null);
         }
         return super.getData(dataId);
       }
     };
     EditSourceOnEnterKeyHandler.install(myView, closer);
     EditSourceOnDoubleClickHandler.install(myView, closer);
-    myChangeListManager = ChangeListManager.getInstance(project);
     createPanel();
     setOKButtonText(CommonBundle.getCancelButtonText());
 

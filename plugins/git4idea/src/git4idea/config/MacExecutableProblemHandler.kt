@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -8,11 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.NonNls
 import java.io.File
 
 class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   companion object {
     val LOG = logger<MacExecutableProblemHandler>()
+
+    private const val XCODE_LICENSE_ERROR: @NonNls String = "Agreeing to the Xcode/iOS license"
+    private const val XCODE_DEVELOPER_PART_ERROR: @NonNls String = "invalid active developer path"
+    private const val XCODE_XCRUN: @NonNls String = "xcrun"
   }
 
   private val tempPath = FileUtil.createTempDirectory("git-install", null)
@@ -28,6 +33,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
 
   private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
+                            getHumanReadableErrorFor(exception),
                             ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
       errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), false) {
         try {
@@ -86,7 +92,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
 
   private fun runCommand(commandLine: GeneralCommandLine, sudo: Boolean, onError: () -> Unit): Boolean {
     try {
-      val cmd = if (sudo) ExecUtil.sudoCommand(commandLine, "Install Git") else commandLine
+      val cmd = if (sudo) ExecUtil.sudoCommand(commandLine, GitBundle.message("title.sudo.command.install.git")) else commandLine
       val output = ExecUtil.execAndGetOutput(cmd)
       if (output.checkSuccess(LOG)) {
         return true
@@ -111,8 +117,8 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   }
 
   private fun showXCodeLicenseError(errorNotifier: ErrorNotifier) {
-    errorNotifier.showError(GitBundle.getString("git.executable.validation.error.xcode.title"),
-                            GitBundle.getString("git.executable.validation.error.xcode.message"),
+    errorNotifier.showError(GitBundle.message("git.executable.validation.error.xcode.title"),
+                            GitBundle.message("git.executable.validation.error.xcode.message"),
                             getLinkToConfigure(project))
   }
 
@@ -129,13 +135,13 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
    * Check if validation failed because the XCode license was not accepted yet
    */
   private fun isXcodeLicenseError(exception: Throwable): Boolean =
-    isXcodeError(exception) { it.contains("Agreeing to the Xcode/iOS license") }
+    isXcodeError(exception) { it.contains(XCODE_LICENSE_ERROR) }
 
   /**
    * Check if validation failed because the XCode command line tools were not found
    */
   private fun isInvalidActiveDeveloperPath(exception: Throwable): Boolean =
-    isXcodeError(exception) { it.contains("invalid active developer path") && it.contains("xcrun") }
+    isXcodeError(exception) { it.contains(XCODE_DEVELOPER_PART_ERROR) && it.contains(XCODE_XCRUN) }
 
   private fun isXcodeError(exception: Throwable, messageIndicator: (String) -> Boolean): Boolean {
     val message = if (exception is GitVersionIdentificationException) {

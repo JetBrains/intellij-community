@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -19,6 +19,7 @@ import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltNamedElement;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class XsltDeclarationInspection extends XsltInspection {
@@ -61,28 +62,28 @@ public class XsltDeclarationInspection extends XsltInspection {
                 final PsiElement token = element.getNameIdentifier();
                 if (name == null || name.length() == 0) {
                     if (token != null) {
-                        holder.registerProblem(token, "Empty name not permitted");
+                        holder.registerProblem(token, XPathBundle.message("inspection.message.empty.name.not.permitted"));
                     } else {
                         final XmlAttribute attribute = element.getNameAttribute();
                         if (attribute != null) {
                             final XmlAttributeValue e = attribute.getValueElement();
                             if (e != null) {
-                                holder.registerProblem(e, "Empty name not permitted");
+                                holder.registerProblem(e, XPathBundle.message("inspection.message.empty.name.not.permitted"));
                             }
                         }
                     }
                 } else if (!isLegalName(name, holder.getManager().getProject())) {
                     assert token != null;
-                    holder.registerProblem(token, "Illegal name");
+                    holder.registerProblem(token, XPathBundle.message("inspection.message.illegal.name"));
                 } else {
                     assert token != null;
                     final XmlFile file = (XmlFile)tag.getContainingFile();
                     final XmlTag duplicatedSymbol = DeclarationChecker.getInstance(file).getDuplicatedSymbol(tag);
                     if (duplicatedSymbol != null) {
                       if (duplicatedSymbol.getContainingFile() == file) {
-                        holder.registerProblem(token, "Duplicate declaration");
+                        holder.registerProblem(token, XPathBundle.message("inspection.message.duplicate.declaration"));
                       } else {
-                        holder.registerProblem(token, "Duplicates declaration from '" + duplicatedSymbol.getContainingFile().getName() + "'");
+                        holder.registerProblem(token, XPathBundle.message("inspection.message.duplicates.declaration.from", duplicatedSymbol.getContainingFile().getName()));
                       }
                     }
                 }

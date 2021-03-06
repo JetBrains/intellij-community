@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
@@ -37,11 +38,9 @@ import java.util.Map;
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
 
-  public static final Icon CHECKED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
-  public static final Icon CHECKED_SELECTED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
+  public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
+  public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
-
-  private ComboBoxButton myButton;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -69,7 +68,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static void updatePresentation(@Nullable ExecutionTarget target,
+  protected static void updatePresentation(@Nullable ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
                                          @NotNull Presentation presentation,
@@ -81,7 +80,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         name += " | " + target.getDisplayName();
       } else {
         if (!ExecutionTargetManager.canRun(settings.getConfiguration(), target)) {
-          name += " | Nothing to run on";
+          name += " | " + ExecutionBundle.message("run.configurations.combo.action.nothing.to.run.on");
         }
       }
       presentation.setText(name, false);
@@ -100,7 +99,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static void setConfigurationIcon(final Presentation presentation,
+  protected static void setConfigurationIcon(final Presentation presentation,
                                            final RunnerAndConfigurationSettings settings,
                                            final Project project) {
     try {
@@ -115,7 +114,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     if (ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())) {
       final Presentation presentation = e.getPresentation();
       if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
-        performWhenButton(myButton, ActionPlaces.TOUCHBAR_GENERAL);
+        InputEvent inputEvent = e.getInputEvent();
+        Component component = inputEvent != null ? inputEvent.getComponent() : null;
+        if (component != null) {
+          performWhenButton(component, ActionPlaces.TOUCHBAR_GENERAL);
+        }
         return;
       }
     }
@@ -130,7 +133,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
-    myButton = new ComboBoxButton(presentation) {
+    ComboBoxButton button = new ComboBoxButton(presentation) {
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
@@ -169,7 +172,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                     JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
 
     panel.setBorder(border);
-    panel.add(myButton);
+    panel.add(button);
     return panel;
   }
 
@@ -206,11 +209,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-        String folderName = entry.getKey();
+        @NlsSafe String folderName = entry.getKey();
         DefaultActionGroup group = folderName == null ? actionGroup : DefaultActionGroup.createPopupGroup(() -> folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
         for (RunnerAndConfigurationSettings settings : entry.getValue()) {
-          group.add(new SelectConfigAction(settings, project));
+          group.add(createFinalAction(settings, project));
         }
         if (group != actionGroup) {
           actionGroup.add(group);
@@ -223,10 +226,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return allActionsGroup;
   }
 
-  private static class SaveTemporaryAction extends DumbAwareAction {
+  protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
+    return new SelectConfigAction(configuration, project);
+  }
+
+  private static final class SaveTemporaryAction extends DumbAwareAction {
     SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.Actions.Menu_saveall);
+      presentation.setIcon(AllIcons.Actions.MenuSaveall);
     }
 
     @Override
@@ -255,6 +262,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       else {
         presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
+        //noinspection DialogTitleCapitalization
         presentation.setDescription(presentation.getText());
         presentation.setEnabledAndVisible(true);
       }
@@ -274,7 +282,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static class SelectTargetAction extends AnAction {
+  private static final class SelectTargetAction extends AnAction {
     private final Project myProject;
     private final ExecutionTarget myTarget;
 
@@ -308,7 +316,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static class SelectConfigAction extends DumbAwareAction {
+  private static final class SelectConfigAction extends DumbAwareAction {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
 

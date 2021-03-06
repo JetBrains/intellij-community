@@ -30,5 +30,10 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

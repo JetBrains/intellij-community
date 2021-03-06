@@ -1,8 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.git4idea.nativessh;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.GitAppUtil;
 import org.jetbrains.git4idea.GitExternalApp;
 
 /**
@@ -23,41 +22,22 @@ public class GitNativeSshAskPassApp implements GitExternalApp {
         description = ""; // XML RPC doesn't like nulls
       }
 
-      String token = getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV);
-      int xmlRpcPort = Integer.parseInt(getNotNull(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV));
-      GitNativeSshAskPassXmlRpcClient xmlRpcClient = new GitNativeSshAskPassXmlRpcClient(xmlRpcPort);
+      String handlerNo = GitAppUtil.getEnv(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_HANDLER_ENV);
+      int xmlRpcPort = GitAppUtil.getEnvInt(GitNativeSshAskPassXmlRpcHandler.IJ_SSH_ASK_PASS_PORT_ENV);
 
-      String answer = adjustNull(xmlRpcClient.handleInput(token, description));
-      if (answer == null) {
+      String response = GitAppUtil.sendXmlRequest(GitNativeSshAskPassXmlRpcHandler.RPC_METHOD_NAME, xmlRpcPort,
+                                                  handlerNo, description);
+      String passphrase = GitAppUtil.adjustNullFrom(response);
+      if (passphrase == null) {
         System.exit(1); // dialog canceled
       }
 
-      System.out.println(answer);
+      System.out.println(passphrase);
     }
     catch (Throwable t) {
       System.err.println(t.getMessage());
       t.printStackTrace(System.err);
+      System.exit(1);
     }
-  }
-
-  @NotNull
-  private static String getNotNull(@NotNull String env) {
-    String value = System.getenv(env);
-    if (value == null) {
-      throw new IllegalStateException(env + " environment variable is not defined!");
-    }
-    return value;
-  }
-
-  /**
-   * Since XML RPC client does not understand null values, the value should be
-   * adjusted (The password is {@code "-"} if null, {@code "+"+s) if non-null).
-   *
-   * @param s a value to adjust
-   * @return adjusted value.
-   */
-  @Nullable
-  private static String adjustNull(final String s) {
-    return s.charAt(0) == '-' ? null : s.substring(1);
   }
 }

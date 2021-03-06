@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.PackageIndex;
@@ -16,6 +17,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +27,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
+  @SuppressWarnings("unused") //used for extension point instantiation
   public PsiElementFinderImpl(Project project) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(project);
@@ -34,6 +37,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
    * @deprecated use {@link #PsiElementFinderImpl(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public PsiElementFinderImpl(Project project, JavaFileManager javaFileManager) {
     myProject = project;
     myFileManager = javaFileManager;
@@ -41,11 +45,22 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
 
   @Override
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (skipIndices()) {
+      return null;
+    }
     return myFileManager.findClass(qualifiedName, scope);
+  }
+
+  private boolean skipIndices() {
+    DumbService dumbService = DumbService.getInstance(myProject);
+    return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
   }
 
   @Override
   public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (skipIndices()) {
+      return PsiClass.EMPTY_ARRAY;
+    }
     return myFileManager.findClasses(qualifiedName, scope);
   }
 

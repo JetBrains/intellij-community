@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -8,7 +8,6 @@ import com.intellij.lang.properties.editor.PropertyStructureViewElement;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -48,11 +47,6 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
       @Override
       public String getPresentableText() {
         return PropertiesFileStructureViewElement.this.getPresentableText();
-      }
-
-      @Override
-      public String getLocationString() {
-        return null;
       }
 
       @Override

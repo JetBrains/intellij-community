@@ -16,12 +16,13 @@
 package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class GroupDisplayNameUtil {
+public final class GroupDisplayNameUtil {
   @NonNls
   private static final Map<String, String> packageGroupDisplayNameMap = new HashMap<>();
 
@@ -72,12 +73,10 @@ public class GroupDisplayNameUtil {
   private GroupDisplayNameUtil() {
   }
 
-  public static String getGroupDisplayName(Class<?> aClass) {
+  public static @Nls String getGroupDisplayName(Class<?> aClass) {
     final Package thisPackage = aClass.getPackage();
     assert thisPackage != null : "need package to determine group display name";
     final String name = thisPackage.getName();
-    assert name != null :
-      "inspection has default package, group display name cannot be determined";
     final int index = name.lastIndexOf('.');
     final String key = name.substring(index + 1);
     final String groupDisplayName = packageGroupDisplayNameMap.get(key);

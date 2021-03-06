@@ -6,6 +6,7 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
+import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

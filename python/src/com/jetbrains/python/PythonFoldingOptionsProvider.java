@@ -8,7 +8,7 @@ import java.util.Objects;
 
 final class PythonFoldingOptionsProvider extends BeanConfigurable<PythonFoldingSettings> implements CodeFoldingOptionsProvider {
   protected PythonFoldingOptionsProvider() {
-    super(PythonFoldingSettings.getInstance(), "Python");
+    super(PythonFoldingSettings.getInstance(), PyBundle.message("python.folding.options.title"));
 
     PythonFoldingSettings settings = Objects.requireNonNull(getInstance());
     checkBox(PyBundle.message("python.long.string.literals"), settings::isCollapseLongStrings, v -> settings.COLLAPSE_LONG_STRINGS = v);

@@ -127,7 +127,8 @@ open class HProfVisitor {
   open fun visitPrimitiveArrayDump(
     arrayObjectId: Long, stackTraceSerialNumber: Long,
     numberOfElements: Long,
-    elementType: Type) {
+    elementType: Type,
+    primitiveArrayData: ByteBuffer) {
   }
 
   open fun visitClassDump(

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.fields;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Expandable;
 import com.intellij.ui.components.JBScrollBar;
@@ -10,6 +11,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,22 +46,15 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     support = new ExpandableSupport<JTextComponent>(this, onShow, onHide) {
       @NotNull
       @Override
-      protected Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, String> onShow) {
+      protected Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, @Nls String> onShow) {
         Font font = field.getFont();
         FontMetrics metrics = font == null ? null : field.getFontMetrics(font);
         int height = metrics == null ? 16 : metrics.getHeight();
         Dimension size = new Dimension(height * 32, height * 16);
 
-        JTextArea area = new JTextArea(onShow.fun(field.getText()));
-        area.putClientProperty(Expandable.class, this);
-        area.setEditable(field.isEditable());
-        area.setBackground(field.getBackground());
-        area.setForeground(field.getForeground());
-        area.setFont(font);
-        area.setWrapStyleWord(true);
-        area.setLineWrap(true);
+        JTextArea area = createTextArea(onShow.fun(field.getText()), field.isEditable(), field.getBackground(), field.getForeground(), font);
+
         copyCaretPosition(field, area);
-        UIUtil.addUndoRedoActions(area);
 
         JLabel label = createLabel(createCollapseExtension());
         label.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
@@ -110,6 +105,23 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     setExtensions(createExtensions());
   }
 
+  @NotNull
+  protected JTextArea createTextArea(@Nls @NotNull String text, boolean editable, Color background, Color foreground, Font font) {
+    JTextArea area = new JTextArea(text);
+
+    area.putClientProperty(Expandable.class, this);
+    area.setEditable(editable);
+    area.setBackground(background);
+    area.setForeground(foreground);
+    area.setFont(font);
+    area.setWrapStyleWord(true);
+    area.setLineWrap(true);
+
+    UIUtil.addUndoRedoActions(area);
+
+    return area;
+  }
+
   public void setMonospaced(boolean monospaced) {
     putClientProperty("monospaced", monospaced);
   }
@@ -123,7 +135,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     return support.getTitle();
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.PopupTitle String title) {
     support.setTitle(title);
   }
 

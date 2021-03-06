@@ -9,10 +9,10 @@ import com.intellij.ide.plugins.PluginUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -21,10 +21,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
+import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")
 
@@ -41,11 +42,10 @@ class StoreUtil private constructor() {
     @JvmStatic
     @CalledInAny
     fun saveSettings(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-      if (componentManager is Application) {
-        SaveAndSyncHandler.getInstance().cancelScheduledSave()
-      }
-      runBlocking {
-        com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+      runInAutoSaveDisabledMode {
+        runBlocking {
+          com.intellij.configurationStore.saveSettings(componentManager, forceSavingAllSettings)
+        }
       }
     }
 
@@ -53,7 +53,7 @@ class StoreUtil private constructor() {
      * Save all unsaved documents and project settings. Must be called from EDT.
      * Use with care because it blocks EDT. Any new usage should be reviewed.
      */
-    @CalledInAwt
+    @RequiresEdt
     @JvmStatic
     fun saveDocumentsAndProjectSettings(project: Project) {
       FileDocumentManager.getInstance().saveAllDocuments()
@@ -66,14 +66,14 @@ class StoreUtil private constructor() {
      *
      * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
      */
-    @CalledInAwt
+    @RequiresEdt
     @JvmStatic
     fun saveDocumentsAndProjectsAndApp(forceSavingAllSettings: Boolean) {
-      SaveAndSyncHandler.getInstance().cancelScheduledSave()
-
-      FileDocumentManager.getInstance().saveAllDocuments()
-      runBlocking {
-        saveProjectsAndApp(forceSavingAllSettings)
+      runInAutoSaveDisabledMode {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        runBlocking {
+          saveProjectsAndApp(forceSavingAllSettings)
+        }
       }
     }
   }
@@ -89,6 +89,9 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
     componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
     return true
   }
+  catch (e: CancellationException) {
+    return false
+  }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
   }
@@ -101,7 +104,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
     }
 
     val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName,
-                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + StringUtil.getThrowableText(e) + "</p>" else ""))
+                                           (if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""))
 
     val pluginId = PluginUtil.getInstance().findPluginId(e)
     val groupId = NotificationGroup.createIdWithTitle("Settings Error", IdeBundle.message("notification.group.settings.error"))
@@ -172,8 +175,24 @@ private suspend fun saveAllProjects(forceSavingAllSettings: Boolean) {
   }
 }
 
-inline fun runInAutoSaveDisabledMode(task: () -> Unit) {
+inline fun <T> runInAutoSaveDisabledMode(task: () -> T): T {
   SaveAndSyncHandler.getInstance().disableAutoSave().use {
+    return task()
+  }
+}
+
+inline fun runInAllowSaveMode(isSaveAllowed: Boolean = true, task: () -> Unit) {
+  val app = ApplicationManagerEx.getApplicationEx()
+  if (isSaveAllowed == app.isSaveAllowed) {
     task()
+    return
+  }
+
+  app.isSaveAllowed = isSaveAllowed
+  try {
+    task()
+  }
+  finally {
+    app.isSaveAllowed = !isSaveAllowed
   }
 }

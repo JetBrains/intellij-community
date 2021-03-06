@@ -49,5 +49,3 @@ name='name'
 
 ${asdasd#assdf}
 ${asdasd#assdf}
-
-test -s /etc/init.d/.depend.boot  || CONCURRENCY="none"

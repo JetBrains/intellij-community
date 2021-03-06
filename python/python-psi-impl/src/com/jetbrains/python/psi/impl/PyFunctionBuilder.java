@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
@@ -94,16 +93,6 @@ public class PyFunctionBuilder {
    */
   @NotNull
   public PyFunctionBuilder parameterWithType(@NotNull String name, @NotNull String type) {
-    parameter(name);
-    myDocStringGenerator.withParamTypedByName(name, type);
-    return this;
-  }
-
-  @NotNull
-  @Deprecated
-  public PyFunctionBuilder parameterWithType(@NotNull final String name,
-                                             @NotNull final String type,
-                                             @NotNull final DocStringFormat format) {
     parameter(name);
     myDocStringGenerator.withParamTypedByName(name, type);
     return this;

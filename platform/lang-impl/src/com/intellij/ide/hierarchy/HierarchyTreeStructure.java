@@ -5,6 +5,8 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
@@ -134,13 +136,17 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
 
   protected SearchScope getSearchScope(final String scopeType, final PsiElement thisClass) {
     SearchScope searchScope = GlobalSearchScope.allScope(myProject);
-    if (HierarchyBrowserBaseEx.getScopeClass().equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
       searchScope = new LocalSearchScope(thisClass);
     }
-    else if (HierarchyBrowserBaseEx.getScopeProject().equals(scopeType)) {
+    else if (HierarchyBrowserBaseEx.SCOPE_MODULE.equals(scopeType)) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(thisClass);
+      searchScope = module == null ? new LocalSearchScope(thisClass) : module.getModuleScope(true);
+    }
+    else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
       searchScope = GlobalSearchScopesCore.projectProductionScope(myProject);
     }
-    else if (HierarchyBrowserBaseEx.getScopeTest().equals(scopeType)) {
+    else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
       searchScope = GlobalSearchScopesCore.projectTestScope(myProject);
     } else {
       final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
@@ -152,18 +158,23 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   protected boolean isInScope(final PsiElement baseClass, @NotNull PsiElement srcElement, final String scopeType) {
-    if (HierarchyBrowserBaseEx.getScopeClass().equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_CLASS.equals(scopeType)) {
       return PsiTreeUtil.isAncestor(baseClass, srcElement, true);
     }
-    if (HierarchyBrowserBaseEx.getScopeProject().equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_MODULE.equals(scopeType)) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(baseClass);
+      VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
+      return module != null && module.getModuleScope().contains(virtualFile);
+    }
+    if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
       final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
       return virtualFile == null || !TestSourcesFilter.isTestSources(virtualFile, myProject);
     }
-    if (HierarchyBrowserBaseEx.getScopeTest().equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
       final VirtualFile virtualFile = srcElement.getContainingFile().getVirtualFile();
       return virtualFile == null || TestSourcesFilter.isTestSources(virtualFile, myProject);
     }
-    if (HierarchyBrowserBaseEx.getScopeAll().equals(scopeType)) {
+    if (HierarchyBrowserBaseEx.SCOPE_ALL.equals(scopeType)) {
       return true;
     }
     final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);

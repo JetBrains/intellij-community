@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,11 +30,11 @@ import java.util.regex.Pattern;
  * Utility to patch project model by excluding folders/files from content roots.
  * Can be used for running offline inspections (from command-line directly or in teamcity).
  *
- * The main logic is in the method {@link #patchProject(com.intellij.openapi.project.Project)}.
+ * The main logic is in the method {@link #patchProject(Project)}.
  *
  * @see com.intellij.codeInspection.InspectionApplication
  */
-public class PatchProjectUtil {
+public final class PatchProjectUtil {
   private PatchProjectUtil() {
   }
 
@@ -117,7 +99,7 @@ public class PatchProjectUtil {
           @Override
           public Result visitFileEx(@NotNull VirtualFile fileOrDir) {
             String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
-            
+
             for (Pattern module : excludePatterns.keySet()) {
               if (module == null || module.matcher(moduleName).matches()) {
                 final Set<Pattern> dirPatterns = excludePatterns.get(module);

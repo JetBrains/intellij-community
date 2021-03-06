@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MappingsToRoots {
+public final class MappingsToRoots {
   public static VirtualFile @NotNull [] getRootsUnderVcs(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
     List<VirtualFile> mappings = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
 

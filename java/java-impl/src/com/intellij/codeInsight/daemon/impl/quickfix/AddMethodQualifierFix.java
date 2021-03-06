@@ -53,7 +53,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @Override
   public String getText() {
     if (myCandidates == null || myCandidates.isEmpty()) {
-      if(ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return "";
       }
       throw new IllegalStateException();
@@ -142,7 +142,7 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   private void chooseAndQualify(Project project, Editor editor, List<? extends PsiVariable> candidates) {
     final BaseListPopupStep<PsiVariable> step =
-      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), candidates) {
+      new BaseListPopupStep<>(QuickFixBundle.message("add.qualifier"), candidates) {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {

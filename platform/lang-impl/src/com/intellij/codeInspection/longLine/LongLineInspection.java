@@ -19,6 +19,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.*;
 
 public class LongLineInspection extends LocalInspectionTool {
   @Nullable
@@ -65,9 +65,8 @@ public class LongLineInspection extends LocalInspectionTool {
         });
       }
     });
-    final JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
-    panel.add(codeStyleHyperlink, BorderLayout.NORTH);
+    final JPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.add(codeStyleHyperlink);
     return panel;
   }
 
@@ -111,7 +110,7 @@ public class LongLineInspection extends LocalInspectionTool {
                 TextRange exceedingRange = new TextRange(highlightingStartOffset, highlightingEndOffset);
                 holder.registerProblem(element,
                                        exceedingRange,
-                                       String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin));
+                                       LangBundle.message("inspection.message.line.longer.than.allowed.by.code.style.columns", codeStyleRightMargin));
               }
             }
           }

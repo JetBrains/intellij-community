@@ -123,7 +123,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (uField != null) {
       final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       refUtil.addReferencesTo(uField, this, uField.getUastInitializer());
-      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
+      refUtil.addReferencesTo(uField, this, uField.getUAnnotations().toArray(UElementKt.EMPTY_ARRAY));
       if (uField instanceof UEnumConstant) {
         refUtil.addReferencesTo(uField, this, uField);
       }
@@ -140,7 +140,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         putUserData(IMPLICITLY_READ, true);
       }
 
-      refUtil.addTypeReference((UElement)uField, uField.getType(), getRefManager(), this);
+      refUtil.addTypeReference(uField, uField.getType(), getRefManager(), this);
       getRefManager().fireBuildReferences(this);
     }
   }

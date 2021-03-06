@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class FoldingUpdate {
+public final class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance(FoldingUpdate.class);
 
   private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY = Key.create("code folding");
@@ -54,7 +55,11 @@ public class FoldingUpdate {
     final Project project = file.getProject();
     final Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
-    
+    if (document.getTextLength() != file.getTextLength()) {
+      LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(file, document));
+      return EmptyRunnable.INSTANCE;
+    }
+
     CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
 
     if (value != null && !applyDefaultState) {
@@ -64,7 +69,7 @@ public class FoldingUpdate {
       }
     }
     if (quick || applyDefaultState) return getUpdateResult(file, document, quick, project, editor, applyDefaultState).getValue();
-    
+
     return CachedValuesManager.getManager(project).getCachedValue(
       editor, CODE_FOLDING_KEY, () -> {
         PsiFile file1 = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -79,7 +84,7 @@ public class FoldingUpdate {
                                                                       final Editor editor,
                                                                       final boolean applyDefaultState) {
     PsiUtilCore.ensureValid(file);
-    final List<RegionInfo> elementsToFold = getFoldingsFor(file, document, quick);
+    final List<RegionInfo> elementsToFold = getFoldingsFor(file, quick);
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFold,
                                                                                 applyDefaultStateMode(applyDefaultState),
                                                                                 !applyDefaultState, false);
@@ -155,7 +160,7 @@ public class FoldingUpdate {
         injectedFiles.add(injectedFile);
         final List<RegionInfo> map = new ArrayList<>();
         lists.add(map);
-        getFoldingsFor(injectedFile, injectedEditor.getDocument(), map, false);
+        getFoldingsFor(injectedFile, map, false);
       });
     }
 
@@ -220,31 +225,45 @@ public class FoldingUpdate {
     return true;
   }
 
-  static List<RegionInfo> getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, boolean quick) {
+  static List<RegionInfo> getFoldingsFor(@NotNull PsiFile file, boolean quick) {
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
     List<RegionInfo> foldingMap = new ArrayList<>();
-    getFoldingsFor(file, document, foldingMap, quick);
+    getFoldingsFor(file, foldingMap, quick);
     return foldingMap;
   }
 
   private static void getFoldingsFor(@NotNull PsiFile file,
-                                     @NotNull Document document,
                                      @NotNull List<? super RegionInfo> elementsToFold,
                                      boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
-    TextRange docRange = TextRange.from(0, document.getTextLength());
+    Document document = viewProvider.getDocument();
+    if (document == null) {
+      LOG.error("No document for " + viewProvider);
+      return;
+    }
+
+    LOG.assertTrue(PsiDocumentManager.getInstance(file.getProject()).isCommitted(document));
+
+    int textLength = document.getTextLength();
+    TextRange docRange = TextRange.from(0, textLength);
     Comparator<Language> preferBaseLanguage = Comparator.comparing((Language l) -> l != viewProvider.getBaseLanguage());
     List<Language> languages = ContainerUtil.sorted(viewProvider.getLanguages(), preferBaseLanguage.thenComparing(Language::getID));
 
-    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence()) : null;
+    boolean slashR = document instanceof DocumentImpl && ((DocumentImpl)document).acceptsSlashR();
+    DocumentEx copyDoc = languages.size() > 1 ? new DocumentImpl(document.getImmutableCharSequence(), slashR, true) : null;
     List<RangeMarker> hardRefToRangeMarkers = new ArrayList<>();
 
     for (Language language : languages) {
       final PsiFile psi = viewProvider.getPsi(language);
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (psi != null && foldingBuilder != null) {
+        if (psi.getTextLength() != textLength) {
+          LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(psi, document));
+          return;
+        }
+
         for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, quick)) {
           PsiElement psiElement = descriptor.getElement().getPsi();
           if (psiElement == null) {
@@ -283,8 +302,7 @@ public class FoldingUpdate {
     if (range1.equals(range2)) return true;
     if (range1.contains(range2) || range2.contains(range1)) return false;
 
-    TextRange intersection = range1.intersection(range2);
-    return intersection != null && !intersection.isEmpty();
+    return range1.intersectsStrict(range2);
   }
 
   private static void diagnoseIncorrectRange(@NotNull PsiFile file,
@@ -307,7 +325,7 @@ public class FoldingUpdate {
     editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, null);
   }
 
-  static class RegionInfo {
+  static final class RegionInfo {
     @NotNull
     final FoldingDescriptor descriptor;
     final PsiElement element;

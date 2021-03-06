@@ -12,29 +12,18 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
-import com.intellij.psi.search.scope.packageSet.ParsingException;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import javax.swing.Icon;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.*;
 
 @State(
   name = "DependencyValidationManager",
@@ -45,9 +34,9 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
   });
 
-  private static class State {
+  private static final class State {
     private final List<DependencyRule> rules = new ArrayList<>();
-    private final Map<String, PackageSet> unnamedScopes = new THashMap<>();
+    private final Map<String, PackageSet> unnamedScopes = new HashMap<>();
   }
 
   private State myState = new State();
@@ -165,7 +154,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
   }
 
   private void appendUnnamedScope(@NotNull NamedScope fromScope, @NotNull State state) {
-    if (getScope(fromScope.getName()) == null) {
+    if (getScope(fromScope.getScopeId()) == null) {
       final PackageSet packageSet = fromScope.getValue();
       if (packageSet != null && !state.unnamedScopes.containsKey(packageSet.getText())) {
         state.unnamedScopes.put(packageSet.getText(), packageSet);
@@ -196,8 +185,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
 
     final NamedScope[] scopes = getEditableScopes();
     Arrays.sort(scopes, (s1, s2) -> {
-      final String name1 = s1.getName();
-      final String name2 = s2.getName();
+      final String name1 = s1.getScopeId();
+      final String name2 = s2.getScopeId();
       if (Objects.equals(name1, name2)){
         return 0;
       }
@@ -265,8 +254,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
 
   @Override
   @Nullable
-  public NamedScope getScope(@Nullable String name) {
-    return getScope(name, myState);
+  public NamedScope getScope(@Nullable String scopeId) {
+    return getScope(scopeId, myState);
   }
 
   private NamedScope getScope(@Nullable String name, @NotNull State state) {
@@ -290,8 +279,8 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     NamedScope toScope = rule.getToScope();
     if (fromScope == null || toScope == null) return null;
     Element ruleElement = new Element(DENY_RULE_KEY);
-    ruleElement.setAttribute(FROM_SCOPE_KEY, fromScope.getName());
-    ruleElement.setAttribute(TO_SCOPE_KEY, toScope.getName());
+    ruleElement.setAttribute(FROM_SCOPE_KEY, fromScope.getScopeId());
+    ruleElement.setAttribute(TO_SCOPE_KEY, toScope.getScopeId());
     ruleElement.setAttribute(IS_DENY_KEY, Boolean.valueOf(rule.isDenyRule()).toString());
     return ruleElement;
   }
@@ -374,7 +363,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     final List<String> order = myNamedScopeManager.myOrderState.myOrder;
     order.clear();
     for (NamedScope scope : scopes) {
-      order.add(scope.getName());
+      order.add(scope.getScopeId());
     }
   }
 }

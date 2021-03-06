@@ -36,6 +36,7 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
     if (!(element instanceof PsiMethod)) return false;
     if (element instanceof SyntheticElement) return false;
     PsiMethod method = (PsiMethod) element;
+    if (method.isConstructor()) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     return targetContainer == null || super.canMove(elements, targetContainer, reference);
   }

@@ -119,8 +119,7 @@ public class MavenRunAnythingProviderTest extends MavenImportingTestCase {
   }
 
   private void withVariantsFor(@NotNull RunAnythingContext context, @NotNull String command, @NotNull Consumer<List<String>> supplier) {
-    String contextKey = RunAnythingProvider.EXECUTING_CONTEXT.getName();
-    DataContext dataContext = SimpleDataContext.getSimpleContext(contextKey, context, myDataContext);
+    DataContext dataContext = SimpleDataContext.getSimpleContext(RunAnythingProvider.EXECUTING_CONTEXT, context, myDataContext);
     List<String> variants = myProvider.getValues(dataContext, "mvn " + command);
     supplier.accept(ContainerUtil.map(variants, it -> trimStart(it, "mvn ")));
   }

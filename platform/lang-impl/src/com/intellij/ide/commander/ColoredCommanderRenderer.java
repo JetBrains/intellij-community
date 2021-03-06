@@ -87,6 +87,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     }
 
     if(attributes == null) attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
+    //noinspection HardCodedStringLiteral
     final String text = value.toString();
 
     if (myCommanderPanel.isEnableSearchHighlighting()) {

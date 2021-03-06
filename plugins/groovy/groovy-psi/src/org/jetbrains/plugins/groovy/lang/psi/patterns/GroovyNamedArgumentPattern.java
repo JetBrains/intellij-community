@@ -35,7 +35,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
   }
 
   public GroovyNamedArgumentPattern withLabel(@NotNull final String label) {
-    return with(new PatternCondition<GrNamedArgument>("left") {
+    return with(new PatternCondition<>("left") {
       @Override
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
         return label.equals(namedArgument.getLabelName());
@@ -44,7 +44,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
   }
 
   public GroovyNamedArgumentPattern withLabel(@NotNull final StringPattern labelPattern) {
-    return with(new PatternCondition<GrNamedArgument>("left") {
+    return with(new PatternCondition<>("left") {
       @Override
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
         return labelPattern.accepts(namedArgument.getLabelName(), context);
@@ -53,7 +53,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
   }
 
   public GroovyNamedArgumentPattern withExpression(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<GrNamedArgument>("left") {
+    return with(new PatternCondition<>("left") {
       @Override
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
         return pattern.accepts(namedArgument.getExpression(), context);
@@ -62,7 +62,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
   }
 
   public GroovyNamedArgumentPattern isParameterOfMethodCall(@Nullable final ElementPattern<? extends GrCall> methodCall) {
-    return with(new PatternCondition<GrNamedArgument>("left") {
+    return with(new PatternCondition<>("left") {
       @Override
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
         GrCall call = PsiUtil.getCallByNamedParameter(namedArgument);

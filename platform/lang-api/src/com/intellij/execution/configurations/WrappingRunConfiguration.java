@@ -22,4 +22,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface WrappingRunConfiguration<T extends RunConfiguration> extends WithoutOwnBeforeRunSteps {
   @NotNull T getPeer();
+
+  static @NotNull RunProfile unwrapRunProfile(@NotNull RunProfile runProfile) {
+    if (runProfile instanceof WrappingRunConfiguration) {
+      return ((WrappingRunConfiguration<?>)runProfile).getPeer();
+    }
+    return runProfile;
+  }
 }

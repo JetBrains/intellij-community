@@ -66,14 +66,11 @@ public class XmlInjectedLanguageBlockBuilder extends InjectedLanguageBlockBuilde
   public boolean canProcessFragment(String text, final ASTNode injectionHost) {
     IElementType type = injectionHost.getElementType();
     if (type == XmlElementType.XML_TEXT) {
-      text = text.trim();
-      text = text.replace("<![CDATA[", "");
-      text = text.replace("]]>", "");
+      return true;
     }
     else if (type == XmlElementType.XML_COMMENT) {   // <!--[if IE]>, <![endif]--> of conditional comments injection
       return true;
     }
-
     return text.isEmpty();
   }
 

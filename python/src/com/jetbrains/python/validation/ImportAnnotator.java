@@ -21,13 +21,14 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Checks for non-top-level star imports.
  */
 public class ImportAnnotator extends PyAnnotator {
   @Override
-  public void visitPyFromImportStatement(final PyFromImportStatement node) {
+  public void visitPyFromImportStatement(final @NotNull PyFromImportStatement node) {
     if (node.isStarImport() && PsiTreeUtil.getParentOfType(node, PyFunction.class, PyClass.class) != null) {
       getHolder().newAnnotation(HighlightSeverity.WARNING, PyPsiBundle.message("ANN.star.import.at.top.only")).create();
     }

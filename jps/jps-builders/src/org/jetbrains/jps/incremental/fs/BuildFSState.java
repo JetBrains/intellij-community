@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TObjectLongHashMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -16,7 +15,6 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
-import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.DataInputStream;
@@ -28,7 +26,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildFSState {
+public final class BuildFSState {
   public static final int VERSION = 3;
   private static final Logger LOG = Logger.getInstance(BuildFSState.class);
   private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
@@ -127,24 +125,28 @@ public class BuildFSState {
     final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     try {
       delta.lockData();
+      final long now = System.currentTimeMillis();
       for (Set<File> files : delta.getSourcesToRecompile().values()) {
         files_loop:
         for (File file : files) {
-          if ((getEventRegistrationStamp(file) > targetBuildStart || FSOperations.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
-            for (BuildRootDescriptor rd : rootIndex.findAllParentDescriptors(file, context)) {
-              if (rd.isGenerated()) { // do not send notification for generated sources
-                continue files_loop;
+          final long fileStamp;
+          if (getEventRegistrationStamp(file) > targetBuildStart || (fileStamp = FSOperations.lastModified(file)) > targetBuildStart && fileStamp < now) {
+            if (scope.isAffected(target, file)) {
+              for (BuildRootDescriptor rd : rootIndex.findAllParentDescriptors(file, context)) {
+                if (rd.isGenerated()) { // do not send notification for generated sources
+                  continue files_loop;
+                }
               }
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Unprocessed changes detected for target " + target +
+                            "; file: " + file.getPath() +
+                            "; targetBuildStart=" + targetBuildStart +
+                            "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
+                            "; lastModified=" + FSOperations.lastModified(file)
+                );
+              }
+              return true;
             }
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Unprocessed changes detected for target " + target +
-                        "; file: " + file.getPath() +
-                        "; targetBuildStart=" + targetBuildStart +
-                        "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
-                        "; lastModified=" + FSOperations.lastModified(file)
-              );
-            }
-            return true;
           }
         }
       }
@@ -232,16 +234,6 @@ public class BuildFSState {
     }
 
     return delta.isMarkedRecompile(rd, file);
-  }
-
-  /**
-   * @deprecated use {@link #markDirty(CompileContext, CompilationRound, File, BuildRootDescriptor, StampsStorage, boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public boolean markDirty(@Nullable CompileContext context, CompilationRound round, File file, final BuildRootDescriptor rd,
-                           @Nullable Timestamps tsStorage, boolean saveEventStamp) throws IOException {
-    return markDirty(context, round, file, rd, (StampsStorage<? extends StampsStorage.Stamp>)tsStorage, saveEventStamp);
   }
 
   /**

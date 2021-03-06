@@ -1,14 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IntIntFunction;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
@@ -100,8 +101,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     myStubData.set(childrenCountIndex(parentId), childrenCount + 1);
   }
 
-  int getParentIndex(int childIndex) {
-    return ((StubBase)get(childIndex).getParentStub()).id;
+  private int getParentIndex(int childIndex) {
+    return ((StubBase<?>)get(childIndex).getParentStub()).id;
   }
 
   private enum ChildrenStorage { inPlainList, inJoinedList, inTempMap }
@@ -161,7 +162,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private TIntObjectHashMap<MostlyUShortIntList> tempMap() {
+  private Int2ObjectMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -171,7 +172,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     int count = getChildrenCount(id);
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
-      case inPlainList: return findChildStubByType(elementType, IntIntFunction.IDENTITY, id + 1, id + 1 + count);
+      case inPlainList: return findChildStubByType(elementType, IntUnaryOperator.identity(), id + 1, id + 1 + count);
       case inJoinedList: return findChildStubByType(elementType, myJoinedChildrenList, start, start + count);
       default: return findChildStubByType(elementType, Objects.requireNonNull(tempMap()).get(id), 0, count);
     }
@@ -179,10 +180,10 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
   @Nullable
   private <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
-                                                                                 IntIntFunction idList,
+                                                                                 IntUnaryOperator idList,
                                                                                  int start, int end) {
     for (int i = start; i < end; ++i) {
-      int id = idList.fun(i);
+      int id = idList.applyAsInt(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
         //noinspection unchecked
         return (S)get(id);
@@ -219,8 +220,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     return getParentIndex(childId - 1) != parentId;
   }
 
-  private class TempState {
-    @Nullable TIntObjectHashMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+  private final class TempState {
+    @Nullable Int2ObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
@@ -229,7 +230,8 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       if (myCurrentParent >= 0) {
         if (childrenCount == myExpectedChildrenCount - 1) {
           myCurrentParent = -1;
-        } else if (parentId != myCurrentParent) {
+        }
+        else if (parentId != myCurrentParent) {
           myCurrentParent = -1;
           return switchChildrenToJoinedList(parentId, childrenCount, myExpectedChildrenCount - childrenCount);
         }
@@ -266,7 +268,9 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
 
     private void switchChildrenToTempMap(int parentId) {
-      if (myTempJoinedChildrenMap == null) myTempJoinedChildrenMap = new TIntObjectHashMap<>();
+      if (myTempJoinedChildrenMap == null) {
+        myTempJoinedChildrenMap = new Int2ObjectOpenHashMap<>();
+      }
 
       int start = getChildrenStart(parentId);
       int count = getChildrenCount(parentId);
@@ -304,7 +308,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
 }
 
-class MaterialStubList extends StubList {
+final class MaterialStubList extends StubList {
   /** The list of all stubs ordered by id. The order is DFS (except maybe temporarily during construction, fixed by {@link #finalizeLoadingStage()} later) */
   private final ArrayList<StubBase<?>> myPlainList;
 

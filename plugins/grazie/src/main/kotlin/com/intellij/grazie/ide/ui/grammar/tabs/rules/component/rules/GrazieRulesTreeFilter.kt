@@ -9,7 +9,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
-class GrazieRulesTreeFilter(val tree: GrazieTreeComponent) : FilterComponent("GRAZIE_RULES_FILTER", 10) {
+internal class GrazieRulesTreeFilter(private val tree: GrazieTreeComponent) : FilterComponent("GRAZIE_RULES_FILTER", 10) {
   private val expansionMonitor = TreeExpansionMonitor.install(tree)
 
   override fun filter() {
@@ -43,7 +43,7 @@ class GrazieRulesTreeFilter(val tree: GrazieTreeComponent) : FilterComponent("GR
         }
         else {
           lang to categories.map { (category, rules) ->
-            if (category.category.getName(lang.jLanguage).contains(filterString, true)) {
+            if (category.category.name.contains(filterString, true)) {
               category to rules
             }
             else {

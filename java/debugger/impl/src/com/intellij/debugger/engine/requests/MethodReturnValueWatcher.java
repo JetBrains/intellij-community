@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
@@ -50,7 +50,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
       LOG.debug("<- " + event.method());
     }
     try {
-      if (Registry.is("debugger.watch.return.speedup") && myEntryMethod != null) {
+      if (myEntryMethod != null) {
         if (myEntryMethod.equals(event.method())) {
           LOG.debug("Now watching all");
           enableEntryWatching(true);
@@ -93,11 +93,8 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         enableEntryWatching(false);
       }
     }
-    catch (VMDisconnectedException e) {
-      throw e;
-    }
     catch (Exception e) {
-      LOG.error(e);
+      DebuggerUtilsImpl.logError(e);
     }
   }
 
@@ -167,9 +164,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         clear();
         myThread = thread;
 
-        if (Registry.is("debugger.watch.return.speedup")) {
-          createEntryRequest().enable();
-        }
+        createEntryRequest().enable();
         createExitRequest().enable();
       }
     }
@@ -197,7 +192,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
 
   @NotNull
   private <T extends EventRequest> T prepareRequest(T request) {
-    request.setSuspendPolicy(Registry.is("debugger.watch.return.speedup") ? EventRequest.SUSPEND_EVENT_THREAD : EventRequest.SUSPEND_NONE);
+    request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     if (myThread != null) {
       if (request instanceof MethodEntryRequest) {
         ((MethodEntryRequest)request).addThreadFilter(myThread);

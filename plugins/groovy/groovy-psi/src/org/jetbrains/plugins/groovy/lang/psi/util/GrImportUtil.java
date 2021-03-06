@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.psi.PsiFile;
@@ -16,7 +16,7 @@ import java.util.Collection;
 /**
  * @author Max Medvedev
  */
-public class GrImportUtil {
+public final class GrImportUtil {
 
   public static boolean acceptName(GrReferenceElement ref, String expected) {
     final String actual = ref.getReferenceName();

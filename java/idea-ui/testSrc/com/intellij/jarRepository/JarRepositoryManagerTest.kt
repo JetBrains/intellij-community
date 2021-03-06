@@ -4,19 +4,16 @@ package com.intellij.jarRepository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -30,12 +27,11 @@ class JarRepositoryManagerTest : UsefulTestCase() {
   private lateinit var myTestLocalMvnCache: File
   private lateinit var myTestRepo: RemoteRepositoryDescription
 
-  @Before
   override fun setUp() {
     super.setUp()
-    myFixture = EdtTestUtil.runInEdtAndGet(ThrowableComputable {
+    myFixture = runInEdtAndGet {
       IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder().fixture.apply { setUp() }
-    })
+    }
     myProject = myFixture.project
     myMavenRepo = FileUtil.createTempDirectory("maven", "repo")
     myTestLocalMvnCache = FileUtil.createTempDirectory("maven", "cache")
@@ -43,12 +39,11 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     JarRepositoryManager.setLocalRepositoryPath(myTestLocalMvnCache)
   }
 
-  @After
   override fun tearDown() {
     try {
-      EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+      runInEdtAndWait {
         myFixture.tearDown()
-      })
+      }
     } finally {
       super.tearDown()
     }
@@ -154,6 +149,22 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     val root = result?.get(0)!!
     assertEquals(AnnotationOrderRootType.getInstance(), root.type)
     assertTrue("File name [${root.file.name} should contain '$expectedName'", root.file.name.contains(expectedName))
+  }
+
+  @Test fun `test selection for snapshot`() {
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(version = "1-SNAPSHOT-an1")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1-SNAPSHOT")
+    val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
+                                                                                              listOf(myTestRepo), null)
+    val result: List<OrderRoot>? = getResultingRoots(promise)
+
+    assertEquals(1, result?.size)
+    val root = result?.get(0)!!
+    assertEquals(AnnotationOrderRootType.getInstance(), root.type)
   }
 
 

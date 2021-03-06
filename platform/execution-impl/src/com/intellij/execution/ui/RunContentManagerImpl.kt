@@ -13,8 +13,9 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
-import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -36,7 +37,6 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
@@ -46,7 +46,7 @@ private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 private val CLOSE_LISTENER_KEY: Key<ContentManagerListener> = Key.create("CloseListener")
 
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
-  private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = THashMap()
+  private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
   private val toolWindowIdZBuffer = ConcurrentLinkedDeque<String>()
 
   init {
@@ -95,7 +95,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   // must be called on EDT
   private fun init() {
-    project.messageBus.connect().subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+    val messageBusConnection = project.messageBus.connect()
+    messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
       override fun stateChanged(toolWindowManager: ToolWindowManager) {
         toolWindowIdZBuffer.retainAll(toolWindowManager.toolWindowIdSet)
         val activeToolWindowId = toolWindowManager.activeToolWindowId
@@ -104,32 +105,38 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
       }
     })
+
+    messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        processToolWindowContentManagers { _, contentManager ->
+          val contents = contentManager.contents
+          for (content in contents) {
+            val runContentDescriptor = getRunContentDescriptorByContent(content) ?: continue
+            if (runContentDescriptor.processHandler?.isProcessTerminated == true) {
+              contentManager.removeContent(content, true)
+            }
+          }
+        }
+      }
+    })
   }
 
-  private fun registerToolWindow(executor: Executor, toolWindowManager: ToolWindowManager): ContentManager {
+  @ApiStatus.Internal
+  fun registerToolWindow(executor: Executor): ContentManager {
+    val toolWindowManager = getToolWindowManager()
     val toolWindowId = executor.toolWindowId
     var toolWindow = toolWindowManager.getToolWindow(toolWindowId)
     if (toolWindow != null) {
       return toolWindow.contentManager
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(id = toolWindowId, icon = executor.toolWindowIcon))
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = toolWindowId, icon = executor.toolWindowIcon, stripeTitle = executor::getActionName))
     val contentManager = toolWindow.contentManager
     contentManager.addDataProvider(object : DataProvider {
-      private var insideGetData = 0
-
       override fun getData(dataId: String): Any? {
-        insideGetData++
-        try {
-          return when {
-            PlatformDataKeys.HELP_ID.`is`(dataId) -> executor.helpId
-            insideGetData == 1 -> DataManager.getInstance().getDataContext(contentManager.component).getData(dataId)
-            else -> null
-          }
-        }
-        finally {
-          insideGetData--
-        }
+        if (PlatformDataKeys.HELP_ID.`is`(dataId)) return executor.helpId
+        return null
       }
     })
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager)
@@ -358,7 +365,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return dashboardManager.dashboardContentManager
     }
     else {
-      return registerToolWindow(executor, getToolWindowManager())
+      return registerToolWindow(executor)
     }
   }
 

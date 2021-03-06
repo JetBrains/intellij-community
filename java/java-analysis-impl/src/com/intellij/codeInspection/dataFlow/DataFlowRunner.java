@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -24,10 +24,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import gnu.trove.THashSet;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -42,15 +42,15 @@ import java.util.stream.Collectors;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
-  private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
-  // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
-  // is executed more than this limit times.
-  static final int MAX_STATES_PER_BRANCH = 300;
+  // Default complexity limit (maximum allowed attempts to process instruction). 
+  // Fail as too complex to process if certain instruction is executed more than this limit times.
+  // Also used to calculate a threshold when states are forcibly merged.
+  protected static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
 
   private Instruction[] myInstructions;
   private final @NotNull MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   private final @NotNull DfaValueFactory myValueFactory;
-  private final boolean myIgnoreAssertions;
+  private final @NotNull ThreeState myIgnoreAssertions;
   private boolean myInlining = true;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
@@ -61,21 +61,19 @@ public class DataFlowRunner {
   }
 
   public DataFlowRunner(@NotNull Project project, @Nullable PsiElement context) {
-    this(project, context, false, false);
+    this(project, context, ThreeState.NO);
   }
 
   /**
    * @param project current project
-   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust 
- *                field initializers (e.g. we usually cannot if context is a constructor) 
-   * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
+   * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust
+ *                field initializers (e.g. we usually cannot if context is a constructor)
    * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
    */
-  public DataFlowRunner(@NotNull Project project, 
+  public DataFlowRunner(@NotNull Project project,
                         @Nullable PsiElement context,
-                        boolean unknownMembersAreNullable,
-                        boolean ignoreAssertions) {
-    myValueFactory = new DfaValueFactory(project, context, unknownMembersAreNullable);
+                        @NotNull ThreeState ignoreAssertions) {
+    myValueFactory = new DfaValueFactory(project, context);
     myIgnoreAssertions = ignoreAssertions;
   }
 
@@ -89,6 +87,15 @@ public class DataFlowRunner {
    */
   public final void cancel() {
     myCancelled = true;
+  }
+
+  /**
+   * @return a complexity limit number that allows to trade-off between analysis quality and CPU time used.
+   * If bigger number is returned, more complex methods could be analyzed, analysis quality is better but may require more CPU time.
+   * By default, returns {@link #DEFAULT_MAX_STATES_PER_BRANCH}.
+   */
+  protected int getComplexityLimit() {
+    return DEFAULT_MAX_STATES_PER_BRANCH;
   }
 
   private @Nullable Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
@@ -106,7 +113,7 @@ public class DataFlowRunner {
         finally {
           myInlining = true;
         }
-        if (result == RunnerResult.OK) {
+        if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
           final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
           if (allowInlining || !closureStates.isEmpty()) {
             return closureStates;
@@ -223,7 +230,7 @@ public class DataFlowRunner {
         myStats.startMerge();
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
         myStats.endMerge();
-        if (states.size() > MAX_STATES_PER_BRANCH) {
+        if (states.size() > getComplexityLimit()) {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
         }
@@ -248,7 +255,7 @@ public class DataFlowRunner {
             if (containsState(processed, instructionState)) {
               continue;
             }
-            if (processed.size() > MERGING_BACK_BRANCHES_THRESHOLD) {
+            if (processed.size() > getComplexityLimit() / 6) {
               myStats.startMerge();
               instructionState = mergeBackBranches(instructionState, processed);
               myStats.endMerge();
@@ -256,7 +263,7 @@ public class DataFlowRunner {
                 continue;
               }
             }
-            if (processed.size() > MAX_STATES_PER_BRANCH) {
+            if (processed.size() > getComplexityLimit()) {
               LOG.trace("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX;
             }
@@ -294,6 +301,10 @@ public class DataFlowRunner {
                 incomingStates.putValue(branching, state.getMemoryState().createCopy());
               }
             }
+            if (nextInstruction.getIndex() < instruction.getIndex() && 
+                (!(instruction instanceof GotoInstruction) || ((GotoInstruction)instruction).shouldWidenBackBranch())) {
+              state.getMemoryState().widen();
+            }
             queue.offer(state);
           }
         }
@@ -329,11 +340,11 @@ public class DataFlowRunner {
   }
 
   protected void beforeInstruction(Instruction instruction) {
-    
+
   }
 
   protected void afterInstruction(Instruction instruction) {
-    
+
   }
 
   private @NotNull DfaInstructionState mergeBackBranches(DfaInstructionState instructionState, Collection<DfaMemoryState> processed) {
@@ -402,6 +413,9 @@ public class DataFlowRunner {
         }
       }
     }
+    if (e instanceof RuntimeExceptionWithAttachments) {
+      attachments = ArrayUtil.mergeArrays(attachments, ((RuntimeExceptionWithAttachments)e).getAttachments());
+    }
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
@@ -431,11 +445,10 @@ public class DataFlowRunner {
                                    @NotNull Collection<? extends DfaMemoryState> initialStates,
                                    @NotNull ControlFlow flow) {
     List<DfaVariableValue> vars = flow.accessedVariables().collect(Collectors.toList());
-    DfaVariableValue assertionStatus =
-      ContainerUtil.find(vars, v -> v.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor);
-    if (assertionStatus != null) {
+    DfaVariableValue assertionStatus = myValueFactory.getAssertionDisabled();
+    if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
       for (DfaMemoryState state : initialStates) {
-        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions)));
+        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean())));
       }
     }
     if (psiBlock instanceof PsiClass) {
@@ -520,7 +533,7 @@ public class DataFlowRunner {
     })) return;
 
     // now remove obsolete memory states
-    final Set<BranchingInstruction> mayRemoveStatesFor = new THashSet<>();
+    final Set<BranchingInstruction> mayRemoveStatesFor = new HashSet<>();
     for (Instruction instruction : myInstructions) {
       if (inSameLoop(prevInstruction, instruction, loopNumber) && instruction instanceof BranchingInstruction) {
         mayRemoveStatesFor.add((BranchingInstruction)instruction);
@@ -626,7 +639,7 @@ public class DataFlowRunner {
     private long myMergeStart, myFlowTime, myLVATime, myMergeTime, myProcessTime;
 
     TimeStats() {
-      this(ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isEAP());
+      this(ApplicationManager.getApplication().isInternal());
     }
 
     public TimeStats(boolean record) {

@@ -3,8 +3,6 @@ These instructions will help you build IntelliJ IDEA Community Edition from sour
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
 * `<IDEA_HOME>` is the root directory for the IntelliJ source code.
-* `<JDK_16_HOME>` is the root directory for the 1.6 JDK, which is optional.
-* `<JDK_18_HOME>` is the root directory for the 1.8 JDK.
 
 ## Getting IntelliJ IDEA Community Edition Source Code
 IntelliJ IDEA Community Edition source code is available from `github.com/JetBrains/intellij-community` by either cloning or
@@ -12,10 +10,7 @@ downloading a zip file (based on a branch) into `<IDEA_HOME>`. The default is th
 
 The master branch contains the source code which will be used to create the next major version of IntelliJ IDEA. The branch names
 and build numbers for older releases of IntelliJ IDEA can be found on the page of
-[Build Number Ranges](http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html).
-
-If you intend to make open-source contributions to the IntelliJ Platform,
-see [Contributing to the IntelliJ Project](http://www.jetbrains.org/display/IJOS/Contribute) for more information.
+[Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html).
 
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
 
@@ -29,7 +24,7 @@ run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Thes
 _**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
-Version 2018.2 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
+Version 2020.1 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
 for the IntelliJ Platform.
 
 ### Opening the IntelliJ Source Code for Build
@@ -40,19 +35,18 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
-1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
-   * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
-     for the **1.8** JDK.
-2. Also configure a JDK named "**IDEA jdk**" (case sensitive), pointing to `<JDK_16_HOME>`. If you don’t want to install JDK 1.6
-   then you may configure **IDEA jdk** to point to `<JDK_18_HOME>`. However, you must be careful to avoid using Java 8 APIs in IntelliJ IDEA Community Edition modules that use **IDEA jdk**. 
-   * If not already present, add the corresponding path for tools.jar to the Classpath for "**IDEA jdk**" JDK.
-3. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/working-with-projects.html#path-variables)
+1. Configure a JDK named "**corretto-11**", pointing to installation of JDK 11. It's recommended to use Amazon Corretto JDK, but other 
+   distributions based on OpenJDK should work as well. You may [download it directly](https://www.jetbrains.com/help/idea/sdk.html#jdk-from-ide) 
+   from Project Structure dialog.    
+2. If the _Maven Integration_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
-4. _**Speed Tip:**_ If you have enough RAM on your computer,
+3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option. Also, set the "User-local build process VM options" to `-Xmx2G`.
-   These changes will greatly reduce the compile time.
+   to enable the "Compile independent modules in parallel" option. Also, increase build process heap size:
+   * if you use IntelliJ IDEA 2020.3 or newer, set "User-local build process heap size" to 2048. 
+   * if you use IntelliJ IDEA 2020.2 or older, copy value from "Shared build process VM options" to "User-local build process VM options" and add `-Xmx2G` to it.
+    
+    These changes will greatly reduce compilation time.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
@@ -66,9 +60,8 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
   * Working dir: `<IDEA_HOME>/bin`
   * VM options: 
     * `-ea` 
-    * `-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader` 
     * `-Didea.config.path=../test-config`
     * `-Didea.system.path=../test-system`
  
-You can find other helpful information at [http://www.jetbrains.org](http://www.jetbrains.org).
-The [contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.
+You can find other helpful information at [https://www.jetbrains.com/opensource/idea](https://www.jetbrains.com/opensource/idea).
+The "Contribute Code" section of that site describes how you can contribute to IntelliJ IDEA.

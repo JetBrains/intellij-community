@@ -2,9 +2,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,9 +12,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftLazyValue;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,21 +23,18 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author cdr
- */
 public class PropertiesUtil {
   private static final Pattern LOCALE_PATTERN = Pattern.compile("(_[a-zA-Z]{2,8}(_[a-zA-Z]{2}|[0-9]{3})?(_[\\w\\-]+)?)\\.[^_]+$");
   public static final Set<Character> BASE_NAME_BORDER_CHAR = ContainerUtil.newHashSet('-', '_', '.');
   public static final Locale DEFAULT_LOCALE = new Locale("", "", "");
 
-  private static final SoftLazyValue<Set<String>> LOCALES_LANGUAGE_CODES = new SoftLazyValue<Set<String>>() {
+  private static final SoftLazyValue<Set<String>> LOCALES_LANGUAGE_CODES = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Set<String> compute() {
       final HashSet<String> locales =
         new HashSet<>(ContainerUtil.flatten(ContainerUtil.map(Locale.getAvailableLocales(),
-                                                                        (Function<Locale, List<String>>)locale -> {
+                                                              locale -> {
                                                                 final ArrayList<String> languages =
                                                                   ContainerUtil.newArrayList(locale.getLanguage());
                                                                 try {
@@ -88,7 +83,7 @@ public class PropertiesUtil {
 
   @NotNull
   static String getDefaultBaseName(@NotNull final PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<String>() {
+    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<String> compute() {
@@ -184,20 +179,6 @@ public class PropertiesUtil {
     return null;
   }
 
-  /**
-   * @deprecated use PropertiesUtil.findAllProperties(ResourceBundle resourceBundle, String key)
-   */
-  @NotNull
-  @Deprecated
-  public static List<IProperty> findAllProperties(Project project, @NotNull ResourceBundle resourceBundle, String key) {
-    List<IProperty> result = new SmartList<>();
-    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
-    for (PropertiesFile propertiesFile : propertiesFiles) {
-      result.addAll(propertiesFile.findPropertiesByKey(key));
-    }
-    return result;
-  }
-
   public static List<IProperty> findAllProperties(@NotNull ResourceBundle resourceBundle, String key) {
     List<IProperty> result = new SmartList<>();
     List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
@@ -226,15 +207,15 @@ public class PropertiesUtil {
   }
 
   @NotNull
-  public static String getPresentableLocale(@NotNull Locale locale) {
+  public static @Nls String getPresentableLocale(@NotNull Locale locale) {
     List<String> names = new ArrayList<>();
-    if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
+    if (locale.getDisplayLanguage() != null) {
       names.add(locale.getDisplayLanguage());
     }
-    if (!Comparing.strEqual(locale.getDisplayCountry(), null)) {
+    if (locale.getDisplayCountry() != null) {
       names.add(locale.getDisplayCountry());
     }
-    if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
+    if (locale.getDisplayVariant() != null) {
       names.add(locale.getDisplayVariant());
     }
     return names.isEmpty() ? "" : " (" + StringUtil.join(names, "/") + ")";

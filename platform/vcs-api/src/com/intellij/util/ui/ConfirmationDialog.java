@@ -4,6 +4,8 @@ package com.intellij.util.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.Checkbox;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -15,9 +17,9 @@ import javax.swing.*;
 
 public class ConfirmationDialog extends OptionsMessageDialog {
   private final VcsShowConfirmationOption myOption;
-  private String myDoNotShowAgainMessage;
-  private final String myOkActionName;
-  private final String myCancelActionName;
+  private @Checkbox String myDoNotShowAgainMessage;
+  private final @ActionText String myOkActionName;
+  private final @ActionText String myCancelActionName;
 
   public static boolean requestForConfirmation(@NotNull VcsShowConfirmationOption option,
                                                @NotNull Project project,
@@ -45,20 +47,29 @@ public class ConfirmationDialog extends OptionsMessageDialog {
     return dialog.showAndGet();
   }
 
-  public ConfirmationDialog(Project project, final String message, String title, final Icon icon, final VcsShowConfirmationOption option) {
+  public ConfirmationDialog(Project project,
+                            @DialogMessage String message,
+                            @DialogTitle String title,
+                            Icon icon,
+                            VcsShowConfirmationOption option) {
     this(project, message, title, icon, option, null, null);
   }
 
-  public ConfirmationDialog(Project project, @DialogMessage String message, @DialogTitle String title, final Icon icon, final VcsShowConfirmationOption option,
-                            @Nullable String okActionName, @Nullable String cancelActionName) {
+  public ConfirmationDialog(Project project,
+                            @DialogMessage String message,
+                            @DialogTitle String title,
+                            Icon icon,
+                            VcsShowConfirmationOption option,
+                            @Nullable @NlsContexts.Button String okActionName,
+                            @Nullable @NlsContexts.Button String cancelActionName) {
     super(project, message, title, icon);
     myOption = option;
     myOkActionName = okActionName != null ? okActionName : CommonBundle.getYesButtonText();
     myCancelActionName = cancelActionName != null ? cancelActionName : CommonBundle.getNoButtonText();
     init();
   }
-  
-  public void setDoNotShowAgainMessage(final String doNotShowAgainMessage) {
+
+  public void setDoNotShowAgainMessage(@Checkbox String doNotShowAgainMessage) {
     myDoNotShowAgainMessage = doNotShowAgainMessage;
     myCheckBoxDoNotShowDialog.setText(doNotShowAgainMessage);
   }

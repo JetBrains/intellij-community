@@ -6,7 +6,6 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,15 +45,6 @@ public abstract class FileIndexFacade {
    * @return true if it's a valid ancestor, false otherwise.
    */
   public abstract boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child);
-
-  /**
-   * @deprecated always returns true, just remove the calls
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public boolean shouldBeFound(@NotNull GlobalSearchScope scope, @NotNull VirtualFile virtualFile) {
-    return true;
-  }
 
   public abstract @NotNull ModificationTracker getRootModificationTracker();
 

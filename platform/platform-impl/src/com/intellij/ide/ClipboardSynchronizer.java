@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.Patches;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ReflectionUtil;
@@ -24,10 +24,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 /**
- * This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
+ * This class is used to workaround <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143">the problem</a> with getting clipboard contents.
  * Although this bug is marked as fixed actually Sun just set 10 seconds timeout for {@link Clipboard#getContents(Object)}
  * method which may cause unacceptably long UI freezes. So we worked around this as follows:
  * <ul>
@@ -38,7 +37,6 @@ import java.util.Set;
  */
 public final class ClipboardSynchronizer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("System Clipboard");
 
   private final ClipboardHandler myClipboardHandler;
 
@@ -50,11 +48,14 @@ public final class ClipboardSynchronizer implements Disposable {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && ApplicationManager.getApplication().isUnitTestMode()) {
       myClipboardHandler = new HeadlessClipboardHandler();
     }
-    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isMac) {
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isMac) {
       myClipboardHandler = new MacClipboardHandler();
     }
-    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfo.isXWindow) {
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isXWindow) {
       myClipboardHandler = new XWinClipboardHandler();
+    }
+    else if (SystemInfoRt.isWindows) {
+      myClipboardHandler = new WindowsClipboardHandler();
     }
     else {
       myClipboardHandler = new ClipboardHandler();
@@ -98,15 +99,15 @@ public final class ClipboardSynchronizer implements Disposable {
     myClipboardHandler.resetContent();
   }
 
-  @Nullable
-  private static Clipboard getClipboard() {
+  private static @Nullable Clipboard getClipboard() {
     try {
       return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
     catch (IllegalStateException e) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         LOG.debug("Clipboard is busy");
-      } else {
+      }
+      else {
         LOG.warn(e);
       }
       return null;
@@ -141,25 +142,38 @@ public final class ClipboardSynchronizer implements Disposable {
       return clipboard == null ? null : clipboard.getData(dataFlavor);
     }
 
-    public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
+    public void setContent(@NotNull Transferable content, @NotNull final ClipboardOwner owner) {
       Clipboard clipboard = getClipboard();
-      if (clipboard !=null) {
+      if (clipboard == null) {
+        return;
+      }
+
+      IllegalStateException lastException = null;
+      for (int i = 0; i < getRetries(); i++) {
         try {
           clipboard.setContents(content, owner);
+          return;
         }
         catch (IllegalStateException e) {
-          LOG.debug(e);
-          NOTIFICATION_GROUP.createNotification(UIBundle.message("clipboard.is.unavailable"), MessageType.WARNING).notify(null);
+          lastException = e;
         }
       }
+      LOG.debug(lastException);
+      NotificationGroupManager.getInstance().getNotificationGroup("System Clipboard")
+        .createNotification(UIBundle.message("clipboard.is.unavailable"), MessageType.WARNING)
+        .notify(null);
     }
 
     public void resetContent() {
     }
+
+    protected int getRetries() {
+      return 1;
+    }
   }
 
-  private static class MacClipboardHandler extends ClipboardHandler {
-    private Pair<String,Transferable> myFullTransferable;
+  private static final class MacClipboardHandler extends ClipboardHandler {
+    private Pair<String, Transferable> myFullTransferable;
 
     @Nullable
     private Transferable doGetContents() {
@@ -211,14 +225,15 @@ public final class ClipboardSynchronizer implements Disposable {
         catch (UnsupportedFlavorException | IOException e) {
           LOG.info(e);
         }
-      } else {
+      }
+      else {
         myFullTransferable = null;
         super.setContent(content, owner);
       }
     }
   }
 
-  private static class XWinClipboardHandler extends ClipboardHandler {
+  private static final class XWinClipboardHandler extends ClipboardHandler {
     private static final String DATA_TRANSFER_TIMEOUT_PROPERTY = "sun.awt.datatransfer.timeout";
     private static final String LONG_TIMEOUT = "2000";
     private static final String SHORT_TIMEOUT = "100";
@@ -301,8 +316,7 @@ public final class ClipboardSynchronizer implements Disposable {
      * @return null if is unable to check; empty list if clipboard owner doesn't respond timely;
      *         collection of available data flavors otherwise.
      */
-    @Nullable
-    private static Collection<DataFlavor> checkContentsQuick() {
+    private static @Nullable Collection<DataFlavor> checkContentsQuick() {
       final Clipboard clipboard = getClipboard();
       if (clipboard == null) return null;
       final Class<? extends Clipboard> aClass = clipboard.getClass();
@@ -319,8 +333,7 @@ public final class ClipboardSynchronizer implements Disposable {
         if (formats == null || formats.length == 0) {
           return Collections.emptySet();
         }
-        @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
-        return set;
+        return DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
       }
       catch (IllegalAccessException | IllegalArgumentException ignore) { }
       catch (InvocationTargetException e) {
@@ -337,7 +350,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }
   }
 
-  private static class HeadlessClipboardHandler extends ClipboardHandler {
+  private static final class HeadlessClipboardHandler extends ClipboardHandler {
     private volatile Transferable myContent = null;
 
     @Override
@@ -352,8 +365,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    public @NotNull Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       return myContent.getTransferData(dataFlavor);
     }
 
@@ -384,5 +396,19 @@ public final class ClipboardSynchronizer implements Disposable {
       }
     }
     return false;
+  }
+
+  private static final class WindowsClipboardHandler extends ClipboardHandler {
+    @Override
+    protected int getRetries() {
+      // Clipboard#setContents throws IllegalStateException if the clipboard is currently unavailable.
+      // On Windows, it uses Win32 OpenClipboard which may fail according to its documentation:
+      //   "OpenClipboard fails if another window has the clipboard open."
+      // Other applications implement retry logic when calling OpenClipboard. Let's do the same.
+      //
+      // According to my simple local stress testing, Clipboard#setContents hasn't failed more than 2 times in a row.
+      // Probably, it needs to be adjusted in future.
+      return 5;
+    }
   }
 }

@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
@@ -14,6 +18,8 @@ import static java.util.Locale.ENGLISH;
  */
 public final class RelativeFont implements PropertyChangeListener {
   private static final float MULTIPLIER = 1.09f; // based on the default sizes: 10, 11, 12, 13, 14
+  private static final float MINIMUM_FONT_SIZE = 1.0f;
+
   public static final RelativeFont NORMAL = new RelativeFont(null, null, null);
   public static final RelativeFont PLAIN = NORMAL.style(Font.PLAIN);
   public static final RelativeFont BOLD = NORMAL.style(Font.BOLD);
@@ -28,11 +34,17 @@ public final class RelativeFont implements PropertyChangeListener {
   private final String myFamily;
   private final Integer myStyle;
   private final Float mySize;
+  private final float myMinimumSize;
 
-  private RelativeFont(String family, Integer style, Float size) {
+  private RelativeFont(String family, Integer style, Float size, Float minimumSize) {
     myFamily = family;
     myStyle = style;
     mySize = size;
+    myMinimumSize = minimumSize;
+  }
+
+  private RelativeFont(String family, Integer style, Float size) {
+    this(family, style, size, MINIMUM_FONT_SIZE);
   }
 
   /**
@@ -65,6 +77,27 @@ public final class RelativeFont implements PropertyChangeListener {
   public RelativeFont small() {
     float size = mySize == null ? 1f : mySize;
     return new RelativeFont(myFamily, myStyle, size / MULTIPLIER);
+  }
+
+  /**
+   * @return a new instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * over the current instance.
+   */
+  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset) {
+    return fromResource(propertyName, defaultOffset, MINIMUM_FONT_SIZE);
+  }
+
+  /**
+   * @return a new instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
+   * over the current instance. Use custom minimum font size limit.
+   */
+  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset, float minSize) {
+    int offset = JBUI.getInt(propertyName, defaultOffset);
+    if (offset == 0) return this;
+    else {
+      float multiplier = (float)Math.pow(MULTIPLIER, offset);
+      return new RelativeFont(myFamily, myStyle, mySize != null ? mySize * multiplier : multiplier, minSize);
+    }
   }
 
   /**
@@ -117,11 +150,11 @@ public final class RelativeFont implements PropertyChangeListener {
       }
       else if (null != myStyle && myStyle != font.getStyle()) {
         return mySize != null
-               ? font.deriveFont(myStyle, mySize * font.getSize2D())
+               ? font.deriveFont(myStyle, Math.max(mySize * font.getSize2D(), myMinimumSize))
                : font.deriveFont(myStyle);
       }
       if (mySize != null) {
-        return font.deriveFont(mySize * font.getSize2D());
+        return font.deriveFont(Math.max(mySize * font.getSize2D(), myMinimumSize));
       }
     }
     return font;

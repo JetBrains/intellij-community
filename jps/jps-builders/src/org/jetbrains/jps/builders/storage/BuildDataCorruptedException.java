@@ -30,12 +30,6 @@ public class BuildDataCorruptedException extends RuntimeException {
     super(message);
   }
 
-  /** @deprecated use {@link #BuildDataCorruptedException(IOException)} instead*/
-  @Deprecated
-  public BuildDataCorruptedException(Exception cause) {
-    super(cause);
-  }
-
   @Override
   public synchronized IOException getCause() {
     return (IOException)super.getCause();

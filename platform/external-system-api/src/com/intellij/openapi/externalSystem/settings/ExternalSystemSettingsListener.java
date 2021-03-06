@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -54,6 +55,7 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
    * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath) {}
 
   /**

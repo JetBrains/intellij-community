@@ -52,7 +52,7 @@ public class ConditionSignalInspection extends BaseInspection {
 
   private static class ConditionSignalFix extends AbstractReplaceWithAnotherMethodCallFix {
     @Override
-    protected String getMethodName() {
+    protected @NonNls String getMethodName() {
       return "signalAll";
     }
   }

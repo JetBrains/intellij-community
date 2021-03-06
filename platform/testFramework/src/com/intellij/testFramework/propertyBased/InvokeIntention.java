@@ -68,6 +68,8 @@ public class InvokeIntention extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
     int offset = generateDocOffset(env, null);
     env.logMessage("Go to " + MadTestingUtil.getPositionDescription(offset, getDocument()));
 
@@ -91,8 +93,6 @@ public class InvokeIntention extends ActionOnFile {
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     FileViewProvider viewProvider = getFile().getViewProvider();
     boolean containsErrorElements = MadTestingUtil.containsErrorElements(viewProvider);
 
@@ -109,7 +109,7 @@ public class InvokeIntention extends ActionOnFile {
     }
     IntentionAction intention = chooseIntention(env, intentions);
     if (intention == null) return;
-    if (myPolicy.shouldCheckPreview(intention)) {
+    if (myPolicy.shouldCheckPreview(intention) && intention.getElementToMakeWritable(file) == file) {
       checkPreview(intention, editor);
     }
 

@@ -69,8 +69,9 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   @NotNull
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(@NotNull final Class<T> ancestorClass, final boolean strict) {
     final T first = strict || !ancestorClass.isInstance(myPsiElement) ? findNext(myPsiElement, ancestorClass) : (T)myPsiElement;
-    return new Iterator<Location<T>>() {
+    return new Iterator<>() {
       private T myCurrent = first;
+
       @Override
       public boolean hasNext() {
         return myCurrent != null;

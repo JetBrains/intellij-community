@@ -29,10 +29,14 @@ class JavaKeywordsTest {
     assertFalse(JavaLexer.isSoftKeyword("char", LanguageLevel.JDK_1_9))
     assertFalse(JavaLexer.isKeyword("module", LanguageLevel.JDK_1_9))
     assertTrue(JavaLexer.isSoftKeyword("module", LanguageLevel.JDK_1_9))
+    assertFalse(JavaLexer.isKeyword("sealed", LanguageLevel.JDK_15_PREVIEW))
+    assertTrue(JavaLexer.isSoftKeyword("sealed", LanguageLevel.JDK_15_PREVIEW))
+    assertFalse(JavaLexer.isKeyword("permits", LanguageLevel.JDK_15_PREVIEW))
+    assertTrue(JavaLexer.isSoftKeyword("permits", LanguageLevel.JDK_15_PREVIEW))
   }
 
   @Test fun sequences() {
-    assertTrue(JavaLexer.isSoftKeyword(ByteArrayCharSequence.convertToBytesIfPossible("module"), LanguageLevel.JDK_1_9))
+    assertTrue(JavaLexer.isSoftKeyword(ByteArrayCharSequence("module".toByteArray()), LanguageLevel.JDK_1_9))
     assertTrue(JavaLexer.isSoftKeyword(CharArrayCharSequence("[module]".toCharArray(), 1, 7), LanguageLevel.JDK_1_9))
   }
 

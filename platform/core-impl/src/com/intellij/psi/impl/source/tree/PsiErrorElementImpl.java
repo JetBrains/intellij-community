@@ -18,14 +18,15 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiErrorElementImpl extends CompositePsiElement implements PsiErrorElement{
-  private final String myErrorDescription;
+  private final @NlsContexts.DetailedDescription String myErrorDescription;
 
-  public PsiErrorElementImpl(@NotNull String errorDescription) {
+  public PsiErrorElementImpl(@NotNull @NlsContexts.DetailedDescription String errorDescription) {
     super(TokenType.ERROR_ELEMENT);
     myErrorDescription = errorDescription;
   }

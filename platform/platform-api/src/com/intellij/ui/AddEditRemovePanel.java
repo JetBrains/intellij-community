@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
@@ -41,13 +43,13 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   private final TableModel myModel;
   private List<T> myData;
   private AbstractTableModel myTableModel;
-  private final String myLabel;
+  private final @NlsContexts.Label String myLabel;
 
   public AddEditRemovePanel(TableModel<T> model, List<T> data) {
     this(model, data, null);
   }
 
-  public AddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable String label) {
+  public AddEditRemovePanel(TableModel<T> model, List<T> data, @Nullable @NlsContexts.Label String label) {
     myModel = model;
     myData = data;
     myLabel = label;
@@ -183,7 +185,6 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable.setModel(myTableModel);
     myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    myTable.setStriped(true);
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
@@ -287,7 +288,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     public abstract int getColumnCount();
     @Nullable
-    public abstract String getColumnName(int columnIndex);
+    public abstract @ColumnName String getColumnName(int columnIndex);
     public abstract Object getField(T o, int columnIndex);
 
     public Class getColumnClass(int columnIndex) { return String.class; }

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,20 +27,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
-/**
- * @author Dmitry Avdeev
- */
 public class UrlClassLoaderTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
   public void testBootstrapResources() {
-    //noinspection SpellCheckingInspection
-    String name = JavaVersion.current().feature > 8 ? "META-INF/services/java.nio.file.spi.FileSystemProvider"
-                                                    : "com/sun/xml/internal/messaging/saaj/soap/LocalStrings.properties";
+    String name = "META-INF/services/java.nio.file.spi.FileSystemProvider";
     assertNotNull(ClassLoader.getSystemResourceAsStream(name));
     assertNull(UrlClassLoader.build().get().getResourceAsStream(name));
     assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
@@ -49,9 +47,9 @@ public class UrlClassLoaderTest {
   public void testNonCanonicalPaths() throws IOException {
     tempDir.newFile("dir/a.txt");
 
-    URL url = tempDir.getRoot().toURI().toURL();
-    UrlClassLoader customCl = UrlClassLoader.build().urls(url).get();
-    try (URLClassLoader standardCl = new URLClassLoader(new URL[]{url})) {
+    Path path = tempDir.getRoot().toPath();
+    UrlClassLoader customCl = UrlClassLoader.build().files(List.of(path)).get();
+    try (URLClassLoader standardCl = new URLClassLoader(new URL[]{path.toUri().toURL()})) {
       String relativePathToFile = "dir/a.txt";
       assertNotNull(customCl.findResource(relativePathToFile));
       assertNotNull(standardCl.findResource(relativePathToFile));
@@ -61,29 +59,26 @@ public class UrlClassLoaderTest {
       assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
-      assertNotNull(customCl.findResource(absolutePathToFile));  // non-standard CL behavior
       assertNull(standardCl.findResource(absolutePathToFile));
-
-      String absoluteNonCanonicalPathToFile = "/dir/a.txt/../a.txt";
-      assertNotNull(customCl.findResource(absoluteNonCanonicalPathToFile));  // non-standard CL behavior
-      assertNull(standardCl.findResource(absoluteNonCanonicalPathToFile));
     }
   }
 
   @Test
   public void testConcurrentResourceLoading() throws Exception {
     List<String> resourceNames = new ArrayList<>();
-    List<URL> urls = new ArrayList<>();
+    List<Path> files = new ArrayList<>();
 
-    File[] libs = Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles());
-    for (File file : libs) {
+    for (File file : Objects.requireNonNull(new File(PathManager.getHomePathFor(UrlClassLoader.class) + "/lib").listFiles())) {
       if (file.getName().endsWith(".jar")) {
-        urls.add(file.toURI().toURL());
+        files.add(file.toPath());
 
         try (ZipFile zipFile = new ZipFile(file)) {
           Enumeration<? extends ZipEntry> entries = zipFile.entries();
           while (entries.hasMoreElements()) {
-            resourceNames.add(entries.nextElement().getName());
+            ZipEntry entry = entries.nextElement();
+            if (!entry.isDirectory()) {
+              resourceNames.add(entry.getName());
+            }
           }
         }
       }
@@ -93,13 +88,11 @@ public class UrlClassLoaderTest {
     int threadCount = 3;
     int resourceCount = 20;
 
-    ExecutorService executor = Executors.newFixedThreadPool(threadCount, ConcurrencyUtil.newNamedThreadFactory("concurrent loading"));
+    ExecutorService executor = Executors.newWorkStealingPool(threadCount);
     try {
       Random random = new Random();
-      UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
       for (int attempt = 0; attempt < attemptCount; attempt++) {
-        // fails also without cache pool (but with cache enabled), but takes much longer
-        UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).allowLock(true).useCache(pool, (url) -> true).get();
+        PathClassLoader loader = new PathClassLoader(UrlClassLoader.build().files(files).parent(null));
         List<String> namesToLoad = new ArrayList<>();
         for (int j = 0; j < resourceCount; j++) {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
@@ -110,11 +103,10 @@ public class UrlClassLoaderTest {
           futures.add(executor.submit(() -> {
             for (String name : namesToLoad) {
               try {
-                assertNotNull(findResource(loader, name, random.nextBoolean()));
+                assertThat(findResource(loader, name, random.nextBoolean())).describedAs("cannot find " + name).isNotNull();
               }
-              catch (Throwable e) {
-                System.err.println("Failed loading " + name);
-                throw new RuntimeException(e);
+              catch (IOException e) {
+                ExceptionUtil.rethrow(e);
               }
             }
           }));
@@ -134,18 +126,18 @@ public class UrlClassLoaderTest {
   @Test
   public void testInvalidJarsInClassPath() throws IOException {
     String entryName = "test_res_dir/test_res.txt";
-    File theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-");
-    File theBad = tempDir.newFile("2_broken.jar", new byte[1024]);
+    Path theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-").toPath();
+    Path theBad = tempDir.newFile("2_broken.jar", new byte[1024]).toPath();
 
-    UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).get();
-    assertNotNull(findResource(flat, entryName, false));
+    UrlClassLoader flat = UrlClassLoader.build().files(List.of(theBad, theGood)).get();
+    assertThat(findResource(flat, entryName, false)).isNotNull();
 
     String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
-                     Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
-    File theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
+                     Attributes.Name.CLASS_PATH + ": " + theBad.toUri().toURL() + " " + theGood.toUri().toURL() + "\n\n";
+    Path theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content).toPath();
 
-    UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).get();
-    assertNotNull(findResource(recursive, entryName, false));
+    UrlClassLoader recursive = UrlClassLoader.build().files(List.of(theUgly)).get();
+    assertThat(recursive.findResource(entryName)).isNotNull();
   }
 
   @Test
@@ -153,17 +145,15 @@ public class UrlClassLoaderTest {
     String resourceDirName = "test_res_dir";
     String resourceDirName2 = "test_res_dir2";
     File theGood = createTestJar(tempDir.newFile("1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
-    UrlClassLoader flat = UrlClassLoader.build().urls(theGood.toURI().toURL()).get();
+    UrlClassLoader flat = UrlClassLoader.build().files(Collections.singletonList(theGood.toPath())).get();
 
     String resourceDirNameWithSlash = resourceDirName + "/";
     String resourceDirNameWithSlash_ = "/" + resourceDirNameWithSlash;
     String resourceDirNameWithSlash2 = resourceDirName2 + "/";
     String resourceDirNameWithSlash2_ = "/" + resourceDirNameWithSlash2;
 
-    assertNull(findResource(flat, resourceDirNameWithSlash, false));
-    assertNull(findResource(flat, resourceDirNameWithSlash_, false));
-    assertNotNull(findResource(flat, resourceDirNameWithSlash2, false));
-    assertNotNull(findResource(flat, resourceDirNameWithSlash2_, false)); // non-standard CL behavior
+    assertThat(findResource(flat, resourceDirNameWithSlash, false)).isNull();
+    assertThat(findResource(flat, resourceDirNameWithSlash2, false)).isNotNull();
 
     try (URLClassLoader recursive2 = new URLClassLoader(new URL[]{theGood.toURI().toURL()})) {
       assertNotNull(recursive2.findResource(resourceDirNameWithSlash2));
@@ -173,16 +163,11 @@ public class UrlClassLoaderTest {
     }
   }
 
-  private static URL findResource(UrlClassLoader loader, String name, boolean findAll) {
+  private static URL findResource(UrlClassLoader loader, String name, boolean findAll) throws IOException {
     if (findAll) {
-      try {
-        Enumeration<URL> resources = loader.getResources(name);
-        assertTrue(resources.hasMoreElements());
-        return resources.nextElement();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      Enumeration<URL> resources = loader.getResources(name);
+      assertThat(resources.hasMoreElements()).describedAs("No resources for " + name).isTrue();
+      return resources.nextElement();
     }
     else {
       return loader.findResource(name);
@@ -192,24 +177,22 @@ public class UrlClassLoaderTest {
   @Test
   public void testFindDirWhenUsingCache() throws IOException {
     int counter = 1;
-    for (String dirName : new String[]{"dir", "dir/", "dir.class", "dir.class/"}) {
+    for (String dirName : new String[]{"dir", "dir.class", "dir.class"}) {
       for (String resourceName : new String[]{"a.class", "a.txt"}) {
-        File root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++));
-        File subDir = createTestDir(root, dirName);
-        createTestFile(subDir, resourceName);
+        Path root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++)).toPath();
+        Path subDir = createTestDir(root.toFile(), dirName).toPath();
+        createTestFile(subDir.toFile(), resourceName);
 
-        URL url = root.toURI().toURL();
-
-        try (URLClassLoader standardCl = new URLClassLoader(new URL[]{url})) {
+        try (URLClassLoader standardCl = new URLClassLoader(new URL[]{root.toUri().toURL()})) {
           Enumeration<URL> resources = standardCl.findResources(dirName);
-          assertTrue(resources.hasMoreElements());
+          assertThat(resources.hasMoreElements()).isTrue();
           URL expectedResourceUrl = resources.nextElement();
 
-          withCustomCachedClassloader(url, (customCl) -> {
-            assertNull(customCl.findResource("SomeNonExistentResource.resource"));
+          withCustomCachedClassloader(root, (customCl) -> {
+            assertThat(customCl.findResource("SomeNonExistentResource.resource")).isNull();
             checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl);
           });
-          withCustomCachedClassloader(url, (customCl) -> checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl));
+          withCustomCachedClassloader(root, (customCl) -> checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl));
         }
       }
     }
@@ -217,23 +200,23 @@ public class UrlClassLoaderTest {
 
   private static void checkResourceUrlIsTheSame(UrlClassLoader customCl, String resourceName, URL expectedResourceUrl) throws IOException {
     Enumeration<URL> customClResources = customCl.findResources(resourceName);
-    assertTrue(customClResources.hasMoreElements());
-    assertEquals(expectedResourceUrl, customClResources.nextElement());
+    assertThat(customClResources.hasMoreElements()).isTrue();
+    assertThat(StringUtil.trimEnd(customClResources.nextElement().toExternalForm(), "/")).isEqualTo(StringUtil.trimEnd(expectedResourceUrl.toExternalForm(), "/"));
   }
 
-  private static void withCustomCachedClassloader(URL url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
-    testAction.consume(UrlClassLoader.build().useCache().urls(url).get());
+  private static void withCustomCachedClassloader(Path url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
+    testAction.consume(UrlClassLoader.build().useCache().files(List.of(url)).get());
   }
 
   @Test
-  public void testUncInClasspath() throws IOException {
+  public void testUncInClasspath() {
     assumeWindows();
     Path uncRootPath = Paths.get(toLocalUncPath(tempDir.getRoot().getPath()));
     assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
 
     String entryName = "test_res_dir/test_res.txt";
     File jar = createTestJar(tempDir.newFile("test.jar"), entryName, "-");
-    UrlClassLoader cl = UrlClassLoader.build().urls(uncRootPath.resolve(jar.getName()).toUri().toURL()).get();
+    UrlClassLoader cl = UrlClassLoader.build().files(Collections.singletonList(uncRootPath.resolve(jar.getName()))).get();
     assertNotNull(cl.findResource(entryName));
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
@@ -45,6 +46,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
   private boolean myDumb;
+  private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
 
   @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project) {
@@ -63,25 +65,23 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   @Override
-  public boolean suitableForFile(@NotNull final PsiFile file) {
+  public boolean suitableForFile(@NotNull PsiFile file) {
     return true;
   }
 
   @Override
-  public boolean analyze(@NotNull final PsiFile file,
-                         final boolean updateWholeFile,
-                         @NotNull final HighlightInfoHolder holder,
-                         @NotNull final Runnable action) {
+  public boolean analyze(@NotNull PsiFile file,
+                         boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable action) {
     myDumb = myDumbService.isDumb();
     myHolder = holder;
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("DefaultHighlightVisitor.analyze("+file.getName()+")");
-    }
 
     myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession(), myBatchMode) {
       @Override
       void queueToUpdateIncrementally() {
         if (!isEmpty()) {
+          myAnnotatorStatisticsCollector.reportAnnotationProduced(myCurrentAnnotator, get(0));
           //noinspection ForLoopReplaceableByForEach
           for (int i = 0; i < size(); i++) {
             Annotation annotation = get(i);
@@ -100,6 +100,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       myAnnotators.clear();
       myHolder = null;
       myAnnotationHolder = null;
+      myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, holder.getAnnotationSession(), file);
     }
     return true;
   }
@@ -131,6 +132,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
       for (Annotator annotator : annotators) {
         if (!myDumb || DumbService.isDumbAware(annotator)) {
           ProgressManager.checkCanceled();
+          holder.myCurrentAnnotator = annotator;
           annotator.annotate(element, holder);
           // assume that annotator is done messing with just created annotations after its annotate() method completed
           // and we can start applying them incrementally at last
@@ -193,7 +195,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   @NotNull
-  private static List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
+  private List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
     List<Annotator> result = new ArrayList<>(templates.size());
     for (Annotator template : templates) {
       Annotator annotator;
@@ -205,12 +207,13 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         continue;
       }
       result.add(annotator);
+      myAnnotatorStatisticsCollector.reportNewAnnotatorCreated(annotator);
     }
     return result;
   }
 
   @NotNull
-  private static List<Annotator> createAnnotators(@NotNull Language language) {
+  private List<Annotator> createAnnotators(@NotNull Language language) {
     return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
   }
 }

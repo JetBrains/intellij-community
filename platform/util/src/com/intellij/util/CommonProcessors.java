@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.FastUtilHashingStrategies;
+import com.intellij.util.containers.HashingStrategy;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +14,8 @@ import java.util.Set;
 
 /**
  * Common {@link Processor} collect/find implementations.
- * .
- * @author max
  */
-public class CommonProcessors {
+public final class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {
     private final Collection<T> myCollection;
 
@@ -99,12 +83,13 @@ public class CommonProcessors {
     private final Processor<? super T> myDelegate;
 
     public UniqueProcessor(@NotNull Processor<? super T> delegate) {
-      this(delegate, ContainerUtil.canonicalStrategy());
+      myDelegate = delegate;
+      processed = new HashSet<>();
     }
 
-    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
+    public UniqueProcessor(@NotNull Processor<? super T> delegate, @NotNull HashingStrategy<? super @NotNull T> strategy) {
       myDelegate = delegate;
-      processed = new THashSet<>(strategy);
+      processed = new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.adaptAsNotNull(strategy));
     }
 
     @Override
@@ -174,7 +159,7 @@ public class CommonProcessors {
       return true;
     }
   }
-  
+
   /**
    * @return processor processing all elements.
    * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning {@code false} value.
@@ -186,7 +171,7 @@ public class CommonProcessors {
       return true;
     };
   }
-  
+
   private static final Processor<Object> FALSE = __ -> false;
   private static final Processor<Object> TRUE = __ -> true;
 

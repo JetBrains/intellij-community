@@ -1,9 +1,21 @@
 <html>
 <body>
-Reports local variable of wrapper type though all usages allowed to be primitive and count of unnecessary boxing/unboxing
-  operations reduces
+Reports local variable of wrapper type which has most of its usages primitive.
 <!-- tooltip end -->
-<p>In some cases boxing can be source of significant performance penalty, especially in loops.</p>
+<p>In some cases, boxing can be source of significant performance penalty, especially in loops.</p>
+<p>Example:</p>
+<pre>
+  public void example() {
+    Long l = 12L;
+    needBox(l);
+    for (int i = 0; i < 10; i++) {
+      needPrimitive(l); // Loops usages considered as more often
+    }
+  }
+
+  void needPrimitive(long l) {}
+  void needBox(Long l) {}
+</pre>
 <p>
   <small>New in 2018.2</small>
 </p>

@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -18,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Function;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * Common interface of archive-based file systems (jar://, phar:// etc).
@@ -30,13 +34,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * (i.e.: file:///path/to/jar.jar => jar:///path/to/jar.jar!/),
    * or {@code null} if the file does not host this file system.
    */
-  @Nullable
-  public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
+  public @Nullable VirtualFile getRootByLocal(@NotNull VirtualFile file) {
     return isCorrectFileType(file) ? findFileByPath(getRootPathByLocal(file)) : null;
   }
 
-  @NotNull
-  public String getRootPathByLocal(@NotNull VirtualFile file) {
+  public @NotNull String getRootPathByLocal(@NotNull VirtualFile file) {
     return composeRootPath(file.getPath());
   }
 
@@ -45,8 +47,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * (i.e.: jar:///path/to/jar.jar!/resource.xml => jar:///path/to/jar.jar!/),
    * or {@code null} if the file does not belong to this file system.
    */
-  @Nullable
-  public VirtualFile getRootByEntry(@NotNull VirtualFile entry) {
+  public @Nullable VirtualFile getRootByEntry(@NotNull VirtualFile entry) {
     return entry.getFileSystem() == this ? VfsUtilCore.getRootFile(entry) : null;
   }
 
@@ -55,8 +56,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * (i.e.: jar:///path/to/jar.jar!/resource.xml => file:///path/to/jar.jar),
    * or {@code null} if the file does not belong to this file system.
    */
-  @Nullable
-  public VirtualFile getLocalByEntry(@NotNull VirtualFile entry) {
+  public @Nullable VirtualFile getLocalByEntry(@NotNull VirtualFile entry) {
     if (entry.getFileSystem() != this) return null;
 
     VirtualFile root = getRootByEntry(entry);
@@ -74,18 +74,15 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   /**
    * Strips any separator chars from a root (obtained via {@link VfsUtilCore#getRootFile} path to obtain a path to a local file.
    */
-  @NotNull
-  protected abstract String extractLocalPath(@NotNull String rootPath);
+  protected abstract @NotNull String extractLocalPath(@NotNull String rootPath);
 
   /**
    * A reverse to {@link #extractLocalPath(String)} - i.e. dresses a local file path to make it a suitable root path for this filesystem.
    * E.g. "/x/y.jar" -> "/x/y.jar!/"
    */
-  @NotNull
-  protected abstract String composeRootPath(@NotNull String localPath);
+  protected abstract @NotNull String composeRootPath(@NotNull String localPath);
 
-  @NotNull
-  protected abstract ArchiveHandler getHandler(@NotNull VirtualFile entryFile);
+  protected abstract @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile);
 
   // standard implementations
 
@@ -94,21 +91,18 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return LocalFileSystem.getInstance().getRank() + 1;
   }
 
-  @NotNull
   @Override
-  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
+  public @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
     throw new IOException(AnalysisBundle.message("jar.modification.not.supported.error", file.getUrl()));
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     throw new IOException(AnalysisBundle.message("jar.modification.not.supported.error", parent.getUrl()));
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     throw new IOException(AnalysisBundle.message("jar.modification.not.supported.error", parent.getUrl()));
   }
 
@@ -127,21 +121,25 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     throw new IOException(AnalysisBundle.message("jar.modification.not.supported.error", file.getUrl()));
   }
 
-  @NotNull
-  protected String getRelativePath(@NotNull VirtualFile file) {
+  protected @NotNull String getRelativePath(@NotNull VirtualFile file) {
     String relativePath = file.getPath().substring(VfsUtilCore.getRootFile(file).getPath().length());
     return StringUtil.trimLeading(relativePath, '/');
   }
 
-  @Nullable
+  private final Function<VirtualFile, FileAttributes> myAttrGetter =
+    ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> getHandler(file).getAttributes(getRelativePath(file)));
+
   @Override
-  public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return getHandler(file).getAttributes(getRelativePath(file));
+  public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
+    return myAttrGetter.apply(file);
   }
+
+  private final Function<VirtualFile, String[]> myChildrenGetter =
+    ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> getHandler(file).list(getRelativePath(file)));
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    return getHandler(file).list(getRelativePath(file));
+    return myChildrenGetter.apply(file);
   }
 
   @Override
@@ -190,14 +188,29 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return ArchiveHandler.DEFAULT_LENGTH;
   }
 
+  private final Function<VirtualFile, Pair<byte[], IOException>> myContentGetter =
+    ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> {
+      try {
+        return pair(getHandler(file).contentsToByteArray(getRelativePath(file)), null);
+      }
+      catch (IOException e) {
+        return pair(null, e);
+      }
+    });
+
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    return getHandler(file).contentsToByteArray(getRelativePath(file));
+    Pair<byte[], IOException> pair = myContentGetter.apply(file);
+    IOException exception = pair.second;
+    if (exception != null) {
+      exception.addSuppressed(new Throwable("Caller thread's stacktrace"));
+      throw exception;
+    }
+    return pair.first;
   }
 
-  @NotNull
   @Override
-  public InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
+  public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     return getHandler(file).getInputStream(getRelativePath(file));
   }
 
@@ -211,9 +224,8 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     throw new IOException(AnalysisBundle.message("jar.modification.not.supported.error", file.getUrl()));
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     throw new IOException(AnalysisBundle.message("jar.modification.not.supported.error", file.getUrl()));
   }
 
@@ -224,8 +236,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * (i.e.: "jar:///path/to/jar.jar!/" => file:///path/to/jar.jar),
    * or {@code null} if the local file is of incorrect type.
    */
-  @Nullable
-  public VirtualFile findLocalByRootPath(@NotNull String rootPath) {
+  public @Nullable VirtualFile findLocalByRootPath(@NotNull String rootPath) {
     String localPath = extractLocalPath(rootPath);
     VirtualFile local = StandardFileSystems.local().findFileByPath(localPath);
     return local != null && isCorrectFileType(local) ? local : null;

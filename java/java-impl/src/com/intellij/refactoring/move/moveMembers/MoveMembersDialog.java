@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -48,7 +49,6 @@ import java.util.Set;
 public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOptions {
   private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
 
-  private final Project myProject;
   private final PsiClass mySourceClass;
   private final String mySourceClassName;
   private final List<MemberInfo> myMemberInfos;
@@ -71,7 +71,6 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
                            Set<PsiMember> preselectMembers,
                            MoveCallback moveCallback) {
     super(project, true, true);
-    myProject = project;
     mySourceClass = sourceClass;
     myMoveCallback = moveCallback;
     setTitle(MoveMembersImpl.getRefactoringName());
@@ -258,7 +257,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   }
 
   @Nullable
-  private String validateInputData() {
+  private @NlsContexts.DialogMessage String validateInputData() {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final String fqName = getTargetClassName();
     if (fqName != null && fqName.isEmpty()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -18,7 +18,6 @@ import org.junit.runners.Parameterized.Parameters
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
@@ -92,9 +91,10 @@ abstract class ImageResourcesTestBase {
                         ignoreSkipTag: Boolean = false): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
+      val checker = MySanityChecker(Paths.get(PathManager.getHomePath()), ignoreSkipTag)
+      val config = IntellijIconClassGeneratorConfig()
       modules.forEach {
-        checker.check(it)
+        checker.check(it, config.getConfigForModule(it.name))
       }
       return createTestData(modules, checker.failures)
     }
@@ -106,7 +106,7 @@ abstract class ImageResourcesTestBase {
                                        ignoreSkipTag: Boolean = false): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MyOptimumSizeChecker(Paths.get(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
+      val checker = MyOptimumSizeChecker(Path.of(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
       modules.forEach {
         checker.checkOptimumSizes(it)
       }
@@ -117,7 +117,7 @@ abstract class ImageResourcesTestBase {
     fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), model.project.modules)
+      val checker = MyIconClassFileChecker(Path.of(PathManager.getHomePath()), model.project.modules)
       modules.forEach {
         checker.checkIconClasses(it)
       }
@@ -142,10 +142,12 @@ abstract class ImageResourcesTestBase {
       return model
     }
 
-    private fun collectModules(root: TestRoot,
-                               model: JpsModel): List<JpsModule> {
+    private fun collectModules(root: TestRoot, model: JpsModel): List<JpsModule> {
       val home = getHomePath(root)
-      return model.project.modules.filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
+      return model.project.modules
+        .filter {
+          !(root == TestRoot.ULTIMATE && isCommunityModule(home, it)) && !it.name.startsWith("fleet.") && it.name != "fleet"
+        }
     }
 
     private fun getHomePath(root: TestRoot): File {
@@ -165,13 +167,13 @@ abstract class ImageResourcesTestBase {
   }
 }
 
-private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
-  val failures = ArrayList<FailedTest>()
+private class MySanityChecker(projectHome: Path, ignoreSkipTag: Boolean) : ImageSanityCheckerBase(projectHome, ignoreSkipTag) {
+  val failures: MutableList<FailedTest> = ArrayList()
 
   override fun log(severity: Severity,
                    message: String,
                    module: JpsModule,
-                   images: Collection<ImagePaths>) {
+                   images: Collection<ImageInfo>) {
     if (severity == Severity.INFO) return
     images.forEach { image ->
       failures.add(FailedTest(module, message, image))
@@ -181,9 +183,12 @@ private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : Image
 
 private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean, val ignoreSkipTag: Boolean) {
   val failures = ContainerUtil.createConcurrentList<FailedTest>()
+
+  private val config = IntellijIconClassGeneratorConfig()
+
   fun checkOptimumSizes(module: JpsModule) {
-    val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag).collect(module)
-    allImages.parallelStream().filter { it.file != null }.forEach { image ->
+    val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag, moduleConfig = config.getConfigForModule(module.name)).collect(module)
+    allImages.parallelStream().filter { it.basicFile != null }.forEach { image ->
       image.files.parallelStream().forEach { file ->
         val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
@@ -194,12 +199,14 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
   }
 }
 
-private class MyIconClassFileChecker(val projectHome: File, val modules: List<JpsModule>) {
+private class MyIconClassFileChecker(private val projectHome: Path, private val modules: List<JpsModule>) {
   val failures = ArrayList<FailedTest>()
+
+  private val config = IntellijIconClassGeneratorConfig()
 
   fun checkIconClasses(module: JpsModule) {
     val generator = IconsClassGenerator(projectHome, modules, false)
-    generator.processModule(module)
+    generator.processModule(module, config.getConfigForModule(module.name))
 
     generator.getModifiedClasses().forEach { (module, file, details) ->
       failures.add(FailedTest(module, "icon class file should be regenerated (run \"Generate icon classes\" configuration)", file, details))
@@ -207,12 +214,12 @@ private class MyIconClassFileChecker(val projectHome: File, val modules: List<Jp
   }
 }
 
-class FailedTest internal constructor(val module: String, val message: String, val id: String, val details: String) {
-  internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
+class FailedTest internal constructor(val module: String, val message: String, val id: String, private val details: String) {
+  internal constructor(module: JpsModule, message: String, image: ImageInfo, file: File) :
     this(module.name, message, image.id, file.absolutePath)
 
-  internal constructor(module: JpsModule, message: String, image: ImagePaths) :
-    this(module.name, message, image.id, image.files.map { it.toAbsolutePath().toString() }.joinToString("\n"))
+  internal constructor(module: JpsModule, message: String, image: ImageInfo) :
+    this(module.name, message, image.id, image.files.joinToString("\n") { it.toAbsolutePath().toString() })
 
   internal constructor(module: JpsModule, message: String, file: Path, details: CharSequence) :
     this(module.name, message, file.fileName.toString(), "$file\n\n$details")

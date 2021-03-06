@@ -9,14 +9,14 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="none" title="DOM Generator Config"/>
+    <border type="none" title-resource-bundle="messages/DevKitBundle" title-key="dom.generator.dialog.label.form.title"/>
     <children>
       <component id="29b47" class="javax.swing.JLabel">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Namespace:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.namespace"/>
         </properties>
       </component>
       <component id="f5680" class="javax.swing.JLabel">
@@ -24,7 +24,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Super Class:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.super.class"/>
         </properties>
       </component>
       <component id="20f66" class="javax.swing.JTextField" binding="mySuperClass">
@@ -42,7 +42,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Package:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.package"/>
         </properties>
       </component>
       <component id="afd05" class="javax.swing.JTextField" binding="myPackage">
@@ -60,7 +60,7 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Output Dir:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.output.directory"/>
         </properties>
       </component>
       <component id="6a48b" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myOutputDir" custom-create="true">
@@ -84,7 +84,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Scheme File:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.scheme.file"/>
         </properties>
       </component>
       <component id="833b2" class="javax.swing.JTextField" binding="myNamespace">
@@ -100,7 +100,7 @@
           <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Skip schemes:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.skip.schemes"/>
         </properties>
       </component>
       <component id="54b59" class="javax.swing.JLabel">
@@ -108,7 +108,7 @@
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="@author:"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.javadoc.author"/>
         </properties>
       </component>
       <component id="b033e" class="javax.swing.JTextField" binding="myAuthor">
@@ -130,8 +130,8 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Use FQNs:"/>
-          <toolTipText value="Use FQNs in generated code to prevent name conflicts"/>
+          <text resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.use.fqn"/>
+          <toolTipText resource-bundle="messages/DevKitBundle" key="dom.generator.dialog.label.use.fqn.tooltip"/>
         </properties>
       </component>
       <scrollpane id="5904e" class="com.intellij.ui.components.JBScrollPane">
@@ -151,4 +151,8 @@
       </scrollpane>
     </children>
   </grid>
+  <inspectionSuppressions>
+    <suppress inspection="I18nForm" id="afd05"/>
+    <suppress inspection="I18nForm" id="20f66"/>
+  </inspectionSuppressions>
 </form>

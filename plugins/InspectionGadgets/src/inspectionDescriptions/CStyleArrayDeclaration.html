@@ -2,17 +2,21 @@
 <body>
 Reports array declarations made using C-style syntax,
 with the array indicator brackets positioned after the variable name or after the method parameter list.
-For example:
-<code><pre>
+<p>Example:</p>
+<pre>
   <b>public</b> String process(String value[])[] {
     return value;
   }
-</pre></code>
-Most code styles prefer Java-style array declarations, with the array indicator brackets attached to the type name.
+</pre>
+Most code styles prefer Java-style array declarations, with the array indicator brackets attached to the type name, like this:
+<pre>
+  <b>public</b> String[] process(String[] value) {
+    return value;
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to only report C-style array declaration of method return types.
 <p>
-
 </body>
 </html>

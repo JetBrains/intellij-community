@@ -40,7 +40,7 @@ public abstract class GraphTestCase {
         in.get(to).add(from);
       }
     }
-    return new Graph<String>() {
+    return new Graph<>() {
       @NotNull
       @Override
       public Collection<String> getNodes() {

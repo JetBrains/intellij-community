@@ -4,7 +4,6 @@ package com.intellij.internal.statistics
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
-import com.intellij.util.containers.toArray
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -69,7 +68,8 @@ object StatisticsTestEventValidator {
   }
 
   fun isValid(str : String) : Boolean {
-    val noTabsOrSpaces = str.indexOf(" ") == -1 && str.indexOf("\t") == -1 && str.indexOf("\"") == -1
-    return noTabsOrSpaces && str.matches("[\\p{ASCII}]*".toRegex())
+    val noTabsOrLineSeparators = str.indexOf("\r") == -1 && str.indexOf("\n") == -1 && str.indexOf("\t") == -1
+    val noQuotes = str.indexOf("\"") == -1
+    return noTabsOrLineSeparators && noQuotes && str.matches("[\\p{ASCII}]*".toRegex())
   }
 }

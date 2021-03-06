@@ -32,6 +32,7 @@ import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +59,13 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
     if (CloneUtils.isDirectlyCloneable(aClass)) {
       return new RemoveCloneableFix();
     }
-    final boolean hasCloneMethod = Arrays.stream(aClass.findMethodsByName("clone", false)).anyMatch(CloneUtils::isClone);
-    if (hasCloneMethod) {
+    final boolean hasOwnCloneMethod = Arrays.stream(aClass.findMethodsByName("clone", false)).anyMatch(CloneUtils::isClone);
+    if (hasOwnCloneMethod) {
+      return null;
+    }
+    final boolean hasParentFinalCloneMethod = Arrays.stream(aClass.findMethodsByName("clone", true))
+      .anyMatch(m -> CloneUtils.isClone(m) && m.hasModifierProperty(PsiModifier.FINAL));
+    if (hasParentFinalCloneMethod) {
       return null;
     }
     return new CreateExceptionCloneMethodFix();
@@ -114,7 +120,7 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = (PsiClass)element;
-      final StringBuilder methodText = new StringBuilder();
+      @NonNls final StringBuilder methodText = new StringBuilder();
       if (PsiUtil.isLanguageLevel5OrHigher(aClass) &&
           JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");

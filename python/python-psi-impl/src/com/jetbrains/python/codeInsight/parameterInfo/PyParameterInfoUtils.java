@@ -14,7 +14,6 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,14 +92,14 @@ public final class PyParameterInfoUtils {
         @Override
         public void visitSlashParameter(@NotNull PySlashParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? "/" : "/, ");
+          hintsList.add(last ? PySlashParameter.TEXT : (PySlashParameter.TEXT + ", "));
           currentParameterIndex[0]++;
         }
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           hintFlags.put(hintsList.size(), EnumSet.noneOf(ParameterFlag.class));
-          hintsList.add(last ? "*" : "*, ");
+          hintsList.add(last ? PySingleStarParameter.TEXT : (PySingleStarParameter.TEXT + ", "));
           currentParameterIndex[0]++;
         }
 

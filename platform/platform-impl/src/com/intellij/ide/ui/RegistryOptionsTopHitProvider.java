@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,8 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
         }
       }
       for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensions()) {
-        ExperimentalFeatureBooleanOptionDescriptor descriptor = new ExperimentalFeatureBooleanOptionDescriptor(feature.id, feature.id);
+        @NlsSafe String optionName = feature.id; // Probably need to add localized feature.name
+        ExperimentalFeatureBooleanOptionDescriptor descriptor = new ExperimentalFeatureBooleanOptionDescriptor(optionName, feature.id);
         if (Experiments.getInstance().isChanged(feature.id)) {
           result.add(0, descriptor);
         }

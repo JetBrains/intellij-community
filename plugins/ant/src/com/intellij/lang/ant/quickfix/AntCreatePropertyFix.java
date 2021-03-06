@@ -25,6 +25,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -35,20 +36,21 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 public class AntCreatePropertyFix implements LocalQuickFix {
-  private static final String PROPERTY = "property";
-  private static final String NAME_ATTR = "name";
-  private static final String VALUE_ATTR = "value";
-  private final String myCanonicalText;
+  private static final @NonNls String PROPERTY = "property";
+  private static final @NonNls String NAME_ATTR = "name";
+  private static final @NonNls String VALUE_ATTR = "value";
+  private final @NlsSafe String myCanonicalText;
   @Nullable
   private final PropertiesFile myPropFile;
 
-  public AntCreatePropertyFix(String canonicalText, @Nullable PropertiesFile propertiesFile) {
+  public AntCreatePropertyFix(@NlsSafe String canonicalText, @Nullable PropertiesFile propertiesFile) {
     myCanonicalText = canonicalText;
     myPropFile = propertiesFile;
   }

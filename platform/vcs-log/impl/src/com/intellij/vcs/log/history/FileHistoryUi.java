@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
@@ -23,12 +22,13 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ import java.util.Set;
 import static com.intellij.ui.JBColor.namedColor;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
-  @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history"; // NON-NLS
+  @NotNull @NonNls private static final String HELP_ID = "reference.versionControl.toolwindow.history";
   @NotNull private final FilePath myPath;
   @NotNull private final VirtualFile myRoot;
   @Nullable private final Hash myRevision;
@@ -50,7 +50,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
-  @NotNull private final Set<String> myHighlighterIds;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
   @NotNull private final History myHistory;
 
@@ -85,13 +84,11 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
     }
 
-    myHighlighterIds = myRevision == null
-                       ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
-                                                  CurrentBranchHighlighter.Factory.ID)
-                       : Collections.singleton(MyCommitsHighlighter.Factory.ID);
-    VcsLogUiUtil.installHighlighters(this, f -> isHighlighterEnabled(f.getId()));
+    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
+    } else {
+      getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(CurrentBranchHighlighter.Factory.class).createHighlighter(getLogData(), this));
     }
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
@@ -126,7 +123,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, boolean commitExists,
-                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+                                          @NotNull PairFunction<? super VisiblePack, ? super T, Integer> rowGetter) {
     if (!commitExists) {
       super.handleCommitNotFound(commitId, false, rowGetter);
       return;
@@ -137,7 +134,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                                          getCommitPresentation(commitId), myPath.getName());
       showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.and.show.all.branches.link"), () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
-        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false));
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create(), false, true));
       });
     }
     else {
@@ -146,10 +143,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       showWarningWithLink(text, VcsLogBundle.message("file.history.commit.not.found.view.in.log.link"), () -> {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
           if (commitId instanceof Hash) {
-            ui.jumpToCommit((Hash)commitId, myRoot);
+            ui.getVcsLog().jumpToCommit((Hash)commitId, myRoot);
           }
           else if (commitId instanceof String) {
-            ui.jumpToHash((String)commitId);
+            ui.getVcsLog().jumpToReference((String)commitId);
           }
         });
       });
@@ -164,11 +161,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public VcsLogFilterUi getFilterUi() {
     return myFilterUi;
-  }
-
-  @Override
-  public boolean isHighlighterEnabled(@NotNull String id) {
-    return myHighlighterIds.contains(id);
   }
 
   @Override
@@ -227,16 +219,16 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       else if (FileHistoryUiProperties.SHOW_ALL_BRANCHES.equals(property)) {
         updateFilter();
       }
-      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+      else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
       }
-      else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      else if (property instanceof TableColumnWidthProperty) {
+        getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
       }
       else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
         getTable().rootColumnUpdated();
       }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(VcsLogColumn.DATE) != null) {
+      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
         getTable().repaint();
       }
     }

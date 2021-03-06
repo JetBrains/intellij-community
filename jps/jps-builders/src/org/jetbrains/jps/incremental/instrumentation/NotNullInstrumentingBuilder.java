@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -37,12 +37,12 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
   @NotNull
   @Override
   public String getPresentableName() {
-    return "NotNull instrumentation";
+    return JpsBuildBundle.message("builder.name.notnull.instrumentation");
   }
 
   @Override
   protected String getProgressMessage() {
-    return "Adding @NotNull assertions...";
+    return JpsBuildBundle.message("progress.message.adding.notnull.assertions");
   }
 
   @Override
@@ -67,14 +67,15 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     try {
       final ProjectDescriptor pd = context.getProjectDescriptor();
       final List<String> notNulls = JpsJavaExtensionService.getInstance().getCompilerConfiguration(pd.getProject()).getNotNullAnnotations();
-      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, ArrayUtilRt.toStringArray(notNulls))) {
+      if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, ArrayUtilRt.toStringArray(notNulls))) {
         return new BinaryContent(writer.toByteArray());
       }
     }
     catch (Throwable e) {
       LOG.error(e);
       final Collection<File> sourceFiles = compiledClass.getSourceFiles();
-      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, file -> file.getName()) + ": " + e.getMessage();
+      String msg = JpsBuildBundle.message("build.message.cannot.instrument.0.1",
+                                          ContainerUtil.map(sourceFiles, file -> file.getName()), e.getMessage());
       context.processMessage(new CompilerMessage(getPresentableName(),
                                                  BuildMessage.Kind.ERROR,
                                                  msg,

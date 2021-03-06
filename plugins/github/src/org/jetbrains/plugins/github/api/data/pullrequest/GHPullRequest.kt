@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHNodes
@@ -14,25 +15,29 @@ class GHPullRequest(id: String,
                     number: Long,
                     title: String,
                     state: GHPullRequestState,
+                    isDraft: Boolean,
                     author: GHActor?,
                     createdAt: Date,
                     @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                     @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                    viewerCanUpdate: Boolean,
                     viewerDidAuthor: Boolean,
-                    val bodyHTML: String,
+                    @NlsSafe val bodyHTML: String,
                     @JsonProperty("reviewRequests") reviewRequests: GHNodes<GHPullRequestReviewRequest>,
                     val baseRefName: String,
                     val baseRefOid: String,
                     val baseRepository: Repository?,
                     val headRefName: String,
                     val headRefOid: String,
-                    val headRepository: Repository?)
-  : GHPullRequestShort(id, url, number, title, state, author, createdAt, assignees, labels, viewerDidAuthor) {
+                    val headRepository: HeadRepository?)
+  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, assignees, labels, viewerCanUpdate, viewerDidAuthor) {
 
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes
 
-  class Repository(val owner: Owner, val isFork: Boolean)
+  open class Repository(val owner: Owner, val isFork: Boolean)
+
+  class HeadRepository(owner: Owner, isFork: Boolean, val url: String, val sshUrl: String) : Repository(owner, isFork)
 
   class Owner(val login: String)
 }

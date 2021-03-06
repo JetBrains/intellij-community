@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.vfs.LocalFileSystem.PROTOCOL_PREFIX;
 
-public class FindUnusedTestDataAction extends DumbAwareAction {
+public final class FindUnusedTestDataAction extends DumbAwareAction {
   private final static Logger LOG = Logger.getInstance(FindUnusedTestDataAction.class);
 
   @Override
@@ -83,10 +84,9 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
                 () -> FindUtil.showInUsageView(
                   null, files,
                   file -> new UsageInfo2UsageAdapter(new UsageInfo(file)),
-                  "Unused Test Data",
+                  JavaCompilerBundle.message("test.discovery.unused.test.data.tab.title"),
                   p -> {
                     p.setCodeUsages(false);
-                    p.setUsagesWord("file");
                   }, project));
             }
           });

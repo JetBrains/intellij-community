@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.PsiTestUtil;
@@ -19,7 +18,7 @@ import java.util.List;
 
 public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
   public void testDirectoryInfoMustKnowAboutContentDirectoriesBeneathExcluded() throws IOException {
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile root = getTempDir().createVirtualDir();
     assertNotNull(root);
     /*
       /root
@@ -81,7 +80,7 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
   }
 
   public void testDirectoryIndexMustNotGoInsideIgnoredDotGit() throws IOException {
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile root = getTempDir().createVirtualDir();
     assertNotNull(root);
     /*
       /root
@@ -105,7 +104,7 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
     PsiTestUtil.addSourceRoot(myModule, src);
 
     root.refresh(false, true);
-    
+
     checkIterate(root, module, src);
     checkIterate(src, src);
     checkIterate(module, module, src);

@@ -4,8 +4,11 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +19,7 @@ public interface PostfixTemplateProvider {
    * Identifier of template provider. Used for storing settings of provider's templates.
    */
   @NotNull
-  default String getId() {
+  default @NonNls String getId() {
     return getClass().getName();
   }
 
@@ -24,7 +27,7 @@ public interface PostfixTemplateProvider {
    * Presentation name of editable template type. If null, provider doesn't allow to custom templates.
    */
   @Nullable
-  default String getPresentableName() {
+  default @NlsActions.ActionText String getPresentableName() {
     return null;
   }
 
@@ -87,7 +90,7 @@ public interface PostfixTemplateProvider {
    * Instantiates the template that was serialized by the provider to XML.
    */
   @Nullable
-  default PostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
+  default PostfixTemplate readExternalTemplate(@NotNull @NonNls String id, @NotNull @NlsSafe String name, @NotNull Element template) {
     return null;
   }
 

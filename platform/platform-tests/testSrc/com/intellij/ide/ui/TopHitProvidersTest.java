@@ -39,8 +39,8 @@ public class TopHitProvidersTest {
           continue;
         }
 
+        BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
         try {
-          BooleanOptionDescription booleanOption = (BooleanOptionDescription)option;
           boolean enabled = booleanOption.isOptionEnabled();
 
           // we can't reliably restore original state for non-boolean options
@@ -61,7 +61,7 @@ public class TopHitProvidersTest {
         }
         catch (Throwable e) {
           e.printStackTrace();
-          errors.add(e.getMessage());
+          errors.add("Error while testing " + toString(booleanOption) + ": " + e.getMessage());
         }
       }
     }

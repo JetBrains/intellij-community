@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.JBEmptyBorder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,14 +78,13 @@ final class ShowByteCodeAction extends AnAction {
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaByteCodeViewerBundle.message("looking.for.bytecode.progress")) {
       private String myByteCode;
-      private String myErrorMessage;
-      private String myErrorTitle;
+      private @Nls String myErrorTitle;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile) &&
             isMarkedForCompilation(project, virtualFile)) {
-          myErrorTitle = "Class File May Be Out-of-Date";
+          myErrorTitle = JavaByteCodeViewerBundle.message("class.file.may.be.out.of.date");
         }
         myByteCode = ReadAction.compute(() -> ByteCodeViewerManager.getByteCode(psiElement));
       }
@@ -132,7 +132,7 @@ final class ShowByteCodeAction extends AnAction {
             .setResizable(true)
             .setMovable(true)
             .setRequestFocus(LookupManager.getActiveLookup(editor) == null)
-            .setTitle(psiElementTitle + " Bytecode")
+            .setTitle(JavaByteCodeViewerBundle.message("popup.title.element.bytecode", psiElementTitle))
             .setCouldPin(pinCallback)
             .createPopup();
           Disposer.register(popup, component);
@@ -154,15 +154,14 @@ final class ShowByteCodeAction extends AnAction {
 
   @Nullable
   private static PsiElement getPsiElement(DataContext dataContext, Project project, @Nullable Editor editor) {
-    PsiElement psiElement = null;
+    PsiElement psiElement;
     if (editor == null) {
       psiElement = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
-    } else {
+    }
+    else {
       final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
       final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
-      if (injectedEditor != null) {
-        psiElement = findElementInFile(PsiUtilBase.getPsiFileInEditor(injectedEditor, project), injectedEditor);
-      }
+      psiElement = findElementInFile(PsiUtilBase.getPsiFileInEditor(injectedEditor, project), injectedEditor);
 
       if (file != null && psiElement == null) {
         psiElement = findElementInFile(file, editor);

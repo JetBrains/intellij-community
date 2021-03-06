@@ -2,6 +2,7 @@
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
@@ -25,6 +26,7 @@ import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public final class LightToolWindow extends JPanel {
   };
 
   public LightToolWindow(@NotNull LightToolWindowContent content,
-                         @NotNull String title,
+                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                          @NotNull Icon icon,
                          @NotNull JComponent component,
                          @NotNull JComponent focusedComponent,
@@ -327,7 +329,7 @@ public final class LightToolWindow extends JPanel {
     group.add(myManager.createGearActions());
     if (myManager.getAnchor() == null) {
       group.addSeparator();
-      DefaultActionGroup viewModeGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.groupText("ViewMode"));
+      DefaultActionGroup viewModeGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.groupText("TW.ViewModeGroup"));
       for (ToolWindowViewModeAction.ViewMode viewMode : ToolWindowViewModeAction.ViewMode.values()) {
         viewModeGroup.add(new MyViewModeAction(viewMode));
       }
@@ -376,7 +378,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private class MyViewModeAction extends ToolWindowViewModeAction {
+  private final class MyViewModeAction extends ToolWindowViewModeAction {
     private MyViewModeAction(@NotNull ViewMode mode) {
       super(mode);
       ActionUtil.copyFrom(this, mode.getActionID());
@@ -419,7 +421,8 @@ public final class LightToolWindow extends JPanel {
     @Override
     public void actionPerformed(ActionEvent e) {
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent)e.getSource() : null;
-      myAction.actionPerformed(AnActionEvent.createFromInputEvent(myAction, inputEvent, ActionPlaces.UNKNOWN));
+      DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      myAction.actionPerformed(AnActionEvent.createFromAnAction(myAction, inputEvent, ActionPlaces.TOOLWINDOW_TITLE, dataContext));
     }
   }
 

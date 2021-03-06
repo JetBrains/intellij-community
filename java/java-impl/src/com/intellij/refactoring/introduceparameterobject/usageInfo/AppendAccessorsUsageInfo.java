@@ -17,6 +17,7 @@
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
@@ -69,7 +70,7 @@ public class AppendAccessorsUsageInfo extends FixableUsageInfo{
       if (myField != null) {
         fieldName = myField.getName();
       }
-      return (myGetter ? "Getter" : "Setter") + " for field \'" + fieldName + "\' is required";
+      return JavaBundle.message("introduce.parameter.object.no.accessor.conflict.message", myGetter ? 0 : 1, fieldName);
     }
     return null;
   }

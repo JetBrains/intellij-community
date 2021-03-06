@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jsonProtocol
 
 import com.google.gson.stream.JsonWriter
 import com.intellij.util.containers.isNullOrEmpty
-import com.intellij.util.io.writeUtf8
-import gnu.trove.TIntArrayList
-import gnu.trove.TIntHashSet
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
+import io.netty.buffer.ByteBufUtil
+import it.unimi.dsi.fastutil.ints.IntList
+import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.io.JsonUtil
 
 open class OutMessage {
@@ -70,23 +70,23 @@ open class OutMessage {
     writer.endArray()
   }
 
-  fun writeIntSet(name: String, value: TIntHashSet) {
+  fun writeIntSet(name: String, value: IntSet) {
     beginArguments()
     writer.name(name)
     writer.beginArray()
-    value.forEach { value ->
-      writer.value(value.toLong())
-      true
+    val iterator = value.iterator()
+    while (iterator.hasNext()) {
+      writer.value(iterator.nextInt().toLong())
     }
     writer.endArray()
   }
 
-  fun writeIntList(name: String, value: TIntArrayList) {
+  fun writeIntList(name: String, value: IntList) {
       beginArguments()
       writer.name(name)
       writer.beginArray()
-      for (i in 0..value.size() - 1) {
-        writer.value(value.getQuick(i).toLong())
+      for (i in 0 until value.size) {
+        writer.value(value.getInt(i).toLong())
       }
       writer.endArray()
   }
@@ -208,7 +208,7 @@ fun prepareWriteRaw(message: OutMessage, name: String) {
 }
 
 fun doWriteRaw(message: OutMessage, rawValue: String) {
-  message.buffer.writeUtf8(rawValue)
+  ByteBufUtil.writeUtf8(message.buffer, rawValue)
 }
 
 fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) {

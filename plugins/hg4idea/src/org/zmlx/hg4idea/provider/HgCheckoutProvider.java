@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.CLONE_ERROR;
 
 public class HgCheckoutProvider implements CheckoutProvider {
 
@@ -66,7 +69,9 @@ public class HgCheckoutProvider implements CheckoutProvider {
       @Override
       public void onSuccess() {
         if (cloneResult.get() == null || HgErrorUtil.hasErrorsInCommandExecution(cloneResult.get())) {
-          new HgCommandResultNotifier(project).notifyError(cloneResult.get(), HgBundle.message("hg4idea.clone.error"),
+          new HgCommandResultNotifier(project).notifyError(CLONE_ERROR,
+                                                           cloneResult.get(),
+                                                           HgBundle.message("hg4idea.clone.error"),
                                                            HgBundle.message("hg4idea.clone.repo.error.msg", sourceRepositoryURL));
         }
         else {
@@ -87,7 +92,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-    return new HgCloneDialogComponent(project);
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+    return new HgCloneDialogComponent(project, dialogStateListener);
   }
 }

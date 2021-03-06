@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -15,6 +17,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +63,13 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
         if (STREAM_COUNT.test(methodCall)) {
           PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
           CountFix fix = FIX_MAPPER.mapFirst(qualifierCall);
+          if (fix == null) {
+            if (extractComparisonWithZero(methodCall) != null) {
+              fix = new CountFix(SimplificationMode.IS_PRESENT);
+            } else if (extractComparisonWithZeroEq(methodCall) != null) {
+              fix = new CountFix(SimplificationMode.IS_EMPTY);
+            }
+          }
           if (fix != null) {
             PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
             LOG.assertTrue(nameElement != null);
@@ -71,8 +81,8 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   @Nullable
-  private static PsiBinaryExpression extractComparisonWithZero(PsiMethodCallExpression filterCall) {
-    PsiBinaryExpression binary = extractBinary(filterCall);
+  private static PsiBinaryExpression extractComparisonWithZero(PsiMethodCallExpression call) {
+    PsiBinaryExpression binary = extractBinary(call);
     if (binary == null) return null;
     IElementType tokenType = binary.getOperationTokenType();
     if(ExpressionUtils.isZero(binary.getLOperand()) && (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.NE) ||
@@ -83,8 +93,8 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   @Nullable
-  private static PsiBinaryExpression extractComparisonWithZeroEq(PsiMethodCallExpression filterCall) {
-    PsiBinaryExpression binary = extractBinary(filterCall);
+  private static PsiBinaryExpression extractComparisonWithZeroEq(PsiMethodCallExpression call) {
+    PsiBinaryExpression binary = extractBinary(call);
     if (binary == null) return null;
     IElementType tokenType = binary.getOperationTokenType();
     if(ExpressionUtils.isZero(binary.getLOperand()) && tokenType == JavaTokenType.EQEQ ||
@@ -95,8 +105,15 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   @Nullable
-  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression filterCall) {
-    PsiMethodCallExpression countCall = ExpressionUtils.getCallForQualifier(filterCall);
+  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
+    final PsiMethodCallExpression countCall;
+    if (STREAM_FILTER.test(call)) {
+      countCall = ExpressionUtils.getCallForQualifier(call);
+    } else if (STREAM_COUNT.test(call)) {
+      countCall = call;
+    } else {
+      countCall = null;
+    }
     if(countCall == null) return null;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
     if(parent == null) return null;
@@ -140,25 +157,28 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   private enum SimplificationMode {
-    SUM("Replace Stream.flatMap().count() with Stream.mapToLong().sum()", "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()"),
-    COLLECTION_SIZE("Replace Collection.stream().count() with Collection.size()", "Collection.stream().count() can be replaced with Collection.size()"),
-    ANY_MATCH("Replace Stream().filter().count() > 0 with stream.anyMatch()", "Stream().filter().count() > 0 can be replaced with stream.anyMatch()"),
-    NONE_MATCH("Replace Stream().filter().count() == 0 with stream.noneMatch()", "Stream().filter().count() == 0 can be replaced with stream.noneMatch()");
+    SUM("Stream.flatMap().count()", "Stream.mapToLong().sum()"),
+    COLLECTION_SIZE("Collection.stream().count()", "Collection.size()"),
+    ANY_MATCH("Stream().filter().count() > 0", "stream.anyMatch()"),
+    NONE_MATCH("Stream().filter().count() == 0", "stream.noneMatch()"),
+    IS_PRESENT("stream.count() > 0", "stream.findAny().isPresent()"),
+    IS_EMPTY("stream.count() == 0", "stream.findAny().isEmpty()");
 
-    private final String myName;
-    private final String myMessage;
+    private final @NonNls @NotNull String myOld;
+    private final @NonNls @NotNull String myNew;
 
-    public String getName() {
-      return myName;
+    SimplificationMode(@NonNls @NotNull String old, @NonNls @NotNull String aNew) {
+      myOld = old;
+      myNew = aNew;
     }
 
-    SimplificationMode(String name, String message) {
-      myName = name;
-      myMessage = message;
+
+    public @Nls String getName() {
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", myOld, myNew);
     }
 
-    public String getMessage() {
-      return myMessage;
+    public @InspectionMessage String getMessage() {
+      return CommonQuickFixBundle.message("fix.can.replace.x.with.y", myOld, myNew);
     }
   }
 
@@ -191,7 +211,6 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
-      if (qualifierCall == null) return;
       switch (mySimplificationMode) {
         case SUM:
           replaceFlatMap(countName, qualifierCall);
@@ -204,6 +223,12 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
           break;
         case NONE_MATCH:
           replaceFilterCountComparison(qualifierCall, false);
+          break;
+        case IS_PRESENT:
+          replaceSimpleCountComparison(countCall, true);
+          break;
+        case IS_EMPTY:
+          replaceSimpleCountComparison(countCall, false);
           break;
       }
     }
@@ -278,7 +303,26 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       }
     }
 
-    public String getMessage() {
+    private static void replaceSimpleCountComparison(PsiMethodCallExpression countCall, boolean isPresent) {
+      PsiBinaryExpression comparison = isPresent ? extractComparisonWithZero(countCall) : extractComparisonWithZeroEq(countCall);
+      if (comparison == null) return;
+      PsiExpression countQualifier = countCall.getMethodExpression().getQualifierExpression();
+      if (countQualifier == null) return;
+      String base = countQualifier.getText();
+      CommentTracker ct = new CommentTracker();
+      if (isPresent) {
+        ct.replaceAndRestoreComments(comparison, base + "." + "findAny().isPresent()");
+      } else {
+        if (PsiUtil.getLanguageLevel(countCall).isAtLeast(LanguageLevel.JDK_11)) {
+          ct.replaceAndRestoreComments(comparison, base + "." + "findAny().isEmpty()");
+        } else {
+          ct.replaceAndRestoreComments(comparison, "!" + base + "." + "findAny().isPresent()");
+        }
+      }
+
+    }
+
+    public @InspectionMessage String getMessage() {
       return mySimplificationMode.getMessage();
     }
   }

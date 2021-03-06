@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.google.common.base.Supplier
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
@@ -16,12 +15,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
 import com.intellij.util.net.NetUtils
@@ -31,8 +32,12 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.builtInWebServer.isSignedRequest
-import org.jetbrains.io.*
+import org.jetbrains.io.addCommonHeaders
+import org.jetbrains.io.addNoCache
+import org.jetbrains.io.response
+import org.jetbrains.io.send
 import java.awt.Window
 import java.io.IOException
 import java.io.OutputStream
@@ -52,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @see [Best Practices for Designing a Pragmatic REST API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
  */
+@Suppress("HardCodedStringLiteral")
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField
@@ -144,14 +150,17 @@ abstract class RestService : HttpRequestHandler() {
       .create()
   }
 
-  private val abuseCounter = CacheBuilder.newBuilder()
+  private val abuseCounter = Caffeine.newBuilder()
     .expireAfterWrite(1, TimeUnit.MINUTES)
-    .build<InetAddress, AtomicInteger>(CacheLoader.from(Supplier { AtomicInteger() }))
+    .build<InetAddress, AtomicInteger>(CacheLoader { AtomicInteger() })
 
-  private val trustedOrigins = CacheBuilder.newBuilder()
+  private val trustedOrigins = Caffeine.newBuilder()
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
     .build<String, Boolean>()
+  private val hostLocks = ContainerUtil.createConcurrentWeakKeyWeakValueMap<String, Any>()
+
+  private var isBlockUnknownHosts = false
 
   /**
    * Service url must be "/api/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
@@ -162,6 +171,7 @@ abstract class RestService : HttpRequestHandler() {
   /**
    * Use human-readable name or UUID if it is an internal service.
    */
+  @NlsSafe
   protected abstract fun getServiceName(): String
 
   override fun isSupported(request: FullHttpRequest): Boolean {
@@ -198,7 +208,7 @@ abstract class RestService : HttpRequestHandler() {
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     try {
-      val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)
+      val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)!!
       if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
         HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).send(context.channel(), request)
         return true
@@ -241,7 +251,7 @@ abstract class RestService : HttpRequestHandler() {
   @Throws(InterruptedException::class, InvocationTargetException::class)
   // e.g. upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest()) {
+    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
       return true
     }
 
@@ -253,31 +263,56 @@ abstract class RestService : HttpRequestHandler() {
       return false
     }
 
-    if (host != null) {
-      if (NetUtils.isLocalhost(host)) {
-        return true
-      }
-      else {
-        trustedOrigins.getIfPresent(host)?.let {
-          return it
+    val lock = hostLocks.computeIfAbsent(host ?: "") { Object() }
+    synchronized(lock) {
+      if (host != null) {
+        if (NetUtils.isLocalhost(host)) {
+          return true
+        }
+        else {
+          trustedOrigins.getIfPresent(host)?.let {
+            return it
+          }
         }
       }
-    }
+      else {
+        if (isBlockUnknownHosts) return false
+      }
 
-    var isTrusted = false
-    ApplicationManager.getApplication().invokeAndWait({
-                                                        AppIcon.getInstance().requestAttention(null, true)
-                                                        isTrusted = showYesNoDialog(IdeBundle.message("warning.use.rest.api", getServiceName(), host ?: "unknown host"), "title.use.rest.api")
-                                                        if (host != null) {
-                                                          trustedOrigins.put(host, isTrusted)
-                                                        }
-                                                      }, ModalityState.any())
-    return isTrusted
+      var isTrusted = false
+      ApplicationManager.getApplication().invokeAndWait(
+        {
+          AppIcon.getInstance().requestAttention(null, true)
+          val message = if (host != null) {
+            IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(),
+                              host)
+          }
+          else {
+            IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown",
+                              getServiceName())
+          }
+          isTrusted = showYesNoDialog(message, "title.use.rest.api")
+          if (host != null) {
+            trustedOrigins.put(host, isTrusted)
+          }
+          else {
+            if (!isTrusted) {
+              isBlockUnknownHosts = showYesNoDialog(IdeBundle.message("warning.use.rest.api.block.unknown.hosts"), "title.use.rest.api")
+            }
+          }
+        }, ModalityState.any())
+      return isTrusted
+    }
   }
 
   /**
    * Return error or send response using [sendOk], [send]
    */
   @Throws(IOException::class)
+  @NonNls
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
+}
+
+internal fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
+  return if (Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode == true) this else safeStatus
 }

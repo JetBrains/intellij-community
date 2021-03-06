@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
@@ -10,6 +10,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -18,8 +19,8 @@ import javax.swing.SwingConstants
 /**
  * @author Vitaliy.Bibaev
  */
-class MappingPane(name: String,
-                  fullCallExpression: String,
+class MappingPane(@Nls name: String,
+                  @Nls fullCallExpression: String,
                   private val beforeValues: List<ValueWithPosition>,
                   private val mapping: LinkedValuesMapping,
                   private val controller: TraceController) : JPanel(BorderLayout()) {

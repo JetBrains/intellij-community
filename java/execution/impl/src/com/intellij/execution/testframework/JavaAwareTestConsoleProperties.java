@@ -44,7 +44,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   }
 
   @Override
-  public T getConfiguration() {
+  public @NotNull T getConfiguration() {
     return (T)super.getConfiguration();
   }
 

@@ -17,11 +17,13 @@ public final class UIPluginGroup {
   public Component panel;
   public List<ListPluginComponent> plugins = new ArrayList<>();
 
-  @Nullable
-  public ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
+  public @Nullable ListPluginComponent findComponent(@NotNull IdeaPluginDescriptor descriptor) {
+    return findComponent(descriptor.getPluginId());
+  }
+
+  public @Nullable ListPluginComponent findComponent(@NotNull PluginId pluginId) {
     for (ListPluginComponent component : plugins) {
-      if (pluginId == component.myPlugin.getPluginId()) {
+      if (pluginId == component.getPluginDescriptor().getPluginId()) {
         return component;
       }
     }

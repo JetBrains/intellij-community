@@ -9,6 +9,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public final class MavenProjectImportProvider extends ProjectImportProvider {
@@ -41,6 +42,6 @@ public final class MavenProjectImportProvider extends ProjectImportProvider {
   @NotNull
   @Override
   public String getFileSample() {
-    return "<b>Maven</b> project file (pom.xml)";
+    return MavenConfigurableBundle.message("maven.project.file.pom.xml");
   }
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.ClientOnlyTrustManager;
 import org.apache.http.client.utils.URIBuilder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -27,7 +28,7 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
 
   private static final Logger LOG = Logger.getInstance(CertificateTrustManager.class);
 
-  private static final String CMD_SSL_SERVER = "cmd.ssl.server";
+  private static final @NonNls String CMD_SSL_SERVER = "cmd.ssl.server";
 
   @NotNull private final AuthenticationService myAuthenticationService;
   @NotNull private final Url myRepositoryUrl;

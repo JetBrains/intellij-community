@@ -11,91 +11,118 @@ SET IDE_BIN_DIR=%~dp0
 FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET IDE_HOME=%%~fi
 
 :: ---------------------------------------------------------------------
-:: Locate a JDK installation directory which will be used to run the IDE.
-:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jre, JDK_HOME, JAVA_HOME.
+:: Locate a JRE installation directory which will be used to run the IDE.
+:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr[-x86], JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
-SET JDK=
+SET JRE=
 
-IF EXIST "%@@product_uc@@_JDK%" SET JDK=%@@product_uc@@_JDK%
-IF EXIST "%JDK%" GOTO check
+IF NOT "%@@product_uc@@_JDK%" == "" (
+  IF EXIST "%@@product_uc@@_JDK%" SET JRE=%@@product_uc@@_JDK%
+)
 
 SET BITS=64
-SET USER_JDK64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
+SET _USER_JRE64_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
 SET BITS=
-SET USER_JDK_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
-IF EXIST "%USER_JDK64_FILE%" (
-  SET /P JDK=<%USER_JDK64_FILE%
-) ELSE (
-  IF EXIST "%USER_JDK_FILE%" SET /P JDK=<%USER_JDK_FILE%
+SET _USER_JRE_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.jdk
+IF "%JRE%" == "" (
+  SET _JRE_CANDIDATE=
+  IF EXIST "%_USER_JRE64_FILE%" (
+    SET /P _JRE_CANDIDATE=<"%_USER_JRE64_FILE%"
+  ) ELSE IF EXIST "%_USER_JRE_FILE%" (
+    SET /P _JRE_CANDIDATE=<"%_USER_JRE_FILE%"
+  )
 )
-IF NOT "%JDK%" == "" (
-  IF NOT EXIST "%JDK%" SET JDK="%IDE_HOME%\%JDK%"
-  IF EXIST "%JDK%" GOTO check
+IF "%JRE%" == "" (
+  IF NOT "%_JRE_CANDIDATE%" == "" IF EXIST "%_JRE_CANDIDATE%" SET JRE=%_JRE_CANDIDATE%
 )
 
-IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
-  IF EXIST "%IDE_HOME%\jbr" SET JDK=%IDE_HOME%\jbr
-  IF EXIST "%JDK%" GOTO check
+IF "%JRE%" == "" (
+  IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET JRE=%IDE_HOME%\jbr
 )
-IF EXIST "%IDE_HOME%\jbr-x86" SET JDK=%IDE_HOME%\jbr-x86
-IF EXIST "%JDK%" GOTO check
+IF "%JRE%" == "" (
+  IF EXIST "%IDE_HOME%\jbr-x86" SET JRE=%IDE_HOME%\jbr-x86
+)
 
-IF EXIST "%JDK_HOME%" SET JDK=%JDK_HOME%
-IF EXIST "%JDK%" GOTO check
+IF "%JRE%" == "" (
+  IF EXIST "%JDK_HOME%" (
+    SET JRE=%JDK_HOME%
+  ) ELSE IF EXIST "%JAVA_HOME%" (
+    SET JRE=%JAVA_HOME%
+  )
+)
 
-IF EXIST "%JAVA_HOME%" SET JDK=%JAVA_HOME%
-
-:check
-SET JAVA_EXE=%JDK%\bin\java.exe
-IF NOT EXIST "%JAVA_EXE%" SET JAVA_EXE=%JDK%\jre\bin\java.exe
+SET JAVA_EXE=%JRE%\bin\java.exe
 IF NOT EXIST "%JAVA_EXE%" (
   ECHO ERROR: cannot start @@product_full@@.
-  ECHO No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME points to valid JDK installation.
+  ECHO No JRE found. Please make sure @@product_uc@@_JDK, JDK_HOME, or JAVA_HOME point to a valid JRE installation.
   EXIT /B
 )
 
-SET JRE=%JDK%
-IF EXIST "%JRE%\jre" SET JRE=%JDK%\jre
-IF EXIST "%JRE%\lib\amd64" (
-  SET BITS=64
-) ELSE (
-  IF EXIST "%JRE%\bin\windowsaccessbridge-64.dll" SET BITS=64
-)
+SET BITS=
+FINDSTR /B /C:"OS_ARCH=\"x86_64\"" "%JRE%\release" > NUL
+IF NOT ERRORLEVEL 1 SET BITS=64
+FINDSTR /B /C:"OS_ARCH=\"amd64\"" "%JRE%\release" > NUL
+IF NOT ERRORLEVEL 1 SET BITS=64
 
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
-:: explicit
-SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
-  :: Toolbox
-  SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+SET VM_OPTIONS_FILE=
+SET USER_VM_OPTIONS_FILE=
+IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
+  :: 1. %<IDE_NAME>_VM_OPTIONS%
+  IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
-  :: user-overridden
-  SET VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
+IF "%VM_OPTIONS_FILE%" == "" (
+  :: 2. <IDE_HOME>.vmoptions || <IDE_HOME>\bin\<exe_name>.vmoptions + <IDE_HOME>.vmoptions (Toolbox)
+  IF EXIST "%IDE_HOME%.vmoptions" (
+    SET VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+    FINDSTR /B /C:"-ea" "%IDE_HOME%.vmoptions" > NUL
+    IF ERRORLEVEL 1 IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
+      :: partial - prepend with default options
+      SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+      SET USER_VM_OPTIONS_FILE=%IDE_HOME%.vmoptions
+    )
+  )
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
-  :: default, standard installation
-  SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+IF "%VM_OPTIONS_FILE%" == "" (
+  :: 3. <config_directory>\<exe_name>.vmoptions
+  IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions" (
+    SET VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions
+  )
 )
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
-  :: default, universal package
-  SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
-)
-IF NOT EXIST "%VM_OPTIONS_FILE%" (
-  ECHO ERROR: cannot find VM options file.
+IF "%VM_OPTIONS_FILE%" == "" (
+  :: 4. <IDE_HOME>\bin\[win\]<exe_name>.vmoptions [+ <config_directory>\user.vmoptions]
+  IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
+    SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+  ) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
+    SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+  )
+  IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\user.vmoptions" (
+    SET USER_VM_OPTIONS_FILE=%APPDATA%\@@product_vendor@@\@@system_selector@@\user.vmoptions
+  )
 )
 
 SET ACC=
-FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
-IF EXIST "%VM_OPTIONS_FILE%" SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
-
-SET COMMON_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error_in_@@product_uc@@_%%p.log" "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@product_uc@@.hprof" -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
-SET IDE_JVM_ARGS=@@ide_jvm_args@@
-SET ALL_JVM_ARGS=%ACC% %COMMON_JVM_ARGS% %IDE_JVM_ARGS%
+IF "%VM_OPTIONS_FILE%" == "" IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
+  SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
+  SET USER_VM_OPTIONS_FILE=
+)
+IF "%VM_OPTIONS_FILE%" == "" (
+  ECHO ERROR: cannot find VM options file.
+) ELSE (
+  IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
+    SET ACC=-Djb.vmOptionsFile="%USER_VM_OPTIONS_FILE%"
+  ) ELSE (
+    SET ACC=-Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
+  )
+  FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+  IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
+    FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+  )
+)
 
 @@class_path@@
 IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%@@product_uc@@_CLASS_PATH%
@@ -103,9 +130,13 @@ IF NOT "%@@product_uc@@_CLASS_PATH%" == "" SET CLASS_PATH=%CLASS_PATH%;%@@produc
 :: ---------------------------------------------------------------------
 :: Run the IDE.
 :: ---------------------------------------------------------------------
-SET OLD_PATH=%PATH%
-SET PATH=%IDE_BIN_DIR%;%PATH%
-
-"%JAVA_EXE%" %ALL_JVM_ARGS% -cp "%CLASS_PATH%" com.intellij.idea.Main %*
-
-SET PATH=%OLD_PATH%
+"%JAVA_EXE%" ^
+  -cp "%CLASS_PATH%" ^
+  %ACC% ^
+  "-XX:ErrorFile=%USERPROFILE%\java_error_in_@@base_name@@_%%p.log" ^
+  "-XX:HeapDumpPath=%USERPROFILE%\java_error_in_@@base_name@@.hprof" ^
+  -Didea.vendor.name=@@product_vendor@@ -Didea.paths.selector=@@system_selector@@ ^
+  @@ide_jvm_args@@ ^
+  %IDE_PROPERTIES_PROPERTY% ^
+  com.intellij.idea.Main ^
+  %*

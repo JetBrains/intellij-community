@@ -2,18 +2,15 @@
 package com.intellij.util;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.process.UnixProcessManager;
-import com.intellij.execution.process.WinProcessManager;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -30,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,57 +40,73 @@ public final class Restarter {
     return ourRestartSupported.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<Boolean>() {
-    @Override
-    protected @NotNull Boolean compute() {
-      String problem;
+  private static final NullableLazyValue<File> ourStarter = NullableLazyValue.createValue(() -> {
+    if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
+      Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
+      char[] buffer = new char[32767];  // using 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260)
+      int result = kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue();
+      if (result != 0) return new File(Native.toString(buffer));
+    }
+    else if (SystemInfo.isMac) {
+      File appDir = new File(PathManager.getHomePath()).getParentFile();
+      if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
+    }
+    else if (SystemInfo.isUnix) {
+      File starter = new File(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getScriptName() + ".sh");
+      if (starter.canExecute()) return starter;
+    }
 
-      if (SystemInfo.isWindows) {
-        if (!JnaLoader.isLoaded()) {
-          problem = "JNA not loaded";
-        }
-        else if (ourStarter.getValue() == null) {
-          problem = "GetModuleFileName() failed";
-        }
-        else {
-          problem = checkRestarter("restarter.exe");
-        }
+    return null;
+  });
+
+  private static final NotNullLazyValue<Boolean> ourRestartSupported = NotNullLazyValue.atomicLazy(() -> {
+    String problem;
+
+    if (SystemInfo.isWindows) {
+      if (!JnaLoader.isLoaded()) {
+        problem = "JNA not loaded";
       }
-      else if (SystemInfo.isMac) {
-        if (ourStarter.getValue() == null) {
-          problem = "not a bundle: " + PathManager.getHomePath();
-        }
-        else {
-          problem = checkRestarter("restarter");
-        }
-      }
-      else if (SystemInfo.isUnix) {
-        if (UnixProcessManager.getCurrentProcessId() <= 0) {
-          problem = "cannot detect process ID";
-        }
-        else if (ourStarter.getValue() == null) {
-          problem = "cannot find launcher script in " + PathManager.getBinPath();
-        }
-        else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
-          problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
-        }
-        else {
-          problem = checkRestarter("restart.py");
-        }
+      else if (ourStarter.getValue() == null) {
+        problem = "GetModuleFileName() failed";
       }
       else {
-        problem = "Platform unsupported: " + SystemInfo.OS_NAME;
-      }
-
-      if (problem == null) {
-        return true;
-      }
-      else {
-        Logger.getInstance(Restarter.class).info("not supported: " + problem);
-        return false;
+        problem = checkRestarter("restarter.exe");
       }
     }
-  };
+    else if (SystemInfo.isMac) {
+      if (ourStarter.getValue() == null) {
+        problem = "not a bundle: " + PathManager.getHomePath();
+      }
+      else {
+        problem = checkRestarter("restarter");
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      if (OSProcessUtil.getCurrentProcessId() <= 0) {
+        problem = "cannot detect process ID";
+      }
+      else if (ourStarter.getValue() == null) {
+        problem = "cannot find launcher script in " + PathManager.getBinPath();
+      }
+      else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
+        problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
+      }
+      else {
+        problem = checkRestarter("restart.py");
+      }
+    }
+    else {
+      problem = "Platform unsupported: " + SystemInfo.OS_NAME;
+    }
+
+    if (problem == null) {
+      return true;
+    }
+    else {
+      Logger.getInstance(Restarter.class).info("not supported: " + problem);
+      return false;
+    }
+  });
 
   private static String checkRestarter(String restarterName) {
     Path restarter = PathManager.findBinFile(restarterName);
@@ -118,39 +132,11 @@ public final class Restarter {
     return ourStarter.getValue();
   }
 
-  private static final NullableLazyValue<File> ourStarter = new NullableLazyValue<File>() {
-    @Override
-    protected File compute() {
-      if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
-        Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
-        char[] buffer = new char[32767];  // using 32,767 as buffer size to avoid limiting ourselves to MAX_PATH (260)
-        int result = kernel32.GetModuleFileNameW(null, buffer, new WinDef.DWORD(buffer.length)).intValue();
-        if (result != 0) return new File(Native.toString(buffer));
-      }
-      else if (SystemInfo.isMac) {
-        File appDir = new File(PathManager.getHomePath()).getParentFile();
-        if (appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory()) return appDir;
-      }
-      else if (SystemInfo.isUnix) {
-        String binPath = PathManager.getBinPath();
-        ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
-        File starter = new File(binPath, names.getProductName() + ".sh");
-        if (starter.canExecute()) return starter;
-        starter = new File(binPath, StringUtil.toLowerCase(names.getProductName()) + ".sh");
-        if (starter.canExecute()) return starter;
-        starter = new File(binPath, names.getScriptName() + ".sh");
-        if (starter.canExecute()) return starter;
-      }
-
-      return null;
-    }
-  };
-
   private static void restartOnWindows(boolean elevate, String... beforeRestart) throws IOException {
     Kernel32 kernel32 = Native.load("kernel32", Kernel32.class);
     Shell32 shell32 = Native.load("shell32", Shell32.class);
 
-    int pid = WinProcessManager.getCurrentProcessId();
+    int pid = OSProcessUtil.getCurrentProcessId();
     IntByReference argc = new IntByReference();
     Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
     String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
@@ -207,9 +193,7 @@ public final class Restarter {
       }
     }
 
-    String[] restartArg = new String[countArgs];
-    System.arraycopy(argv, 0, restartArg, 0, countArgs);
-    return restartArg;
+    return Arrays.copyOf(argv, countArgs);
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
@@ -225,7 +209,7 @@ public final class Restarter {
     File starterScript = ourStarter.getValue();
     if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinPath());
 
-    int pid = UnixProcessManager.getCurrentProcessId();
+    int pid = OSProcessUtil.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
     File python = PathEnvironmentVariableUtil.findInPath("python");
@@ -266,7 +250,31 @@ public final class Restarter {
     }
     restarterArgs.add(0, restarter);
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs), null, doNotLock ? tempDir.toFile() : null);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(restarterArgs);
+    if (doNotLock) processBuilder.directory(tempDir.toFile());
+    if (SystemInfo.isXWindow) setDesktopStartupId(processBuilder);
+    processBuilder.start();
+  }
+
+  // this is required to support X server's focus stealing prevention mechanism, see JBR-2503
+  private static void setDesktopStartupId(ProcessBuilder processBuilder) {
+    if (!SystemInfo.isJetBrainsJvm) return;
+    try {
+      Long lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
+      if (lastUserActionTime == null) {
+        Logger.getInstance(Restarter.class).warn("Couldn't obtain last user action's timestamp");
+      }
+      else {
+        // this doesn't start 'proper' startup sequence (by sending 'new:' message to the root window),
+        // but passing the event timestamp to the started process should be enough to prevent focus stealing
+        processBuilder.environment().put("DESKTOP_STARTUP_ID",
+                                         ApplicationNamesInfo.getInstance().getProductName() + "-restart_TIME" + lastUserActionTime);
+      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(Restarter.class).warn("Couldn't set DESKTOP_STARTUP_ID", e);
+    }
   }
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})

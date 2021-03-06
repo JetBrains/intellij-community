@@ -3,17 +3,18 @@ package org.jetbrains.intellij.build.impl.compilation.cache
 
 import groovy.transform.CompileStatic
 
+/**
+ * Compiled bytecode of project module, cannot be used for incremental compilation without {@link org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache.JpsCaches}
+ */
 @CompileStatic
 class CompilationOutput {
-  final String name
-  final String type
   final String hash
   final String path
+  final String remotePath
 
   CompilationOutput(String name, String type, String hash, String path) {
-    this.name = name
-    this.type = type
     this.hash = hash
     this.path = path
+    this.remotePath = "$type/$name/$hash"
   }
 }

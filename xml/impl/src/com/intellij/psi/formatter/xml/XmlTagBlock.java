@@ -17,16 +17,22 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.SmartList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class XmlTagBlock extends AbstractXmlBlock{
   private final Indent myIndent;
@@ -162,22 +168,157 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   @Override
   @Nullable
-  protected
-  ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
+  protected ASTNode processChild(List<Block> result, final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
     IElementType type = child.getElementType();
     if (type == XmlElementType.XML_TEXT) {
-      final PsiElement parent = child.getPsi().getParent();
-
-      if (parent instanceof XmlTag && ((XmlTag)parent).getSubTags().length == 0) {
-        if (buildInjectedPsiBlocks(result, child, wrap, alignment, indent)) return child;
+      List<Block> injections = new SmartList<>();
+      if (buildInjectedPsiBlocks(injections, child, wrap, alignment, indent)) {
+        List<Block> regular = new SmartList<>();
+        createXmlTextBlocks(regular, child, wrap, alignment);
+        combineRegularBlocksWithInjected(child, result, injections, regular);
+        return child;
       }
+      else {
+        return createXmlTextBlocks(result, child, wrap, alignment);
+      }
+    } else if (type == XmlElementType.HTML_RAW_TEXT) {
       return createXmlTextBlocks(result, child, wrap, alignment);
-    } else if (type == XmlElementType.XML_COMMENT) {
+    }
+    else if (type == XmlElementType.XML_COMMENT) {
       if (buildInjectedPsiBlocks(result, child, wrap, alignment, indent)) return child;
       return super.processChild(result, child, wrap, alignment, indent);
     }
     else {
       return super.processChild(result, child, wrap, alignment, indent);
+    }
+  }
+
+  /**
+   * <p>When a single {@code XmlText} element contains one or more injections, which do not span over the whole element, we need to combine
+   * regular formatting blocks with injected language blocks. For instance, following example HTML text containing JavaScript interpolation
+   * between <code>{{</code> and <code>}}</code>:
+   * <pre> foo   bar{{1+ 2   }}   a {{ 12*23}} b </pre>
+   * <p>by Injected Block Builder ({@code withInjections} parameter) is split into 5 blocks (T - HTML text block, FL - foreign language block):
+   * <p>{@code
+   *  T< foo   bar{{>,
+   *  FL<1+ 2   >,
+   *  T<}}   a {{>,
+   *  FL< 12*23 >,
+   *  T<}} b >,
+   * }
+   * <p>Such division will allow to properly format injections, but will fail to format HTML text, where continuous spaces should be reduced
+   * to a single space. On the other hand the regular HTML formatting ({@code regularBlocks} parameter) of the fragment would result in
+   * following text blocks: <p><code><foo>, <bar{{1+>, <2>, <}}>, <a>, <{{>, <12*23}}>, <b></code>
+   * <p>
+   * Here HTML text blocks intersect with injection blocks. These two representations are combined together by the procedure into {@code result}
+   * parameter and for the given example following formatting blocks are created:
+   * <p>{@code
+   *   T<foo>, T<bar{{>, FL<1+ 2 >, T<}}>, T<a>, T<{{>, FL<12*23>, T<}}>, T<b>
+   * }
+   */
+  private void combineRegularBlocksWithInjected(@NotNull ASTNode injectionHost, @NotNull List<Block> result,
+                                                @NotNull List<Block> withInjections, @NotNull List<Block> regularBlocks) {
+    int i = 0;
+    int j = 0;
+    int injectionHostOffset = injectionHost.getStartOffset();
+    // Since there are possible injections without formatter blocks (i.e. whitespace only block),
+    // we need to detect such scenarios and correctly split as if there was an injection.
+    List<TextRange> injectedRanges = new ArrayList<>(withInjections.size());
+    Int2ObjectMap<Block> injectedBlocksMap = new Int2ObjectOpenHashMap<>();
+    boolean lastInjected = true;
+    int lastOffset = 0;
+    for (Block block: withInjections) {
+      TextRange range = block.getTextRange();
+      if (block instanceof AnotherLanguageBlockWrapper) {
+        injectedRanges.add(range);
+        injectedBlocksMap.put(range.getStartOffset(), block);
+        lastInjected = true;
+      } else {
+        if (!lastInjected) {
+          // add range for empty injection
+          int offset = range.getStartOffset();
+          injectedRanges.add(new TextRange(lastOffset, offset));
+        }
+        lastOffset = range.getEndOffset();
+        lastInjected = false;
+      }
+    }
+    // Perform actual splitting
+    int injectedRangesCount = injectedRanges.size();
+    while (i < regularBlocks.size()) {
+      Block reg = regularBlocks.get(i);
+      if (j < injectedRangesCount) {
+        TextRange injRange = injectedRanges.get(j);
+        TextRange regRange = reg.getTextRange();
+        if (regRange.getEndOffset() <= injRange.getStartOffset()) {
+          // Regular block does not intersect with injected - add
+          result.add(reg);
+          i++;
+        }
+        else if (injRange.getStartOffset() <= regRange.getStartOffset()
+                 && regRange.getEndOffset() <= injRange.getEndOffset()) {
+          // Regular block completely within injected - skip
+          i++;
+        }
+        else {
+          if (regRange.getStartOffset() < injRange.getStartOffset()) {
+            // Regular block ends within or after an injected - split
+            ASTNode node = notNull(injectionHost.findLeafElementAt(injRange.getStartOffset() - 1 - injectionHostOffset), injectionHost);
+            result.add(createSimpleChild(node, reg.getIndent(), reg.getWrap(), reg.getAlignment(), new TextRange(
+                regRange.getStartOffset(), injRange.getStartOffset())));
+            if (regRange.getEndOffset() <= injRange.getEndOffset()) {
+              // Block ends within injected - move to the next block
+              i++;
+              continue;
+            }
+            // Case of a regular block spanning over multiple injected ones
+          }
+          // Add injected block to the result
+          addIfNotNull(result, injectedBlocksMap.get(injRange.getStartOffset()));
+          j++;
+          if (regRange.getStartOffset() < injRange.getEndOffset()) {
+            // we have a regular block starting within or before last added injected block - split
+            int lastInjection = injRange.getEndOffset();
+            while (j < injectedRangesCount) {
+              // check if single block does not span over next injected block
+              TextRange nextRange = injectedRanges.get(j);
+              if (nextRange.getStartOffset() < regRange.getEndOffset()) {
+                // out regular block ends within or after the next injected block - add a split if it's not empty
+                if (lastInjection < nextRange.getStartOffset()) {
+                  ASTNode node = notNull(injectionHost.findLeafElementAt(lastInjection - injectionHostOffset), injectionHost);
+                  result.add(createSimpleChild(node, reg.getIndent(), null, reg.getAlignment(),
+                                               new TextRange(lastInjection, nextRange.getStartOffset())));
+                }
+                lastInjection = nextRange.getEndOffset();
+                if (lastInjection <= regRange.getEndOffset()) {
+                  // Add current injected block and repeat if regular block ends after it
+                  addIfNotNull(result, injectedBlocksMap.get(nextRange.getStartOffset()));
+                  j++;
+                  continue;
+                }
+              }
+              break;
+            }
+            // We might have some leftover of regular block after last added injected one,
+            // which does not end within or after the next injected block - add a split
+            if (lastInjection < regRange.getEndOffset()) {
+              ASTNode node = notNull(injectionHost.findLeafElementAt(lastInjection - injectionHostOffset), injectionHost);
+              result.add(createSimpleChild(node, reg.getIndent(), null, reg.getAlignment(),
+                                           new TextRange(lastInjection, regRange.getEndOffset())));
+            }
+            i++;
+          }
+        }
+      }
+      else {
+        // No more injected blocks to process, just add the regular ones
+        result.add(reg);
+        i++;
+      }
+    }
+    // Add any leftover injected blocks
+    while (j < injectedRangesCount) {
+      addIfNotNull(result, injectedBlocksMap.get(injectedRanges.get(j++).getStartOffset()));
     }
   }
 
@@ -192,24 +333,24 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return myIndent;
   }
 
-  private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
+  private ASTNode createXmlTextBlocks(final List<Block> list, final @NotNull ASTNode textNode, final Wrap wrap, final Alignment alignment) {
     ASTNode child = textNode.getFirstChildNode();
     return createXmlTextBlocks(list, textNode, child, wrap, alignment);
   }
 
   private ASTNode createXmlTextBlocks(final List<Block> list, final ASTNode textNode, ASTNode child,
                                       final Wrap wrap,
-                                      final Alignment alignment
-  ) {
+                                      final Alignment alignment) {
     while (child != null) {
-      if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!AbstractXmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         final Indent indent = getChildrenIndent();
-        child = processChild(list,child,  wrap, alignment, indent);
-        if (child == null) return child;
+        child = processChild(list, child, wrap, alignment, indent);
+        if (child == null) return null;
         if (child.getTreeParent() != textNode) {
           if (child.getTreeParent() != myNode) {
             return createXmlTextBlocks(list, child.getTreeParent(), child.getTreeNext(), wrap, alignment);
-          } else {
+          }
+          else {
             return child;
           }
         }

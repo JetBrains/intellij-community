@@ -102,13 +102,6 @@
         successive-show="8"
         />
     <feature
-      id="editing.completion.finishByDotEtc"
-      tip-file="DotEtcInLookups.html"
-      min-usage-count="7"
-      first-show="4"
-      successive-show="8"
-      />
-    <feature
       id="editing.completion.camelHumps"
       tip-file="CamelHumpsInCodeCompletion.html"
       min-usage-count="8"
@@ -179,7 +172,7 @@
     </feature>
     <feature
       id="codeassists.surroundwith.statement"
-      tip-file="Surround.html"
+      tip-file="SurroundWith.html"
       first-show="5"
       successive-show="5"
       min-usage-count="4"
@@ -200,13 +193,6 @@
       min-usage-count="3"
       />
     -->
-    <feature
-      id="codeassists.comment.line"
-      tip-file="Comment.html"
-      first-show="6"
-      successive-show="5"
-      min-usage-count="3"
-      />
   </group>
 
   <group id="refactoring">

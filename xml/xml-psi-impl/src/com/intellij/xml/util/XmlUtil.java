@@ -50,6 +50,7 @@ import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.psi.XmlPsiBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.*;
 
-public class XmlUtil {
+public final class XmlUtil {
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
@@ -119,7 +120,7 @@ public class XmlUtil {
   @NonNls public static final String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   @NonNls public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
-  public static final List<String> ourSchemaUrisList = ContainerUtil.immutableList(SCHEMA_URIS);
+  public static final List<String> ourSchemaUrisList = List.of(SCHEMA_URIS);
   public static final Key<Boolean> ANT_FILE_SIGN = new Key<>("FORCED ANT FILE");
   @NonNls public static final String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
   @NonNls public static final String VALUE_ATTR_NAME = "value";
@@ -144,7 +145,7 @@ public class XmlUtil {
   }
 
   @NotNull
-  public static String getSchemaLocation(XmlTag tag, final String namespace) {
+  public static String getSchemaLocation(XmlTag tag, @NotNull String namespace) {
     while (tag != null) {
       String schemaLocation = tag.getAttributeValue(SCHEMA_LOCATION_ATT, XML_SCHEMA_INSTANCE_URI);
       if (schemaLocation != null) {
@@ -164,7 +165,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static String findNamespacePrefixByURI(XmlFile file, @NotNull @NonNls String uri) {
+  public static String findNamespacePrefixByURI(@NotNull XmlFile file, @NotNull @NonNls String uri) {
     final XmlTag tag = file.getRootTag();
     if (tag == null) return null;
 
@@ -194,7 +195,8 @@ public class XmlUtil {
     return findXmlFile(base, location);
   }
 
-  public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project, Module module) {
+  @NotNull
+  public static Collection<XmlFile> findNSFilesByURI(@NotNull String namespace, @NotNull Project project, @Nullable Module module) {
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -206,7 +208,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static XmlFile findXmlFile(PsiFile base, @NotNull String uri) {
+  public static XmlFile findXmlFile(@NotNull PsiFile base, @NotNull String uri) {
     PsiFile result = null;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -231,12 +233,12 @@ public class XmlUtil {
     return null;
   }
 
-  public static boolean isXmlToken(PsiElement element, IElementType tokenType) {
+  public static boolean isXmlToken(PsiElement element, @NotNull IElementType tokenType) {
     return element instanceof XmlToken && ((XmlToken)element).getTokenType() == tokenType;
   }
 
   @Nullable
-  public static XmlToken getTokenOfType(PsiElement element, IElementType type) {
+  public static XmlToken getTokenOfType(PsiElement element, @NotNull IElementType type) {
     if (element == null) {
       return null;
     }
@@ -256,24 +258,24 @@ public class XmlUtil {
     return null;
   }
 
-  public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag) {
+  public static boolean processXmlElements(@NotNull XmlElement element, @NotNull PsiElementProcessor<? super PsiElement> processor, boolean deepFlag) {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag);
   }
 
-  public static boolean processXmlElements(XmlElement element, PsiElementProcessor processor, boolean deepFlag, boolean wideFlag) {
+  public static boolean processXmlElements(@NotNull XmlElement element, @NotNull PsiElementProcessor<? super PsiElement> processor, boolean deepFlag, boolean wideFlag) {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag);
   }
 
-  public static boolean processXmlElements(final XmlElement element,
-                                           final PsiElementProcessor processor,
+  public static boolean processXmlElements(@NotNull XmlElement element,
+                                           @NotNull PsiElementProcessor<? super PsiElement> processor,
                                            final boolean deepFlag,
                                            final boolean wideFlag,
                                            final PsiFile baseFile) {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag, baseFile);
   }
 
-  public static boolean processXmlElements(final XmlElement element,
-                                           final PsiElementProcessor processor,
+  public static boolean processXmlElements(@NotNull XmlElement element,
+                                           @NotNull PsiElementProcessor<? super PsiElement> processor,
                                            final boolean deepFlag,
                                            final boolean wideFlag,
                                            final PsiFile baseFile,
@@ -281,7 +283,7 @@ public class XmlUtil {
     return XmlPsiUtil.processXmlElements(element, processor, deepFlag, wideFlag, baseFile, processIncludes);
   }
 
-  public static boolean processXmlElementChildren(final XmlElement element, final PsiElementProcessor processor, final boolean deepFlag) {
+  public static boolean processXmlElementChildren(@NotNull XmlElement element, @NotNull PsiElementProcessor<? super PsiElement> processor, final boolean deepFlag) {
     return XmlPsiUtil.processXmlElementChildren(element, processor, deepFlag);
   }
 
@@ -348,23 +350,20 @@ public class XmlUtil {
       if (type instanceof ComplexTypeDescriptor) {
         final XmlTag[] simpleContent = new XmlTag[1];
 
-        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor<PsiElement>() {
-          @Override
-          public boolean execute(@NotNull final PsiElement element) {
-            if (element instanceof XmlTag) {
-              final XmlTag tag = (XmlTag)element;
-              @NonNls final String s = ((XmlTag)element).getLocalName();
+        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), element -> {
+          if (element instanceof XmlTag) {
+            final XmlTag tag1 = (XmlTag)element;
+            @NonNls final String s = ((XmlTag)element).getLocalName();
 
-              if ((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
-                   s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag.getAttributeValue("base")))) &&
-                  tag.getNamespace().equals(XML_SCHEMA_URI)) {
-                simpleContent[0] = tag;
-                return false;
-              }
+            if ((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
+                 s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag1.getAttributeValue("base")))) &&
+                tag1.getNamespace().equals(XML_SCHEMA_URI)) {
+              simpleContent[0] = tag1;
+              return false;
             }
-
-            return true;
           }
+
+          return true;
         }, true);
 
         return simpleContent[0];
@@ -385,7 +384,7 @@ public class XmlUtil {
 
       if (presentNames.containsKey(nameKey)) {
         final T psiElement = presentNames.get(nameKey);
-        final String message = XmlPsiBundle.message("duplicate.declaration", nameKey);
+        final String message = XmlPsiBundle.message("xml.inspections.duplicate.declaration", nameKey);
 
         if (psiElement != null) {
           presentNames.put(nameKey, null);
@@ -452,6 +451,7 @@ public class XmlUtil {
    * @deprecated use {@link XmlComment#getCommentText()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static String getCommentText(XmlComment comment) {
     return comment.getCommentText();
@@ -850,12 +850,7 @@ public class XmlUtil {
   }
 
   /**
-   * @param xmlTag
-   * @param localName
-   * @param namespace
    * @param bodyText              pass null to create collapsed tag, empty string means creating expanded one
-   * @param enforceNamespacesDeep
-   * @return
    */
   public static XmlTag createChildTag(final XmlTag xmlTag,
                                       String localName,
@@ -971,7 +966,7 @@ public class XmlUtil {
     return true;
   }
 
-  public static boolean toCode(String str) {
+  public static boolean toCode(@NotNull String str) {
     for (int i = 0; i < str.length(); i++) {
       if (toCode(str.charAt(i))) return true;
     }
@@ -1003,22 +998,19 @@ public class XmlUtil {
 
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
-      processXmlElements((XmlFile)currentElement, new PsiElementProcessor<PsiElement>() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          if (element instanceof PsiNamedElement) {
-            final String elementName = ((PsiNamedElement)element).getName();
+      processXmlElements((XmlFile)currentElement, element -> {
+        if (element instanceof PsiNamedElement) {
+          final String elementName = ((PsiNamedElement)element).getName();
 
-            if (elementName.equals(name) && _element.getClass().isInstance(element)
-                || lastEntityRef != null && element instanceof XmlEntityDecl &&
-                   elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
-              result[0] = (PsiNamedElement)element;
-              return false;
-            }
+          if (elementName.equals(name) && _element.getClass().isInstance(element)
+              || lastEntityRef != null && element instanceof XmlEntityDecl &&
+                 elementName.equals(lastEntityRef.getText().substring(1, lastEntityRef.getTextLength() - 1))) {
+            result[0] = (PsiNamedElement)element;
+            return false;
           }
-
-          return true;
         }
+
+        return true;
       }, true);
 
       return result[0];

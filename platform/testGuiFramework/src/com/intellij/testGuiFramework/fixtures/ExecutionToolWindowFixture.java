@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -38,7 +38,7 @@ import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.timing.Pause.pause;
 
 public class ExecutionToolWindowFixture extends ToolWindowFixture {
-  public static class ContentFixture {
+  public static final class ContentFixture {
     @NotNull private final ExecutionToolWindowFixture myParentToolWindow;
     @NotNull private final Robot myRobot;
     @NotNull private final Content myContent;
@@ -98,9 +98,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
     public XDebuggerTreeNode getDebuggerTreeRoot() {
       try {
         JComponent debuggerComponent = getTabComponent("Debugger");
-        if (debuggerComponent != null) {
-          myRobot.click(debuggerComponent);
-        }
+        myRobot.click(debuggerComponent);
         ThreeComponentsSplitter threeComponentsSplitter =
           myRobot.finder().findByType(debuggerComponent, ThreeComponentsSplitter.class, false);
         JComponent innerComponent = threeComponentsSplitter.getInnerComponent();
@@ -128,7 +126,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
 
       TabLabel tabLabel;
       if (parentComponentType == null) {
-        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
+        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, new GenericTypeMatcher<>(TabLabel.class) {
           @Override
           protected boolean isMatching(@NotNull TabLabel component) {
             return component.toString().equals(tabName);
@@ -137,7 +135,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
       }
       else {
         final JComponent parent = myRobot.finder().findByType(root, parentComponentType, false);
-        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, parent, new GenericTypeMatcher<TabLabel>(TabLabel.class) {
+        tabLabel = GuiTestUtil.INSTANCE.waitUntilFound(myRobot, parent, new GenericTypeMatcher<>(TabLabel.class) {
           @Override
           protected boolean isMatching(@NotNull TabLabel component) {
             return component.getParent() == parent && component.toString().equals(tabName);
@@ -194,7 +192,7 @@ public class ExecutionToolWindowFixture extends ToolWindowFixture {
     public boolean stop() {
       for (final ActionButton button : getToolbarButtons()) {
         final AnAction action = button.getAction();
-        if (action != null && action.getClass().getName().equals("com.intellij.execution.actions.StopAction")) {
+        if (action.getClass().getName().equals("com.intellij.execution.actions.StopAction")) {
           //noinspection ConstantConditions
           boolean enabled = method("isButtonEnabled").withReturnType(boolean.class).in(button).invoke();
           if (enabled) {

@@ -2,11 +2,13 @@
 package com.intellij.ui.win;
 
 import com.intellij.ide.CliResult;
-import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ApplicationStarterBase;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -18,13 +20,13 @@ final class RecentProjectApplication extends ApplicationStarterBase {
 
   @Override
   public String getUsageMessage() {
-    return "This command is used for internal purpose only.";
+    return "This command is used for internal purpose only."; //NON-NLS
   }
 
   @NotNull
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
-    ProjectUtil.openProject(args.get(1), null, false);
+    ProjectManagerEx.getInstanceEx().openProject(Paths.get(args.get(1)).normalize(), new OpenProjectTask());
     return CompletableFuture.completedFuture(CliResult.OK);
   }
 }

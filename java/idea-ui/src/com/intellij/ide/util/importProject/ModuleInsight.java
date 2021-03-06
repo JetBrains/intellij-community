@@ -1,21 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.StringInterner;
-import com.intellij.util.text.StringFactory;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public abstract class ModuleInsight {
   private final Map<File, Set<String>> mySourceRootToReferencedPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> mySourceRootToPackagesMap = new HashMap<>();
   private final Map<File, Set<String>> myJarToPackagesMap = new HashMap<>();
-  private final Interner<String> myInterner = new StringInterner();
+  private final Interner<String> myInterner = Interner.createStringInterner();
 
   private List<ModuleDescriptor> myModules;
   private List<LibraryDescriptor> myLibraries;
@@ -92,7 +93,7 @@ public abstract class ModuleInsight {
         if (isIgnoredName(sourceRoot)) {
           continue;
         }
-        myProgress.setText("Scanning " + sourceRoot.getPath());
+        myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.scanning", sourceRoot.getPath()));
 
         final HashSet<String> usedPackages = new HashSet<>();
         mySourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
@@ -107,7 +108,7 @@ public abstract class ModuleInsight {
       myProgress.popState();
 
       myProgress.pushState();
-      myProgress.setText("Building modules layout...");
+      myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.building.modules.layout"));
       Map<File, ModuleCandidate> rootToModule = new HashMap<>();
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
@@ -132,7 +133,7 @@ public abstract class ModuleInsight {
     addModules(contentRootToModules.values());
   }
 
-  private static class ModuleCandidate {
+  private static final class ModuleCandidate {
     final List<DetectedSourceRoot> myRoots = new ArrayList<>();
     @NotNull File myFolder;
 
@@ -142,19 +143,17 @@ public abstract class ModuleInsight {
   }
 
   private void maximizeModuleFolders(@NotNull Collection<ModuleCandidate> modules) {
-    TObjectIntHashMap<File> dirToChildRootCount = new TObjectIntHashMap<>();
+    Object2IntMap<File> dirToChildRootCount = new Object2IntOpenHashMap<>();
     for (ModuleCandidate module : modules) {
       walkParents(module.myFolder, this::isEntryPointRoot, file -> {
-        if (!dirToChildRootCount.adjustValue(file, 1)) {
-          dirToChildRootCount.put(file, 1);
-        }
+        dirToChildRootCount.mergeInt(file, 1, Math::addExact);
       });
     }
     for (ModuleCandidate module : modules) {
       File moduleRoot = module.myFolder;
       Ref<File> adjustedRootRef = new Ref<>(module.myFolder);
       File current = moduleRoot;
-      while (dirToChildRootCount.get(current) == 1) {
+      while (dirToChildRootCount.getInt(current) == 1) {
         adjustedRootRef.set(current);
         if (isEntryPointRoot(current)) break;
         current = current.getParentFile();
@@ -163,7 +162,7 @@ public abstract class ModuleInsight {
     }
   }
 
-  private static void walkParents(@NotNull File file, Predicate<File> stopCondition, @NotNull Consumer<File> fileConsumer) {
+  private static void walkParents(@NotNull File file, Predicate<? super File> stopCondition, @NotNull Consumer<? super File> fileConsumer) {
     File current = file;
     while (true) {
       fileConsumer.consume(current);
@@ -180,7 +179,7 @@ public abstract class ModuleInsight {
     return myIgnoredNames.contains(sourceRoot.getName());
   }
 
-  protected void addModules(Collection<? extends ModuleDescriptor> newModules) {
+  protected void addModules(Collection<ModuleDescriptor> newModules) {
     if (myModules == null) {
       myModules = new ArrayList<>(newModules);
     }
@@ -211,10 +210,10 @@ public abstract class ModuleInsight {
 
     for (File contentRoot : moduleContentRoots) {
       final ModuleDescriptor checkedModule = contentRootToModules.get(contentRoot);
-      myProgress.setText2("Building library dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.library.dependencies.for.module", checkedModule.getName()));
       buildJarDependencies(checkedModule);
 
-      myProgress.setText2("Building module dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.module.dependencies.for.module", checkedModule.getName()));
       for (File aContentRoot : moduleContentRoots) {
         final ModuleDescriptor aModule = contentRootToModules.get(aContentRoot);
         if (checkedModule.equals(aModule)) {
@@ -253,13 +252,13 @@ public abstract class ModuleInsight {
     try {
       try {
         for (File root : myEntryPointRoots) {
-          myProgress.setText("Scanning for libraries " + root.getPath());
+          myProgress.setText(JavaUiBundle.message("progress.text.scanning.for.libraries", root.getPath()));
           scanRootForLibraries(root);
         }
       }
       catch (ProcessCanceledException ignored) {
       }
-      myProgress.setText("Building initial libraries layout...");
+      myProgress.setText(JavaUiBundle.message("progress.text.building.initial.libraries.layout"));
       final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
       // correct library names so that there are no duplicates
       final Set<String> libNames = new HashSet<>(myExistingProjectLibraryNames);
@@ -464,10 +463,11 @@ public abstract class ModuleInsight {
   protected abstract boolean isSourceFile(final File file);
 
   private void scanSourceFile(File file, final Set<? super String> usedPackages) {
-    myProgress.setText2(file.getName());
+    @NlsSafe final String name = file.getName();
+    myProgress.setText2(name);
     try {
-      final char[] chars = FileUtil.loadFileText(file);
-      scanSourceFileForImportedPackages(StringFactory.createShared(chars), s -> usedPackages.add(myInterner.intern(s)));
+      String chars = FileUtil.loadFile(file, (String)null);
+      scanSourceFileForImportedPackages(chars, s -> usedPackages.add(myInterner.intern(s)));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -488,14 +488,14 @@ public abstract class ModuleInsight {
           scanRootForLibraries(file);
         }
         else {
-          final String fileName = file.getName();
+          @NlsSafe final String fileName = file.getName();
           if (isLibraryFile(fileName)) {
             if (!myJarToPackagesMap.containsKey(file)) {
               final HashSet<String> libraryPackages = new HashSet<>();
               myJarToPackagesMap.put(file, libraryPackages);
 
               myProgress.pushState();
-              myProgress.setText2(file.getName());
+              myProgress.setText2(fileName);
               try {
                 scanLibraryForDeclaredPackages(file, s -> {
                   if (!libraryPackages.contains(s)) {

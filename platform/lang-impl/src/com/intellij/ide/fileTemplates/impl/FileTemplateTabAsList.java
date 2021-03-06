@@ -16,12 +16,14 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +37,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   private final JList<FileTemplate> myList = new JBList<>();
   private MyListModel myModel;
 
-  FileTemplateTabAsList(String title) {
+  FileTemplateTabAsList(@NlsContexts.TabTitle String title) {
     super(title);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
@@ -44,9 +46,13 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
       if (!value.isDefault() && myList.getSelectedIndex() != index) {
         label.setForeground(MODIFIED_FOREGROUND);
       }
+      if (FileTemplateBase.isChild(value)) {
+        label.setBorder(JBUI.Borders.emptyLeft(JBUI.scale(20)));
+        label.setText(value.getFileName().isEmpty() ? IdeBundle.message("label.empty.file.name") : value.getFileName());  //NON-NLS
+      }
     }));
     myList.addListSelectionListener(__ -> onTemplateSelected());
-    new ListSpeedSearch<>(myList, (Function<FileTemplate, String>)FileTemplate::getName);
+    new ListSpeedSearch<>(myList, FileTemplate::getName);
   }
 
   @Override
@@ -56,6 +62,9 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
       return;
     }
     final DefaultListModel model = (DefaultListModel) myList.getModel();
+    for (FileTemplate child : selectedTemplate.getChildren()) {
+      model.removeElement(child);
+    }
     final int selectedIndex = myList.getSelectedIndex();
     model.remove(selectedIndex);
     if (!model.isEmpty()) {
@@ -106,6 +115,11 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   @Override
   public void addTemplate(FileTemplate newTemplate) {
     myModel.addElement(newTemplate);
+  }
+
+  @Override
+  public void insertTemplate(FileTemplate newTemplate, int index) {
+    myModel.insertElementAt(newTemplate, index);
   }
 
   @Override

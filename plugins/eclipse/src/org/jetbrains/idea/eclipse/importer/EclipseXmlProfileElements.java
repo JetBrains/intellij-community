@@ -15,15 +15,17 @@
  */
 package org.jetbrains.idea.eclipse.importer;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Rustam Vishnyakov
  */
 @SuppressWarnings("UnusedDeclaration")
 public interface EclipseXmlProfileElements {
-  String PROFILES_TAG = "profiles";
-  String PROFILE_TAG = "profile";
+  @NonNls String PROFILES_TAG = "profiles";
+  @NonNls String PROFILE_TAG = "profile";
   String NAME_ATTR = "name";
-  String SETTING_TAG = "setting";
+  @NonNls String SETTING_TAG = "setting";
   String ID_ATTR = "id";
   String VALUE_ATTR = "value";
 }

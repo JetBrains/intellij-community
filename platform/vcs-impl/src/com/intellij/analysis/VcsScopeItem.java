@@ -2,23 +2,23 @@
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class VcsScopeItem implements ModelScopeItem {
   private final ChangeListManager myChangeListManager;
-  private final DefaultComboBoxModel<String> myModel;
+  private final DefaultComboBoxModel<LocalChangeList> myModel;
   private final Project myProject;
 
   @Nullable
@@ -35,40 +35,42 @@ public class VcsScopeItem implements ModelScopeItem {
     myChangeListManager = ChangeListManager.getInstance(project);
     assert !myChangeListManager.getAffectedFiles().isEmpty();
 
-    myModel = new DefaultComboBoxModel<>();
-    myModel.addElement(getAll());
-    final List<? extends ChangeList> changeLists = myChangeListManager.getChangeListsCopy();
-    for (ChangeList changeList : changeLists) {
-      myModel.addElement(changeList.getName());
+    if (myChangeListManager.areChangeListsEnabled()) {
+      myModel = new DefaultComboBoxModel<>();
+      myModel.addElement(null);
+      List<LocalChangeList> changeLists = myChangeListManager.getChangeLists();
+      for (LocalChangeList changeList : changeLists) {
+        myModel.addElement(changeList);
+      }
+    }
+    else {
+      myModel = null;
     }
   }
 
   @Override
   public AnalysisScope getScope() {
-    Object selectedItem = myModel.getSelectedItem();
-    if (selectedItem == null)
-      return null;
+    ChangeList changeList = myModel != null ? (ChangeList)myModel.getSelectedItem() : null;
 
     List<VirtualFile> files;
-    if (selectedItem == getAll()) {
+    if (changeList == null) {
       files = myChangeListManager.getAffectedFiles();
     }
     else {
-      files = myChangeListManager
-        .getChangeListsCopy()
-        .stream()
-        .filter(l -> Comparing.strEqual(l.getName(), (String)selectedItem))
-        .flatMap(l -> ChangesUtil.getAfterRevisionsFiles(l.getChanges().stream()))
-        .collect(Collectors.toList());
+      LocalChangeList list = myChangeListManager.findChangeList(changeList.getName());
+      if (list != null) {
+        files = ChangesUtil.getAfterRevisionsFiles(list.getChanges().stream())
+          .collect(Collectors.toList());
+      }
+      else {
+        files = Collections.emptyList();
+      }
     }
     return new AnalysisScope(myProject, new HashSet<>(files));
   }
 
-  public DefaultComboBoxModel<String> getChangeListsModel() {
+  @Nullable
+  public DefaultComboBoxModel<LocalChangeList> getChangeListsModel() {
     return myModel;
-  }
-
-  private static String getAll() {
-    return CodeInsightBundle.message("scope.option.uncommitted.files.all.changelists.choice");
   }
 }

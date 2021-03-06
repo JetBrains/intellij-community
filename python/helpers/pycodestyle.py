@@ -78,7 +78,7 @@ try:
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.5.0'  # patched #836, PY-37054
+__version__ = '2.6.0'  # patched PY-37054
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503,W504'
@@ -113,7 +113,7 @@ PyCF_ONLY_AST = 1024
 SINGLETONS = frozenset(['False', 'None', 'True'])
 KEYWORDS = frozenset(keyword.kwlist + ['print', 'async']) - SINGLETONS
 UNARY_OPERATORS = frozenset(['>>', '**', '*', '+', '-'])
-ARITHMETIC_OP = frozenset(['**', '*', '/', '//', '+', '-'])
+ARITHMETIC_OP = frozenset(['**', '*', '/', '//', '+', '-', '@'])
 WS_OPTIONAL_OPERATORS = ARITHMETIC_OP.union(['^', '&', '|', '<<', '>>', '%'])
 # Warn for -> function annotation operator in py3.5+ (issue 803)
 FUNCTION_RETURN_ANNOTATION_OP = ['->'] if sys.version_info >= (3, 5) else []
@@ -140,7 +140,8 @@ EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({] | [\]}),;]| :(?!=)')
 WHITESPACE_AFTER_COMMA_REGEX = re.compile(r'[,;:]\s*(?:  |\t)')
 COMPARE_SINGLETON_REGEX = re.compile(r'(\bNone|\bFalse|\bTrue)?\s*([=!]=)'
                                      r'\s*(?(1)|(None|False|True))\b')
-COMPARE_NEGATIVE_REGEX = re.compile(r'\b(not)\s+[^][)(}{ ]+\s+(in|is)\s')
+COMPARE_NEGATIVE_REGEX = re.compile(r'\b(?<!is\s)(not)\s+[^][)(}{ ]+\s+'
+                                    r'(in|is)\s')
 COMPARE_TYPE_REGEX = re.compile(r'(?:[=!]=|is(?:\s+not)?)\s+type(?:s.\w+Type'
                                 r'|\s*\(\s*([^)]*[^ )])\s*\))')
 KEYWORD_REGEX = re.compile(r'(\s*)\b(?:%s)\b(\s*)' % r'|'.join(KEYWORDS))
@@ -314,6 +315,41 @@ def maximum_line_length(physical_line, max_line_length, multiline,
 ########################################################################
 
 
+def _is_one_liner(logical_line, indent_level, lines, line_number):
+    if not STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
+        return False
+
+    line_idx = line_number - 1
+
+    if line_idx < 1:
+        prev_indent = 0
+    else:
+        prev_indent = expand_indent(lines[line_idx - 1])
+
+    if prev_indent > indent_level:
+        return False
+
+    while line_idx < len(lines):
+        line = lines[line_idx].strip()
+        if not line.startswith('@') and STARTSWITH_TOP_LEVEL_REGEX.match(line):
+            break
+        else:
+            line_idx += 1
+    else:
+        return False  # invalid syntax: EOF while searching for def/class
+
+    next_idx = line_idx + 1
+    while next_idx < len(lines):
+        if lines[next_idx].strip():
+            break
+        else:
+            next_idx += 1
+    else:
+        return True  # line is last in the file
+
+    return expand_indent(lines[next_idx]) <= indent_level
+
+
 @register_check
 def blank_lines(logical_line, blank_lines, indent_level, line_number,
                 blank_before, previous_logical,
@@ -350,7 +386,7 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
     top_level_lines = BLANK_LINES_CONFIG['top_level']
     method_lines = BLANK_LINES_CONFIG['method']
 
-    if line_number < top_level_lines + 1 and not previous_logical:
+    if not previous_logical and blank_before < top_level_lines:
         return  # Don't expect blank lines before the first line
     if previous_logical.startswith('@'):
         if blank_lines:
@@ -360,16 +396,11 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
           ):
         yield 0, "E303 too many blank lines (%d)" % blank_lines
     elif STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
-        # If this is a one-liner (i.e. this is not a decorator and the
-        # next line is not more indented), and the previous line is also
-        # not deeper (it would be better to check if the previous line
-        # is part of another def/class at the same level), don't require
-        # blank lines around this.
-        prev_line = lines[line_number - 2] if line_number >= 2 else ''
-        next_line = lines[line_number] if line_number < len(lines) else ''
-        if (not logical_line.startswith("@") and
-                expand_indent(prev_line) <= indent_level and
-                expand_indent(next_line) <= indent_level):
+        # allow a group of one-liners
+        if (
+            _is_one_liner(logical_line, indent_level, lines, line_number) and
+            blank_before == 0
+        ):
             return
         if indent_level:
             if not (blank_before == method_lines or
@@ -383,7 +414,7 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
                 for line in lines[line_number - top_level_lines::-1]:
                     if line.strip() and expand_indent(line) < ancestor_level:
                         ancestor_level = expand_indent(line)
-                        nested = line.lstrip().startswith('def ')
+                        nested = STARTSWITH_DEF_REGEX.match(line.lstrip())
                         if nested or ancestor_level == 0:
                             break
                 if nested:
@@ -695,6 +726,9 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
         elif (token_type in (tokenize.STRING, tokenize.COMMENT) or
               text in ('u', 'ur', 'b', 'br')):
             indent_chances[start[1]] = str
+        # visual indent after assert/raise/with
+        elif not row and not depth and text in ["assert", "raise", "with"]:
+            indent_chances[end[1] + 1] = True
         # special case for the "if" statement because len("if (") == 4
         elif not indent_chances and not row and not depth and text == 'if':
             indent_chances[end[1] + 1] = True
@@ -859,6 +893,19 @@ def missing_whitespace_around_operator(logical_line, tokens):
             elif text == '>' and prev_text in ('<', '-'):
                 # Tolerate the "<>" operator, even if running Python 3
                 # Deal with Python 3's annotated return value "->"
+                pass
+            elif (
+                    # def f(a, /, b):
+                    #           ^
+                    # def f(a, b, /):
+                    #              ^
+                    prev_text == '/' and text in {',', ')'} or
+                    # def f(a, b, /):
+                    #               ^
+                    prev_text == ')' and text == ':'
+            ):
+                # Tolerate the "/" operator in function definition
+                # For more info see PEP570
                 pass
             else:
                 if need_space is True or need_space[1]:
@@ -1790,6 +1837,7 @@ def expand_indent(line):
     >>> expand_indent('        \t')
     16
     """
+    line = line.rstrip('\n\r')
     if '\t' not in line:
         return len(line) - len(line.lstrip())
     result = 0

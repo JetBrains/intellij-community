@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -33,8 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +66,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter(Side.LEFT), Side.LEFT);
@@ -88,7 +74,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyChangedBlocks();
     myFoldingModel.destroy();
@@ -96,14 +82,14 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -128,7 +114,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     };
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void clearDiffPresentation() {
     myStatusPanel.setBusy(false);
     myPanel.resetNotifications();
@@ -138,7 +124,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myStatusPanel.update();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyChangedBlocks() {
   }
 
@@ -146,7 +132,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   // Impl
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     ThreesideDiffChangeBase targetChange = scrollToPolicy.select(getChanges());
     if (targetChange == null) return false;
@@ -247,7 +233,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   protected ThreesideDiffChangeBase getSelectedChange(@NotNull ThreeSide side) {
     int caretLine = getEditor(side).getCaretModel().getLogicalPosition().line;
 
@@ -258,12 +244,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       if (DiffUtil.isSelectedByLine(caretLine, line1, line2)) return change;
     }
     return null;
-  }
-
-  protected static boolean isChangeSelected(@NotNull ThreesideDiffChangeBase change, @NotNull BitSet lines, @NotNull ThreeSide side) {
-    int line1 = change.getStartLine(side);
-    int line2 = change.getEndLine(side);
-    return DiffUtil.isSelectedByLine(lines, line1, line2);
   }
 
   //
@@ -337,12 +317,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
 
   protected class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     public MyToggleExpandByDefaultAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void expandAll(boolean expand) {
-      myFoldingModel.expandAll(expand);
+      super(getTextSettings(), myFoldingModel);
     }
   }
 
@@ -486,7 +461,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       paintable.paintOnDivider(gg, divider);
     }
 
-    private static class MyFoldingBuilder extends FoldingBuilderBase {
+    private static final class MyFoldingBuilder extends FoldingBuilderBase {
       private final EditorEx @NotNull [] myEditors;
 
       private MyFoldingBuilder(EditorEx @NotNull [] editors, int @NotNull [] lineCount, @NotNull Settings settings) {

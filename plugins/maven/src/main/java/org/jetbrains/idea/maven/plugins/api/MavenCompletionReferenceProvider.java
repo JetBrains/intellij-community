@@ -19,7 +19,7 @@ public abstract class MavenCompletionReferenceProvider implements MavenParamRefe
                                                @NotNull MavenDomConfiguration domCfg,
                                                @NotNull ProcessingContext context) {
     return new PsiReference[] {
-      new PsiReferenceBase<PsiElement>(element, true) {
+      new PsiReferenceBase<>(element, true) {
         @Override
         public PsiElement resolve() {
           return null;

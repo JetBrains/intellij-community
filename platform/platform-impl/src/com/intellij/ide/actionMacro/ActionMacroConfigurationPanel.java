@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Couple;
@@ -22,7 +23,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 
-public class ActionMacroConfigurationPanel implements Disposable {
+public final class ActionMacroConfigurationPanel implements Disposable {
   private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
   private Splitter mySplitter;
   private final JList myMacrosList;
@@ -156,9 +157,9 @@ public class ActionMacroConfigurationPanel implements Disposable {
               while (elements.hasMoreElements()) {
                 final ActionMacro macro = (ActionMacro)elements.nextElement();
                 if (macro.getName().equals(name)) {
-                  if (Messages.showYesNoDialog(IdeBundle.message("message.macro.exists", name),
-                                               IdeBundle.message("title.macro.name.already.used"),
-                                               Messages.getWarningIcon()) != Messages.YES) {
+                  if (!MessageDialogBuilder
+                        .yesNo(IdeBundle.message("title.macro.name.already.used"), IdeBundle.message("message.macro.exists", name))
+                        .icon(Messages.getWarningIcon()).ask(mySplitter)) {
                     return false;
                   }
                   myMacrosModel.removeElement(macro);

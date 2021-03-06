@@ -100,6 +100,8 @@ public final class SelectInAction extends AnAction implements DumbAware {
       String id = value.getMinorViewId() == null ? value.getToolWindowId() : null;
       ToolWindow toolWindow = id == null ? null : ToolWindowManager.getInstance(mySelectInContext.getProject()).getToolWindow(id);
       if (toolWindow != null) {
+        //this code is left for compatibility with external plugins; plugins from intellij project return proper localized text from SelectInTarget::toString
+        //noinspection HardCodedStringLiteral
         text = text.replace(value.getToolWindowId(), toolWindow.getStripeTitle());
       }
       int n = myVisibleTargets.indexOf(value);
@@ -160,6 +162,7 @@ public final class SelectInAction extends AnAction implements DumbAware {
 
   private static final class NoTargetsAction extends AnAction {
     NoTargetsAction() {
+      //noinspection DialogTitleCapitalization
       super(IdeBundle.messagePointer("message.no.targets.available"));
     }
 

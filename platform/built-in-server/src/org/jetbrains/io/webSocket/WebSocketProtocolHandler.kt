@@ -51,6 +51,7 @@ open class WebSocketProtocolHandshakeHandler(private val handshaker: WebSocketCl
       try {
         handshaker.finishHandshake(channel, message as FullHttpResponse)
         val pipeline = channel.pipeline()
+        @Suppress("HardCodedStringLiteral")
         pipeline.replace(this, "aggregator", WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH))
         // https codec is removed by finishHandshake
         completed()

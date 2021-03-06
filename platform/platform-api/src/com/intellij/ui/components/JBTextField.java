@@ -21,6 +21,7 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Objects;
 
 public class JBTextField extends JTextField implements ComponentWithEmptyText, TextAccessor {
   private TextComponentEmptyText myEmptyText;
@@ -41,12 +43,12 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     init();
   }
 
-  public JBTextField(String text) {
+  public JBTextField(@Nls String text) {
     super(text);
     init();
   }
 
-  public JBTextField(String text, int columns) {
+  public JBTextField(@Nls String text, int columns) {
     super(text, columns);
     init();
   }
@@ -81,6 +83,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
 
   @Override
   public void setText(String t) {
+    if (Objects.equals(t, getText())) return;
     super.setText(t);
     UIUtil.resetUndoRedoActions(this);
   }
@@ -110,7 +113,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   @Override
   public String getToolTipText(MouseEvent event) {
     TextUI ui = getUI();
-    String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
+    @SuppressWarnings("HardCodedStringLiteral") String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
     return text != null ? text : getToolTipText();
   }
 }

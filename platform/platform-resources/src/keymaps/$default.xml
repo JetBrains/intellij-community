@@ -2,6 +2,28 @@
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
+  <action id="OpenInRightSplit">
+    <keyboard-shortcut first-keystroke="shift ENTER"/>
+    <mouse-shortcut keystroke="alt button1 doubleClick"/> 
+  </action>
+  <action id="SplitChooser">
+    <keyboard-shortcut first-keystroke="alt shift ENTER"/>
+  </action>
+  <action id="SplitChooser.NextWindow">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SplitChooser.PreviousWindow">
+    <keyboard-shortcut first-keystroke="shift TAB"/>
+  </action>
+  <action id="SplitChooser.Split">
+    <keyboard-shortcut first-keystroke="ENTER"/>
+  </action>
+  <action id="SplitChooser.Duplicate">
+    <keyboard-shortcut first-keystroke="ctrl ENTER"/>
+  </action>
+  <action id="SplitChooser.SplitCenter">
+    <keyboard-shortcut first-keystroke="SPACE"/>
+  </action>
   <action id="FileChooser.TogglePathShowing">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
@@ -83,6 +105,9 @@
   <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
+  <action id="CloseGotItTooltip">
+    <keyboard-shortcut first-keystroke="ESCAPE"/>
+  </action>
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
@@ -132,6 +157,9 @@
   </action>
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
+  </action>
+  <action id="EditorAddCaretPerSelectedLine">
+    <keyboard-shortcut first-keystroke="shift alt G"/>
   </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="control B"/>
@@ -341,9 +369,6 @@
   </action>
   <action id="ActivateTerminalToolWindow">
     <keyboard-shortcut first-keystroke="alt F12"/>
-  </action>
-  <action id="ActivateMessagesToolWindow">
-    <keyboard-shortcut first-keystroke="alt 0"/>
   </action>
   <action id="CloseContent">
     <keyboard-shortcut first-keystroke="control F4"/>
@@ -904,7 +929,7 @@
   <action id="ActivateDebugToolWindow">
     <keyboard-shortcut first-keystroke="alt 5"/>
   </action>
-  <action id="ActivateTODOToolWindow">
+  <action id="ActivateProblemsViewToolWindow">
     <keyboard-shortcut first-keystroke="alt 6"/>
   </action>
   <action id="ActivateStructureToolWindow">
@@ -916,6 +941,9 @@
   </action>
   <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
+  </action>
+  <action id="ActivateCommitToolWindow">
+    <keyboard-shortcut first-keystroke="alt 0"/>
   </action>
   <action id="NewElement">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
@@ -965,6 +993,9 @@
   </action>
   <action id="SafeDelete">
     <keyboard-shortcut first-keystroke="alt DELETE"/>
+  </action>
+  <action id="SelectVirtualTemplateElement">
+    <keyboard-shortcut first-keystroke="Alt Shift O"/>
   </action>
   <action id="NextTemplateVariable">
     <keyboard-shortcut first-keystroke="TAB"/>
@@ -1197,10 +1228,35 @@
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
 
-  <action id="ViewInplaceComments">
-    <keyboard-shortcut first-keystroke="alt shift BACK_SLASH"/>
-  </action>
   <action id="ToggleFindInSelection">
     <keyboard-shortcut first-keystroke="control alt E"/>
+  </action>
+
+  <action id="UsageGrouping.Module">
+    <keyboard-shortcut first-keystroke="control alt M"/>
+  </action>
+  <action  id="UsageGrouping.Directory">
+    <keyboard-shortcut first-keystroke="control alt P"/>
+  </action>
+  <action id="UsageGrouping.UsageType">
+    <keyboard-shortcut first-keystroke="control alt T"/>
+  </action>
+  <action id="UsageGrouping.FlattenModules">
+    <keyboard-shortcut first-keystroke="control alt O"/>
+  </action>
+  <action id="UsageGrouping.FileStructure">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+  <action id="UsageGrouping.DirectoryStructure">
+    <keyboard-shortcut first-keystroke="control alt D"/>
+  </action>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="F10"/>
+  </action>
+  <action id="ActivateUnitTestsToolWindow">
+    <keyboard-shortcut first-keystroke="alt shift 8"/>
+  </action>
+  <action id="ActivateNuGetToolWindow">
+    <keyboard-shortcut first-keystroke="alt shift 7"/>
   </action>
 </keymap>

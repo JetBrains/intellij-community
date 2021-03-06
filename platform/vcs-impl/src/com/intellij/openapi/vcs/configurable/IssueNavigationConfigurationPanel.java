@@ -1,21 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.DumbAwareActionButton;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.xml.util.XmlStringUtil;
@@ -35,13 +34,13 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
 
-  private final ColumnInfo<IssueNavigationLink, String> ISSUE_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.issue.column")) {
+  private final ColumnInfo<IssueNavigationLink, String> ISSUE_COLUMN = new ColumnInfo<>(VcsBundle.message("issue.link.issue.column")) {
     @Override
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getIssueRegexp();
     }
   };
-  private final ColumnInfo<IssueNavigationLink, String> LINK_COLUMN = new ColumnInfo<IssueNavigationLink, String>(VcsBundle.message("issue.link.link.column")) {
+  private final ColumnInfo<IssueNavigationLink, String> LINK_COLUMN = new ColumnInfo<>(VcsBundle.message("issue.link.link.column")) {
     @Override
     public String valueOf(IssueNavigationLink issueNavigationLink) {
       return issueNavigationLink.getLinkRegexp();
@@ -52,25 +51,23 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     super(new BorderLayout());
     myProject = project;
     myLinkTable = new JBTable();
+    myLinkTable.setShowGrid(false);
     myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
     add(new JLabel(
           XmlStringUtil
             .wrapInHtml(VcsBundle.message("settings.issue.navigation.patterns", ApplicationNamesInfo.getInstance().getFullProductName()))),
         BorderLayout.NORTH);
+    DefaultActionGroup addGroup = new DefaultActionGroup(new AddYouTrackLinkAction(), new AddJiraLinkAction(), new AddIssueNavigationLinkAction());
+    addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+    addGroup.getTemplatePresentation().setText(UIBundle.messagePointer("button.text.add.with.ellipsis"));
+    addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
+
     add(
       ToolbarDecorator.createDecorator(myLinkTable)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
-            dlg.setTitle(VcsBundle.message("issue.link.add.title"));
-            if (dlg.showAndGet()) {
-              myLinks.add(dlg.getLink());
-              myModel.fireTableDataChanged();
-            }
-          }
-        }).setRemoveAction(new AnActionButtonRunnable() {
+        .disableAddAction()
+        .addExtraAction(new AnActionButton.GroupPopupWrapper(addGroup))
+        .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           if (Messages.showOkCancelDialog(myProject, VcsBundle.message("issue.link.delete.prompt"),
@@ -100,38 +97,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
             myModel.fireTableDataChanged();
           }
         }
-      }).addExtraAction(new DumbAwareActionButton(VcsBundle.messagePointer("action.AnActionButton.text.add.jira.pattern"), IconUtil.getAddJiraPatternIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this, VcsBundle.getString(
-            "issue.action.enter.jira.installation.url.label"),
-                                              VcsBundle.getString("issue.action.add.jira.issue.navigation.pattern.title"), Messages.getQuestionIcon());
-          if (s == null) {
-            return;
-          }
-          if (!s.endsWith("/")) {
-            s += "/";
-          }
-          myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
-          myModel.fireTableDataChanged();
-        }
-      }).addExtraAction(new DumbAwareActionButton(VcsBundle.messagePointer("action.AnActionButton.text.add.youtrack.pattern"),
-                                                  IconUtil.getAddYouTrackPatternIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this,
-                                              VcsBundle.getString("issue.action.enter.youtrack.installation.url.label"),
-                                              VcsBundle.getString("issue.action.add.youtrack.issue.navigation.pattern.title"), Messages.getQuestionIcon());
-          if (s == null) {
-            return;
-          }
-          if (!s.endsWith("/")) {
-            s += "/";
-          }
-          myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"));
-          myModel.fireTableDataChanged();
-        }
-      }).setButtonComparator("Add", "Add JIRA Pattern", "Add YouTrack Pattern", "Edit", "Remove")
+      }).setButtonComparator(UIBundle.message("button.text.add.with.ellipsis"),
+                             VcsBundle.message("configurable.issue.link.edit"),
+                             VcsBundle.message("configurable.issue.link.remove"))
         .disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
@@ -179,6 +147,65 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
 
   @Override
   public JComponent createComponent() {
+    SwingUtilities.updateComponentTreeUI(this); // TODO: create Swing components in this method (see javadoc)
     return this;
+  }
+
+  private class AddYouTrackLinkAction extends DumbAwareAction {
+    private AddYouTrackLinkAction() {
+      super(VcsBundle.messagePointer("action.AnActionButton.text.add.youtrack.pattern"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this,
+                                          VcsBundle.message("issue.action.enter.youtrack.installation.url.label"),
+                                          VcsBundle.message("issue.action.add.youtrack.issue.navigation.pattern.title"), Messages.getQuestionIcon());
+      if (s == null) {
+        return;
+      }
+      if (!s.endsWith("/")) {
+        s += "/";
+      }
+      myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"));
+      myModel.fireTableDataChanged();
+    }
+  }
+
+  private class AddJiraLinkAction extends DumbAwareAction {
+    private AddJiraLinkAction() {
+      super(VcsBundle.messagePointer("action.AnActionButton.text.add.jira.pattern"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      String s = Messages.showInputDialog(IssueNavigationConfigurationPanel.this,
+                                          VcsBundle.message("issue.action.enter.jira.installation.url.label"),
+                                          VcsBundle.message("issue.action.add.jira.issue.navigation.pattern.title"), Messages.getQuestionIcon());
+      if (s == null) {
+        return;
+      }
+      if (!s.endsWith("/")) {
+        s += "/";
+      }
+      myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"));
+      myModel.fireTableDataChanged();
+    }
+  }
+
+  private class AddIssueNavigationLinkAction extends DumbAwareAction {
+    private AddIssueNavigationLinkAction() {
+      super(VcsBundle.messagePointer("issue.link.add.title"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
+      dlg.setTitle(VcsBundle.message("issue.link.add.title"));
+      if (dlg.showAndGet()) {
+        myLinks.add(dlg.getLink());
+        myModel.fireTableDataChanged();
+      }
+    }
   }
 }

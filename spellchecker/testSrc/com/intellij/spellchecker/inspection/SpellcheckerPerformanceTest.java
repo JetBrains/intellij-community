@@ -62,7 +62,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     int[] toIgnore = passes.stream().mapToInt(TextEditorHighlightingPass::getId).toArray();
     int i = ArrayUtil.find(toIgnore, Pass.LOCAL_INSPECTIONS);
     toIgnore[i] = 0; // ignore everything except Pass.LOCAL_INSPECTIONS
-    
+
     start = System.currentTimeMillis();
     CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false);
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
@@ -96,47 +96,49 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     }).assertTiming();
   }
 
-  public void testVeryLongEmail(){
+  public void testVeryLongEmail() {
     final String text = "\\LONG_EMAIL: " + StringUtil.repeat("ivan.ivanov", 1000000) + "@mail.com\n";
     doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 8000);
   }
 
-  public void testVeryLongURL(){
+  public void testVeryLongURL() {
     final String text = "\\LONG_URL:  http://" + StringUtil.repeat("ivan.ivanov", 1000000) + ".com\n";
     doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 8000);
   }
 
-  public void testVeryLongHTML(){
-    final String text = "\\ LONG_HTML <!--<li>something go here</li>" + StringUtil.repeat("<li>next content</li>", 1000000) + "foooo barrrr <p> text -->";
+  public void testVeryLongHTML() {
+    final String text = "\\ LONG_HTML <!--<li>something go here</li>"
+                        + StringUtil.repeat("<li>next content</li>", 1000000)
+                        + "foooo barrrr <p> text -->";
     doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 4000);
   }
 
-  public void testVeryLongIdentifier(){
+  public void testVeryLongIdentifier() {
     final String text = StringUtil.repeat("identifier1", 1000000);
     doSplitterPerformanceTest(text, IdentifierSplitter.getInstance(), 3000);
   }
 
-  public void testVeryLongSpecialCharacters(){
+  public void testVeryLongSpecialCharacters() {
     final String text = "word" + StringUtil.repeat("\n\t\r\t\n", 1000000);
     doSplitterPerformanceTest(text, TextSplitter.getInstance(), 2000);
   }
 
-  public void testVeryLongProperty(){
+  public void testVeryLongProperty() {
     final String text = StringUtil.repeat("properties.test.properties", 1000000);
     doSplitterPerformanceTest(text, PropertiesSplitter.getInstance(), 4000);
   }
 
-  public void testVeryLongList(){
+  public void testVeryLongList() {
     final String text = StringUtil.repeat("properties,test,properties", 1000000);
     doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 2000);
   }
 
   private static void doSplitterPerformanceTest(String text, Splitter splitter, int expectedTime) {
     PlatformTestUtil.startPerformanceTest("long word for spelling", expectedTime, () -> {
-      try{
+      try {
         splitter.split(text, TextRange.allOf(text), (textRange) -> {});
       }
-      catch(ProcessCanceledException pce){
+      catch (ProcessCanceledException pce) {
         System.err.println("pce is thrown");
       }
     }).attempts(1).assertTiming();

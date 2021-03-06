@@ -18,26 +18,28 @@ package com.intellij.refactoring.typeMigration.ui;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 
 /**
  * created at Sep 12, 2001
  * @author Jeka
  */
 public class FailedConversionsDialog extends DialogWrapper {
-  private final String[] myConflictDescriptions;
+  private final @Nls String[] myConflictDescriptions;
   public static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
-  public FailedConversionsDialog(String[] conflictDescriptions, Project project) {
+  public FailedConversionsDialog(@Nls String[] conflictDescriptions, Project project) {
     super(project, true);
     myConflictDescriptions = conflictDescriptions;
     setTitle(JavaRefactoringBundle.message("usages.detected.title"));
@@ -62,12 +64,13 @@ public class FailedConversionsDialog extends DialogWrapper {
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    @NonNls StringBuilder buf = new StringBuilder();
-    for (String description : myConflictDescriptions) {
-      buf.append(description);
-      buf.append("<br><br>");
+    ArrayList<HtmlChunk> chunks = new ArrayList<>(myConflictDescriptions.length * 2);
+    for (@Nls String conflictDescription : myConflictDescriptions) {
+      chunks.add(HtmlChunk.raw(conflictDescription));
+      chunks.add(HtmlChunk.br());
     }
-    messagePane.setText(buf.toString());
+    String text = HtmlChunk.body().children(chunks.toArray(HtmlChunk[]::new)).toString();
+    messagePane.setText(text);
     return panel;
   }
 

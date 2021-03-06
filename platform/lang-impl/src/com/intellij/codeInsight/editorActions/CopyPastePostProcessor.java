@@ -40,7 +40,10 @@ public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData
    * This method will be run in the dispatch thread with alternative resolve enabled
    */
   @NotNull
-  public abstract List<T> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
+  public abstract List<T> collectTransferableData(final PsiFile file,
+                                                  final Editor editor,
+                                                  final int[] startOffsets,
+                                                  final int[] endOffsets);
 
   @NotNull
   public List<T> extractTransferableData(final Transferable content) {
@@ -48,6 +51,12 @@ public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData
   }
 
   public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, int caretOffset,
-                                      Ref<Boolean> indented, final List<T> values) {
+                                      Ref<? super Boolean> indented, final List<? extends T> values) {
+  }
+
+  //For performance optimization implementations can return false in case when they dont have access to any other documents(psi file)
+  // except current one
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return true;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
@@ -10,13 +11,17 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.editor.markup.UIController;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ErrorStripeUpdateManager {
+public final class ErrorStripeUpdateManager implements Disposable {
   public static ErrorStripeUpdateManager getInstance(Project project) {
     return ServiceManager.getService(project, ErrorStripeUpdateManager.class);
   }
@@ -27,6 +32,18 @@ public final class ErrorStripeUpdateManager {
   public ErrorStripeUpdateManager(Project project) {
     myProject = project;
     myPsiDocumentManager = PsiDocumentManager.getInstance(myProject);
+    TrafficLightRendererContributor.EP_NAME.addChangeListener(() -> {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          TextEditor textEditor = (TextEditor)fileEditor;
+          repaintErrorStripePanel(textEditor.getEditor());
+        }
+      }
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @SuppressWarnings("WeakerAccess") // Used in Rider
@@ -45,7 +62,7 @@ public final class ErrorStripeUpdateManager {
   @SuppressWarnings("WeakerAccess") // Used in Rider
   protected void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
+    if (!editorMarkupModel.isErrorStripeVisible() || file == null || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return;
     }
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
@@ -67,14 +84,19 @@ public final class ErrorStripeUpdateManager {
     return new DaemonTooltipRendererProvider(myProject, editor);
   }
 
-  @Nullable
-  protected TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+  private TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
       if (renderer != null) {
         return renderer;
       }
     }
-    return new TrafficLightRenderer(myProject, editor.getDocument());
+    return new TrafficLightRenderer(myProject, editor.getDocument()) {
+      @Override
+      @NotNull
+      protected UIController createUIController() {
+        return super.createUIController(editor);
+      }
+    };
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.tasks.lighthouse;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
@@ -22,7 +23,7 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
     super(project, repository, changeListener);
     myUserNameText.setVisible(false);
     myUsernameLabel.setVisible(false);
-    myPasswordLabel.setText("API Token:");
+    myPasswordLabel.setText(TaskBundle.message("label.api.token"));
 
     myProjectId.setText(repository.getProjectId());
   }
@@ -36,7 +37,7 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myProjectIDLabel = new JBLabel("Project ID:", SwingConstants.RIGHT);
+    myProjectIDLabel = new JBLabel(TaskBundle.message("label.project.id"), SwingConstants.RIGHT);
     myProjectId = new JTextField();
     installListener(myProjectId);
     return FormBuilder.createFormBuilder()

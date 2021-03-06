@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.Patches.JDK_BUG_ID_8147994;
+import static com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher.doPerformActionImpl;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -259,28 +260,36 @@ public final class IdeMouseEventDispatcher {
     MouseShortcut shortcut = new MouseShortcut(button, modifiersEx, clickCount);
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-    if (actionManager != null) {
-      AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
-      for (AnAction action : actions) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(c);
-        Presentation presentation = myPresentationFactory.getPresentation(action);
-        AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MOUSE_SHORTCUT, presentation,
-                                                      ActionManager.getInstance(),
-                                                      modifiers);
-        if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) {
-          actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
-          final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-
-          if (context != null && !context.isShowing()) continue;
-
-          ActionUtil.performActionDumbAware(action, actionEvent);
-          actionManager.fireAfterActionPerformed(action, dataContext, actionEvent);
-          e.consume();
-          break;
-        }
-      }
+    if (actionManager != null && !myActions.isEmpty()) {
+      DataContext context = DataManager.getInstance().getDataContext(c);
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
+        e, ActionPlaces.MOUSE_SHORTCUT, context, new ArrayList<>(myActions),
+        newActionProcessor(modifiers), myPresentationFactory, actionManager);
     }
     return e.getButton() > 3;
+  }
+
+  private static ActionProcessor newActionProcessor(int modifiers) {
+    return new ActionProcessor() {
+      @NotNull
+      @Override
+      public AnActionEvent createEvent(InputEvent inputEvent,
+                                       @NotNull DataContext context,
+                                       @NotNull String place,
+                                       @NotNull Presentation presentation,
+                                       @NotNull ActionManager manager) {
+        return new AnActionEvent(inputEvent, context, ActionPlaces.MOUSE_SHORTCUT, presentation, manager, modifiers);
+      }
+
+      @Override
+      public void onUpdatePassed(InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
+      }
+
+      @Override
+      public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
+        doPerformActionImpl(e, action, actionEvent);
+      }
+    };
   }
 
   private static void resetPopupTrigger(final MouseEvent e) {
@@ -363,7 +372,7 @@ public final class IdeMouseEventDispatcher {
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
     if ( c != null
          && e instanceof MouseWheelEvent
-         && (JDK_BUG_ID_8147994 || isDiagramViewComponent(c.getParent()))) {
+         && isDiagramViewComponent(c.getParent())) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
@@ -425,7 +434,7 @@ public final class IdeMouseEventDispatcher {
     return root;
   }
 
-  private static class BlockState {
+  private static final class BlockState {
     private int currentEventId;
     private final IdeEventQueue.BlockMode blockMode;
 

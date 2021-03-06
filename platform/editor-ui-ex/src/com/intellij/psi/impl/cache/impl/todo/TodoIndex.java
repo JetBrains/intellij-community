@@ -4,12 +4,14 @@ package com.intellij.psi.impl.cache.impl.todo;
 
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IntInlineKeyDescriptor;
@@ -41,7 +43,7 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
     });
   }
 
-  private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<TodoIndexEntry>() {
+  private final KeyDescriptor<TodoIndexEntry> myKeyDescriptor = new KeyDescriptor<>() {
     @Override
     public int getHashCode(final TodoIndexEntry value) {
       return value.hashCode();
@@ -97,7 +99,13 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
     @NotNull
     @Override
     public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData, @NotNull DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
-      return indexer.map(inputData);
+      try {
+        return indexer.map(inputData);
+      }
+      catch (Exception e) {
+        if (e instanceof ControlFlowException) throw e;
+        throw new MapReduceIndexMappingException(e, indexer.getClass());
+      }
     }
   };
 
@@ -139,17 +147,20 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> {
-      if (!TodoIndexers.needsTodoIndex(file)) return false;
+    return new FileBasedIndex.ProjectSpecificInputFilter() {
+      @Override
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        if (!TodoIndexers.needsTodoIndex(file)) return false;
 
-      final FileType fileType = file.getFileType();
+        final FileType fileType = file.getFileType();
 
-      if (fileType instanceof LanguageFileType) {
-        return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
+        if (fileType instanceof LanguageFileType) {
+          return LanguageParserDefinitions.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null;
+        }
+
+        return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
+               fileType instanceof CustomSyntaxTableFileType;
       }
-
-      return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
-             fileType instanceof CustomSyntaxTableFileType;
     };
   }
 

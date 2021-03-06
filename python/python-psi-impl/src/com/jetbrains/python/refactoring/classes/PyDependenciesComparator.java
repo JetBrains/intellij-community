@@ -28,7 +28,7 @@ import java.util.Comparator;
  * Compares elements by their dependencies.
  * If A depends on B, then A &lt; B
  */
-public class PyDependenciesComparator implements Comparator<PyElement>, Serializable {
+public final class PyDependenciesComparator implements Comparator<PyElement>, Serializable {
 
   /**
    * Singleton comparator instance

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,13 +10,13 @@ import org.jetbrains.annotations.Nullable;
  * Represents a tool which manages IDE updates instead of a built-in update engine.
  */
 public enum ExternalUpdateManager {
-  TOOLBOX("Toolbox"),
+  TOOLBOX("Toolbox App"),
   SNAP("Snap"),
   UNKNOWN(null);
 
-  public final String toolName;
+  public final @NlsSafe String toolName;
 
-  ExternalUpdateManager(String name) {
+  ExternalUpdateManager(@Nullable("`null` for unknown (a.k.a. 'other') update manager") String name) {
     if (name != null) {
       toolName = name;
     }

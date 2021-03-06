@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ZipperUpdater;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public class ZipAndQueue {
 
   public ZipAndQueue(@NotNull Project project,
                      final int interval,
-                     final String title,
+                     @NlsContexts.ProgressTitle String title,
                      @NotNull Disposable parentDisposable,
                      final Runnable runnable) {
     final int correctedInterval = interval <= 0 ? 300 : interval;

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.tasks.TaskBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,9 +28,8 @@ public class DeadlockWithCertificateDialogAction extends AnAction {
       // EDT will not be released for dialog until message dialog is shown. Meanwhile downloading of image by
       // ImageFetcher thread, started by MediaTracker, won't stop until certificate is accepted by user.
       Messages.showMessageDialog(e.getProject(),
-                                 "This dialog may not be shown due to deadlock caused by MediaTracker and CertificateManager. " +
-                                 "Fortunately it didn't happen." ,
-                                 "Deadlocking Dialog", new ImageIcon(location));
+                                 TaskBundle.message("dialog.message.this.dialog.may.not.be.shown"),
+                                 TaskBundle.message("dialog.title.deadlocking.dialog"), new ImageIcon(location));
     });
   }
 }

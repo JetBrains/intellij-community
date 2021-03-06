@@ -16,9 +16,10 @@
 
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides location-dependent element description.
@@ -29,5 +30,5 @@ public interface ElementDescriptionProvider {
   ExtensionPointName<ElementDescriptionProvider> EP_NAME = ExtensionPointName.create("com.intellij.elementDescriptionProvider");
   
   @Nullable
-  String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location);
+  @NlsSafe String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location);
 }

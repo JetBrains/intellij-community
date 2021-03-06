@@ -11,7 +11,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
@@ -20,6 +19,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +77,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
     else {
       if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-        createLightWeightPopup(validator, elementsConsumer).showCenteredInCurrentWindow(project);
+        createLightWeightPopup(validator, elementsConsumer, directory).showCenteredInCurrentWindow(project);
       }
       else {
         Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.file.name"),
@@ -88,7 +87,10 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
   }
 
-  private JBPopup createLightWeightPopup(MyInputValidator validator, Consumer<PsiElement[]> consumer) {
+  private JBPopup createLightWeightPopup(MyInputValidator validator,
+                                         Consumer<PsiElement[]> consumer,
+                                         @NotNull PsiDirectory directory) {
+    Project project = directory.getProject();
     NewItemSimplePopupPanel contentPanel = new NewItemSimplePopupPanel();
     JTextField nameField = contentPanel.getTextField();
     JBPopup popup = NewItemPopupUtil.createNewItemPopup(IdeBundle.message("title.new.file"), contentPanel, nameField);
@@ -97,6 +99,9 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       if (validator.checkInput(name) && validator.canClose(name)) {
         popup.closeOk(event);
         consumer.accept(validator.getCreatedElements());
+        if (StringUtil.isNotEmpty(name)) {
+          FileTypeChooser.getKnownFileTypeOrAssociate(directory.getVirtualFile(), getFileName(name), project);
+        }
       }
       else {
         String errorMessage = validator instanceof InputValidatorEx
@@ -168,7 +173,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected String getFileName(String newName) {
-    if (getDefaultExtension() == null || FileUtilRt.getExtension(newName).length() > 0) {
+    if (getDefaultExtension() == null || !FileUtilRt.getExtension(newName).isEmpty()) {
       return newName;
     }
     return newName + "." + getDefaultExtension();
@@ -180,7 +185,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected class MyValidator extends MyInputValidator implements InputValidatorEx {
-    private String myErrorText;
+    private @NlsContexts.DetailedDescription String myErrorText;
 
     public MyValidator(Project project, PsiDirectory directory){
       super(project, directory);
@@ -245,21 +250,11 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
 
     @Override
-    public PsiElement[] create(@NotNull String newName) throws Exception {
-      return super.create(newName);
-    }
-
-    @Override
     public boolean canClose(final String inputString) {
-      if (inputString.length() == 0) {
+      if (inputString.isEmpty()) {
         return super.canClose(inputString);
       }
 
-      final PsiDirectory psiDirectory = getDirectory();
-
-      final Project project = psiDirectory.getProject();
-      FileType fileType = FileTypeChooser.getKnownFileTypeOrAssociate(psiDirectory.getVirtualFile(), getFileName(inputString), project);
-      if (fileType == null) return false;
       return super.canClose(getFileName(inputString));
     }
   }

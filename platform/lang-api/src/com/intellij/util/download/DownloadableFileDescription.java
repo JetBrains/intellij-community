@@ -16,6 +16,7 @@
 package com.intellij.util.download;
 
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Use {@link DownloadableFileService#createFileDescription(String, String)} to create instances of this interface
  */
+@ApiStatus.NonExtendable
 public interface DownloadableFileDescription {
   @NotNull
   String getDownloadUrl();

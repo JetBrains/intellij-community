@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.patterns.compiler;
 
@@ -15,9 +15,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.StringInterner;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +24,11 @@ import java.util.*;
 /**
  * @author Gregory.Shrago
  */
-public class PatternCompilerImpl<T> implements PatternCompiler<T> {
-
+public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
   private static final Logger LOG = Logger.getInstance(PatternCompilerImpl.class.getName());
 
   private final Set<Method> myStaticMethods;
-  private final Interner<String> myStringInterner = new StringInterner();
+  private final Interner<String> myStringInterner = Interner.createStringInterner();
 
   public PatternCompilerImpl(final List<Class<?>> patternClasses) {
     myStaticMethods = getStaticMethods(patternClasses);
@@ -93,7 +89,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   private static Set<Method> getStaticMethods(List<Class<?>> patternClasses) {
-    return new THashSet<>(ContainerUtil.concat(
+    return new HashSet<>(ContainerUtil.concat(
       patternClasses,
       aClass -> ContainerUtil.findAll(aClass.getMethods(),
                               method -> Modifier.isStatic(method.getModifiers()) &&
@@ -345,8 +341,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   @Override
   public String dumpContextDeclarations() {
     final StringBuilder sb = new StringBuilder();
-    final Map<Class<?>, Collection<Class<?>>> classes = new THashMap<>();
-    final Set<Class<?>> missingClasses = new THashSet<>();
+    final Map<Class<?>, Collection<Class<?>>> classes = new HashMap<>();
+    final Set<Class<?>> missingClasses = new HashSet<>();
     classes.put(Object.class, missingClasses);
     for (Method method : myStaticMethods) {
       for (Class<?> type = method.getReturnType(); type != null && ElementPattern.class.isAssignableFrom(type); type = type.getSuperclass()) {
@@ -354,7 +350,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         if (enclosingClass != null) {
           Collection<Class<?>> list = classes.get(enclosingClass);
           if (list == null) {
-            list = new THashSet<>();
+            list = new HashSet<>();
             classes.put(enclosingClass, list);
           }
           list.add(type);

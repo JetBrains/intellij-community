@@ -12,21 +12,7 @@ import java.awt.Rectangle
 class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
     updatedRect(position, rect, borderThickness)
-
-    tabColor?.let {
-      g.fill2DRect(rect, it)
-
-      if(theme is EditorTabTheme)
-      theme.inactiveColoredFileBackground?.let { inactive ->
-        g.fill2DRect(rect, inactive)
-      }
-    }
-
-    if(hovered) {
-      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
-        g.fill2DRect(rect, it)
-      }
-    }
+    super.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 
   private fun updatedRect(position: JBTabsPosition, rect: Rectangle, borderThickness: Int): Rectangle {
@@ -47,18 +33,7 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
                                 hovered: Boolean) {
 
     updatedRect(position, rect, borderThickness)
-
-    val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
-
-    color?.let {
-      g.fill2DRect(rect, it)
-    }
-
-    if(hovered) {
-      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
-        g.fill2DRect(rect, it)
-      }
-    }
+    super.paintSelectedTab(position, g, rect, borderThickness, tabColor, active, hovered)
   }
 
 
@@ -77,6 +52,23 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
     val maxY = rect.y + rect.height - borderThickness
 
     paintBorderLine(g, borderThickness, Point(maxX, rect.y), Point(maxX, maxY))
+  }
+
+  fun paintTopGap(position: JBTabsPosition, g: Graphics2D, baseRect: Rectangle, borderThickness: Int) {
+    val rect = updatedRect(position, baseRect.clone() as Rectangle, borderThickness)
+
+    val maxX = rect.x + rect.width
+
+    paintBorderLine(g, borderThickness, Point(rect.x, rect.y), Point(maxX, rect.y))
+  }
+
+  fun paintBottomGap(position: JBTabsPosition, g: Graphics2D, baseRect: Rectangle, borderThickness: Int) {
+    val rect = updatedRect(position, baseRect.clone() as Rectangle, borderThickness)
+
+    val maxX = rect.x + rect.width - borderThickness
+    val maxY = rect.y + rect.height - borderThickness
+
+    paintBorderLine(g, borderThickness, Point(rect.x, maxY), Point(maxX, maxY))
   }
 
   override fun underlineRectangle(position: JBTabsPosition, rect: Rectangle, thickness: Int): Rectangle {

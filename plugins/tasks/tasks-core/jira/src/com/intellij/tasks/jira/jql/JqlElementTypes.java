@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -95,7 +96,7 @@ public interface JqlElementTypes {
   IElementType EMPTY = new JqlElementType("EMPTY");
   IElementType HISTORY_PREDICATE = new JqlElementType("HISTORY_PREDICATE");
 
-  class Factory {
+  final class Factory {
     @NotNull
     public static PsiElement createElement(@NotNull ASTNode node) {
       final IElementType type = node.getElementType();

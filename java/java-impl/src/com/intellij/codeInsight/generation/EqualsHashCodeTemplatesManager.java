@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +50,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
 
 
   public static EqualsHashCodeTemplatesManager getInstance() {
-    return ServiceManager.getService(EqualsHashCodeTemplatesManager.class);
+    return ApplicationManager.getApplication().getService(EqualsHashCodeTemplatesManager.class);
   }
 
   @Override
@@ -97,7 +98,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
   }
 
-  public static @NotNull String getTemplateBaseName(TemplateResource resource) {
+  public static @NotNull @NlsSafe String getTemplateBaseName(TemplateResource resource) {
     return StringUtil.trimEnd(StringUtil.trimEnd(resource.getFileName(), EQUALS_SUFFIX), HASH_CODE_SUFFIX).trim();
   }
 
@@ -131,7 +132,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
   }
 
-  public String getDefaultTemplateBaseName() {
+  public @NlsSafe String getDefaultTemplateBaseName() {
     return getTemplateBaseName(getDefaultTemplate());
   }
 

@@ -18,6 +18,7 @@ package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import org.jetbrains.annotations.Nullable;
@@ -28,10 +29,11 @@ import java.util.Objects;
 public class OfflineProblemDescriptor {
   public String myType;
   public String myFQName;
-  public String myDescription;
+  public @InspectionMessage String myDescription;
   public List<String> myHints;
   public int myProblemIndex;
   public int myLine;
+  public int myOffset;
   public String myModuleName;
 
   public String getType() {
@@ -50,11 +52,11 @@ public class OfflineProblemDescriptor {
     myFQName = FQName;                              
   }
 
-  public String getDescription() {
+  public @InspectionMessage String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(final String description) {
+  public void setDescription(@InspectionMessage String description) {
     myDescription = description;
   }
 
@@ -80,6 +82,14 @@ public class OfflineProblemDescriptor {
 
   public void setLine(final int line) {
     myLine = line;
+  }
+
+  public void setOffset(final int offset) {
+    myOffset = offset;
+  }
+
+  public int getOffset() {
+    return myOffset;
   }
 
   @Nullable

@@ -19,10 +19,10 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
   private var contentToReuse: RunContentDescriptor? = null
   private var runnerAndConfigurationSettings: RunnerAndConfigurationSettings? = null
   private var runner: ProgramRunner<*>? = null
-  private var assignNewId = false
   private var executionId: Long? = null
   private var dataContext: DataContext? = null
   private val userData = UserDataHolderBase()
+  private var modulePath: String? = null
 
   /**
    * Creates an execution environment builder initialized with a copy of the specified environment.
@@ -45,7 +45,7 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
     @Throws(ExecutionException::class)
     fun create(project: Project, executor: Executor, runProfile: RunProfile): ExecutionEnvironmentBuilder {
       return createOrNull(project, executor, runProfile)
-             ?: throw ExecutionException("Cannot find runner for ${runProfile.name}")
+             ?: throw ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner", runProfile.name))
     }
 
     @JvmStatic
@@ -134,7 +134,11 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
 
   fun executionId(executionId: Long): ExecutionEnvironmentBuilder {
     this.executionId = executionId
-    assignNewId = false
+    return this
+  }
+
+  fun modulePath(modulePath: String): ExecutionEnvironmentBuilder {
+    this.modulePath = modulePath
     return this
   }
 
@@ -157,14 +161,14 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
                                          configurationSettings, contentToReuse,
                                          runnerAndConfigurationSettings, runner!!, callback)
     }
-    if (assignNewId) {
-      environment.assignNewExecutionId()
-    }
     if (executionId != null) {
       environment.executionId = executionId!!
     }
     if (dataContext != null) {
       environment.setDataContext(dataContext!!)
+    }
+    if (modulePath != null) {
+      environment.setModulePath(modulePath!!)
     }
     userData.copyUserDataTo(environment)
     return environment

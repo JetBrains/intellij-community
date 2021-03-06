@@ -7,10 +7,6 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 
 internal object GrazieFUSCounter {
-  fun languageDetected(lang: Language) = log("language.detected") {
-    addData("language", lang.iso.toString())
-  }
-
   fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
     for (language in languages) {
       log("language.suggested") {
@@ -23,11 +19,7 @@ internal object GrazieFUSCounter {
   fun typoFound(typo: Typo) = log("typo.found") {
     addData("id", typo.info.rule.id)
     addData("fixes", typo.fixes.size)
-  }
-
-  fun quickfixApplied(ruleId: String, cancelled: Boolean) = log("quickfix.applied") {
-    addData("id", ruleId)
-    addData("cancelled", cancelled)
+    addProject(typo.location.element?.project)
   }
 
   private fun log(eventId: String, body: FeatureUsageData.() -> Unit) {

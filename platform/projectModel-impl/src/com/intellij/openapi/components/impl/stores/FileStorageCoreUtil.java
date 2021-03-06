@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -21,15 +21,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class FileStorageCoreUtil {
+public final class FileStorageCoreUtil {
   private static final Logger LOG = Logger.getInstance(FileStorageCoreUtil.class);
 
   public static final String COMPONENT = "component";
   public static final String NAME = "name";
   public static final String DEFAULT_EXT = PathManager.DEFAULT_EXT;
 
-  @NotNull
-  public static Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
+  public static @NotNull Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean internElements) {
     if (pathMacroSubstitutor != null) {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
@@ -66,7 +65,7 @@ public class FileStorageCoreUtil {
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
 
-      map.put(name, JDOMUtil.internElement(element));
+      map.put(name, internElements ? JDOMUtil.internElement(element) : element);
     }
     return map;
   }

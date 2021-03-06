@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +29,9 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnEditCommitMessageAction extends DumbAwareAction {
@@ -104,7 +106,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
                     final long number,
                     Consumer<? super String> listener,
                     boolean fromVersionControl) {
-      super(project, "Edit Revision Comment");
+      super(project, message("progress.title.edit.revision.comment"));
       myNewMessage = newMessage;
       myLocation = location;
       myNumber = number;
@@ -120,7 +122,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
       try {
         root = SvnUtil.getRepositoryRoot(myVcs, createUrl(url));
         if (root == null) {
-          myException = new VcsException("Can not determine repository root for URL: " + url);
+          myException = new VcsException(message("error.can.not.find.repository.root.for.url", url));
           return;
         }
         Target target = Target.on(root);
@@ -135,20 +137,21 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
     @Override
     public void onSuccess() {
       if (myException != null) {
-        AbstractVcsHelper.getInstance(myProject).showError(myException, myTitle);
+        AbstractVcsHelper.getInstance(myProject).showError(myException, message("tab.title.edit.revision.comment"));
       } else {
         if (myListener != null) {
           myListener.consume(myNewMessage);
         }
-        if (! myProject.isDefault()) {
+        if (!myProject.isDefault()) {
           CommittedChangesCache.getInstance(myProject).commitMessageChanged(myLocation, myNumber, myNewMessage);
         }
+
+        String message = message("notification.content.revision.commit.message.changed.to", myNumber, myNewMessage);
         if (myFromVersionControl) {
-          VcsBalloonProblemNotifier.showOverVersionControlView(myProject, "Revision #" + myNumber + " comment " +
-                                                                          "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
-        } else {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Revision #" + myNumber + " comment " +
-                                                                   "changed to:\n'" + myNewMessage + "'", MessageType.INFO);
+          showOverVersionControlView(myProject, message, MessageType.INFO);
+        }
+        else {
+          showOverChangesView(myProject, message, MessageType.INFO);
         }
       }
     }

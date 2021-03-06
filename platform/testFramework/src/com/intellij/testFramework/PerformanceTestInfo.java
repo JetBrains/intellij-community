@@ -18,10 +18,9 @@ public class PerformanceTestInfo {
   private final int expectedMs;           // millis the test is expected to run
   private ThrowableRunnable<?> setup;      // to run before each test
   private int usedReferenceCpuCores = 1;
-  private int attempts = 4;             // number of retries if performance failed
-  private boolean waitForJit;
+  private int maxRetries = 4;             // number of retries if performance failed
   private final String what;         // to print on fail
-  private boolean adjustForIO = false;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
+  private boolean adjustForIO;// true if test uses IO, timings need to be re-calibrated according to this agent disk performance
   private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
   private boolean useLegacyScaling;
 
@@ -30,7 +29,7 @@ public class PerformanceTestInfo {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
   }
 
-  PerformanceTestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
+  PerformanceTestInfo(@NotNull ThrowableRunnable<?> test, int expectedMs, @NotNull String what) {
     this.test = test;
     this.expectedMs = expectedMs;
     assert expectedMs > 0 : "Expected must be > 0. Was: " + expectedMs;
@@ -38,7 +37,7 @@ public class PerformanceTestInfo {
   }
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo setup(@NotNull ThrowableRunnable setup) {
+  public PerformanceTestInfo setup(@NotNull ThrowableRunnable<?> setup) {
     assert this.setup == null;
     this.setup = setup;
     return this;
@@ -73,13 +72,7 @@ public class PerformanceTestInfo {
 
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo attempts(int attempts) {
-    this.attempts = attempts;
-    return this;
-  }
-
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public PerformanceTestInfo reattemptUntilJitSettlesDown() {
-    this.waitForJit = true;
+    this.maxRetries = attempts;
     return this;
   }
 
@@ -98,21 +91,17 @@ public class PerformanceTestInfo {
   public void assertTiming() {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     Timings.getStatistics(); // warm-up, measure
-    if (waitForJit) {
-      attempts = 100;
-      updateJitUsage();
-    }
+    updateJitUsage();
 
-    if (attempts == 1) {
+    if (maxRetries == 1) {
       //noinspection CallToSystemGC
       System.gc();
     }
 
-    boolean testShouldPass = false;
+    boolean testPassed = false;
     String logMessage;
 
-    while (true) {
-      attempts--;
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
       CpuUsageData data;
       try {
         if (setup != null) setup.run();
@@ -125,35 +114,31 @@ public class PerformanceTestInfo {
       }
 
       int expectedOnMyMachine = getExpectedTimeOnThisMachine();
-      IterationResult iterationResult = data.durationMs < expectedOnMyMachine ? IterationResult.acceptable :
-                                        // Allow 10% more in case of test machine is busy.
-                                        data.durationMs < expectedOnMyMachine * 1.1 ? IterationResult.borderline :
-                                        IterationResult.slow;
+      IterationResult iterationResult = data.getIterationResult(expectedOnMyMachine);
 
-      testShouldPass |= iterationResult != IterationResult.slow;
+      testPassed |= iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
 
       logMessage = formatMessage(data, expectedOnMyMachine, iterationResult);
 
-      if (iterationResult == IterationResult.acceptable) {
+      if (iterationResult == IterationResult.ACCEPTABLE) {
         TeamCityLogger.info(logMessage);
         System.out.println("\nSUCCESS: " + logMessage);
-      }
-      else {
-        TeamCityLogger.warning(logMessage, null);
-        if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-          System.out.println("\nWARNING: " + logMessage);
-        }
-      }
-
-      if (iterationResult == IterationResult.acceptable) {
         return;
       }
-      if (attempts == 0 || waitForJit && updateJitUsage() == JitUsageResult.definitelyLow) {
-        if (testShouldPass) return;
-        throw new AssertionFailedError(logMessage);
+      TeamCityLogger.warning(logMessage, null);
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        System.out.println("\nWARNING: " + logMessage);
       }
 
-      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
+      JitUsageResult jitUsage = updateJitUsage();
+      if (attempt == maxRetries && jitUsage == JitUsageResult.DEFINITELY_LOW) {
+        if (testPassed) return;
+        throw new AssertionFailedError(logMessage);
+      }
+      if ((iterationResult == IterationResult.DISTRACTED || jitUsage == JitUsageResult.UNCLEAR) && attempt < 30 && maxRetries != 1) {
+        maxRetries++;
+      }
+      String s = "  " + (maxRetries - attempt) + " " + StringUtil.pluralize("attempt", maxRetries - attempt) + " remain" + (jitUsage == JitUsageResult.UNCLEAR ? " (waiting for JITc; its usage was " + jitUsage + " in this iteration)" : "");
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);
@@ -166,24 +151,18 @@ public class PerformanceTestInfo {
   private String formatMessage(CpuUsageData data, int expectedOnMyMachine, IterationResult iterationResult) {
     long duration = data.durationMs;
     int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-    String colorCode = iterationResult == IterationResult.acceptable ? "32;1m" : // green
-                       iterationResult == IterationResult.borderline ? "33;1m" : // yellow
+    String colorCode = iterationResult == IterationResult.ACCEPTABLE ? "32;1m" : // green
+                       iterationResult == IterationResult.BORDERLINE ? "33;1m" : // yellow
                        "31;1m"; // red
-    return String.format(
-      "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
-      "\n  Expected: %sms (%s)" +
-      "\n  Actual:   %sms (%s)" +
-      "\n  Timings:  %s" +
-      "\n  Threads:  %s" +
-      "\n  GC stats: %s" +
-      "\n  Process:  %s",
-      what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
-      expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
-      duration, StringUtil.formatDuration(duration),
-      Timings.getStatistics(),
-      data.getThreadStats(),
-      data.getGcStats(),
-      data.getProcessCpuStats());
+    return
+      what+" took \u001B[" + colorCode + Math.abs(percentage) + "% " + (percentage > 0 ? "more" : "less") + " time\u001B[0m than expected" +
+      (iterationResult == IterationResult.DISTRACTED ? " (but JIT compilation took too long, will retry anyway)" : "") +
+      "\n  Expected: " + expectedOnMyMachine + "ms (" + StringUtil.formatDuration(expectedOnMyMachine) + ")" +
+      "\n  Actual:   " + duration + "ms (" + StringUtil.formatDuration(duration) + ")" +
+      "\n  Timings:  " + Timings.getStatistics() +
+      "\n  Threads:  " + data.getThreadStats() +
+      "\n  GC stats: " + data.getGcStats() +
+      "\n  Process:  " + data.getProcessCpuStats();
   }
 
   private long lastJitUsage;
@@ -197,25 +176,30 @@ public class PerformanceTestInfo {
     if (lastJitStamp >= 0) {
       if (elapsedMillis >= 3_000) {
         if (jitNow - lastJitUsage <= elapsedMillis / 10) {
-          return JitUsageResult.definitelyLow;
+          return JitUsageResult.DEFINITELY_LOW;
         }
       } else {
         // don't update stamps too frequently,
         // because JIT times are quite discrete: they only change after a compilation is finished,
         // and some compilations take a second or even more
-        return JitUsageResult.unclear;
+        return JitUsageResult.UNCLEAR;
       }
     }
 
     lastJitStamp = timeNow;
     lastJitUsage = jitNow;
 
-    return JitUsageResult.unclear;
+    return JitUsageResult.UNCLEAR;
   }
 
-  private enum JitUsageResult {definitelyLow, unclear}
+  private enum JitUsageResult {DEFINITELY_LOW, UNCLEAR}
 
-  private enum IterationResult { acceptable, borderline, slow }
+  enum IterationResult {
+    ACCEPTABLE, // test was completed within specified range
+    BORDERLINE, // test barely managed to complete within specified range
+    SLOW,       // test was too slow
+    DISTRACTED  // CPU was occupied by irrelevant computations for too long (e.g. JIT or GC)
+  }
 
   private int getExpectedTimeOnThisMachine() {
     int expectedOnMyMachine = expectedMs;

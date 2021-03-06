@@ -47,16 +47,6 @@ public class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactP
     return XmlSerializer.deserialize(options, JpsJavaFxPreloaderArtifactProperties.MyState.class);
   }
 
-  @Override
-  public void saveProperties(JpsJavaFxPreloaderArtifactProperties properties, List<ArtifactPropertiesState> stateList) {
-    final ArtifactPropertiesState state = findApplicationProperties(stateList);
-
-    if (state == null) {
-      return;
-    }
-    state.setOptions(XmlSerializer.serialize(properties));
-  }
-
   private static ArtifactPropertiesState findApplicationProperties(List<ArtifactPropertiesState> stateList) {
     for (ArtifactPropertiesState state : stateList) {
       if ("javafx-preloader-properties".equals(state.getId())) {

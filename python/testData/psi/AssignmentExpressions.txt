@@ -209,3 +209,42 @@ PyFile:AssignmentExpressions.py
       PsiElement(Py:SINGLE_QUOTED_STRING)(''spam'')
     PsiWhiteSpace('  ')
     PsiComment(Py:END_OF_LINE_COMMENT)('# z is a reference')
+  PsiWhiteSpace('\n\n')
+  PyAssignmentStatement
+    PyTargetExpression: result_list
+      PsiElement(Py:IDENTIFIER)('result_list')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyListLiteralExpression
+      PsiElement(Py:LBRACKET)('[')
+      PyAssignmentExpression
+        PyTargetExpression: a
+          PsiElement(Py:IDENTIFIER)('a')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:COLONEQ)(':=')
+        PsiWhiteSpace(' ')
+        PyNumericLiteralExpression
+          PsiElement(Py:INTEGER_LITERAL)('1')
+      PsiElement(Py:RBRACKET)(']')
+  PsiWhiteSpace('\n')
+  PyAssignmentStatement
+    PyTargetExpression: result_list
+      PsiElement(Py:IDENTIFIER)('result_list')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyListLiteralExpression
+      PsiElement(Py:LBRACKET)('[')
+      PyParenthesizedExpression
+        PsiElement(Py:LPAR)('(')
+        PyAssignmentExpression
+          PyTargetExpression: a
+            PsiElement(Py:IDENTIFIER)('a')
+          PsiWhiteSpace(' ')
+          PsiElement(Py:COLONEQ)(':=')
+          PsiWhiteSpace(' ')
+          PyNumericLiteralExpression
+            PsiElement(Py:INTEGER_LITERAL)('1')
+        PsiElement(Py:RPAR)(')')
+      PsiElement(Py:RBRACKET)(']')

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -136,7 +137,7 @@ public class DaemonsUi implements Disposable {
   private static class DaemonsTable extends ListTableWithButtons<DaemonState> {
     @Override
     protected ListTableModel createListModel() {
-      final ColumnInfo pidColumn = new DaemonsTable.TableColumn("PID", 80) {
+      final ColumnInfo pidColumn = new DaemonsTable.TableColumn(GradleBundle.message("column.name.daemon.PID"), 80) {
         @Nullable
         @Override
         public String valueOf(DaemonState daemonState) {
@@ -149,7 +150,7 @@ public class DaemonsUi implements Disposable {
           return Comparator.comparing(DaemonState::getPid);
         }
       };
-      final ColumnInfo statusColumn = new DaemonsTable.TableColumn("Status", 100) {
+      final ColumnInfo statusColumn = new DaemonsTable.TableColumn(GradleBundle.message("column.name.daemon.status"), 100) {
         @Nullable
         @Override
         public String valueOf(DaemonState daemonState) {
@@ -162,7 +163,7 @@ public class DaemonsUi implements Disposable {
           return Comparator.comparing(DaemonState::getStatus);
         }
       };
-      final ColumnInfo timeColumn = new DaemonsTable.TableColumn("Timestamp", 150) {
+      final ColumnInfo timeColumn = new DaemonsTable.TableColumn(GradleBundle.message("column.name.daemon.timestamp"), 150) {
         @NotNull
         @Override
         public String valueOf(DaemonState daemonState) {
@@ -175,7 +176,7 @@ public class DaemonsUi implements Disposable {
           return Comparator.comparing(DaemonState::getTimestamp);
         }
       };
-      final ColumnInfo infoColumn = new DaemonsTable.TableColumn("Info", -1) {
+      final ColumnInfo infoColumn = new DaemonsTable.TableColumn(GradleBundle.message("column.name.daemon.info"), -1) {
         private MultiLineTableCellRenderer myRenderer;
 
         @NotNull
@@ -234,7 +235,7 @@ public class DaemonsUi implements Disposable {
 
       private final int myWidth;
 
-      TableColumn(final String name, int width) {
+      TableColumn(@NlsContexts.ColumnName final String name, int width) {
         super(name);
         myWidth = width;
       }
@@ -343,9 +344,7 @@ public class DaemonsUi implements Disposable {
     protected JComponent createNorthPanel() {
       JPanel panel = new JPanel(new BorderLayout());
       JLabel infoLabel = new JLabel(XmlStringUtil.wrapInHtml(
-        "Daemons started by " +
-        ApplicationNamesInfo.getInstance().getFullProductName() +
-        " (or other daemons of the similar configuration) are displayed. <i>Gradle 3.0 or better supported.<i>"));
+        GradleBundle.message("daemons.started.by.are.displayed", ApplicationNamesInfo.getInstance().getFullProductName())));
       infoLabel.setIcon(UIUtil.getInformationIcon());
       panel.add(infoLabel, BorderLayout.CENTER);
       return panel;

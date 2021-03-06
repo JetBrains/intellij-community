@@ -88,6 +88,7 @@ public final class KeyboardShortcut extends Shortcut {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return mySecondKeyStroke == null ? "[" + myFirstKeyStroke + "]" : "[" + myFirstKeyStroke + "]+[" + mySecondKeyStroke + "]";
   }

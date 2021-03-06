@@ -1,18 +1,4 @@
-/*
- * Copyright 2008-2013 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -48,17 +34,37 @@ import java.util.List;
 
 public class LoggerInitializedWithForeignClassInspection extends BaseInspection {
 
-  @NonNls private static final String DEFAULT_LOGGER_CLASS_NAMES =
-    "org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger";
-  @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES = "getLogger,getLogger,getLog,getLogger";
+  @NonNls private static final String DEFAULT_FACTORY_CLASS_NAMES =
+    // Log4J 1
+    "org.apache.log4j.Logger," +
+    // SLF4J
+    "org.slf4j.LoggerFactory," +
+    // Apache Commons Logging
+    "org.apache.commons.logging.LogFactory," +
+    // Java Util Logging
+    "java.util.logging.Logger," +
+    // Log4J 2
+    "org.apache.logging.log4j.LogManager";
+
+  @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES =
+    //Log4J 1
+    "getLogger," +
+    // SLF4J
+    "getLogger," +
+    // Apache Commons Logging
+    "getLog," +
+    // Java Util Logging
+    "getLogger," +
+    // Log4J 2
+    "getLogger";
   protected final List<String> loggerFactoryClassNames = new ArrayList<>();
   protected final List<String> loggerFactoryMethodNames = new ArrayList<>();
-  @SuppressWarnings({"PublicField"})
-  public String loggerClassName = DEFAULT_LOGGER_CLASS_NAMES;
-  @SuppressWarnings({"PublicField"})
-  public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
+  @SuppressWarnings("PublicField")
+  public String loggerClassName = DEFAULT_FACTORY_CLASS_NAMES;
+  @SuppressWarnings("PublicField")
+  public @NonNls String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
-  
+
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
@@ -69,7 +75,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose logger factory class");
+    final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
   }
 
   @Override
@@ -95,7 +102,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
     if (loggerFactoryClassNames.size() != loggerFactoryMethodNames.size() || loggerFactoryClassNames.isEmpty()) {
-      parseString(DEFAULT_LOGGER_CLASS_NAMES, loggerFactoryClassNames);
+      parseString(DEFAULT_FACTORY_CLASS_NAMES, loggerFactoryClassNames);
       parseString(DEFAULT_FACTORY_METHOD_NAMES, loggerFactoryMethodNames);
     }
   }
@@ -104,13 +111,22 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   public void writeSettings(@NotNull Element element) throws WriteExternalException {
     loggerClassName = formatString(loggerFactoryClassNames);
     loggerFactoryMethodName = formatString(loggerFactoryMethodNames);
+    if (loggerFactoryMethodName.equals(DEFAULT_FACTORY_METHOD_NAMES) && loggerClassName.equals(DEFAULT_FACTORY_CLASS_NAMES)) {
+      // to prevent changing inspection profile with new default, which is mistakenly always written because of bug in serialization below.
+      loggerFactoryMethodName = "getLogger," +
+                                "getLogger," +
+                                "getLog," +
+                                "getLogger";
+      // these broken settings are restored correctly in readSettings()
+    }
     XmlSerializer.serializeInto(this, element, new SerializationFilterBase() {
       @Override
       protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
-        if ("loggerClassName".equals(accessor.getName()) && DEFAULT_LOGGER_CLASS_NAMES.equals(beanValue)) {
+        final @NonNls String factoryName = accessor.getName();
+        if ("loggerClassName".equals(factoryName) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) {
           return false;
         }
-        if ("loggerFactoryMethodNames".equals(accessor.getName()) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
+        if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
           return false;
         }
         return true;
@@ -118,7 +134,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     });
   }
 
-  private static class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
+  private static final class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
 
     private final String newClassName;
 

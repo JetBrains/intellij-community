@@ -106,9 +106,19 @@
     <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
+    <group id="Svn.WorkingCopiesView.Toolbar">
+      <action id="Svn.RefreshWorkingCopies" class="org.jetbrains.idea.svn.dialogs.RefreshWorkingCopiesAction"
+              icon="AllIcons.Actions.Refresh" use-shortcut-of="Refresh"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="svn.use.incoming.optimization" defaultValue="false"
+                 description="Use remotely (in svn repository) changed files list to optimize incoming revisions processing"/>
+    <registryKey key="svn.lowest.supported.format.for.command.line" defaultValue="1.7.0"
+                 description="Lowest svn working copy format command line integration could be used with"/>
+    <registryKey key="svn.filter.unique.roots.by.url" defaultValue="false" description="Filter unique roots by obtaining repository urls"/>
+
     <vcsCheckinHandlerFactory implementation="org.jetbrains.idea.svn.checkin.SvnCheckinHandlerFactory"/>
     <checkoutProvider implementation="org.jetbrains.idea.svn.checkout.SvnCheckoutProvider"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
@@ -126,19 +136,23 @@
     <search.projectOptionsTopHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
          areChildrenValidMappings="true"/>
-    <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
+    <projectConfigurable id="vcs.Subversion" key="configurable.name.svn.general" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
-      <configurable id="vcs.Subversion.Presentation" displayName="Presentation"
-                    instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"/>
-      <configurable id="vcs.Subversion.Network" displayName="Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"/>
-      <configurable id="vcs.Subversion.SSH" displayName="SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"/>
+      <configurable id="vcs.Subversion.Presentation" instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"
+                    bundle="messages.SvnBundle" key="configurable.name.svn.presentation"/>
+      <configurable id="vcs.Subversion.Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"
+                    bundle="messages.SvnBundle" key="configurable.name.svn.network"/>
+      <configurable id="vcs.Subversion.SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"
+                    bundle="messages.SvnBundle" key="configurable.name.svn.ssh"/>
     </projectConfigurable>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnStatisticsCollector"/>
 
-    <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
-                        predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
+    <changesViewContent tabName="Subversion Working Copies Information"
+                        className="org.jetbrains.idea.svn.WorkingCopiesContent"
+                        predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"
+                        displayNameSupplierClassName="org.jetbrains.idea.svn.WorkingCopiesContent$DisplayNameSupplier"/>
 
     <vcs.branchStateProvider implementation="org.jetbrains.idea.svn.branchConfig.SvnBranchStateProvider"/>
 
@@ -153,6 +167,6 @@
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnPhantomChangeDiffRequestProvider$SvnPhantomDiffTool"/>
     <diff.DiffTool implementation="org.jetbrains.idea.svn.difftool.SvnTreeConflictDiffRequestProvider$SvnTreeConflictDiffTool"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder"/>
-    <notificationWhitelist groupIds="Svn Roots Detection Errors"/>
+    <notificationGroup id="Svn Roots Detection Errors" displayType="STICKY_BALLOON"/>
   </extensions>
 </idea-plugin>

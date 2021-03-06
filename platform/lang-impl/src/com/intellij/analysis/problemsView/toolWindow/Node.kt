@@ -3,8 +3,10 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.TreePathUtil.pathToCustomNode
 import java.util.Collections.emptyList
@@ -17,14 +19,20 @@ internal abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Suppl
 
   abstract override fun getName(): String
 
+  override fun toString() = name
+
   open fun getChildren(): Collection<Node> = emptyList()
+
+  open fun getVirtualFile(): VirtualFile? = null
+
+  open fun getDescriptor(): OpenFileDescriptor? = null
+
+  open fun getNavigatable(): Navigatable? = getDescriptor()
 
   override fun getElement() = this
 
   override fun update(presentation: PresentationData) {
     if (myProject == null || myProject.isDisposed) return
-    presentation.addText(name, REGULAR_ATTRIBUTES)
-    presentation.setIcon(icon)
     update(myProject, presentation)
   }
 

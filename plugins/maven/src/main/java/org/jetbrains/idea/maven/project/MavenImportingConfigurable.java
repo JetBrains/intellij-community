@@ -44,7 +44,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
       myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
     }
-    mySettingsForm = new MavenImportingSettingsForm(myProject.isDefault());
+    mySettingsForm = new MavenImportingSettingsForm(myProject);
   }
 
   @Override

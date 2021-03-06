@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.BrowserUtil;
@@ -6,16 +7,16 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.URLUtil;
@@ -42,7 +43,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   @NotNull
-  protected abstract String getDisplayName();
+  protected abstract @Nls String getDisplayName();
 
   @NotNull
   public abstract String getGithubUserName();
@@ -54,7 +55,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @Nullable
   public abstract String getDescription();
 
-  private String getTitle() {
+  private @NlsContexts.ProgressTitle String getTitle() {
     return getDisplayName();
   }
 
@@ -165,8 +166,9 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   public ActionLink createGitHubLink() {
-    ActionLink link = new ActionLink(LangBundle.message("link.label.on.github", getName()), DumbAwareAction.create(e ->
-        BrowserUtil.open("https://github.com/" + getGithubUserName() + "/" + getGithubRepositoryName())));
+    ActionLink link = new ActionLink(LangBundle.message("link.label.on.github", getName()), e -> {
+      BrowserUtil.open("https://github.com/" + getGithubUserName() + "/" + getGithubRepositoryName());
+    });
     link.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     return link;
   }

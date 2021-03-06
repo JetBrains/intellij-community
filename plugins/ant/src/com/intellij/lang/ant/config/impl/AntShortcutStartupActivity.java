@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.lang.ant.AntDisposable;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
 import com.intellij.openapi.Disposable;
@@ -18,7 +19,7 @@ final class AntShortcutStartupActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull Project project) {
     Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
-    Disposer.register(project, activityDisposable);
+    Disposer.register(AntDisposable.getInstance(project), activityDisposable);
 
     final String prefix = AntConfiguration.getActionIdPrefix(project);
     final ActionManager actionManager = ActionManager.getInstance();
@@ -35,9 +36,8 @@ final class AntShortcutStartupActivity implements StartupActivity {
   }
 
   private static void unregisterAction(@NotNull Project project) {
-    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
-    for (String oldId : oldIds) {
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    for (String oldId : actionManager.getActionIdList(AntConfiguration.getActionIdPrefix(project))) {
       actionManager.unregisterAction(oldId);
     }
   }

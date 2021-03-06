@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -14,18 +16,18 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,9 +35,6 @@ import java.util.*;
 
 import static java.util.Collections.emptySet;
 
-/**
- * @author cdr
- */
 public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/projectWide";
   private MockWolfTheProblemSolver myWolfTheProblemSolver;
@@ -43,7 +42,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myWolfTheProblemSolver = prepareWolf(myProject);
+    myWolfTheProblemSolver = prepareWolf(myProject, getTestRootDisposable());
   }
 
   @Override
@@ -61,12 +60,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
 
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    PsiJavaFile psiX = (PsiJavaFile)myPsiManager.findFile(x);
-    PsiJavaFile psiY = (PsiJavaFile)myPsiManager.findFile(y);
-    DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
-    ProblemsScope problemsScope = ProblemsScope.INSTANCE;
-    assertTrue(problemsScope.getValue().contains(psiX, validationManager));
-    assertTrue(problemsScope.getValue().contains(psiY, validationManager));
 
     deleteMethodWithProblem(x);
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
@@ -74,8 +67,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     highlightFile(x);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    assertFalse(problemsScope.getValue().contains(psiX, validationManager));
-    assertTrue(problemsScope.getValue().contains(psiY, validationManager));
 
     deleteMethodWithProblem(y);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
@@ -83,8 +74,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     highlightFile(y);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertFalse(myWolfTheProblemSolver.isProblemFile(y));
-    assertFalse(problemsScope.getValue().contains(psiX, validationManager));
-    assertFalse(problemsScope.getValue().contains(psiY, validationManager));
   }
 
   private void deleteMethodWithProblem(VirtualFile virtualFile) {
@@ -133,12 +122,15 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
   }
 
-  public static MockWolfTheProblemSolver prepareWolf(final Project project) {
+  @NotNull
+  public static MockWolfTheProblemSolver prepareWolf(@NotNull Project project, @NotNull Disposable parentDisposable) {
     MockWolfTheProblemSolver wolfTheProblemSolver = (MockWolfTheProblemSolver)WolfTheProblemSolver.getInstance(project);
 
     WolfTheProblemSolverImpl theRealSolver = new WolfTheProblemSolverImpl(project);
     wolfTheProblemSolver.setDelegate(theRealSolver);
+    Disposer.register(parentDisposable, theRealSolver);
     return wolfTheProblemSolver;
+
   }
 
   private VirtualFile configureRoot() throws Exception {
@@ -229,8 +221,8 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-      ApplicationManager.getApplication().runReadAction(runnable);
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ReadAction.run(testRunnable);
   }
 
   private void highlightFile(@NotNull VirtualFile virtualFile) {
@@ -262,7 +254,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertFalse(myWolfTheProblemSolver.isProblemFile(virtualFile));
   }
 
-  private static class MyProblemListener implements ProblemListener {
+  private static final class MyProblemListener implements ProblemListener {
     private final Set<VirtualFile> myEventAdded;
     private final Set<VirtualFile> myEventChanged;
     private final Set<VirtualFile> myEventRemoved;

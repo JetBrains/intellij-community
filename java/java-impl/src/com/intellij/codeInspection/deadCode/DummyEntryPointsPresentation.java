@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -16,7 +14,7 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +46,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
                                                @NotNull InspectionTreeNode parent) {
     return new UnusedDeclarationRefElementNode(entity, this, parent) {
       @Override
-      protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+      protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
         // do nothing
       }
     };
@@ -59,7 +57,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     return UnusedDeclarationInspectionBase.SHORT_NAME;
   }
 
-  private class MoveEntriesToSuspicious extends QuickFixAction {
+  private final class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
       super(AnalysisBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
     }

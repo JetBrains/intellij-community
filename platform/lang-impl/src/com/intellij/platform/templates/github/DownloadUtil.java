@@ -6,11 +6,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
 public final class DownloadUtil {
-  public static final String CONTENT_LENGTH_TEMPLATE = "${content-length}";
+  public static final @NonNls String CONTENT_LENGTH_TEMPLATE = "${content-length}";
   private static final Logger LOG = Logger.getInstance(DownloadUtil.class);
 
   /**
@@ -102,8 +104,8 @@ public final class DownloadUtil {
 
   public static @NotNull <V> Outcome<V> provideDataWithProgressSynchronously(
     @Nullable Project project,
-    @NotNull String progressTitle,
-    final @NotNull String actionShortDescription,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    final @NotNull @NlsContexts.ProgressText String actionShortDescription,
     final @NotNull Callable<? extends V> supplier,
     @Nullable Producer<Boolean> tryAgainProvider) {
     int attemptNumber = 1;
@@ -162,7 +164,7 @@ public final class DownloadUtil {
     }
     HttpRequests.request(location)
       .productNameAsUserAgent()
-      .connect(new HttpRequests.RequestProcessor<Object>() {
+      .connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public Object process(@NotNull HttpRequests.Request request) throws IOException {
           try {
@@ -178,7 +180,7 @@ public final class DownloadUtil {
       });
   }
 
-  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable String text, int contentLengthInBytes) {
+  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable @NlsContexts.ProgressText String text, int contentLengthInBytes) {
     if (progress != null && text != null) {
       int ind = text.indexOf(CONTENT_LENGTH_TEMPLATE);
       if (ind != -1) {
@@ -189,6 +191,7 @@ public final class DownloadUtil {
     }
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   private static String formatContentLength(int contentLengthInBytes) {
     if (contentLengthInBytes < 0) {
       return "";

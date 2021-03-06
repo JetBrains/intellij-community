@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.branch.DvcsBranchManager
@@ -51,6 +51,14 @@ internal class BranchesDashboardController(private val project: Project,
     remoteBranches.clear()
   }
 
+  fun updateLogBranchFilter() {
+    ui.updateLogBranchFilter()
+  }
+
+  fun navigateLogToSelectedBranch() {
+    ui.navigateToSelectedBranch(true)
+  }
+
   fun checkForBranchesUpdate(): Boolean {
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project)
     val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project)
@@ -96,12 +104,12 @@ internal class BranchesDashboardController(private val project: Project,
   }
 
   private fun updateBranchesIsMyState() {
-    VcsProjectLog.runWhenLogIsReady(project) { log, _ ->
+    VcsProjectLog.runWhenLogIsReady(project) {
       val allBranches = localBranches + remoteBranches
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
       ui.startLoadingBranches()
       calculateMyBranchesInBackground(
-        run = { indicator -> BranchesDashboardUtil.checkIsMyBranchesSynchronously(log, branchesToCheck, indicator) },
+        run = { indicator -> BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator) },
         onSuccess = { branches ->
           localBranches.updateUnsureBranchesStateFrom(branches)
           remoteBranches.updateUnsureBranchesStateFrom(branches)

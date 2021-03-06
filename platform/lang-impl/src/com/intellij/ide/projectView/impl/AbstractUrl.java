@@ -23,10 +23,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author cdr
- */
 public abstract class AbstractUrl {
+  @NotNull
   protected final String url;
   protected final String moduleName;
   private final String myType;

@@ -18,11 +18,13 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +34,7 @@ import java.util.Comparator;
  * @deprecated please use {@link BackgroundUpdaterTask}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
 
   protected AbstractPopup myPopup;
@@ -40,11 +43,12 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
    * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
   @Deprecated
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull @ProgressTitle final String title) {
     this(project, title, null);
   }
 
-  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title, @Nullable Comparator<PsiElement> comparator) {
+  public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final @ProgressTitle String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title, comparator);
   }
 
@@ -52,6 +56,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
    * @deprecated please use {@link BackgroundUpdaterTask}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void init(@NotNull AbstractPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
     if (component instanceof JBList) {

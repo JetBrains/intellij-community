@@ -295,7 +295,7 @@ public class FileStructureDialog extends DialogWrapper {
           }
         }
         final boolean state = chkFilter.isSelected();
-        myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
+        myTreeActionsOwner.setActionIncluded(action, (action instanceof FileStructureFilter) != state);
         myTreeStructure.rebuildTree();
         if (builder != null) {
           if (currentParent != null) {

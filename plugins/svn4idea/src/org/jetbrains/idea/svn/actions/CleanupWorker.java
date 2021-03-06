@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
@@ -36,7 +37,7 @@ public class CleanupWorker extends Task.Backgroundable {
     this(vcs, roots, null);
   }
 
-  public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots, @Nullable String title) {
+  public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots, @ProgressTitle @Nullable String title) {
     super(vcs.getProject(), notNull(title, message("action.Subversion.cleanup.progress.title")));
     myVcs = vcs;
     myRoots = new ArrayList<>(roots);
@@ -62,7 +63,7 @@ public class CleanupWorker extends Task.Backgroundable {
         File path = virtualToIoFile(root);
         File pathOrParent = virtualToIoFile(root.isDirectory() ? root : root.getParent());
 
-        indicator.setText(message("action.Subversion.cleanup.progress.text", path));
+        indicator.setText(message("progress.text.performing.path.cleanup", path));
         myVcs.getFactory(path).createCleanupClient().cleanup(pathOrParent, new SvnProgressCanceller(indicator));
       }
       catch (VcsException e) {

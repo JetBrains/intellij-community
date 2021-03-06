@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -260,8 +261,8 @@ class CompositeSequentialTask implements SequentialTask {
   private int myTotalIterations = 0;
 
   private final SequentialModalProgressTask myProgressTask;
-  private String myProgressText;
-  private String myProgressText2;
+  private @NlsContexts.ProgressText String myProgressText;
+  private @NlsContexts.ProgressDetails String myProgressText2;
 
   CompositeSequentialTask(@NotNull SequentialModalProgressTask progressTask) {
     myProgressTask = progressTask;
@@ -272,7 +273,7 @@ class CompositeSequentialTask implements SequentialTask {
     myTotalIterations += task.getTotalIterationsNumber();
   }
 
-  public void setProgressText(@NotNull String progressText) {
+  public void setProgressText(@NotNull @NlsContexts.ProgressText String progressText) {
     myProgressText = progressText;
   }
 
@@ -323,7 +324,7 @@ class CompositeSequentialTask implements SequentialTask {
     }
   }
 
-  public void setProgressText2(String progressText2) {
+  public void setProgressText2(@NlsContexts.ProgressDetails String progressText2) {
     myProgressText2 = progressText2;
   }
 }

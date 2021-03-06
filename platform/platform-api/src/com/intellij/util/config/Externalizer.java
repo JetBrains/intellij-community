@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Factory;
@@ -12,18 +11,19 @@ import java.util.Iterator;
 
 public interface Externalizer<T> {
   @NonNls String VALUE_ATTRIBUTE = "value";
-  Externalizer<String> STRING = new BaseExternalizer<String>(){
+  Externalizer<String> STRING = new BaseExternalizer<>() {
     @Override
     public String readValue(Element dataElement) {
       return dataElement.getAttributeValue(VALUE_ATTRIBUTE);
     }
   };
-  Externalizer<Integer> INTEGER = new BaseExternalizer<Integer>() {
+  Externalizer<Integer> INTEGER = new BaseExternalizer<>() {
     @Override
     public Integer readValue(Element dataElement) {
       try {
         return new Integer(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
-      } catch(NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         return null;
       }
     }
@@ -36,7 +36,7 @@ public interface Externalizer<T> {
       dataElement.setAttribute(VALUE_ATTRIBUTE, value.toString());
     }
   }
-  Externalizer<Boolean> BOOLEAN = new BaseExternalizer<Boolean>() {
+  Externalizer<Boolean> BOOLEAN = new BaseExternalizer<>() {
     @Override
     public Boolean readValue(Element dataElement) {
       return Boolean.valueOf(dataElement.getAttributeValue(VALUE_ATTRIBUTE));
@@ -50,7 +50,7 @@ public interface Externalizer<T> {
   interface SkippableValue {
   }
 
-  class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
+  final class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
     private final Factory<? extends T> myFactory;
 
     public FactoryBased(@NotNull Factory<? extends T> factory) {
@@ -68,13 +68,9 @@ public interface Externalizer<T> {
     public void writeValue(Element dataElement, T value) {
       value.writeExternal(dataElement);
     }
-
-    static <T extends JDOMExternalizable> FactoryBased<T> create(@NotNull Factory<? extends T> factory) {
-      return new FactoryBased<>(factory);
-    }
   }
 
-  class StorageExternalizer implements Externalizer<Storage> {
+  final class StorageExternalizer implements Externalizer<Storage> {
     @NonNls private static final String ITEM_TAG = "item";
     @NonNls private static final String KEY_ATTR = "key";
     @NonNls private static final String VALUE_ATTR = "value";

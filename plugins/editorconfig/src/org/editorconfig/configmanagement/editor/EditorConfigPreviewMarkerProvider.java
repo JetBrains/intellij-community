@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -44,7 +44,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
-    if (element instanceof EditorConfigHeader) {
+    if ( element instanceof EditorConfigHeader && isEditorConfigEnabled(element)) {
       ActionGroup actionGroup = createActions((EditorConfigHeader)element);
       PsiElement child = element.getFirstChild();
       if (child != null && child.getNode().getElementType() == EditorConfigElementTypes.L_BRACKET) {
@@ -57,7 +57,11 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     return null;
   }
 
-  private static class SectionLineMarkerInfo extends LineMarkerInfo<PsiElement> {
+  private static boolean isEditorConfigEnabled(@NotNull PsiElement element) {
+    return element.isValid() && Utils.isEnabled(element.getProject());
+  }
+
+  private static final class SectionLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final ActionGroup myActionGroup;
 
     private SectionLineMarkerInfo(@NotNull ActionGroup actionGroup,
@@ -71,7 +75,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     @Nullable
     @Override
     public GutterIconRenderer createGutterRenderer() {
-      return new LineMarkerGutterIconRenderer<PsiElement>(this) {
+      return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
           return null;
@@ -95,7 +99,7 @@ public class EditorConfigPreviewMarkerProvider extends LineMarkerProviderDescrip
     return new DefaultActionGroup(Collections.singletonList(new ChooseFileAction(header)));
   }
 
-  private static class ChooseFileAction extends DumbAwareAction {
+  private static final class ChooseFileAction extends DumbAwareAction {
     private final @NotNull EditorConfigHeader myHeader;
 
     private ChooseFileAction(@NotNull EditorConfigHeader header) {

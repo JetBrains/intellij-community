@@ -3,7 +3,6 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -11,7 +10,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  */
 class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_13
 
   fun testSimpleExpression() = doTest()
   fun testSimpleStatement() = doTest()

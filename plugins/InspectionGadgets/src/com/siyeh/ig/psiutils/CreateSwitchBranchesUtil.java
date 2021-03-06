@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -14,8 +14,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,16 +25,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
-public class CreateSwitchBranchesUtil {
+public final class CreateSwitchBranchesUtil {
   /**
    * @param names names of individual branches to create (non-empty)
    * @return a name of the action which creates missing switch branches.
    */
-  public static @NotNull String getActionName(Collection<String> names) {
+  public static @NotNull @Nls String getActionName(Collection<String> names) {
     if (names.size() == 1) {
-      return "Create missing switch branch '" + names.iterator().next() + "'";
+      return InspectionGadgetsBundle.message("create.missing.switch.branch", names.iterator().next());
     }
-    return "Create missing branches: " + formatMissingBranches(names);
+    return InspectionGadgetsBundle.message("create.missing.switch.branches", formatMissingBranches(names));
   }
 
   /**
@@ -58,7 +60,7 @@ public class CreateSwitchBranchesUtil {
   public static List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
                                                                         @NotNull List<String> allNames,
                                                                         @NotNull Collection<String> missingNames,
-                                                                        @NotNull Function<PsiSwitchLabelStatementBase, List<String>> caseExtractor) {
+                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();
     if (body == null) {
@@ -150,7 +152,7 @@ public class CreateSwitchBranchesUtil {
     return elementsToReplace;
   }
 
-  private static List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+  private static @NonNls List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {

@@ -5,10 +5,12 @@ import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
 import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import groovy.transform.CompileStatic
@@ -166,13 +168,29 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     assert doc == expected
   }
 
+  void testInlineReturnJava16() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_16, { configure """\
+      class C {
+        /** {@return smth} */
+        public String <caret>m() { }
+      }""".stripIndent()
+      def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
+      def doc = new JavaDocumentationProvider().generateRenderedDoc(method.getDocComment())
+
+      def expected =
+      "<div class=\'content\'>  </div><table class=\'sections\'><tr><td valign=\'top\' class=\'section\'><p>Returns:</td><td valign=\'top\'><p> smth</td></table>"
+
+      assert doc == expected
+    })
+  }
+
   void testMethodToMethodDelegate() {
     DocumentationDelegateProvider provider = {
       if (it instanceof PsiMethod && it.name == 'foo') {
         JavaPsiFacade.getInstance(project).findClass('Foo', it.resolveScope)?.findMethodBySignature(it, false)
       }
     }
-    DocumentationDelegateProvider.EP_NAME.getPoint(null).registerExtension(provider, myFixture.testRootDisposable)
+    DocumentationDelegateProvider.EP_NAME.getPoint().registerExtension(provider, myFixture.testRootDisposable)
 
     configure '''\
 class Foo {
@@ -235,7 +253,7 @@ class Bar {
 
       assert component.decoratedText == expected
 
-      documentationManager.navigateByLink(component, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
+      documentationManager.navigateByLink(component, null, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
       try {
         JavaExternalDocumentationTest.waitTillDone(documentationManager.getLastAction())
       }

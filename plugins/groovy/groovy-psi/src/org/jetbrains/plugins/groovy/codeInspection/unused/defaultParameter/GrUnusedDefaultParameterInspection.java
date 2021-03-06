@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.unused.defaultParameter;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionTool;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -34,14 +19,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
+public class GrUnusedDefaultParameterInspection extends GroovyLocalInspectionTool implements CleanupLocalInspectionTool {
 
-public class GrUnusedDefaultParameterInspection extends LocalInspectionTool implements CleanupLocalInspectionTool {
-
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
+  public @NotNull GroovyElementVisitor buildGroovyVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new GroovyElementVisitor() {
       @Override
       public void visitExpression(@NotNull GrExpression expression) {
         PsiElement expressionParent = expression.getParent();
@@ -61,12 +43,12 @@ public class GrUnusedDefaultParameterInspection extends LocalInspectionTool impl
 
         if (isInitializerUnused(parameter, method)) {
           holder.registerProblem(
-            expression, message("unused.default.parameter.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            QuickFixFactory.getInstance().createDeleteFix(expression, message("unused.default.parameter.fix"))
+            expression, GroovyBundle.message("unused.default.parameter.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            QuickFixFactory.getInstance().createDeleteFix(expression, GroovyBundle.message("unused.default.parameter.fix"))
           );
         }
       }
-    });
+    };
   }
 
   /**

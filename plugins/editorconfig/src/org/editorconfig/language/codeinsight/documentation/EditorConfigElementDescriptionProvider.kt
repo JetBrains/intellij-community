@@ -31,7 +31,7 @@ class EditorConfigElementDescriptionProvider : ElementDescriptionProvider {
         element.text,
         element.section.header.text
       )
-      else -> EditorConfigBundle["usage.type.unknown"]
+      else -> EditorConfigBundle.get("usage.type.unknown")
     }
   }
 }

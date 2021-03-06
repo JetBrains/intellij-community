@@ -22,9 +22,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 
-/**
- * @author cdr
- */
 @SkipSlowTestLocally
 public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
   public void testHugeConcatenationVisitingPerformance() throws IncorrectOperationException {

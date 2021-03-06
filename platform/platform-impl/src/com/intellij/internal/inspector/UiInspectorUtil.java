@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class UiInspectorUtil {
+public final class UiInspectorUtil {
   private static final String PROPERTY_KEY = "UiInspectorContextProvider.Key";
 
   public static void registerProvider(@NotNull JComponent component, @NotNull UiInspectorContextProvider provider) {
@@ -44,7 +45,7 @@ public class UiInspectorUtil {
   }
 
   @NotNull
-  public static List<PropertyBean> collectActionGroupInfo(@NotNull String prefix, @NotNull ActionGroup group, @Nullable String place) {
+  public static List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix, @NotNull ActionGroup group, @Nullable String place) {
     List<PropertyBean> result = new ArrayList<>();
 
     if (place != null) {
@@ -74,12 +75,12 @@ public class UiInspectorUtil {
 
     final ClassLoader classLoader = action.getClass().getClassLoader();
     if (classLoader instanceof PluginClassLoader) {
-      result.add(new PropertyBean("Action Plugin ID", ((PluginClassLoader)classLoader).getPluginIdString(), true));
+      result.add(new PropertyBean("Action Plugin ID", ((PluginClassLoader)classLoader).getPluginId().getIdString(), true));
     }
     return result;
   }
 
-  private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<String> result) {
+  private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<? super String> result) {
     for (AnAction action : group.getChildren(null)) {
       if (action instanceof ActionGroup) {
         ActionGroup child = (ActionGroup)action;

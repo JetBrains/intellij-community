@@ -22,6 +22,13 @@ public class MockFacetConfiguration implements FacetConfiguration {
   private String myData = "";
   private MockFacetEditorTab myEditor;
 
+  public MockFacetConfiguration(String data) {
+    myData = data;
+  }
+
+  public MockFacetConfiguration() {
+  }
+
   @Override
   public FacetEditorTab[] createEditorTabs(final FacetEditorContext editorContext, final FacetValidatorsManager validatorsManager) {
     myEditor = new MockFacetEditorTab(this);
@@ -51,6 +58,7 @@ public class MockFacetConfiguration implements FacetConfiguration {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myData = StringUtil.notNullize(element.getAttributeValue("data"));
+    myRoots.clear();
     final List<Element> children = element.getChildren("root");
     for (Element child : children) {
       myRoots.add(VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("url")));

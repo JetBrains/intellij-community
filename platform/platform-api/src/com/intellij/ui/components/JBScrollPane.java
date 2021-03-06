@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,12 +7,18 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.scroll.LatchingScroll;
+import com.intellij.ui.scroll.MouseWheelSmoothScroll;
+import com.intellij.ui.scroll.TouchScroll;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -33,31 +39,27 @@ import java.util.function.Supplier;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBScrollPane extends JScrollPane {
-  /**
-   * This key is used to specify which colors should use the scroll bars on the pane.
-   * If a client property is set to {@code true} the bar's brightness
-   * will be modified according to the view's background.
-   *
-   * @see UIUtil#putClientProperty(JComponent, Key, Object)
-   * @see UIUtil#isUnderDarcula
-   * @deprecated unsupported approach to control a scroll bar painting
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   /**
    * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
    * when insets for {@code JScrollPane's} content are being calculated.
    * <p>
    * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
-   * scrollbar
+   * scrollbar.
    * <p>
-   * Please use as a marker for scrollbars, that should be transparent and shown over content
+   * Please use as a marker for scrollbars, that should be transparent and shown over content.
    *
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
   public static final Key<Boolean> IGNORE_SCROLLBAR_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
+
+  /**
+   * When set to {@link Boolean#TRUE} for component then latching will be ignored.
+   *
+   * @see LatchingScroll
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -125,18 +127,13 @@ public class JBScrollPane extends JScrollPane {
     return view.getBackground();
   }
 
+  /**
+   * @deprecated use {@link ComponentUtil#getScrollPane} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static JScrollPane findScrollPane(Component c) {
-    if (c == null) return null;
-
-    if (!(c instanceof JViewport)) {
-      Container vp = c.getParent();
-      if (vp instanceof JViewport) c = vp;
-    }
-
-    c = c.getParent();
-    if (!(c instanceof JScrollPane)) return null;
-
-    return (JScrollPane)c;
+    return ComponentUtil.getScrollPane(c);
   }
 
   private void init() {
@@ -184,9 +181,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   /**
-   * Adds status component which's anchored to the top right corner above the right scrollbar.
-   * This component obeys the <code>Flip</code>
-   * @param statusComponent
+   * Adds status component which is anchored to the top right corner above the right scrollbar.
+   * This component obeys the {@link Flip}.
    */
   public void setStatusComponent(JComponent statusComponent) {
     JComponent old = getStatusComponent();
@@ -207,11 +203,12 @@ public class JBScrollPane extends JScrollPane {
     return statusComponent;
   }
 
-  private static class JBMouseWheelListener implements MouseWheelListener {
+  private static final class JBMouseWheelListener implements MouseWheelListener {
 
     private final MouseWheelListener myDelegate;
     private MouseWheelSmoothScroll mySmoothScroll;
     private TouchScroll myTouchScroll;
+    private LatchingScroll myLatchingScroll;
 
     private JBMouseWheelListener(MouseWheelListener delegate) {
       this.myDelegate = delegate;
@@ -242,8 +239,16 @@ public class JBScrollPane extends JScrollPane {
               });
             }
             mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
-          } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
-            myDelegate.mouseWheelMoved(event);
+          } else {
+            if (LatchingScroll.isEnabled()) {
+              if (myLatchingScroll == null) myLatchingScroll = new LatchingScroll();
+              if (myLatchingScroll.shouldBeIgnored(event)) {
+                event.consume();
+              }
+            }
+            if (!event.isConsumed() && !(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
+              myDelegate.mouseWheelMoved(event);
+            }
           }
         }
 
@@ -294,16 +299,6 @@ public class JBScrollPane extends JScrollPane {
   @Override
   protected JViewport createViewport() {
     return new JBViewport();
-  }
-
-  /**
-   * @deprecated unsupported old implementation
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
-    ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
-    return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
   }
 
   public static boolean canBePreprocessed(@NotNull MouseEvent e, @NotNull JScrollBar bar) {
@@ -641,7 +636,7 @@ public class JBScrollPane extends JScrollPane {
       colHeadBounds.x = bounds.x - insets.left;
       colHeadBounds.width = bounds.width + insets.left + insets.right;
       boolean fillUpperCorner = false;
-      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing(); 
+      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing();
       if (colHead != null) {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);

@@ -38,6 +38,7 @@
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
         <xs:element type="statisticsType" name="statistics" minOccurs="0"/>
+        <xs:element type="default-lafType" name="default-laf" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -435,6 +436,7 @@
   </xs:complexType>
   <xs:complexType name="customize-ide-wizardType">
     <xs:attribute type="xs:string" name="provider" use="required"/>
+    <xs:attribute type="xs:string" name="dialog" />
   </xs:complexType>
   <xs:complexType name="editorType">
     <xs:attribute type="xs:string" name="background-url" use="required"/>
@@ -500,5 +502,9 @@
     <xs:attribute type="xs:string" name="service-key"/>
     <xs:attribute type="xs:string" name="fus-settings"/>
     <xs:attribute type="xs:string" name="event-log-settings"/>
+  </xs:complexType>
+  <xs:complexType name="default-lafType">
+    <xs:attribute type="xs:string" name="light"/>
+    <xs:attribute type="xs:string" name="dark"/>
   </xs:complexType>
 </xs:schema>

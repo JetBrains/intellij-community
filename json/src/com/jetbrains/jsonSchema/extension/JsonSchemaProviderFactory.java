@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -15,8 +16,10 @@ public interface JsonSchemaProviderFactory {
   ExtensionPointName<JsonSchemaProviderFactory> EP_NAME = ExtensionPointName.create("JavaScript.JsonSchema.ProviderFactory");
   Logger LOG = Logger.getInstance(JsonSchemaProviderFactory.class);
 
-  @NotNull
-  List<JsonSchemaFileProvider> getProviders(@NotNull Project project);
+  /**
+   * Called in smart mode by default. Implement {@link com.intellij.openapi.project.DumbAware} to be called in dumb mode.
+   */
+  @NotNull List<JsonSchemaFileProvider> getProviders(@NotNull Project project);
 
   /**
    * Finds a {@link VirtualFile} instance corresponding to a specified resource path (relative or absolute).
@@ -26,7 +29,7 @@ public interface JsonSchemaProviderFactory {
    *                      See {@link Class#getResource(String)} for more details
    * @return VirtualFile instance, or null if not found
    */
-  static VirtualFile getResourceFile(@NotNull Class baseClass, @NotNull String resourcePath) {
+  static VirtualFile getResourceFile(@NotNull Class baseClass, @NonNls @NotNull String resourcePath) {
     URL url = baseClass.getResource(resourcePath);
     if (url == null) {
       LOG.error("Cannot find resource " + resourcePath);

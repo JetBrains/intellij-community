@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * more specific constructor to pass all parameters
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     this(jdkModel, null);
   }
@@ -62,6 +64,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * suggested SDKs into {@link Sdk}s
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("unused")
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
                      @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
@@ -86,7 +89,20 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @Nullable Condition<? super Sdk> sdkFilter,
                      @Nullable Condition<? super SdkTypeId> creationFilter,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
-    super(new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter));
+    this(project,
+         new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter),
+         onNewSdkAdded);
+  }
+
+  /**
+   * Creates new Sdk selector combobox
+   * @param project current project (if any)
+   * @param onNewSdkAdded a callback that is executed once a new Sdk is added to the list
+   */
+  public JdkComboBox(@Nullable Project project,
+                     @NotNull SdkListModelBuilder modelBuilder,
+                     @Nullable Consumer<? super Sdk> onNewSdkAdded) {
+    super(modelBuilder);
     myOnNewSdkAdded = sdk -> {
       if (onNewSdkAdded != null) {
         onNewSdkAdded.consume(sdk);
@@ -137,6 +153,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * all the needed actions in the popup. The button will be made invisible.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("unused")
   public void setSetupButton(final JButton setUpButton,
                                 @Nullable final Project project,
@@ -154,6 +171,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    */
   @Deprecated
   @SuppressWarnings("unused")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void setSetupButton(final JButton setUpButton,
                                 @Nullable final Project project,
                                 final ProjectSdksModel jdksModel,
@@ -194,6 +212,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    */
   @Nullable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public JButton getSetUpButton() {
     return mySetUpButton;
   }
@@ -220,6 +239,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    */
   @Deprecated
   @SuppressWarnings("unused")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
     processFirstItem(firstItem);
     reloadModel();
@@ -287,7 +307,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       if (myModel.executeAction(this, item, newItem -> {
         setSelectedItem(newItem);
         if (newItem instanceof SdkItem) {
-          myOnNewSdkAdded.consume(((SdkItem)newItem).getSdk());
+          myOnNewSdkAdded.consume(((SdkItem)newItem).sdk);
         }
       })) return;
     }
@@ -379,7 +399,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
   }
 
-  private static class InnerJdkComboBoxItem extends JdkComboBoxItem implements InnerComboBoxItem {
+  private static final class InnerJdkComboBoxItem extends JdkComboBoxItem implements InnerComboBoxItem {
     private final SdkListItem myItem;
 
     private InnerJdkComboBoxItem(@NotNull SdkListItem item) {
@@ -406,11 +426,11 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
   }
 
-  private static class ActualJdkInnerItem extends ActualJdkComboBoxItem implements InnerComboBoxItem {
+  private static final class ActualJdkInnerItem extends ActualJdkComboBoxItem implements InnerComboBoxItem {
     private final SdkItem myItem;
 
     private ActualJdkInnerItem(@NotNull SdkItem item) {
-      super(item.getSdk());
+      super(item.sdk);
       myItem = item;
     }
 
@@ -504,6 +524,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
    * it is kept here for binary compatibility
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static class SuggestedJdkItem extends JdkComboBoxItem {
     private final SdkType mySdkType;
     private final String myPath;

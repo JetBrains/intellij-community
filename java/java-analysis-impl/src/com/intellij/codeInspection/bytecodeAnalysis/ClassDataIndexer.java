@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.IntFunction;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
@@ -54,7 +52,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 14; // change when inference algorithm changes
+  private static final int VERSION = 15; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
@@ -251,7 +249,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     }
   }
 
-  private static class MethodAnalysisVisitor extends KeyedMethodVisitor {
+  private static final class MethodAnalysisVisitor extends KeyedMethodVisitor {
     private final Map<EKey, Equations> myEquations;
     private final String myPresentableUrl;
     private final ExpandableArray<State> mySharedPendingStates;
@@ -502,31 +500,6 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         return;
       }
 
-      final IntFunction<Function<Value, Stream<Equation>>> inOuts =
-        index -> val -> {
-          if (isBooleanResult && negatedAnalysis != null) {
-            return Stream.of(negatedAnalysis.contractEquation(index, val, stable));
-          }
-          Stream.Builder<Equation> builder = Stream.builder();
-          try {
-            if (isInterestingResult) {
-              builder.add(new InOutAnalysis(richControlFlow, new InOut(index, val), origins, stable, mySharedPendingStates).analyze());
-            }
-            if (shouldInferNonTrivialFailingContracts) {
-              InThrow direction = new InThrow(index, val);
-              if (throwEquation.result.equals(Value.Fail)) {
-                builder.add(new Equation(new EKey(method, direction, stable), Value.Fail));
-              }
-              else {
-                builder.add(new InThrowAnalysis(richControlFlow, direction, origins, stable, mySharedPendingStates).analyze());
-              }
-            }
-          }
-          catch (AnalyzerException e) {
-            throw new RuntimeException("Analyzer error", e);
-          }
-          return builder.build();
-        };
       // arguments and contract clauses
       for (int i = 0; i < argumentTypes.length; i++) {
         boolean notNullParam = false;
@@ -573,7 +546,27 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
             }
           }
         }
-        Value.typeValues(argumentTypes[i]).flatMap(inOuts.apply(i)).forEach(result::add);
+        for (Value val : Value.typeValues(argumentTypes[i])) {
+          if (isBooleanResult && negatedAnalysis != null) {
+            result.add(negatedAnalysis.contractEquation(i, val, stable));
+            continue;
+          }
+          try {
+            if (isInterestingResult) {
+              result.add(new InOutAnalysis(richControlFlow, new InOut(i, val), origins, stable, mySharedPendingStates).analyze());
+            }
+            if (shouldInferNonTrivialFailingContracts) {
+              InThrow direction = new InThrow(i, val);
+              Equation failEquation = throwEquation.result.equals(Value.Fail)
+                                      ? new Equation(new EKey(method, direction, stable), Value.Fail)
+                                      : new InThrowAnalysis(richControlFlow, direction, origins, stable, mySharedPendingStates).analyze();
+              result.add(failEquation);
+            }
+          }
+          catch (AnalyzerException e) {
+            throw new RuntimeException("Analyzer error", e);
+          }
+        }
       }
     }
 
@@ -592,16 +585,22 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       if (ASMUtils.isReferenceType(returnType)) {
         result.add(analyzer.nullableResultEquation(stable));
       }
-      EntryStream.of(argumentTypes).forKeyValue((i, argType) -> {
+      for (int i = 0; i < argumentTypes.length; i++) {
+        Type argType = argumentTypes[i];
         if (ASMUtils.isReferenceType(argType)) {
           result.add(analyzer.notNullParamEquation(i, stable));
           result.add(analyzer.nullableParamEquation(i, stable));
+          for (Value val : Value.OBJECT) {
+            ContainerUtil.addIfNotNull(result, analyzer.contractEquation(i, val, stable));
+            ContainerUtil.addIfNotNull(result, analyzer.failEquation(i, val, stable));
+          }
+        } else if (ASMUtils.isBooleanType(argType)) {
+          for (Value val : Value.BOOLEAN) {
+            ContainerUtil.addIfNotNull(result, analyzer.contractEquation(i, val, stable));
+            ContainerUtil.addIfNotNull(result, analyzer.failEquation(i, val, stable));
+          }
         }
-        Value.typeValues(argType)
-          .flatMap(val -> Stream.of(analyzer.contractEquation(i, val, stable), analyzer.failEquation(i, val, stable)))
-          .filter(Objects::nonNull)
-          .forEach(result::add);
-      });
+      }
     }
 
     private void storeStaticFieldEquations(CombinedAnalysis analyzer) {

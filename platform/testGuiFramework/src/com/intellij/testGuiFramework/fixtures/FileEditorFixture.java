@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -32,7 +30,6 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
 
 public class FileEditorFixture extends EditorFixture {
-
   private final FileEditorManager myManager;
   private final IdeFrameFixture myFrame;
   private final EditorTabsFixture tabs;
@@ -58,10 +55,10 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public VirtualFile getCurrentFile() {
-    return execute(new GuiQuery<VirtualFile>() {
-      @javax.annotation.Nullable
+    return execute(new GuiQuery<>() {
+      @Nullable
       @Override
-      protected VirtualFile executeInEDT() throws Throwable {
+      protected VirtualFile executeInEDT() {
         VirtualFile[] selectedFiles = myManager.getSelectedFiles();
         if (selectedFiles.length > 0) {
 
@@ -89,9 +86,9 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public String getCurrentFileName() {
-    return execute(new GuiQuery<String>() {
+    return execute(new GuiQuery<>() {
       @Override
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         return currentFile != null ? currentFile.getName() : null;
       }
@@ -160,7 +157,7 @@ public class FileEditorFixture extends EditorFixture {
       @Override
       public boolean test() {
         //noinspection ConstantConditions
-        return execute(new GuiQuery<Boolean>() {
+        return execute(new GuiQuery<>() {
           @Override
           protected Boolean executeInEDT() {
             FileEditor[] editors = FileEditorManager.getInstance(myFrame.getProject()).getEditors(file);
@@ -250,7 +247,7 @@ public class FileEditorFixture extends EditorFixture {
 
   @NotNull
   public EditorFixture waitUntilErrorAnalysisFinishes() {
-    FileFixture file = execute(new GuiQuery<FileFixture>() {
+    FileFixture file = execute(new GuiQuery<>() {
       @Override
       protected FileFixture executeInEDT() {
         return getCurrentFileFixture();
@@ -273,7 +270,7 @@ public class FileEditorFixture extends EditorFixture {
     pause(new Condition("Wait when virtual file is created...") {
       @Override
       public boolean test() {
-        virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
+        virtualFileReference.set(execute(new GuiQuery<>() {
           @Override
           protected VirtualFile executeInEDT() {
             return getCurrentFile();
@@ -360,9 +357,9 @@ public class FileEditorFixture extends EditorFixture {
    * Clicks to the editor's center to get focus to the editor
    */
   public void clickCenter() {
-    Editor selectedTextEditor = execute(new GuiQuery<Editor>() {
+    Editor selectedTextEditor = execute(new GuiQuery<>() {
                                           @Override
-                                          protected Editor executeInEDT() throws Throwable {
+                                          protected Editor executeInEDT() {
                                             return myManager.getSelectedTextEditor();
                                           }
                                         }

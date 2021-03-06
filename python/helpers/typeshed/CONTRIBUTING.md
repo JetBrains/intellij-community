@@ -15,6 +15,7 @@ are important to the project's success.
       but [contact us](#discussion) before starting significant work.
     * Create your stubs [conforming to the coding style](#stub-file-coding-style).
     * Make sure your tests pass cleanly on `mypy`, `pytype`, and `flake8`.
+    * Reformat your stubs with `black` and `isort`.
 4. [Submit your changes](#submitting-changes) by opening a pull request.
 5. You can expect a reply within a few days:
     * Diffs are merged when considered ready by the core team.
@@ -85,6 +86,8 @@ At present the core developers are (alphabetically):
 * Greg Price (@gnprice)
 * Sebastian Rittau (@srittau)
 * Guido van Rossum (@gvanrossum)
+* Shantanu (@hauntsaninja)
+* Rune Tynan (@CraftSpider)
 * Jelle Zijlstra (@JelleZijlstra)
 
 NOTE: the process for preparing and submitting changes also applies to
@@ -206,9 +209,6 @@ you should know about.
 
 Style conventions for stub files are different from PEP 8. The general
 rule is that they should be as concise as possible.  Specifically:
-* lines can be up to 130 characters long;
-* functions and methods that don't fit in one line should be split up
-  with one argument per line;
 * all function bodies should be empty;
 * prefer ``...`` over ``pass``;
 * prefer ``...`` on the same line as the class/function signature;
@@ -218,10 +218,15 @@ rule is that they should be as concise as possible.  Specifically:
   if the classes are very small;
 * do not use docstrings;
 * use variable annotations instead of type comments, even for stubs
-  that target older versions of Python;
-* for arguments with a type and a default, use spaces around the `=`.
-The code formatter [black](https://github.com/psf/black) will format
-stubs according to this standard.
+  that target older versions of Python.
+
+Stubs should be reformatted with the formatters
+[black](https://github.com/psf/black) and
+[isort](https://github.com/PyCQA/isort) before submission.
+These formatters are included in typeshed's `requirements-tests-py3.txt` file.
+A sample `pre-commit` file is included in the typeshed repository.  Copy it
+to `.git/hooks` and adjust the path to your virtual environment's `bin`
+directory to automatically reformat stubs before commit.
 
 Stub files should only contain information necessary for the type
 checker, and leave out unnecessary detail:
@@ -232,7 +237,13 @@ checker, and leave out unnecessary detail:
 * use `float` instead of `Union[int, float]`.
 
 Some further tips for good type hints:
-* avoid invariant collection types (`List`, `Dict`) in argument
+* use built-in generics (`list`, `dict`, `tuple`, `set`), instead
+  of importing them from `typing`, **except** for arbitrary length tuples
+  (`Tuple[int, ...]`) (see
+  [python/mypy#9980](https://github.com/python/mypy/issues/9980));
+* in Python 3 stubs, import collections (`Mapping`, `Iterable`, etc.)
+  from `collections.abc` instead of `typing`;
+* avoid invariant collection types (`list`, `dict`) in argument
   positions, in favor of covariant types like `Mapping` or `Sequence`;
 * avoid Union return types: https://github.com/python/mypy/issues/1693;
 * in Python 2, whenever possible, use `unicode` if that's the only
@@ -256,14 +267,6 @@ Note that `Any` is not the correct type to use if you want to indicate
 that some function can accept literally anything: in those cases use
 `object` instead.
 
-For arguments with type and a default value of `None`, PEP 484
-prescribes that the type automatically becomes `Optional`.  However we
-prefer explicit over implicit in this case, and require the explicit
-`Optional[]` around the type.  The mypy tests enforce this (through
-the use of --no-implicit-optional) and the error looks like
-`Incompatible types in assignment (expression has type None, variable
-has type "Blah") `.
-
 Stub files support forward references natively.  In other words, the
 order of class declarations and type aliases does not matter in
 a stub file.  You can also use the name of the class within its own
@@ -276,12 +279,22 @@ they are not part of the stubbed API.
 
 When adding type annotations for context manager classes, annotate
 the return type of `__exit__` as bool only if the context manager
-sometimes suppresses annotations -- if it sometimes returns `True`
+sometimes suppresses exceptions -- if it sometimes returns `True`
 at runtime. If the context manager never suppresses exceptions,
 have the return type be either `None` or `Optional[bool]`. If you
 are not sure whether exceptions are suppressed or not or if the
 context manager is meant to be subclassed, pick `Optional[bool]`.
 See https://github.com/python/mypy/issues/7214 for more details.
+
+A few guidelines for protocol names below. In cases that don't fall
+into any of those categories, use your best judgement.
+
+* Use plain names for protocols that represent a clear concept
+  (e.g. `Iterator`, `Container`).
+* Use `SupportsX` for protocols that provide callable methods (e.g.
+  `SupportsInt`, `SupportsRead`, `SupportsReadSeek`).
+* Use `HasX` for protocols that have readable and/or writable attributes
+  or getter/setter methods (e.g. `HasItems`, `HasFileno`).
 
 NOTE: there are stubs in this repository that don't conform to the
 style described above.  Fixing them is a great starting point for new
@@ -289,30 +302,19 @@ contributors.
 
 ### Stub versioning
 
-There are separate directories for `stdlib` and `third_party` stubs.
-Within those, there are separate directories for different versions of
-Python the stubs target.
+There are separate directories for `stdlib` (standard library) and `stubs`
+(all other stubs). For standard library stubs Python version support is
+given in `VERSIONS` file. Each line in this file is a module or package name
+followed by `: `, followed by the oldest *supported* Python version where
+the module is available. For third party packages, the Python version support
+(2 and/or 3 only, no finer grained version is supported) is indicated in the
+corresponding `METADATA.toml` file as `python2 = (True|False)` (defaults to
+`False`) and `python3 = (True|False)` (defaults to `True`).
 
-The directory name indicates the major version of Python that a stub targets
-and optionally the lowest minor version, with the exception of the `2and3`
-directory which applies to both Python 2 and 3.
-
-For example, stubs in the `3` directory will be applied to all versions of
-Python 3, though stubs in the `3.7` directory will only be applied to versions
-3.7 and above. However, stubs in the `2` directory will not be applied to
-Python 3.
-
-It is preferred to use a single stub in the more generic directory that
-conditionally targets specific versions when needed, as opposed
-to maintaining multiple stub files within more specific directories. Similarly,
-if the given library works on both Python 2 and Python 3, prefer to put your
-stubs in the `2and3` directory, unless the types are so different that the stubs
-become unreadable that way.
-
-You can use checks like `if sys.version_info >= (3, 8):` to denote new
-functionality introduced in a given Python version or solve type
-differences.  When doing so, only use one-tuples or two-tuples.  This is
-because:
+It is preferred to use a single stub for every module. You can use checks
+like `if sys.version_info >= (3, 8):` to denote new functionality introduced
+in a given Python version or solve type differences.  When doing so, only use
+one-tuples or two-tuples.  This is because:
 
 * mypy doesn't support more fine-grained version checks; and more
   importantly
@@ -334,10 +336,28 @@ harmless.  This is a strictly better compromise than using the latter
 two forms, which would generate false positive errors for correct use
 under Python 3.7.4.
 
+If it is not possible to generate combined stubs for all Python versions
+in a single file, you can split Python 2 and Python 3 stubs and place Python 2
+stubs into `@python2` subdirectory for corresponding distribution. Note that
+you don't need `@python2` in most cases, if your package supports Python 2,
+just put the stubs at root of the distribution directory, and put
+`python2 = True` in `METADATA.toml`.
+
 Note: in its current implementation, typeshed cannot contain stubs for
 multiple versions of the same third-party library.  Prefer to generate
 stubs for the latest version released on PyPI at the time of your
-stubbing.
+stubbing. The oldest version of the library for which the stubs are still
+applicable (i.e. reflect the actual runtime behaviour) can be indicated
+in `METADATA.toml` as `version = "x.y"`. Note that only two most significant
+version levels are supported (i.e. only single dot). When a significant change
+is made in the library, the version of the stub should be bumped (note that
+previous versions are still available on PyPI).
+
+Internal typeshed machinery will periodically build and upload modified
+third party packages to PyPI, each time this happens the least significant
+version level is incremented. For example, if `stubs/foo/METADATA.toml` has
+`version = "x.y"` the package on PyPI will be updated from `types-foo-x.y.n`
+to `types-foo-x.y.n+1`.
 
 ### What to do when a project's documentation and implementation disagree
 
@@ -373,3 +393,13 @@ Core developers should follow these rules when processing pull requests:
 * Make sure commit messages to master are meaningful. For example, remove irrelevant
   intermediate commit messages.
 * If stubs for a new library are submitted, notify the library's maintainers.
+
+When reviewing PRs, follow these guidelines:
+
+* Typing is hard. Try to be helpful and explain issues with the PR,
+  especially to new contributors.
+* When reviewing auto-generated stubs, just scan for red flags and obvious
+  errors. Leave possible manual improvements for separate PRs.
+* When reviewing large, hand-crafted PRs, you only need to look for red flags
+  and general issues, and do a few spot checks.
+* Review smaller, hand-crafted PRs thoroughly.

@@ -16,12 +16,15 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
 /**
  * Base class for light tests.
  * <p/>
- * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
  *
  * @author peter
  * @see CodeInsightFixtureTestCase for "heavy" tests that require access to the real FS or changes project roots.
@@ -42,8 +45,7 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
 
-    TempDirTestFixture tempDirFixture = createTempDirTestFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirTestFixture());
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
@@ -98,21 +100,17 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
    }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     if (isWriteActionRequired()) {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> doRunTests());
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
     }
     else {
-      doRunTests();
+      super.runTestRunnable(testRunnable);
     }
   }
 
   protected boolean isWriteActionRequired() {
     return false;
-  }
-
-  protected void doRunTests() throws Throwable {
-    super.runTest();
   }
 
   protected Project getProject() {

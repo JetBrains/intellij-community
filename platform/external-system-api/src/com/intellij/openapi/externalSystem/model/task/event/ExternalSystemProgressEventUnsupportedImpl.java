@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -22,7 +24,7 @@ public class ExternalSystemProgressEventUnsupportedImpl extends BaseExternalSyst
                                                                                                 ExternalSystemProgressEventUnsupported {
   private static final long serialVersionUID = 1L;
 
-  public ExternalSystemProgressEventUnsupportedImpl(String description) {
+  public ExternalSystemProgressEventUnsupportedImpl(@Nls String description) {
     super("unsupported", null, new OperationDescriptorImpl(description, -1));
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.options.ExternalizableScheme;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +28,7 @@ public abstract class ProfileEx implements Comparable, ExternalizableScheme {
 
   protected final SmartSerializer mySerializer;
 
-  @NotNull
-  protected String myName;
+  protected @NotNull @NlsSafe String myName;
 
   public ProfileEx(@NotNull String name) {
     myName = name;

@@ -223,11 +223,16 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
       return false;
     }
 
+    private static boolean isInFinalClass(@NotNull PsiMember member) {
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass == null) return false;
+      return containingClass.hasModifierProperty(PsiModifier.FINAL);
+    }
+
     @Contract("null -> false")
     private boolean isModulePublicApi(@Nullable PsiMember member) {
-      if (member != null &&
-          !(member instanceof PsiTypeParameter) &&
-          (member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED))) {
+      if (member == null || member instanceof PsiTypeParameter) return false;
+      if (member.hasModifierProperty(PsiModifier.PUBLIC) || !isInFinalClass(member) && member.hasModifierProperty(PsiModifier.PROTECTED)) {
         PsiElement parent = member.getParent();
         if (parent instanceof PsiClass) {
           return isModulePublicApi((PsiClass)parent);

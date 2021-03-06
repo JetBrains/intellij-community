@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Please use {@link ModuleListener} directly.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class ModuleAdapter implements ModuleListener {
 }

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
@@ -36,7 +37,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    */
   @NonNls @Language("RegExp")
   public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
-  private static final java.util.regex.Pattern COMPILED_VALID_ID_PATTERN = java.util.regex.Pattern.compile(VALID_ID_PATTERN);
+  private static final Pattern COMPILED_VALID_ID_PATTERN = Pattern.compile(VALID_ID_PATTERN);
 
   public static boolean isValidID(@NotNull String id) {
     return !id.isEmpty() && COMPILED_VALID_ID_PATTERN.matcher(id).matches();
@@ -178,15 +179,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
-    inspectionFinished(session);
   }
 
-  /**
-   * @deprecated Use {@link #inspectionFinished(LocalInspectionToolSession, ProblemsHolder)} instead
-   */
-  @Deprecated
-  public void inspectionFinished(@NotNull LocalInspectionToolSession session) {}
-  
   @NotNull
   public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, false);

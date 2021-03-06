@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTypesUtil.getPsiClass
 import com.intellij.psi.util.PsiUtil.substituteTypeParameter
-import com.intellij.psi.util.parentsWithSelf
+import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.dgm.GdkMethodHolder.getHolderForClass
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
@@ -21,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 fun processCategoriesInScope(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState): Boolean {
   if (!shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true
 
-  for (parent in place.parentsWithSelf) {
+  for (parent in place.parents(true)) {
     if (parent is GrMember) break
     if (parent !is GrFunctionalExpression) continue
     val call = checkMethodCall(parent) ?: continue
@@ -58,6 +59,8 @@ private fun getCategoryClasses(call: GrMethodCall, closure: GrFunctionalExpressi
   }
 }
 
+@NlsSafe private const val USE = "use"
+
 private fun checkMethodCall(place: PsiElement): GrMethodCall? {
   val context = place.context
   val call = when (context) {
@@ -68,7 +71,7 @@ private fun checkMethodCall(place: PsiElement): GrMethodCall? {
   if (call == null) return null
 
   val invoked = call.invokedExpression as? GrReferenceExpression
-  if (invoked?.referenceName != "use") return null
+  if (invoked?.referenceName != USE) return null
 
   return call
 }

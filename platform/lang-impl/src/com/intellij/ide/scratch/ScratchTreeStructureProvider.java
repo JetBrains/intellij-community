@@ -41,6 +41,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
     for (RootType rootType : RootType.getAllRootTypes()) {
       registerRootTypeUpdater(project, rootType, onUpdate, disposable, disposables);
     }
-    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<RootType>() {
+    RootType.ROOT_EP.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull RootType rootType, @NotNull PluginDescriptor pluginDescriptor) {
         registerRootTypeUpdater(project, rootType, onUpdate, disposable, disposables);
@@ -181,6 +182,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
    * @deprecated Use modify method instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static AbstractTreeNode<?> createRootNode(@NotNull Project project, ViewSettings settings) {
     return new MyProjectNode(project, settings);
   }
@@ -201,6 +203,11 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   private static final class MyProjectNode extends ProjectViewNode<String> {
     MyProjectNode(Project project, ViewSettings settings) {
       super(project, ScratchesNamedScope.scratchesAndConsoles(), settings);
+    }
+
+    @Override
+    public @NotNull NodeSortOrder getSortOrder(@NotNull NodeSortSettings settings) {
+      return NodeSortOrder.SCRATCH_ROOT;
     }
 
     @Override
@@ -307,7 +314,7 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
                                                                  @NotNull ViewSettings settings,
                                                                  @NotNull PsiFileSystemItemFilter filter) {
       final List<AbstractTreeNode<?>> result = new ArrayList<>();
-      PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
+      PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<>() {
         @Override
         public boolean execute(@NotNull PsiFileSystemItem element) {
           if (!filter.shouldShow(element)) {

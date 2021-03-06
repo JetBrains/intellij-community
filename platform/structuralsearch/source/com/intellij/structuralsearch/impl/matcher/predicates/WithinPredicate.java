@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -18,12 +19,12 @@ public class WithinPredicate extends MatchPredicate {
 
   private final Matcher matcher;
 
-  public WithinPredicate(String within, LanguageFileType fileType, Project project) {
+  public WithinPredicate(@NotNull String within, @NotNull LanguageFileType fileType, @NotNull Project project) {
     matcher = Matcher.buildMatcher(project, fileType, within);
   }
 
   @Override
-  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
+  public boolean match(@NotNull PsiElement matchedNode, int start, int end, @NotNull MatchContext context) {
     final List<MatchResult> results = matcher.matchByDownUp(matchedNode);
     for (MatchResult result : results) {
       if (PsiTreeUtil.isAncestor(result.getMatch(), matchedNode, false)) {

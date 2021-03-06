@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
@@ -15,12 +15,13 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
@@ -343,7 +344,6 @@ public class PyStubsTest extends PyTestCase {
 
   private PyFile getTestFile(final String fileName) {
     VirtualFile sourceFile = myFixture.copyFileToProject(fileName);
-    assert sourceFile != null;
     PsiFile psiFile = myFixture.getPsiManager().findFile(sourceFile);
     return (PyFile)psiFile;
   }
@@ -620,9 +620,7 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private void doTestUnsupportedTypingNamedTuple(@NotNull PsiElement anchor) {
-    final QualifiedName typingNTName = QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE);
-
-    final PsiElement member = PyResolveImportUtil.resolveTopLevelMember(typingNTName, PyResolveImportUtil.fromFoothold(anchor));
+    final PsiElement member = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(PyTypingTypeProvider.NAMEDTUPLE, anchor);
     assertInstanceOf(member, PyClass.class);
 
     doTestUnsupportedNT(
@@ -633,7 +631,7 @@ public class PyStubsTest extends PyTestCase {
     );
   }
 
-  private void doTestUnsupportedNT(@NotNull BiConsumer<PyType, TypeEvalContext> typeFromAstChecker) {
+  private void doTestUnsupportedNT(@NotNull BiConsumer<? super PyType, ? super TypeEvalContext> typeFromAstChecker) {
     final PyFile file = getTestFile();
 
     final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
@@ -741,7 +739,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testParameterAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -756,7 +754,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testFunctionAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -769,7 +767,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testVariableAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final PyFile file = getTestFile();
@@ -789,7 +787,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testAttributeTypeDeclaration() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final PyFile file = getTestFile();
@@ -804,7 +802,7 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testTypeAliasInParameterAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -815,30 +813,32 @@ public class PyStubsTest extends PyTestCase {
     });
   }
 
-  // PY-18116
+  // PY-18816
   public void testTypeAliasStubs() {
-    final PyFile file = getTestFile();
-    final List<PyTargetExpression> attributes = file.getTopLevelAttributes();
-    for (PyTargetExpression attr : attributes) {
-      assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
-    }
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      final PyFile file = getTestFile();
+      final List<PyTargetExpression> attributes = file.getTopLevelAttributes();
+      for (PyTargetExpression attr : attributes) {
+        assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
+      }
 
-    final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
-    final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
-    assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
-    assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
+      final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
+      final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
+      assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
+      assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
 
-    final PyClass pyClass = file.findTopLevelClass("C");
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
-    final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);
-    assertHasTypingAliasStub(false, classAttr);
+      final PyClass pyClass = file.findTopLevelClass("C");
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);
+      assertHasTypingAliasStub(false, classAttr);
 
-    final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
-    assertHasTypingAliasStub(false, instanceAttr);
-    assertNotParsed(file);
+      final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
+      assertHasTypingAliasStub(false, instanceAttr);
+      assertNotParsed(file);
+    });
   }
 
-  // PY-18166
+  // PY-18866
   public void testUnresolvedTypingSymbol() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
@@ -977,6 +977,18 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-33189
+  public void testAttrsKwOnlyOnField() {
+    final PyFile file = getTestFile();
+    final PyClass cls = file.findTopLevelClass("Foo");
+
+    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+
+    assertNotParsed(file);
+  }
+
   // PY-27398
   public void testTypingNewType() {
     runWithLanguageLevel(
@@ -1074,6 +1086,21 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingTypedDictArguments();
   }
 
+  // PY-41305
+  public void testDecoratorQualifiedNames() {
+    final PyFile file = getTestFile();
+    final PyFunction func = file.findTopLevelFunction("func");
+    assertNotNull(func);
+
+    PyDecoratorList decorators = func.getDecoratorList();
+    assertNotNull(decorators);
+    List<@Nullable String> names = ContainerUtil.map(decorators.getDecorators(),
+                                                     d -> ObjectUtils.doIfNotNull(d.getQualifiedName(), QualifiedName::toString));
+
+    assertEquals(names, Arrays.asList(null, "foo", "foo", "foo.bar", "foo.bar", null, null, null));
+    assertNotParsed(file);
+  }
+
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));
   }
@@ -1136,7 +1163,7 @@ public class PyStubsTest extends PyTestCase {
     assertFalse(fieldsTypesIterator.hasNext());
   }
 
-  private static class DataclassFieldChecker {
+  private static final class DataclassFieldChecker {
 
     @NotNull
     private final PyClass myClass;

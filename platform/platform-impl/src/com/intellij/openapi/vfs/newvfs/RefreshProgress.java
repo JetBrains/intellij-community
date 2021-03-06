@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.ui.UIUtil;
@@ -18,15 +19,15 @@ import org.jetbrains.annotations.NotNull;
 
 final class RefreshProgress extends ProgressIndicatorBase {
   @NotNull
-  public static ProgressIndicator create(@NotNull String message) {
+  public static ProgressIndicator create(@NotNull @NlsContexts.Tooltip String message) {
     Application app = LoadingState.COMPONENTS_LOADED.isOccurred() ? ApplicationManager.getApplication() : null;
     return app == null || app.isUnitTestMode() ? new EmptyProgressIndicator() : new RefreshProgress(message);
   }
 
-  private final String myMessage;
+  private final @NlsContexts.Tooltip String myMessage;
   private long myStartedTime;
 
-  private RefreshProgress(@NotNull String message) {
+  private RefreshProgress(@NotNull @NlsContexts.Tooltip String message) {
     super(true);
     myMessage = message;
   }

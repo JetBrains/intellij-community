@@ -15,10 +15,12 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.encoding.EncodingReference;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,12 +33,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-
-import static com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction.NO_ENCODING;
 
 /**
  * @author peter
@@ -171,13 +170,13 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private boolean isEncodingModified() {
     EncodingManager encodingManager = EncodingManager.getInstance();
 
-    Charset defaultEncoding = NO_ENCODING;
+    EncodingReference defaultEncoding = EncodingReference.DEFAULT;
     if (encodingManager instanceof EncodingManagerImpl) {
-      defaultEncoding = ((EncodingManagerImpl)encodingManager).getDefaultConsoleEncodingInternal();
+      defaultEncoding = ((EncodingManagerImpl)encodingManager).getDefaultConsoleEncodingReference();
     }
 
-    Charset consoleEncoding = myEncodingComboBox.getSelectedCharset();
-    return defaultEncoding.compareTo(consoleEncoding) != 0;
+    EncodingReference consoleEncoding = myEncodingComboBox.getSelectedEncodingReference();
+    return !defaultEncoding.equals(consoleEncoding);
   }
 
   @Override
@@ -208,7 +207,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     }
     if (isEncodingModified()) {
       if (encodingManager instanceof EncodingManagerImpl) {
-        ((EncodingManagerImpl)encodingManager).setDefaultConsoleEncodingInternal(myEncodingComboBox.getSelectedCharset());
+        ((EncodingManagerImpl)encodingManager).setDefaultConsoleEncodingReference(myEncodingComboBox.getSelectedEncodingReference());
       }
     }
 
@@ -230,13 +229,13 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     myConsoleCycleBufferSizeField.setEnabled(ConsoleBuffer.useCycleBuffer() && uiSettings.getOverrideConsoleCycleBufferSize());
     myConsoleCycleBufferSizeField.setText(Integer.toString(uiSettings.getConsoleCycleBufferSizeKb()));
 
-    Charset encoding = NO_ENCODING;
+    EncodingReference encodingReference = EncodingReference.DEFAULT;
     if (encodingManager instanceof EncodingManagerImpl) {
-      encoding = ((EncodingManagerImpl)encodingManager).getDefaultConsoleEncodingInternal();
+      encodingReference = ((EncodingManagerImpl)encodingManager).getDefaultConsoleEncodingReference();
     } else {
-      LOG.error("Expected EncodingManagerImpl but got " + encodingManager.getClass().getName());
+      LOG.warn("Expected EncodingManagerImpl but got " + encodingManager.getClass().getName());
     }
-    myEncodingComboBox.reset(encoding);
+    myEncodingComboBox.reset(encodingReference);
 
     myNegativePanel.resetFrom(mySettings.getNegativePatterns());
     myPositivePanel.resetFrom(mySettings.getPositivePatterns());
@@ -266,9 +265,9 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
-    private final String myQuery;
+    private final @NlsContexts.DialogMessage String myQuery;
 
-    MyAddDeleteListPanel(String title, String query) {
+    MyAddDeleteListPanel(@NlsContexts.BorderTitle String title, @NlsContexts.DialogMessage String query) {
       super(title, new ArrayList<>());
       myQuery = query;
       new ListSpeedSearch(myList);
@@ -280,13 +279,11 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     }
 
     @Override
-    @Nullable
-    protected String findItemToAdd() {
+    protected @Nullable String findItemToAdd() {
       return showEditDialog("");
     }
 
-    @Nullable
-    private String showEditDialog(final String initialValue) {
+    private @Nullable String showEditDialog(final String initialValue) {
       return Messages.showInputDialog(this, myQuery, ExecutionBundle.message("dialog.title.folding.pattern"), Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
@@ -298,11 +295,10 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
           return !StringUtil.isEmpty(inputString);
         }
 
-        @Nullable
         @Override
-        public String getErrorText(String inputString) {
+        public @NlsContexts.DetailedDescription @Nullable String getErrorText(String inputString) {
           if (!checkInput(inputString)) {
-            return "Console folding rule string cannot be empty";
+            return ExecutionBundle.message("message.console.folding.rule.string.cannot.be.empty");
           }
           return null;
         }

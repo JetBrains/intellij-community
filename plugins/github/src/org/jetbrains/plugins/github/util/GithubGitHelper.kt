@@ -5,19 +5,17 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.GitLocalBranch
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
+import git4idea.push.GitPushTarget
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
-import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 
 /**
  * Utilities for Github-Git interactions
- *
- * accessible url - url that matches at least one registered account
- * possible url - accessible urls + urls that match github.com + urls that match server saved in old settings
  */
 @Service
 class GithubGitHelper {
@@ -34,55 +32,29 @@ class GithubGitHelper {
     }
   }
 
-  fun getAccessibleRemoteUrls(repository: GitRepository): List<String> {
-    return repository.getRemoteUrls().filter(::isRemoteUrlAccessible)
-  }
+  fun findRemote(repository: GitRepository, httpUrl: String?, sshUrl: String?): GitRemote? =
+    repository.remotes.find {
+      it.firstUrl != null && (it.firstUrl == httpUrl ||
+                              it.firstUrl == httpUrl + GitUtil.DOT_GIT ||
+                              it.firstUrl == sshUrl ||
+                              it.firstUrl == sshUrl + GitUtil.DOT_GIT)
+    }
 
-  fun hasAccessibleRemotes(repository: GitRepository): Boolean {
-    return repository.getRemoteUrls().any(::isRemoteUrlAccessible)
-  }
-
-  private fun isRemoteUrlAccessible(url: String) = GithubAuthenticationManager.getInstance().getAccounts().find { it.server.matches(url) } != null
-
-  fun getPossibleRepositories(repository: GitRepository): Set<GHRepositoryCoordinates> {
-    val knownServers = getKnownGithubServers()
-    return repository.getRemoteUrls().mapNotNull { url ->
-      knownServers.find { it.matches(url) }
-        ?.let { server -> GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url)?.let { GHRepositoryCoordinates(server, it) } }
-    }.toSet()
-  }
-
-  fun getPossibleRemoteUrlCoordinates(project: Project): Set<GitRemoteUrlCoordinates> {
-    val repositories = project.service<GitRepositoryManager>().repositories
-    if (repositories.isEmpty()) return emptySet()
-
-    val knownServers = getKnownGithubServers()
-
-    return repositories.flatMap { repo ->
-      repo.remotes.flatMap { remote ->
-        remote.urls.mapNotNull { url ->
-          if (knownServers.any { it.matches(url) }) GitRemoteUrlCoordinates(url, remote, repo) else null
+  fun findLocalBranch(repository: GitRepository, prRemote: GitRemote, isFork: Boolean, possibleBranchName: String?): String? {
+    val localBranchesWithTracking =
+      with(repository.branches) {
+        if (isFork) {
+          localBranches.filter { it.findTrackedBranch(repository)?.remote == prRemote }
+        }
+        else {
+          val prRemoteBranch = remoteBranches.find { it.nameForRemoteOperations == possibleBranchName } ?: return null
+          localBranches.filter { it.findTrackedBranch(repository) == prRemoteBranch }
         }
       }
-    }.toSet()
+    return localBranchesWithTracking.find { it.name == possibleBranchName }?.name
+           // if PR was made not from fork we can assume that the first local branch with tracking to that fork is a good candidate of local branch for that PR.
+           ?: if (!isFork) localBranchesWithTracking.firstOrNull()?.name else null
   }
-
-  fun havePossibleRemotes(project: Project): Boolean {
-    val repositories = project.service<GitRepositoryManager>().repositories
-    if (repositories.isEmpty()) return false
-
-    val knownServers = getKnownGithubServers()
-    return repositories.any { repo -> repo.getRemoteUrls().any { url -> knownServers.any { it.matches(url) } } }
-  }
-
-  private fun getKnownGithubServers(): Set<GithubServerPath> {
-    val registeredServers = mutableSetOf(GithubServerPath.DEFAULT_SERVER)
-    GithubAccountsMigrationHelper.getInstance().getOldServer()?.run(registeredServers::add)
-    GithubAuthenticationManager.getInstance().getAccounts().mapTo(registeredServers) { it.server }
-    return registeredServers
-  }
-
-  private fun GitRepository.getRemoteUrls() = remotes.map { it.urls }.flatten()
 
   companion object {
     @JvmStatic
@@ -103,6 +75,12 @@ class GithubGitHelper {
       }
       return manager.getRepositoryForFileQuick(project.baseDir)
     }
+
+    fun findPushTarget(repository: GitRepository, remote: GitRemote, branch: GitLocalBranch) =
+      GitPushTarget.getFromPushSpec(repository, remote, branch)
+      ?: GitBranchUtil.getTrackInfoForBranch(repository, branch)
+        ?.takeIf { it.remote == remote }
+        ?.let { GitPushTarget(it.remoteBranch, false) }
 
     @JvmStatic
     fun getInstance(): GithubGitHelper {

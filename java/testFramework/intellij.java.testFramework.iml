@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.java.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" />
     <orderEntry type="module" module-name="intellij.relaxng" exported="" scope="TEST" />
@@ -28,6 +28,10 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
   <component name="copyright">
     <Base>

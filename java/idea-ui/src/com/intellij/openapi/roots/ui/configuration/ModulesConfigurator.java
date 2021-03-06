@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
@@ -55,7 +41,9 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +58,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private static final Logger LOG = Logger.getInstance(ModulesConfigurator.class);
 
   private final Project myProject;
+  private final ProjectStructureConfigurable myProjectStructureConfigurable;
 
   private final Map<Module, ModuleEditor> myModuleEditors = new TreeMap<>((o1, o2) -> {
     String n1 = o1.getName();
@@ -85,18 +74,48 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ModifiableModuleModel myModuleModel;
   private boolean myModuleModelCommitted = false;
   private ProjectFacetsConfigurator myFacetsConfigurator;
+  private WorkspaceEntityStorageBuilder myWorkspaceEntityStorageBuilder;
 
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<>();
 
+  /**
+   * @deprecated use {@link ModuleManager} to access modules instead
+   */
+  @Deprecated
   public ModulesConfigurator(Project project) {
+    this(project, ProjectStructureConfigurable.getInstance(project));
+  }
+
+  public ModulesConfigurator(Project project, ProjectStructureConfigurable projectStructureConfigurable) {
     myProject = project;
-    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    myProjectStructureConfigurable = projectStructureConfigurable;
+    initModuleModel();
+  }
+
+  private void initModuleModel() {
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    if (moduleManager instanceof ModuleManagerComponentBridge) {
+      myWorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent());
+      myModuleModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(myWorkspaceEntityStorageBuilder);
+    }
+    else {
+      myModuleModel = moduleManager.getModifiableModel();
+      myWorkspaceEntityStorageBuilder = null;
+    }
+  }
+
+  public @Nullable WorkspaceEntityStorageBuilder getWorkspaceEntityStorageBuilder() {
+    return myWorkspaceEntityStorageBuilder;
   }
 
   public void setContext(final StructureConfigurableContext context) {
     myContext = context;
     myFacetsConfigurator = createFacetsConfigurator();
+  }
+
+  public ProjectStructureConfigurable getProjectStructureConfigurable() {
+    return myProjectStructureConfigurable;
   }
 
   public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -110,11 +129,15 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
       myModuleEditors.clear();
 
-      myModuleModel.dispose();
+      if (myModuleModel != null) {
+        myModuleModel.dispose();
+      }
+      myWorkspaceEntityStorageBuilder = null;
 
       if (myFacetsConfigurator != null) {
         myFacetsConfigurator.disposeEditors();
       }
+      myModuleModel = null;
     });
   }
 
@@ -126,6 +149,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   @Override
   @Nullable
   public Module getModule(@NotNull String name) {
+    if (myModuleModel == null) return null;
+
     final Module moduleByName = myModuleModel.findModuleByName(name);
     if (moduleByName != null) {
       return moduleByName;
@@ -181,7 +206,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void resetModuleEditors() {
-    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+    initModuleModel();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (!myModuleEditors.isEmpty()) {
@@ -212,7 +237,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   public void apply() throws ConfigurationException {
-    // validate content and source roots 
+    // validate content and source roots
     final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
     final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
@@ -278,9 +303,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     for (ModuleEditor moduleEditor : myModuleEditors.values()) {
       moduleEditor.canApply();
     }
-    
-    final Map<Sdk, Sdk> modifiedToOriginalMap = new THashMap<>();
-    final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
+
+    final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<>();
+    final ProjectSdksModel projectJdksModel = myProjectStructureConfigurable.getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
     }
@@ -322,10 +347,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
       }
       finally {
-        ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
+        myProjectStructureConfigurable.getModulesConfig().getFacetEditorFacade().clearMaps(false);
 
         myFacetsConfigurator = createFacetsConfigurator();
-        myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+        initModuleModel();
         myModuleModelCommitted = false;
       }
     });
@@ -379,7 +404,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       final List<Module> committedModules;
       if (builder instanceof ProjectImportBuilder<?>) {
         final ModifiableArtifactModel artifactModel =
-          ProjectStructureConfigurable.getInstance(myProject).getArtifactsStructureConfigurable().getModifiableArtifactModel();
+          myProjectStructureConfigurable.getArtifactsStructureConfigurable().getModifiableArtifactModel();
         committedModules = ((ProjectImportBuilder<?>)builder).commit(myProject, myModuleModel, this, artifactModel);
       }
       else {
@@ -541,7 +566,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (moduleEditor != null) {
       moduleEditor.setModuleName(name);
       moduleEditor.updateCompilerOutputPathChanged(
-        ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);
+        myProjectStructureConfigurable.getProjectConfig().getCompilerOutputUrl(), name);
       myContext.getDaemonAnalyzer().queueUpdate(new ModuleProjectStructureElement(myContext, module));
     }
   }

@@ -140,6 +140,7 @@ message Message {
       optional uint64 line = 7;
       optional uint64 column = 8;
       optional float  done = 9;
+      repeated string module_names = 10;
     }
 
     message ConstantSearchTask {

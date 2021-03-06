@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -40,7 +41,7 @@ import java.util.Map;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 
-public class CreateDesktopEntryAction extends DumbAwareAction {
+public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
@@ -64,7 +65,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     }
 
     boolean globalEntry = dialog.myGlobalEntryCheckBox.isSelected();
-    new Task.Backgroundable(project, ApplicationBundle.message("desktop.entry.title")) {
+    new Task.Backgroundable(project, ApplicationBundle.message("desktop.entry.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -100,7 +101,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
   public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
     LOG.warn(e);
-    final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
+    final String message = ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error"));
     Notifications.Bus.notify(
       new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.desktop.entry.creation.failed"), message, NotificationType.ERROR),
       project);
@@ -174,6 +175,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   }
 
   public static class CreateDesktopEntryDialog extends DialogWrapper {
+    private static final @NlsSafe String APP_NAME_PLACEHOLDER = "$APP_NAME$";
     private JPanel myContentPane;
     private JLabel myLabel;
     private JCheckBox myGlobalEntryCheckBox;
@@ -182,7 +184,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
       super(project);
       init();
       setTitle(ApplicationBundle.message("desktop.entry.title"));
-      myLabel.setText(myLabel.getText().replace("$APP_NAME$", ApplicationNamesInfo.getInstance().getProductName()));
+      myLabel.setText(myLabel.getText().replace(APP_NAME_PLACEHOLDER, ApplicationNamesInfo.getInstance().getProductName()));
     }
 
     @Override

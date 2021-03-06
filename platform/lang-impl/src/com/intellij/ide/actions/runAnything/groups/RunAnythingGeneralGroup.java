@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ public class RunAnythingGeneralGroup extends RunAnythingGroupBase {
     return 15;
   }
 
-  public static String getGroupTitle() {
+  public static @Nls String getGroupTitle() {
     return IdeBundle.message("run.anything.general.group.title");
   }
 }

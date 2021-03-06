@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.PyFunction;
 /**
  * @author yole
  */
-public class PyOverridingMethodsSearch extends ExtensibleQueryFactory<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
+public final class PyOverridingMethodsSearch extends ExtensibleQueryFactory<PyFunction, PyOverridingMethodsSearch.SearchParameters> {
   public static final PyOverridingMethodsSearch INSTANCE = new PyOverridingMethodsSearch();
 
   public static class SearchParameters {

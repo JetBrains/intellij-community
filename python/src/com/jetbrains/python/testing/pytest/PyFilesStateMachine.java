@@ -93,7 +93,7 @@ final class PyFilesStateMachine {
       resetState();
       if (!myQuoteMode) { // Relaunch process if we do not need quote
         myInProgress = true;
-        myStart = charNumber;
+        myStart = charNumber + 1;
       }
       return false;
     }

@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -26,6 +27,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
   protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite candidate, EditorWindow window) {
     VirtualFile contextFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     VirtualFile candidateFile = candidate.getFile();
+    if (candidate.isPinned()) return false;
     if (Comparing.equal(candidateFile, contextFile)) return false;
     for (EditorWithProviderComposite composite : window.getEditors()) {
       VirtualFile cursorFile = composite.getFile();
@@ -55,6 +57,6 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
 
   @Override
   protected String getPresentationText(boolean inSplitter) {
-    return IdeBundle.message("action.close.all.editors.to.the.left");
+    return ActionsBundle.actionText("CloseAllToTheLeft");
   }
 }

@@ -83,27 +83,27 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
 
     private static String getCanonicalForm(@NonNls String text) {
       final boolean isHexadecimal = text.startsWith("0x") || text.startsWith("0X");
-      int breakPoint = text.indexOf((int)'e');
+      int breakPoint = text.indexOf('e');
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'E');
+        breakPoint = text.indexOf('E');
       }
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'f');
+        breakPoint = text.indexOf('f');
       }
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'F');
+        breakPoint = text.indexOf('F');
       }
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'p');
+        breakPoint = text.indexOf('p');
       }
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'P');
+        breakPoint = text.indexOf('P');
       }
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'d');
+        breakPoint = text.indexOf('d');
       }
       if (breakPoint < 0) {
-        breakPoint = text.indexOf((int)'D');
+        breakPoint = text.indexOf('D');
       }
       final String suffix;
       final String prefix;
@@ -115,7 +115,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
         suffix = text.substring(breakPoint);
         prefix = text.substring(0, breakPoint);
       }
-      final int indexPoint = prefix.indexOf((int)'.');
+      final int indexPoint = prefix.indexOf('.');
       if (indexPoint < 0) {
         return prefix + ".0" + suffix;
       }

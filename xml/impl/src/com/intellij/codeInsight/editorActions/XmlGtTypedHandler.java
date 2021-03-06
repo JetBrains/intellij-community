@@ -84,6 +84,9 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
             if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
               return Result.STOP;
             }
+            else if (tokenType == XmlTokenType.XML_START_TAG_START) {
+              return Result.CONTINUE;
+            }
           }
         }
 

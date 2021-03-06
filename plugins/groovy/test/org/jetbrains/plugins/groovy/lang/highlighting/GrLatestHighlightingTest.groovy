@@ -709,4 +709,15 @@ def m2() {
 
 ''',  true, false, false
   }
+
+  void 'test resolve calls inside closure with CompileStatic'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def test() {
+    def x = 1
+    1.with { x.byteValue() }
+}''', true, false, false
+  }
 }

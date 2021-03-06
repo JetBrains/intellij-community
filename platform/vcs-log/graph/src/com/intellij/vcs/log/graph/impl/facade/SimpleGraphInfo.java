@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.util.NotNullFunction;
@@ -27,7 +27,7 @@ import java.util.*;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asLiteLinearGraph;
 
-public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
+public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   @NotNull private final LinearGraph myLinearGraph;
   @NotNull private final GraphLayout myGraphLayout;
   @NotNull private final NotNullFunction<? super Integer, ? extends CommitId> myFunction;
@@ -126,7 +126,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   @NotNull
   @Override
   public PermanentCommitsInfo<CommitId> getPermanentCommitsInfo() {
-    return new PermanentCommitsInfo<CommitId>() {
+    return new PermanentCommitsInfo<>() {
       @NotNull
       @Override
       public CommitId getCommitId(int nodeId) {

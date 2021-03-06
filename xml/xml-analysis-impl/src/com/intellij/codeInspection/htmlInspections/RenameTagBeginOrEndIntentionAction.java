@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -33,10 +19,7 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
-public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
+public final class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   private final boolean myStart;
   private final String myTargetName;
   private final String mySourceName;
@@ -81,7 +64,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
         }
       }
 
-      PsiElement target = null;
+      PsiElement target;
       final String text = psiElement.getText();
       if (!myTargetName.equals(text)) {
         target = psiElement;
@@ -131,9 +114,9 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   }
 
   @NotNull
-  public String getName() {
+  public @IntentionName String getName() {
     return myStart
-           ? XmlAnalysisBundle.message("rename.start.tag.name.intention", mySourceName, myTargetName)
-           : XmlAnalysisBundle.message("rename.end.tag.name.intention", mySourceName, myTargetName);
+           ? XmlAnalysisBundle.message("xml.intention.rename.start.tag", mySourceName, myTargetName)
+           : XmlAnalysisBundle.message("xml.intention.rename.end.tag", mySourceName, myTargetName);
   }
 }

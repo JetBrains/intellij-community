@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
@@ -39,8 +40,13 @@ class ShelvedWrapper {
     return myBinaryFile;
   }
 
+  public  String getPath() {
+    return chooseNotNull(getAfterPath(), getBeforePath());
+  }
+
+  @NlsSafe
   public String getRequestName() {
-    return FileUtil.toSystemDependentName(chooseNotNull(getAfterPath(), getBeforePath()));
+    return FileUtil.toSystemDependentName(getPath());
   }
 
   String getBeforePath() {

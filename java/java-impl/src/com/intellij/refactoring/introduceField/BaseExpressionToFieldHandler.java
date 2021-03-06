@@ -19,11 +19,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -49,6 +48,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,9 +121,16 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
+      final @Nls String title;
+      if (myIsConstant) {
+        title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.constant");
+      }
+      else {
+        title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
+      }
       NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
-                                        "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
-                                        new PsiElementProcessor<PsiClass>() {
+                                        title,
+                                        new PsiElementProcessor<>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
                                             AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
@@ -234,12 +241,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiElement element = selectedExpr.getUserData(ElementToWorkOn.PARENT);
     if (element == null) element = selectedExpr;
     return element;
-  }
-
-  private static TextAttributes highlightAttributes() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
-                EditorColors.SEARCH_RESULT_ATTRIBUTES
-              );
   }
 
   @Nullable
@@ -448,7 +449,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   protected abstract boolean accept(ElementToWorkOn elementToWorkOn);
 
   protected ElementToWorkOn.ElementsProcessor<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
-    return new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+    return new ElementToWorkOn.ElementsProcessor<>() {
       @Override
       public boolean accept(ElementToWorkOn el) {
         return BaseExpressionToFieldHandler.this.accept(el);
@@ -482,7 +483,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     };
   }
 
-  protected abstract String getRefactoringName();
+  protected abstract @NlsContexts.DialogTitle String getRefactoringName();
 
   public static class Settings {
     private final String myFieldName;
@@ -828,7 +829,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               PsiElement[] exprsToHighlight = PsiUtilCore.toPsiElementArray(array);
               HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-              highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight, highlightAttributes(), true, null);
+              highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight,
+                                                       EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
               WindowManager
                 .getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
             }

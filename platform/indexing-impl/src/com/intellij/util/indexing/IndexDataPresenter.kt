@@ -1,38 +1,46 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.psi.stubs.*
+import com.intellij.util.Base64
 
 object IndexDataPresenter {
 
-  fun <V> getPresentableIndexValue(value: V): String {
-    return if (value is SerializedStubTree) {
-      getPresentableSerializedStubTree(value)
-    }
-    else {
-      value.toString()
+  fun <K> getPresentableIndexKey(key: K): String = key.toString()
+
+  fun <V> getPresentableIndexValue(value: V?): String {
+    return when (value) {
+      null -> "<no value>"
+      is SerializedStubTree -> {
+        getPresentableSerializedStubTree(value)
+      }
+      is ByteArraySequence -> {
+        Base64.encode(value.toBytes())
+      }
+      else -> value.toString()
     }
   }
 
   fun getPresentableSerializedStubTree(value: SerializedStubTree): String =
     buildString {
-      appendln("Stub tree:")
-      appendln(getPresentableStub(value.stub, "  "))
+      appendLine("Stub tree:")
+      appendLine(getPresentableStub(value.stub, "  "))
 
       val stubIndicesValueMap: Map<StubIndexKey<*, *>, Map<Any, StubIdList>> = try {
         value.stubIndicesValueMap
       }
       catch (e: Exception) {
-        appendln("Failed-to-read stub tree forward index: (message = ${e.message}) (exception class = ${e.javaClass.simpleName})")
+        appendLine("Failed-to-read stub tree forward index: (message = ${e.message}) (exception class = ${e.javaClass.simpleName})")
         return@buildString
       }
 
-      appendln("Stub tree forward index:")
-      for ((stubIndexKey, stubIndexValues) in stubIndicesValueMap) {
-        appendln("    ${stubIndexKey.name}")
-        for ((key, stubIdList) in stubIndexValues) {
+      appendLine("Stub tree forward index:")
+      for ((stubIndexKey, stubIndexValues) in stubIndicesValueMap.entries.sortedBy { it.key.name }) {
+        appendLine("    ${stubIndexKey.name}")
+        for ((key, stubIdList) in stubIndexValues.entries.sortedBy { it.key.toString() }) {
           val stubIds = (0 until stubIdList.size()).map { stubIdList[it] }
-          appendln("        $key -> " + stubIds.joinToString())
+          appendLine("        $key -> " + stubIds.joinToString())
         }
       }
     }
@@ -43,8 +51,8 @@ object IndexDataPresenter {
     }
     return buildString {
       for ((key, value) in keyValueMap) {
-        appendln(key)
-        appendln(getPresentableIndexValue(value).withIndent("  "))
+        appendLine(getPresentableIndexKey(key))
+        appendLine(getPresentableIndexValue(value).withIndent("  "))
       }
     }
   }
@@ -63,7 +71,7 @@ object IndexDataPresenter {
         append(" (id = ").append(node.stubId).append(")")
       }
       for (child in node.childrenStubs) {
-        appendln(getPresentableStub(child, "$indent  "))
+        appendLine(getPresentableStub(child, "$indent  "))
       }
     }
 

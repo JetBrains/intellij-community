@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -83,7 +85,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   @NotNull
   public FileAnnotation annotate(@NotNull final VirtualFile file, @Nullable final VcsFileRevision revision) throws VcsException {
     if (file.isDirectory()) {
-      throw new VcsException("Cannot annotate a directory");
+      throw new VcsException(GitBundle.message("annotate.cannot.annotate.dir"));
     }
 
     if (revision == null) {
@@ -95,6 +97,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
       return annotate(filePath, revisionNumber, file);
     }
+  }
+
+  @Override
+  public String getActionName() {
+    //noinspection DialogTitleCapitalization
+    return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 
   @Override
@@ -111,7 +119,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return annotate(path, revision, file);
   }
 
-  private static void setProgressIndicatorText(@Nullable String text) {
+  private static void setProgressIndicatorText(@NlsContexts.ProgressText @Nullable String text) {
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) progress.setText(text);
   }
@@ -201,7 +209,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject), () -> {
         try {
           VirtualFile file = fileAnnotation.getFile();
           FilePath filePath = VcsUtil.getFilePath(file);
@@ -326,7 +334,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           }
 
           if (authorDate == null || committerDate == null || filePath == null || authorName == null || authorEmail == null || subject == null) {
-            throw new VcsException("Output for line " + lineNum + " lacks necessary data");
+            throw new VcsException(GitBundle.message("annotate.output.lack.data", lineNum));
           }
 
           GitRevisionNumber revisionNumber = new GitRevisionNumber(commitHash);
@@ -345,7 +353,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
         int expectedLineNum = lines.size() + 1;
         if (lineNum != expectedLineNum) {
-          throw new VcsException("Adding for info for line " + lineNum + " but we are expecting it to be for " + expectedLineNum);
+          throw new VcsException(GitBundle.message("annotate.line.mismatch.exception", lineNum, expectedLineNum));
         }
 
         LineInfo lineInfo = new LineInfo(commit, lineNum, originalLineNum);

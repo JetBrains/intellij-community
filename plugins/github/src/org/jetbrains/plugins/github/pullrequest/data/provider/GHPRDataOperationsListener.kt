@@ -5,10 +5,13 @@ import com.intellij.util.messages.Topic
 
 interface GHPRDataOperationsListener {
 
-  fun onStateChanged()
-  fun onMetadataChanged()
-  fun onCommentAdded()
-  fun onReviewsChanged()
+  fun onStateChanged() {}
+  fun onMetadataChanged() {}
+  fun onCommentAdded() {}
+  fun onCommentUpdated(commentId: String, newBody: String) {}
+  fun onCommentDeleted(commentId: String) {}
+  fun onReviewsChanged() {}
+  fun onReviewUpdated(reviewId: String, newBody: String) {}
 
   companion object {
     val TOPIC = Topic.create("Pull Request data operations", GHPRDataOperationsListener::class.java)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.application.Topics;
@@ -86,7 +86,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     }
   }
 
-  private class MyActionListener implements AnActionListener {
+  private final class MyActionListener implements AnActionListener {
     private final XValueMarkers<?, ?> myValueMarkers;
 
     private MyActionListener(@NotNull XValueMarkers<?, ?> markers) {

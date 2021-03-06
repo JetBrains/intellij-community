@@ -15,18 +15,20 @@
  */
 package com.intellij.diff.requests;
 
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MessageDiffRequest extends DiffRequest {
-  @Nullable private String myTitle;
-  @NotNull private String myMessage;
+  @Nullable @NlsContexts.DialogTitle private String myTitle;
+  @NotNull @Nls private String myMessage;
 
-  public MessageDiffRequest(@NotNull String message) {
+  public MessageDiffRequest(@NotNull @Nls String message) {
     this(null, message);
   }
 
-  public MessageDiffRequest(@Nullable String title, @NotNull String message) {
+  public MessageDiffRequest(@Nullable @NlsContexts.DialogTitle String title, @NotNull @Nls String message) {
     myTitle = title;
     myMessage = message;
   }
@@ -37,16 +39,17 @@ public class MessageDiffRequest extends DiffRequest {
     return myTitle;
   }
 
+  @Nls
   @NotNull
   public String getMessage() {
     return myMessage;
   }
 
-  public void setTitle(@Nullable String title) {
+  public void setTitle(@Nullable @NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
-  public void setMessage(@NotNull String message) {
+  public void setMessage(@NotNull @Nls String message) {
     myMessage = message;
   }
 

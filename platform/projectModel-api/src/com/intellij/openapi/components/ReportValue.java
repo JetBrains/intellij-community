@@ -7,8 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that an absolute value of the numerical field should be reported in statistics.
- * Won't work on objects, string or enum fields.
+ * Indicates that an absolute value of the field should be reported in statistics.
+ * Won't work on objects.
+ * To record string field enumerate all possible values in {@link #possibleValues()}
  *
  * Can be used within persistent components if reportStatistics flag is enabled.
  * @see State#reportStatistic()
@@ -16,4 +17,10 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ReportValue {
+
+  /**
+   * Describes possible values of field that should be recorded in statistics.
+   * Applies only to string fields.
+   */
+  String[] possibleValues() default {};
 }

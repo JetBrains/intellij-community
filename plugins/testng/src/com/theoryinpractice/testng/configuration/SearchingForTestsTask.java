@@ -8,12 +8,21 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.testng.TestNGXmlSuiteHelper;
+import com.intellij.util.ObjectUtils;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -32,7 +41,6 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   private static final Logger LOG = Logger.getInstance(SearchingForTestsTask.class);
   protected final Map<PsiClass, Map<PsiMethod, List<String>>> myClasses;
   private final TestData myData;
-  private final Project myProject;
   private final TestNGConfiguration myConfig;
   private final File myTempFile;
 
@@ -41,7 +49,6 @@ public class SearchingForTestsTask extends SearchForTestsTask {
                                File tempFile) {
     super(config.getProject(), serverSocket);
     myData = config.getPersistantData();
-    myProject = config.getProject();
     myConfig = config;
     myTempFile = tempFile;
     myClasses = new LinkedHashMap<>();
@@ -124,8 +131,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         logLevel = Integer.parseInt(verbose);
       }
     }
-    catch (Exception e) { //not a number
-      logLevel = 1;
+    catch (Exception ignore) { //not a number
     }
 
     File xmlFile;
@@ -146,7 +152,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
                                                   public void log(Throwable e) {
                                                     LOG.error(e);
                                                   }
-                                                });
+                                                }, requireToDowngradeToHttp());
     }
     String path = xmlFile.getAbsolutePath() + "\n";
     try {
@@ -157,6 +163,39 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     }
   }
 
+  /**
+   * Old testng versions (< 7.0.0) would load dtd from internet iff the dtd is not exactly https://testng.org/testng-1.0.dtd
+   * Detect version from manifest is not possible now because manifest doesn't provide this information unfortunately
+   */
+  private boolean requireToDowngradeToHttp() {
+    GlobalSearchScope searchScope = ObjectUtils.notNull(myConfig.getSearchScope(), GlobalSearchScope.allScope(myProject));
+    PsiClass testMarker = JavaPsiFacade.getInstance(myProject).findClass(TestNGUtil.TEST_ANNOTATION_FQN, searchScope);
+    String version = getVersion(testMarker);
+    return version == null || StringUtil.compareVersionNumbers(version, "7.0.0") < 0;
+  }
+
+  private static String getVersion(PsiClass classFromCommon) {
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
+    if (virtualFile != null) {
+      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(classFromCommon.getProject());
+      VirtualFile root = index.getClassRootForFile(virtualFile);
+      if (root != null) {
+        VirtualFileSystem fileSystem = root.getFileSystem();
+        if (fileSystem instanceof JarFileSystem) {
+          VirtualFile localFile = ((JarFileSystem)fileSystem).getLocalVirtualFileFor(root);
+          if (localFile != null) {
+            String name = localFile.getNameWithoutExtension();
+            if (name.startsWith("testng-")) {
+              return StringUtil.trimStart(name, "testng-");
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+  
   private boolean shouldSearchForTestMethods() {
     for (Map<PsiMethod, List<String>> methods : myClasses.values()) {
       if (!methods.isEmpty()) {
@@ -185,7 +224,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         final String fileId =
           FileUtil.sanitizeFileName(myProject.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml");
         final File suiteFile = new File(PathManager.getSystemPath(), fileId);
-        FileWriter fileWriter = new FileWriter(suiteFile);
+        FileWriter fileWriter = new FileWriter(suiteFile, StandardCharsets.UTF_8);
         try {
           fileWriter.write(suite.toXml());
         }
@@ -197,16 +236,14 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       }
     }
     catch (Exception e) {
-      throw new CantRunException("Unable to parse suite: " + e.getMessage());
+      LOG.info(e);
+      throw new CantRunException(TestngBundle.message("dialog.message.unable.to.parse.suite", e.getMessage()));
     }
   }
 
   protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes)
     throws CantRunException {
-    final TestNGTestObject testObject = TestNGTestObject.fromConfig(myConfig);
-    if (testObject != null) {
-      testObject.fillTestObjects(classes);
-    }
+    TestNGTestObject.fromConfig(myConfig).fillTestObjects(classes);
   }
 
   private Map<String, String> buildTestParameters() {
@@ -220,9 +257,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         Properties properties = new Properties();
         try {
           properties.load(new FileInputStream(propertiesFile));
-          for (Map.Entry entry : properties.entrySet()) {
-            testParams.put((String)entry.getKey(), (String)entry.getValue());
-          }
+          properties.forEach((key, value) -> testParams.put((String)key, (String)value));
 
         }
         catch (IOException e) {

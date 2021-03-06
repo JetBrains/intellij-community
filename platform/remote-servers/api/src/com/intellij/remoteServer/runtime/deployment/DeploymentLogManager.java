@@ -4,6 +4,7 @@ package com.intellij.remoteServer.runtime.deployment;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import com.intellij.remoteServer.runtime.log.TerminalHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,5 +26,5 @@ public interface DeploymentLogManager {
   boolean isTtySupported();
 
   @Nullable
-  TerminalHandler addTerminal(@NotNull String presentableName, InputStream terminalOutput, OutputStream terminalInput);
+  TerminalHandler addTerminal(@NotNull @Nls String presentableName, InputStream terminalOutput, OutputStream terminalInput);
 }

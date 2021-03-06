@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.execution.RunManager;
@@ -10,21 +10,16 @@ import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSys
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.util.PathUtil;
-import gnu.trove.THashSet;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemNode.BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER)
-public class RunConfigurationsNode extends ExternalSystemNode<Void> {
-
+public final class RunConfigurationsNode extends ExternalSystemNode<Void> {
   private final ModuleData myModuleData;
 
   public RunConfigurationsNode(@NotNull ExternalProjectsView externalProjectsView, ModuleNode parent) {
@@ -55,16 +50,15 @@ public class RunConfigurationsNode extends ExternalSystemNode<Void> {
     final AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(myModuleData.getOwner());
     if (configurationType == null) return Collections.emptyList();
 
-    Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
+    Set<RunnerAndConfigurationSettings> settings = new HashSet<>(
       RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType));
 
-
-    String directory = PathUtil.getCanonicalPath(myModuleData.getLinkedExternalProjectPath());
+    String directory = FileUtil.toCanonicalPath(myModuleData.getLinkedExternalProjectPath());
 
     for (RunnerAndConfigurationSettings cfg : settings) {
       ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)cfg.getConfiguration();
 
-      if (directory.equals(PathUtil.getCanonicalPath(externalSystemRunConfiguration.getSettings().getExternalProjectPath()))) {
+      if (directory.equals(FileUtil.toCanonicalPath(externalSystemRunConfiguration.getSettings().getExternalProjectPath()))) {
         runConfigurationNodes.add(new RunConfigurationNode(getExternalProjectsView(), this, cfg));
       }
     }

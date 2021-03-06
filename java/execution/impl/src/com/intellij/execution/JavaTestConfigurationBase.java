@@ -3,14 +3,8 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.LanguageRuntimeType;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
-import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -19,18 +13,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider,
-             TargetEnvironmentAwareRunProfile {
-  private ShortenCommandLine myShortenCommandLine = null;
+public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
+  implements RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
+  private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
-  private static final String USE_CLASS_PATH_ONLY = "useClassPathOnly";
+  private static final @NonNls String USE_CLASS_PATH_ONLY = "useClassPathOnly";
 
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
@@ -50,7 +44,7 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
 
   public abstract boolean isConfiguredByElement(PsiElement element);
 
-  public abstract String getTestType();
+  public abstract @NonNls String getTestType();
 
   public String prepareParameterizedParameter(String paramSetName) {
     return paramSetName;
@@ -97,27 +91,4 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public void setUseModulePath(boolean useModulePath) {
     myUseModulePath = useModulePath;
   }
-
-  @Override
-  public boolean canRunOn(@NotNull TargetEnvironmentConfiguration target) {
-    return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
-  }
-
-  @Nullable
-  @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
-    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
-  }
-
-  @Nullable
-  @Override
-  public String getDefaultTargetName() {
-    return getOptions().getRemoteTarget();
-  }
-
-  @Override
-  public void setDefaultTargetName(@Nullable String targetName) {
-    getOptions().setRemoteTarget(targetName);
-  }
-
 }

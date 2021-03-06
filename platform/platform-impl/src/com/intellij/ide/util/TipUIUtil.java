@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -16,7 +16,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,12 +30,12 @@ import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
-import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -50,6 +50,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.util.ui.UIUtil.drawImage;
@@ -58,7 +59,7 @@ import static com.intellij.util.ui.UIUtil.drawImage;
  * @author dsl
  * @author Konstantin Bulenkov
  */
-public class TipUIUtil {
+public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
   private static final String SHORTCUT_ENTITY = "&shortcut:";
 
@@ -66,6 +67,7 @@ public class TipUIUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
     PluginDescriptor descriptor = tip.getPluginDescriptor();
     return descriptor != null &&
@@ -95,18 +97,19 @@ public class TipUIUtil {
    * @deprecated use {@link #openTipInBrowser(TipAndTrickBean, Browser)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
     browser.setText(getTipText(tip, browser));
   }
 
-  private static String getTipText(@Nullable TipAndTrickBean tip, Component component) {
+  private static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
     if (tip == null) return "";
     try {
       StringBuilder text = new StringBuilder();
       String cssText;
       File tipFile = new File(tip.fileName);
       if (tipFile.isAbsolute() && tipFile.exists()) {
-        text.append(FileUtil.loadFile(tipFile));
+        text.append(FileUtil.loadFile(tipFile, StandardCharsets.UTF_8));
         updateImages(text, null, tipFile.getParentFile().getAbsolutePath(), component);
         cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), StartupUiUtil.isUnderDarcula()
                                                                       ? "css/tips_darcula.css" : "css/tips.css"));
@@ -185,11 +188,11 @@ public class TipUIUtil {
             boolean fallbackUpscale = false;
             boolean fallbackDownscale = false;
 
-            Trinity<String, BufferedImage, byte[]> trinity;
+            BufferedImage image;
             URL actualURL;
             try {
               actualURL = new URL(canonicalPath);
-              trinity = read(actualURL);
+              image = read(actualURL);
             }
             catch (IOException e) {
               if (hidpi) {
@@ -200,12 +203,11 @@ public class TipUIUtil {
                 fallbackDownscale = true;
                 actualURL = new URL(getImageCanonicalPath(path2x, tipLoader, tipPath));
               }
-              trinity = read(actualURL);
+              image = read(actualURL);
             }
 
             String newImgTag;
             newImgTag = "<img src=\"" + actualURL.toExternalForm() + "\" ";
-            BufferedImage image = trinity.second;
             int w = image.getWidth();
             int h = image.getHeight();
             if (hidpi) {
@@ -243,38 +245,21 @@ public class TipUIUtil {
     }
   }
 
-  @NotNull
-  private static String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
+  private static @NotNull String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
     try {
-      URL url = tipLoader != null ? ResourceUtil.getResource(tipLoader, "/tips/", path) : new File(tipPath, path).toURI().toURL();
-      return url != null ? url.toExternalForm() : path;
+      URL url = tipLoader == null ? new File(tipPath, path).toURI().toURL() : ResourceUtil.getResource(tipLoader, "tips", path);
+      return url == null ? path : url.toExternalForm();
     }
     catch (MalformedURLException e) {
       return path;
     }
   }
 
-  private static Trinity<String, BufferedImage, byte[]> read(@NotNull URL url) throws IOException {
-    byte[] bytes = readBytes(url);
-    Iterator<ImageReader> readers = ImageIO.getImageReaders(new ByteArrayImageInputStream(bytes));
-    String formatName = "png";
-    if (readers.hasNext()) {
-      formatName = readers.next().getFormatName();
-    }
-
-    BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-    if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
-    return Trinity.create(formatName, image, bytes);
-  }
-
-  private static byte[] readBytes(@NotNull URL url) throws IOException{
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    byte[] buffer = new byte[16384];
+  private static BufferedImage read(@NotNull URL url) throws IOException {
     try (InputStream stream = url.openStream()) {
-      for (int len = stream.read(buffer); len > 0; len = stream.read(buffer)) {
-        baos.write(buffer, 0, len);
-      }
-      return baos.toByteArray();
+      BufferedImage image = ImageIO.read(stream);
+      if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
+      return image;
     }
   }
 
@@ -321,6 +306,7 @@ public class TipUIUtil {
    * @deprecated use {@link #createBrowser()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static JEditorPane createTipBrowser() {
     return new SwingBrowser();
@@ -333,6 +319,9 @@ public class TipUIUtil {
   public interface Browser extends TextAccessor {
     void load(String url) throws IOException;
     JComponent getComponent();
+
+    @Override
+    void setText(@Nls String text);
   }
 
   private static class SwingBrowser extends JEditorPane implements Browser {
@@ -349,8 +338,6 @@ public class TipUIUtil {
           }
         }
       );
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", StartupUiUtil.isUnderDarcula()
-                                                                             ? "tips_darcula.css" : "tips.css");
       HTMLEditorKit kit = new JBHtmlEditorKit(false) {
         private final ViewFactory myFactory = createViewFactory();
         //SVG support
@@ -464,6 +451,9 @@ public class TipUIUtil {
           return myFactory;
         }
       };
+
+      String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
+      URL resource = TipUIUtil.class.getClassLoader().getResource("tips/css/" + fileName);
       kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
       setEditorKit(kit);
     }
@@ -478,7 +468,8 @@ public class TipUIUtil {
 
     @Override
     public void load(String url) throws IOException{
-      setText(IOUtil.readString(new DataInputStream(new URL(url).openStream())));
+      @NlsSafe String text = IOUtil.readString(new DataInputStream(new URL(url).openStream()));
+      setText(text);
     }
 
     @Override

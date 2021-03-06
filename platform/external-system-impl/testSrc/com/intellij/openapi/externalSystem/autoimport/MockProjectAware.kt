@@ -12,12 +12,12 @@ import com.intellij.util.EventDispatcher
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashSet
 
 class MockProjectAware(override val projectId: ExternalSystemProjectId) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
   val unsubscribeCounter = AtomicInteger(0)
+  val settingsAccessCounter = AtomicInteger(0)
   val refreshCounter = AtomicInteger(0)
 
   val refreshCollisionPassType = AtomicReference(DUPLICATE)
@@ -26,7 +26,22 @@ class MockProjectAware(override val projectId: ExternalSystemProjectId) : Extern
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val refresh = AnonymousParallelOperationTrace(debugName = "$projectId MockProjectAware.refreshProject")
 
-  override val settingsFiles = LinkedHashSet<String>()
+  private val _settingsFiles = LinkedHashSet<String>()
+  override val settingsFiles: Set<String>
+    get() = _settingsFiles.toSet().also {
+      settingsAccessCounter.incrementAndGet()
+    }
+
+  fun resetAssertionCounters() {
+    settingsAccessCounter.set(0)
+    refreshCounter.set(0)
+    subscribeCounter.set(0)
+    unsubscribeCounter.set(0)
+  }
+
+  fun registerSettingsFile(path: String) {
+    _settingsFiles.add(path)
+  }
 
   override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
     eventDispatcher.addListener(listener.asListener(), parentDisposable)
@@ -34,45 +49,45 @@ class MockProjectAware(override val projectId: ExternalSystemProjectId) : Extern
     Disposer.register(parentDisposable, Disposable { unsubscribeCounter.incrementAndGet() })
   }
 
-  override fun refreshProject() {
+  override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     when (refreshCollisionPassType.get()!!) {
       DUPLICATE -> {
-        doRefreshProject()
+        doRefreshProject(context)
       }
       CANCEL -> {
-        val task = once { doRefreshProject() }
+        val task = once { doRefreshProject(context) }
         refresh.afterOperation { task.run() }
         if (refresh.isOperationCompleted()) task.run()
       }
       IGNORE -> {
         if (refresh.isOperationCompleted()) {
-          doRefreshProject()
+          doRefreshProject(context)
         }
       }
     }
   }
 
-  private fun doRefreshProject() {
+  private fun doRefreshProject(context: ExternalSystemProjectReloadContext) {
     val refreshStatus = refreshStatus.get()
     eventDispatcher.multicaster.beforeProjectRefresh()
     refresh.task {
       refreshCounter.incrementAndGet()
-      eventDispatcher.multicaster.insideProjectRefresh()
+      eventDispatcher.multicaster.insideProjectRefresh(context)
     }
     eventDispatcher.multicaster.afterProjectRefresh(refreshStatus)
   }
 
-  fun onceDuringRefresh(action: () -> Unit) {
+  fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) {
     val disposable = Disposer.newDisposable()
     duringRefresh(disposable) {
       Disposer.dispose(disposable)
-      action()
+      action(it)
     }
   }
 
-  fun duringRefresh(parentDisposable: Disposable, action: () -> Unit) {
+  fun duringRefresh(parentDisposable: Disposable, action: (ExternalSystemProjectReloadContext) -> Unit) {
     eventDispatcher.addListener(object : Listener {
-      override fun insideProjectRefresh() = action()
+      override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = action(context)
     }, parentDisposable)
   }
 
@@ -90,7 +105,7 @@ class MockProjectAware(override val projectId: ExternalSystemProjectId) : Extern
 
   interface Listener : ExternalSystemProjectRefreshListener, EventListener {
     @JvmDefault
-    fun insideProjectRefresh() {
+    fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) {
     }
   }
 

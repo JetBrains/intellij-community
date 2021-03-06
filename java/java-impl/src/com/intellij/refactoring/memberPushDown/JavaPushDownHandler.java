@@ -23,9 +23,11 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -35,6 +37,7 @@ import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -47,19 +50,23 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   /**
    * @deprecated Use {@link #getRefactoringName()} instead
    */
-  @Deprecated
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final String REFACTORING_NAME = "Push Members Down";
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return !getElements(editor, file, Ref.create(), true).isEmpty();
+    final List<PsiElement> elements = getElements(editor, file, Ref.create(), true);
+    if (elements.isEmpty()) return false;
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
+    if (psiClass == null) return false;
+    return ClassInheritorsSearch.search(psiClass).iterator().hasNext();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    Ref<String> errorMessage = Ref.create();
+    Ref<@NlsContexts.DialogMessage String> errorMessage = Ref.create();
     List<PsiElement> elements = getElements(editor, file, errorMessage, false);
     if (elements.isEmpty()) {
       String message =
@@ -72,7 +79,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   }
 
   @NotNull
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<? super String> errorMessage, boolean stopAtCodeBlock) {
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<@NlsContexts.DialogMessage String> errorMessage, boolean stopAtCodeBlock) {
     List<PsiElement> elements = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
@@ -85,7 +92,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     return elements;
   }
 
-  private static String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements, boolean stopAtCodeBlock) {
+  private static @NlsContexts.DialogMessage String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements, boolean stopAtCodeBlock) {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
@@ -115,8 +122,10 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      CommonRefactoringUtil.showErrorHint(project, editor,  RefactoringBundle.message("refactoring.cannot.be.performed") + 
-                                                            JavaRefactoringBundle.message("class.is.final.warning.message", aClass.getName()), getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          RefactoringBundle.message("refactoring.cannot.be.performed") +
+                                          JavaRefactoringBundle.message("class.is.final.warning.message", aClass.getName()),
+                                          getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
 
@@ -143,7 +152,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 }

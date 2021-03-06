@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -65,14 +64,14 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
     val providedAnnotations = imported
       .flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) + it }
       .flatMap { moduleNode ->
-      ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.LIBRARY_DEPENDENCY)
-        .filter { it.data.level == LibraryLevel.MODULE }
-        .mapNotNull {
-          val libData = it.data.target
-          val lib = (modelsProvider.findIdeModuleOrderEntry(it.data) as? LibraryOrderEntry)?.library ?: return@mapNotNull null
-          lookForLocations(project, lib, libData)
-        }
-    }.toMap()
+        val libraryDependencyDataList = ExternalSystemApiUtil.findAll(moduleNode, ProjectKeys.LIBRARY_DEPENDENCY)
+          .filter { it.data.level == LibraryLevel.MODULE }.map { it.data }
+        modelsProvider.findIdeModuleLibraryOrderEntries(moduleNode.data, libraryDependencyDataList)
+          .mapNotNull { (libraryOrderEntry, libraryDependencyData) ->
+            val library = libraryOrderEntry.library ?: return@mapNotNull null
+            lookForLocations(project, library, libraryDependencyData.target)
+          }
+      }.toMap()
 
     resolveProvidedAnnotations(providedAnnotations, project)
   }

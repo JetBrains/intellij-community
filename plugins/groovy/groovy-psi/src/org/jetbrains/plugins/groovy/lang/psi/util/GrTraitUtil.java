@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,7 +14,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 /**
  * @author Max Medvedev
  */
-public class GrTraitUtil {
+public final class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
   private static final PsiTypeMapper ID_MAPPER = new PsiTypeMapper() {
     @Override
@@ -74,7 +73,7 @@ public class GrTraitUtil {
         }
         return true;
       });
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -169,7 +168,7 @@ public class GrTraitUtil {
     final PsiTypeParameter[] traitTypeParameters = trait.getTypeParameters();
     if (traitTypeParameters.length == 0) return ID_MAPPER;
 
-    final Map<String, PsiTypeParameter> substitutionMap = new THashMap<>();
+    final Map<String, PsiTypeParameter> substitutionMap = new HashMap<>();
     for (PsiTypeParameter parameter : traitTypeParameters) {
       substitutionMap.put(parameter.getName(), parameter);
     }
@@ -217,10 +216,11 @@ public class GrTraitUtil {
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
     if (helperFile == null) return;
 
-    Map<Integer, Collection<TraitFieldDescriptor>> data =
-      FileBasedIndex.getInstance().getFileData(GroovyTraitFieldsFileIndex.INDEX_ID, helperFile, trait.getProject());
-    Collection<TraitFieldDescriptor> values = ContainerUtil.getFirstItem(data.values(), Collections.emptyList());
-    values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
+    Collection<TraitFieldDescriptor> values =
+      FileBasedIndex.getInstance().getSingleEntryIndexData(GroovyTraitFieldsFileIndex.INDEX_ID, helperFile, trait.getProject());
+    if (values != null) {
+      values.forEach(descriptor -> result.add(createTraitField(descriptor, trait)));
+    }
   }
 
   private static GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {

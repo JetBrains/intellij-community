@@ -2,6 +2,7 @@
 package com.intellij.grazie
 
 import com.intellij.AbstractBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
 import java.util.function.Supplier
@@ -13,6 +14,7 @@ object GrazieBundle {
   private val defaultBundle by lazy { ResourceBundle.getBundle(DEFAULT_BUNDLE_NAME) }
   private val pluginBundle by lazy { ResourceBundle.getBundle(PLUGIN_BUNDLE_NAME) }
 
+  @Nls
   fun message(@PropertyKey(resourceBundle = DEFAULT_BUNDLE_NAME) key: String, vararg params: String): String {
     val bundle = if (!GraziePlugin.isBundled && pluginBundle.containsKey(key)) pluginBundle else defaultBundle
     return AbstractBundle.message(bundle, key, *params)

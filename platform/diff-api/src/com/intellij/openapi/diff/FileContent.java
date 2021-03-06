@@ -21,15 +21,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 
 public class FileContent extends DiffContent {
@@ -78,23 +75,6 @@ public class FileContent extends DiffContent {
   @Override
   public boolean isBinary() {
     return !myFile.isDirectory() && myType.isBinary();
-  }
-
-  public static FileContent createFromTempFile(Project project, String name, String ext, byte @NotNull [] content) throws IOException {
-    File tempFile = FileUtil.createTempFile(name, "." + ext);
-    if (content.length != 0) {
-      FileUtil.writeToFile(tempFile, content);
-    }
-    tempFile.deleteOnExit();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile file = lfs.findFileByIoFile(tempFile);
-    if (file == null) {
-      file = lfs.refreshAndFindFileByIoFile(tempFile);
-    }
-    if (file != null) {
-      return new FileContent(project, file);
-    }
-    throw new IOException("Can not create temp file for revision content");
   }
 
   @NotNull

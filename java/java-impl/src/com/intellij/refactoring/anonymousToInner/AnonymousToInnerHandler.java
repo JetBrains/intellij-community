@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -89,7 +90,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     invoke(project, editor, anonymousClass);
   }
 
-  private void showErrorMessage(Editor editor, String message) {
+  private void showErrorMessage(Editor editor, @NlsContexts.DialogMessage String message) {
     CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.ANONYMOUS_TO_INNER);
   }
 
@@ -599,7 +600,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     });
   }
 
-  static String getRefactoringName() {
+  static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("anonymousToInner.refactoring.name");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type.highlighting
 
 import com.intellij.psi.PsiElement
@@ -27,7 +27,7 @@ class BinaryExpressionHighlighter(
     val arguments = reference.arguments ?: return null
     if (argument !in arguments) return null
 
-    val name = "Cast operand to " + expectedType.presentableText
+    val name = GroovyBundle.message("intention.name.cast.operand.to.0", expectedType.presentableText)
     return GrCastFix(expectedType, argument.expression, true, name)
   }
 

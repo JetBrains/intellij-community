@@ -37,7 +37,7 @@ public class BinaryLightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     return VfsUtilCore.byteStreamSkippingBOM(myContent, this);
   }
 

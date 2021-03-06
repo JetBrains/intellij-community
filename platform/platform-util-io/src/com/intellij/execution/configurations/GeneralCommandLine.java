@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.IllegalEnvVarException;
@@ -8,17 +9,18 @@ import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,15 +85,17 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private String myExePath;
   private File myWorkDirectory;
-  private final Map<String, String> myEnvParams = new MyTHashMap();
+  private final Map<String, String> myEnvParams = new MyMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
-  private Charset myCharset = EncodingManager.getInstance().getDefaultConsoleEncoding();
+  private Charset myCharset = defaultCharset();
   private boolean myRedirectErrorStream;
   private File myInputFile;
   private Map<Object, Object> myUserData;
 
-  public GeneralCommandLine() { }
+  public GeneralCommandLine() {
+    this(Collections.emptyList());
+  }
 
   public GeneralCommandLine(@NonNls String @NotNull ... command) {
     this(Arrays.asList(command));
@@ -119,18 +123,20 @@ public class GeneralCommandLine implements UserDataHolder {
     myUserData = null;  // user data should not be copied over
   }
 
-  @NotNull
-  public String getExePath() {
+  private static Charset defaultCharset() {
+    return LoadingState.COMPONENTS_LOADED.isOccurred() ? EncodingManager.getInstance().getDefaultConsoleEncoding() : Charset.defaultCharset();
+  }
+
+  public @NotNull @NlsSafe String getExePath() {
     return myExePath;
   }
 
-  @NotNull
-  public GeneralCommandLine withExePath(@NotNull String exePath) {
+  public @NotNull GeneralCommandLine withExePath(@NotNull @NlsSafe String exePath) {
     myExePath = exePath.trim();
     return this;
   }
 
-  public void setExePath(@NotNull String exePath) {
+  public void setExePath(@NotNull @NlsSafe String exePath) {
     withExePath(exePath);
   }
 
@@ -174,7 +180,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
+  public GeneralCommandLine withEnvironment(@NonNls @NotNull String key, @NonNls @NotNull String value) {
     getEnvironment().put(key, value);
     return this;
   }
@@ -223,32 +229,32 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public Map<String, String> getEffectiveEnvironment() {
-    MyTHashMap env = new MyTHashMap();
+    Map<String, String> env = new MyMap();
     setupEnvironment(env);
     return env;
   }
 
-  public void addParameters(String @NotNull ... parameters) {
+  public void addParameters(@NonNls String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void addParameters(@NotNull List<@NonNls String> parameters) {
     withParameters(parameters);
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(String @NotNull ... parameters) {
+  public GeneralCommandLine withParameters(@NotNull @NonNls String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(@NotNull List<String> parameters) {
+  public GeneralCommandLine withParameters(@NotNull List<@NonNls String> parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
-  public void addParameter(@NotNull String parameter) {
+  public void addParameter(@NonNls @NotNull String parameter) {
     myProgramParams.add(parameter);
   }
 
@@ -302,6 +308,7 @@ public class GeneralCommandLine implements UserDataHolder {
    *
    * @return single-string representation of this command line.
    */
+  @NlsSafe
   @NotNull
   public String getCommandLineString() {
     return getCommandLineString(null);
@@ -321,16 +328,10 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
-    List<String> commands = new ArrayList<>();
-    if (exeName != null) {
-      commands.add(exeName);
-    }
-    else if (myExePath != null) {
-      commands.add(myExePath);
-    }
-    else {
-      commands.add("<null>");
-    }
+    List<@NlsSafe String> commands = new ArrayList<>();
+    String exe = StringUtil.notNullize(exeName, StringUtil.notNullize(myExePath, "<null>"));
+    commands.add(exe);
+
     commands.addAll(myProgramParams.getList());
     return commands;
   }
@@ -368,10 +369,30 @@ public class GeneralCommandLine implements UserDataHolder {
   public Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
+      if (myWorkDirectory != null) {
+        LOG.debug("  working dir: " + myWorkDirectory.getAbsolutePath());
+      }
       LOG.debug("  environment: " + myEnvParams + " (+" + myParentEnvironmentType + ")");
       LOG.debug("  charset: " + myCharset);
     }
 
+    List<String> commands = validateAndPrepareCommandLine();
+    try {
+      return startProcess(commands);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      throw new ProcessNotCreatedException(e.getMessage(), e, this);
+    }
+  }
+
+  public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {
+    List<String> escapedCommands = validateAndPrepareCommandLine();
+    return toProcessBuilderInternal(escapedCommands);
+  }
+
+  @NotNull
+  private List<String> validateAndPrepareCommandLine() throws ExecutionException {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
@@ -399,7 +420,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myExePath;
-    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
+    if (SystemInfoRt.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
       String systemPath = System.getenv("PATH");
       String shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
@@ -411,15 +432,7 @@ public class GeneralCommandLine implements UserDataHolder {
       }
     }
 
-    List<String> commands = prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
-
-    try {
-      return startProcess(commands);
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      throw new ProcessNotCreatedException(e.getMessage(), e, this);
-    }
+    return prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
   }
 
   /**
@@ -442,6 +455,13 @@ public class GeneralCommandLine implements UserDataHolder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Building process with commands: " + escapedCommands);
     }
+    return toProcessBuilderInternal(escapedCommands).start();
+  }
+
+  // This is caused by the fact there are external usages overriding startProcess(List<String>).
+  // Ideally, it should have been startProcess(ProcessBuilder), and the design would be more straightforward.
+  @NotNull
+  private ProcessBuilder toProcessBuilderInternal(@NotNull List<String> escapedCommands) {
     ProcessBuilder builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
@@ -449,7 +469,7 @@ public class GeneralCommandLine implements UserDataHolder {
     if (myInputFile != null) {
       builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
     }
-    return buildProcess(builder).start();
+    return buildProcess(builder);
   }
 
   /**
@@ -470,7 +490,7 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfo.isUnix) {
+    if (SystemInfoRt.isUnix) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -478,8 +498,8 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfo.isWindows) {
-        THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      if (SystemInfoRt.isWindows) {
+        Map<String, String> envVars = CollectionFactory.createCaseInsensitiveStringMap();
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
         environment.clear();
@@ -525,9 +545,9 @@ public class GeneralCommandLine implements UserDataHolder {
     myUserData.put(key, value);
   }
 
-  private static class MyTHashMap extends THashMap<String, String> {
-    private MyTHashMap() {
-      super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
+  private static final class MyMap extends Object2ObjectOpenCustomHashMap<String, String> {
+    private MyMap() {
+      super(FastUtilHashingStrategies.getStringStrategy(!SystemInfoRt.isWindows));
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.intellij.tasks.actions;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
+import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -41,14 +42,28 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     myProject = project;
   }
 
+  @Override
+  public @NotNull List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
+    return filterNames((ChooseByNameViewModel) base, names, pattern);
+  }
+
   @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameBase base, String @NotNull [] names, @NotNull String pattern) {
+  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
   @Override
   public boolean filterElements(@NotNull ChooseByNameBase base,
+                                @NotNull String pattern,
+                                boolean everywhere,
+                                @NotNull ProgressIndicator cancelled,
+                                @NotNull Processor<Object> consumer) {
+    return filterElements((ChooseByNameViewModel)base, pattern, everywhere, cancelled, consumer);
+  }
+
+  @Override
+  public boolean filterElements(@NotNull ChooseByNameViewModel base,
                                 @NotNull final String pattern,
                                 final boolean everywhere,
                                 @NotNull final ProgressIndicator cancelled,

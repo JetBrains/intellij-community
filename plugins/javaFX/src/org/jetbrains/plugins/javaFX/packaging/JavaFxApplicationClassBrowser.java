@@ -7,11 +7,13 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -21,7 +23,7 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser<JTextField> {
   private final String myApplicationClass;
   private final Artifact myArtifact;
 
-  public JavaFxApplicationClassBrowser(Project project, String title, String applicationClass, Artifact artifact) {
+  public JavaFxApplicationClassBrowser(Project project, @NlsContexts.DialogTitle String title, String applicationClass, Artifact artifact) {
     super(project, title);
     myArtifact = artifact;
     myApplicationClass = applicationClass;
@@ -55,10 +57,10 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser<JTextField> {
   }
 
   public static JavaFxApplicationClassBrowser appClassBrowser(Project project, Artifact artifact) {
-    return new JavaFxApplicationClassBrowser(project, "Choose Application Class", "javafx.application.Application", artifact);
+    return new JavaFxApplicationClassBrowser(project, JavaFXBundle.message("dialog.title.choose.application.class"), "javafx.application.Application", artifact);
   }
 
   public static JavaFxApplicationClassBrowser preloaderClassBrowser(Project project, Artifact artifact) {
-    return new JavaFxApplicationClassBrowser(project, "Choose Preloader Class", "javafx.application.Preloader", artifact);
+    return new JavaFxApplicationClassBrowser(project, JavaFXBundle.message("dialog.title.choose.preloader.class"), "javafx.application.Preloader", artifact);
   }
 }

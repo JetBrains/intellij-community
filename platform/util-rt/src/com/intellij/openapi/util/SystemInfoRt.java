@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.ReviseWhenPortedToJDK;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Locale;
 
@@ -20,25 +20,14 @@ public final class SystemInfoRt {
   public static final boolean isFreeBSD = _OS_NAME.startsWith("freebsd");
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = !isWindows;
+  public static final boolean isXWindow = isUnix && !isMac;
 
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 
   private static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
-  public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
-  public static final boolean is64Bit = !is32Bit;
-
-  @ReviseWhenPortedToJDK("9")
-  public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
-
-  @SuppressWarnings("JavaReflectionMemberAccess")
-  private static boolean isModularJava() {
-    try {
-      Class.class.getMethod("getModule");
-      return true;
-    }
-    catch (Throwable t) {
-      return false;
-    }
-  }
+  /** @deprecated inexact, please use {@code com.intellij.util.system.CpuArch} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static final boolean is64Bit = !(ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32"));
 }

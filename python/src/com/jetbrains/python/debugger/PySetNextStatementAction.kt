@@ -49,7 +49,7 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
                 ApplicationManager.getApplication().invokeLater(Runnable {
                   if (!editor.isDisposed) {
                     editor.caretModel.moveToOffset(position.offset)
-                    HintManager.getInstance().showErrorHint(editor, response.second)
+                    HintManager.getInstance().showErrorHint(editor, response.second) // NON-NLS
                   }
                 }, ModalityState.defaultModalityState())
               }
@@ -76,6 +76,6 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
   }
 
   companion object {
-    private val LOG = Logger.getInstance("#com.jetbrains.python.debugger.PySetNextStatementAction")
+    private val LOG = Logger.getInstance(PySetNextStatementAction::class.java)
   }
 }

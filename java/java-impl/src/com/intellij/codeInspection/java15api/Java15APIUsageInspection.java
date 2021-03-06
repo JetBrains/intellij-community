@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java15api;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -31,7 +31,6 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
   private static final Set<String> ourIgnored16ClassesAPI = loadForbiddenApi("ignore16List.txt");
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_13;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_16;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -75,7 +74,9 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_11, "12");
     ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
     ourPresentableShortMessage.put(LanguageLevel.JDK_13, "14");
-
+    ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_15, "16");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_15_PREVIEW, "16");
   }
 
   private static final Set<String> ourGenerifiedClasses = new HashSet<>();
@@ -105,7 +106,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     gr.add(projectRb);
     gr.add(customRb);
 
-    JComboBox<LanguageLevel> llCombo = new ComboBox<LanguageLevel>(LanguageLevel.values()) {
+    JComboBox<LanguageLevel> llCombo = new ComboBox<>(LanguageLevel.values()) {
       @Override
       public void setEnabled(boolean b) {
         if (b == customRb.isSelected()) {
@@ -159,7 +160,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     }
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-      return new THashSet<>(FileUtil.loadLines(reader));
+      return new HashSet<>(FileUtil.loadLines(reader));
     }
     catch (IOException ex) {
       Logger.getInstance(Java15APIUsageInspection.class).warn("cannot load: " + fileName, ex);

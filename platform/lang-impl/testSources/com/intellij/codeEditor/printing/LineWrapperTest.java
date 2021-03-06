@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -54,7 +54,7 @@ public class LineWrapperTest {
   }
 
   private void doTest(String text, boolean atLineStart, double clipWidth, int... expectedBreaks) {
-    IntArrayList actualBreaks = LineWrapper.calcBreakOffsets(text.toCharArray(), 0, text.length(), atLineStart, 0, clipWidth, myWidthProvider);
+    IntList actualBreaks = LineWrapper.calcBreakOffsets(text.toCharArray(), 0, text.length(), atLineStart, 0, clipWidth, myWidthProvider);
     assertArrayEquals(expectedBreaks, actualBreaks.toIntArray());
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class ShowCoveringTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
@@ -75,19 +77,14 @@ public class ShowCoveringTestsAction extends AnAction {
       final String title = CoverageBundle.message("popup.title.tests.covering.line", myClassFQName, myLineData.getLineNumber());
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
-        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+        Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
+        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0, processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
-          .setDimensionServiceKey(project, "ShowTestsPopup", false)
-          .setCouldPin(popup -> {
-            component.showInUsageView();
-            popup.cancel();
-            return false;
-          });
+          .setDimensionServiceKey(project, "ShowTestsPopup", false);
       } else {
         component = null;
-        final JPanel panel = new PanelWithText(CoverageBundle
-                                                 .message("following.test.0.could.not.be.found.1", testNames.length > 1 ? "s" : "",
-                                                          StringUtil.join(testNames, "<br/>").replace("_", ".")));
+        @NonNls String testsPresentation = StringUtil.join(testNames, "<br/>").replace("_", ".");
+        final JPanel panel = new PanelWithText(CoverageBundle.message("following.test.could.not.be.found.1", testNames.length, testsPresentation));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);
       }
       final JBPopup popup = popupBuilder.setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)

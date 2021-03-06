@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -33,9 +34,10 @@ public abstract class EditorNotifications {
 
   /**
    * An extension allowing to add custom notifications to the top of file editors.
-   *
+   * <p>
    * During indexing, only {@link com.intellij.openapi.project.DumbAware} instances are executed.
-   * @param <T> the type of the notification UI component
+   *
+   * @param <T> the type of the notification UI component, see also {@link EditorNotificationPanel}
    */
   public abstract static class Provider<T extends JComponent> {
     @NotNull
@@ -44,7 +46,7 @@ public abstract class EditorNotifications {
     /**
      * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
      */
-    @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+    @SuppressWarnings({"unused"})
     @Nullable
     @Deprecated
     public T createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
@@ -74,6 +76,10 @@ public abstract class EditorNotifications {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       getInstance(project).updateAllNotifications();
+    }
+    Project lightEditProject = LightEditService.getInstance().getProject();
+    if (lightEditProject != null) {
+      getInstance(lightEditProject).updateAllNotifications();
     }
   }
 }

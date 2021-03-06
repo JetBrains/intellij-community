@@ -12,6 +12,7 @@ import git4idea.GitFormatException;
 import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class GitLogParser<R extends GitLogRecord> {
   @NotNull private final String myPretty;
 
   @NotNull private final OptionsParser myOptionsParser;
-  @NotNull private final PathsParser myPathsParser;
+  @NotNull private final PathsParser<R> myPathsParser;
 
   @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
 
@@ -185,8 +186,11 @@ public class GitLogParser<R extends GitLogRecord> {
 
   @Nullable
   private R createRecord() {
-    if (myPathsParser.getErrorText() != null) {
-      LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
+    if (myPathsParser.getErrorText() != null ||
+        !myOptionsParser.hasCompleteOptionsList()) {
+      if (myPathsParser.getErrorText() != null) LOG.debug("Creating record was skipped: " + myPathsParser.getErrorText());
+      if (!myOptionsParser.hasCompleteOptionsList()) LOG.debug("Parsed incomplete options " + myOptionsParser.myResult.getResult() + " for " +
+                                                               Arrays.toString(myOptionsParser.myOptions));
       myOptionsParser.clear();
       myRecordBuilder.clear();
       myPathsParser.clear();
@@ -284,10 +288,11 @@ public class GitLogParser<R extends GitLogRecord> {
 
     private final String myPlaceholder;
 
-    GitLogOption(String placeholder) {
+    GitLogOption(@NonNls String placeholder) {
       myPlaceholder = placeholder;
     }
 
+    @NonNls
     private String getPlaceholder() {
       return myPlaceholder;
     }
@@ -314,8 +319,8 @@ public class GitLogParser<R extends GitLogRecord> {
       while (offset < line.length()) {
         if (atRecordEnd(line, offset)) {
           myResult.finishItem();
-          if (myResult.getResult().size() != myOptions.length) {
-            throwGFE("Parsed incorrect options " + myResult.getResult() + " for " +
+          if (!hasCompleteOptionsList()) {
+            throwGFE("Parsed incomplete options " + myResult.getResult() + " for " +
                      Arrays.toString(myOptions), line);
           }
           return true;
@@ -335,6 +340,10 @@ public class GitLogParser<R extends GitLogRecord> {
       myResult.append('\n');
 
       return false;
+    }
+
+    public boolean hasCompleteOptionsList() {
+      return myResult.getResult().size() == myOptions.length;
     }
 
     private boolean atRecordEnd(@NotNull CharSequence line, int offset) {

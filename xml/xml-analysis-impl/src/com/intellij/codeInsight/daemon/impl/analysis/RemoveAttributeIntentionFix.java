@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,15 +22,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionAction {
   private final String myLocalName;
-
-  /**
-   * @deprecated use {@link #RemoveAttributeIntentionFix(String)}. To be removed in 2018.3
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
-  public RemoveAttributeIntentionFix(final String localName, XmlAttribute attribute) {
-    this(localName);
-  }
 
   public RemoveAttributeIntentionFix(final String localName) {
     myLocalName = localName;
@@ -45,7 +35,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @Override
   @NotNull
   public String getName() {
-    return XmlAnalysisBundle.message("remove.attribute.quickfix.text", myLocalName);
+    return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.text", myLocalName);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -58,7 +48,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("remove.attribute.quickfix.family");
+    return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.family");
   }
 
   @Override

@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
+  PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     ASSIGNMENT_COMMAND
@@ -12,8 +13,8 @@ SHELL_SCRIPT
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
           PsiElement(word)('XDG_RUNTIME_DIR')
-          PsiElement(param_separator)(':-/')
-          PsiElement(word)('run')
+          PsiElement(param_separator)(':-')
+          PsiElement(word)('/run')
           PsiElement(param_separator)('/')
           PsiElement(word)('user')
           PsiElement(param_separator)('/')
@@ -37,8 +38,7 @@ SHELL_SCRIPT
           PsiElement(param_separator)(':-')
           VARIABLE
             PsiElement(var)('$HOME')
-          PsiElement(param_separator)('/')
-          PsiElement(word)('.config')
+          PsiElement(word)('/.config')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi.config')
         PsiElement(CLOSE_QUOTE)('"')
@@ -57,8 +57,7 @@ SHELL_SCRIPT
           PsiElement(param_separator)(':-')
           VARIABLE
             PsiElement(var)('$HOME')
-          PsiElement(param_separator)('/')
-          PsiElement(word)('.cache')
+          PsiElement(word)('/.cache')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('/gaudi')
         PsiElement(CLOSE_QUOTE)('"')
@@ -2111,7 +2110,7 @@ SHELL_SCRIPT
                   FOR_CLAUSE
                     PsiElement(word)('D1')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('in')
+                    PsiElement(in)('in')
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
@@ -2144,7 +2143,7 @@ SHELL_SCRIPT
                         FOR_CLAUSE
                           PsiElement(word)('D2')
                           PsiWhiteSpace(' ')
-                          PsiElement(word)('in')
+                          PsiElement(in)('in')
                           PsiWhiteSpace(' ')
                           STRING
                             PsiElement(OPEN_QUOTE)('"')
@@ -2195,10 +2194,8 @@ SHELL_SCRIPT
                                 PsiWhiteSpace(' ')
                                 PsiElement(&&)('&&')
                                 PsiWhiteSpace(' ')
-                                SIMPLE_COMMAND
-                                  GENERIC_COMMAND_DIRECTIVE
-                                    LITERAL
-                                      PsiElement(word)('test')
+                                TEST_COMMAND
+                                  PsiElement(test)('test')
                                   PsiWhiteSpace(' ')
                                   LITERAL
                                     PsiElement(word)('-d')
@@ -2211,10 +2208,8 @@ SHELL_SCRIPT
                                 PsiWhiteSpace(' ')
                                 PsiElement(&&)('&&')
                                 PsiWhiteSpace(' ')
-                                SIMPLE_COMMAND
-                                  GENERIC_COMMAND_DIRECTIVE
-                                    LITERAL
-                                      PsiElement(word)('test')
+                                TEST_COMMAND
+                                  PsiElement(test)('test')
                                   PsiWhiteSpace(' ')
                                   LITERAL
                                     PsiElement(word)('-d')
@@ -2560,7 +2555,7 @@ SHELL_SCRIPT
                   FOR_CLAUSE
                     PsiElement(word)('D')
                     PsiWhiteSpace(' ')
-                    PsiElement(word)('in')
+                    PsiElement(in)('in')
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')

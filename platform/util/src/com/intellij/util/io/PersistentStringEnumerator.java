@@ -18,18 +18,17 @@ package com.intellij.util.io;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String> implements AbstractStringEnumerator {
+public class PersistentStringEnumerator extends PersistentEnumerator<String> implements AbstractStringEnumerator {
   @Nullable private final CachingEnumerator<String> myCache;
 
   public PersistentStringEnumerator(@NotNull Path file) throws IOException {
     this(file, null);
   }
 
-  public PersistentStringEnumerator(@NotNull Path file, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+  public PersistentStringEnumerator(@NotNull Path file, @Nullable StorageLockContext storageLockContext) throws IOException {
     this(file, 1024 * 4, storageLockContext);
   }
 
@@ -43,14 +42,14 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
 
   public PersistentStringEnumerator(@NotNull Path file,
                                     final int initialSize,
-                                    @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                    @Nullable StorageLockContext lockContext) throws IOException {
     this(file, initialSize, false, lockContext);
   }
 
-  private PersistentStringEnumerator(@NotNull Path file,
+  public PersistentStringEnumerator(@NotNull Path file,
                                      final int initialSize,
                                      boolean cacheLastMappings,
-                                     @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+                                     @Nullable StorageLockContext lockContext) throws IOException {
     super(file, EnumeratorStringDescriptor.INSTANCE, initialSize, lockContext);
     myCache = cacheLastMappings ? new CachingEnumerator<>(new DataEnumerator<String>() {
       @Override

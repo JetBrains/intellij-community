@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.EditFileProvider;
@@ -10,7 +9,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,13 +53,13 @@ public class VcsHandleType extends HandleType {
       }
     });
     if (changelist != null) {
-      myChangeListManager.invokeAfterUpdate(() -> {
+      myChangeListManager.invokeAfterUpdate(true, () -> {
         LocalChangeList list = myChangeListManager.findChangeList(changelist);
         if (list != null) {
           List<Change> changes = ContainerUtil.mapNotNull(files, myChangeFunction);
           myChangeListManager.moveChangesTo(list, changes.toArray(new Change[0]));
         }
-      }, InvokeAfterUpdateMode.SILENT, "", ModalityState.NON_MODAL);
+      });
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ import java.util.List;
 public abstract class MultiSelectionListPopupStep<T> extends BaseListPopupStep<T> {
   private int[] myDefaultOptionIndices = ArrayUtilRt.EMPTY_INT_ARRAY;
 
-  protected MultiSelectionListPopupStep(@Nullable String title, List<? extends T> values) {
+  protected MultiSelectionListPopupStep(@PopupTitle @Nullable String title, List<? extends T> values) {
     super(title, values);
   }
 

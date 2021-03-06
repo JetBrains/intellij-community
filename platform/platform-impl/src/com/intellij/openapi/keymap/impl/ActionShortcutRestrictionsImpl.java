@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.IdeActions;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ActionShortcutRestrictionsImpl extends ActionShortcutRestrictions {
@@ -25,7 +26,7 @@ public class ActionShortcutRestrictionsImpl extends ActionShortcutRestrictions {
 
   @Override
   @NotNull
-  public ShortcutRestrictions getForActionId(String actionId) {
+  public ShortcutRestrictions getForActionId(@NonNls String actionId) {
     if (actionId == null) return ShortcutRestrictions.NO_RESTRICTIONS;
     if (actionId.startsWith("Swing-")) return SWING_SHORTCUT;
 

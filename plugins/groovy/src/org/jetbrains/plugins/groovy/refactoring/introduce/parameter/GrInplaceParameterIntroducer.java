@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -13,13 +13,15 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -37,27 +39,27 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceParameterSettings> {
+public final class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceParameterSettings> {
   private final IntroduceParameterInfo myInfo;
-  private final TIntArrayList myParametersToRemove;
+  private final IntList myParametersToRemove;
 
   private JBCheckBox myDelegateCB;
 
   private final LinkedHashSet<String> mySuggestedNames;
 
   public GrInplaceParameterIntroducer(IntroduceParameterInfo info, GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(GrIntroduceParameterHandler.getRefactoringName(), choice, context);
+    super(RefactoringBundle.message("introduce.parameter.title"), choice, context);
     myInfo = info;
 
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
     mySuggestedNames = GroovyIntroduceParameterUtil.suggestNames(localVar, context.getExpression(), context.getStringPart(), info.getToReplaceIn(), context.getProject());
 
-    myParametersToRemove = new TIntArrayList(GroovyIntroduceParameterUtil.findParametersToRemove(info).getValues());
+    myParametersToRemove = new IntArrayList(GroovyIntroduceParameterUtil.findParametersToRemove(info).values());
   }
 
   @Override
   protected String getActionName() {
-    return GrIntroduceParameterHandler.getRefactoringName();
+    return "IntroduceParameter";
   }
 
   @Override
@@ -67,7 +69,6 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
 
   @Override
   protected JComponent getComponent() {
-
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.add(getPreviewEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new EmptyBorder(2, 2, 6, 2));
@@ -196,7 +197,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
                    expression != null ? expression.getType() :
                    null;
 
-    return new GrIntroduceExpressionSettingsImpl(myInfo, names[0], false, new TIntArrayList(), false,
+    return new GrIntroduceExpressionSettingsImpl(myInfo, names[0], false, new IntArrayList(), false,
                                                  IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, expression,
                                                  var, type, false, false, false);
 

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.facet;
 
 import com.intellij.facet.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
@@ -32,19 +19,19 @@ public abstract class LibraryContributingFacet<T extends FacetConfiguration> ext
                                   @NotNull Module module,
                                   @NotNull String name, @NotNull T configuration, Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
-    final MessageBusConnection connection = module.getMessageBus().connect();
-    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
+    final MessageBusConnection connection = module.getProject().getMessageBus().connect();
+    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void beforeFacetRemoved(@NotNull Facet facet) {
         if (facet == LibraryContributingFacet.this) {
-          ((LibraryContributingFacet) facet).removeLibrary();
+          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>)facet).removeLibrary());
         }
       }
 
       @Override
       public void facetConfigurationChanged(@NotNull Facet facet) {
         if (facet == LibraryContributingFacet.this) {
-          ((LibraryContributingFacet) facet).updateLibrary();
+          ApplicationManager.getApplication().invokeLater(() -> ((LibraryContributingFacet<?>) facet).updateLibrary());
         }
       }
     });

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UAnnotation;
@@ -40,9 +39,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author cdr
- */
 public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   private final SmartPsiFileRange myReferencePointer;
 
@@ -94,20 +90,20 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     invoke(project, null, descriptor.getPsiElement().getContainingFile());
   }
 
-  @Nullable
+  @NotNull
   public static List<LocalQuickFix> registerFixes(@NotNull QuickFixActionRegistrar registrar, @NotNull PsiReference reference) {
     PsiElement psiElement = reference.getElement();
     String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile == null) return null;
+    if (containingFile == null) return Collections.emptyList();
     VirtualFile refVFile = containingFile.getVirtualFile();
-    if (refVFile == null) return null;
+    if (refVFile == null) return Collections.emptyList();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module currentModule = fileIndex.getModuleForFile(refVFile);
-    if (currentModule == null) return null;
+    if (currentModule == null) return Collections.emptyList();
 
     DependencyScope scope = fileIndex.isInTestSourceContent(refVFile) ? DependencyScope.TEST : DependencyScope.COMPILE;
 
@@ -142,7 +138,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     registrar.register(moduleDependencyFix);
     result.add(moduleDependencyFix);
 
-    Set<Object> librariesToAdd = new THashSet<>();
+    Set<Object> librariesToAdd = new HashSet<>();
     ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(currentModule).getFileIndex();
     for (PsiClass aClass : allowedDependencies) {
       if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;

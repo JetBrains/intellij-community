@@ -15,10 +15,11 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -155,32 +156,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public DfaInstructionState[] visitBox(BoxingInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    DfaValue value = state.pop();
-    DfaValueFactory factory = runner.getFactory();
-    if (value instanceof DfaBinOpValue) {
-      value = factory.fromDfType(state.getDfType(value));
-    }
-    DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
-    state.push(boxed == null ? factory.getObjectType(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
-    return nextInstruction(instruction, runner, state);
-  }
-
-  public DfaInstructionState[] visitUnwrapField(UnwrapSpecialFieldInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    DfaValue value = state.pop();
-    DfaValue field = instruction.getSpecialField().createValue(runner.getFactory(), value);
-    state.push(field);
-    return nextInstruction(instruction, runner, state);
-  }
-
-  public DfaInstructionState[] visitConvertPrimitive(PrimitiveConversionInstruction instruction,
-                                                     DataFlowRunner runner,
-                                                     DfaMemoryState state) {
-    state.pop();
-    pushExpressionResult(runner.getFactory().getUnknown(), instruction, state);
-    return nextInstruction(instruction, runner, state);
-  }
-
   protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,
                                                DfaValueFactory factory,
                                                DfaValue dest,
@@ -218,11 +193,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
-  public DfaInstructionState[] visitResultOf(ResultOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    pushExpressionResult(state.pop(), instruction, state);
-    return nextInstruction(instruction, runner, state);
-  }
-
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }
@@ -236,13 +206,6 @@ public abstract class InstructionVisitor {
     memState.pop();
     pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
-  }
-
-  public DfaInstructionState[] visitObjectOfInstruction(ObjectOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
-    DfaValue value = state.pop();
-    PsiType type = DfConstantType.getConstantOfType(state.getDfType(value), PsiType.class);
-    state.push(runner.getFactory().getObjectType(type, Nullability.NOT_NULL));
-    return nextInstruction(instruction, runner, state);
   }
 
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -308,12 +271,6 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction, DataFlowRunner runner, 
-                                         DfaMemoryState memState, DfaValue value) {
-    pushExpressionResult(value, instruction, memState);
-    return nextInstruction(instruction, runner, memState);
-  }
-
   public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop(); // index
     memState.pop(); // array reference
@@ -328,5 +285,18 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitClosureInstruction(ClosureInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
     return nextInstruction(instruction, runner, before);
+  }
+  
+  public DfaInstructionState[] visitEval(EvalInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    int operands = instruction.getOperands();
+    for (int i = 0; i < operands; i++) {
+      memState.pop();
+    }
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
+    return nextInstruction(instruction, runner, memState);
+  }
+  
+  public DfaInstructionState[] visitArraySizeCheck(ArraySizeCheckInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    return nextInstruction(instruction, runner, memState);
   }
 }

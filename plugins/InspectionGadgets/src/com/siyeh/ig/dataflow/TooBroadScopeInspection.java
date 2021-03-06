@@ -36,6 +36,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class TooBroadScopeInspection extends BaseInspection {
   }
 
   protected boolean isMovable(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return true;
     }
@@ -207,7 +208,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     if (aClass == null) {
       return false;
     }
-    final String qualifiedName = aClass.getQualifiedName();
+    @NonNls final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread") ||
         qualifiedName.equals("java.lang.System") || qualifiedName.equals("java.lang.Runtime")) {
       return false;
@@ -255,7 +256,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      if (variable instanceof PsiResourceVariable) {
+      if (variable.getType() == PsiType.NULL || variable instanceof PsiResourceVariable) {
         return;
       }
       final PsiExpression initializer = variable.getInitializer();
@@ -312,7 +313,9 @@ public class TooBroadScopeInspection extends BaseInspection {
             // String s = "";
             // String t = "";
             // String u = s + t;
-            registerError(nameIdentifier, ProblemHighlightType.INFORMATION, variable);
+            if (isOnTheFly()) {
+              registerError(nameIdentifier, ProblemHighlightType.INFORMATION, variable);
+            }
           }
           return;
         }

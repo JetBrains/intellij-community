@@ -32,7 +32,7 @@ import javax.swing.*;
 
 class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingElement> {
   ArchiveElementType() {
-    super("archive", JavaCompilerBundle.message("element.type.name.archive"));
+    super("archive", JavaCompilerBundle.messagePointer("element.type.name.archive"));
   }
 
   @Override

@@ -29,12 +29,12 @@ import javax.swing.*;
  */
 public abstract class AttachRootButtonDescriptor {
   private final OrderRootType myOrderRootType;
-  protected final String myButtonText;
+  protected final @NlsContexts.Button String myButtonText;
   private final Icon myToolbarIcon;
 
   /**
    * Creates a descriptor for 'attach' button shown in popup when user click on '+' button.
-   * Consider using {@link #AttachRootButtonDescriptor(com.intellij.openapi.roots.OrderRootType, javax.swing.Icon, String)} instead.
+   * Consider using {@link #AttachRootButtonDescriptor(OrderRootType, Icon, String)} instead.
    */
   protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @NotNull @NlsContexts.Button String buttonText) {
     myOrderRootType = orderRootType;
@@ -56,7 +56,7 @@ public abstract class AttachRootButtonDescriptor {
   public abstract VirtualFile[] selectFiles(@NotNull JComponent parent, @Nullable VirtualFile initialSelection,
                                             @Nullable Module contextModule, @NotNull LibraryEditor libraryEditor);
 
-  public String getButtonText() {
+  public @NlsContexts.Button String getButtonText() {
     return myButtonText;
   }
 

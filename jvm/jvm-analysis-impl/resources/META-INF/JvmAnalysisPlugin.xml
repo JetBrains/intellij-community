@@ -29,13 +29,22 @@
                      implementationClass="com.intellij.codeInspection.OverrideOnlyInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MissingDeprecatedAnnotationOnScheduledForRemovalApi"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
-                     groupKey="jvm.inspections.group.name" key="jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.display.name"
+                     groupKey="jvm.inspections.group.name"
+                     key="jvm.inspections.missing.deprecated.annotation.on.scheduled.for.removal.api.display.name"
                      implementationClass="com.intellij.codeInspection.MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="MustAlreadyBeRemovedApi"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.must.already.be.removed.api.display.name"
                      implementationClass="com.intellij.codeInspection.MustAlreadyBeRemovedApiInspection"/>
-    <notificationWhitelist groupIds="UAST"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="Dependency"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.dependency.display.name"
+                     implementationClass="com.intellij.codeInspection.DependencyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="ERROR" shortName="JUnitRule"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.junit.rule.display.name"
+                     implementationClass="com.intellij.codeInspection.JUnitRuleInspection"/>
+    <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
     <blockingMethodChecker implementation="com.intellij.codeInspection.blockingCallsDetection.ThrowsTypeBlockingMethodChecker"/>

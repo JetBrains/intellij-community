@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.Disposable;
@@ -17,7 +17,7 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
   public abstract Icon getNodeIcon();
 
   @Nullable
-  public abstract String getBuilderId();
+  public abstract @NonNls String getBuilderId();
 
   public abstract ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider);
 

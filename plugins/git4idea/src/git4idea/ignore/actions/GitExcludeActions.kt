@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -17,12 +16,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.i18n.GitBundle.message
+import git4idea.i18n.GitBundle.messagePointer
 import git4idea.ignore.lang.GitExcludeFileType
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
+import java.util.function.Supplier
 import kotlin.streams.toList
 
-abstract class DefaultGitExcludeAction(text: String?, description: String?) : DumbAwareAction(text, description,
-                                                                                              GitExcludeFileType.INSTANCE.icon) {
+abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls String>,
+                                       dynamicDescription: @NotNull Supplier<@Nls String>)
+  : DumbAwareAction(dynamicText, dynamicDescription, GitExcludeFileType.INSTANCE.icon) {
+
   override fun update(e: AnActionEvent) {
     val enabled = isEnabled(e)
     e.presentation.isVisible = enabled
@@ -37,7 +41,8 @@ abstract class DefaultGitExcludeAction(text: String?, description: String?) : Du
 }
 
 class AddToGitExcludeAction : DefaultGitExcludeAction(
-  message("git.add.to.exclude.file.action.text"), message("git.add.to.exclude.file.action.description")
+  messagePointer("git.add.to.exclude.file.action.text"),
+  messagePointer("git.add.to.exclude.file.action.description")
 ) {
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
@@ -71,15 +76,9 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
 }
 
 class OpenGitExcludeAction : DefaultGitExcludeAction(
-  message("git.open.exclude.file.action.text"), message("git.open.exclude.file.action.description")
+  messagePointer("git.open.exclude.file.action.text"),
+  messagePointer("git.open.exclude.file.action.description")
 ) {
-
-  override fun update(e: AnActionEvent) {
-    if (e.place == ActionPlaces.MAIN_MENU)
-      super.update(e)
-    else
-      e.presentation.isEnabledAndVisible = false
-  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)

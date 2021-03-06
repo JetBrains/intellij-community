@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Platform;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class RunnerMediator {
   private static final char C = (char)5;
   private static final String RUNNERW = "runnerw.exe";
   private static final String RUNNERW_64 = "runnerw64.exe";
-  private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
+  @NonNls private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
 
   /**
    * Creates default runner mediator

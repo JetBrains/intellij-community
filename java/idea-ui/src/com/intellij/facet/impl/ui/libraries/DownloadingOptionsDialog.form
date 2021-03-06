@@ -19,7 +19,7 @@
         </constraints>
         <properties>
           <labelFor value="117b3"/>
-          <text value="&amp;Files to download:"/>
+          <text resource-bundle="messages/JavaUiBundle" key="label.files.to.download"/>
         </properties>
       </component>
       <component id="dd86" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDirectoryField">
@@ -35,7 +35,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Copy downloaded files &amp;to:"/>
+          <text resource-bundle="messages/JavaUiBundle" key="label.copy.downloaded.files.to"/>
         </properties>
       </component>
       <grid id="6bec" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -52,7 +52,7 @@
             </constraints>
             <properties>
               <focusable value="false"/>
-              <text value="Download &amp;sources"/>
+              <text resource-bundle="messages/JavaUiBundle" key="checkbox.download.sources"/>
             </properties>
           </component>
           <hspacer id="598d">
@@ -66,7 +66,7 @@
             </constraints>
             <properties>
               <focusable value="false"/>
-              <text value="Download &amp;javadocs"/>
+              <text resource-bundle="messages/JavaUiBundle" key="checkbox.download.javadocs"/>
             </properties>
           </component>
         </children>

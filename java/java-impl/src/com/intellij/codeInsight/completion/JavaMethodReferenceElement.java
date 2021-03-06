@@ -3,25 +3,30 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class JavaMethodReferenceElement extends LookupElement {
+class JavaMethodReferenceElement extends LookupElement implements TypedLookupItem {
   private final PsiMethod myMethod;
   private final PsiElement myRefPlace;
+  private final PsiType myType;
 
-  JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace) {
+  JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace, @Nullable PsiType type) {
     myMethod = method;
     myRefPlace = refPlace;
+    myType = type;
+  }
+
+  @Override
+  public @Nullable PsiType getType() {
+    return myType;
   }
 
   @Override
@@ -69,7 +74,5 @@ class JavaMethodReferenceElement extends LookupElement {
       document.insertString(startOffset, qualifiedName + "::");
       JavaCompletionUtil.shortenReference(context.getFile(), startOffset + qualifiedName.length() - 1);
     }
-    JavaCompletionUtil
-      .insertTail(context, this, LookupItem.handleCompletionChar(context.getEditor(), this, context.getCompletionChar()), false);
   }
 }

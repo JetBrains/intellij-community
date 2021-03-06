@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
+import com.jetbrains.python.lexer.PyFStringLiteralLexer;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
 
 /**
@@ -42,5 +42,11 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
     doLexerTest("'\\N{F\\')", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE),
                 "Py:SINGLE_QUOTED_UNICODE", "INVALID_UNICODE_ESCAPE_TOKEN", "VALID_STRING_ESCAPE_TOKEN",
                 "Py:SINGLE_QUOTED_UNICODE");
+  }
+
+  // PY-40863
+  public void testFStringDoubleCurleyBrace() {
+    doLexerTest("a{{b", new PyFStringLiteralLexer(PyTokenTypes.FSTRING_TEXT), true, "a", "{{", "b");
+    doLexerTest("a\\}}b", new PyFStringLiteralLexer(PyTokenTypes.FSTRING_RAW_TEXT), true, "a", "\\", "}}", "b");
   }
 }

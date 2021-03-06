@@ -60,6 +60,12 @@
   <item name='java.util.ArrayDeque void push(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.ArrayList ArrayList(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -82,11 +88,23 @@
   <item name="java.util.Arrays T[] copyOf(T[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays T[] copyOf(T[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;) 2">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -172,7 +190,13 @@
   <item name="java.util.Arrays boolean[] copyOf(boolean[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.util.Arrays boolean[] copyOfRange(boolean[], int, int)">
+    <item name='java.util.Arrays boolean[] copyOf(boolean[], int) 1'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+        </annotation>
+    </item>
+    <item name="java.util.Arrays boolean[] copyOfRange(boolean[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.util.Arrays boolean[] copyOfRange(boolean[], int, int) 0">
@@ -183,6 +207,12 @@
   </item>
   <item name="java.util.Arrays byte[] copyOf(byte[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays byte[] copyOf(byte[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays byte[] copyOfRange(byte[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -196,6 +226,12 @@
   <item name="java.util.Arrays char[] copyOf(char[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays char[] copyOf(char[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays char[] copyOfRange(char[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -208,6 +244,12 @@
   <item name="java.util.Arrays double[] copyOf(double[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays double[] copyOf(double[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays double[] copyOfRange(double[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -219,6 +261,12 @@
   </item>
   <item name="java.util.Arrays float[] copyOf(float[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays float[] copyOf(float[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays float[] copyOfRange(float[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -430,6 +478,12 @@
   <item name="java.util.Arrays int[] copyOf(int[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays int[] copyOf(int[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays int[] copyOfRange(int[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -609,6 +663,12 @@
   <item name="java.util.Arrays long[] copyOf(long[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays long[] copyOf(long[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays long[] copyOfRange(long[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -620,6 +680,12 @@
   </item>
   <item name="java.util.Arrays short[] copyOf(short[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays short[] copyOf(short[], int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays short[] copyOfRange(short[], int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -1771,6 +1837,9 @@
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;param1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Collection T[] toArray(T[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -1790,6 +1859,16 @@
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Collection boolean contains(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt;) 0">
@@ -1832,6 +1911,9 @@
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
     </annotation>
+      <annotation name='org.jetbrains.annotations.Contract'>
+          <val name="pure" val="true"/>
+      </annotation>
   </item>
   <item name="java.util.Collection java.util.Iterator&lt;E&gt; iterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2437,6 +2519,30 @@
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
   </item>
+  <item name='java.util.HashMap HashMap(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashMap HashMap(int, float) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashSet HashSet(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashSet HashSet(int, float) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.util.HashSet HashSet(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -2540,6 +2646,16 @@
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List boolean contains(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List boolean containsAll(java.util.Collection&lt;?&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.util.List boolean containsAll(java.util.Collection&lt;?&gt;) 0">
@@ -2826,6 +2942,9 @@
   <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Objects T requireNonNull(T, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.util.Objects T requireNonNullElse(T, T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;!null, _ -&gt; param1; null, !null -&gt; param2; null, null -&gt; fail&quot;"/>
@@ -2893,6 +3012,36 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Random int nextInt(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.IntStream ints(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.IntStream ints(long, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.LongStream longs(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.Random java.util.stream.LongStream longs(long, long, long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -2907,6 +3056,7 @@
   </item>
   <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Nls'/>
   </item>
   <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3026,30 +3176,35 @@
   </item>
   <item name='java.util.Scanner boolean hasNext(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner boolean hasNext(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.lang.String findInLine(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.lang.String findInLine(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.lang.String findWithinHorizon(java.lang.String, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.lang.String findWithinHorizon(java.util.regex.Pattern, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.lang.String next(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.lang.String next(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.util.Scanner skip(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.util.Scanner skip(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3077,7 +3232,17 @@
   <item name='java.util.Set boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+  <item name='java.util.Set boolean contains(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Set boolean removeAll(java.util.Collection&lt;?&gt;) 0'>
@@ -3213,6 +3378,42 @@
   <item name='java.util.Spliterators.IteratorSpliterator IteratorSpliterator(java.util.Iterator&lt;? extends T&gt;, int) 1'>
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.util.Spliterator.class" />
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom int nextInt(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.IntStream ints(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.IntStream ints(long, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.LongStream longs(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom java.util.stream.LongStream longs(long, long, long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.SplittableRandom long nextLong(long) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
     </annotation>
   </item>
   <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">

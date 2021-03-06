@@ -24,8 +24,8 @@ import org.jetbrains.java.generate.psi.PsiAdapter;
 /**
  * Factory for creating {@link FieldElement} or {@link ClassElement} objects.
  */
-public class ElementFactory {
-  private static final Logger LOG = Logger.getInstance("#ElementFactory");
+public final class ElementFactory {
+  private static final Logger LOG = Logger.getInstance(ElementFactory.class);
 
   private ElementFactory() { }
 

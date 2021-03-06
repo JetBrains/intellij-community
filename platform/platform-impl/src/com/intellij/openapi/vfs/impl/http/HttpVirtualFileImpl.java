@@ -107,6 +107,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "HttpVirtualFile:" + myPath + ", info=" + myFileInfo;
   }
@@ -168,7 +169,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  public InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() throws IOException {
     if (myFileInfo != null) {
       VirtualFile localFile = myFileInfo.getLocalFile();
       if (localFile != null) {

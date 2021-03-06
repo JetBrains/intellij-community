@@ -23,13 +23,14 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
+import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Paths
 
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
                                     private val dependencyModuleNames: List<String>,
                                     private val contentRoots: List<VirtualFilePointer>) : UnloadedModuleDescription {
-  override fun getGroupPath(): List<String> = modulePath.group?.split(ModuleManagerImpl.MODULE_GROUP_SEPARATOR) ?: emptyList()
+  override fun getGroupPath(): List<String> = modulePath.group?.split(ModuleManagerEx.MODULE_GROUP_SEPARATOR) ?: emptyList()
 
   override fun getName(): String = modulePath.moduleName
 
@@ -45,7 +46,7 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
     @JvmStatic
     fun createFromPaths(paths: Collection<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
-      val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables)
+      val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY)
       val pathsByName = paths.associateBy { it.moduleName }
       return modules.map { create(pathsByName[it.name]!!, it, parentDisposable) }
     }

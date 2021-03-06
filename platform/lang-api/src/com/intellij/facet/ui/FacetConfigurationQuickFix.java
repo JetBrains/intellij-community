@@ -16,23 +16,24 @@
 
 package com.intellij.facet.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public abstract class FacetConfigurationQuickFix {
-  private final String myFixButtonText;
+  private final @NlsContexts.Button String myFixButtonText;
 
   protected FacetConfigurationQuickFix() {
     this(null);
   }
 
-  protected FacetConfigurationQuickFix(final @Nullable String fixButtonText) {
+  protected FacetConfigurationQuickFix(final @Nullable @NlsContexts.Button String fixButtonText) {
     myFixButtonText = fixButtonText;
   }
 
   @Nullable
-  public final String getFixButtonText() {
+  public final @NlsContexts.Button String getFixButtonText() {
     return myFixButtonText;
   }
 

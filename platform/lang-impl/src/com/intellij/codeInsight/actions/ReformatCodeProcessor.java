@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.formatting.FormattingProgressTask;
 import com.intellij.lang.Language;
@@ -10,13 +11,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +79,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   public ReformatCodeProcessor(Project project,
                                PsiFile[] files,
-                               String commandName,
+                               @NlsContexts.Command String commandName,
                                @Nullable Runnable postRunnable,
                                boolean processChangedTextOnly)
   {
@@ -93,28 +97,40 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         PsiFile fileToProcess = ensureValid(file);
         if (fileToProcess == null) return false;
 
-        CharSequence before = null;
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(fileToProcess);
-        if (getInfoCollector() != null) {
-          LOG.assertTrue(document != null);
-          before = document.getImmutableCharSequence();
+        final LayoutCodeInfoCollector infoCollector = getInfoCollector();
+        LOG.assertTrue(infoCollector == null || document != null);
+
+        CharSequence before = document == null
+         ? null
+         : document.getImmutableCharSequence();
+
+        try {
+          EditorScrollingPositionKeeper.perform(document, true, () -> SlowOperations.allowSlowOperations(() -> {
+            if (processChangedTextOnly) {
+              ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
+              if (info != null) {
+                assertFileIsValid(fileToProcess);
+                CodeStyleManager.getInstance(myProject).reformatTextWithContext(fileToProcess, info);
+              }
+            }
+            else {
+              Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
+              CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
+            }
+          }));
+        }
+        catch (ProcessCanceledException pce) {
+          if (before != null) {
+            document.setText(before);
+          }
+          if (infoCollector != null) {
+            infoCollector.setReformatCodeNotification(CodeInsightBundle.message("hint.text.formatting.canceled"));
+          }
+           return false;
         }
 
-        EditorScrollingPositionKeeper.perform(document, true, () -> {
-          if (processChangedTextOnly) {
-            ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(fileToProcess);
-            if (info != null) {
-              assertFileIsValid(fileToProcess);
-              CodeStyleManager.getInstance(myProject).reformatTextWithContext(fileToProcess, info);
-            }
-          }
-          else {
-            Collection<TextRange> ranges = getRangesToFormat(fileToProcess);
-            CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
-          }
-        });
-
-        if (before != null) {
+        if (infoCollector != null) {
           prepareUserNotificationMessage(document, before);
         }
 
@@ -157,7 +173,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     LOG.assertTrue(getInfoCollector() != null);
     int number = VcsFacade.getInstance().calculateChangedLinesNumber(document, before);
     if (number > 0) {
-      String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
+      String message = CodeInsightBundle.message("hint.text.formatted.line", number);
       getInfoCollector().setReformatCodeNotification(message);
     }
   }
@@ -171,11 +187,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
   }
 
-  private static String getProgressText() {
-    return CodeInsightBundle.message("reformat.progress.common.text");
+  private static @NlsContexts.ProgressText String getProgressText() {
+    return CodeStyleBundle.message("reformat.progress.common.text");
   }
 
-  public static String getCommandName() {
-    return CodeInsightBundle.message("process.reformat.code");
+  public static @NlsContexts.Command String getCommandName() {
+    return CodeStyleBundle.message("process.reformat.code");
   }
 }

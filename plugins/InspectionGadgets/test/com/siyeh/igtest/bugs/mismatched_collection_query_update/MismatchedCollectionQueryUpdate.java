@@ -18,7 +18,7 @@ package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 import java.util.*;
 import java.util.stream.IntStream;
 import java.io.FileInputStream;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.*;
 
 public class MismatchedCollectionQueryUpdate {
     private Set foo = new HashSet();
@@ -312,6 +312,34 @@ public class MismatchedCollectionQueryUpdate {
 
   void m(List l) {}
 
+  void initializationInsideMethodCall() {
+    HashMap<String, Map<String, String>> root = new HashMap<>();
+    HashMap<String, String> child;
+    root.put("A", child = new HashMap<>());
+    child.put("A", "B");
+    root.forEach((key, value) -> System.out.println(key + ": " + value));
+  }
+
+  void chainedInitializationInsideMethodCall() {
+    HashMap<String, Map<String, String>> root = new HashMap<>();
+    HashMap<String, String> child1;
+    HashMap<String, String> child2;
+    root.put("A", child1 = child2 = new HashMap<>());
+    child1.put("A", "B");
+    child2.put("A", "B");
+    root.forEach((key, value) -> System.out.println(key + ": " + value));
+  }
+
+  void parenthesizedInitializationInsideMethodCall() {
+    HashMap<String, Map<String, String>> root = new HashMap<>();
+    HashMap<String, String> child1;
+    HashMap<String, String> child2;
+    root.put("A", ((child1 = ((child2 = ((new HashMap<>())))))));
+    child1.put("A", "B");
+    child2.put("A", "B");
+    root.forEach((key, value) -> System.out.println(key + ": " + value));
+  }
+
   public void foo()
   {
     final Set localFoo = foo;
@@ -555,7 +583,23 @@ class UnmodifiableTernaryTest {
     return Collections.unmodifiableList(b ? myList : myList2);
   }
 }
-
+class BlockingQueueTest {
+  void test() throws InterruptedException {
+    LinkedBlockingQueue<Boolean> <warning descr="Contents of collection 'x' are updated, but never queried">x</warning> = new LinkedBlockingQueue<>();
+    x.put(true);
+    x.poll(); // not blocking
+    x.peek(); // not blocking
+    LinkedBlockingQueue<Boolean> y = new LinkedBlockingQueue<>();
+    y.put(true);
+    y.take(); // blocking
+    LinkedBlockingQueue<Boolean> z = new LinkedBlockingQueue<>();
+    z.put(true);
+    z.poll(1, TimeUnit.MILLISECONDS); // blocking until timeout
+    LinkedBlockingDeque<Boolean> a = new LinkedBlockingDeque<>();
+    a.put(true);
+    a.takeFirst(); // blocking
+  }
+}
 class InLambdaTest {
   void test() {
     List<String> <warning descr="Contents of collection 'listForLambda' are updated, but never queried">listForLambda</warning> = new ArrayList<>();

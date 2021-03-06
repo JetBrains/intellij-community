@@ -39,7 +39,7 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
 
   @NotNull
-  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath);
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath);
 
 
   @NotNull

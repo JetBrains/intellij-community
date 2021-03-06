@@ -164,7 +164,7 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   public void setLinkedProjectsSettings(@NotNull Collection<? extends PS> settings) {
-    setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter<PS>() {
+    setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter<>() {
       @Override
       public void onProjectsLinked(@NotNull Collection<PS> settings) {
         AbstractExternalSystemSettings.this.onProjectsLinked(settings);
@@ -231,7 +231,7 @@ public abstract class AbstractExternalSystemSettings<
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings != null) {
-      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter<PS>() {
+      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter<>() {
         @Override
         public void onProjectsLinked(@NotNull Collection<PS> settings) {
           ApplicationManager.getApplication().invokeLater(() -> {

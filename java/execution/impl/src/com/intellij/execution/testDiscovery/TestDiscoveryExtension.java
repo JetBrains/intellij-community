@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.*;
@@ -33,7 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class TestDiscoveryExtension extends RunConfigurationExtension {
+public final class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
   private static final String TEST_DISCOVERY_AGENT_PATH = "test.discovery.agent.path";
 
@@ -42,9 +42,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
 
-  @NotNull
   @Override
-  public String getSerializationId() {
+  public @NotNull String getSerializationId() {
     return "testDiscovery";
   }
 
@@ -98,7 +97,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @NotNull
-  private static String getTraceFilePath(RunConfigurationBase configuration) {
+  private static String getTraceFilePath(RunConfigurationBase<?> configuration) {
     return baseTestDiscoveryPathForProject(configuration.getProject()) + File.separator + configuration.getUniqueID() + ".tr";
   }
 
@@ -156,7 +155,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Nullable
-  private static TestDiscoveryDataSocketListener tryInstallSocketListener(@NotNull RunConfigurationBase configuration) {
+  private static TestDiscoveryDataSocketListener tryInstallSocketListener(@NotNull RunConfigurationBase<?> configuration) {
     TestDiscoveryDataSocketListener listener = null;
     if (USE_SOCKET) {
       try {

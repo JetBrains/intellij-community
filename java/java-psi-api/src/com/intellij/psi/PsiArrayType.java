@@ -31,32 +31,41 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   @NotNull
   @Override
   public String getPresentableText(boolean annotated) {
-    return getText(myComponentType.getPresentableText(annotated), "[]", false, annotated);
+    return getText(getDeepComponentType().getPresentableText(annotated), "[]", false, annotated);
   }
 
   @NotNull
   @Override
   public String getCanonicalText(boolean annotated) {
-    return getText(myComponentType.getCanonicalText(annotated), "[]", true, annotated);
+    return getText(getDeepComponentType().getCanonicalText(annotated), "[]", true, annotated);
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return getText(myComponentType.getInternalCanonicalText(), "[]", true, true);
+    return getText(getDeepComponentType().getInternalCanonicalText(), "[]", true, true);
   }
 
   protected String getText(@NotNull String prefix, @NotNull String suffix, boolean qualified, boolean annotated) {
-    StringBuilder sb = new StringBuilder(prefix.length() + suffix.length());
+    int dimensions = getArrayDimensions();
+    StringBuilder sb = new StringBuilder(prefix.length() + (dimensions - 1) * 2 + suffix.length());
     sb.append(prefix);
-    if (annotated) {
-      PsiAnnotation[] annotations = getAnnotations();
-      if (annotations.length != 0) {
-        sb.append(' ');
-        PsiNameHelper.appendAnnotations(sb, annotations, qualified);
+    PsiType current = this;
+    for (int i = 0; i < dimensions; i++) {
+      if (annotated) {
+        PsiAnnotation[] annotations = current.getAnnotations();
+        if (annotations.length != 0) {
+          sb.append(' ');
+          PsiNameHelper.appendAnnotations(sb, annotations, qualified);
+        }
+      }
+      if (i == dimensions - 1) {
+        sb.append(suffix);
+      } else {
+        sb.append("[]");
+        current = ((PsiArrayType)current).getComponentType();
       }
     }
-    sb.append(suffix);
     return sb.toString();
   }
 

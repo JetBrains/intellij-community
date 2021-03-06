@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -18,7 +14,7 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 import static java.awt.GridBagConstraints.*;
 
 /**
- * also consider using {@link UI.PanelFactory} for non-trivial forms  
+ * also consider using {@link UI.PanelFactory} for non-trivial forms
  */
 public class FormBuilder {
   private boolean myAlignLabelOnRight;
@@ -75,12 +71,7 @@ public class FormBuilder {
 
   @NotNull
   private static JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
-    JLabel label = new JLabel(UIUtil.removeMnemonic(labelText));
-    final int index = UIUtil.getDisplayMnemonicIndex(labelText);
-    if (index != -1) {
-      label.setDisplayedMnemonic(labelText.charAt(index + 1));
-      label.setDisplayedMnemonicIndex(index);
-    }
+    JLabel label = new JLabel(UIUtil.replaceMnemonicAmpersand(labelText));
     label.setLabelFor(component);
     return label;
   }
@@ -116,7 +107,7 @@ public class FormBuilder {
                                new Box.Filler(new JBDimension(0, height), new JBDimension(0, height), new JBDimension(Short.MAX_VALUE, height)));
   }
 
-  public FormBuilder addTooltip(final String text) {
+  public FormBuilder addTooltip(final @NlsContexts.Label String text) {
     final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
     label.setBorder(JBUI.Borders.emptyLeft(10));
     return addComponentToRightColumn(label, 1);

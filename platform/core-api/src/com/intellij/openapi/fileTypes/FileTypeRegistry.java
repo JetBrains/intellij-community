@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
@@ -8,12 +8,9 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * A service for retrieving file types for files.
@@ -130,7 +127,7 @@ public abstract class FileTypeRegistry {
    * Pluggable file type detector by content
    */
   public interface FileTypeDetector {
-    ExtensionPointName<FileTypeDetector> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeDetector");
+    ExtensionPointName<FileTypeDetector> EP_NAME = new ExtensionPointName<>("com.intellij.fileTypeDetector");
     /**
      * Detects file type by its (may be binary) content on disk.
      * Your detector must be as light as possible.
@@ -145,19 +142,6 @@ public abstract class FileTypeRegistry {
     FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText);
 
     /**
-     * Returns the file type that this detector is capable of detecting, or null if it can detect
-     * multiple file types.
-     * 
-     * @deprecated unused
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-    @Nullable
-    default Collection<? extends FileType> getDetectedFileTypes() {
-      return null;
-    }
-
-    /**
      * Defines how much content is required for this detector to detect file type reliably. At least such amount of bytes
      * will be passed to {@link #detect(VirtualFile, ByteSequence, CharSequence)} if present.
      *
@@ -167,6 +151,10 @@ public abstract class FileTypeRegistry {
       return 1024;
     }
 
+    /**
+     * @deprecated Do not use
+     */
+    @Deprecated
     default int getVersion() { return 0; }
   }
 }

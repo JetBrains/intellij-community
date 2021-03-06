@@ -24,7 +24,7 @@ public interface DuplocateVisitor {
 
   /**
    * Is not invoked when index is used
-   * @see com.intellij.dupLocator.DuplicatesProfile#supportIndex()
+   * @see DuplicatesProfile#supportIndex()
    */
   void hashingFinished();
 }

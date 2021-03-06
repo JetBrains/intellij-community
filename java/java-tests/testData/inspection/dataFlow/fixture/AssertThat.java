@@ -2,6 +2,7 @@ import org.hamcrest.CoreMatchers;
 import org.jetbrains.annotations.Nullable;
 import org.assertj.core.api.Assertions;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
@@ -83,7 +84,12 @@ class Contracts {
     id = obtainOptional();
     Assertions.assertThat(id).isPresent();
     if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = obtainOptional();
+    Assertions.assertThat(id).isPresent().map(this::convert).isEmpty();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
   }
+  
+  native @Nullable String convert(String s);
 
   native Optional<String> obtainOptional();
 
@@ -115,5 +121,12 @@ class Contracts {
     Assertions.assertThat(list2).isNotEmpty();
     if (<warning descr="Condition 'list2.size() == 0' is always 'false'">list2.size() == 0</warning>) {}
     Assertions.<warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>(list2).isEmpty();
+  }
+  
+  void testAtomicBoolean() {
+    AtomicBoolean b = new AtomicBoolean(false);
+    Runnable r = () -> b.set(true);
+    r.run();
+    Assertions.assertThat(b).isTrue();
   }
 }

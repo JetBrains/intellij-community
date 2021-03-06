@@ -18,6 +18,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -360,7 +361,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       final PsiElement formatArg = PsiUtil.skipParenthesizedExprDown(expr);
       if (formatArg == null) return;
 
-      final String newLineToken = "%n";
+      final @NonNls String newLineToken = "%n";
 
       if (formatArg instanceof PsiLiteralExpression) {
         final PsiLiteralExpression replacement = joinWithNewlineToken((PsiLiteralExpression)formatArg);
@@ -399,7 +400,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       final Object value = expression.getValue();
       if (value == null) return expression;
 
-      final StringBuilder newExpression = new StringBuilder();
+      final @NonNls StringBuilder newExpression = new StringBuilder();
 
       final String leftText = value.toString();
       if (expression.isTextBlock()) {

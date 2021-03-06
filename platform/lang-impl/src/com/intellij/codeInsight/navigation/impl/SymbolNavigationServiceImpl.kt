@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.PsiElementNavigationTarget
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
-import com.intellij.navigation.NavigatableSymbol
-import com.intellij.navigation.NavigationTarget
-import com.intellij.navigation.SymbolNavigationProvider
-import com.intellij.navigation.SymbolNavigationService
+import com.intellij.navigation.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
+import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 class SymbolNavigationServiceImpl : SymbolNavigationService {
@@ -31,5 +29,13 @@ class SymbolNavigationServiceImpl : SymbolNavigationService {
       result += PsiElementNavigationTarget(element)
     }
     return result
+  }
+
+  override fun psiFileNavigationTarget(file: PsiFile): NavigationTarget {
+    return PsiFileNavigationTarget(file)
+  }
+
+  override fun presentationBuilder(presentableText: @Nls String): TargetPresentationBuilder {
+    return TargetPresentationBuilderImpl(presentableText = presentableText)
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -153,6 +154,7 @@ public abstract class ActionButtonLook {
    * @deprecated Use {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon, int, int)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public void paintIconAt(Graphics g, Icon icon, int x, int y) {
     icon.paintIcon(null, g, x, y);
   }

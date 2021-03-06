@@ -1,33 +1,28 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.analysis.dialog.ModelScopeItemPresenter;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.find.FindSettings;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -40,10 +35,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @NotNull private final AnalysisUIOptions myOptions;
   private final boolean myRememberScope;
   private final boolean myShowInspectTestSource;
-  private final String myAnalysisNoon;
+  private final @NlsContexts.Separator String myScopeTitle;
   private final Project myProject;
   private final ButtonGroup myGroup = new ButtonGroup();
   private final JCheckBox myInspectTestSource = new JCheckBox();
+  private final JCheckBox myAnalyzeInjectedCode = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
 
   /**
@@ -51,14 +47,14 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
    */
   @Deprecated
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                   @NotNull String analysisNoon,
+                                   @NotNull @NlsContexts.Separator String scopeTitle,
                                    @NotNull Project project,
                                    @NotNull final AnalysisScope scope,
                                    final String moduleName,
                                    final boolean rememberScope,
                                    @NotNull AnalysisUIOptions analysisUIOptions,
                                    @Nullable PsiElement context) {
-    this(title, analysisNoon, project, standardItems(project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, context),
+    this(title, scopeTitle, project, standardItems(project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, context),
          analysisUIOptions, rememberScope);
   }
 
@@ -73,23 +69,23 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                @NotNull String analysisNoon,
+                                @NotNull @NlsContexts.Separator String scopeTitle,
                                 @NotNull Project project,
                                 @NotNull List<? extends ModelScopeItem> items,
                                 @NotNull AnalysisUIOptions options,
                                 final boolean rememberScope) {
-    this(title, analysisNoon, project, items, options, rememberScope, ModuleUtil.hasTestSourceRoots(project));
+    this(title, scopeTitle, project, items, options, rememberScope, ModuleUtil.hasTestSourceRoots(project));
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                  @NotNull String analysisNoon,
+                                  @NotNull @NlsContexts.Separator String scopeTitle,
                                   @NotNull Project project,
                                   @NotNull List<? extends ModelScopeItem> items,
                                   @NotNull AnalysisUIOptions options,
                                   final boolean rememberScope,
                                   final boolean showInspectTestSource) {
     super(true);
-    myAnalysisNoon = analysisNoon;
+    myScopeTitle = scopeTitle;
     myProject = project;
 
     myViewItems = ModelScopeItemPresenter.createOrderedViews(items, getDisposable());
@@ -103,68 +99,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    BorderLayoutPanel panel = new BorderLayoutPanel();
-    TitledSeparator titledSeparator = new TitledSeparator();
-    titledSeparator.setText(myAnalysisNoon);
-    panel.addToTop(titledSeparator);
-
-    JPanel scopesPanel = new JPanel(new GridBagLayout());
-    panel.addToCenter(scopesPanel);
-
-    int maxColumns = myViewItems.stream()
-                       .mapToInt(x -> x.additionalComponents.size())
-                       .max().orElse(0) + 1;
-
-    int gridY = 0;
-    JRadioButton[] buttons = new JRadioButton[myViewItems.size()];
-    GridBagConstraints gbc = new GridBagConstraints();
-    for (ModelScopeItemView x: myViewItems) {
-      JRadioButton button = x.button;
-      List<JComponent> components = x.additionalComponents;
-
-      int gridX = 0;
-      buttons[gridY] = button;
-      myGroup.add(button);
-      int countExtraColumns = components.size();
-
-      gbc.gridy = gridY;
-      gbc.gridx = gridX;
-      gbc.gridwidth = countExtraColumns == 0 ? maxColumns : 1;
-      gbc.weightx = 0.0D;
-      gbc.fill = 0;
-      gbc.anchor = GridBagConstraints.WEST;
-      gbc.insets = JBUI.insetsLeft(10);
-      scopesPanel.add(button, gbc);
-      gridX++;
-
-      for (JComponent c : components) {
-        if (c instanceof Disposable) {
-          Disposer.register(myDisposable, (Disposable)c);
-        }
-        gbc.gridy = gridY;
-        gbc.gridx = gridX;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbc.insets = JBUI.insetsLeft(5);
-        scopesPanel.add(c, gbc);
-        gridX++;
-      }
-      gridY++;
-    }
-
     myInspectTestSource.setText(CodeInsightBundle.message("scope.option.include.test.sources"));
     myInspectTestSource.setSelected(myOptions.ANALYZE_TEST_SOURCES);
     myInspectTestSource.setVisible(myShowInspectTestSource);
-    gbc.gridy = gridY;
-    gbc.gridx = 0;
-    gbc.gridwidth = maxColumns;
-    gbc.weightx = 1.0;
-    gbc.fill = 0;
-    gbc.anchor = GridBagConstraints.WEST;
-    gbc.insets = JBUI.insetsLeft(10);
-    scopesPanel.add(myInspectTestSource, gbc);
+    myAnalyzeInjectedCode.setText(CodeInsightBundle.message("scope.option.analyze.injected.code"));
+    myAnalyzeInjectedCode.setSelected(myOptions.ANALYZE_INJECTED_CODE);
+    myAnalyzeInjectedCode.setVisible(false);
+
+    ArrayList<JRadioButton> buttons = new ArrayList<>();
+    JPanel panel = new BaseAnalysisActionDialogUI().panel(myScopeTitle, myViewItems, myInspectTestSource, myAnalyzeInjectedCode, buttons, myDisposable);
+    buttons.forEach(b -> myGroup.add(b));
 
     preselectButton();
 
@@ -174,9 +118,16 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     if (additionalPanel != null) {
       wholePanel.addToCenter(additionalPanel);
     }
-    new RadioUpDownListener(buttons);
+    new RadioUpDownListener(buttons.toArray(new JRadioButton[0]));
 
     return wholePanel;
+  }
+
+  public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
+    if (Registry.is("idea.batch.inspections.injected.psi.option") &&
+        SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true)) {
+      myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
+    }
   }
 
   private void preselectButton() {
@@ -260,6 +211,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return myInspectTestSource.isSelected();
   }
 
+  public boolean isAnalyzeInjectedCode() {
+    return !myAnalyzeInjectedCode.isVisible() || myAnalyzeInjectedCode.isSelected();
+  }
+
   public AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
     AnalysisScope scope = null;
     for (ModelScopeItemView x : myViewItems) {
@@ -286,6 +241,13 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
         myOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
       }
       scope.setIncludeTestSource(isInspectTestSources());
+    }
+
+    if (myAnalyzeInjectedCode.isVisible()) {
+      if (myRememberScope) {
+        myOptions.ANALYZE_INJECTED_CODE = isAnalyzeInjectedCode();
+      }
+      scope.setAnalyzeInjectedCode(isAnalyzeInjectedCode());
     }
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());

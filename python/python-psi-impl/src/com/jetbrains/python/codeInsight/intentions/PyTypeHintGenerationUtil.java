@@ -35,7 +35,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyTypeHintGenerationUtil {
+public final class PyTypeHintGenerationUtil {
 
   public static final String TYPE_COMMENT_PREFIX = "# type: ";
 
@@ -55,7 +55,7 @@ public class PyTypeHintGenerationUtil {
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
-    final String assignedValue = langLevel.isAtLeast(LanguageLevel.PYTHON30) ? "..." : "None";
+    final String assignedValue = langLevel.isPython2() ? "None" : "...";
     final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
     final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
@@ -172,16 +172,19 @@ public class PyTypeHintGenerationUtil {
     final Project project = annotated.getProject();
     final int initialCaretOffset = annotated.getTextRange().getStartOffset();
     final VirtualFile updatedVirtualFile = annotated.getContainingFile().getVirtualFile();
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
+    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
+    final String annotation = annotated.getAnnotationValue();
+    final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
+    //noinspection ConstantConditions
+    templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
 
+    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
     if (editor != null) {
       editor.getCaretModel().moveToOffset(initialCaretOffset);
-      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
-      final String annotation = annotated.getAnnotationValue();
-      final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
-      //noinspection ConstantConditions
-      templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
       templateBuilder.run(editor, true);
+    }
+    else {
+      templateBuilder.runNonInteractively(true);
     }
   }
 
@@ -245,7 +248,6 @@ public class PyTypeHintGenerationUtil {
         openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
       }
     });
-
   }
 
   private static void openEditorAndAddTemplateForTypeComment(@NotNull PsiComment insertedComment,
@@ -254,18 +256,21 @@ public class PyTypeHintGenerationUtil {
     final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
     final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
     final Project project = insertedComment.getProject();
-    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
+    final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    for (TextRange range : typeRanges) {
+      final String individualType = range.substring(annotation);
+      final String replacementText = testMode ? "[" + individualType + "]" : individualType;
+      templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
+    }
 
+    final Editor editor = PythonUiService.getInstance().openTextEditor(project, updatedVirtualFile, initialCaretOffset);
     if (editor != null) {
-      final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
       editor.getCaretModel().moveToOffset(initialCaretOffset);
-      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
-      for (TextRange range : typeRanges) {
-        final String individualType = range.substring(annotation);
-        final String replacementText = testMode ? "[" + individualType + "]" : individualType;
-        templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
-      }
       templateBuilder.run(editor, true);
+    }
+    else {
+      templateBuilder.runNonInteractively(true);
     }
   }
 
@@ -381,6 +386,10 @@ public class PyTypeHintGenerationUtil {
       throw new Pep484IncompatibleTypeException(
         PyPsiBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type.getName()));
     }
+  }
+
+  public static boolean isTypeHintComment(PsiElement element) {
+    return element instanceof PsiComment && element.getText().startsWith(TYPE_COMMENT_PREFIX);
   }
 
   public static final class Pep484IncompatibleTypeException extends RuntimeException {

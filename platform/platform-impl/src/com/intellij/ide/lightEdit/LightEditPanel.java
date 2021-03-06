@@ -2,6 +2,9 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,11 +12,12 @@ import java.awt.*;
 public final class LightEditPanel extends JPanel implements Disposable {
   private final LightEditTabs myTabs;
 
-  public LightEditPanel() {
+  public LightEditPanel(@NotNull Project project) {
     LightEditorManager editorManager = LightEditService.getInstance().getEditorManager();
     setLayout(new BorderLayout());
-    myTabs = new LightEditTabs(this, (LightEditorManagerImpl)editorManager);
+    myTabs = new LightEditTabs(project,this, (LightEditorManagerImpl)editorManager);
     add(myTabs, BorderLayout.CENTER);
+    setBackground(JBColor.background().darker());
   }
 
   LightEditTabs getTabs() {

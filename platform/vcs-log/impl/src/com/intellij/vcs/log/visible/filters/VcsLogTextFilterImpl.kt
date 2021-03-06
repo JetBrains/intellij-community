@@ -3,11 +3,10 @@ package com.intellij.vcs.log.visible.filters
 
 import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
-@ApiStatus.Internal
-data class VcsLogTextFilterImpl internal constructor(private val text: String,
-                                                     private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+internal data class VcsLogTextFilterImpl(private val text: String,
+                                         private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
 
   override fun matches(message: String): Boolean = message.contains(text, !isMatchCase)
 
@@ -17,7 +16,8 @@ data class VcsLogTextFilterImpl internal constructor(private val text: String,
 
   override fun matchesCase(): Boolean = isMatchCase
 
+  @NonNls
   override fun toString(): String {
-    return "containing '$text' ${caseSensitiveText()}" // NON-NLS
+    return "containing '$text' ${caseSensitiveText()}"
   }
 }

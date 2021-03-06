@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
@@ -114,7 +114,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       panel.add(new TitledSeparator(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
-      final EditorTextField field = new EditorTextField(suggestedName, getProject(), StdFileTypes.JAVA);
+      final EditorTextField field = new EditorTextField(suggestedName, getProject(), JavaFileType.INSTANCE);
       field.setMinimumSize(new Dimension(field.getPreferredSize()));
       myOldClassParameterNameFields.put(aClass, field);
       panel.add(field);

@@ -1,21 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -34,41 +32,26 @@ import java.util.stream.Collectors;
  * - multiple linuxes
  * - file system is unavailable form windows (for now at least)
  */
-public class WSLUtil {
+public final class WSLUtil {
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
 
   /**
-   * this listener is a hack for https://github.com/Microsoft/BashOnWindows/issues/2592
-   * See RUBY-20358
+   * @deprecated use {@link WslDistributionManager#getInstalledDistributions} instead.
+   * Alternatively, check {@link WSLUtil#isSystemCompatible} and show standard WSL UI, e.g.
+   * {@link com.intellij.execution.wsl.ui.WslDistributionComboBox}. If no WSL distributions installed,
+   * it will show "No installed distributions" message.
    */
-  private static final ProcessListener INPUT_CLOSE_LISTENER = new ProcessAdapter() {
-    @Override
-    public void startNotified(@NotNull ProcessEvent event) {
-      OutputStream input = event.getProcessHandler().getProcessInput();
-      if (input != null) {
-        try {
-          input.flush();
-          input.close();
-        }
-        catch (IOException ignore) {
-        }
-      }
-    }
-  };
-
-  /**
-   * @return true if there are distributions available for usage
-   */
+  @Deprecated
   public static boolean hasAvailableDistributions() {
     return !getAvailableDistributions().isEmpty();
   }
 
 
   /**
-   * @return list of installed WSL distributions
-   * @apiNote order of entries depends on configuration file and may change between launches.
-   * @see WSLDistributionService
+   * @deprecated use {@link WslDistributionManager#getInstalledDistributions()} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
     if (!isSystemCompatible()) return Collections.emptyList();
@@ -80,14 +63,16 @@ public class WSLUtil {
     final List<WSLDistribution> result = new ArrayList<>(descriptors.size() + 1 /* LEGACY_WSL */);
 
     for (WslDistributionDescriptor descriptor: descriptors) {
+      String executablePathStr = descriptor.getExecutablePath();
+      if (executablePathStr != null) {
+        Path executablePath = Paths.get(executablePathStr);
+        if (!executablePath.isAbsolute()) {
+          executablePath = executableRoot.resolve(executablePath);
+        }
 
-      Path executablePath = Paths.get(descriptor.getExecutablePath());
-      if (!executablePath.isAbsolute()) {
-        executablePath = executableRoot.resolve(executablePath);
-      }
-
-      if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
-        result.add(new WSLDistribution(descriptor, executablePath));
+        if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
+          result.add(new WSLDistribution(descriptor, executablePath));
+        }
       }
     }
 
@@ -109,8 +94,10 @@ public class WSLUtil {
   }
 
   /**
-   * @return instance of WSL distribution or null if it's unavailable
+   * @deprecated use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static WSLDistribution getDistributionById(@Nullable String id) {
     if (id == null) {
@@ -125,18 +112,21 @@ public class WSLUtil {
   }
 
   /**
-   * Temporary hack method to fix <a href="https://github.com/Microsoft/BashOnWindows/issues/2592">WSL bug</a>
-   * Must be invoked just before execution, see RUBY-20358
+   * @return instance of WSL distribution or null if it's unavailable
+   * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
    */
+  @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @NotNull
-  public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
-    if (Experiments.getInstance().isFeatureEnabled("wsl.close.process.input")) {
-      processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
-      processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
+  public static WSLDistribution getDistributionByMsId(@Nullable String name) {
+    if (name == null) {
+      return null;
     }
-    return processHandler;
+    for (WSLDistribution distribution : getAvailableDistributions()) {
+      if (name.equals(distribution.getMsId())) {
+        return distribution;
+      }
+    }
+    return null;
   }
 
   public static boolean isSystemCompatible() {
@@ -166,18 +156,22 @@ public class WSLUtil {
     return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
   }
 
-  /**
-   * @return list of existing UNC roots for known WSL distributions
-   */
-  @ApiStatus.Experimental
   @NotNull
-  public static List<File> getExistingUNCRoots() {
-    if (!isSystemCompatible() || !Experiments.getInstance().isFeatureEnabled("wsl.p9.support")) {
-      return Collections.emptyList();
+  public static ThreeState isWsl1(@NotNull WSLDistribution distribution) {
+    try {
+      ProcessOutput output = distribution.executeOnWsl(10_000, "uname", "-v");
+      if (output.getExitCode() != 0) return ThreeState.UNSURE;
+      return ThreeState.fromBoolean(output.getStdout().contains("Microsoft"));
     }
-    return getAvailableDistributions().stream()
-      .map(WSLDistribution::getUNCRoot)
-      .filter(File::exists)
-      .collect(Collectors.toList());
+    catch (ExecutionException e) {
+      LOG.warn(e);
+      return ThreeState.UNSURE;
+    }
+  }
+
+  public static @NotNull @NlsSafe String getMsId(@NotNull @NlsSafe String msOrInternalId) {
+    WslDistributionDescriptor descriptor = ContainerUtil.find(WSLDistributionService.getInstance().getDescriptors(),
+                                                              d -> d.getId().equals(msOrInternalId));
+    return descriptor != null ? descriptor.getMsId() : msOrInternalId;
   }
 }

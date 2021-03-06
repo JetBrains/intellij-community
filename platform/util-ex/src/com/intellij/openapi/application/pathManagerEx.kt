@@ -7,7 +7,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.application.PathManagerEx")
+private val LOG = Logger.getInstance(PathManager::class.java)
 
 /**
  * Absolute canonical path to system cache dir.

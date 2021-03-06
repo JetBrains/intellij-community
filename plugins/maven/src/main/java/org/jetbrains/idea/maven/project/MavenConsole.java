@@ -19,14 +19,11 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.buildtool.BuildViewMavenConsole;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.server.MavenServerConsole;
@@ -35,22 +32,10 @@ import java.text.MessageFormat;
 import java.util.List;
 
 public abstract class MavenConsole {
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+  private static final String LINE_SEPARATOR = System.lineSeparator();
   private final List<ProcessListener> myProcessListeners = new SmartList<>();
   private final List<AttachProcessListener> myAttachProcessListeners = new SmartList<>();
 
-
-  public static MavenConsole createGuiMavenConsole(@NotNull Project project,
-                                                   @NotNull String title,
-                                                   @NotNull String workingDir,
-                                                   @NotNull String toolWindowId,
-                                                   long executionId) {
-    if (Registry.is("maven.build.tool.window.enabled")) {
-      return new BuildViewMavenConsole(project, title, workingDir, toolWindowId, executionId);
-    } else {
-      return new MavenConsoleImpl(title, project);
-    }
-  }
 
   public enum OutputType {
     NORMAL, SYSTEM, ERROR

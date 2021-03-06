@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +32,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ScopeBasedTodosPanel extends TodoPanel {
-  private static final String SELECTED_SCOPE = "TODO_SCOPE";
+  private static final @NonNls String SELECTED_SCOPE = "TODO_SCOPE";
   private final Alarm myAlarm;
   private ScopeChooserCombo myScopes;
 
@@ -60,7 +62,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     myScopes.setUsageView(false);
 
     JPanel chooserPanel = new JPanel(new GridBagLayout());
-    final JLabel scopesLabel = new JLabel("Scope:");
+    final JLabel scopesLabel = new JLabel(IdeBundle.message("label.scope"));
     scopesLabel.setDisplayedMnemonic('S');
     scopesLabel.setLabelFor(myScopes);
     final GridBagConstraints gc =

@@ -58,15 +58,20 @@ public class DetectionExcludesConfigurable implements Configurable {
     myEnabledDetectionCheckBox = new JCheckBox(ProjectBundle.message("checkbox.text.enable.framework.detection"));
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList<ExcludeListItem> excludesList = new JBList<>(myModel);
-    final ColoredListCellRenderer<ExcludeListItem> renderer = new ColoredListCellRenderer<ExcludeListItem>() {
+    final ColoredListCellRenderer<ExcludeListItem> renderer = new ColoredListCellRenderer<>() {
       final JPanel panel = new JPanel(new BorderLayout());
+
       {
         panel.setBorder(JBUI.Borders.empty(2, 10, 2, 0));
         panel.add(this);
       }
 
       @Override
-      protected void customizeCellRenderer(@NotNull JList<? extends ExcludeListItem> list, ExcludeListItem value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends ExcludeListItem> list,
+                                           ExcludeListItem value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
         setIconTextGap(4);
         if (value != null) {
           value.renderItem(this);
@@ -75,7 +80,11 @@ public class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      public Component getListCellRendererComponent(JList<? extends ExcludeListItem> list, ExcludeListItem value, int index, boolean selected, boolean hasFocus) {
+      public Component getListCellRendererComponent(JList<? extends ExcludeListItem> list,
+                                                    ExcludeListItem value,
+                                                    int index,
+                                                    boolean selected,
+                                                    boolean hasFocus) {
         super.getListCellRendererComponent(list, value, index, selected, hasFocus);
         panel.setBackground(UIUtil.getListBackground(selected, hasFocus));
         return panel;
@@ -118,7 +127,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     }
     types.sort((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
     types.add(0, null);
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<FrameworkType>(
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
       LangBundle.message("popup.title.framework.to.exclude"), types) {
       @Override
       public Icon getIconFor(FrameworkType value) {
@@ -128,7 +137,7 @@ public class DetectionExcludesConfigurable implements Configurable {
       @NotNull
       @Override
       public String getTextFor(FrameworkType value) {
-        return value != null ? value.getPresentableName() : "All Frameworks...";
+        return value != null ? value.getPresentableName() : ProjectBundle.message("list.item.all.frameworks");
       }
 
       @Override
@@ -165,8 +174,8 @@ public class DetectionExcludesConfigurable implements Configurable {
   }
 
   private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
-    final String projectItem = "In the whole project";
-    return new BaseListPopupStep<String>(null, projectItem, "In directory...") {
+    String projectItem = LangBundle.message("list.item.disable.framework.detection.in.whole.project");
+    return new BaseListPopupStep<>(null, projectItem, LangBundle.message("list.item.disable.framework.detection.in.directory")) {
       @Override
       public PopupStep onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {
@@ -229,8 +238,7 @@ public class DetectionExcludesConfigurable implements Configurable {
     myConfiguration.loadState(computeState());
   }
 
-  @Nullable
-  private ExcludesConfigurationState computeState() {
+  private @NotNull ExcludesConfigurationState computeState() {
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
     state.setDetectionEnabled(myEnabledDetectionCheckBox.isSelected());
     for (ExcludeListItem item : myModel.getItems()) {

@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
-public class GrUnresolvedAccessChecker {
+public final class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
 
   static boolean areMissingMethodsDeclared(GrReferenceExpression ref) {

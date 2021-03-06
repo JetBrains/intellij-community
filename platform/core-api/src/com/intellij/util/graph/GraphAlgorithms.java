@@ -1,7 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
@@ -13,15 +13,8 @@ import java.util.Set;
 
 public abstract class GraphAlgorithms {
   public static GraphAlgorithms getInstance() {
-    return ServiceManager.getService(GraphAlgorithms.class);
+    return ApplicationManager.getApplication().getService(GraphAlgorithms.class);
   }
-
-  /**
-   * @deprecated use more generic {@link #findShortestPath(InboundSemiGraph, Object, Object)} instead
-   */
-  @Deprecated
-  @Nullable
-  public abstract <Node> List<Node> findShortestPath(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish);
 
   @Nullable
   public abstract <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);

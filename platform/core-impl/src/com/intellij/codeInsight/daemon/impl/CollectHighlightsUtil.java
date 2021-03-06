@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -11,14 +11,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CollectHighlightsUtil {
+public final class CollectHighlightsUtil {
   static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance(CollectHighlightsUtil.class);
@@ -57,7 +58,7 @@ public class CollectHighlightsUtil {
     final List<PsiElement> result = new ArrayList<>();
     int offset = parent.getTextRange().getStartOffset();
 
-    final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    final IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
     final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
     final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = parent;
@@ -90,7 +91,7 @@ public class CollectHighlightsUtil {
         }
 
         if (elements.isEmpty()) break;
-        int start = starts.pop();
+        int start = starts.popInt();
         if (startOffset <= start && offset <= endOffset) {
           assert element != null;
           assert element != PsiUtilCore.NULL_PSI_ELEMENT;

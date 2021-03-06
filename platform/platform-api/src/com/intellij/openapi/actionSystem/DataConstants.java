@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Identifiers for data items which can be returned from {@link DataContext#getData(String)} and
  * {@link DataProvider#getData(String)}.
@@ -22,39 +24,37 @@ package com.intellij.openapi.actionSystem;
  * @deprecated use {@link DataKeys} and {@link DataKey#getData} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}
    *
    * @deprecated use {@link PlatformDataKeys#PROJECT} instead
    */
-  @Deprecated String PROJECT = CommonDataKeys.PROJECT.getName();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  String PROJECT = CommonDataKeys.PROJECT.getName();
 
   /**
    * Returns {@link com.intellij.openapi.vfs.VirtualFile}
    *
    * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE} instead
    */
-  @Deprecated String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
    * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}
    *
    * @deprecated use {@link PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
    */
-  @Deprecated String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.openapi.editor.Editor}
    *
    * @deprecated use {@link PlatformDataKeys#EDITOR} instead
    */
-  @Deprecated String EDITOR = CommonDataKeys.EDITOR.getName();
-
-  /**
-   * Returns {@link com.intellij.openapi.fileEditor.FileEditor}
-   *
-   * @deprecated use {@link PlatformDataKeys#FILE_EDITOR} instead
-   */
-  @Deprecated String FILE_EDITOR = PlatformDataKeys.FILE_EDITOR.getName();
+  @Deprecated @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  String EDITOR = CommonDataKeys.EDITOR.getName();
 }

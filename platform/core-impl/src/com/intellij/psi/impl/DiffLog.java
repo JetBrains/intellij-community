@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.pom.PomManager;
@@ -9,14 +10,12 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
-import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   @NotNull
   public TreeChangeEventImpl performActualPsiChange(@NotNull PsiFile file) {
     TreeAspect modelAspect = PomManager.getModel(file.getProject()).getModelAspect(TreeAspect.class);
-    TreeChangeEventImpl event = new TreeChangeEventImpl(modelAspect, ((PsiFileImpl)file).calcTreeElement());
+    TreeChangeEventImpl event = new TreeChangeEventImpl(modelAspect, file.getNode());
     for (LogEntry entry : myEntries) {
       entry.doActualPsiChange(file, event);
     }
@@ -49,8 +48,8 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
   @Override
   public void nodeReplaced(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
-    if (oldNode instanceof FileElement && newNode instanceof FileElement) {
-      appendReplaceFileElement((FileElement)oldNode, (FileElement)newNode);
+    if (oldNode instanceof FileASTNode && newNode instanceof FileASTNode) {
+      appendReplaceFileElement((FileASTNode)oldNode, (FileASTNode)newNode);
     }
     else {
       myEntries.add(new ReplaceEntry(oldNode, newNode));
@@ -61,7 +60,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     myEntries.add(new ReplaceElementWithEvents(oldRoot, newRoot));
   }
 
-  void appendReplaceFileElement(@NotNull FileElement oldNode, @NotNull FileElement newNode) {
+  void appendReplaceFileElement(@NotNull FileASTNode oldNode, @NotNull FileASTNode newNode) {
     myEntries.add(new ReplaceFileElement(oldNode, newNode));
   }
 
@@ -75,19 +74,19 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     myEntries.add(new InsertEntry(oldParent, newNode, pos));
   }
 
-  private static class ReplaceEntry extends LogEntry {
-    private final TreeElement myOldChild;
-    private final TreeElement myNewChild;
+  private static final class ReplaceEntry extends LogEntry {
+    private final ASTNode myOldChild;
+    private final ASTNode myNewChild;
 
     private ReplaceEntry(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
-      myOldChild = (TreeElement)oldNode;
-      myNewChild = (TreeElement)newNode;
+      myOldChild = oldNode;
+      myNewChild = newNode;
       ensureOldParent();
     }
 
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
-      CompositeElement parent = ensureOldParent();
+      ASTNode parent = ensureOldParent();
 
       final PsiElement psiParent = parent.getPsi();
       final PsiElement psiOldChild = file.isPhysical() ? myOldChild.getPsi() : null;
@@ -104,21 +103,14 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       if (!(myOldChild instanceof FileElement) || !(myNewChild instanceof FileElement)) {
         changeEvent.addElementaryChange(myOldChild.getTreeParent());
       }
-
-      myNewChild.rawRemove();
-      myOldChild.rawReplaceWithList(myNewChild);
-
-      myNewChild.clearCaches();
-      if (!(myNewChild instanceof FileElement)) {
-        myNewChild.getTreeParent().subtreeChanged();
-      }
+      ((ReparseableASTNode) myOldChild).applyReplaceOnReparse(myNewChild);
 
       DebugUtil.checkTreeStructure(parent);
     }
 
     @NotNull
-    private CompositeElement ensureOldParent() {
-      CompositeElement parent = myOldChild.getTreeParent();
+    private ASTNode ensureOldParent() {
+      ASTNode parent = myOldChild.getTreeParent();
       if (parent == null) {
         throw PsiInvalidElementAccessException.createByNode(myOldChild, "new:" + myNewChild);
       }
@@ -126,13 +118,13 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static class DeleteEntry extends LogEntry {
-    @NotNull private final CompositeElement myOldParent;
-    @NotNull private final TreeElement myOldNode;
+  private static final class DeleteEntry extends LogEntry {
+    @NotNull private final ASTNode myOldParent;
+    @NotNull private final ASTNode myOldNode;
 
     private DeleteEntry(@NotNull ASTNode oldParent, @NotNull ASTNode oldNode) {
-      myOldParent = (CompositeElement)oldParent;
-      myOldNode = (TreeElement)oldNode;
+      myOldParent = oldParent;
+      myOldNode = oldNode;
     }
 
     @Override
@@ -149,30 +141,28 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       }
 
       changeEvent.addElementaryChange(myOldParent);
-
-      myOldNode.rawRemove();
-      myOldParent.subtreeChanged();
+      ((ReparseableASTNode) myOldParent).applyDeleteOnReparse(myOldNode);
 
       DebugUtil.checkTreeStructure(myOldParent);
     }
   }
 
-  private static class InsertEntry extends LogEntry {
-    @NotNull private final CompositeElement myOldParent;
-    @NotNull private final TreeElement myNewNode;
+  private static final class InsertEntry extends LogEntry {
+    @NotNull private final ASTNode myOldParent;
+    @NotNull private final ASTNode myNewNode;
     private final int myPos;
 
     private InsertEntry(@NotNull ASTNode oldParent, @NotNull ASTNode newNode, int pos) {
       assert pos>=0 : pos;
-      myOldParent = (CompositeElement)oldParent;
-      myNewNode = (TreeElement)newNode;
+      myOldParent = oldParent;
+      myNewNode = newNode;
       myPos = pos;
     }
 
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
-      TreeElement anchor = null;
-      TreeElement firstChildNode = myOldParent.getFirstChildNode();
+      ASTNode anchor = null;
+      ASTNode firstChildNode = myOldParent.getFirstChildNode();
       for (int i = 0; i < myPos; i++) {
         anchor = anchor == null ? firstChildNode : anchor.getTreeNext();
       }
@@ -189,21 +179,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
 
       changeEvent.addElementaryChange(myOldParent);
 
-      myNewNode.rawRemove();
-      if (anchor != null) {
-        anchor.rawInsertAfterMe(myNewNode);
-      }
-      else {
-        if (firstChildNode != null) {
-          firstChildNode.rawInsertBeforeMe(myNewNode);
-        }
-        else {
-          myOldParent.rawAddChildren(myNewNode);
-        }
-      }
-
-      myNewNode.clearCaches();
-      myOldParent.subtreeChanged();
+      ((ReparseableASTNode) myOldParent).applyInsertOnReparse(myNewNode, anchor);
 
       DebugUtil.checkTreeStructure(myOldParent);
     }
@@ -216,31 +192,23 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     return psiChild;
   }
 
-  private static class ReplaceFileElement extends LogEntry {
-    @NotNull private final FileElement myOldNode;
-    @NotNull private final FileElement myNewNode;
+  private static final class ReplaceFileElement extends LogEntry {
+    @NotNull private final FileASTNode myOldNode;
+    @NotNull private final FileASTNode myNewNode;
 
-    private ReplaceFileElement(@NotNull FileElement oldNode, @NotNull FileElement newNode) {
+    private ReplaceFileElement(@NotNull FileASTNode oldNode, @NotNull FileASTNode newNode) {
       myOldNode = oldNode;
       myNewNode = newNode;
     }
 
     @Override
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event) {
-      PsiFileImpl fileImpl = (PsiFileImpl)file;
-      final int oldLength = myOldNode.getTextLength();
-      PsiManagerImpl manager = (PsiManagerImpl)fileImpl.getManager();
-      BlockSupportImpl.sendBeforeChildrenChangeEvent(manager, fileImpl, false);
-      if (myOldNode.getFirstChildNode() != null) myOldNode.rawRemoveAllChildren();
-      final TreeElement firstChildNode = myNewNode.getFirstChildNode();
-      if (firstChildNode != null) myOldNode.rawAddChildren(firstChildNode);
-      fileImpl.calcTreeElement().setCharTable(myNewNode.getCharTable());
-      myOldNode.subtreeChanged();
-      BlockSupportImpl.sendAfterChildrenChangedEvent(manager,fileImpl, oldLength, false);
+      event.addElementaryChange(myOldNode);
+      ((ReparseableASTNode) myOldNode).applyReplaceFileOnReparse(file, myNewNode);
     }
   }
 
-  private static class ReplaceElementWithEvents extends LogEntry {
+  private static final class ReplaceElementWithEvents extends LogEntry {
     @NotNull private final CompositeElement myOldRoot;
     @NotNull private final CompositeElement myNewRoot;
 
@@ -271,10 +239,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         if (transaction == null) {
           final PomModel model = PomManager.getModel(file.getProject());
 
-          model.runTransaction(new PomTransactionBase(file, model.getModelAspect(TreeAspect.class)) {
+          model.runTransaction(new PomTransactionBase(file) {
             @Override
-            public PomModelEvent runInner() {
-              return new TreeAspectEvent(model, performActualPsiChange(file));
+            public @NotNull PomModelEvent runInner() {
+              return new PomModelEvent(model, performActualPsiChange(file));
             }
           });
         }

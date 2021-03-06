@@ -18,6 +18,7 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.shellcheck.ShShellcheckUtil.isValidPath;
 
 public class ShellcheckSetupNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
@@ -35,21 +36,22 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
     if (file.getFileType() instanceof ShFileType && !isValidPath(ShSettings.getShellcheckPath())) {
-      EditorNotificationPanel panel = new EditorNotificationPanel();
-      panel.setText("Would you like to install shellcheck to verify your shell scripts?");
-      panel.createActionLabel("Install", () -> ShShellcheckUtil.download(null,
-      () -> {
+      EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+      panel.setText(message("sh.shellcheck.install.question"));
+      Runnable onSuccess = () -> {
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        if (psiFile != null) {
-          DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
-        }
-        Notifications.Bus.notify(new Notification("Shell Script", "", "Shellcheck has been successfully installed",
+        if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+        Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"), message("sh.shellcheck.success.install"),
                                                   NotificationType.INFORMATION));
-      }, () -> Notifications.Bus.notify(new Notification("Shell Script", "", "Can't download sh shellcheck. Please install it manually",
-                                                         NotificationType.ERROR))));
-      panel.createActionLabel("No, thanks", () -> {
-        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND);
+      };
+      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"),
+                                                                           message("sh.shellcheck.cannot.download"),
+                                                                           NotificationType.ERROR));
+      panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));
+      //noinspection DialogTitleCapitalization
+      panel.createActionLabel(message("sh.no.thanks"), () -> {
+        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
       return panel;

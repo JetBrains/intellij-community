@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +77,7 @@ public final class DuplicatesFinder {
       }
       while (endOffset < 0 && j >= 0);
 
-      IntArrayList exitPoints = new IntArrayList();
+      IntList exitPoints = new IntArrayList();
       final Collection<PsiStatement> exitStatements = ControlFlowUtil
           .findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       myMultipleExitPoints = exitPoints.size() > 1;
@@ -263,7 +264,7 @@ public final class DuplicatesFinder {
         endOffset = controlFlow.getEndOffset(candidates.get(j--));
       } while(endOffset < 0 && j >= 0);
 
-      final IntArrayList exitPoints = new IntArrayList();
+      final IntList exitPoints = new IntArrayList();
       ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       final PsiVariable[] outVariables = ControlFlowUtil.getOutputVariables(controlFlow, startOffset, endOffset, exitPoints.toIntArray());
 

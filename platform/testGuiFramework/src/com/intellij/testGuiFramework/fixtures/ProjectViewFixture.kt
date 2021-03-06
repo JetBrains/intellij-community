@@ -1,31 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
@@ -159,51 +142,6 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         }
       }
     }
-
-    //TODO: remove this method
-    @Deprecated("Because of unreliable logic for reading Nodes", ReplaceWith("getNode1 function"))
-    fun getNode2(path: Array<String>): NodeFixture? {
-      val tree = myPane.tree
-      val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception(
-        "Unfortunately the root for a tree model in ProjectView is null")
-      var pivotRoot: Any = root
-      for (pathItem in path) {
-        var (childCount, children) = getChildrenAndCountOnEdt(tree, pivotRoot)
-        if (childCount == 0) throw Exception("${pathItem} node has no more children")
-        if (childCount == 1 && children[0] is LoadingNode) {
-          runOnEdt { TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(children[0]!!)) }
-          waitUntil("children will be loaded", Timeouts.seconds30) {
-            val updatedChildrenAndCount = getChildrenAndCountOnEdt(tree, pivotRoot)
-            childCount = updatedChildrenAndCount.first
-            children = updatedChildrenAndCount.second
-            childCount > 1 || (childCount == 1 && children[0] !is LoadingNode)
-          }
-        }
-        var childIsFound = false
-        for (child in children) {
-          child ?: throw Exception("Path element ($pathItem) is null")
-          val nodeText = withPauseWhenNull("project view node for pathItem: $pathItem\"") { getNodeText(child.userObject) }
-          if (nodeText == pathItem) {
-            pivotRoot = child
-            childIsFound = true
-            break
-          }
-        }
-        if (!childIsFound) return null
-      }
-      return NodeFixture(pivotRoot as DefaultMutableTreeNode, TreeUtil.getPathFromRoot(pivotRoot), myPane)
-    }
-
-    //TODO: remove this method
-    private fun getChildrenAndCountOnEdt(tree: JTree,
-                                         node: Any): Pair<Int, ArrayList<DefaultMutableTreeNode?>> {
-      return computeOnEdt {
-        Pair(tree.model.getChildCount(node),
-             (0 until tree.model.getChildCount(node))
-               .map { tree.model.getChild(node, it) as DefaultMutableTreeNode? }
-               .toCollection(arrayListOf<DefaultMutableTreeNode?>()))
-      }!!
-    }
   }
 
   inner class NodeFixture internal constructor(private val myNode: DefaultMutableTreeNode,
@@ -253,20 +191,6 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       myRobot.click(locationOnScreen, MouseButton.RIGHT_BUTTON, 1)
     }
 
-    val isJdk: Boolean
-      get() {
-        if (myNode is NamedLibraryElementNode) {
-          val value = myNode.value
-          assertNotNull(value)
-          val orderEntry = value!!.orderEntry
-          if (orderEntry is JdkOrderEntry) {
-            val sdk = orderEntry.jdk
-            return sdk.sdkType is JavaSdk
-          }
-        }
-        return false
-      }
-
     fun requireDirectory(name: String): NodeFixture {
       val projectViewNode = myNode.userObject
       assertThat(projectViewNode).isInstanceOf(PsiDirectoryNode::class.java)
@@ -312,7 +236,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
 
   companion object {
 
-    private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.fixtures.ProjectViewFixture")
+    private val LOG = Logger.getInstance(ProjectViewFixture::class.java)
 
     private fun getNodeText(node: Any): String? {
       assert(node is PresentableNodeDescriptor<*>)

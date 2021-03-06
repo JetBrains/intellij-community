@@ -6,8 +6,11 @@ import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
+@NonNls
 class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "vcs.settings"
   override fun getVersion(): Int = 2
@@ -50,8 +53,13 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
 
     addExternalFilesActionsStatistics(project, set, conf, confDefault)
     addProjectConfigurationFilesActionsStatistics(project, set)
+    addIgnoredToExcludeSynchronizerActionsStatistics(project, set)
 
     return set
+  }
+
+  private fun addIgnoredToExcludeSynchronizerActionsStatistics(project: Project, set: HashSet<MetricEvent>) {
+    addBooleanPropertyIfDiffers(project, set, ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, false, "asked.add.external.files")
   }
 
   private fun addProjectConfigurationFilesActionsStatistics(project: Project, set: HashSet<MetricEvent>) {
@@ -92,10 +100,10 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
                                              valueFunction: Function1<T, VcsShowConfirmationOption.Value>, eventId: String) {
       addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {
         val value = when (it) {
-          VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> "ask"
-          VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> "disabled"
-          VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> "silently"
-          else -> "unknown"
+          VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> "ask" // NON-NLS
+          VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> "disabled" // NON-NLS
+          VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> "silently" // NON-NLS
+          else -> "unknown" // NON-NLS
         }
         return@addMetricIfDiffers newMetric(eventId, value)
       }

@@ -2,11 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 
 class GHPROpenPullRequestTimelineAction
   : DumbAwareAction(GithubBundle.messagePointer("pull.request.view.conversations.action"),
@@ -14,17 +11,20 @@ class GHPROpenPullRequestTimelineAction
                     null) {
 
   override fun update(e: AnActionEvent) {
-    val dataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    val actionDataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    e.presentation.isEnabled = e.project != null && dataContext != null && actionDataContext != null
+    val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER)
+    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+
+    e.presentation.isEnabled = controller != null && (selection != null || dataProvider != null)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val dataContext = e.getRequiredData(GHPRActionKeys.DATA_CONTEXT)
-    val actionDataContext = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
+    val controller = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER)
+    val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    val file = GHPRVirtualFile(dataContext, actionDataContext.pullRequestDetails)
-    FileEditorManager.getInstance(project).openFile(file, true)
+    val pullRequest = selection ?: dataProvider!!.id
+
+    controller.openPullRequestTimeline(pullRequest, true)
   }
 }

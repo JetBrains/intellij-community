@@ -40,10 +40,7 @@ import java.util.function.Function;
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
 @Service
-@State(name = "FavoritesManager", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true),
-})
+@State(name = "FavoritesManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class FavoritesManager implements PersistentStateComponent<Element> {
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots = new TreeMap<>();

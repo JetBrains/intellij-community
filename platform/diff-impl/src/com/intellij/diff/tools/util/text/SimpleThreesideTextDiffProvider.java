@@ -7,9 +7,7 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.MergeConflictType;
-import com.intellij.diff.util.ThreeSide;
+import com.intellij.diff.util.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,10 +25,14 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
   private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES};
   private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD};
 
+  private final DiffUserDataKeys.ThreeSideDiffColors myColorsMode;
+
   public SimpleThreesideTextDiffProvider(@NotNull TextDiffSettings settings,
+                                         @NotNull DiffUserDataKeys.ThreeSideDiffColors colorsMode,
                                          @NotNull Runnable rediff,
                                          @NotNull Disposable disposable) {
     super(settings, rediff, disposable, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+    myColorsMode = colorsMode;
   }
 
   @NotNull
@@ -52,7 +54,7 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
     indicator.checkCanceled();
     List<FineMergeLineFragment> result = new ArrayList<>(lineFragments.size());
     for (MergeLineFragment fragment : lineFragments) {
-      MergeConflictType conflictType = DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+      MergeConflictType conflictType = getConflictType(comparisonPolicy, sequences, lineOffsets, fragment);
 
       MergeInnerDifferences innerDifferences;
       if (highlightPolicy.isFineFragments()) {
@@ -70,6 +72,24 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
   }
 
   @NotNull
+  private MergeConflictType getConflictType(@NotNull ComparisonPolicy comparisonPolicy,
+                                            @NotNull List<CharSequence> sequences,
+                                            @NotNull List<LineOffsets> lineOffsets,
+                                            @NotNull MergeLineFragment fragment) {
+    switch (myColorsMode) {
+      case MERGE_CONFLICT:
+        return DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+      case MERGE_RESULT:
+        MergeConflictType conflictType = DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+        return invertConflictType(conflictType);
+      case LEFT_TO_RIGHT:
+        return DiffUtil.getLineLeftToRightThreeSideDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+      default:
+        throw new IllegalStateException(myColorsMode.name());
+    }
+  }
+
+  @NotNull
   private static List<CharSequence> getChunks(@NotNull MergeLineFragment fragment,
                                               @NotNull List<CharSequence> sequences,
                                               @NotNull List<LineOffsets> lineOffsets,
@@ -83,5 +103,18 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
 
       return DiffUtil.getLinesContent(side.select(sequences), side.select(lineOffsets), startLine, endLine);
     });
+  }
+
+  @NotNull
+  private static MergeConflictType invertConflictType(@NotNull MergeConflictType oldConflictType) {
+    TextDiffType oldDiffType = oldConflictType.getDiffType();
+
+    if (oldDiffType != TextDiffType.INSERTED && oldDiffType != TextDiffType.DELETED) {
+      return oldConflictType;
+    }
+
+    return new MergeConflictType(oldDiffType == TextDiffType.DELETED ? TextDiffType.INSERTED : TextDiffType.DELETED,
+                                 oldConflictType.isChange(Side.LEFT), oldConflictType.isChange(Side.RIGHT),
+                                 oldConflictType.canBeResolved());
   }
 }

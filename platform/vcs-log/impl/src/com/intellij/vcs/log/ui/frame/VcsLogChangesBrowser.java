@@ -7,28 +7,24 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
-import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,17 +33,14 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
-import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcsUtil.VcsFileUtil;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +52,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.diff.util.DiffUserDataKeysEx.*;
+import static com.intellij.openapi.vcs.history.VcsDiffUtil.getRevisionTitle;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES;
@@ -66,9 +60,8 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
-public class VcsLogChangesBrowser extends FilterableChangesBrowser {
+public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
-  @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
@@ -88,7 +81,6 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
                        @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
                        @NotNull Disposable parent) {
     super(project, false, false);
-    myProject = project;
     myUiProperties = uiProperties;
     myDataGetter = getter;
 
@@ -124,7 +116,10 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Override
   protected JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
-    ComponentUtil.putClientProperty(centerPanel, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    JScrollPane scrollPane = UIUtil.findComponentOfType(centerPanel, JScrollPane.class);
+    if (scrollPane != null) {
+      ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    }
     return centerPanel;
   }
 
@@ -212,7 +207,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
           if (detail.getParents().size() > 1) {
             for (int i = 0; i < detail.getParents().size(); i++) {
-              THashSet<Change> changesSet = ContainerUtil.newIdentityTroveSet(detail.getChanges(i));
+              Set<Change> changesSet = new ReferenceOpenHashSet<>(detail.getChanges(i));
               myChangesToParents.put(new CommitId(detail.getParents().get(i), detail.getRoot()), changesSet);
             }
           }
@@ -231,17 +226,19 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     else if (!myChangesToParents.isEmpty()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).
         appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
-                            VcsLogUiUtil.getLinkAttributes(),
+                            SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                             e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
     }
     else if (isShowOnlyAffectedSelected() && myAffectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"), VcsLogUiUtil.getLinkAttributes(),
+        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
+                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                              e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
     else if (!myHasMergeCommits && hasActiveChangesFilter()) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"), VcsLogUiUtil.getLinkAttributes(),
+        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"),
+                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                              e -> clearActiveChangesFilter());
     }
     else {
@@ -327,6 +324,24 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     else if (HAS_AFFECTED_FILES.is(dataId)) {
       return myAffectedPaths != null;
     }
+    else if (QuickActionProvider.KEY.is(dataId)) {
+      return new QuickActionProvider() {
+        @Override
+        public @NotNull List<AnAction> getActions(boolean originalProvider) {
+          return SimpleToolWindowPanel.collectActions(VcsLogChangesBrowser.this);
+        }
+
+        @Override
+        public JComponent getComponent() {
+          return VcsLogChangesBrowser.this;
+        }
+
+        @Override
+        public @NlsActions.ActionText @Nullable String getName() {
+          return null;
+        }
+      };
+    }
     return super.getData(dataId);
   }
 
@@ -351,7 +366,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     if (!(userObject instanceof Change)) return null;
     Change change = (Change)userObject;
 
-    Map<Key, Object> context = new HashMap<>();
+    Map<Key<?>, Object> context = new HashMap<>();
     if (!(change instanceof MergedChange)) {
       putRootTagIntoChangeContext(change, context);
     }
@@ -361,7 +376,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @Nullable
   public static ChangeDiffRequestChain.Producer createDiffRequestProducer(@NotNull Project project,
                                                                           @NotNull Change change,
-                                                                          @NotNull Map<Key, Object> context,
+                                                                          @NotNull Map<Key<?>, Object> context,
                                                                           boolean forDiffPreview) {
     if (change instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)change;
@@ -374,13 +389,13 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     if (forDiffPreview) {
-      putFilePathsIntoChangeContext(change, context);
+      VcsDiffUtil.putFilePathsIntoChangeContext(change, context);
     }
 
     return ChangeDiffRequestProducer.create(project, change, context);
   }
 
-  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+  private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     CommitId parentId = null;
     for (CommitId commitId : myChangesToParents.keySet()) {
       if (myChangesToParents.get(commitId).contains(change)) {
@@ -395,7 +410,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
   }
 
-  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key, Object> context) {
+  private static void putFilePathsIntoMergedChangeContext(@NotNull MergedChange change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision centerRevision = change.getAfterRevision();
     ContentRevision leftRevision = change.getSourceChanges().get(0).getBeforeRevision();
     ContentRevision rightRevision = change.getSourceChanges().get(1).getBeforeRevision();
@@ -407,42 +422,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(leftRevision, leftFile, centerFile == null ? rightFile : centerFile));
   }
 
-  private static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
-    ContentRevision afterRevision = change.getAfterRevision();
-    ContentRevision beforeRevision = change.getBeforeRevision();
-    FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
-    FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
-    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
-    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
-  }
-
-  @NotNull
-  private static String getRevisionTitle(@Nullable ContentRevision revision,
-                                         @Nullable FilePath file,
-                                         @Nullable FilePath baseFile) {
-    return getShortHash(revision) +
-           (file == null || FileHistoryKt.FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
-            ? ""
-            : " (" + getRelativeFileName(baseFile, file) + ")");
-  }
-
-  @NotNull
-  private static String getShortHash(@Nullable ContentRevision revision) {
-    if (revision == null) return "";
-    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
-    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
-    return revisionNumber.asString();
-  }
-
-  @NotNull
-  private static String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
-    if (baseFile == null || !baseFile.getName().equals(file.getName())) return file.getName();
-    FilePath aParentPath = baseFile.getParentPath();
-    if (aParentPath == null) return file.getName();
-    return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
-  }
-
-  private class ChangesBrowserParentNode extends ChangesBrowserNode<String> {
+  private class ChangesBrowserParentNode extends ChangesBrowserStringNode {
     protected ChangesBrowserParentNode(@NotNull CommitId commitId) {
       super(getText(commitId));
     }
@@ -468,11 +448,11 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     void onModelUpdated();
   }
 
-  private static class RootTag {
-    @NotNull private final Hash myCommit;
-    @NotNull private final String myText;
+  private static class RootTag implements ChangesBrowserNode.Tag {
+    private final @NotNull Hash myCommit;
+    private final @NotNull @Nls String myText;
 
-    RootTag(@NotNull Hash commit, @NotNull String text) {
+    RootTag(@NotNull Hash commit, @NotNull @Nls String text) {
       myCommit = commit;
       myText = text;
     }

@@ -3,10 +3,11 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import java.util.*;
 
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
-  private final String myDescription;
+  private final @NlsContexts.Label String myDescription;
 
   public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
     this(project, items, title, description, false);
@@ -54,7 +55,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   private void initializeDialog(final List<? extends T> items, @NlsContexts.DialogTitle String title, boolean sort) {
     setTitle(title);
-    myChooser = new ElementsChooser<T>(canElementsBeMarked()) {
+    myChooser = new ElementsChooser<>(canElementsBeMarked()) {
       @Override
       protected String getItemText(@NotNull final T item) {
         return ChooseElementsDialog.this.getItemText(item);
@@ -91,7 +92,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return getChosenElements();
   }
 
-  protected abstract String getItemText(T item);
+  protected abstract @NlsContexts.ListItem String getItemText(T item);
 
   @Nullable
   protected abstract Icon getItemIcon(T item);
@@ -100,7 +101,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
    * Override this method and return non-null value to specify location of {@code item}.
    * It will be shown as grayed text next to the {@link #getItemText(T) item text}.
    */
-  protected String getItemLocation(T item) {
+  protected @Nls String getItemLocation(T item) {
     return null; // default implementation
   }
 
@@ -163,7 +164,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
       @Override
       @Nullable
-      public String getLocation() {
+      public @Nls String getLocation() {
         return getItemLocation(item);
       }
     };

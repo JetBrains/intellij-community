@@ -39,6 +39,11 @@ public final class PythonConfigurationType implements ConfigurationType {
     public @NotNull String getId() {
       return "Python";
     }
+
+    @Override
+    public boolean isEditableInDumbMode() {
+      return true;
+    }
   }
 
   @NotNull

@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,10 +77,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         myChildren = EMPTY_CONFIGURABLES;
       }
       else {
-        Configurable[] generalConfigurables = mergedGeneralConfigurable.children;
-        Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
-        System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
-        mergedArray[generalConfigurables.length] = firstConfigurable;
+        Configurable[] mergedArray = ArrayUtil.append(mergedGeneralConfigurable.children, firstConfigurable);
         myRootConfigurable = new MergedCompositeConfigurable(getId(), getDisplayName(), null, mergedArray);
         myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
       }
@@ -189,6 +188,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
+  @Nls
   public static String getDisplayNameText() {
     return XDebuggerBundle.message("debugger.configurable.display.name");
   }

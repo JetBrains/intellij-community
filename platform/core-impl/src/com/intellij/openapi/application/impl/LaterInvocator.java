@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -17,9 +17,11 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -31,8 +33,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class LaterInvocator {
+public final class LaterInvocator {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
 
   private LaterInvocator() { }
@@ -59,7 +62,7 @@ public class LaterInvocator {
     }
   }
 
-  private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = ContainerUtil.createConcurrentWeakMap();
+  private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = CollectionFactory.createConcurrentWeakMap();
 
   @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
@@ -83,24 +86,29 @@ public class LaterInvocator {
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired, boolean onEdt) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    return invokeLater(runnable, modalityState, expired, onEdt);
+    return invokeLater(runnable, modalityState, expired);
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
-    return invokeLater(runnable, modalityState, Conditions.alwaysFalse(), onEdt);
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    return invokeLater(runnable, modalityState, Conditions.alwaysFalse());
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, boolean onEdt) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable,
+                                    @NotNull ModalityState modalityState,
+                                    @NotNull Condition<?> expired) {
     ActionCallback callback = new ActionCallback();
-    invokeLaterWithCallback(runnable, modalityState, expired, callback, onEdt);
+    invokeLaterWithCallback(runnable, modalityState, expired, callback, true);
     return callback;
   }
 
-  static void invokeLaterWithCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback,
+  static void invokeLaterWithCallback(@NotNull Runnable runnable,
+                                      @NotNull ModalityState modalityState,
+                                      @NotNull Condition<?> expired,
+                                      @Nullable ActionCallback callback,
                                       boolean onEdt) {
     if (expired.value(null)) {
       if (callback != null) {
@@ -113,7 +121,7 @@ public class LaterInvocator {
     requestFlush();
   }
 
-  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
+  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -139,7 +147,7 @@ public class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, onEdt);
+    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, true);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -171,7 +179,7 @@ public class LaterInvocator {
       LOG.debug("enterModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, modalEntity);
 
     ourModalEntities.add(modalEntity);
     synchronized (ourModalityStack) {
@@ -183,11 +191,10 @@ public class LaterInvocator {
       guard.enteredModality(appendedState);
     }
 
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void enterModal(Project project, Dialog dialog) {
+  public static void enterModal(Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
 
     if (LOG.isDebugEnabled()) {
@@ -199,7 +206,7 @@ public class LaterInvocator {
       return;
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true, dialog);
 
     List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
     projectToModalEntities.put(project, modalEntitiesList);
@@ -218,24 +225,24 @@ public class LaterInvocator {
   @ApiStatus.Internal
   public static void markTransparent(@NotNull ModalityState state) {
     ((ModalityStateEx)state).markTransparent();
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
-  public static void leaveModal(Project project, Dialog dialog) {
+  public static void leaveModal(Project project, @NotNull Dialog dialog) {
     LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, dialog);
 
     int index = ourModalEntities.indexOf(dialog);
 
     if (index != -1) {
       removeModality(dialog, index);
-    } else if (project != null) {
+    }
+    else if (project != null) {
       List<Dialog> dialogs = projectToModalEntities.get(project);
       int perProjectIndex = dialogs.indexOf(dialog);
       LOG.assertTrue(perProjectIndex >= 0);
@@ -247,8 +254,7 @@ public class LaterInvocator {
       }
     }
 
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   private static void removeModality(@NotNull Object modalEntity, int index) {
@@ -270,14 +276,13 @@ public class LaterInvocator {
       LOG.debug("leaveModal:" + modalEntity);
     }
 
-    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false);
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(false, modalEntity);
 
     int index = ourModalEntities.indexOf(modalEntity);
     LOG.assertTrue(index >= 0);
     removeModality(modalEntity, index);
 
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   @TestOnly
@@ -286,8 +291,7 @@ public class LaterInvocator {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
-    reincludeSkippedItems();
-    requestFlush();
+    reincludeSkippedItemsAndRequestFlush();
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
@@ -297,7 +301,7 @@ public class LaterInvocator {
 
   @NotNull
   public static ModalityStateEx getCurrentModalityState() {
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       ApplicationManager.getApplication().assertIsWriteThread();
     }
     synchronized (ourModalityStack) {
@@ -327,13 +331,17 @@ public class LaterInvocator {
     return ApplicationManager.getApplication().isWriteThread();
   }
 
+  @NotNull
   private static FlushQueue getRunnableQueue(boolean onEdt) {
     return onEdt ? ourEdtQueue : ourWtQueue;
   }
 
   static void requestFlush() {
-    if (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
+    SUBMITTED_COUNT.incrementAndGet();
+    while (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
       int whichThread = THREAD_TO_FLUSH.getAndUpdate(operand -> operand ^ 1);
+
+      long submittedCount = SUBMITTED_COUNT.get();
 
       FlushQueue firstQueue = getRunnableQueue(whichThread == 0);
       if (firstQueue.mayHaveItems()) {
@@ -348,6 +356,14 @@ public class LaterInvocator {
       }
 
       FLUSHER_SCHEDULED.set(false);
+
+      // If a requestFlush was called by somebody else (because queues were modified) but we have not really scheduled anything
+      // then we've missed `mayHaveItems` `true` value because of race.
+      // Another run of `requestFlush` will get the correct `mayHaveItems` because
+      // `mayHaveItems` is mutated strictly before SUBMITTED_COUNT which we've observe below
+      if (submittedCount == SUBMITTED_COUNT.get()) {
+        break;
+      }
     }
   }
 
@@ -360,10 +376,10 @@ public class LaterInvocator {
 
   /**
    * There might be some requests in the queue, but ourFlushQueueRunnable might not be scheduled yet. In these circumstances
-   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link UIUtil#dispatchAllInvocationEvents()} would
+   * {@link EventQueue#peekEvent()} default implementation would return null, and {@link com.intellij.util.ui.UIUtil#dispatchAllInvocationEvents()} would
    * stop processing events too early and lead to spurious test failures.
    *
-   * @see IdeEventQueue#peekEvent()
+   * @see com.intellij.ide.IdeEventQueue#peekEvent()
    */
   public static boolean ensureFlushRequested() {
     if (ourEdtQueue.getNextEvent(false) != null) {
@@ -379,9 +395,12 @@ public class LaterInvocator {
 
   static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
 
+  private static final AtomicLong SUBMITTED_COUNT = new AtomicLong(0);
+
   private static final AtomicInteger THREAD_TO_FLUSH = new AtomicInteger(0);
 
   @TestOnly
+  @NotNull
   public static Collection<FlushQueue.RunnableInfo> getLaterInvocatorEdtQueue() {
     return ourEdtQueue.getQueue();
   }
@@ -392,14 +411,16 @@ public class LaterInvocator {
     return ourWtQueue.getQueue();
   }
 
-  private static void reincludeSkippedItems() {
+  private static void reincludeSkippedItemsAndRequestFlush() {
     ourEdtQueue.reincludeSkippedItems();
     ourWtQueue.reincludeSkippedItems();
+    requestFlush();
   }
 
   public static void purgeExpiredItems() {
     ourEdtQueue.purgeExpiredItems();
     ourWtQueue.purgeExpiredItems();
+    requestFlush();
   }
 
   @TestOnly
@@ -408,9 +429,9 @@ public class LaterInvocator {
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    invokeLater(semaphore::up, ModalityState.any(), true);
+    invokeLater(semaphore::up, ModalityState.any());
     while (!semaphore.isUp()) {
-      UIUtil.dispatchAllInvocationEvents();
+      EdtInvocationManager.dispatchAllInvocationEvents();
     }
   }
 }

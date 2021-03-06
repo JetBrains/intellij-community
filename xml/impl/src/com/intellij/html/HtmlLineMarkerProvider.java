@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.html;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -8,18 +8,14 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
  */
-public class HtmlLineMarkerProvider implements LineMarkerProvider {
+public final class HtmlLineMarkerProvider implements LineMarkerProvider {
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) return null;
@@ -50,10 +46,10 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
         List<LineMarkerProvider> lineMarkerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
         for (LineMarkerProvider provider : lineMarkerProviders) {
           if (provider instanceof HtmlLineMarkerProvider) continue;
-          if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
-          List<PsiElement> elementList = embeddedLineMarkersWorkItems.computeIfAbsent(provider, k -> new ArrayList<>(5));
-
-          elementList.add(element);
+          if (embeddedLineMarkersWorkItems == null) {
+            embeddedLineMarkersWorkItems = new HashMap<>();
+          }
+          embeddedLineMarkersWorkItems.computeIfAbsent(provider, k -> new ArrayList<>(5)).add(element);
         }
       }
     }

@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +66,7 @@ public interface ExtensionPoint extends DomElement {
 
   @NotNull
   @Attribute("dynamic")
+  @Stubbed
   GenericAttributeValue<Boolean> getDynamic();
 
   @NotNull
@@ -75,18 +81,8 @@ public interface ExtensionPoint extends DomElement {
    *
    * @return {@code PluginID.name} or {@code qualifiedName}.
    */
-  @NotNull
+  @NotNull @NlsSafe
   String getEffectiveQualifiedName();
-
-  /**
-   * Returns the actually defined name.
-   *
-   * @return {@link #getName()} if defined, {@link #getQualifiedName()} otherwise.
-   * @deprecated Use {@link #getEffectiveQualifiedName()} for presentation.
-   */
-  @Deprecated
-  @NotNull
-  String getEffectiveName();
 
   /**
    * Returns the extension point class.
@@ -106,16 +102,25 @@ public interface ExtensionPoint extends DomElement {
    *   <li>first {@code <with> "implements"} class where attribute name matching common naming rules ({@code "implementationClass"} etc.)</li>
    *   <li>{@code null} if none of above rules apply</li>
    * </ol>
+   * @see #getExtensionPointClassName()
    */
   @Nullable
   PsiClass getExtensionPointClass();
+
+  /**
+   * <em>NOTE</em> Inner class is separated via {@code '$'}
+   *
+   * @see #getExtensionPointClass()
+   */
+  @Nullable
+  String getExtensionPointClassName();
 
   /**
    * Returns EP name prefix (Plugin ID).
    *
    * @return {@code null} if {@code qualifiedName} is set.
    */
-  @Nullable
+  @Nullable @NlsSafe
   String getNamePrefix();
 
   /**
@@ -124,4 +129,88 @@ public interface ExtensionPoint extends DomElement {
    * @return Fields.
    */
   List<PsiField> collectMissingWithTags();
+
+  /**
+   * Returns status of EP for presentation/highlighting.
+   */
+  @NotNull
+  ExtensionPoint.Status getExtensionPointStatus();
+
+  interface Status {
+
+    enum Kind {
+      /**
+       * Nothing to report.
+       */
+      DEFAULT,
+
+      /**
+       * Unresolved EP class (setup problem).
+       */
+      UNRESOLVED_CLASS,
+
+      /**
+       * Deprecated EP class.
+       */
+      DEPRECATED,
+
+      /**
+       * Deprecated EP, replacement EP available via {@link #getAdditionalData()}.
+       */
+      ADDITIONAL_DEPRECATED,
+
+      /**
+       * Internal API, should not be used outside of IntelliJ project.
+       *
+       * @see org.jetbrains.annotations.ApiStatus.Internal
+       */
+      INTERNAL_API,
+
+      /**
+       * Experimental API, might be removed or break in future versions.
+       *
+       * @see org.jetbrains.annotations.ApiStatus.Experimental
+       */
+      EXPERIMENTAL_API,
+
+      /**
+       * Scheduled for removal API.
+       *
+       * @see org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+       */
+      SCHEDULED_FOR_REMOVAL_API
+    }
+
+    /**
+     * @return Most "relevant" kind.
+     */
+    Kind getKind();
+
+    /**
+     * Provides additional data depending on {@link #getKind()}.
+     *
+     * @return <ul>
+     * <li>{@link Kind#ADDITIONAL_DEPRECATED} - replacement EP or {@code null} if none defined</li>
+     * <li>{@link Kind#SCHEDULED_FOR_REMOVAL_API} - {@code inVersion} attribute value</li>
+     * </ul>
+     */
+    @Nullable
+    String getAdditionalData();
+  }
+
+  @Nullable
+  static ExtensionPoint resolveFromDeclaration(PsiElement declaration) {
+    DomElement domElement = null;
+    if (declaration instanceof PomTargetPsiElement) {
+      final PomTarget pomTarget = ((PomTargetPsiElement)declaration).getTarget();
+      if (pomTarget instanceof DomTarget) {
+        domElement = ((DomTarget)pomTarget).getDomElement();
+      }
+    } // via XmlTag for "qualifiedName"
+    else if (declaration instanceof XmlTag) {
+      domElement = DomUtil.getDomElement(declaration);
+    }
+
+    return ObjectUtils.tryCast(domElement, ExtensionPoint.class);
+  }
 }

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
-public class ReferenceDescriptor {
+public final class ReferenceDescriptor {
   @NotNull
   public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
     final PsiElement element = psiReference.getElement();

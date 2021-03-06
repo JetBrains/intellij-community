@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.module.impl.scopes;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   private final Module myModule;
-  private final IntObjectMap<GlobalSearchScope> myScopeCache = ContainerUtil.createConcurrentIntObjectMap();
+  private final IntObjectMap<GlobalSearchScope> myScopeCache =
+    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private ModuleWithDependentsTestScope myModuleTestsWithDependentsScope;
 
   public ModuleScopeProviderImpl(@NotNull Module module) {

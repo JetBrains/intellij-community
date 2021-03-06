@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -19,6 +19,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
 
   @NotNull private final BorderStrategy myBorderStrategy;
-  @NotNull private final String myText;
+  @NotNull private final @Nls String myText;
   @NotNull private final ArrangementColorsProvider myColorsProvider;
   @NotNull private final RoundedLineBorder myBorder;
   @NotNull private final ArrangementAtomMatchCondition myCondition;
@@ -91,7 +92,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   // cached value for inverted atom condition, e.g. condition: 'static', opposite: 'not static'
   @Nullable private ArrangementAtomMatchCondition myOppositeCondition;
-  @Nullable private String myInvertedText;
+  @Nullable @Nls private String myInvertedText;
 
   public ArrangementAtomMatchConditionComponent(@NotNull ArrangementStandardSettingsManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
@@ -113,10 +114,10 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
       myText = type.getRepresentationValue();
     }
     else if (StdArrangementTokenType.REG_EXP.is(type)) {
-      myText = String.format("%s %s", StringUtil.toLowerCase(type.getRepresentationValue()), condition.getValue());
+      myText = StringUtil.toLowerCase(type.getRepresentationValue()) + " " + condition.getValue();
     }
     else {
-      myText = condition.getValue().toString();
+      myText = condition.getPresentableValue();
     }
     myTextControl.setTextAlign(SwingConstants.CENTER);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(type, false)));
@@ -276,7 +277,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return attributes;
   }
 
-  private String getComponentText() {
+  private @Nls String getComponentText() {
     if (myInverted) {
       if (StringUtil.isEmpty(myInvertedText)) {
         final ArrangementSettingsToken token = myCondition.getType();

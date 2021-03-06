@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-class DocumentationBuilderKit {
+final class DocumentationBuilderKit {
   static final TagWrapper TagBold = new TagWrapper("b");
   static final TagWrapper TagSmall = new TagWrapper("small");
   static final TagWrapper TagCode = new TagWrapper("code");
@@ -26,7 +26,7 @@ class DocumentationBuilderKit {
   static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXmlEntities;
 
   @NotNull
-  static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> ESCAPE_ONLY.apply(s.replace('\n', ' '));
+  static final Function<@NotNull String, @NotNull String> TO_ONE_LINE_AND_ESCAPE = s -> ESCAPE_ONLY.apply(s.replace('\n', ' '));
 
   @NotNull
   static final Function<String, String> ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES =

@@ -6,7 +6,11 @@ import com.google.common.collect.Multimaps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +19,8 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Property;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
@@ -34,7 +40,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
 
   private static final String CONDA_ENVS_DIR = "envs";
 
-  @Nullable @SystemDependent public String PREFERRED_CONDA_PATH = null;
+  @Nullable @SystemDependent @Property private String PREFERRED_CONDA_PATH = null;
 
   @Override
   public PyCondaPackageService getState() {
@@ -47,12 +53,12 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   public static PyCondaPackageService getInstance() {
-    return ServiceManager.getService(PyCondaPackageService.class);
+    return ApplicationManager.getApplication().getService(PyCondaPackageService.class);
   }
 
   @Nullable
-  public String getCondaPython() {
-    final String conda = StringUtil.defaultIfEmpty(PREFERRED_CONDA_PATH, getSystemCondaExecutable());
+  private static String getCondaPython() {
+    final String conda = getCondaExecutable(null);
     if (conda != null) {
       final String python = getCondaBasePython(conda);
       if (python != null) return python;
@@ -87,6 +93,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
+  @SystemDependent
   public static String getCondaExecutable(@Nullable String sdkPath) {
     if (sdkPath != null) {
       String condaPath = findCondaExecutableRelativeToEnv(sdkPath);
@@ -98,6 +105,10 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     }
 
     return getSystemCondaExecutable();
+  }
+
+  public static void onCondaEnvCreated(@NotNull @SystemDependent String condaExecutable) {
+    getInstance().PREFERRED_CONDA_PATH = condaExecutable;
   }
 
   @Nullable
@@ -186,7 +197,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public Multimap<String, String> listAllPackagesAndVersions() {
+  public static Multimap<String, String> listAllPackagesAndVersions() {
     try {
       final String output = runCondaPackagingHelper("listall");
       final Multimap<String, String> nameToVersions =
@@ -205,26 +216,26 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @NotNull
-  public List<String> listPackageVersions(@NotNull String packageName) throws ExecutionException {
+  public static List<String> listPackageVersions(@NotNull String packageName) throws ExecutionException {
     final String output = runCondaPackagingHelper("versions", packageName);
     return StringUtil.split(output, "\n");
   }
 
-  @Nullable
-  public List<String> listChannels() throws ExecutionException {
+  @NotNull
+  public static List<String> listChannels() throws ExecutionException {
     final String output = runCondaPackagingHelper("channels");
     return StringUtil.split(output, "\n");
   }
 
   @NotNull
-  private String runCondaPackagingHelper(String @NotNull ... args) throws ExecutionException {
+  private static String runCondaPackagingHelper(String @NotNull ... args) throws ExecutionException {
     final List<String> commandArgs = new ArrayList<>();
     commandArgs.add(PythonHelpersLocator.getHelperPath("conda_packaging_tool.py"));
     commandArgs.addAll(Arrays.asList(args));
     // "conda" module required for conda_packaging_tool.py is available only in a base interpreter
     final String condaPython = getCondaPython();
     if (condaPython == null) {
-      throw new PyExecutionException("Cannot find Python executable for conda",
+      throw new PyExecutionException(PySdkBundle.message("python.conda.cannot.find.python.executable"),
                                      "python", commandArgs, new ProcessOutput());
     }
     final ProcessOutput output = PyCondaRunKt.runCondaPython(condaPython, commandArgs);

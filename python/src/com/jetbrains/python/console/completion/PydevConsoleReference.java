@@ -116,7 +116,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
         String args = completion.getArgs();
         if (args.equals("(%)")) {
           builder = builder.withPresentableText("%" + completion.getName());
-          builder = builder.withInsertHandler(new InsertHandler<LookupElement>() {
+          builder = builder.withInsertHandler(new InsertHandler<>() {
             @Override
             public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               final Editor editor = context.getEditor();

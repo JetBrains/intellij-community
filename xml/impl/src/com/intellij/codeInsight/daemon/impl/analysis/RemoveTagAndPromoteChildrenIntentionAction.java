@@ -28,7 +28,7 @@ public class RemoveTagAndPromoteChildrenIntentionAction implements IntentionActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("remove.tag.quickfix.family");
+    return XmlAnalysisBundle.message("xml.quickfix.remove.tag.family");
   }
 
   @Override

@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.containers.stopAfter
@@ -33,23 +35,36 @@ inline fun <reified T : PsiElement> PsiElement.parentsOfType(withSelf: Boolean =
 fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>): Sequence<T> = parentsOfType(clazz, withSelf = true)
 
 fun <T : PsiElement> PsiElement.parentsOfType(clazz: Class<out T>, withSelf: Boolean = true): Sequence<T> {
-  return (if (withSelf) parentsWithSelf else parents).filterIsInstance(clazz)
+  return parents(withSelf).filterIsInstance(clazz)
 }
 
-@Deprecated("Use PsiElement.parentsWithSelf property", ReplaceWith("parentsWithSelf"))
-fun PsiElement.parents(): Sequence<PsiElement> = parentsWithSelf
+/**
+ * @param withSelf whether to include [this] element into the sequence
+ * @return a sequence of parents, starting with [this] (or parent, depending on [withSelf])
+ * and walking up to and including the containing file
+ */
+fun PsiElement.parents(withSelf: Boolean): Sequence<PsiElement> {
+  val seed = if (withSelf) this else parentWithoutWalkingDirectories(this)
+  return generateSequence(seed, ::parentWithoutWalkingDirectories)
+}
 
-@Deprecated("Use PsiElement.parents property", ReplaceWith("parents"))
-fun PsiElement.strictParents(): Sequence<PsiElement> = parents
+private fun parentWithoutWalkingDirectories(element: PsiElement): PsiElement? {
+  return if (element is PsiFile) null else element.parent
+}
 
+@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
+fun PsiElement.parents(): Sequence<PsiElement> = parents(true)
+
+@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
+fun PsiElement.strictParents(): Sequence<PsiElement> = parents(false)
+
+@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(true)"))
 val PsiElement.parentsWithSelf: Sequence<PsiElement>
-  get() = generateSequence(this) { if (it is PsiFile) null else it.parent }
+  get() = parents(true)
 
+@Deprecated("Use PsiElement.parents() function", ReplaceWith("parents(false)"))
 val PsiElement.parents: Sequence<PsiElement>
-  get() {
-    val seed = if (this is PsiFile) null else parent
-    return generateSequence(seed) { if (it is PsiFile) null else it.parent }
-  }
+  get() = parents(false)
 
 fun PsiElement.siblings(forward: Boolean = true, withSelf: Boolean = true): Sequence<PsiElement> {
   val seed = when {
@@ -99,78 +114,51 @@ fun PsiElement.nextLeaf(filter: (PsiElement) -> Boolean): PsiElement? {
 
 // -------------------- Recursive tree visiting --------------------------------------------------------------------------------------------
 
-inline fun <reified T : PsiElement> PsiElement.forEachDescendantOfType(noinline action: (T) -> Unit) {
-  forEachDescendantOfType({ true }, action)
+private val alwaysTrue: (Any?) -> Boolean = { true }
+
+/**
+ * @param childrenFirst if `true` then traverse children before parent (postorder),
+ *                      if `false` then traverse parent before children (preorder)
+ * @param canGoInside a predicate which checks if children of an element should be traversed
+ * @return sequence of all children of [this] element (including this element)
+ */
+fun PsiElement.descendants(
+  childrenFirst: Boolean = false,
+  canGoInside: (PsiElement) -> Boolean = alwaysTrue
+): Sequence<PsiElement> = sequence {
+  val root = this@descendants
+  if (childrenFirst) {
+    visitChildrenAndYield(root, canGoInside)
+  }
+  else {
+    yieldAndVisitChildren(root, canGoInside)
+  }
 }
 
-inline fun <reified T : PsiElement> PsiElement.forEachDescendantOfType(
-  crossinline canGoInside: (PsiElement) -> Boolean,
-  noinline action: (T) -> Unit
-) {
-  this.accept(object : PsiRecursiveElementVisitor() {
-    override fun visitElement(element: PsiElement) {
-      if (canGoInside(element)) {
-        super.visitElement(element)
-      }
-
-      if (element is T) {
-        action(element)
-      }
-    }
-  })
-}
-
-inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(noinline predicate: (T) -> Boolean = { true }): Boolean {
-  return findDescendantOfType(predicate) != null
-}
-
-inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(
-  crossinline canGoInside: (PsiElement) -> Boolean,
-  noinline predicate: (T) -> Boolean = { true }
-): Boolean {
-  return findDescendantOfType(canGoInside, predicate) != null
-}
-
-inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(noinline predicate: (T) -> Boolean = { true }): T? {
-  return findDescendantOfType({ true }, predicate)
-}
-
-inline fun <reified T : PsiElement> PsiElement.findDescendantOfType(
-  crossinline canGoInside: (PsiElement) -> Boolean,
-  noinline predicate: (T) -> Boolean = { true }
-): T? {
-  var result: T? = null
-  this.accept(object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(element: PsiElement) {
-      if (element is T && predicate(element)) {
-        result = element
-        stopWalking()
-        return
-      }
-
-      if (canGoInside(element)) {
-        super.visitElement(element)
-      }
-    }
-  })
-  return result
-}
-
-inline fun <reified T : PsiElement> PsiElement.collectDescendantsOfType(noinline predicate: (T) -> Boolean = { true }): List<T> {
-  return collectDescendantsOfType({ true }, predicate)
-}
-
-inline fun <reified T : PsiElement> PsiElement.collectDescendantsOfType(
-  crossinline canGoInside: (PsiElement) -> Boolean,
-  noinline predicate: (T) -> Boolean = { true }
-): List<T> {
-  val result = ArrayList<T>()
-  forEachDescendantOfType<T>(canGoInside) {
-    if (predicate(it)) {
-      result.add(it)
+private suspend fun SequenceScope<PsiElement>.yieldAndVisitChildren(element: PsiElement, canGoInside: (PsiElement) -> Boolean) {
+  yield(element)
+  if (canGoInside(element)) {
+    var child = element.firstChild
+    while (child != null) {
+      yieldAndVisitChildren(child, canGoInside)
+      child = child.nextSibling
     }
   }
-  return result
+}
+
+private suspend fun SequenceScope<PsiElement>.visitChildrenAndYield(element: PsiElement, canGoInside: (PsiElement) -> Boolean) {
+  if (canGoInside(element)) {
+    var child = element.firstChild
+    while (child != null) {
+      visitChildrenAndYield(child, canGoInside)
+      child = child.nextSibling
+    }
+  }
+  yield(element)
+}
+
+inline fun <reified T : PsiElement> PsiElement.descendantsOfType(childrenFirst: Boolean = false): Sequence<T> {
+  return descendants(childrenFirst).filterIsInstance<T>()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------------------------
@@ -310,7 +298,9 @@ fun PsiFile.leavesAroundOffset(offsetInFile: Int): Iterable<ElementAndOffset> {
   return listOf(ElementAndOffset(leaf, offsetInLeaf))
 }
 
-inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? = contextOfType(T::class)
+inline fun <reified T : PsiElement> PsiElement.contextOfType(withSelf: Boolean = false): T? {
+  return PsiTreeUtil.getContextOfType(this, T::class.java, !withSelf)
+}
 
 fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T? {
   return PsiTreeUtil.getContextOfType(this, *classes.map { it.java }.toTypedArray())
@@ -335,7 +325,7 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   }
   check(leafRange.startOffset >= range.startOffset)
 
-  val stopAt = leaf.parents.first { range in it.textRange }
+  val stopAt = leaf.parents(false).first { range in it.textRange }
   if (stopAt is PsiErrorElement) return true
 
   if (leafRange.startOffset == range.startOffset) {

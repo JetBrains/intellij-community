@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -29,11 +14,10 @@ import java.util.concurrent.ConcurrentMap;
  * Null keys are allowed
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, TObjectHashingStrategy<K> {
+abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements ConcurrentMap<K, V>, HashingStrategy<K> {
   final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final ConcurrentMap<KeyReference<K>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
-  @NotNull
-  private final TObjectHashingStrategy<? super K> myHashingStrategy;
+  private final @NotNull HashingStrategy<? super K> myHashingStrategy;
 
   @FunctionalInterface
   interface KeyReference<K> {
@@ -47,8 +31,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     int hashCode();
   }
 
-  @NotNull
-  abstract KeyReference<K> createKeyReference(@NotNull K key, @NotNull TObjectHashingStrategy<? super K> hashingStrategy);
+  abstract @NotNull KeyReference<K> createKeyReference(@NotNull K key, @NotNull HashingStrategy<? super K> hashingStrategy);
 
   private static final HardKey<?> NULL_KEY = new HardKey<Object>() {
     @Override
@@ -71,7 +54,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   // returns true if some keys were processed
-  boolean processQueue() {
+  private boolean processQueue() {
     KeyReference<K> wk;
     boolean processed = false;
     //noinspection unchecked
@@ -89,13 +72,13 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     this(DEFAULT_CAPACITY);
   }
 
-  ConcurrentRefHashMap(int initialCapacity) {
+  private ConcurrentRefHashMap(int initialCapacity) {
     this(initialCapacity, LOAD_FACTOR);
   }
 
-  private static final TObjectHashingStrategy<?> THIS = new TObjectHashingStrategy<Object>() {
+  private static final HashingStrategy<?> THIS = new HashingStrategy<Object>() {
     @Override
-    public int computeHashCode(Object object) {
+    public int hashCode(Object object) {
       throw new UnsupportedOperationException();
     }
 
@@ -104,21 +87,22 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       throw new UnsupportedOperationException();
     }
   };
+
   private ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
     //noinspection unchecked
-    this(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL, (TObjectHashingStrategy<? super K>)THIS);
+    this(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL, (HashingStrategy<? super K>)THIS);
   }
 
-  ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
+  ConcurrentRefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, hashingStrategy);
   }
 
   ConcurrentRefHashMap(int initialCapacity,
                        float loadFactor,
                        int concurrencyLevel,
-                       @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
-    myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
+                       @Nullable HashingStrategy<? super K> hashingStrategy) {
+    myHashingStrategy = hashingStrategy == THIS ? this : (hashingStrategy == null ? HashingStrategy.canonical() : hashingStrategy);
+    myMap = new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   @Override
@@ -135,9 +119,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public boolean containsKey(@Nullable Object key) {
     HardKey<K> hardKey = createHardKey(key);
-    boolean result = myMap.containsKey(hardKey);
-    releaseHardKey(hardKey);
-    return result;
+    try {
+      return myMap.containsKey(hardKey);
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
@@ -169,8 +156,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     public int hashCode() {
       return myHash;
     }
+
+    private void clear() {
+      setKey(null, 0);
+    }
   }
-  private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(HardKey::new);
+  private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(() -> new HardKey<>());
 
   @NotNull
   private HardKey<K> createHardKey(@Nullable Object o) {
@@ -182,20 +173,19 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     K key = (K)o;
     //noinspection unchecked
     HardKey<K> hardKey = (HardKey<K>)HARD_KEY.get();
-    hardKey.setKey(key, myHashingStrategy.computeHashCode(key));
+    hardKey.setKey(key, myHashingStrategy.hashCode(key));
     return hardKey;
-  }
-
-  private static void releaseHardKey(@NotNull HardKey<?> key) {
-    key.setKey(null, 0);
   }
 
   @Override
   public V get(@Nullable Object key) {
     HardKey<K> hardKey = createHardKey(key);
-    V result = myMap.get(hardKey);
-    releaseHardKey(hardKey);
-    return result;
+    try {
+      return myMap.get(hardKey);
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
@@ -210,9 +200,12 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     processQueue();
 
     HardKey<?> hardKey = createHardKey(key);
-    V result = myMap.remove(hardKey);
-    releaseHardKey(hardKey);
-    return result;
+    try {
+      return myMap.remove(hardKey);
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
@@ -221,7 +214,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     myMap.clear();
   }
 
-  private static class RefEntry<K, V> implements Map.Entry<K, V> {
+  private static final class RefEntry<K, V> implements Map.Entry<K, V> {
     private final Map.Entry<?, V> ent;
     private final K key; /* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
@@ -263,7 +256,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   /* Internal class for entry sets */
-  private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+  private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
     private final Set<Map.Entry<KeyReference<K>, V>> hashEntrySet = myMap.entrySet();
 
     @NotNull
@@ -328,13 +321,18 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
       HardKey<K> key = createHardKey(e.getKey());
 
-      V hv = myMap.get(key);
-      boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
-      if (toRemove) {
-        myMap.remove(key);
+      boolean toRemove;
+      try {
+        V hv = myMap.get(key);
+        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
+        if (toRemove) {
+          myMap.remove(key);
+        }
+      }
+      finally {
+        key.clear();
       }
 
-      releaseHardKey(key);
       return toRemove;
     }
 
@@ -388,8 +386,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   // MAKE SURE IT CONSISTENT WITH com.intellij.util.containers.ConcurrentHashMap
   @Override
-  public int computeHashCode(final K object) {
-    int h = object.hashCode();
+  public int hashCode(@Nullable K object) {
+    int h = object == null ? 0 : object.hashCode();
     h += ~(h << 9);
     h ^= h >>> 14;
     h += h << 4;
@@ -398,7 +396,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public boolean equals(final K o1, final K o2) {
-    return o1.equals(o2);
+  public boolean equals(K o1, K o2) {
+    return Objects.equals(o1, o2);
   }
 }

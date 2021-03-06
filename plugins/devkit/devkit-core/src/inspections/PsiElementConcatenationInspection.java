@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -18,6 +18,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
 
       private void checkOperand(@Nullable PsiExpression operand, Set<PsiExpression> visited) {
         if(operand == null || !visited.add(operand)) return;
-        if(operand instanceof PsiReferenceExpression) {
+        if(operand instanceof PsiReferenceExpression)  {
           PsiElement element = ((PsiReferenceExpression)operand).resolve();
           if(element instanceof PsiLocalVariable && ((PsiLocalVariable)element).getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
@@ -77,11 +78,11 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
         }
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
         if(InheritanceUtil.isInheritor(aClass, false, PsiElement.class.getName())) {
-          holder.registerProblem(operand, "Suspicious conversion of PsiElement to string",
+          holder.registerProblem(operand, DevKitBundle.message("inspections.psi.element.concat.psi.element"),
                                  new AddGetTextFix("getText"));
         }
         if(InheritanceUtil.isInheritor(aClass, false, PsiType.class.getName())) {
-          holder.registerProblem(operand, "Suspicious conversion of PsiType to string",
+          holder.registerProblem(operand, DevKitBundle.message("inspections.psi.element.concat.psi.type"),
                                  new AddGetTextFix("getCanonicalText"));
         }
         if(operand instanceof PsiPolyadicExpression) {
@@ -96,7 +97,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  private static class AddGetTextFix implements LocalQuickFix {
+  private static final class AddGetTextFix implements LocalQuickFix {
     private final String myMethodName;
 
     private AddGetTextFix(String name) {
@@ -107,14 +108,14 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
     @NotNull
     @Override
     public String getName() {
-      return "Use '"+myMethodName+"' call";
+      return DevKitBundle.message("inspections.psi.element.concat.add.get.text.name", myMethodName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Call text representation retrieval method";
+      return DevKitBundle.message("inspections.psi.element.concat.add.get.text.family.name");
     }
 
     @Override

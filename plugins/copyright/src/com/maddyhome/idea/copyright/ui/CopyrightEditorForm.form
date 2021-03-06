@@ -18,7 +18,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Regexp to detect copyright in comments:"/>
+          <text resource-bundle="messages/CopyrightBundle" key="label.regexp.to.detect.copyright.in.comments"/>
         </properties>
       </component>
       <component id="25309" class="javax.swing.JTextField" binding="myKeywordTf" default-binding="true">
@@ -34,7 +34,7 @@
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Validate"/>
+          <text resource-bundle="messages/CopyrightBundle" key="button.validate"/>
         </properties>
       </component>
       <component id="2d808" class="javax.swing.JLabel">
@@ -43,7 +43,7 @@
         </constraints>
         <properties>
           <labelFor value="31075"/>
-          <text value="Allow replacing copyright if old copyright matches:"/>
+          <text resource-bundle="messages/CopyrightBundle" key="label.allow.replacing.copyright.if.old.copyright.matches"/>
         </properties>
       </component>
       <component id="31075" class="javax.swing.JTextField" binding="myAllowReplaceTextField">
@@ -59,7 +59,7 @@
           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Copyright text (may contain Velocity templates):"/>
+          <text resource-bundle="messages/CopyrightBundle" key="label.copyright.text.may.contain.velocity.templates"/>
         </properties>
       </component>
       <grid id="b7e50" binding="myEditorPanel" layout-manager="BorderLayout" hgap="0" vgap="0">

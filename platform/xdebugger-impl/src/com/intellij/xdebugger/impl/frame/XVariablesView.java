@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
@@ -12,42 +10,50 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.lang.ref.WeakReference;
+import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  private final JPanel myComponent;
+  protected BorderLayoutPanel myComponent;
+  private final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
+    mySession = new WeakReference<>(session);
     myComponent = new BorderLayoutPanel();
-    myComponent.add(super.getPanel());
+    JComponent panel = super.getPanel();
+    JComponent top = createTopPanel();
+    if (top != null) {
+      panel = new BorderLayoutPanel().addToTop(top).addToCenter(panel);
+    }
+    myComponent.add(panel);
     DataManager.registerDataProvider(myComponent, this);
   }
 
   @Override
   public JPanel getPanel() {
     return myComponent;
+  }
+
+  JComponent createTopPanel() {
+    return null;
   }
 
   @Override
@@ -61,7 +67,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     }
 
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    DebuggerUIUtil.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
@@ -70,7 +76,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       else {
         requestClear();
       }
-    });
+    }, session.getProject().getDisposed());
   }
 
   @Override
@@ -89,7 +95,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     XDebugSession session = getSession(getPanel());
     if (session != null) {
       if (!session.isStopped() && session.isPaused()) {
-        root.setInfoMessage("Frame is not available", null);
+        root.setInfoMessage(XDebuggerBundle.message("message.frame.is.not.available"), null);
       }
       else {
         XDebugProcess debugProcess = session.getDebugProcess();
@@ -113,15 +119,25 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return getCurrentFile(getTree());
+      XDebugSessionImpl session = mySession.get();
+      if (session != null) {
+        XSourcePosition position = session.getCurrentPosition();
+        if (position != null) {
+          return position.getFile();
+        }
+      }
     }
     return null;
   }
 
-  public static class InlineVariablesInfo {
-    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new THashMap<>();
-    private final TObjectLongHashMap<VirtualFile> myTimestamps = new ObjectLongHashMap<>();
+  public static final class InlineVariablesInfo {
+    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new HashMap<>();
+    private final Object2LongMap<VirtualFile> myTimestamps = new Object2LongOpenHashMap<>();
     private static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
+
+    public InlineVariablesInfo() {
+      myTimestamps.defaultReturnValue(-1);
+    }
 
     public static InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session != null) {
@@ -138,18 +154,18 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
     @Nullable
     public synchronized List<XValueNodeImpl> get(@NotNull VirtualFile file, int line, long currentTimestamp) {
-      long timestamp = myTimestamps.get(file);
+      long timestamp = myTimestamps.getLong(file);
       if (timestamp == -1 || timestamp < currentTimestamp) {
         return null;
       }
-      Set<Entry> entries = myData.get(Pair.create(file, line));
+      Set<Entry> entries = myData.get(new Pair<>(file, line));
       if (entries == null) return null;
       return ContainerUtil.map(entries, entry -> entry.myNode);
     }
 
     public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
       myTimestamps.put(file, timestamp);
-      Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
+      Pair<VirtualFile, Integer> key = new Pair<>(file, position.getLine());
       myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
     }
 

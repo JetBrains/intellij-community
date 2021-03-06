@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -8,10 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public abstract class SdkType implements SdkTypeId {
-  public static final ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
+  public static final ExtensionPointName<SdkType> EP_NAME = new ExtensionPointName<>("com.intellij.sdkType");
 
   private static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
 
@@ -86,12 +87,12 @@ public abstract class SdkType implements SdkTypeId {
     return homePath;
   }
 
-  public abstract boolean isValidSdkHome(String path);
+  public abstract boolean isValidSdkHome(@NotNull String path);
 
   /**
    * Returns the message to be shown to the user when {@link #isValidSdkHome(String)} returned false for the path.
    */
-  public String getInvalidHomeMessage(String path) {
+  public String getInvalidHomeMessage(@NotNull String path) {
     return new File(path).isDirectory()
       ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
       : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
@@ -100,7 +101,8 @@ public abstract class SdkType implements SdkTypeId {
   @Override
   @Nullable
   public String getVersionString(@NotNull Sdk sdk) {
-    return getVersionString(sdk.getHomePath());
+    String homePath = sdk.getHomePath();
+    return homePath == null ? null : getVersionString(homePath);
   }
 
   @Nullable
@@ -109,7 +111,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  public abstract String suggestSdkName(@Nullable String currentSdkName, String sdkHome);
+  public abstract String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome);
 
   /**
    * Returns a comparator used to order SDKs in project or module settings combo boxes.
@@ -165,7 +167,7 @@ public abstract class SdkType implements SdkTypeId {
 
   @NotNull
   public Icon getIconForAddAction() {
-    return IconUtil.getAddIcon();
+    return AllIcons.General.Add;
   }
 
   @Override
@@ -213,7 +215,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  public String getHomeFieldLabel() {
+  public @NlsContexts.Label String getHomeFieldLabel() {
     return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
   }
 
@@ -292,15 +294,8 @@ public abstract class SdkType implements SdkTypeId {
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
-                                 @NotNull Consumer<Sdk> sdkCreatedCallback) {
-    //noinspection deprecation
-    showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
+                                 @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
   }
-
-  /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) { }
 
   /**
    * Checks if the home directory of the specified SDK is valid. By default, checks that the directory points to a valid local

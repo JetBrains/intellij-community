@@ -27,7 +27,6 @@ repositories {
 }
 
 configurations {
-  androidToolsBaseTemplates
   androidOfflineRepo
   androidSdk
   kotlinDeps
@@ -40,32 +39,39 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){
   osFamily = 'darwin'
 }
 
-// infer kotlin_version from kotlin-plugin (e.g. "1.3.60-eap-143" in "1.3.60-eap-143-IJ2019.3-1:EAP")
+// infer kotlin_version from kotlin-plugin (e.g. "1.4.10" in "203-1.4.10-release-IJ2965:Ideadev")
 def kotlinVersionLen = kotlinPluginBuild.indexOf("-release")
 if (kotlinVersionLen == -1) {
-  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ20")
+  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ")
 }
 
-ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
-ext.android_m2_version = "26.6.0.2"
-ext.android_sdk_version = "${osFamily}.3.6.0.0"
+ext.kotlin_version = kotlinPluginBuild.substring(
+  4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
+  kotlinVersionLen
+)
+ext.android_m2_version = "27.1.0.0" // 27.1.1.0 is not published because there are no changes comparing to current version
+ext.android_sdk_version = "${osFamily}.4.0.0.0"
 
 dependencies {
-  androidToolsBaseTemplates "org.jetbrains.intellij.deps.android.tools.base:templates:${android_m2_version}"
   androidOfflineRepo "org.jetbrains.intellij.deps.android.tools.base:android-sdk-offline-repo:${android_m2_version}@zip"
   androidSdk "org.jetbrains.intellij.deps.android:android-sdk:${android_sdk_version}:@tar.gz"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-daemon-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-reflect:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-script-runtime:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
   kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
@@ -99,19 +105,7 @@ task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androi
   }
 }
 
-task syncToolsBaseTemplates(dependsOn: [configurations.androidToolsBaseTemplates, syncAndroidSdk], type: VersionedLazyCopyTask) {
-  from { zipTree(configurations.androidToolsBaseTemplates.singleFile) }
-  into "${project.buildDir}/android-sdk/tools-base/templates"
-  versionFile = android_m2_version
-}
-
-task syncToolsBaseTemplatesOnly(dependsOn: [configurations.androidToolsBaseTemplates], type: VersionedLazyCopyTask) {
-  from { zipTree(configurations.androidToolsBaseTemplates.singleFile) }
-  into "${project.buildDir}/android-sdk/tools-base/templates"
-  versionFile = android_m2_version
-}
-
-task setupAndroidPluginRuntimeForIdea(dependsOn: [syncToolsBaseTemplatesOnly, setupKotlinPlugin]){
+task setupAndroidPluginRuntimeForIdea(dependsOn: [setupKotlinPlugin]){
 
 }
 
@@ -122,9 +116,6 @@ task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], 
 
 task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncAndroidSdk], type: OfflineMavenRepository) {
   def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
-  onlyIf {
-    !file(verFile).isFile()
-  }
   configurationName = "kotlinDeps"
   repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
   doLast {
@@ -135,7 +126,7 @@ task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncAndroidSdk], ty
 /**
  * This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
  */
-task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid, updateKotlinLibs, syncToolsBaseTemplates])
+task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid, updateKotlinLibs])
 
 class CopyData implements Serializable {
   String from

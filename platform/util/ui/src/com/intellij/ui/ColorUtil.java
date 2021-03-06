@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.MathUtil;
 import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +14,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
-public class ColorUtil {
+public final class ColorUtil {
   private ColorUtil() {
   }
 
@@ -64,7 +62,7 @@ public class ColorUtil {
     final float[] hsb = Color.RGBtoHSB(r, g, b, null);
     float brightness = hsb[2];
     for (int i = 0; i < howMuch; i++) {
-      brightness = Math.min(1, Math.max(0, brightness * hackValue));
+      brightness = MathUtil.clamp(brightness * hackValue, 0, 1);
       if (brightness == 0 || brightness == 1) break;
     }
     return Color.getHSBColor(hsb[0], hsb[1], brightness);
@@ -159,7 +157,7 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static String toHtmlColor(@NotNull final Color c) {
+  public static @NlsSafe String toHtmlColor(@NotNull final Color c) {
     return "#"+toHex(c);
   }
 

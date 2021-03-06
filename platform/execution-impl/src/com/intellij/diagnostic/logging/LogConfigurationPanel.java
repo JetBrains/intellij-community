@@ -24,26 +24,13 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import gnu.trove.THashMap;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.table.*;
+import java.awt.*;
+import java.util.List;
+import java.util.*;
 
 public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
@@ -54,7 +41,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   private TextFieldWithBrowseButton myOutputFile;
   private JCheckBox myShowConsoleOnStdOutCb;
   private JCheckBox myShowConsoleOnStdErrCb;
-  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new THashMap<>();
+  private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
 
   public LogConfigurationPanel() {
@@ -85,7 +72,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myScrollPanel.add(
       ToolbarDecorator.createDecorator(myFilesTable)
         .setAddAction(button -> {
-          ArrayList<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
+          List<LogFileOptions> newList = new ArrayList<>(myModel.getItems());
           LogFileOptions newOptions = new LogFileOptions("", "", true);
           if (showEditorDialog(newOptions)) {
             newList.add(newOptions);
@@ -188,7 +175,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   @Override
   protected void resetEditorFrom(@NotNull final RunConfigurationBase configuration) {
-    ArrayList<LogFileOptions> list = new ArrayList<>();
+    List<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
       list.add(

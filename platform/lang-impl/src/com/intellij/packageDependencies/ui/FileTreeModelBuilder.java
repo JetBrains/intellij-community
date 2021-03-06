@@ -32,17 +32,22 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,10 +132,29 @@ public class FileTreeModelBuilder {
         }
         return true;
       });
+
+      VirtualFile[] roots = LibraryUtil.getLibraryRoots(project);
+      for (VirtualFile root : roots) {
+        if (!ContainerUtil.exists(roots, r -> VfsUtilCore.isAncestor(r, root, true))) {
+          countFilesRecursively(root);
+        }
+      }
       project.putUserData(FILE_COUNT, myTotalFileCount);
     } else {
       myTotalFileCount = fileCount.intValue();
     }
+  }
+
+  private void countFilesRecursively(VirtualFile file) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+          counting();
+        }
+        return true;
+      }
+    });
   }
 
   public static void clearCaches(Project project) {
@@ -153,6 +177,12 @@ public class FileTreeModelBuilder {
         indicator.setIndeterminate(false);
       }
       myFileIndex.iterateContent(new MyContentIterator());
+      VirtualFile[] roots = LibraryUtil.getLibraryRoots(project);
+      for (VirtualFile root : roots) {
+        if (!ContainerUtil.exists(roots, r -> VfsUtilCore.isAncestor(r, root, true))) {
+          processFilesRecursively(root);
+        }
+      }
     };
     final TreeModel treeModel = new TreeModel(myRoot);
     if (showProgress) {
@@ -183,6 +213,30 @@ public class FileTreeModelBuilder {
     treeModel.setTotalFileCount(myTotalFileCount);
     treeModel.setMarkedFileCount(myMarkedFileCount);
     return treeModel;
+  }
+
+  private void processFilesRecursively(@NotNull VirtualFile file) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
+      private PackageDependenciesNode parent;
+
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          parent = null;
+        }
+        else {
+          parent = buildFileNode(file, parent);
+        }
+        return true;
+      }
+
+      @Override
+      public void afterChildrenVisited(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          parent = null;
+        }
+      }
+    });
   }
 
   private void counting() {
@@ -355,7 +409,7 @@ public class FileTreeModelBuilder {
 
     PackageDependenciesNode dirNode = getFileParentNode(vFile);
     if (findNodeForPsiElement(dirNode, file) == null) {  //check if dir node already contains child
-      dirNode.add(new FileNode(vFile, myProject, isMarked));
+      dirNode.add(new FileNode(vFile, myProject, true));
     }
     return rootToReload;
   }
@@ -485,13 +539,14 @@ public class FileTreeModelBuilder {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(virtualFile);
     final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
+    final VirtualFile classRoot = fileIndex.getClassRootForFile(virtualFile);
 
     directoryNode = new DirectoryNode(virtualFile, myProject, myCompactEmptyMiddlePackages, myFlattenPackages, myBaseDir,
                                       myContentRoots);
     myModuleDirNodes.put(virtualFile, (DirectoryNode)directoryNode);
 
     final VirtualFile directory = virtualFile.getParent();
-    if (!myFlattenPackages && directory != null) {
+    if (!myFlattenPackages && directory != null && !Comparing.equal(virtualFile, classRoot)) {
       if (myCompactEmptyMiddlePackages && !Comparing.equal(sourceRoot, virtualFile) && !Comparing.equal(contentRoot, virtualFile)) {//compact
         ((DirectoryNode)directoryNode).setCompactedDirNode(childNode);
       }
@@ -500,7 +555,8 @@ public class FileTreeModelBuilder {
         if (parentDirectoryNode != null
             || !myCompactEmptyMiddlePackages
             || (sourceRoot != null && VfsUtilCore.isAncestor(directory, sourceRoot, false) && fileIndex.getSourceRootForFile(directory) != null)
-            || Comparing.equal(directory, contentRoot)) {
+            || Comparing.equal(directory, contentRoot) 
+            || Comparing.equal(directory, classRoot)) {
           getModuleDirNode(directory, module, (DirectoryNode)directoryNode).add(directoryNode);
         }
         else {
@@ -512,6 +568,26 @@ public class FileTreeModelBuilder {
       }
     }
     else {
+      if ((directory == null || Comparing.equal(virtualFile, classRoot)) && fileIndex.isInLibrary(virtualFile)) {
+        List<OrderEntry> orderEntriesForFile = fileIndex.getOrderEntriesForFile(virtualFile);
+        if (orderEntriesForFile.isEmpty()) {
+          myRoot.add(directoryNode);
+        }
+        else {
+          LibraryNode node = new LibraryNode(orderEntriesForFile.get(0), myProject);
+          LibraryNode existingLibraryNode = getExistingLibraryNode(node);
+          if (existingLibraryNode != null) {
+            node = existingLibraryNode;
+          }
+          else {
+            addExternalDepNode(node);
+          }
+
+          node.add(directoryNode);
+        }
+        return directoryNode;
+      }
+
       if (Comparing.equal(contentRoot, virtualFile)) {
         getModuleNode(module).add(directoryNode);
       }
@@ -529,17 +605,33 @@ public class FileTreeModelBuilder {
         if (root != null) {
           getModuleDirNode(root, module, null).add(directoryNode);
         } else {
-          if (myExternalNode == null) {
-            myExternalNode = new GeneralGroupNode("External Dependencies", AllIcons.Nodes.PpLibFolder, myProject);
-            myRoot.add(myExternalNode);
-          }
-
-          myExternalNode.add(directoryNode);
+          addExternalDepNode(directoryNode);
         }
       }
     }
 
     return directoryNode;
+  }
+
+  private LibraryNode getExistingLibraryNode(LibraryNode node) {
+    if (myExternalNode != null) {
+      for (int i = 0; i < myExternalNode.getChildCount(); i++) {
+        TreeNode child = myExternalNode.getChildAt(i);
+        if (child instanceof LibraryNode && child.equals(node)) {
+          return (LibraryNode)child;
+        }
+      }
+    }
+    return null;
+  }
+
+  private void addExternalDepNode(PackageDependenciesNode node) {
+    if (myExternalNode == null) {
+      myExternalNode = new GeneralGroupNode("External Dependencies", AllIcons.Nodes.PpLibFolder, myProject);
+      myRoot.add(myExternalNode);
+    }
+
+    myExternalNode.add(node);
   }
 
 
@@ -603,7 +695,7 @@ public class FileTreeModelBuilder {
     }
   }
 
-  public static String getScanningPackagesMessage() {
+  public static @NlsContexts.ProgressText String getScanningPackagesMessage() {
     return CodeInsightBundle.message("package.dependencies.build.progress.text");
   }
 }

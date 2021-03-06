@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
@@ -63,8 +63,8 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   }
 
   private fun silentlyIgnoreFilesInsideConfigDir(files: List<VirtualFile>): List<VirtualFile> {
-    val configDir = project.stateStore.projectConfigDir ?: return files
-    val configDirFile = LocalFileSystem.getInstance().findFileByPath(configDir) ?: return files
+    val configDir = project.stateStore.directoryStorePath ?: return files
+    val configDirFile = LocalFileSystem.getInstance().findFileByNioFile(configDir) ?: return files
     val filesInConfigDir = files.filter { VfsUtil.isAncestor(configDirFile, it, true) }
     val unversionedFilesInConfigDir = doFilterFiles(filesInConfigDir)
 
@@ -175,34 +175,37 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     return VfsUtilCore.isAncestor(storeDir, this, true)
   }
 
-  override fun doFilterFiles(files: Collection<VirtualFile>) =
-    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles.filter { isUnder(files, it) }
+  override fun doFilterFiles(files: Collection<VirtualFile>): List<VirtualFile> {
+    val parents = files.toHashSet()
+    return ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
+      .filter { isUnder(parents, it) }
+  }
 
   override fun rememberForAllProjects() {
     val applicationSettings = VcsApplicationSettings.getInstance()
     applicationSettings.MANAGE_IGNORE_FILES = true
   }
 
-  override val notificationDisplayId: String = "manage.ignore.files.notification"
+  override val notificationDisplayId: String = VcsNotificationIdsHolder.MANAGE_IGNORE_FILES
 
   override val askedBeforeProperty = ASKED_MANAGE_IGNORE_FILES_PROPERTY
 
   override val doForCurrentProjectProperty = MANAGE_IGNORE_FILES_PROPERTY
-  override val showActionText: String = VcsBundle.getString("ignored.file.manage.view")
+  override val showActionText: String = VcsBundle.message("ignored.file.manage.view")
 
-  override val forCurrentProjectActionText: String = VcsBundle.getString("ignored.file.manage.this.project")
-  override val forAllProjectsActionText: String? = VcsBundle.getString("ignored.file.manage.all.project")
-  override val muteActionText: String = VcsBundle.getString("ignored.file.manage.notmanage")
+  override val forCurrentProjectActionText: String = VcsBundle.message("ignored.file.manage.this.project")
+  override val forAllProjectsActionText: String? = VcsBundle.message("ignored.file.manage.all.project")
+  override val muteActionText: String = VcsBundle.message("ignored.file.manage.notmanage")
 
-  override val viewFilesDialogTitle: String? = VcsBundle.getString("ignored.file.manage.view.dialog.title")
+  override val viewFilesDialogTitle: String? = VcsBundle.message("ignored.file.manage.view.dialog.title")
   override val viewFilesDialogOkActionName: String = VcsBundle.message("ignored.file.manage.view.dialog.ignore.action")
 
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message",
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
-                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: "ignore file")
+                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: VcsBundle.message("changes.ignore.file"))
 
-  private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
+  private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
   override fun needDoForCurrentProject(): Boolean {
     val appSettings = VcsApplicationSettings.getInstance()

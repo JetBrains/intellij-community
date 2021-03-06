@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.DataManager;
@@ -22,10 +22,13 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -139,14 +142,13 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
-  /** @noinspection unused*/
   private void handleScopeChooserAction(ActionEvent ignore) {
     String selection = getSelectedScopeName();
     if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
     EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
     if (dlg.isOK()){
       NamedScope namedScope = dlg.getSelectedScope();
-      rebuildModelAndSelectScopeOnSuccess(namedScope == null ? null : namedScope.getName());
+      rebuildModelAndSelectScopeOnSuccess(namedScope == null ? null : namedScope.getScopeId());
     }
     if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }
@@ -178,7 +180,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     };
     for (SearchScopeProvider each : SearchScopeProvider.EP_NAME.getExtensions()) {
       if (StringUtil.isEmpty(each.getDisplayName())) continue;
-      List<SearchScope> scopes = each.getSearchScopes(project, dataContext);
+      List<SearchScope> scopes = SlowOperations.allowSlowOperations(() -> each.getSearchScopes(project, dataContext));
       if (scopes.isEmpty()) continue;
       if (!processor.process(new ScopeSeparator(each.getDisplayName()))) return false;
       for (SearchScope scope : ContainerUtil.sorted(scopes, comparator)) {
@@ -192,14 +194,18 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
     Promise<DataContext> promise = DataManager.getInstance().getDataContextFromFocusAsync();
     promise.onSuccess(c -> {
-      processScopes(myProject, c, myOptions, descriptor -> {
-        if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
-          model.addElement(descriptor);
-        }
-        return true;
-      });
+      processScopes(model, c);
       getComboBox().setModel(model);
       selectItem(selection);
+    });
+  }
+
+  protected void processScopes(DefaultComboBoxModel<ScopeDescriptor> model, DataContext c) {
+    processScopes(myProject, c, myOptions, descriptor -> {
+      if (myScopeFilter == null || myScopeFilter.value(descriptor)) {
+        model.addElement(descriptor);
+      }
+      return true;
     });
   }
 
@@ -231,16 +237,21 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return item == null ? null : item.getScope();
   }
 
-  @Nullable
-  public String getSelectedScopeName() {
+  public @Nullable @Nls String getSelectedScopeName() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
     return item == null ? null : item.getDisplayName();
   }
 
-  private static class ScopeSeparator extends ScopeDescriptor {
-    final String text;
+  public @Nullable @NonNls String getSelectedScopeId() {
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    String scopeName = item != null ? item.getDisplayName() : null;
+    return scopeName != null ? ScopePresentableNameToSerializationIdMapper.getScopeSerializationId(scopeName) : null;
+  }
 
-    ScopeSeparator(@NotNull String text) {
+  private static class ScopeSeparator extends ScopeDescriptor {
+    final @Nls String text;
+
+    ScopeSeparator(@NotNull @Nls String text) {
       super(null);
       this.text = text;
     }
@@ -278,6 +289,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   public interface BrowseListener {
     void onBeforeBrowseStarted();
+
     void onAfterBrowseFinished();
   }
 

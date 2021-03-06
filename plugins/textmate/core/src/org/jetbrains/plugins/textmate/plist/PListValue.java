@@ -120,7 +120,7 @@ public class PListValue {
            '}';
   }
 
-  private static class NullablePListValue extends PListValue {
+  private static final class NullablePListValue extends PListValue {
     private NullablePListValue(PlistValueType type) {
       super(null, type);
     }

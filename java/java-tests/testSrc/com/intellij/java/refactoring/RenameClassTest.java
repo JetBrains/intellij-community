@@ -65,6 +65,10 @@ public class RenameClassTest extends LightMultiFileTestCase {
     doRenameClass("Bar", "Baz");
   }
 
+  public void testAnnotatedReference() {
+    doRenameClass("test.MyList", "MyList123");
+  }
+  
   private void doRenameClass(final String className, final String newName) {
     doTest(() -> {
       PsiClass aClass = myFixture.findClass(className);

@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,10 +23,11 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = true;
     public boolean USE_CREDENTIAL_HELPER = false;
+    public boolean STAGING_AREA_ENABLED = false;
   }
 
   public static GitVcsApplicationSettings getInstance() {
-    return ServiceManager.getService(GitVcsApplicationSettings.class);
+    return ApplicationManager.getApplication().getService(GitVcsApplicationSettings.class);
   }
 
   @Override
@@ -43,6 +47,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
    */
   @NotNull
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public String getPathToGit() {
     return GitExecutableManager.getInstance().getPathToGit();
   }
@@ -87,6 +92,18 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public boolean isUseCredentialHelper() {
     return myState.USE_CREDENTIAL_HELPER;
+  }
+
+  public boolean isStagingAreaEnabled() {
+    if (Registry.is("git.enable.stage")) {
+      myState.STAGING_AREA_ENABLED = true;
+      Registry.get("git.enable.stage").setValue(false);
+    }
+    return myState.STAGING_AREA_ENABLED;
+  }
+
+  public void setStagingAreaEnabled(boolean isStagingAreaEnabled) {
+    myState.STAGING_AREA_ENABLED = isStagingAreaEnabled;
   }
 
   public enum AnnotateDetectMovementsOption {

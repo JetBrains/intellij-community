@@ -1,31 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
 public final class MouseGestureManager {
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
 
-  private final Map<IdeFrame, Object> myListeners = new THashMap<>();
+  private final Map<IdeFrame, Object> myListeners = new HashMap<>();
   private boolean hasTrackPad = false;
 
   public static MouseGestureManager getInstance() {
-    return ServiceManager.getService(MouseGestureManager.class);
+    return ApplicationManager.getApplication().getService(MouseGestureManager.class);
   }
 
   public void add(@NotNull IdeFrame frame) {
-    if (!SystemInfo.isMacOSSnowLeopard || !Registry.is("actionSystem.mouseGesturesEnabled")) {
+    if (!SystemInfo.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
       return;
     }
 
@@ -49,7 +49,7 @@ public final class MouseGestureManager {
   }
 
   public void remove(@NotNull IdeFrame frame) {
-    if (!SystemInfo.isMacOSSnowLeopard || !Registry.is("actionSystem.mouseGesturesEnabled")) {
+    if (!SystemInfo.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
       return;
     }
 

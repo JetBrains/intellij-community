@@ -53,7 +53,8 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredStubPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm("Ignored stub packages", ignoredStubPackages).contentPanel
+  override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
+                                                               ignoredStubPackages).contentPanel
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -90,12 +91,12 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
           if (requirement.match(listOf(runtimePkg)) == null) {
             val stubPkgName = stubPkg.name
             val specsToString = StringUtil.join(requirement.versionSpecs, { it.presentableText }, ", ")
-
+            val message = PyPsiBundle.message("INSP.stub.packages.compatibility.incompatible.packages.message",
+                                              stubPkgName, PyRequirementRelation.EQ.presentableText, stubPkg.version,
+                                              runtimePkgName, PyRequirementRelation.EQ.presentableText, runtimePkg.version,
+                                              runtimePkgName, specsToString)
             registerProblem(node,
-                            "'$stubPkgName${PyRequirementRelation.EQ.presentableText}${stubPkg.version}' " +
-                            "is incompatible with " +
-                            "'$runtimePkgName${PyRequirementRelation.EQ.presentableText}${runtimePkg.version}'. " +
-                            "Expected '$runtimePkgName' version: [$specsToString]",
+                            message,
                             PyInterpreterInspection.InterpreterSettingsQuickFix(module),
                             createIgnoreStubPackageQuickFix(stubPkgName, ignoredStubPackages))
           }

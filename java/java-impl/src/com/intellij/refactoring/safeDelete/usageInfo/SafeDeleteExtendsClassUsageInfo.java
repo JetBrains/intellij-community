@@ -21,7 +21,14 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.SealedUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
 
 /**
  * @author ven
@@ -51,13 +58,22 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refClass.getProject());
 
     boolean targetTypeParameter = myExtendingClass instanceof PsiTypeParameter;
-    copyExtendsList(refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
-    copyExtendsList(refClass.getImplementsList(), targetTypeParameter, elementFactory);
+    copyExtendsList(refClass, refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
+    copyExtendsList(refClass, refClass.getImplementsList(), targetTypeParameter, elementFactory);
 
     getElement().delete();
+
+    if (!refClass.hasModifierProperty(PsiModifier.SEALED)) return;
+    SealedUtils.removeFromPermitsList(refClass, myExtendingClass);
+    final PsiModifierList modifiers = myExtendingClass.getModifierList();
+    if (modifiers == null || !modifiers.hasModifierProperty(PsiModifier.NON_SEALED)) return;
+    if (!SealedUtils.hasSealedParent(myExtendingClass)) {
+      modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
+    }
   }
 
-  private void copyExtendsList(@Nullable PsiReferenceList sourceExtendsList,
+  private void copyExtendsList(@NotNull PsiClass classToRemove,
+                               @Nullable PsiReferenceList sourceExtendsList,
                                boolean targetExtends,
                                PsiElementFactory elementFactory) {
     if (sourceExtendsList != null) {
@@ -68,6 +84,20 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
         if (ArrayUtilRt.find(existingRefTypes, referenceType) > -1) continue;
         PsiClassType classType = (PsiClassType)mySubstitutor.substitute(referenceType);
         PsiElement extendsRef = targetExtendsList.add(elementFactory.createReferenceElementByType(classType));
+        PsiClass classToExtend = classType.resolve();
+        if (classToExtend != null && classToExtend.hasModifierProperty(PsiModifier.SEALED)) {
+          String extendingClassName = Objects.requireNonNull(myExtendingClass.getQualifiedName());
+          if (classToExtend.getPermitsList() == null) {
+            if (classToExtend.getContainingFile() != myExtendingClass.getContainingFile()) {
+              Collection<String> missingInheritors = SealedUtils.findSameFileInheritors(classToExtend, classToRemove);
+              missingInheritors.add(extendingClassName);
+              SealedUtils.fillPermitsList(classToExtend, missingInheritors);
+            }
+          }
+          else {
+            SealedUtils.fillPermitsList(classToExtend, Collections.singleton(extendingClassName));
+          }
+        }
         CodeStyleManager.getInstance(myExtendingClass.getProject()).reformat(extendsRef);
       }
     }
@@ -76,17 +106,20 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
   @Override
   public boolean isSafeDelete() {
     if (getElement() == null) return false;
-    final PsiClass refClass = getReferencedElement();
-    if (refClass.getExtendsListTypes().length > 0) {
-      final PsiReferenceList listToAddExtends = refClass.isInterface() == myExtendingClass.isInterface() ? myExtendingClass.getExtendsList() :
+    final PsiClass classToRemove = getReferencedElement();
+    if (classToRemove.getExtendsListTypes().length > 0) {
+      final PsiReferenceList listToAddExtends = classToRemove.isInterface() == myExtendingClass.isInterface() ?
+                                                myExtendingClass.getExtendsList() :
                                                 myExtendingClass.getImplementsList();
       if (listToAddExtends == null) return false;
     }
 
-    if (refClass.getImplementsListTypes().length > 0) {
+    if (classToRemove.getImplementsListTypes().length > 0) {
       if (myExtendingClass.getImplementsList() == null) return false;
     }
 
-    return true;
+    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(getProject());
+    return StreamEx.of(classToRemove.getInterfaces()).prepend(classToRemove.getSuperClass()).nonNull()
+      .allMatch(grandParent -> resolveHelper.isAccessible(grandParent, myExtendingClass, null));
   }
 }

@@ -1,49 +1,35 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class PathExecLazyValue extends AtomicNotNullLazyValue<Boolean> {
-  private final String myName;
-
-  public PathExecLazyValue(@NotNull String name) {
-    if (StringUtil.containsAnyChar(name, "/\\")) {
-      throw new IllegalArgumentException(name);
-    }
-    myName = name;
+public final class PathExecLazyValue {
+  private PathExecLazyValue() {
   }
 
-  @NotNull
-  @Override
-  protected Boolean compute() {
-    String path = EnvironmentUtil.getValue("PATH");
-    if (path != null) {
-      for (String dir : StringUtil.tokenize(path, File.pathSeparator)) {
-        if (new File(dir, myName).canExecute()) {
-          return true;
-        }
-      }
+  public static @NotNull NotNullLazyValue<Boolean> create(@NlsSafe @NotNull String name) {
+    if (Strings.containsAnyChar(name, "/\\")) {
+      throw new IllegalArgumentException(name);
     }
 
-    return false;
+    return NotNullLazyValue.atomicLazy(() -> {
+      String path = EnvironmentUtil.getValue("PATH");
+      if (path != null) {
+        for (String dir : StringUtil.tokenize(path, File.pathSeparator)) {
+          if (new File(dir, name).canExecute()) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
   }
 }

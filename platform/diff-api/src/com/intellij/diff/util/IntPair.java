@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @deprecated Use {@link  com.intellij.util.IntPair}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public final class IntPair {
   public final int val1;
   public final int val2;

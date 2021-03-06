@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.DialogUtil;
@@ -37,7 +38,7 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   protected final JComboBox myComboBox;
   private final Map<V, String> myNamesMap = new HashMap<>();
 
-  public ComboBoxVisibilityPanel(String name, V[] options, String[] presentableNames) {
+  public ComboBoxVisibilityPanel(@NlsContexts.Label String name, V[] options, @NlsContexts.ListItem String[] presentableNames) {
     setLayout(new BorderLayout(0,2));
     myLabel = new JLabel(name);
     add(myLabel, BorderLayout.NORTH);
@@ -67,7 +68,7 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     return SimpleListCellRenderer.<V>create("", myNamesMap::get);
   }
 
-  public ComboBoxVisibilityPanel(String name, V[] options) {
+  public ComboBoxVisibilityPanel(@NlsContexts.Label String name, V[] options) {
     this(name, options, getObjectNames(options));
   }
 

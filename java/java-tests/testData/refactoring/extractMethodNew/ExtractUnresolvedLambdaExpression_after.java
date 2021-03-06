@@ -11,7 +11,7 @@ class Test {
     @NotNull
     private Supplier newMethod() {
         return (s) -> {
-            System.out.println(s);
+          System.out.println(s);
         };
     }
 

@@ -16,6 +16,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -28,8 +29,8 @@ import java.awt.*;
 import java.util.Collections;
 
 /**
- * Supported value type: {@link ListWithSelection} and {@link java.lang.Enum}.
- * Value type can implement {@link com.intellij.openapi.util.Iconable} to display icon.
+ * Supported value type: {@link ListWithSelection} and {@link Enum}.
+ * Value type can implement {@link Iconable} to display icon.
  */
 public class ComboBoxTableCellEditor extends DefaultCellEditor {
   public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
@@ -57,7 +58,8 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
 
     comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       label.setIcon(value instanceof Iconable ? ((Iconable)value).getIcon(Iconable.ICON_FLAG_VISIBILITY) : null);
-      label.setText(value == null ? "" : value.toString());
+      @NlsSafe String text = value == null ? "" : value.toString();
+      label.setText(text);
     }));
   }
 

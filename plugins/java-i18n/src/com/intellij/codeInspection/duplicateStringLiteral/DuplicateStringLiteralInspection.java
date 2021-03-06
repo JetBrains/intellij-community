@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -13,8 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -30,10 +31,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ import javax.swing.event.DocumentEvent;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_FILES_TO_ON_THE_FLY_SEARCH = 10;
 
   @SuppressWarnings("WeakerAccess") public int MIN_STRING_LENGTH = 5;
@@ -78,34 +77,33 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     final List<String> words = ContainerUtil.filter(StringUtil.getWordsInStringLongestFirst(query.stringToFind), s -> s.length() >= query.minStringLength);
     if (words.isEmpty()) return Collections.emptyList();
+    List<PsiLiteralExpression> foundExpressions = new SmartList<>();
 
-    List<PsiLiteralExpression> foundExpressions = new ArrayList<>();
-    List<IdIndexEntry> indexKeys = ContainerUtil.map(words, word -> new IdIndexEntry(word, true));
-    FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, indexKeys, scope, (Integer mask) -> {
-      return (mask & UsageSearchContext.IN_STRINGS) != 0;
-    }, new Processor<VirtualFile>() {
-      int filesWithLiterals;
+    CacheManager.getInstance(project).processVirtualFilesWithAllWords(words,
+                                                                      UsageSearchContext.IN_STRINGS,
+                                                                      scope,
+                                                                      true, new Processor<>() {
+        int filesWithLiterals;
 
-      @Override
-      public boolean process(VirtualFile f) {
-        FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(f);
-        // important: skip non-java files with given word in literal (IDEA-126201)
-        if (viewProvider == null || viewProvider.getPsi(JavaLanguage.INSTANCE) == null) return true;
-        PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
-        if (psiFile != null) {
-          List<PsiLiteralExpression> duplicateLiteralsInFile =
-            findDuplicateLiteralsInFile(query.stringToFind, query.ignorePropertyKeys, psiFile);
-          if (!duplicateLiteralsInFile.isEmpty()) {
-            foundExpressions.addAll(duplicateLiteralsInFile);
-            if (query.isOnFlySearch && ++filesWithLiterals >= MAX_FILES_TO_ON_THE_FLY_SEARCH) {
-              return false;
+        @Override
+        public boolean process(VirtualFile f) {
+          FileViewProvider viewProvider = PsiManager.getInstance(project).findViewProvider(f);
+          // important: skip non-java files with given word in literal (IDEA-126201)
+          if (viewProvider == null || viewProvider.getPsi(JavaLanguage.INSTANCE) == null) return true;
+          PsiFile psiFile = viewProvider.getPsi(viewProvider.getBaseLanguage());
+          if (psiFile != null) {
+            List<PsiLiteralExpression> duplicateLiteralsInFile =
+              findDuplicateLiteralsInFile(query.stringToFind, query.ignorePropertyKeys, psiFile);
+            if (!duplicateLiteralsInFile.isEmpty()) {
+              foundExpressions.addAll(duplicateLiteralsInFile);
+              if (query.isOnFlySearch && ++filesWithLiterals >= MAX_FILES_TO_ON_THE_FLY_SEARCH) {
+                return false;
+              }
             }
           }
+          return true;
         }
-        ProgressManager.checkCanceled();
-        return true;
-      }
-    });
+      });
     return foundExpressions;
   }
 
@@ -116,7 +114,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     StringSearcher searcher = new StringSearcher(stringToFind, true, true);
 
     List<PsiLiteralExpression> foundExpr = new SmartList<>();
-    LowLevelSearchUtil.processTextOccurrences(text, 0, text.length(), searcher, offset -> {
+    LowLevelSearchUtil.processTexts(text, 0, text.length(), searcher, offset -> {
       PsiElement element = file.findElementAt(offset);
       if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
       PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
@@ -133,7 +131,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
                                             final boolean isOnTheFly) {
     PsiExpression[] foundExpr = getDuplicateLiterals(holder.getProject(), originalExpression, isOnTheFly);
     if (foundExpr.length == 0) return;
-    Set<PsiClass> classes = new THashSet<>();
+    Set<PsiClass> classes = new HashSet<>();
     for (PsiElement aClass : foundExpr) {
       if (aClass == originalExpression) continue;
       ProgressManager.checkCanceled();
@@ -289,8 +287,9 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private final String myText;
+  private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+    private final @IntentionName String myText;
+    @SafeFieldForPreview
     private final SmartPsiElementPointer<PsiField> myConst;
 
     private ReplaceFix(PsiField constant, PsiExpression originalExpression) {
@@ -396,7 +395,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class StringLiteralSearchQuery {
+  private static final class StringLiteralSearchQuery {
     @NotNull
     private final String stringToFind;
     private final boolean ignorePropertyKeys;
@@ -431,9 +430,9 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
     if (!(literalExpression instanceof PsiLiteralExpression)) return null;
     Project project = literalExpression.getProject();
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      return getDuplicateLiterals(project,
-                                  (PsiLiteralExpression)literalExpression,
-                                  false /* here we want find all the expressions */);
+      return ReadAction.compute(()->getDuplicateLiterals(project,
+                                             (PsiLiteralExpression)literalExpression,
+                                             false /* here we want find all the expressions */));
     }, JavaI18nBundle.message("progress.title.searching.for.duplicates.of.0", ((PsiLiteralExpression)literalExpression).getValue()), true, project);
   }
 

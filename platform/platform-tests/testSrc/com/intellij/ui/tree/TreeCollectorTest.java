@@ -3,7 +3,6 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -170,13 +169,10 @@ public class TreeCollectorTest {
     private static final IntFunction<Object> SLOW = Slow::new;
     private static final IntFunction<Object> FAST = Integer::toString;
     private static final Consumer<TreePath[]> SELECT_MAXIMALS = paths -> {
-      measureExecutionTime("selectMaximals", () -> TreeUtil.selectMaximals(paths));
       measureExecutionTime("collectRoots", () -> TreeCollector.TreePathRoots.collect(paths));
       measureExecutionTime("collectLeafs", () -> TreeCollector.TreePathLeafs.collect(paths));
-      Assert.assertArrayEquals(TreeUtil.selectMaximals(paths), TreePathUtil.toTreePathArray(TreeCollector.TreePathRoots.collect(paths)));
     };
     private static final Consumer<TreePath[]> FIND_COMMON_PATH = paths -> {
-      measureExecutionTime("findCommonPath", () -> TreeUtil.findCommonPath(paths));
       measureExecutionTime("findCommonAncestor", () -> TreePathUtil.findCommonAncestor(paths));
       Assert.assertEquals(TreePathUtil.findCommonAncestor(paths), TreePathUtil.findCommonAncestor(paths));
     };

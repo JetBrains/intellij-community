@@ -42,10 +42,12 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
 
     val enteringIndex = AtomicInteger(-1)
 
-    val modalityStateListener = ModalityStateListener { entering ->
-      if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
-        throw RuntimeException(
-          "Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()])
+    val modalityStateListener = object: ModalityStateListener {
+      override fun beforeModalityStateChanged(entering: Boolean, modalEntity: Any) {
+        if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
+          throw RuntimeException(
+            "Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()])
+        }
       }
     }
 
@@ -54,21 +56,21 @@ class RunnableActionsTest : HeavyPlatformTestCase() {
     val project = getProject()
     Testable()
       .suspendEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL, true) }
+      .execute { invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL) }
       .flushEDT()
       .execute { enterModal(myApplicationModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current(), true) }
+      .execute { invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()) }
       .flushEDT()
       .execute { enterModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL, true) }
+      .execute { invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current(), true) }
+      .execute { invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()) }
       .flushEDT()
       .execute { leaveModal(project, myPerProjectModalDialog) }
       .flushEDT()
-      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL, true) }
+      .execute { invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL) }
       .flushEDT()
       .execute { leaveModal(myApplicationModalDialog) }
       .flushEDT()

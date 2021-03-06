@@ -29,14 +29,12 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -47,7 +45,8 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.newImpl.*;
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper;
+import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -78,7 +77,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    final Pass<PsiElement[]> callback = new Pass<PsiElement[]>() {
+    final Pass<PsiElement[]> callback = new Pass<>() {
       @Override
       public void pass(final PsiElement[] selectedValue) {
         invokeOnElements(project, editor, file, selectedValue);
@@ -100,7 +99,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         return;
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
           @Override
           public void pass(PsiExpression psiExpression) {
             callback.pass(new PsiElement[]{psiExpression});
@@ -168,17 +167,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
-    if (Registry.is("java.refactoring.extractMethod.newImplementation") && canUseNewImpl(project, file, elements)) {
-      new MethodExtractor().doExtract(editor, getRefactoringName(), HelpID.EXTRACT_METHOD);
-      return;
-    }
-
-    getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
-      @Override
-      public void pass(ExtractMethodProcessor processor) {
-        invokeOnElements(project, editor, processor, true);
-      }
-    });
+    TextRange selection = ExtractMethodHelper.findEditorSelection(editor);
+    if (selection == null && elements.length == 1) selection = elements[0].getTextRange();
+    if (selection != null) new MethodExtractor().doExtract(file, selection);
   }
 
   private static boolean invokeOnElements(@NotNull Project project, @NotNull Editor editor, @NotNull ExtractMethodProcessor processor, final boolean directTypes) {
@@ -283,9 +274,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     if (e.getFile() == file) {
       final TextRange textRange = e.getTextRange();
       final HighlightManager highlightManager = HighlightManager.getInstance(project);
-      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, true, null);
+      highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
+                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
@@ -313,7 +303,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return FileEditorManager.getInstance(project).openTextEditor(fileDescriptor, false);
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("extract.method.title");
   }
 }

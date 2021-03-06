@@ -156,8 +156,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     boolean checkDeep = !refMethod.isStatic() && !refMethod.isConstructor();
     ArrayList<RefParameter> res = new ArrayList<>();
     RefParameter[] methodParameters = refMethod.getParameters();
-    RefParameter[] result = new RefParameter[methodParameters.length];
-    System.arraycopy(methodParameters, 0, result, 0, methodParameters.length);
+    RefParameter[] result = methodParameters.clone();
 
     clearUsedParameters(refMethod, result, checkDeep);
 

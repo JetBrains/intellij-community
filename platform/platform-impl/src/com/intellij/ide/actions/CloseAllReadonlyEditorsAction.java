@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 public class CloseAllReadonlyEditorsAction extends CloseEditorsActionBase {
   @Override
   protected boolean isFileToClose(EditorComposite editor, EditorWindow window) {
-    return !editor.getFile().isWritable();
+    return !editor.isPinned() && !editor.getFile().isWritable();
   }
 
   @Override

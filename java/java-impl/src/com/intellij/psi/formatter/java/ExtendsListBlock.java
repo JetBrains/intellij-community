@@ -94,7 +94,9 @@ public class ExtendsListBlock extends AbstractJavaBlock{
   }
 
   private boolean alignList() {
-    if (myNode.getElementType() == JavaElementType.EXTENDS_LIST || myNode.getElementType() == JavaElementType.IMPLEMENTS_LIST) {
+    if (myNode.getElementType() == JavaElementType.EXTENDS_LIST ||
+        myNode.getElementType() == JavaElementType.IMPLEMENTS_LIST ||
+        myNode.getElementType() == JavaElementType.PERMITS_LIST) {
       return mySettings.ALIGN_MULTILINE_EXTENDS_LIST;
     } else if (myNode.getElementType() == JavaElementType.THROWS_LIST) {
       return mySettings.ALIGN_MULTILINE_THROWS_LIST;

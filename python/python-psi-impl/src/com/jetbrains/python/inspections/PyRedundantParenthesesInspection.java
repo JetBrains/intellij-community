@@ -17,7 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
@@ -26,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jdom.Element;
@@ -83,7 +83,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
+    public void visitPyParenthesizedExpression(final @NotNull PyParenthesizedExpression node) {
       if (node.textContains('\n')) return;
       final PsiElement parent = node.getParent();
       if (parent instanceof PyParenthesizedExpression) return;
@@ -144,7 +144,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyArgumentList(PyArgumentList node) {
+    public void visitPyArgumentList(@NotNull PyArgumentList node) {
       if (!(node.getParent() instanceof PyClass)) {
         return;
       }
@@ -156,10 +156,11 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.argument.of.operator"), "myIgnorePercOperator");
-    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.tuples"), "myIgnoreTupleInReturn");
-    panel.addCheckbox(PyPsiBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"), "myIgnoreEmptyBaseClasses");
+    final PythonUiService uiService = PythonUiService.getInstance();
+    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.redundant.parens.ignore.argument.of.operator"), "myIgnorePercOperator");
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.redundant.parens.ignore.tuples"), "myIgnoreTupleInReturn");
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.redundant.parens.ignore.empty.lists.of.base.classes"), "myIgnoreEmptyBaseClasses");
     return panel;
   }
 }

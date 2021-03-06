@@ -1,0 +1,17 @@
+<html>
+<body>
+Reports use of generic classes with omitted type parameters. Such <i>raw</i> use of generic types is valid
+in Java, but it defeats the purpose of type parameters and may mask bugs. This inspection mirrors the
+<i>rawtypes</i> warning of javac.
+<p>
+  Using the inspection options, you can ignore the following cases:
+<ul>
+  <li>when raw types are used in objects' constuction</li>
+  <li>when raw types are used in type casts</li>
+  <li>when a type parameter will fail to compile (for example when creating an array or overriding a library method)</li>
+  <li>when type parameters are used in parameters of overriding methods</li>
+  <li>when a quick-fix is not available</li>
+</ul>
+This inspection only reports if the language level of the project or module is 5 or higher
+</body>
+</html>

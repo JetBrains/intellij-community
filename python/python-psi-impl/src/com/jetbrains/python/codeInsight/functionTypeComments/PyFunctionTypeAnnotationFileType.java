@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyFunctionTypeAnnotationFileType extends PythonFileType {
   public static final PyFunctionTypeAnnotationFileType INSTANCE = new PyFunctionTypeAnnotationFileType();
 
-  public PyFunctionTypeAnnotationFileType() {
+  private PyFunctionTypeAnnotationFileType() {
     super(PyFunctionTypeAnnotationDialect.INSTANCE);
   }
 

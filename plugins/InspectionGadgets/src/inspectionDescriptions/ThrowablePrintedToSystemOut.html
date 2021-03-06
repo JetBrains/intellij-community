@@ -1,10 +1,28 @@
 <html>
 <body>
-Reports any calls to <b>System.out.println()</b> with an exception as an argument.
-This is even worse than calling <b>printStackTrace()</b> on an exception, since it will be unclear where the exception originated.
-Calls to <b>System.out.print()</b>, <b>System.err.println()</b> and <b>System.err.print()</b> with an exception argument will also be
+Reports calls to <code>System.out.println()</code> with an exception as an argument.
+Using print statements for logging exceptions hides the stack trace from you, which is important when you need to investigate what happened.
+It is recommended to use logger instead.
+Calls to <code>System.out.print()</code>, <code>System.err.println()</code> and <code>System.err.print()</code> with an exception argument are also
 reported.
+It is better to use a logger to log exceptions instead.
 <!-- tooltip end -->
+<p>For example, instead of:</p>
+<pre><code>
+  try {
+      foo();
+  } catch (Exception e) {
+      System.out.println(e);
+  }
+</code></pre>
+<p>use the following code:</p>
+<pre><code>
+  try {
+      foo();
+  } catch (Exception e) {
+      logger.warn(e); // logger call may be different
+  }
+</code></pre>
 <p>
 </body>
 </html>

@@ -10,12 +10,15 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,12 +73,12 @@ public final class ProcessListUtil {
     return Collections.emptyList();
   }
 
-  private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
+  private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<@NlsSafe String> command,
                                                                 @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
     return parseCommandOutput(command, parser, null);
   }
 
-  private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
+  private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<@NlsSafe String> command,
                                                                 @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
                                                                 @Nullable Charset charset) {
     String output;
@@ -163,7 +166,7 @@ public final class ProcessListUtil {
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
 
-    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<>();
+    Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
       idToCommand.put(each.pid, each.commandLine);
     }
@@ -188,7 +191,7 @@ public final class ProcessListUtil {
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
 
-    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<>();
+    Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
       idToCommand.put(each.pid, each.commandLine);
     }
@@ -207,12 +210,12 @@ public final class ProcessListUtil {
     return result;
   }
 
-  private static @Nullable List<MacProcessInfo> doParseMacOutput(String output) {
+  private static @Nullable List<MacProcessInfo> doParseMacOutput(@NlsSafe String output) {
     List<MacProcessInfo> result = new ArrayList<>();
     String[] lines = StringUtil.splitByLinesDontTrim(output);
     if (lines.length == 0) return null;
 
-    String header = lines[0];
+    @NlsSafe String header = lines[0];
     int pidStart = header.indexOf("PID");
     if (pidStart == -1) return null;
 
@@ -232,7 +235,7 @@ public final class ProcessListUtil {
         int pid = StringUtil.parseInt(line.substring(0, statStart).trim(), -1);
         if (pid == -1) continue;
 
-        String state = line.substring(statStart, userStart).trim();
+        @NlsSafe String state = line.substring(statStart, userStart).trim();
         if (state.contains("Z")) continue; // zombie
 
         String user = line.substring(userStart, commandStart).trim();
@@ -269,7 +272,7 @@ public final class ProcessListUtil {
     return parseCommandOutput(Collections.singletonList(exeFile.toAbsolutePath().toString()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
   }
 
-  private static void logErrorTestSafe(String message) {
+  private static void logErrorTestSafe(@NonNls String message) {
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode()) {
       LOG.warn(message);
@@ -315,7 +318,7 @@ public final class ProcessListUtil {
     return builder.toString();
   }
 
-  private static @Nullable String removePrefix(String str, String prefix) {
+  private static @Nullable String removePrefix(String str, @NonNls String prefix) {
     if (str.startsWith(prefix)) {
       return str.substring(prefix.length());
     }

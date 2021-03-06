@@ -17,9 +17,10 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UExpression;
 
 import java.util.Collection;
 
@@ -27,8 +28,8 @@ public interface PropertyCreationHandler {
 
   void createProperty(@NotNull Project project,
                       @NotNull Collection<PropertiesFile> propertiesFiles,
-                      @NotNull String key,
+                      @NotNull @NlsSafe String key,
                       @NotNull String value,
-                      PsiExpression @NotNull [] parameters) throws IncorrectOperationException;
+                      UExpression @NotNull [] parameters) throws IncorrectOperationException;
 
 }

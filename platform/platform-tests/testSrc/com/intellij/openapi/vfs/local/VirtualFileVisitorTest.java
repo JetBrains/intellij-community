@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -12,7 +13,6 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -25,9 +25,10 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
-  @Rule public TempDirectory myTempDir = new TempDirectory();
+  @Rule public TempDirectory tempDir = new TempDirectory();
 
   private VirtualFile myRoot;
 
@@ -35,7 +36,7 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   public void setUp() {
     assumeSymLinkCreationIsSupported();
 
-    File d1 = createTestDir(myTempDir.getRoot(),"d1");
+    File d1 = createTestDir(tempDir.getRoot(), "d1");
     File d11 = createTestDir(d1, "d11");
     createTestFile(d11, "f11.1");
     createTestFile(d11, "f11.2");
@@ -44,15 +45,16 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     File d13 = createTestDir(d1, "d13");
     createTestFile(d13, "f13.1");
     createTestFile(d13, "f13.2");
-    File d2 = createTestDir(myTempDir.getRoot(),"d2");
+    File d2 = createTestDir(tempDir.getRoot(), "d2");
     createTestFile(d2, "f2.1");
     createTestFile(d2, "f2.2");
-    File d3 = createTestDir(myTempDir.getRoot(),"d3");
+    File d3 = createTestDir(tempDir.getRoot(), "d3");
 
     createSymLink(d11.getPath(), d1.getPath() + "/d11_link");
     createSymLink(d3.getPath(), d3.getPath() + "/d3_rec_link");
 
-    myRoot = SymlinkHandlingTest.refreshAndFind(myTempDir.getRoot(), myTempDir.getRoot());
+    myRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.getRoot());
+    assertNotNull(tempDir.getRoot().toString(), myRoot);
   }
 
   @After
@@ -301,14 +303,14 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
 
   private static class AbortException extends RuntimeException { }
 
-  private void doTest(@Nullable Function<VirtualFile, Object> condition,
-                      @Nullable Function<VirtualFile, Iterable<VirtualFile>> iterable,
+  private void doTest(@Nullable Function<? super VirtualFile, Object> condition,
+                      @Nullable Function<? super VirtualFile, ? extends Iterable<VirtualFile>> iterable,
                       @NotNull String expected,
                       VirtualFileVisitor.Option @NotNull ... options) {
     MultiMap<VirtualFile, Pair<VirtualFile, String>> visitLog = MultiMap.create();
     Map<VirtualFile, String> backLog = new HashMap<>();
     try {
-      Set<VirtualFile> visited = new THashSet<>();
+      Set<VirtualFile> visited = new HashSet<>();
       VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Integer>(options) {
         { setValueForChildren(0); }
 

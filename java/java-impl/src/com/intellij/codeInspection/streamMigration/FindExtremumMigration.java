@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 
@@ -249,7 +235,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   //    maxAge = person.getAge();
   //  }
   //}
-  private static class ComplexExtremumTerminal implements ExtremumTerminal {
+  private static final class ComplexExtremumTerminal implements ExtremumTerminal {
     private final boolean myMax;
     private final @NotNull PsiVariable myExtremum;
     private final @NotNull PsiVariable myExtremumKey;
@@ -355,7 +341,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                          comparison.getComparator());
     }
 
-    private static class ComplexAssignment {
+    private static final class ComplexAssignment {
       private @NotNull final PsiVariable myExtremum;
       private @NotNull final PsiVariable myExtremumKey;
       private @NotNull final PsiVariable myLoopVar; // extremum = loopVar;
@@ -427,7 +413,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   //if(max < anInt) {
   //max = anInt;
   //}
-  private static class PrimitiveExtremumTerminal implements ExtremumTerminal {
+  private static final class PrimitiveExtremumTerminal implements ExtremumTerminal {
     private final boolean myMax;
     private final @NotNull TerminalBlock myTerminalBlock;
     private final @NotNull PsiExpression myLoopVarExpression;
@@ -531,7 +517,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     }
   }
 
-  private static class SimpleRefExtremumTerminal implements ExtremumTerminal {
+  private static final class SimpleRefExtremumTerminal implements ExtremumTerminal {
     private final boolean myMax;
     private final @NotNull TerminalBlock myTerminalBlock;
     private final @NotNull PsiExpression myLoopVarExpression;
@@ -624,7 +610,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     }
   }
 
-  private static class Comparison {
+  private static final class Comparison {
     private final @NotNull PsiExpression myExtremumExpr;
     private final @NotNull PsiExpression myLoopVarExpr;
     private final boolean myIsMax;

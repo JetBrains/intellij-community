@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
@@ -29,20 +30,18 @@ class PyProtocolInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      val type = node?.let { myTypeEvalContext.getType(it) } as? PyClassType ?: return
+      val type = myTypeEvalContext.getType(node) as? PyClassType ?: return
       val superClassTypes = type.getSuperClassTypes(myTypeEvalContext)
 
       checkCompatibility(type, superClassTypes)
       checkProtocolBases(type, superClassTypes)
     }
 
-    override fun visitPyCallExpression(node: PyCallExpression?) {
+    override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
-
-      if (node == null) return
 
       checkRuntimeProtocolInIsInstance(node)
       checkNewTypeWithProtocols(node)
@@ -78,7 +77,7 @@ class PyProtocolInspection : PyInspection() {
       }
 
       if (!superClassTypes.all(correctBase)) {
-        registerProblem(type.pyClass.nameIdentifier, "All bases of a protocol must be protocols")
+        registerProblem(type.pyClass.nameIdentifier, PyPsiBundle.message("INSP.protocol.all.bases.protocol.must.be.protocols"))
       }
     }
 
@@ -89,7 +88,9 @@ class PyProtocolInspection : PyInspection() {
         if (base is PyReferenceExpression) {
           val qNames = PyResolveUtil.resolveImportedElementQNameLocally(base).asSequence().map { it.toString() }
           if (qNames.any { it == PyTypingTypeProvider.PROTOCOL || it == PyTypingTypeProvider.PROTOCOL_EXT }) {
-            registerProblem(base, "Only @runtime_checkable protocols can be used with instance and class checks", GENERIC_ERROR)
+            registerProblem(base,
+                            PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
+                            GENERIC_ERROR)
             return
           }
         }
@@ -102,7 +103,9 @@ class PyProtocolInspection : PyInspection() {
             it == TYPING_RUNTIME_CHECKABLE || it == TYPING_RUNTIME_CHECKABLE_EXT || it == TYPING_RUNTIME || it == TYPING_RUNTIME_EXT
           }
         ) {
-          registerProblem(base, "Only @runtime_checkable protocols can be used with instance and class checks", GENERIC_ERROR)
+          registerProblem(base,
+                          PyPsiBundle.message("INSP.protocol.only.runtime.checkable.protocols.can.be.used.with.instance.class.checks"),
+                          GENERIC_ERROR)
         }
       }
     }
@@ -118,7 +121,7 @@ class PyProtocolInspection : PyInspection() {
           if (base != null) {
             val type = myTypeEvalContext.getType(base)
             if (type is PyClassLikeType && isProtocol(type, myTypeEvalContext)) {
-              registerProblem(base, "NewType cannot be used with protocol classes")
+              registerProblem(base, PyPsiBundle.message("INSP.protocol.newtype.cannot.be.used.with.protocol.classes"))
             }
           }
         }
@@ -138,7 +141,7 @@ class PyProtocolInspection : PyInspection() {
         .filterNot { PyTypeChecker.match(expectedMemberType, myTypeEvalContext.getType(it), myTypeEvalContext) }
         .forEach {
           val place = if (it is PsiNameIdentifierOwner) it.nameIdentifier else it
-          registerProblem(place, "Type of '${it.name}' is incompatible with '${protocol.name}'")
+          registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", it.name, protocol.name))
         }
     }
   }

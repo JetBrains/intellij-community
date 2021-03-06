@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
- import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -32,6 +19,7 @@ import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -48,12 +36,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final String GROOVY_EXTENSION = "groovy";
   private final JpsGroovycRunner<JavaSourceRootDescriptor, ModuleBuildTarget> myHelper;
   private final boolean myForStubs;
-  private final String myBuilderName;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myBuilderName;
 
   public GroovyBuilder(boolean forStubs) {
     super(forStubs ? BuilderCategory.SOURCE_GENERATOR : BuilderCategory.OVERWRITING_TRANSLATOR);
     myForStubs = forStubs;
-    myBuilderName = "Groovy " + (forStubs ? "stub generator" : "compiler");
+    myBuilderName = forStubs ? GroovyJpsBundle.message("builder.stub.generator")
+                             : GroovyJpsBundle.message("builder.compiler");
     myHelper = new CompilingGroovycRunner(forStubs);
   }
 
@@ -91,7 +80,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     if (myForStubs) {
       File stubRoot = getStubRoot(context);
       if (stubRoot.exists() && !FileUtil.deleteWithRenaming(stubRoot)) {
-        context.processMessage(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR, "External build cannot clean " + stubRoot.getPath()));
+        context.processMessage(new CompilerMessage(
+          myBuilderName, BuildMessage.Kind.ERROR,
+          GroovyJpsBundle.message("external.build.cannot.clean.path.0", stubRoot.getPath())
+        ));
       }
     }
   }
@@ -113,7 +105,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       File moduleOutputDir = target.getOutputDir();
       if (moduleOutputDir == null) {
-        context.processMessage(new CompilerMessage(builder.getPresentableName(), BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModule().getName()));
+        context.processMessage(new CompilerMessage(
+          builder.getPresentableName(), BuildMessage.Kind.ERROR,
+          GroovyJpsBundle.message("no.output.0", target.getModule().getName())
+        ));
         return null;
       }
       //noinspection ResultOfMethodCallIgnored
@@ -133,20 +128,23 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return getGroovyRtRoots(ClasspathBootstrap.getResourceFile(GroovyBuilder.class));
   }
 
-  @NotNull
   static List<String> getGroovyRtRoots(File jpsPluginRoot) {
-    return Arrays.asList(getGroovyRtJarPath(jpsPluginRoot, "groovy_rt.jar", "intellij.groovy.rt", "groovy-rt"),
-                         getGroovyRtJarPath(jpsPluginRoot, "groovy-rt-constants.jar", "intellij.groovy.constants.rt", "groovy-constants-rt"));
+    List<String> result = new ArrayList<>();
+    addGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar",
+                       Collections.singletonList("intellij.groovy.rt"), "groovy-rt", result);
+   addGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar",
+                      Collections.singletonList("intellij.groovy.constants.rt"), "groovy-constants-rt", result);
+    return result;
   }
 
-  @NotNull
-  private static String getGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
-                                           String moduleName,
-                                           String mavenArtifactNamePrefix) {
-    String fileName;
+  private static void addGroovyRtJarPath(File jpsPluginClassesRoot, String jarNameInDistribution,
+                                         List<String> moduleNames,
+                                         String mavenArtifactNamePrefix,
+                                         @NotNull List<String> to) {
     File parentDir = jpsPluginClassesRoot.getParentFile();
     if (jpsPluginClassesRoot.isFile()) {
-      if (jpsPluginClassesRoot.getName().equals("groovy-jps-plugin.jar")) {
+      String fileName;
+      if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
         fileName = jarNameInDistribution;
       }
       else {
@@ -156,11 +154,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           parentDir = new File(parentDir.getParentFile().getParentFile(), mavenArtifactNamePrefix + "/" + version);
         }
       }
+      to.add(new File(parentDir, fileName).getPath());
     }
     else {
-      fileName = moduleName;
+      for (String moduleName : moduleNames) {
+        to.add(new File(parentDir, moduleName).getPath());
+      }
     }
-    return new File(parentDir, fileName).getPath();
   }
 
   public static boolean isGroovyFile(String path) {
@@ -194,27 +194,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
     @Override
     public void process(CompileContext context, OutputFileObject out) {
-      Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
-      if (stubToSrc == null) {
-        return;
-      }
-      File src = out.getSourceFile();
-      if (src == null) {
-        return;
-      }
-      String groovy = stubToSrc.get(FileUtil.toSystemIndependentName(src.getPath()));
-      if (groovy == null) {
-        return;
-      }
-      try {
-        final File groovyFile = new File(groovy);
-        if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
-          FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
-          FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+      final Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
+      if (stubToSrc != null) {
+        for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Iterators.notNullFilter())) {
+          try {
+            final File groovyFile = new File(groovy);
+            if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
+              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
+              FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
     }
   }

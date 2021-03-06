@@ -2,21 +2,29 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -27,15 +35,20 @@ import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.impl.file.UpdateAddedFileProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.SkipOverwriteChoice;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   private static final Logger LOG = Logger.getInstance(CopyFilesOrDirectoriesHandler.class);
@@ -229,14 +242,16 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       final int[] choice = files.length > 1 || files[0].isDirectory() ? new int[]{-1} : null;
       List<PsiFile> added = new ArrayList<>();
       PsiManager manager = PsiManager.getInstance(project);
+      List<PsiFileSystemItem> items = new ArrayList<>(files.length);
       for (VirtualFile file : files) {
         PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
         if (item == null) {
           LOG.info("invalid file: " + file.getExtension());
           continue;
         }
-        copyToDirectory(item, newName, targetDirectory, choice, title, added);
+        items.add(item);
       }
+      copyToDirectory(items, newName, targetDirectory, choice, title, added);
 
 
       if (!added.isEmpty()) {
@@ -280,9 +295,9 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                         @Nullable String newName,
                                         @NotNull PsiDirectory targetDirectory,
                                         int @Nullable [] choice,
-                                        @Nullable String title) throws IncorrectOperationException, IOException {
+                                        @Nullable @NlsContexts.Command String title) throws IncorrectOperationException, IOException {
     ArrayList<PsiFile> added = new ArrayList<>();
-    copyToDirectory(elementToCopy, newName, targetDirectory, choice, title, added);
+    copyToDirectory(Collections.singletonList(elementToCopy), newName, targetDirectory, choice, title, added);
     if (added.isEmpty()) {
       return null;
     }
@@ -291,30 +306,132 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     return added.get(0);
   }
 
-  /**
-   * @param elementToCopy PsiFile or PsiDirectory
-   * @param newName can be not null only if elements.length == 1
-   * @param choice a horrible way to pass/keep user preference
-   * @param added  a collection of files to be updated
-   */
-  private static void copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
+  private static void copyToDirectory(List<PsiFileSystemItem> elementsToCopy,
                                       @Nullable String newName,
                                       @NotNull PsiDirectory targetDirectory,
                                       int @Nullable [] choice,
-                                      @Nullable String title,
+                                      @Nullable @NlsContexts.Command String title,
                                       @NotNull List<PsiFile> added) throws IncorrectOperationException, IOException {
+    MultiMap<PsiDirectory, PsiFile> existingFiles = new MultiMap<>();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    if (Registry.is("run.refactorings.under.progress")) {
+      AtomicReference<Throwable> thrown = new AtomicReference<>();
+      Consumer<ProgressIndicator> copyAction = pi -> {
+        try {
+          for (PsiFileSystemItem elementToCopy : elementsToCopy) {
+            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, existingFiles, pi);
+          }
+        }
+        catch (Throwable e) {
+          thrown.set(e);
+        }
+      };
+      app.runWriteActionWithCancellableProgressInDispatchThread(ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")), 
+                                                                targetDirectory.getProject(), null, copyAction);
+      rethrow(thrown.get());
+    }
+    else {
+      WriteCommandAction.writeCommandAction(targetDirectory.getProject())
+        .withName(title)
+        .run(() -> {
+          for (PsiFileSystemItem elementToCopy : elementsToCopy) {
+            copyToDirectoryUnderProgress(elementToCopy, newName, targetDirectory, added, existingFiles, null);
+          }
+        });
+    }
+
+    handleExistingFiles(newName, targetDirectory, choice, title, existingFiles, added);
+  }
+
+  private static void rethrow(Throwable throwable) throws IOException {
+    if (throwable instanceof ProcessCanceledException) {
+      return;
+    }
+
+    if (throwable instanceof IOException) {
+      throw (IOException)throwable;
+    }
+    else if (throwable instanceof IncorrectOperationException) {
+      throw (IncorrectOperationException)throwable;
+    }
+    else if (throwable != null) {
+      throw new IncorrectOperationException(throwable);
+    }
+  }
+
+  private static void handleExistingFiles(String newName,
+                                          PsiDirectory targetDirectory,
+                                          int @Nullable [] choice,
+                                          @NlsContexts.DialogTitle String title,
+                                          @NotNull MultiMap<PsiDirectory, PsiFile> existingFiles,
+                                          @NotNull List<PsiFile> added) {
+    SkipOverwriteChoice defaultChoice = choice != null && choice[0] > -1 ? SkipOverwriteChoice.values()[choice[0]] : null;
+    try {
+      for (PsiDirectory tDirectory : existingFiles.keySet()) {
+        Collection<PsiFile> replacementFiles = existingFiles.get(tDirectory);
+        for (PsiFile replacement : replacementFiles) {
+          String name = newName == null || tDirectory != targetDirectory ? replacement.getName() : newName;
+          PsiFile existing = tDirectory.findFile(name);
+          if (existing == null) continue;
+  
+          SkipOverwriteChoice userChoice = defaultChoice;
+          if (userChoice == null) {
+            userChoice = SkipOverwriteChoice.askUser(targetDirectory, name, title, choice != null);
+
+            if (userChoice == SkipOverwriteChoice.SKIP_ALL || userChoice == SkipOverwriteChoice.OVERWRITE_ALL) {
+              defaultChoice = userChoice;
+            }
+          }
+  
+          switch (userChoice) {
+            case OVERWRITE:
+            case OVERWRITE_ALL:
+              WriteCommandAction.writeCommandAction(targetDirectory.getProject())
+                .withName(title)
+                .run(() -> {
+                  existing.delete();
+                  ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, tDirectory.copyFileFrom(name, replacement)));
+                });
+              break;
+            case SKIP_ALL:
+              return;
+          }
+        }
+      }
+    }
+    finally {
+      if (choice != null && defaultChoice != null) {
+        choice[0] = defaultChoice.ordinal() % 2;
+      }
+    }
+  }
+
+  /**
+   * @param elementToCopy PsiFile or PsiDirectory
+   * @param newName can be not null only if elements.length == 1
+   * @param added  a collection of files to be updated
+   * @param existingFiles a collection of files which already exist in the target
+   * @param pi progress indicator if any
+   */
+  private static void copyToDirectoryUnderProgress(PsiFileSystemItem elementToCopy,
+                                                   @Nullable String newName,
+                                                   @NotNull PsiDirectory targetDirectory,
+                                                   @NotNull List<PsiFile> added,
+                                                   MultiMap<PsiDirectory, PsiFile> existingFiles,
+                                                   @Nullable ProgressIndicator pi) throws IncorrectOperationException, IOException {
+    if (pi != null) {
+      pi.setText2(InspectionsBundle.message("processing.progress.text", elementToCopy.getName()));
+    }
+    
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
-      if (checkFileExist(targetDirectory, choice, file, name, "Copy")) {
+      final PsiFile existing = targetDirectory.findFile(name);
+      if (existing != null && !existing.equals(file)) {
+        existingFiles.putValue(targetDirectory, file);
         return;
       }
-      ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> {
-        ContainerUtil.addIfNotNull(added, 
-                                   WriteCommandAction.writeCommandAction(targetDirectory.getProject())
-                                     .withName(title)
-                                     .compute(() -> targetDirectory.copyFileFrom(name, file)));
-      });
+      ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> ContainerUtil.addIfNotNull(added, targetDirectory.copyFileFrom(name, file)));
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
@@ -325,9 +442,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
       final PsiDirectory subdirectory;
       if (existing == null) {
-        String finalNewName = newName;
-        subdirectory = WriteCommandAction.writeCommandAction(targetDirectory.getProject()).withName(title)
-                                         .compute(() -> targetDirectory.createSubdirectory(finalNewName));
+        subdirectory = targetDirectory.createSubdirectory(newName);
       }
       else {
         subdirectory = existing;
@@ -344,7 +459,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           LOG.info("invalid file: " + file.getExtension());
           continue;
         }
-        copyToDirectory(item, null, subdirectory, choice, title, added);
+        copyToDirectoryUnderProgress(item, null, subdirectory, added, existingFiles, pi);
       }
     }
     else {
@@ -352,16 +467,13 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  public static boolean checkFileExist(@Nullable PsiDirectory targetDirectory, int[] choice, PsiFile file, String name, String title) {
+  public static boolean checkFileExist(@Nullable PsiDirectory targetDirectory, int[] choice, PsiFile file, @NlsSafe String name, @NlsContexts.Command String title) {
     if (targetDirectory == null) return false;
     final PsiFile existing = targetDirectory.findFile(name);
     if (existing != null && !existing.equals(file)) {
       int selection;
       if (choice == null || choice[0] == -1) {
-        String message = String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath());
-        String[] options = choice == null ? new String[]{"Overwrite", "Skip"}
-                                          : new String[]{"Overwrite", "Skip", "Overwrite for all", "Skip for all"};
-        selection = Messages.showDialog(targetDirectory.getProject(), message, title, options, 0, Messages.getQuestionIcon());
+        selection = SkipOverwriteChoice.askUser(targetDirectory, name, title, choice != null).ordinal();
       }
       else {
         selection = choice[0];

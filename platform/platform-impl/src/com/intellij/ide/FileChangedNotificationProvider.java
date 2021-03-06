@@ -96,7 +96,7 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
         FileAttributes attributes = ((LocalFileSystem)fs).getAttributes(file);
         if (attributes == null || file.getTimeStamp() != attributes.lastModified || file.getLength() != attributes.length) {
           LogUtil.debug(LOG, "%s: (%s,%s) -> %s", file, file.getTimeStamp(), file.getLength(), attributes);
-          return createPanel(file, project);
+          return createPanel(file, fileEditor, project);
         }
       }
     }
@@ -105,8 +105,8 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
   }
 
   @NotNull
-  private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull Project project) {
-    EditorNotificationPanel panel = new EditorNotificationPanel();
+  private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(IdeBundle.message("file.changed.externally.message"));
     panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), () -> {
       if (!project.isDisposed()) {

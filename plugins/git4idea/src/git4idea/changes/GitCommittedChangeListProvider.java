@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.changes;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -24,6 +25,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +37,8 @@ import java.util.*;
 /**
  * The provider for committed change lists
  */
-public class GitCommittedChangeListProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
-
+@Service(Service.Level.PROJECT)
+public final class GitCommittedChangeListProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
   private static final Logger LOG = Logger.getInstance(GitCommittedChangeListProvider.class);
 
   @NotNull private final Project myProject;
@@ -109,7 +111,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     final String author = settings.getUserFilter();
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {
-      throw new VcsException("The repository does not exists anymore: " + l.getRoot());
+      throw new VcsException(GitBundle.message("error.git.repository.not.found", l.getRoot()));
     }
 
     GitUtil.getLocalCommittedChanges(myProject, root, h -> {

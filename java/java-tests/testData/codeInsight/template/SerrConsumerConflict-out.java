@@ -2,7 +2,8 @@ import java.util.List;
 
 class System {
 
+  // Conflict resolution deliberately not supported
   static void foo(List<String> ls) {
-    ls.forEach(java.lang.System.err::println<caret>);
+    ls.forEach(System.err::println<caret>);
   }
 }

@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpBundle;
+import org.intellij.lang.regexp.RegExpLanguageHosts;
+import org.intellij.lang.regexp.inspection.ShredManager.ShredInfo;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,6 +67,14 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
       if (line) {
         if (sibling instanceof RegExpChar) {
           final int value = ((RegExpChar)sibling).getValue();
+          if (value == ' ') {
+            ShredManager shredManager = new ShredManager(element);
+            ShredInfo shredInfo = shredManager.getShredInfo(element.getParent().getText());
+            if (shredInfo == null || shredInfo.getHost() == null) return true;
+            if (RegExpLanguageHosts.getInstance().belongsToConditionalExpression(element, shredInfo.getHost())) {
+              return shredManager.containsCloseRealWhiteSpace(shredInfo, next);
+            }
+          }
           return value != '\n' && value != '\r';
         }
         else if (sibling instanceof RegExpSimpleClass) {

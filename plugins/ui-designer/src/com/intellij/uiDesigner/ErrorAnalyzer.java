@@ -93,7 +93,7 @@ public final class ErrorAnalyzer {
     final Set<IButtonGroup> processedGroups = new HashSet<>();
     FormEditingUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<>() {
         @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
@@ -143,7 +143,7 @@ public final class ErrorAnalyzer {
     // Check that there are no panels in XY with children
     FormEditingUtil.iterate(
       rootContainer,
-      new FormEditingUtil.ComponentVisitor<IComponent>() {
+      new FormEditingUtil.ComponentVisitor<>() {
         @Override
         public boolean visit(final IComponent component) {
           if (progress != null && progress.isCanceled()) return false;
@@ -170,10 +170,10 @@ public final class ErrorAnalyzer {
           else if (container.isXY() && container.getComponentCount() > 0) {
             // TODO[vova] implement
             putError(component, new ErrorInfo(
-              component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
-              HighlightDisplayLevel.ERROR,
-              QuickFix.EMPTY_ARRAY
-            )
+                       component, null, UIDesignerBundle.message("error.panel.not.laid.out"),
+                       HighlightDisplayLevel.ERROR,
+                       QuickFix.EMPTY_ARRAY
+                     )
             );
           }
           return true;

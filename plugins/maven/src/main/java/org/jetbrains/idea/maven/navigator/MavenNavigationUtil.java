@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class MavenNavigationUtil {
+public final class MavenNavigationUtil {
   private static final String ARTIFACT_ID = "artifactId";
 
   private MavenNavigationUtil() { }
@@ -88,20 +88,21 @@ public class MavenNavigationUtil {
 
   @Nullable
   public static MavenDomDependency findDependency(@NotNull MavenDomProjectModel projectDom, final String groupId, final String artifactId) {
-    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor = new MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
-      @Nullable
-      @Override
-      protected MavenDomDependency find(MavenDomDependencies element) {
-        for (MavenDomDependency dependency : element.getDependencies()) {
-          if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
-              Objects.equals(artifactId, dependency.getArtifactId().getStringValue())) {
-            return dependency;
+    MavenDomProjectProcessorUtils.SearchProcessor<MavenDomDependency, MavenDomDependencies> processor =
+      new MavenDomProjectProcessorUtils.SearchProcessor<>() {
+        @Nullable
+        @Override
+        protected MavenDomDependency find(MavenDomDependencies element) {
+          for (MavenDomDependency dependency : element.getDependencies()) {
+            if (Objects.equals(groupId, dependency.getGroupId().getStringValue()) &&
+                Objects.equals(artifactId, dependency.getArtifactId().getStringValue())) {
+              return dependency;
+            }
           }
-        }
 
-        return null;
-      }
-    };
+          return null;
+        }
+      };
 
     MavenDomProjectProcessorUtils.processDependencies(projectDom, processor);
 

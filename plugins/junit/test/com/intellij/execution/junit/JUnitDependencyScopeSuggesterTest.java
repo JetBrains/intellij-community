@@ -14,13 +14,13 @@ import com.intellij.util.ArrayUtilRt;
 public class JUnitDependencyScopeSuggesterTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addLibrary("junit3", JavaSdkUtil.getJunit3JarPath());
+    //moduleBuilder.addLibrary("junit3", JavaSdkUtil.getJunit3JarPath());
     moduleBuilder.addLibrary("junit4", ArrayUtilRt.toStringArray(JavaSdkUtil.getJUnit4JarPaths()));
     moduleBuilder.addLibrary("ideaRt", JavaSdkUtil.getIdeaRtJarPath());
     moduleBuilder.addLibrary("empty");
   }
 
-  public void testJunit3() {
+  public void _testJunit3() {
     assertSame(DependencyScope.TEST, getScope("junit3"));
   }
 

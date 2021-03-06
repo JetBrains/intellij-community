@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.ScaleContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -22,16 +23,18 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
    * @param image the raw image
    * @return the Retina-aware wrapper
    */
-  public static Image createFrom(Image image) {
-    return createFrom(image, 2, ImageLoader.ourComponent);
+  public static Image createFrom(@NotNull Image image) {
+    int w = image.getWidth(ImageLoader.ourComponent);
+    int h = image.getHeight(ImageLoader.ourComponent);
+    return new JBHiDPIScaledImage(image, w / (double)2, h / (double)2, BufferedImage.TYPE_INT_ARGB);
   }
 
   /**
    * @deprecated use {@link #createFrom(Image, double, ImageObserver)} instead
    */
   @Deprecated
-  @NotNull
-  public static Image createFrom(Image image, int scale, ImageObserver observer) {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static @NotNull Image createFrom(@NotNull Image image, int scale, ImageObserver observer) {
     return createFrom(image, (float)scale, observer);
   }
 
@@ -45,40 +48,33 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
    * @param observer the raw image observer
    * @return the Retina-aware wrapper
    */
-  @NotNull
-  public static Image createFrom(@NotNull Image image, double scale, ImageObserver observer) {
+  public static @NotNull Image createFrom(@NotNull Image image, double scale, ImageObserver observer) {
     int w = image.getWidth(observer);
     int h = image.getHeight(observer);
     return new JBHiDPIScaledImage(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
   }
 
-  @NotNull
-  public static BufferedImage create(int width, int height, int type) {
+  public static @NotNull BufferedImage create(int width, int height, int type) {
     return new JBHiDPIScaledImage(width, height, type);
   }
 
-  @NotNull
-  public static BufferedImage create(Graphics2D g, int width, int height, int type) {
+  public static @NotNull BufferedImage create(Graphics2D g, int width, int height, int type) {
     return new JBHiDPIScaledImage(g, width, height, type);
   }
 
-  @NotNull
-  public static BufferedImage create(Graphics2D g, double width, double height, int type, @NotNull RoundingMode rm) {
+  public static @NotNull BufferedImage create(Graphics2D g, double width, double height, int type, @NotNull RoundingMode rm) {
     return new JBHiDPIScaledImage(g, width, height, type, rm);
   }
 
-  @NotNull
-  public static BufferedImage create(GraphicsConfiguration gc, int width, int height, int type) {
+  public static @NotNull BufferedImage create(GraphicsConfiguration gc, int width, int height, int type) {
     return new JBHiDPIScaledImage(gc, width, height, type);
   }
 
-  @NotNull
-  public static BufferedImage create(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
+  public static @NotNull BufferedImage create(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
     return new JBHiDPIScaledImage(gc, width, height, type, rm);
   }
 
-  @NotNull
-  public static BufferedImage create(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
+  public static @NotNull BufferedImage create(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
     return new JBHiDPIScaledImage(ctx, width, height, type, rm);
   }
 }

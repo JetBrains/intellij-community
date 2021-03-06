@@ -1,8 +1,29 @@
 <html>
 <body>
-Reports <b>public</b> methods in classes
-which are not exposed as in interface. Exposing all <b>public</b> methods via interface is important for
+Reports <code>public</code> methods in classes
+which are not exposed as in interface. Exposing all <code>public</code> methods via interface is important for
 maintaining loose coupling, and may be necessary for certain component-based programming styles.
+<p>Example:</p>
+<pre>
+interface Person {
+  String getName();
+}
+  
+class PersonImpl implements Person {
+  private String name;
+  
+  // ok: the method is exposed in the interface
+  @Override
+  public String getName() {
+    return name;
+  }
+  
+  // warning: the method is public but not exposed in the interface
+  public void setName() {
+    this.name = name;
+  }
+}
+</pre>
 <!-- tooltip end -->
 <p>
 Use the list below to specify special annotations. Methods annotated with one of

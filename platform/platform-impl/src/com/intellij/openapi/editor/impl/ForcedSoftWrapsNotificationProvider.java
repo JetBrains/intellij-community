@@ -34,7 +34,7 @@ public final class ForcedSoftWrapsNotificationProvider extends EditorNotificatio
         !Boolean.TRUE.equals(editor.getUserData(EditorImpl.SOFT_WRAPS_EXIST)) ||
         PropertiesComponent.getInstance().isTrueValue(DISABLED_NOTIFICATION_KEY)) return null;
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel();
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
     panel.setText(EditorBundle.message("forced.soft.wrap.message"));
     panel.createActionLabel(EditorBundle.message("notification.hide.message"), () -> {
       editor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, null);

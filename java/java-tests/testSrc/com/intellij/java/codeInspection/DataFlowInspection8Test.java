@@ -2,6 +2,7 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.openapi.Disposable;
@@ -42,6 +43,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalOfNullable() { doTest(); }
   public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
+  public void testOptionalIntSwitch() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
@@ -184,8 +186,13 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testStreamInlining() { doTest(); }
+  public void testStreamCollectInlining() {
+    setupTypeUseAnnotations("foo", myFixture);
+    doTest(); 
+  }
   public void testStreamCollectorInlining() { doTest(); }
   public void testStreamToMapInlining() { doTest(); }
+  public void testStreamToMapInlining2() { doTest(); }
   public void testStreamToCollectionInlining() { doTest(); }
   public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
@@ -267,6 +274,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testManyNestedOptionals() { doTest(); }
   public void testGetClass() { doTest(); }
   public void testParamContract() { doTest(); }
+  public void testParamContractBoolean() { doTest(); }
   public void testTypeUseVarArg() {
     setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
@@ -284,4 +292,42 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
     doTest();
   }
+  public void testClassInsideLambda() { doTest(); }
+  public void testMultiDimensionalArrays() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testImplicitUnboxingInMethodReference() {
+    doTest();
+  }
+  public void testArrayTypeParameterInference() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    nnnManager.setDefaultNotNull("typeUse.NotNull");
+    nnnManager.setDefaultNullable("typeUse.Nullable");
+    Disposer.register(getTestRootDisposable(), () -> {
+      nnnManager.setDefaultNotNull(AnnotationUtil.NOT_NULL);
+      nnnManager.setDefaultNullable(AnnotationUtil.NULLABLE);
+    });
+    doTest();
+  }
+  public void testArrayTypeParameterInferenceAmbiguous() {
+    setupAmbiguousAnnotations("ambiguous", myFixture);
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    nnnManager.setDefaultNotNull("ambiguous.NotNull");
+    nnnManager.setDefaultNullable("ambiguous.Nullable");
+    Disposer.register(getTestRootDisposable(), () -> {
+      nnnManager.setDefaultNotNull(AnnotationUtil.NOT_NULL);
+      nnnManager.setDefaultNullable(AnnotationUtil.NULLABLE);
+    });
+    doTest();
+  }
+  public void testGuavaFunction() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testModifyListInLambda() {
+    doTest();
+  }
+  public void testConstantInClosure() { doTest(); }
 }

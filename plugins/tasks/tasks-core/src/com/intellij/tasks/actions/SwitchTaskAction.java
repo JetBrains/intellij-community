@@ -14,12 +14,14 @@ import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -96,7 +98,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
 
-  private static String getText(LocalTask activeTask) {
+  private static @NlsActions.ActionText String getText(LocalTask activeTask) {
     String text = activeTask.getPresentableName();
     return StringUtil.first(text, 50, true);
   }
@@ -118,8 +120,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.emptyList() :
                                createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
-    final String title = withTitle ? "Switch to Task" : null;
-    ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {
+    final String title = withTitle ? TaskBundle.message("popup.title.switch.to.task") : null;
+    ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<>(title, items) {
       @Override
       public PopupStep<?> onChosen(List<TaskListItem> selectedValues, boolean finalChoice) {
         if (finalChoice) {
@@ -174,20 +176,20 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       return popup;
     }
 
-    popup.setAdText("Press SHIFT to merge with current context");
+    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
 
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
-        popup.setCaption("Merge with Current Context");
+        popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
-        popup.setCaption("Switch to Task");
+        popup.setCaption(TaskBundle.message("popup.title.switch.to.task"));
       }
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
@@ -204,20 +206,20 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final TaskManager manager = TaskManager.getManager(project);
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {
-      group.add(new DumbAwareAction("&Switch to") {
+      group.add(new DumbAwareAction(TaskBundle.message("action.switch.to.text")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           manager.activateTask(task, !shiftPressed.get());
         }
       });
-      group.add(new DumbAwareAction("&Edit") {
+      group.add(new DumbAwareAction(TaskBundle.message("action.edit.text.with.mnemonic")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           EditTaskDialog.editTask((LocalTaskImpl)task, project);
         }
       });
     }
-    final AnAction remove = new DumbAwareAction("&Remove") {
+    final AnAction remove = new DumbAwareAction(TaskBundle.message("action.remove.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         for (TaskListItem item : tasks) {
@@ -277,7 +279,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       for (int i = 0, tempSize = temp.size(); i < Math.min(tempSize, 15); i++) {
         final LocalTask task = temp.get(i);
 
-        group.add(new TaskListItem(task, i == 0 ? "Recently Closed Tasks" : null, true) {
+        group.add(new TaskListItem(task, i == 0 ? TaskBundle.message("separator.recently.closed.tasks") : null, true) {
           @Override
           void select() {
             manager.activateTask(task, !shiftPressed.get());
@@ -290,7 +292,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
 
   public static void removeTask(final @NotNull Project project, @NotNull LocalTask task, @NotNull TaskManager manager) {
     if (task.isDefault()) {
-      Messages.showInfoMessage(project, "Default task cannot be removed", "Cannot Remove");
+      Messages.showInfoMessage(project, TaskBundle.message("dialog.message.default.task.cannot.be.removed"),
+                               TaskBundle.message("dialog.title.cannot.remove"));
     }
     else {
 
@@ -305,9 +308,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       for (LocalChangeList list : lists) {
         if (!list.getChanges().isEmpty()) {
           int result = Messages.showYesNoCancelDialog(project,
-                                                      "Changelist associated with '" + task.getSummary() + "' is not empty.\n" +
-                                                      "Do you want to remove it and move the changes to the active changelist?",
-                                                      "Changelist Not Empty", Messages.getWarningIcon());
+                                                      TaskBundle.message("dialog.message.changelist.associated.with.not.empty", task.getSummary()),
+                                                      TaskBundle.message("dialog.title.changelist.not.empty"), Messages.getWarningIcon());
           switch (result) {
             case Messages.YES:
               break l;

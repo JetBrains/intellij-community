@@ -45,8 +45,8 @@ import java.util.List;
  * @author jeka
  */
 public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable {
-  protected static final Logger LOG = Logger.getInstance(PersistentEnumerator.class);
-  protected static final int NULL_ID = 0;
+  protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
+  protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
@@ -185,7 +185,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
     myStorage = storage;
 
-    lockStorage();
+    lockStorageWrite();
     try {
       if (myStorage.length() == 0) {
         try {
@@ -230,7 +230,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
 
     if (dataDescriptor instanceof InlineKeyDescriptor) {
@@ -253,12 +253,25 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  void lockStorage() {
-    myStorage.getPagedFileStorage().lock();
+  @NotNull
+  protected Object getDataAccessLock() {
+    return this;
   }
 
-  void unlockStorage() {
-    myStorage.getPagedFileStorage().unlock();
+  void lockStorageRead() {
+    myStorage.getPagedFileStorage().lockRead();
+  }
+
+  void unlockStorageRead() {
+    myStorage.getPagedFileStorage().unlockRead();
+  }
+
+  void lockStorageWrite() {
+    myStorage.getPagedFileStorage().lockWrite();
+  }
+
+  void unlockStorageWrite() {
+    myStorage.getPagedFileStorage().unlockWrite();
   }
 
   protected abstract void setupEmptyFile() throws IOException;
@@ -327,42 +340,42 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void putMetaData(long data) {
-    lockStorage();
+    lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
   }
 
   protected long getMetaData() {
-    lockStorage();
+    lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET);
     }
     finally {
-      unlockStorage();
+      unlockStorageRead();
     }
   }
 
   void putMetaData2(long data) {
-    lockStorage();
+    lockStorageWrite();
     try {
       if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
   }
 
   long getMetaData2() {
-    lockStorage();
+    lockStorageRead();
     try {
       return myStorage.getLong(META_DATA_OFFSET + 8);
     }
     finally {
-      unlockStorage();
+      unlockStorageRead();
     }
   }
 
@@ -447,12 +460,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    lockStorage(); // todo locking in key storage
+    lockStorageWrite(); // todo locking in key storage
     try {
       myKeyStorage.force();
     }
     finally {
-      unlockStorage();
+      unlockStorageWrite();
     }
 
     return myKeyStorage.processAll(processor);
@@ -467,17 +480,20 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     if (idx <= NULL_ID) return null;
     try {
 
-      lockStorage();
+      lockStorageRead();
       try {
         int addr = indexToAddr(idx);
 
         return myKeyStorage.read(addr);
       }
       finally {
-        unlockStorage();
+        unlockStorageRead();
       }
     }
     catch (NoDataException e) {
+      if (myFile.getFileSystem().isReadOnly()) {
+        throw e;
+      }
       markCorrupted();
       return null;
     }
@@ -503,16 +519,18 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected abstract int indexToAddr(int idx);
 
   @Override
-  public synchronized void close() throws IOException {
-    lockStorage();
-    try {
-      if (!myClosed) {
-        myClosed = true;
-        doClose();
+  public void close() throws IOException {
+    synchronized (getDataAccessLock()) {
+      lockStorageWrite();
+      try {
+        if (!myClosed) {
+          myClosed = true;
+          doClose();
+        }
       }
-    }
-    finally {
-      unlockStorage();
+      finally {
+        unlockStorageWrite();
+      }
     }
   }
 
@@ -526,28 +544,36 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public synchronized boolean isClosed() {
-    return myClosed;
+  public boolean isClosed() {
+    synchronized (getDataAccessLock()) {
+      return myClosed;
+    }
   }
 
   @Override
-  public synchronized boolean isDirty() {
-    return myDirty;
-  }
-
-  public synchronized boolean isCorrupted() {
-    return myCorrupted;
-  }
-
-  private synchronized void flush() throws IOException {
-    lockStorage();
-    try {
-      if (myStorage.isDirty() || isDirty()) {
-        doFlush();
-      }
+  public boolean isDirty() {
+    synchronized (getDataAccessLock()) {
+      return myDirty;
     }
-    finally {
-      unlockStorage();
+  }
+
+  public boolean isCorrupted() {
+    synchronized (getDataAccessLock()) {
+      return myCorrupted;
+    }
+  }
+
+  private void flush() throws IOException {
+    synchronized (getDataAccessLock()) {
+      lockStorageWrite();
+      try {
+        if (myStorage.isDirty() || isDirty()) {
+          doFlush();
+        }
+      }
+      finally {
+        unlockStorageWrite();
+      }
     }
   }
 
@@ -557,61 +583,66 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @Override
-  public synchronized void force() {
-    lockStorage();
+  public void force() {
+    synchronized (getDataAccessLock()) {
+      lockStorageWrite();
 
-    try {
-      myKeyStorage.force();
-      flush();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      unlockStorage();
+      try {
+        myKeyStorage.force();
+        flush();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      finally {
+        unlockStorageWrite();
+      }
     }
   }
 
   protected final void markDirty(boolean dirty) throws IOException {
-    //assert Thread.holdsLock(this) || Thread.holdsLock(ourLock); // we hold one lock or another so can access myDirty
-    if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
-    lockStorage();
-    try {
-      if (myDirty) {
-        if (!dirty) {
-          myDirtyStatusUpdateInProgress = true;
-          if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
-          if (!myCorrupted) {
-            myStorage.putInt(0, myVersion.correctlyClosedMagic);
-            myDirty = false;
+    synchronized (getDataAccessLock()) {
+      if (dirty && myDirty && !myDirtyStatusUpdateInProgress) return;
+      lockStorageWrite();
+      try {
+        if (myDirty) {
+          if (!dirty) {
+            myDirtyStatusUpdateInProgress = true;
+            if (myMarkCleanCallback != null) myMarkCleanCallback.flush();
+            if (!myCorrupted) {
+              myStorage.putInt(0, myVersion.correctlyClosedMagic);
+              myDirty = false;
+            }
+            myDirtyStatusUpdateInProgress = false;
           }
-          myDirtyStatusUpdateInProgress = false;
+        }
+        else {
+          if (dirty) {
+            myDirtyStatusUpdateInProgress = true;
+            myStorage.putInt(0, myVersion.dirtyMagic);
+            myDirtyStatusUpdateInProgress = false;
+            myDirty = true;
+          }
         }
       }
-      else {
-        if (dirty) {
-          myDirtyStatusUpdateInProgress = true;
-          myStorage.putInt(0, myVersion.dirtyMagic);
-          myDirtyStatusUpdateInProgress = false;
-          myDirty = true;
-        }
+      finally {
+        unlockStorageWrite();
       }
-    }
-    finally {
-      unlockStorage();
     }
   }
 
-  protected synchronized void markCorrupted() {
-    if (!myCorrupted) {
-      myCorrupted = true;
-      if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
-      try {
-        markDirty(true);
-        force();
-      }
-      catch (IOException e) {
-        // ignore...
+  protected void markCorrupted() {
+    synchronized (getDataAccessLock()) {
+      if (!myCorrupted) {
+        myCorrupted = true;
+        if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
+        try {
+          markDirty(true);
+          force();
+        }
+        catch (IOException e) {
+          // ignore...
+        }
       }
     }
   }

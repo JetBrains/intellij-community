@@ -26,7 +26,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -95,6 +98,14 @@ public class RemoveInitializerFix implements LocalQuickFix {
     }
     WriteAction.run(() -> {
       if (res == RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL) {
+        if (elementToDelete instanceof PsiExpression && !ExpressionUtils.isVoidContext((PsiExpression)elementToDelete) &&
+            !PsiTreeUtil.isAncestor(variable, elementToDelete, true)) {
+          String name = variable.getName();
+          if (name != null) {
+            new CommentTracker().replaceAndRestoreComments(elementToDelete, name);
+            return;
+          }
+        }
         elementToDelete.delete();
       }
       else if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT) {

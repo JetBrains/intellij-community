@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.TouchScrollUtil;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,6 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   public static final String TRAILING = "JB_SCROLL_BAR_TRAILING_COMPONENT";
 
-  private static final double THRESHOLD = 1D + 1E-5D;
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
   private double myFractionalRemainder;
   private boolean wasPositiveDelta;
@@ -96,6 +95,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a new instance of {@link ScrollBarUI}
    */
   @SuppressWarnings("UnusedParameters")
+  @NotNull
   public static ScrollBarUI createUI(JComponent c) {
     return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
   }
@@ -311,7 +311,6 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);
       double delta = unitIncrement * rotation * event.getScrollAmount();
-      if (-THRESHOLD > delta && delta > THRESHOLD) return delta;
       // When the scrolling speed is set to maximum, it's possible to scroll by more units than will fit in the visible area.
       // To make for more accurate low-speed scrolling, we limit scrolling to the block increment
       // if the wheel was only rotated one click.

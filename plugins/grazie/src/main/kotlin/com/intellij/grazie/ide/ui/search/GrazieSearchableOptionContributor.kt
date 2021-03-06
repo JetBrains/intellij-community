@@ -8,7 +8,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 
-class GrazieSearchableOptionContributor : SearchableOptionContributor() {
+private class GrazieSearchableOptionContributor : SearchableOptionContributor() {
   private val proofreadId = "proofread"
   private val proofreadName = msg("grazie.group.name")
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -70,7 +71,12 @@ public class PlatformContentEntriesConfigurable implements Configurable {
     final ModuleConfigurationStateImpl moduleConfigurationState =
       new ModuleConfigurationStateImpl(myModule.getProject(), new DefaultModulesProvider(myModule.getProject())) {
         @Override
-        public ModifiableRootModel getRootModel() {
+        public ModifiableRootModel getModifiableRootModel() {
+          return myModifiableModel;
+        }
+
+        @Override
+        public ModuleRootModel getCurrentRootModel() {
           return myModifiableModel;
         }
       };

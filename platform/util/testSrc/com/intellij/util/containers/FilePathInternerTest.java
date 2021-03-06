@@ -1,20 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FilePathInterner;
 import com.intellij.testFramework.LightPlatformTestCase;
-import gnu.trove.THashSet;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
 
 public class FilePathInternerTest extends LightPlatformTestCase {
   public void testHashCodeIsConsistentWithStringStress() {
     long start = System.currentTimeMillis();
-    Set<String> thm = new THashSet<>();
-    Set<CharSequence> uniq = new THashSet<>(ContainerUtil.identityStrategy());
+    Set<String> thm = new HashSet<>();
+    Set<CharSequence> uniq = Collections.newSetFromMap(new IdentityHashMap<>());
     FilePathInterner interner = new FilePathInterner();
     FileUtil.processFilesRecursively(new File(PathManagerEx.getTestDataPath()), file -> {
       String s = FileUtil.toSystemIndependentName(file.getPath());

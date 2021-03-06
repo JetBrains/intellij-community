@@ -25,17 +25,6 @@ public class BaseDecompiler {
     engine.addLibrary(library);
   }
 
-  /** @deprecated use {@link #addSource(File)} / {@link #addLibrary(File)} instead */
-  @Deprecated
-  public void addSpace(File file, boolean own) {
-    if (own) {
-      addSource(file);
-    }
-    else {
-      addLibrary(file);
-    }
-  }
-
   public void decompileContext() {
     try {
       engine.decompileContext();

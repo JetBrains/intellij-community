@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyExtractMethodUtil {
+public final class PyExtractMethodUtil {
   public static final String NAME = "extract.method.name";
 
   private PyExtractMethodUtil() {
@@ -602,7 +602,7 @@ public class PyExtractMethodUtil {
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
-    final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<Object>() {
+    final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<>() {
       @Override
       @NotNull
       public String createMethodSignature(@NotNull ExtractMethodSettings<Object> settings) {
@@ -629,9 +629,9 @@ public class PyExtractMethodUtil {
       }
     };
 
-    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<Object>(project, "method_name", fragment,
-                                                                                          ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
-                                                                                          decorator, PythonFileType.INSTANCE) {
+    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<>(project, "method_name", fragment,
+                                                                                    ArrayUtilRt.EMPTY_OBJECT_ARRAY, validator,
+                                                                                    decorator, PythonFileType.INSTANCE) {
       @Override
       protected String getHelpId() {
         return "python.reference.extractMethod";

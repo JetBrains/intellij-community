@@ -11,6 +11,7 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
+import com.intellij.xdebugger.impl.inline.InlineWatch
 import com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
 
 @Tag("breakpoint-manager")
@@ -35,10 +36,15 @@ class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
   val expressions by list<ConfigurationState>()
+
+  @get:Property(surroundWithTag = false)
+  @get:XCollection
+  val inlineExpressionStates by list<InlineWatchState>()
 }
 
 @Tag("configuration")
-class ConfigurationState @JvmOverloads constructor(name: String? = null, expressions: List<XExpression>? = null) : BaseState() {
+class ConfigurationState @JvmOverloads constructor(name: String? = null,
+                                                   expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
   var name by string()
 
@@ -56,6 +62,23 @@ class ConfigurationState @JvmOverloads constructor(name: String? = null, express
       expressionStates.clear()
       expressions.mapTo(expressionStates) { WatchState(it) }
     }
+  }
+}
+
+@Tag("inline-watch")
+class InlineWatchState @JvmOverloads  constructor(expression: XExpression? = null, line: Int = -1, fileUrl: String? = null) : BaseState() {
+
+  @get:Attribute
+  var fileUrl by string()
+  @get:Attribute
+  var line by property(-1)
+  @get:Property(surroundWithTag = false)
+  var watchState by property<WatchState?>(null) {it == null}
+
+  init {
+    this.fileUrl = fileUrl
+    this.line = line
+    this.watchState = expression?.let { WatchState(it) }
   }
 }
 

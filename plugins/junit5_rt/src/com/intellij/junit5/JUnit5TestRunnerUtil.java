@@ -45,6 +45,12 @@ public class JUnit5TestRunnerUtil {
     "org.junit.jupiter.api.condition.DisabledOnOs"
   };
 
+  private static final String[] SCRIPT_COND_ANNO =
+    {
+      "org.junit.jupiter.api.condition.DisabledIf",
+      "org.junit.jupiter.api.condition.EnabledIf"
+    };
+
   private static final String[] ENABLED_COND_ANNO = {
     "org.junit.jupiter.api.condition.EnabledOnJre",
     "org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable",
@@ -159,7 +165,7 @@ public class JUnit5TestRunnerUtil {
     return null;
   }
 
-  private static String getDisabledCondition(ClassLoader loader, AnnotatedElement annotatedElement) throws ClassNotFoundException {
+  private static String getDisabledCondition(ClassLoader loader, AnnotatedElement annotatedElement) {
     if (isDisabledCondition(DISABLED_COND_ANNO, loader, annotatedElement)) {
       return "org.junit.*Disabled*Condition";
     }
@@ -168,17 +174,25 @@ public class JUnit5TestRunnerUtil {
       return "org.junit.*Enabled*Condition";
     }
 
+    if (isDisabledCondition(SCRIPT_COND_ANNO, loader, annotatedElement)) {
+      return "org.junit.*DisabledIfCondition";
+    }
+
     if (isDisabledCondition(DISABLED_ANNO, loader, annotatedElement)) {
       return "org.junit.*DisabledCondition";
     }
     return null;
   }
 
-  private static boolean isDisabledCondition(String[] anno, ClassLoader loader, AnnotatedElement annotatedElement) throws ClassNotFoundException {
+  private static boolean isDisabledCondition(String[] anno, ClassLoader loader, AnnotatedElement annotatedElement) {
     for (String disabledAnnotationName : anno) {
-      Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(disabledAnnotationName, false, loader);
-      if (AnnotationUtils.findAnnotation(annotatedElement, disabledAnnotation).isPresent()) {
-        return true;
+      try {
+        Class<? extends Annotation> disabledAnnotation = (Class<? extends Annotation>)Class.forName(disabledAnnotationName, false, loader);
+        if (AnnotationUtils.findAnnotation(annotatedElement, disabledAnnotation).isPresent()) {
+          return true;
+        }
+      } catch (ClassNotFoundException e) {
+        // TODO we just ignore it. In later Junit5 versions some condition annotations were removed, i.e. @DisabledIf
       }
     }
     return false;

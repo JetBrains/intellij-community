@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -12,7 +12,9 @@ import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,12 +92,12 @@ public class GrAccessibilityChecker {
   }
 
   @Nullable
-  public HighlightInfo checkCodeReferenceElement(GrCodeReferenceElement ref) {
+  public HighlightInfo checkCodeReferenceElement(@NotNull GrCodeReferenceElement ref) {
     return checkReferenceImpl(ref);
   }
 
-  private HighlightInfo checkReferenceImpl(GrReferenceElement ref) {
-    boolean isCompileStatic = PsiUtil.isCompileStatic(ref);
+  private HighlightInfo checkReferenceImpl(@NotNull GrReferenceElement ref) {
+    boolean isCompileStatic = CompileStaticUtil.isCompileStatic(ref);
 
     if (!needToCheck(ref, isCompileStatic)) return null;
 
@@ -124,6 +126,7 @@ public class GrAccessibilityChecker {
   private void registerFixes(GrReferenceElement ref, GroovyResolveResult result, HighlightInfo info) {
     PsiElement element = result.getElement();
     assert element != null;
+    if (element instanceof LightElement) return;
     GroovyFix[] fixes = buildFixes(ref, result);
     if (fixes.length == 0) {
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myDisplayKey);
@@ -141,7 +144,7 @@ public class GrAccessibilityChecker {
   }
 
   @Nullable
-  public HighlightInfo checkReferenceExpression(GrReferenceExpression ref) {
+  public HighlightInfo checkReferenceExpression(@NotNull GrReferenceExpression ref) {
     return checkReferenceImpl(ref);
   }
 
@@ -159,7 +162,7 @@ public class GrAccessibilityChecker {
     return true;
   }
 
-  private static String checkConstructorCall(GrConstructorCall constructorCall) {
+  private static @DetailedDescription String checkConstructorCall(GrConstructorCall constructorCall) {
     GroovyResolveResult result = constructorCall.advancedResolve();
     if (checkResolveResult(result)) {
       return GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)result.getElement(), PsiSubstitutor.EMPTY,
@@ -177,7 +180,7 @@ public class GrAccessibilityChecker {
   @Nullable
   private static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
                                                       boolean strongError,
-                                                      @NotNull String message) {
+                                                      @DetailedDescription @NotNull String message) {
     HighlightDisplayLevel displayLevel = strongError ? HighlightDisplayLevel.ERROR
                                                      : GroovyAccessibilityInspection.getHighlightDisplayLevel(ref.getProject(), ref);
     return GrInspectionUtil.createAnnotationForRef(ref, displayLevel, message);

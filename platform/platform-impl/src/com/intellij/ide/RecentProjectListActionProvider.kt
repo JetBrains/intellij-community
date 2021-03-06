@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
@@ -91,6 +92,13 @@ open class RecentProjectListActionProvider {
     // on USB-sticks or flash-cards, and it will be nice to have them in the list
     // when USB device or SD-card is mounted
     return ReopenProjectAction(path, projectName, displayName)
+  }
+
+  /**
+   * Returns true if action corresponds to specified project
+   */
+  open fun isCurrentProjectAction(project: Project, action: ReopenProjectAction): Boolean {
+    return StringUtil.equals(action.projectPath, project.basePath)
   }
 
   private fun getDuplicateProjectNames(openedPaths: Set<String>, recentPaths: Collection<String>): Set<String> {

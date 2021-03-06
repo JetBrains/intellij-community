@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet.impl.ui.actions;
 
@@ -13,8 +13,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,7 +20,7 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class AddFacetToModuleAction extends AnAction implements DumbAware {
+public final class AddFacetToModuleAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AddFacetToModuleAction.class);
   private final FacetEditorFacade myEditor;
   private final Project myProject;
@@ -50,7 +48,7 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
                      grandParent != null && grandParent.getFacetType().getId() == underlyingFacetType);
       facet = myEditor.createFacet(grandParent, myType);
     }
-    ProjectStructureConfigurable.getInstance(myProject).select(facet, true);
+    myEditor.getProjectStructureConfigurable().select(facet, true);
   }
 
   @Override
@@ -93,7 +91,7 @@ public class AddFacetToModuleAction extends AnAction implements DumbAware {
     );
     for (FrameworkTypeEx frameworkType : frameworkTypes) {
       final AnAction action = new AddFrameworkSupportInProjectStructureAction(frameworkType, frameworkType.createProvider(),
-                                                                              ModuleStructureConfigurable.getInstance(project));
+                                                                              editor.getProjectStructureConfigurable().getModulesConfig());
       actions.put(frameworkType.getPresentableName(), action);
     }
     for (FacetType type : FacetTypeRegistry.getInstance().getFacetTypes()) {

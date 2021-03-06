@@ -26,4 +26,5 @@ public class CommonJavaParsingTest extends JavaParsingTestCase{
   public void testRefParamsAfterError() { doTest(true); }
   public void testUnclosedComment() { doTest(true); }
   public void testIncompleteFor() { doTest(true); }
+  public void testVarPackage() { doTest(true); }
 }

@@ -25,7 +25,7 @@ EditorConfig file
         EditorConfigFlatPatternImpl(FLAT_PATTERN)
           PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('ava')
       PsiElement(EditorConfigTokenType.R_BRACKET)(']')
-    PsiWhiteSpace('\n')
+    PsiWhiteSpace('\n\n')
     indent_style =tab
       indent_style
         PsiElement(EditorConfigTokenType.IDENTIFIER)('indent_style')
@@ -33,12 +33,10 @@ EditorConfig file
       PsiElement(EditorConfigTokenType.SEPARATOR)('=')
       tab
         PsiElement(EditorConfigTokenType.IDENTIFIER)('tab')
-    PsiWhiteSpace(' ')
-    indent_size
-=100500
+    PsiWhiteSpace('\n\n\n')
+    indent_size=100500
       indent_size
         PsiElement(EditorConfigTokenType.IDENTIFIER)('indent_size')
-      PsiWhiteSpace('\n')
       PsiElement(EditorConfigTokenType.SEPARATOR)('=')
       100500
         PsiElement(EditorConfigTokenType.IDENTIFIER)('100500')

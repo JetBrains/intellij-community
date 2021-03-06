@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.designSurface.FeedbackLayer;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +45,8 @@ public final class RadScrollPane extends RadContainer {
     super(componentClass, id, palette);
   }
 
-  @Nullable @Override
-  protected RadLayoutManager createInitialLayoutManager() {
+  @Override
+  protected @NotNull RadLayoutManager createInitialLayoutManager() {
     return new RadScrollPaneLayoutManager();
   }
 
@@ -63,18 +62,6 @@ public final class RadScrollPane extends RadContainer {
 
   @Override public RadComponent getActionTargetComponent(RadComponent child) {
     return this;
-  }
-
-  @Override
-  protected void importSnapshotComponent(final SnapshotContext context, final JComponent component) {
-    JScrollPane scrollPane = (JScrollPane) component;
-    final Component view = scrollPane.getViewport().getView();
-    if (view instanceof JComponent) {
-      RadComponent childComponent = createSnapshotComponent(context, (JComponent) view);
-      if (childComponent != null) {
-        addComponent(childComponent);
-      }
-    }
   }
 
   private class RadScrollPaneLayoutManager extends RadLayoutManager {

@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
@@ -31,7 +32,7 @@ public class SerializableCtorInspection extends DevKitInspectionBase {
         PsiMethod[] constructors = aClass.getConstructors();
         for (PsiMethod constructor : constructors) {
           if (constructor.getNameIdentifier() != null && constructor.getAnnotation(PROPERTY_MAPPING_ANNOTATION) == null) {
-            StringBuilder builder = new StringBuilder("@PropertyMapping({");
+            @NonNls StringBuilder builder = new StringBuilder("@PropertyMapping({");
             JvmParameter[] parameters = constructor.getParameters();
             for (int i = 0; i < parameters.length; i++) {
               if (i > 0) builder.append(',');

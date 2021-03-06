@@ -312,7 +312,7 @@ public class PyDocumentationBuilder {
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myOriginalElement, myContext, false));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
       if (docStringExpression == null && pyClass != null && !isProperty) {
         docStringExpression = addInheritedDocString(pyFunction, pyClass);
       }
@@ -535,7 +535,7 @@ public class PyDocumentationBuilder {
       final QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
       if (name != null) {
         myProlog.add($(PyUtil.isPackage(followed) ? "Package " : "Module "))
-                .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
+          .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(followed, name, null), name).toString()));
       }
       else {
         final String path = file.getPath();

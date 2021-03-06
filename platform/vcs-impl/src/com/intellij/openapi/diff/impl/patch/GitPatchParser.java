@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.PatchContentParser.stripPatchNameIfNeeded;
 
-public class GitPatchParser {
+public final class GitPatchParser {
   @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
   @NonNls private static final Pattern ourGitHeaderLinePattern = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*");
   @NonNls private static final Pattern ourIndexHeaderLinePattern =
@@ -48,12 +49,12 @@ public class GitPatchParser {
         iterator.previous();
       }
       else if (contentParser.testIsStart(next)) {
-        patch = contentParser.readTextPatch(next, iterator, true);
+        patch = contentParser.readTextPatch(next, iterator);
       }
     }
     if (patch == null) {
       patch = new TextFilePatch(null);
-      //maybe an exception should be thrown!  
+      //maybe an exception should be thrown!
     }
     applyPatchInfo(patch, patchInfo);
     return patch;
@@ -68,7 +69,8 @@ public class GitPatchParser {
     int newFileMode = -1;
     Couple<String> sha1Indexes = null;
     if (beforeAfterName == null) {
-      throw new PatchSyntaxException(iterator.previousIndex(), "Can't detect file names from git format header line");
+      throw new PatchSyntaxException(iterator.previousIndex(),
+                                     VcsBundle.message("patch.can.t.detect.file.names.from.git.format.header.line"));
     }
     while (iterator.hasNext()) {
       String next = iterator.next();
@@ -135,7 +137,7 @@ public class GitPatchParser {
 
   @Nullable
   private static String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
-    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), true, before);
+    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), before);
   }
 
   @NotNull
@@ -147,7 +149,7 @@ public class GitPatchParser {
     return FileStatus.MODIFIED;
   }
 
-  private static class PatchInfo {
+  private static final class PatchInfo {
     @Nullable private final String myBeforeName;
     @Nullable private final String myAfterName;
 

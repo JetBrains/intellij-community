@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -22,6 +23,7 @@ public class AbstractAllInDirectoryConfigurationProducer extends JUnitConfigurat
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected AbstractAllInDirectoryConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

@@ -1,41 +1,26 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.util.Function;
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
+import java.util.function.Function;
 
 public abstract class IconDeferrer {
   public static IconDeferrer getInstance() {
-    return ServiceManager.getService(IconDeferrer.class);
+    return ApplicationManager.getApplication().getService(IconDeferrer.class);
   }
 
-  public abstract <T> Icon defer(Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
+  public abstract <T> @NotNull Icon defer(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
   public abstract <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
+  public abstract void clearCache();
+
   public boolean equalIcons(Icon icon1, Icon icon2) {
-    return Comparing.equal(icon1, icon2);
+    return Objects.equals(icon1, icon2);
   }
 }

@@ -15,9 +15,15 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
+ * Returns ID of a place in the IDE UI.
+ *
+ * @see com.intellij.openapi.actionSystem.ActionPlaces
  * @author Konstantin Bulenkov
  */
-public interface PlaceProvider<Place> {
-  Place getPlace();
+public interface PlaceProvider extends PlaceProviderCompatibilityLayer {
+  @Override
+  @NonNls String getPlace();
 }

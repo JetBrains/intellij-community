@@ -4,6 +4,8 @@ package com.jetbrains.jsonSchema;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,6 +22,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,14 +43,14 @@ public class UserDefinedJsonSchemaConfiguration {
     return o1.path.compareToIgnoreCase(o2.path);
   };
 
-  public String name;
+  public @Nls String name;
   public String relativePathToSchema;
   public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
   public List<Item> patterns = new SmartList<>();
   @Transient
   private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
-    new AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>>() {
+    new AtomicClearableLazyValue<>() {
       @NotNull
       @Override
       protected List<PairProcessor<Project, VirtualFile>> compute() {
@@ -58,7 +61,7 @@ public class UserDefinedJsonSchemaConfiguration {
   public UserDefinedJsonSchemaConfiguration() {
   }
 
-  public UserDefinedJsonSchemaConfiguration(@NotNull String name,
+  public UserDefinedJsonSchemaConfiguration(@NotNull @NlsSafe String name,
                                             JsonSchemaVersion schemaVersion,
                                             @NotNull String relativePathToSchema,
                                             boolean applicationDefined,
@@ -70,11 +73,11 @@ public class UserDefinedJsonSchemaConfiguration {
     setPatterns(patterns);
   }
 
-  public String getName() {
+  public @Nls String getName() {
     return name;
   }
 
-  public void setName(@NotNull String name) {
+  public void setName(@NotNull @Nls String name) {
     this.name = name;
   }
 
@@ -248,7 +251,7 @@ public class UserDefinedJsonSchemaConfiguration {
       this.path = neutralizePath(path);
     }
 
-    public String getError() {
+    public @Tooltip String getError() {
       switch (mappingKind) {
         case File:
           return !StringUtil.isEmpty(path) ? null : JsonBundle.message("schema.configuration.error.empty.file.path");

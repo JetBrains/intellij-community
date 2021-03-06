@@ -1,11 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
-import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.navigation.TargetPresentation
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.speedSearch.SearchAwareRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.getListSelectionForeground
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import javax.swing.JList
@@ -19,7 +20,7 @@ internal abstract class TargetPresentationRightRenderer<T> : ListCellRenderer<T>
     private val ourBorder = JBUI.Borders.emptyRight(UIUtil.getListCellHPadding())
   }
 
-  protected abstract fun getPresentation(value: T): TargetPopupPresentation?
+  protected abstract fun getPresentation(value: T): TargetPresentation?
 
   private val component = JBLabel().apply {
     border = ourBorder
@@ -27,7 +28,7 @@ internal abstract class TargetPresentationRightRenderer<T> : ListCellRenderer<T>
     horizontalAlignment = SwingConstants.RIGHT // align icon to the right
   }
 
-  final override fun getItemSearchString(item: T): String? = getPresentation(item)?.locationText
+  final override fun getItemSearchString(item: T): String? = getPresentation(item)?.containerText
 
   final override fun getListCellRendererComponent(list: JList<out T>,
                                                   value: T,
@@ -38,13 +39,13 @@ internal abstract class TargetPresentationRightRenderer<T> : ListCellRenderer<T>
       text = ""
       icon = null
       background = UIUtil.getListBackground(isSelected)
-      foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
+      foreground = if (isSelected) getListSelectionForeground(true) else UIUtil.getInactiveTextColor()
       font = list.font
     }
     getPresentation(value)?.let { presentation ->
-      presentation.rightText?.let { rightText ->
-        component.text = rightText
-        component.icon = presentation.rightIcon
+      presentation.locationText?.let { locationText ->
+        component.text = locationText
+        component.icon = presentation.locationIcon
       }
     }
     return component

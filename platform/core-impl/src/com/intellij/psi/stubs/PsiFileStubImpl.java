@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package com.intellij.psi.stubs;
 
-import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -137,15 +122,14 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return myStubRoots != null;
   }
 
-  public String getDiagnostics() {
-    ObjectStubTree stubTree = ObjectStubTree.getStubTree(this);
+  public final String getDiagnostics() {
+    ObjectStubTree<?> stubTree = ObjectStubTree.getStubTree(this);
     T file = myFile;
-    return toString() +
-           MoreObjects.toStringHelper("")
-             .add("myFile", file)
-             .add("myInvalidationReason", myInvalidationReason)
-             .add("myStubRoots", Arrays.toString(myStubRoots))
-             .add("stubTree", stubTree)
-             .toString();
+    return this + "(" +
+           "file='" + file + '\'' +
+           ", invalidationReason=" + myInvalidationReason +
+           ", stubRoots='" + Arrays.toString(myStubRoots) + '\'' +
+           ", stubTree='" + stubTree + '\'' +
+           ')';
   }
 }

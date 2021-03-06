@@ -5,6 +5,7 @@ import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +28,7 @@ public interface ApplicationStarter {
    *
    * @return command-line selector.
    */
-  String getCommandName();
-
-  /**
-   * @deprecated Use {@link #premain(List)}
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default void premain(@SuppressWarnings("unused") String @NotNull [] args) { }
+  @NonNls String getCommandName();
 
   /**
    * Called before application initialization.
@@ -43,13 +37,6 @@ public interface ApplicationStarter {
    */
   default void premain(@NotNull List<String> args) {
     premain(ArrayUtilRt.toStringArray(args));
-  }
-
-  /**
-   * @deprecated Use {@link #main(List)}
-   */
-  @Deprecated
-  default void main(String @NotNull [] args) {
   }
 
   /**
@@ -80,27 +67,32 @@ public interface ApplicationStarter {
   }
 
   /**
-   * If true, the command of this launcher can be processed when there is a modal dialog open.
+   * Return {@link #ANY_MODALITY} if the command of this launcher can be processed when there is a modal dialog open.
    * Such a starter may not directly change the PSI/VFS/project model of the opened projects or open new projects.
-   * Such activities should be performed inside write-safe contexts (see {@link TransactionGuard}).
+   * Such a starter may not perform activities that should be performed inside write-safe contexts (see {@link TransactionGuard}).
+   * <p>
+   * Return {@link #NOT_IN_EDT} if the command of this launcher can be processed on pooled thread.
+   * <p>
+   * Note, that platform may ignore this flag and process command as {@link #NON_MODAL}.
    */
   @MagicConstant(intValues = {NON_MODAL, ANY_MODALITY, NOT_IN_EDT})
   default int getRequiredModality() {
-    return allowAnyModalityState() ? ANY_MODALITY : NON_MODAL;
-  }
-
-  /**
-   * @deprecated Use {@link #getRequiredModality()}.
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  default boolean allowAnyModalityState() {
-    return false;
+    return NON_MODAL;
   }
 
   /** @see #canProcessExternalCommandLine */
-  @NotNull
-  default Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
+  default @NotNull Future<CliResult> processExternalCommandLineAsync(@NotNull List<String> args, @Nullable String currentDirectory) {
     throw new UnsupportedOperationException("Class " + getClass().getName() + " must implement `processExternalCommandLineAsync()`");
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated Use {@link #premain(List)} */
+  @Deprecated
+  default void premain(@SuppressWarnings("unused") String @NotNull [] args) { }
+
+  /** @deprecated Use {@link #main(List)} */
+  @Deprecated
+  default void main(String @NotNull [] args) { }
+
+  //</editor-fold>
 }

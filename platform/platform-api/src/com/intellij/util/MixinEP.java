@@ -1,31 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
-import com.intellij.openapi.util.LazyInstance;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.serviceContainer.LazyExtensionInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public class MixinEP<T> extends AbstractExtensionPointBean {
+public final class MixinEP<T> extends LazyExtensionInstance<T> implements PluginAware {
+  private transient PluginDescriptor pluginDescriptor;
 
   // these must be public for scrambling compatibility
   @Attribute("key")
@@ -34,33 +24,35 @@ public class MixinEP<T> extends AbstractExtensionPointBean {
   @Attribute("implementationClass")
   public String implementationClass;
 
-  private final NotNullLazyValue<Class> myKey = new NotNullLazyValue<Class>() {
-    @Override
-    @NotNull
-    protected Class compute() {
-      if (key == null) {
-        String error = "No key specified for mixin with implementation class " + implementationClass;
-        if (myPluginDescriptor != null) {
-          throw new PluginException(error, myPluginDescriptor.getPluginId());
-        }
-        throw new IllegalArgumentException(error);
-      }
-      return findExtensionClass(key);
+  private final NotNullLazyValue<Class<?>> myKey = NotNullLazyValue.lazy(() -> {
+    if (key == null) {
+      String error = "No key specified for mixin with implementation class " + implementationClass;
+      throw new PluginException(error, pluginDescriptor.getPluginId());
     }
-  };
 
-  private final LazyInstance<T> myHandler = new LazyInstance<T>() {
-    @Override
-    protected Class<T> getInstanceClass() {
-      return findExtensionClass(implementationClass);
+    try {
+      return ApplicationManager.getApplication().loadClass(key, pluginDescriptor);
     }
-  };
+    catch (ClassNotFoundException e) {
+      throw ApplicationManager.getApplication().createError(e, pluginDescriptor.getPluginId());
+    }
+  });
 
-  public Class getKey() {
+  public Class<?> getKey() {
     return myKey.getValue();
   }
 
-  public T getInstance() {
-    return myHandler.getValue();
+  public @NotNull T getInstance() {
+    return getInstance(ApplicationManager.getApplication(), pluginDescriptor);
+  }
+
+  @Override
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
+  }
+
+  @Override
+  protected @Nullable String getImplementationClassName() {
+    return implementationClass;
   }
 }

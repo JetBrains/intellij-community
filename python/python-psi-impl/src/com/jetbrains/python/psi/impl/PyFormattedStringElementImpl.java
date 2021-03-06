@@ -6,9 +6,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -40,13 +39,8 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
   @NotNull
   @Override
   public List<TextRange> getLiteralPartRanges() {
-    final TextRange contentRange = getContentRange();
-    return SyntaxTraverser.psiApi()
-      .children(this)
-      .filter(child -> PyTokenTypes.FSTRING_TEXT_TOKENS.contains(child.getNode().getElementType()))
-      .map(PsiElement::getTextRangeInParent)
-      .map(range -> range.intersection(contentRange))
-      .toList();
+    final List<PsiElement> textTokens = findChildrenByType(PyTokenTypes.FSTRING_TEXT_TOKENS);
+    return ContainerUtil.map(textTokens, PsiElement::getTextRangeInParent);
   }
 
   @NotNull
@@ -85,36 +79,16 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
   public List<Pair<TextRange, String>> getDecodedFragments() {
     final ArrayList<Pair<TextRange, String>> result = new ArrayList<>();
     final PyStringLiteralDecoder decoder = new PyStringLiteralDecoder(this);
-    int continuousTextStart = -1;
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       final IElementType childType = child.getNode().getElementType();
-      if (childType == PyTokenTypes.FSTRING_START) {
-        continue;
-      }
       final TextRange relChildRange = child.getTextRangeInParent();
-      if (childType == PyElementTypes.FSTRING_FRAGMENT || childType == PyTokenTypes.FSTRING_END) {
-        if (continuousTextStart != -1) {
-          result.addAll(decoder.decodeRange(TextRange.create(continuousTextStart, relChildRange.getStartOffset())));
-        }
-        continuousTextStart = -1;
-
-        if (childType == PyElementTypes.FSTRING_FRAGMENT) {
-          // There shouldn't be any escaping inside interpolated parts
-          result.add(Pair.create(relChildRange, child.getText()));
-        }
+      if (PyTokenTypes.FSTRING_TEXT_TOKENS.contains(childType)) {
+        result.addAll(decoder.decodeRange(relChildRange));
       }
-      else if (PyTokenTypes.FSTRING_TEXT_TOKENS.contains(childType)) {
-        if (continuousTextStart == -1) {
-          continuousTextStart = relChildRange.getStartOffset();
-        }
+      else if (childType == PyElementTypes.FSTRING_FRAGMENT) {
+        // There shouldn't be any escaping inside interpolated parts
+        result.add(Pair.create(relChildRange, child.getText()));
       }
-      else if (!(child instanceof PsiErrorElement)) {
-        throw new AssertionError("Illegal element " + child + " inside f-string");
-      } 
-    }
-    if (continuousTextStart != -1) {
-      // There are no closing quotes if we got here
-      result.addAll(decoder.decodeRange(TextRange.create(continuousTextStart, getTextLength())));
     }
     return result;
   }

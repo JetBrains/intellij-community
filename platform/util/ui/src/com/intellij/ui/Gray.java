@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import java.awt.*;
@@ -7,7 +7,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"InspectionUsingGrayColors", "UnusedDeclaration"})
-public class Gray extends Color {
+public final class Gray extends Color {
   private Gray(int num) {
     super(num, num, num);
   }

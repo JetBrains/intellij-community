@@ -3,6 +3,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.java.JavaLanguage;
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MultiFileTestCase;
@@ -107,6 +109,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteMethodKeepEnumValues() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testDeleteMethodCascadeRecursive() throws Exception {
     doSingleFileTest();
   }
@@ -121,6 +127,31 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
     doSingleFileTest();
+  }
+
+  public void testDeleteMethodWithPropertyUsage() {
+    doTest("Foo");
+  }
+
+  public void testDeleteMethodWithoutPropertyUsage() {
+    ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
+      @Override
+      public boolean isImplicitUsage(@NotNull PsiElement element) {
+        return element instanceof PsiNamedElement && ((PsiNamedElement)element).getName().equals("a.b.c");
+      }
+
+      @Override
+      public boolean isImplicitRead(@NotNull PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitWrite(@NotNull PsiElement element) {
+        return false;
+      }
+    }, getTestRootDisposable());
+
+    doTest("Foo");
   }
 
   public void testParameterInHierarchy() {
@@ -272,7 +303,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
-  
+
   public void testLastResourceVariableConflictingVar() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doSingleFileTest();
@@ -382,6 +413,37 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testUpdateContractOnParameterRemoval() throws Exception {
     doSingleFileTest();
+  }
+
+  public void testSealedParent() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doSingleFileTest();
+  }
+
+  public void testSealedGrandParent() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doTest("Parent");
+  }
+
+  public void testNonAccessibleGrandParent() {
+    try {
+      doTest("foo.Parent");
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
+  public void testLastClassInPackage() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    doTest("pack1.First");
+  }
+
+  public void testNotLastClassInPackage() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    doTest("pack1.First");
   }
 
   private void doTest(@NonNls final String qClassName) {

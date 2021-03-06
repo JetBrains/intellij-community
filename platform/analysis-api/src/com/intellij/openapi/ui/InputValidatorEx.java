@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,5 +14,5 @@ import org.jetbrains.annotations.Nullable;
 public interface InputValidatorEx extends InputValidator {
   @NlsContexts.DetailedDescription
   @Nullable
-  String getErrorText(String inputString);
+  String getErrorText(@NonNls String inputString);
 }

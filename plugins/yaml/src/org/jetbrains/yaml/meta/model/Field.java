@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -28,7 +29,10 @@ public class Field {
   }
 
   private final String myName;
-  private final YamlMetaType myMainType;
+  private final MetaTypeSupplier myMetaTypeSupplier;
+  // must be accessed with getMainType()
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private YamlMetaType myMainType;
   private boolean myIsRequired;
   private boolean myEditable = true;
   private boolean myDeprecated = false;
@@ -39,9 +43,35 @@ public class Field {
 
   private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
+  /**
+   * Used in {@link Field#Field(String, MetaTypeSupplier)}.
+   * Invoked only once
+   */
+  public interface MetaTypeSupplier {
+    @NotNull YamlMetaType getMainType();
+
+    default @Nullable YamlMetaType getSpecializedType(@SuppressWarnings("unused") @NotNull YAMLValue element) {
+      return null;
+    }
+  }
+
   public Field(@NonNls @NotNull String name, @NotNull YamlMetaType mainType) {
     myName = name;
     myMainType = mainType;
+    if(myMainType instanceof YamlArrayType) {
+      myMainType = ((YamlArrayType)myMainType).getElementType();
+      myIsMany = !(myMainType instanceof YamlArrayType);
+    }
+    myMetaTypeSupplier = null;
+  }
+
+  /**
+   * Used for late initialization of the field metatype.
+   * Useful when the type isn't fully constructed at the moment of the field initialization (e.g. for cyclic dependencies)
+   */
+  public Field(@NonNls @NotNull String name, @NotNull MetaTypeSupplier supplier) {
+    myName = name;
+    myMetaTypeSupplier = supplier;
   }
 
   @NotNull
@@ -128,7 +158,7 @@ public class Field {
   @Contract(pure = true)
   @NotNull
   public YamlMetaType getType(@NotNull Relation relation) {
-    return myPerRelationTypes.getOrDefault(relation, myMainType);
+    return myPerRelationTypes.getOrDefault(relation, getMainType());
   }
 
   @Contract(pure = true)
@@ -146,10 +176,10 @@ public class Field {
     if (myOverriddenDefaultRelation != null) {
       return myOverriddenDefaultRelation;
     }
-    if (myIsMany) {
+    if (myIsMany || getMainType() instanceof YamlArrayType) {
       return Relation.SEQUENCE_ITEM;
     }
-    return myMainType instanceof YamlScalarType ? Relation.SCALAR_VALUE : Relation.OBJECT_CONTENTS;
+    return getMainType() instanceof YamlScalarType ? Relation.SCALAR_VALUE : Relation.OBJECT_CONTENTS;
   }
 
   @NotNull
@@ -183,10 +213,10 @@ public class Field {
     result.append("[").append(getName()).append("]@");
     result.append(Integer.toHexString(hashCode()));
     result.append(" : ");
-    result.append(myMainType.getTypeName());
+    result.append(getMainType().getTypeName());
 
     List<String> nonDefaultTypes = myPerRelationTypes.entrySet().stream()
-      .filter(e -> e.getValue() == myMainType)
+      .filter(e -> e.getValue() == getMainType())
       .map(e -> e.getKey() + ":" + e.getValue())
       .collect(Collectors.toList());
 
@@ -205,7 +235,7 @@ public class Field {
 
     LookupElementBuilder lookup = LookupElementBuilder
       .create(new TypeFieldPair(ownerClass, this), getName())
-      .withTypeText(myMainType.getDisplayName(), true)
+      .withTypeText(getMainType().getDisplayName(), true)
       .withIcon(getLookupIcon())
       .withStrikeoutness(isDeprecated());
 
@@ -226,6 +256,61 @@ public class Field {
 
   @Nullable
   public Icon getLookupIcon() {
-    return myIsMany ? AllIcons.Json.Array : myMainType.getIcon();
+    return myIsMany ? AllIcons.Json.Array : getMainType().getIcon();
+  }
+
+  @NotNull
+  public Field resolveToSpecializedField(@NotNull YAMLValue element) {
+    if(myMetaTypeSupplier == null)
+      return this;
+
+    YamlMetaType specializedType = myMetaTypeSupplier.getSpecializedType(element);
+    if(specializedType == null)
+      return this;
+
+    return cloneWithNewType(specializedType);
+  }
+
+  private Field cloneWithNewType(@NotNull YamlMetaType newType) {
+    var result = newField(newType);
+
+    result.myIsRequired = myIsRequired;
+    result.myEditable = myEditable;
+    result.myDeprecated = myDeprecated;
+    result.myAnyNameAllowed = myAnyNameAllowed;
+    result.myEmptyValueAllowed = myEmptyValueAllowed;
+    result.myIsMany = myIsMany;
+    result.myOverriddenDefaultRelation = myOverriddenDefaultRelation;
+    result.myPerRelationTypes.putAll(myPerRelationTypes);
+
+    return result;
+  }
+
+  @NotNull
+  protected Field newField(@NotNull YamlMetaType type) {
+    return new Field(this.myName, type);
+  }
+
+  @NotNull
+  private YamlMetaType getMainType() {
+    if(myMainType != null)
+      return myMainType;
+
+    assert myMetaTypeSupplier != null;
+
+    synchronized (myMetaTypeSupplier) {
+      if(myMainType == null) {
+        try {
+          YamlMetaType mainType = myMetaTypeSupplier.getMainType();
+          assert !(myMainType instanceof YamlArrayType) : "Type supplier must not provide array types";
+
+          myMainType = mainType;
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Supplier failed to return a metatype for field: " + this, e);
+        }
+      }
+      return myMainType;
+    }
   }
 }

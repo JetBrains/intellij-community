@@ -1,18 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileNodeDescriptor extends NodeDescriptor {
-
+public class FileNodeDescriptor extends NodeDescriptor<FileElement> {
   private FileElement myFileElement;
   private final Icon myOriginalIcon;
   private final String myComment;
@@ -22,7 +23,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
                             NodeDescriptor parentDescriptor,
                             Icon closedIcon,
                             String name,
-                            String comment) {
+                            @NlsSafe String comment) {
     super(project, parentDescriptor);
     myOriginalIcon = closedIcon;
     myComment = comment;
@@ -42,20 +43,21 @@ public class FileNodeDescriptor extends NodeDescriptor {
     }
 
     VirtualFile file = myFileElement.getFile();
-
     if (file == null) return true;
 
     setIcon(myOriginalIcon);
     if (myFileElement.isHidden()) {
-      setIcon(IconLoader.getTransparentIcon(getIcon()));
+      Icon icon = getIcon();
+      if (icon != null) {
+        setIcon(IconLoader.getTransparentIcon(icon));
+      }
     }
     myColor = myFileElement.isHidden() ? SimpleTextAttributes.DARK_TEXT.getFgColor() : null;
     return changed;
   }
 
   @Override
-  @NotNull
-  public final FileElement getElement() {
+  public final @NotNull FileElement getElement() {
     return myFileElement;
   }
 
@@ -63,7 +65,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
     myFileElement = descriptor;
   }
 
-  public String getComment() {
+  public @NlsSafe @Nullable String getComment() {
     return myComment;
   }
 }

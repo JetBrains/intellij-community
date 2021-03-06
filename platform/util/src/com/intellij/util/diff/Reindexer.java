@@ -1,14 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.diff;
 
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.BitSet;
 
-class Reindexer {
-  private final int[][] myOldIndecies = new int[2][];
+final class Reindexer {
+  private final int[][] myOldIndices = new int[2][];
   private final int[] myOriginalLengths = new int[]{-1, -1};
   private final int[] myDiscardedLengths = new int[]{-1, -1};
 
@@ -25,38 +26,37 @@ class Reindexer {
     myDiscardedLengths[1] = length2;
     for (int j = 0; j < 2; j++) {
       int originalLength = myOriginalLengths[j];
-      myOldIndecies[j] = new int[originalLength];
+      myOldIndices[j] = new int[originalLength];
       for (int i = 0; i < originalLength; i++) {
-        myOldIndecies[j][i] = i;
+        myOldIndices[j][i] = i;
       }
     }
   }
 
   @TestOnly
   int restoreIndex(int index, int array) {
-    return myOldIndecies[array][index];
+    return myOldIndices[array][index];
   }
 
   private int[] discard(int[] needed, int[] toDiscard, int arrayIndex) {
     myOriginalLengths[arrayIndex] = toDiscard.length;
     int[] sorted1 = createSorted(needed);
-    TIntArrayList discarded = new TIntArrayList(toDiscard.length);
-    TIntArrayList oldIndecies = new TIntArrayList(toDiscard.length);
+    IntList discarded = new IntArrayList(toDiscard.length);
+    IntList oldIndices = new IntArrayList(toDiscard.length);
     for (int i = 0; i < toDiscard.length; i++) {
       int index = toDiscard[i];
       if (Arrays.binarySearch(sorted1, index) >= 0) {
         discarded.add(index);
-        oldIndecies.add(i);
+        oldIndices.add(i);
       }
     }
-    myOldIndecies[arrayIndex] = oldIndecies.toNativeArray();
+    myOldIndices[arrayIndex] = oldIndices.toIntArray();
     myDiscardedLengths[arrayIndex] = discarded.size();
-    return discarded.toNativeArray();
+    return discarded.toIntArray();
   }
 
-  private int[] createSorted(int[] ints1) {
-    int[] sorted1 = new int[ints1.length];
-    System.arraycopy(ints1, 0, sorted1, 0, ints1.length);
+  private static int[] createSorted(int[] ints1) {
+    int[] sorted1 = ints1.clone();
     Arrays.sort(sorted1);
     return sorted1;
   }
@@ -76,32 +76,29 @@ class Reindexer {
       int y = 0;
       while (x < myDiscardedLengths[0] || y < myDiscardedLengths[1]) {
         if ((x < myDiscardedLengths[0] && y < myDiscardedLengths[1]) && !discardedChanges[0].get(x) && !discardedChanges[1].get(y)) {
-          x = increment(myOldIndecies[0], x, changes1, myOriginalLengths[0]);
-          y = increment(myOldIndecies[1], y, changes2, myOriginalLengths[1]);
-          continue;
+          x = increment(myOldIndices[0], x, changes1, myOriginalLengths[0]);
+          y = increment(myOldIndices[1], y, changes2, myOriginalLengths[1]);
         }
-        if (discardedChanges[0].get(x)) {
-          changes1.set(getOriginal(myOldIndecies[0], x));
-          x = increment(myOldIndecies[0], x, changes1, myOriginalLengths[0]);
-          continue;
+        else if (discardedChanges[0].get(x)) {
+          changes1.set(getOriginal(myOldIndices[0], x));
+          x = increment(myOldIndices[0], x, changes1, myOriginalLengths[0]);
         }
-        if (discardedChanges[1].get(y)) {
-          changes2.set(getOriginal(myOldIndecies[1], y));
-          y = increment(myOldIndecies[1], y, changes2, myOriginalLengths[1]);
-          continue;
+        else if (discardedChanges[1].get(y)) {
+          changes2.set(getOriginal(myOldIndices[1], y));
+          y = increment(myOldIndices[1], y, changes2, myOriginalLengths[1]);
         }
       }
       if (myDiscardedLengths[0] == 0) {
         changes1.set(0, myOriginalLengths[0]);
       }
       else {
-        changes1.set(0, myOldIndecies[0][0]);
+        changes1.set(0, myOldIndices[0][0]);
       }
       if (myDiscardedLengths[1] == 0) {
         changes2.set(0, myOriginalLengths[1]);
       }
       else {
-        changes2.set(0, myOldIndecies[1][0]);
+        changes2.set(0, myOldIndices[1][0]);
       }
     }
 
@@ -129,11 +126,11 @@ class Reindexer {
     if (x != myOriginalLengths[0] || y != myOriginalLengths[1]) builder.addChange(myOriginalLengths[0] - x, myOriginalLengths[1] - y);
   }
 
-  private int getOriginal(int[] indexes, int i) {
+  private static int getOriginal(int[] indexes, int i) {
     return indexes[i];
   }
 
-  private int increment(int[] indexes, int i, BitSet set, int length) {
+  private static int increment(int[] indexes, int i, BitSet set, int length) {
     if (i + 1 < indexes.length) {
       set.set(indexes[i] + 1, indexes[i + 1]);
     }

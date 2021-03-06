@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -34,12 +33,12 @@ import java.util.ListIterator;
  *
  * @author Kirill Likhodedov
  */
-public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
+public class CommitListPanel extends JPanel implements DataProvider {
 
   private final List<VcsFullCommitDetails> myCommits;
   private final TableView<VcsFullCommitDetails> myTable;
 
-  public CommitListPanel(@NotNull List<? extends VcsFullCommitDetails> commits, @Nullable String emptyText) {
+  public CommitListPanel(@NotNull List<? extends VcsFullCommitDetails> commits, @Nullable @NlsContexts.Label String emptyText) {
     myCommits = new ArrayList<>(commits);
 
     myTable = new TableView<>();
@@ -96,19 +95,19 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
     diffAction.registerCustomShortcutSet(diffAction.getShortcutSet(), myTable);
   }
 
-  // Make changes available for diff action
+  @Nullable
   @Override
-  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
-    if (VcsDataKeys.CHANGES.equals(key)) {
+  public Object getData(@NotNull String dataId) {
+    // Make changes available for diff action
+    if (VcsDataKeys.CHANGES.is(dataId)) {
       int[] rows = myTable.getSelectedRows();
-      if (rows.length != 1) return;
+      if (rows.length != 1) return null;
       int row = rows[0];
 
       VcsFullCommitDetails commit = myCommits.get(row);
-      // suppressing: inherited API
-      //noinspection unchecked
-      sink.put(key, commit.getChanges().toArray(new Change[0]));
+      return commit.getChanges().toArray(new Change[0]);
     }
+    return null;
   }
 
   @NotNull
@@ -142,25 +141,25 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
     }
 
     return new ColumnInfo[] {
-      new CommitColumnInfo("Hash", hash.myItem) {
+      new CommitColumnInfo(DvcsBundle.message("column.commit.list.hash"), hash.myItem) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return getHash(commit);
         }
       },
-      new ColumnInfo<VcsFullCommitDetails, String>("Subject") {
+      new ColumnInfo<VcsFullCommitDetails, String>(DvcsBundle.message("column.commit.list.subject")) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return commit.getSubject();
         }
       },
-      new CommitColumnInfo("Author", author.myItem) {
+      new CommitColumnInfo(DvcsBundle.message("column.commit.list.author"), author.myItem) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return getAuthor(commit);
         }
       },
-      new CommitColumnInfo("Author time", time.myItem) {
+      new CommitColumnInfo(DvcsBundle.message("column.commit.list.author.time"), time.myItem) {
         @Override
         public String valueOf(VcsFullCommitDetails commit) {
           return getTime(commit);
@@ -177,7 +176,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
     return current;
   }
 
-  private static class ItemAndWidth {
+  private static final class ItemAndWidth {
     private final String myItem;
     private final int myWidth;
 
@@ -203,7 +202,7 @@ public class CommitListPanel extends JPanel implements TypeSafeDataProvider {
 
     @NotNull private final String myMaxString;
 
-    CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+    CommitColumnInfo(@NotNull @NlsContexts.ColumnName String name, @NotNull String maxString) {
       super(name);
       myMaxString = maxString;
     }

@@ -11,12 +11,17 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class InstallFromDiskAction extends DumbAwareAction {
+
   public InstallFromDiskAction() {
     super(IdeBundle.messagePointer("action.InstallFromDiskAction.text"), AllIcons.Nodes.Plugin);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    PluginInstaller.chooseAndInstall(new InstalledPluginsTableModel(), null, PluginInstallCallbackDataKt::installPluginFromCallbackData);
+    PluginInstaller.chooseAndInstall(
+      new InstalledPluginsTableModel(e.getProject()),
+      null,
+      PluginInstallCallbackDataKt::installPluginFromCallbackData
+    );
   }
 }

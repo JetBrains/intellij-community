@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,21 +13,21 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
   XmlAttribute[] EMPTY_ARRAY = new XmlAttribute[0];
 
   @Override
-  @NonNls
+  @NlsSafe
   @NotNull
   String getName();
 
-  @NonNls
+  @NlsSafe
   @NotNull
   String getLocalName();
 
   XmlElement getNameElement();
 
-  @NonNls
+  @NlsSafe
   @NotNull
   String getNamespace();
 
-  @NonNls
+  @NlsSafe
   @NotNull
   String getNamespacePrefix();
 
@@ -37,14 +37,12 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
   /**
    * @return text inside XML attribute with quotes stripped off
    */
-  @Nullable
-  String getValue();
+  @Nullable @NlsSafe String getValue();
 
   /**
    * @return text inside XML attribute with quotes stripped off and XML char entities replaced with corresponding characters
    */
-  @Nullable
-  String getDisplayValue();
+  @Nullable @NlsSafe String getDisplayValue();
 
   /**
    * @param offset in string returned by {@link #getValue()} (with quotes stripped)
@@ -77,5 +75,5 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
   @Nullable
   XmlAttributeValue getValueElement();
 
-  void setValue(@NotNull String value) throws IncorrectOperationException;
+  void setValue(@NotNull @NlsSafe String value) throws IncorrectOperationException;
 }

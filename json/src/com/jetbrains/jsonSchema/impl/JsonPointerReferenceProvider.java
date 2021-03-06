@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -181,7 +181,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
     return value == null ? psiFile : new JsonPointerResolver(value, StringUtil.join(chain, "/")).resolve();
   }
 
-  public static class JsonSchemaIdReference extends JsonSchemaBaseReference<JsonValue> {
+  public static final class JsonSchemaIdReference extends JsonSchemaBaseReference<JsonValue> {
     private final String myText;
 
     private JsonSchemaIdReference(JsonValue element, String text) {

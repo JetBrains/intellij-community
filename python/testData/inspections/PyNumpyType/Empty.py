@@ -1,3 +1,5 @@
+__docformat__ = "numpy"
+
 def empty(shape, dtype=None, order='C'): # real signature unknown; restored from __doc__
     """
     empty(shape, dtype=float, order='C')

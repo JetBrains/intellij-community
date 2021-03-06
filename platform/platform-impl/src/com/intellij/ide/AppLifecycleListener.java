@@ -19,7 +19,7 @@ public interface AppLifecycleListener {
 
   /** @deprecated use {@link #appFrameCreated(List)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default void appFrameCreated(@NotNull List<String> commandLineArgs, @SuppressWarnings("unused") @NotNull Ref<? super Boolean> willOpenProject) {
     appFrameCreated(commandLineArgs);
   }
@@ -27,26 +27,23 @@ public interface AppLifecycleListener {
   /**
    * Called before an application frame is shown.
    */
-  default void appFrameCreated(@NotNull List<String> commandLineArgs) {
-    appUiReady();
-  }
+  default void appFrameCreated(@NotNull List<String> commandLineArgs) { }
 
   /**
    * Called when the welcome screen is displayed (not called if the application opens a project).
    */
-  default void welcomeScreenDisplayed() {
-    appUiReady();
-  }
-
-  /**
-   * Called when either a welcome screen or a project frame is displayed.
-   */
-  default void appUiReady() { }
+  default void welcomeScreenDisplayed() { }
 
   /**
    * Called after an application frame is shown.
    */
   default void appStarting(@Nullable Project projectFromCommandLine) { }
+
+  /**
+   * Called after all application startup tasks, including opening projects, are processed (i.e. either completed or running in background).
+   */
+  @ApiStatus.Internal
+  default void appStarted() { }
 
   /**
    * Called when a project frame is closed.
@@ -72,6 +69,6 @@ public interface AppLifecycleListener {
 
   /** @deprecated please use {@link AppLifecycleListener} directly */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   abstract class Adapter implements AppLifecycleListener { }
 }

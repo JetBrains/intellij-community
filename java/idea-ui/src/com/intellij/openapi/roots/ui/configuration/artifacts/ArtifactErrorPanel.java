@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -25,7 +26,7 @@ public final class ArtifactErrorPanel {
   private final JButton myFixButton;
   private final JLabel myErrorLabel;
   private List<? extends ConfigurationErrorQuickFix> myCurrentQuickFixes;
-  private String myErrorText;
+  private @NlsContexts.Label String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
     myMainPanel = new JPanel(new BorderLayout());
@@ -75,7 +76,7 @@ public final class ArtifactErrorPanel {
     artifactEditor.queueValidation();
   }
 
-  public void showError(@NotNull String message, @NotNull ProjectStructureProblemType.Severity severity,
+  public void showError(@NotNull @NlsContexts.Label String message, @NotNull ProjectStructureProblemType.Severity severity,
                         @NotNull List<? extends ConfigurationErrorQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
     myErrorLabel.setIcon(severity == ProjectStructureProblemType.Severity.ERROR ? AllIcons.General.Error :

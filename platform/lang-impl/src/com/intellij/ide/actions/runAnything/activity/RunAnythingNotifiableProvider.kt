@@ -13,6 +13,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.util.NlsActions
 
 /**
  * Implement notifiable provider if you desire to run an arbitrary activity in the IDE, that may hasn't provide visual effects,
@@ -67,7 +68,7 @@ abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
     var subtitle: String? = null
     var content: String? = null
 
-    fun action(name: String, perform: () -> Unit) {
+    fun action(@NlsActions.ActionText name: String, perform: () -> Unit) {
       actions.add(ActionData(name, perform))
     }
 
@@ -88,7 +89,7 @@ abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
 
   protected enum class ExecutionStatus { SUCCESS, ERROR }
 
-  private data class ActionData(val name: String, val perform: () -> Unit)
+  private data class ActionData(@NlsActions.ActionText val name: String, val perform: () -> Unit)
 
   init {
     notification(ERROR) {

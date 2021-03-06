@@ -1,13 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.html;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.ICustomParsingType;
 import com.intellij.psi.tree.IElementType;
@@ -93,7 +89,7 @@ public class HtmlParsing {
     }
 
     if (error != null) {
-      error.error(XmlPsiBundle.message("top.level.element.is.not.completed"));
+      error.error(XmlPsiBundle.message("xml.parsing.top.level.element.is.not.completed"));
     }
 
     document.done(XmlElementType.HTML_DOCUMENT);
@@ -163,6 +159,9 @@ public class HtmlParsing {
         String tagName = StringUtil.toLowerCase(originalTagName);
         while (childTerminatesParentInStack(tagName)) {
           IElementType tagElementType = getHtmlTagElementType();
+          if (!HtmlUtil.isOptionalEndForHtmlTagL(myTagNamesStack.peek())) {
+            tag.precede().errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", myOriginalTagNamesStack.peek()), tag);
+          }
           PsiBuilder.Marker top = closeTag();
           top.doneBefore(tagElementType, tag);
         }
@@ -183,7 +182,7 @@ public class HtmlParsing {
           advance();
         }
         else {
-          error(XmlPsiBundle.message("tag.start.is.not.closed"));
+          error(XmlPsiBundle.message("xml.parsing.tag.start.is.not.closed"));
           doneTag(tag);
           continue;
         }
@@ -231,7 +230,7 @@ public class HtmlParsing {
         xmlText = startText(xmlText);
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error(XmlPsiBundle.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
+        error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
       else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
@@ -251,7 +250,7 @@ public class HtmlParsing {
             if (hasChancesToMatch) {
               footer.rollbackTo();
               if (!isOptionalTagEnd) {
-                error(XmlErrorBundle.message("named.element.is.not.closed", myOriginalTagNamesStack.peek()));
+                error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", myOriginalTagNamesStack.peek()));
               }
               doneTag(myTagMarkersStack.peek());
             }
@@ -296,7 +295,7 @@ public class HtmlParsing {
     while (hasTags()) {
       final String tagName = myTagNamesStack.peek();
       if (!HtmlUtil.isOptionalEndForHtmlTagL(tagName) && !"html".equals(tagName) && !"body".equals(tagName)) {
-        error(XmlErrorBundle.message("named.element.is.not.closed", myOriginalTagNamesStack.peek()));
+        error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", myOriginalTagNamesStack.peek()));
       }
       doneTag(myTagMarkersStack.peek());
     }
@@ -428,9 +427,8 @@ public class HtmlParsing {
   protected static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XmlElementType.XML_TEXT);
-      xmlText = null;
     }
-    return xmlText;
+    return null;
   }
 
   protected void parseCData() {
@@ -515,7 +513,7 @@ public class HtmlParsing {
         if (tt == XmlTokenType.XML_BAD_CHARACTER) {
           final PsiBuilder.Marker error = mark();
           advance();
-          error.error(XmlPsiBundle.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
+          error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
         }
         else if (tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
           parseReference();
@@ -591,7 +589,7 @@ public class HtmlParsing {
         advance();
       }
       else {
-        error(XmlErrorBundle.message("expected.attribute.eq.sign"));
+        error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
       }
       parseAttributeValue();
     }
@@ -618,7 +616,7 @@ public class HtmlParsing {
     myBuilder.advanceLexer();
   }
 
-  protected void error(@NotNull String message) {
+  protected void error(@NotNull @ParsingError String message) {
     myBuilder.error(message);
   }
 }

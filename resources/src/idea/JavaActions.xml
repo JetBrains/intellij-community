@@ -6,7 +6,7 @@
     </action>
 
 
-    <group id="NewGroup1">
+    <group id="NewGroup1" searchable="false">
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
               icon="AllIcons.Nodes.Module"/>
 
@@ -37,8 +37,7 @@
     <action id="ShowProjectStructureSettings" class="com.intellij.ide.actions.ShowStructureSettingsAction"
             icon="AllIcons.General.ProjectStructure">
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="MainToolBarSettings" anchor="after" relative-to-action="ShowSettings"/>
-      <add-to-group group-id="NavBarToolBar" relative-to-action="NavBarToolBarOthers" anchor="after"/>
+      <add-to-group group-id="SettingsEntryPointGroup" anchor="before" relative-to-action="ShowSettings"/>
     </action>
     <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
       <add-to-group group-id="FileSettingsGroup" anchor="last"/>
@@ -89,6 +88,7 @@
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
+      <action id="CompileFile" class="com.intellij.compiler.actions.CompileFileAction" use-shortcut-of="Compile"/>
       <separator/>
       <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
       <separator/>
@@ -121,14 +121,6 @@
       </group>
 
       <separator/>
-      <group internal="true" text="Cached Value Profiler" popup="true">
-        <action id="TurnOnOffCachedValueProfilerAction" class="com.intellij.internal.cachedValueProfiler.TurnOnOffCachedValueProfilerAction"
-                internal="true"/>
-        <action id="DumpCachedValueProfilerInfoAction" class="com.intellij.internal.cachedValueProfiler.DumpCachedValueProfilerInfoAction"
-                internal="true"/>
-      </group>
-
-      <separator/>
       <group id="Internal.VFS" popup="true">
         <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
         <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
@@ -138,6 +130,7 @@
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
         <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>
         <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
+        <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
         <separator/>
         <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
         <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
@@ -150,8 +143,8 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action internal="true" id="TestParseEventLogWhitelistAction"
-            class="com.intellij.internal.statistic.actions.TestParseEventLogWhitelistAction">
+    <action internal="true" id="TestParseEventsSchemeAction"
+            class="com.intellij.internal.statistic.actions.TestParseEventsSchemeAction">
     </action>
 
     <action internal="true" id="CollectFUStatisticsAction"
@@ -188,8 +181,12 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="NavbarPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
-      <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
     </reference>
+
+    <group id="EditorPopupMenuAnalyze" class="com.intellij.ide.actions.EditorPopupNoSelectionGroup">
+      <reference ref="AnalyzeMenu"/>
+      <add-to-group group-id="EditorPopupMenu1" anchor="after" relative-to-action="FindUsages"/>
+    </group>
 
     <group id="ProjectViewAnalysisGroup">
       <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="first"/>
@@ -403,6 +400,7 @@
       <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
 
     <group id="ToggleBreakpointAction">
@@ -422,6 +420,7 @@
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
 
     <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">
@@ -502,11 +501,13 @@
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction">
@@ -516,9 +517,13 @@
       <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction"
               icon="AllIcons.Actions.StepOutCodeBlock">
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
+        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra" anchor="after" relative-to-action="SmartStepInto"/>
       </action>
 
-      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction"/>
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
+        <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
+        <override-text place="XDebuggerTreeInlayPopup"/>
+      </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
@@ -726,6 +731,10 @@
 
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
+
+    <action class="com.intellij.find.findUsages.GroupByPackageAction" id="UsageGrouping.Package" use-shortcut-of="UsageGrouping.Directory">
+      <add-to-group group-id="UsageGroupingActionGroup"/>
+    </action>
   </actions>
 </idea-plugin>
 

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
@@ -43,11 +44,11 @@ public class GroovyInstanceVariableNamingConventionInspection extends Convention
   public String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
-      return "Instance variable name '#ref' is too short";
+      return GroovyBundle.message("inspection.message.instance.variable.name.ref.too.short");
     } else if (className.length() > getMaxLength()) {
-      return "Instance variable name '#ref' is too long";
+      return GroovyBundle.message("inspection.message.instance.variable.name.ref.too.long");
     }
-    return "Instance variable name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+    return GroovyBundle.message("inspection.message.instance.variable.name.ref.doesn.t.match.regex", getRegex());
   }
 
   @Override

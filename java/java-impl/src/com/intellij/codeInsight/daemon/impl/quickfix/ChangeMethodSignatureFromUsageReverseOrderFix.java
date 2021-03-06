@@ -16,8 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodSignatureFromUsageFix {
   public ChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
                                                        PsiExpression @NotNull [] expressions,
@@ -80,7 +78,6 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
       }
       else if (isArgumentInVarargPosition(expressions, ei, varargParam, substitutor)) {
         if (pi == parameters.length - 1) {
-          assert varargParam != null;
           final PsiType type = varargParam.getType();
           result.add(0, ParameterInfoImpl.create(pi).withName(varargParam.getName()).withType(type));
           params.add(0, escapePresentableType(type));

@@ -58,7 +58,7 @@ public class ComponentWithBrowseButtonFixture extends JComponentFixture<Componen
 
     final Optional<ExtendableTextComponent.Extension> extension =
       extendableTextField.getExtensions().stream().filter(extensionFilter).findFirst();
-    if (!extension.isPresent()) {
+    if (extension.isEmpty()) {
       throw new ComponentLookupException("Unable to find extension");
     }
 

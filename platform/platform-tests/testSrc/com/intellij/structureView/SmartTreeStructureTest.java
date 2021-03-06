@@ -149,7 +149,7 @@ public class SmartTreeStructureTest extends BasePlatformTestCase {
       @NotNull
       @Override
       public Comparator getComparator() {
-        return (o1, o2) -> o1.toString().compareTo(o2.toString());
+        return Comparator.comparing(Object::toString);
       }
 
       @Override

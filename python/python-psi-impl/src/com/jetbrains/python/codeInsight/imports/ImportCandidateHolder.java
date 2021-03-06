@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
@@ -27,13 +28,14 @@ import java.util.List;
  *
  * @author dcheryasov
  */
-// visibility is intentionally package-level
 public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private static final Logger LOG = Logger.getInstance(ImportCandidateHolder.class);
-  @NotNull private final SmartPsiElementPointer<PsiElement> myImportable;
+
+  @NotNull private final SmartPsiElementPointer<PsiNamedElement> myImportable;
   @Nullable private final SmartPsiElementPointer<PyImportElement> myImportElement;
   @NotNull private final SmartPsiElementPointer<PsiFileSystemItem> myFile;
   @Nullable private final QualifiedName myPath;
+  @NotNull private final String myImportableName;
   @Nullable private final String myAsName;
   private final int myRelevance;
 
@@ -47,30 +49,36 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
    *                      For top-level imported symbols it's <em>qualified name of containing module</em> (or package for __init__.py).
    *                      For modules and packages it should be <em>qualified name of their parental package</em>
    *                      (empty for modules and packages located at source roots).
-   *
    */
-  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+  public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path, @Nullable String asName) {
+    if (importElement == null && path == null) {
+      throw new IllegalArgumentException("Either an import path or an existing import should be provided for " + importable);
+    }
     SmartPointerManager pointerManager = SmartPointerManager.getInstance(importable.getProject());
     myFile = pointerManager.createSmartPsiElementPointer(file);
     myImportable = pointerManager.createSmartPsiElementPointer(importable);
+    myImportableName = PyUtil.getElementNameWithoutExtension(importable);
+    assert myImportableName != null;
     myImportElement = importElement != null ? pointerManager.createSmartPsiElementPointer(importElement) : null;
     myPath = path;
     myAsName = asName;
-    String name = importable instanceof PsiNamedElement ? ((PsiNamedElement)importable).getName() : null;
-    myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, name, path, null, false);
-    LOG.debug("Computed relevance for import item ", name, ": ", myRelevance);
-    assert importElement != null || path != null; // one of these must be present
+    myRelevance = PyCompletionUtilsKt.computeCompletionWeight(importable, myImportableName, myPath, null, false);
+    LOG.debug("Computed relevance for import item ", myImportableName, ": ", myRelevance);
   }
 
-  public ImportCandidateHolder(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
+  public ImportCandidateHolder(@NotNull PsiNamedElement importable, @NotNull PsiFileSystemItem file,
                                @Nullable PyImportElement importElement, @Nullable QualifiedName path) {
     this(importable, file, importElement, path, null);
   }
 
   @Nullable
-  public PsiElement getImportable() {
+  public PsiNamedElement getImportable() {
     return myImportable.getElement();
+  }
+
+  public @NotNull String getImportableName() {
+    return myImportableName;
   }
 
   @Nullable
@@ -119,10 +127,10 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   }
 
   @NotNull
-  public String getPresentableText(@NotNull String myName) {
+  public @NlsSafe String getPresentableText() {
     PyImportElement importElement = getImportElement();
     PsiElement importable = getImportable();
-    final StringBuilder sb = new StringBuilder(getQualifiedName(myName, myPath, importElement));
+    final StringBuilder sb = new StringBuilder(getQualifiedName(getImportableName(), myPath, importElement));
     PsiElement parent = null;
     if (importElement != null) {
       parent = importElement.getParent();
@@ -148,6 +156,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
         sb.append(source.asQualifiedName());
       }
     }
+    if (myAsName != null) {
+      sb.append(" as ").append(myAsName);
+    }
     return sb.toString();
   }
 
@@ -155,6 +166,9 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   public int compareTo(@NotNull ImportCandidateHolder other) {
     if (myImportElement != null && other.myImportElement == null) return -1;
     if (myImportElement == null && other.myImportElement != null) return 1;
+    if (myAsName != null && other.myAsName == null) return -1;
+    if (myAsName == null && other.myAsName != null) return 1;
+
     int comparedRelevance = Comparator
       .comparing(ImportCandidateHolder::getRelevance).reversed()
       .compare(this, other);

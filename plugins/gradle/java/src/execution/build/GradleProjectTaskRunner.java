@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.build.BuildViewManager;
@@ -24,16 +24,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.task.impl.JpsProjectTaskRunner;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import org.gradle.api.internal.jvm.ClassDirectoryBinaryNamingScheme;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +44,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -81,7 +82,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                                                                           "def effectiveTasks = []\n" +
                                                                           "gradle.taskGraph.addTaskExecutionListener(new TaskExecutionAdapter() {\n" +
                                                                           "    void afterExecute(Task task, TaskState state) {\n" +
-                                                                          "        if (state.didWork && task.outputs.hasOutput) {\n" +
+                                                                          "        if ((state.didWork || (state.skipped && state.skipMessage == 'FROM-CACHE')) && task.outputs.hasOutput) {\n" +
                                                                           "            effectiveTasks.add(task)\n" +
                                                                           "        }\n" +
                                                                           "    }\n" +
@@ -172,7 +173,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       else {
         projectName = projectFile.getName();
       }
-      String executionName = "Build " + projectName;
+      String executionName = GradleBundle.message("gradle.execution.name.build.project.", projectName);
       settings.setExecutionName(executionName);
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
@@ -185,9 +186,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
       if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
-        scripts.add(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, PathUtil.getCanonicalPath(outputPathsFile.getAbsolutePath())));
+        scripts.add(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath())));
       }
-      userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, SystemProperties.getLineSeparator()));
+      userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, System.lineSeparator()));
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
 
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
@@ -374,9 +375,8 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
   @NotNull
   private static String getTaskName(@NotNull String taskPrefix, @NotNull String taskSuffix, @Nullable String sourceSetName) {
-    return isEmpty(sourceSetName) || "main".equals(sourceSetName) ?
-           taskPrefix + (taskPrefix.isEmpty() ? taskSuffix : capitalize(taskSuffix)) :
-           taskPrefix + (taskPrefix.isEmpty() ? sourceSetName : capitalize(sourceSetName)) + capitalize(taskSuffix);
+    if (Strings.isEmpty(sourceSetName)) sourceSetName = "main";
+    return new ClassDirectoryBinaryNamingScheme(sourceSetName).getTaskName(taskPrefix, taskSuffix);
   }
 
   private static boolean addIfContains(@NotNull String taskPathPrefix,

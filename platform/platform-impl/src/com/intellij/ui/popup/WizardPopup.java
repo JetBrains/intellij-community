@@ -13,6 +13,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.popup.async.AsyncPopupImpl;
 import com.intellij.ui.popup.async.AsyncPopupStep;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.MnemonicsSearch;
@@ -21,6 +22,7 @@ import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,10 +57,13 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final ActionMap myActionMap = new ActionMap();
   private final InputMap myInputMap = new InputMap();
 
+  private boolean myKeyPressedReceived;
+
   /**
    * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public WizardPopup(@NotNull PopupStep<Object> aStep) {
     this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);
   }
@@ -70,18 +75,10 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     mySpeedSearch.setEnabled(myStep.isSpeedSearchEnabled());
 
     final JComponent content = createContent();
+    content.putClientProperty(KEY, this);
+    JComponent popupComponent = createPopupComponent(content);
 
-    JScrollPane scrollPane = createScrollPane(content);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getHorizontalScrollBar().setBorder(null);
-
-    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
-    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
-
-    scrollPane.setBorder(JBUI.Borders.empty());
-
-    init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
+    init(project, popupComponent, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, Collections.emptySet(), false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, null, true, null);
@@ -116,6 +113,20 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
 
 
+  }
+
+  @NotNull
+  protected JComponent createPopupComponent(JComponent content) {
+    JScrollPane scrollPane = createScrollPane(content);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getHorizontalScrollBar().setBorder(null);
+
+    scrollPane.getActionMap().get("unitScrollLeft").setEnabled(false);
+    scrollPane.getActionMap().get("unitScrollRight").setEnabled(false);
+
+    scrollPane.setBorder(JBUI.Borders.empty());
+    return scrollPane;
   }
 
   @NotNull
@@ -290,7 +301,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return false;
   }
 
-  private static class MyContainer extends MyContentPanel {
+  private static final class MyContainer extends MyContentPanel {
     private MyContainer(@NotNull PopupBorder border) {
       super(border);
       setOpaque(true);
@@ -311,14 +322,14 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
     }
 
-    private Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
+    private static Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {
       int resultHeight = ofContent.height > MAX_SIZE.height + 50 ? MAX_SIZE.height : ofContent.height;
       if (locationOnScreen != null) {
         final Rectangle r = ScreenUtil.getScreenRectangle(locationOnScreen);
-        resultHeight = ofContent.height > r.height - (r.height / 4) ? r.height - (r.height / 4) : ofContent.height;
+        resultHeight = Math.min(ofContent.height, r.height - (r.height / 4));
       }
 
-      int resultWidth = ofContent.width > MAX_SIZE.width ? MAX_SIZE.width : ofContent.width;
+      int resultWidth = Math.min(ofContent.width, MAX_SIZE.width);
 
       if (ofContent.height > MAX_SIZE.height) {
         resultWidth += ScrollPaneFactory.createScrollPane().getVerticalScrollBar().getPreferredSize().getWidth();
@@ -337,17 +348,14 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
-    if (event.getID() != KeyEvent.KEY_PRESSED &&
-        event.getID() != KeyEvent.KEY_RELEASED &&
-        event.getID() != KeyEvent.KEY_TYPED) {
-      // do not dispatch these events to Swing
-      event.consume();
-      return true;
-    }
-
     if (event.getID() == KeyEvent.KEY_PRESSED) {
+      myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
       if (proceedKeyEvent(event, stroke)) return true;
+    }
+    else if (!myKeyPressedReceived && !(this instanceof ComboBoxPopup)) {
+      // key was pressed while this popup wasn't active, ignore the event
+      return false;
     }
 
     if (event.getID() == KeyEvent.KEY_RELEASED) {
@@ -380,7 +388,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public Rectangle getBounds() {
-    return new Rectangle(getContent().getLocationOnScreen(), getContent().getSize());
+    JComponent content = isDisposed() ? null : getContent();
+    return content == null ? null : new Rectangle(content.getLocationOnScreen(), content.getSize());
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {

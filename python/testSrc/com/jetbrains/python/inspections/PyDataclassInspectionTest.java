@@ -5,7 +5,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,22 +65,22 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyDefaultBase() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
     doTest();
   }
 
-  // PY-34374
+  // PY-34374, PY-33189
   public void testFieldsOrderInInheritanceKwOnlyDefaultDerived() {
     doTest();
   }
@@ -226,6 +225,20 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-43359
+  public void testSuppressedDunderPostInitSignature() {
+    doTestByText("import dataclasses\n" +
+                 "\n" +
+                 "@dataclasses.dataclass\n" +
+                 "class A:\n" +
+                 "    a: int\n" +
+                 "    b: dataclasses.InitVar[str]\n" +
+                 "    c: dataclasses.InitVar[bytes]\n" +
+                 "\n" +
+                 "    def __post_init__(self, *args, **kwargs):\n" +
+                 "        pass");
+  }
+
   // PY-27398
   public void testFieldDefaultAndDefaultFactory() {
     doTest();
@@ -303,20 +316,15 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
 
   @Override
   protected void doTest() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> {
-        myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
-        super.doTest();
-        assertProjectFilesNotParsed(myFixture.getFile());
-      }
-    );
+    myFixture.copyFileToProject(getTestCaseDirectory() + "/dataclasses.py", "dataclasses.py");
+    super.doTest();
+    assertProjectFilesNotParsed(myFixture.getFile());
   }
 
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @NotNull

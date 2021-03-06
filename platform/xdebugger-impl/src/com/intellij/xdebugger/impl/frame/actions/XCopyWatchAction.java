@@ -22,13 +22,17 @@ public class XCopyWatchAction extends XWatchesTreeActionBase {
   protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
     XDebuggerTreeNode root = tree.getRoot();
     for (XValueNodeImpl node : getSelectedNodes(tree, XValueNodeImpl.class)) {
-      node.getValueContainer().calculateEvaluationExpression().onSuccess(expr -> {
-        XExpression watchExpression = expr != null ? expr : XExpressionImpl.fromText(node.getName());
-        if (watchExpression != null) {
-          DebuggerUIUtil.invokeLater(
-            () -> watchesView.addWatchExpression(watchExpression, node instanceof WatchNode ? root.getIndex(node) + 1 : -1, true));
-        }
-      });
+      if (node instanceof WatchNode) {
+        watchesView.addWatchExpression(((WatchNode)node).getExpression(), root.getIndex(node) + 1, true);
+      }
+      else {
+        node.getValueContainer().calculateEvaluationExpression().onSuccess(expr -> {
+          XExpression watchExpression = expr != null ? expr : XExpressionImpl.fromText(node.getName());
+          if (watchExpression != null) {
+            DebuggerUIUtil.invokeLater(() -> watchesView.addWatchExpression(watchExpression, -1, true));
+          }
+        });
+      }
     }
   }
 }

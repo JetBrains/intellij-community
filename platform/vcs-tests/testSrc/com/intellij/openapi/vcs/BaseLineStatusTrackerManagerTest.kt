@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
@@ -8,7 +8,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -32,14 +31,14 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
   }
 
   override fun tearDown() {
-    RunAll()
-      .append(ThrowableRunnable { clm.waitUntilRefreshed() })
-      .append(ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() })
-      .append(ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() })
-      .append(ThrowableRunnable { lstm.releaseAllTrackers() })
-      .append(ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(false) })
-      .append(ThrowableRunnable { super.tearDown() })
-      .run()
+    RunAll(
+      ThrowableRunnable { clm.waitUntilRefreshed() },
+      ThrowableRunnable { UIUtil.dispatchAllInvocationEvents() },
+      ThrowableRunnable { lstm.resetExcludedFromCommitMarkers() },
+      ThrowableRunnable { lstm.releaseAllTrackers() },
+      ThrowableRunnable { DiffIterableUtil.setVerifyEnabled(false) },
+      ThrowableRunnable { super.tearDown() }
+    ).run()
   }
 
   override fun resetSettings() {
@@ -86,14 +85,6 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
   protected fun PartialLocalLineStatusTracker.assertAffectedChangeLists(vararg expectedNames: String) {
     assertSameElements(this.getAffectedChangeListsIds().asListIdsToNames(), *expectedNames)
-  }
-
-  protected fun LineStatusTracker<*>.assertTextContentIs(expected: String) {
-    assertEquals(parseInput(expected), document.text)
-  }
-
-  protected fun LineStatusTracker<*>.assertBaseTextContentIs(expected: String) {
-    assertEquals(parseInput(expected), vcsDocument.text)
   }
 
   protected fun Range.assertChangeList(listName: String) {

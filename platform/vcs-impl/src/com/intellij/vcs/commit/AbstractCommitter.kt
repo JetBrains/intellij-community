@@ -11,18 +11,20 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
+import org.jetbrains.annotations.Nls
 
 private val LOG = logger<AbstractCommitter>()
 
 abstract class AbstractCommitter(
   val project: Project,
   val changes: List<Change>,
-  val commitMessage: String,
+  val commitMessage: @NlsSafe String,
   val commitContext: CommitContext
 ) {
   private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
@@ -43,11 +45,11 @@ abstract class AbstractCommitter(
     resultHandlers += resultHandler
   }
 
-  fun runCommit(taskName: String, sync: Boolean) {
+  fun runCommit(taskName: @Nls String, sync: Boolean) {
     val task = object : Task.Backgroundable(project, taskName, true, configuration.commitOption) {
       override fun run(indicator: ProgressIndicator) {
         val vcsManager = ProjectLevelVcsManager.getInstance(myProject)
-        val activity = IdeActivity.started(myProject, "vcs", "commit")
+        val activity = IdeActivity.started(myProject, "vcs", "commit") // NON-NLS
         vcsManager.startBackgroundVcsOperation()
         try {
           delegateCommitToVcsThread()
@@ -129,12 +131,18 @@ abstract class AbstractCommitter(
     }
     catch (e: Throwable) {
       LOG.error(e)
-      _exceptions.add(VcsException(e))
+      addException(e)
     }
     finally {
       finishCommit(canceled)
       onFinish()
     }
+  }
+
+  protected fun Throwable.asVcsException(): VcsException = if (this is VcsException) this else VcsException(this)
+
+  protected fun addException(e: Throwable) {
+    _exceptions.add(e.asVcsException())
   }
 
   private fun finishCommit(canceled: Boolean) {
@@ -163,7 +171,7 @@ abstract class AbstractCommitter(
     @JvmStatic
     fun collectErrors(exceptions: List<VcsException>): List<VcsException> = exceptions.filterNot { it.isWarning }
 
-    internal fun progress(message: String) =
+    internal fun progress(message: @Nls String) =
       ProgressManager.getInstance().progressIndicator?.apply {
         text = message
         text2 = ""

@@ -41,9 +41,7 @@ import com.intellij.util.xml.stubs.FileStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -51,7 +49,7 @@ import java.util.List;
 public class DomServiceImpl extends DomService {
 
   @NotNull
-  private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
+  private static XmlFileHeader calcXmlFileHeader(@NotNull XmlFile file) {
 
     if (file instanceof PsiFileEx && ((PsiFileEx)file).isContentsLoaded() && file.getNode().isParsed()) {
       return computeHeaderByPsi(file);
@@ -117,7 +115,7 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public ModelMerger createModelMerger() {
+  public @NotNull ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }
 
@@ -143,7 +141,7 @@ public class DomServiceImpl extends DomService {
 
   @Override
   @NotNull
-  public XmlFileHeader getXmlFileHeader(XmlFile file) {
+  public XmlFileHeader getXmlFileHeader(@NotNull XmlFile file) {
     if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) {
       return calcXmlFileHeader(file);
     }
@@ -152,15 +150,31 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  public Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
-                                                      Project project,
-                                                      final GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(DomFileIndex.NAME, rootElementClass.getName(), scope);
+  public @NotNull Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+                                                               @NotNull GlobalSearchScope scope) {
+    DomFileDescription<?> description = DomApplicationComponent
+      .getInstance()
+      .findFileDescription(rootElementClass);
+    if (description == null) return Collections.emptySet();
+
+    String[] namespaces = description.getAllPossibleRootTagNamespaces();
+    if (namespaces.length == 0) {
+      namespaces = new String[]{null};
+    }
+    String rootTagName = description.getRootTagName();
+
+    Set<VirtualFile> files = new HashSet<>();
+    for (String namespace : namespaces) {
+      files.addAll(DomFileIndex.findFiles(rootTagName, namespace, scope));
+    }
+    return files;
   }
 
   @Override
-  public <T extends DomElement> List<DomFileElement<T>> getFileElements(final Class<T> clazz, final Project project, @Nullable final GlobalSearchScope scope) {
-    final Collection<VirtualFile> list = getDomFileCandidates(clazz, project, scope != null ? scope : GlobalSearchScope.allScope(project));
+  public <T extends DomElement> @NotNull List<DomFileElement<T>> getFileElements(@NotNull Class<T> clazz, @NotNull Project project, @Nullable GlobalSearchScope scope) {
+    final Collection<VirtualFile> list = getDomFileCandidates(clazz, scope != null ? scope : GlobalSearchScope.allScope(project));
+    if (list.isEmpty()) return Collections.emptyList();
+
     final ArrayList<DomFileElement<T>> result = new ArrayList<>(list.size());
     for (VirtualFile file : list) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -171,13 +185,12 @@ public class DomServiceImpl extends DomService {
         }
       }
     }
-
     return result;
   }
 
 
   @Override
-  public StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file, final Function<DomElement, StructureViewMode> modeProvider) {
+  public @NotNull StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider) {
     return new DomStructureViewBuilder(file, modeProvider);
   }
 }

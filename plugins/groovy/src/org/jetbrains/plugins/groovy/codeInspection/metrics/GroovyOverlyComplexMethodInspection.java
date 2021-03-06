@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
-import org.jetbrains.plugins.groovy.codeInspection.utils.InspectionUtil;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
 
@@ -23,6 +24,6 @@ public class GroovyOverlyComplexMethodInspection extends GroovyOverlyComplexMeth
 
   @Override
   public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Method complexity limit:");
+    return new SingleIntegerFieldOptionsPanel(GroovyBundle.message("overly.complex.method.complexity.limit.option"), this, "m_limit");
   }
 }

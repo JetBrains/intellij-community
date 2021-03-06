@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.diagnostic.PluginException;
@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.reporting.FreezeLogger;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,9 +178,11 @@ public abstract class TypedAction {
     }
   }
 
-  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, final DataContext dataContext) {
+  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
     if (editor == null) return;
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    FreezeLogger.getInstance().runUnderPerformanceMonitor(project, () -> myRawHandler.execute(editor, charTyped, dataContext));
+    SlowOperations.allowSlowOperations(() -> FreezeLogger.getInstance().runUnderPerformanceMonitor(
+      project, () -> myRawHandler.execute(editor, charTyped, dataContext)
+    ));
   }
 }

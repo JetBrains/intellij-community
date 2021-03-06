@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -132,7 +134,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
-    return supConstructor;
+    return null;
   }
 
   private static void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
@@ -205,7 +207,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     PsiNewExpression expression = getNewExpression();
-    if (rejectQualifier(expression.getQualifier())) {
+    if (rejectContainer(expression)) {
       return false;
     }
 
@@ -224,11 +226,23 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  protected boolean rejectQualifier(PsiExpression qualifier) {
-    return qualifier != null;
+  protected boolean rejectContainer(PsiNewExpression expression) {
+    if (expression.getQualifier() != null) {
+      return true;
+    }
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+    if (classReference != null && classReference.isQualified()) {
+      PsiJavaCodeReferenceElement containerReference = ObjectUtils.tryCast(classReference.getQualifier(), PsiJavaCodeReferenceElement.class);
+      if (containerReference != null) {
+        PsiElement targetClass = containerReference.resolve();
+        return !(targetClass instanceof PsiClass) || !InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)targetClass, expression, true, true);
+      }
+      return true;
+    }
+    return false;
   }
 
-  protected String getText(final String varName) {
+  protected @IntentionName String getText(final String varName) {
     return CommonQuickFixBundle.message("fix.create.title.x", getKind().getDescriptionAccusative(), varName);
   }
 

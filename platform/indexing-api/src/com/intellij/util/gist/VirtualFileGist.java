@@ -18,6 +18,7 @@ package com.intellij.util.gist;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  * @author peter
  */
+@ApiStatus.NonExtendable
 public interface VirtualFileGist<Data> {
 
   /**

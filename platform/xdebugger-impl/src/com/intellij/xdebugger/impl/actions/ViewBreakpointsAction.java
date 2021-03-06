@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class ViewBreakpointsAction
@@ -7,22 +7,25 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
+public class ViewBreakpointsAction extends DumbAwareAction {
   private Object myInitialBreakpoint;
 
   public ViewBreakpointsAction(){
     this(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), null);
   }
 
-  public ViewBreakpointsAction(String name, Object initialBreakpoint) {
+  public ViewBreakpointsAction(@NlsActions.ActionText String name, Object initialBreakpoint) {
     super(name);
     myInitialBreakpoint = initialBreakpoint;
   }

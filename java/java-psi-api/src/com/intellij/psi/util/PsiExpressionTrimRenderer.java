@@ -16,6 +16,7 @@
 
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
@@ -256,7 +257,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     }
   }
 
-  public static String render(@NotNull PsiExpression expression) {
+  public static @NlsSafe String render(@NotNull PsiExpression expression) {
     return render(expression, 100);
   }
 

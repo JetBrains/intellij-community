@@ -6,37 +6,45 @@ import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
+import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.ObjectUtils;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.text.ChoiceFormat;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class JavaI18nUtil extends I18nUtil {
+public final class JavaI18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
-    (project, propertiesFiles, key, value, parameters) -> createProperty(project, propertiesFiles, key, value, true);
+    (project, propertiesFiles, key, value, parameters) -> I18nUtil.createProperty(project, propertiesFiles, key, value, true);
+
+  public static final PropertyCreationHandler EMPTY_CREATION_HANDLER =
+    (project, propertiesFiles, key, value, parameters) -> {};
 
   private JavaI18nUtil() {
   }
 
   @Nullable
-  public static TextRange getSelectedRange(Editor editor, final PsiFile psiFile) {
+  public static TextRange getSelectedRange(Editor editor, @NotNull PsiFile psiFile) {
     if (editor == null) return null;
     String selectedText = editor.getSelectionModel().getSelectedText();
     if (selectedText != null) {
@@ -48,88 +56,44 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull PsiExpression expression, @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiVariable) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
-      if (annotation != null) {
-        processAnnotationAttributes(resourceBundleRef, annotation);
-        return true;
+    UExpression uExpression = UastContextKt.toUElement(expression, UExpression.class);
+    if (uExpression == null) return false;
+    Ref<UExpression> resourceBundleURef = resourceBundleRef == null ? null : Ref.create();
+    if (!mustBePropertyKey(uExpression, resourceBundleURef)) return false;
+    if (resourceBundleURef != null) {
+      UExpression value = resourceBundleURef.get();
+      if (value != null) {
+        resourceBundleRef.set(ObjectUtils.tryCast(value.getSourcePsi(), PsiAnnotationMemberValue.class));
       }
     }
-    return isPassedToResourceParam(expression, resourceBundleRef);
+    return true;
   }
 
   public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
-    while (expression.getUastParent() instanceof UParenthesizedExpression) {
-      expression = (UParenthesizedExpression)expression.getUastParent();
-    }
-    final UElement parent = expression.getUastParent();
-    if (parent instanceof UVariable) {
-      UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
+    expression = NlsInfo.goUp(expression, false);
+    AnnotationContext context = AnnotationContext.fromExpression(expression);
+    return context.allItems().anyMatch(owner -> {
+      PsiAnnotation annotation = owner.findAnnotation(AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
-        processAnnotationAttributes(resourceBundleRef, annotation);
-        return true;
+        UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
+        if (uAnnotation != null) {
+          if (resourceBundleRef != null) {
+            for (UNamedExpression attribute : uAnnotation.getAttributeValues()) {
+              final String name = attribute.getName();
+              if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
+                resourceBundleRef.set(attribute.getExpression());
+              }
+            }
+          }
+          return true;
+        }
       }
-    }
-
-    UCallExpression callExpression = UastUtils.getUCallExpression(expression);
-    if (callExpression == null) return false;
-    PsiMethod psiMethod = callExpression.resolve();
-    if (psiMethod == null) return false;
-    PsiParameter parameter = UastUtils.getParameterForArgument(callExpression, expression);
-    if (parameter == null) return false;
-    int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
-    if (paramIndex == -1) return false;
-    if (resourceBundleRef == null) {
-      return isPropertyKeyParameter(psiMethod, paramIndex, null, null);
-    }
-    @Nullable Ref<PsiAnnotationMemberValue> ref = new Ref<>();
-    boolean isAnnotated = isPropertyKeyParameter(psiMethod, paramIndex, null, ref);
-    PsiAnnotationMemberValue memberValue = ref.get();
-    if (memberValue != null) {
-      resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
-    }
-    return isAnnotated;
-  }
-
-  static boolean isPassedToResourceParam(@NotNull PsiExpression expression,
-                                         @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    expression = getTopLevelExpression(expression);
-    final PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiExpressionList)) return false;
-    int idx = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), expression);
-    if (idx == -1) return false;
-
-    PsiElement grParent = parent.getParent();
-
-    if (grParent instanceof PsiAnonymousClass) {
-      grParent = grParent.getParent();
-    }
-
-    if (grParent instanceof PsiCall) {
-      PsiMethod method = ((PsiCall)grParent).resolveMethod();
-      return method != null && isPropertyKeyParameter(method, idx, null, resourceBundleRef);
-    }
-
-    return false;
+      return false;
+    });
   }
 
   @NotNull
-  static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
-    while (expression.getParent() instanceof PsiExpression) {
-      final PsiExpression parent = (PsiExpression)expression.getParent();
-      if (parent instanceof PsiConditionalExpression &&
-          ((PsiConditionalExpression)parent).getCondition() == expression) {
-        break;
-      }
-      expression = parent;
-      if (expression instanceof PsiAssignmentExpression) break;
-    }
-    return expression;
-  }
-
-  @NotNull
-  static UExpression getTopLevelExpression(@NotNull UExpression expression) {
+  static UExpression getTopLevelExpression(@NotNull UExpression expression, boolean stopAtCall) {
     while (expression.getUastParent() instanceof UExpression) {
       final UExpression parent = (UExpression)expression.getUastParent();
       if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
@@ -141,70 +105,17 @@ public class JavaI18nUtil extends I18nUtil {
       }
       expression = parent;
       if (UastExpressionUtils.isAssignment(expression)) break;
+      if (expression instanceof UCallExpression && stopAtCall) {
+        UastCallKind kind = ((UCallExpression)expression).getKind();
+        if (kind == UastCallKind.METHOD_CALL) {
+          if (expression.getUastParent() instanceof UQualifiedReferenceExpression) {
+            expression = (UExpression)expression.getUastParent();
+          }
+          break;
+        }
+      }
     }
     return expression;
-  }
-
-  static boolean isPropertyKeyParameter(final PsiMethod method,
-                                        final int idx,
-                                        @Nullable Collection<? super PsiMethod> processed,
-                                        @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    if (processed != null) {
-      if (processed.contains(method)) return false;
-    }
-    else {
-      processed = new THashSet<>();
-    }
-    processed.add(method);
-
-    final PsiParameter[] params = method.getParameterList().getParameters();
-    PsiParameter param;
-    if (idx >= params.length) {
-      PsiParameter lastParam = ArrayUtil.getLastElement(params);
-      if (lastParam == null || !lastParam.isVarArgs()) return false;
-      param = lastParam;
-    }
-    else {
-      param = params[idx];
-    }
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, AnnotationUtil.PROPERTY_KEY);
-    if (annotation != null) {
-      processAnnotationAttributes(resourceBundleRef, annotation);
-      return true;
-    }
-
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    for (PsiMethod superMethod : superMethods) {
-      if (isPropertyKeyParameter(superMethod, idx, processed, resourceBundleRef)) return true;
-    }
-
-    return false;
-  }
-
-  private static void processAnnotationAttributes(@Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
-                                                  @NotNull PsiAnnotation annotation) {
-    if (resourceBundleRef != null) {
-      final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-      final PsiNameValuePair[] attributes = parameterList.getAttributes();
-      for (PsiNameValuePair attribute : attributes) {
-        final String name = attribute.getName();
-        if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
-          resourceBundleRef.set(attribute.getValue());
-        }
-      }
-    }
-  }
-
-  private static void processAnnotationAttributes(@Nullable Ref<? super UExpression> resourceBundleRef,
-                                                  @NotNull UAnnotation annotation) {
-    if (resourceBundleRef != null) {
-      for (UNamedExpression attribute : annotation.getAttributeValues()) {
-        final String name = attribute.getName();
-        if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
-          resourceBundleRef.set(attribute.getExpression());
-        }
-      }
-    }
   }
 
   static boolean isValidPropertyReference(@NotNull Project project,
@@ -267,21 +178,23 @@ public class JavaI18nUtil extends I18nUtil {
     return r ? bundleRef.get() : null;
   }
 
-  static boolean isPropertyRef(final PsiExpression expression, final String key, final String resourceBundleName) {
+  private static boolean isPropertyRef(@NotNull PsiExpression expression, @NotNull String key, @Nullable String resourceBundleName) {
     if (resourceBundleName == null) {
       return !PropertiesImplUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
-    else {
-      final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
-      boolean containedInPropertiesFile = false;
-      for (PropertiesFile propertiesFile : propertiesFiles) {
-        containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
-      }
-      return containedInPropertiesFile;
+    List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(resourceBundleName, expression);
+    boolean containedInPropertiesFile = false;
+    for (PropertiesFile propertiesFile : propertiesFiles) {
+      containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
     }
+    return containedInPropertiesFile;
   }
 
-  public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiLiteralExpression context) {
+  public static @NotNull List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
+    return I18nUtil.propertiesFilesByBundleName(resourceBundleName, context);
+  }
+
+  public static @NotNull Set<String> suggestExpressionOfType(final PsiClassType type, final PsiElement context) {
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(context, "");
     Set<String> result = new LinkedHashSet<>();
     for (PsiVariable var : variables) {
@@ -302,9 +215,9 @@ public class JavaI18nUtil extends I18nUtil {
     return result;
   }
 
-  private static void addAvailableMethodsOfType(final PsiClassType type,
-                                                final PsiLiteralExpression context,
-                                                final Collection<? super String> result) {
+  private static void addAvailableMethodsOfType(@NotNull PsiClassType type,
+                                                @NotNull PsiElement context,
+                                                @NotNull Collection<? super String> result) {
     PsiScopesUtil.treeWalkUp((element, state) -> {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
@@ -335,7 +248,7 @@ public class JavaI18nUtil extends I18nUtil {
     }
   }
 
-  private static int countFormatParameters(MessageFormat mf) {
+  private static int countFormatParameters(@NotNull MessageFormat mf) {
     Format[] formats = mf.getFormatsByArgumentIndex();
     int maxLength = formats.length;
     for (Format format : formats) {
@@ -422,5 +335,151 @@ public class JavaI18nUtil extends I18nUtil {
       }
     }
     return paramsCount;
+  }
+
+  public static @NotNull String buildUnescapedFormatString(@NotNull UStringConcatenationsFacade cf,
+                                                           @NotNull List<? super UExpression> formatParameters,
+                                                           @NotNull Project project) {
+    return buildUnescapedFormatString(cf, formatParameters, project, false);
+  }
+
+  private static @NotNull String buildUnescapedFormatString(@NotNull UStringConcatenationsFacade cf,
+                                                            @NotNull List<? super UExpression> formatParameters,
+                                                            @NotNull Project project,
+                                                            boolean nested) {
+    StringBuilder result = new StringBuilder();
+    boolean noEscapingRequired = !nested && SequencesKt.all(cf.getUastOperands(), expression -> expression instanceof ULiteralExpression);
+    for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
+      while (expression instanceof UParenthesizedExpression) {
+        expression = ((UParenthesizedExpression)expression).getExpression();
+      }
+      if (expression instanceof ULiteralExpression) {
+        Object value = ((ULiteralExpression)expression).getValue();
+        if (value != null) {
+          if (noEscapingRequired) {
+            result.append(value);
+          }
+          else {
+            String formatString = PsiConcatenationUtil.formatString(value.toString(), false);
+            result.append(nested ? PsiConcatenationUtil.formatString(formatString, false) : formatString);
+          }
+        }
+      }
+      else if (nested || !addChoicePattern(expression, formatParameters, project, result)) {
+        result.append("{").append(formatParameters.size()).append("}");
+        formatParameters.add(expression);
+      }
+    }
+    return result.toString();
+  }
+
+  private static boolean addChoicePattern(@NotNull UExpression expression,
+                                          @NotNull List<? super UExpression> formatParameters,
+                                          @NotNull Project project,
+                                          @NotNull StringBuilder result) {
+    if (!(expression instanceof UIfExpression)) return false;
+    PsiElement sourcePsi = expression.getSourcePsi();
+    if (sourcePsi == null) return false;
+    UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(sourcePsi.getLanguage());
+    if (generationPlugin == null) return false;
+
+    UExpression thenExpression = ((UIfExpression)expression).getThenExpression();
+    UExpression elseExpression = ((UIfExpression)expression).getElseExpression();
+    if (!(thenExpression instanceof ULiteralExpression) &&
+        !(elseExpression instanceof ULiteralExpression)) return false;
+
+    boolean nested = !(thenExpression instanceof ULiteralExpression && elseExpression instanceof ULiteralExpression);
+
+    String thenStr = getSideText(formatParameters, project, thenExpression, nested);
+    String elseStr = getSideText(formatParameters, project, elseExpression, nested);
+
+    result.append("{")
+      .append(formatParameters.size())
+      .append(", choice, 0#").append(thenStr)
+      .append("|1#").append(elseStr)
+      .append("}");
+
+
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    UIfExpression exCopy = UastContextKt.toUElement(sourcePsi.copy(), UIfExpression.class);
+    assert exCopy != null;
+    generationPlugin.replace(Objects.requireNonNull(exCopy.getThenExpression()),
+                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("0", null), ULiteralExpression.class)),
+                             ULiteralExpression.class);
+
+    generationPlugin.replace(Objects.requireNonNull(exCopy.getElseExpression()),
+                             Objects.requireNonNull(UastContextKt.toUElement(elementFactory.createExpressionFromText("1", null), ULiteralExpression.class)),
+                             ULiteralExpression.class);
+    formatParameters.add(exCopy);
+    return true;
+  }
+
+  @NotNull
+  private static String getSideText(@NotNull List<? super UExpression> formatParameters,
+                                    @NotNull Project project,
+                                    UExpression expression,
+                                    boolean nested) {
+    String elseStr;
+    if (expression instanceof ULiteralExpression) {
+      Object elseValue = ((ULiteralExpression)expression).getValue();
+      if (elseValue != null) {
+        elseStr = PsiConcatenationUtil.formatString(elseValue.toString(), false);
+        elseStr = nested ? PsiConcatenationUtil.formatString(elseStr, false) : elseStr;
+      }
+      else {
+        elseStr = "null";
+      }
+    }
+    else {
+      UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(expression);
+      if (concatenation != null) {
+        elseStr = buildUnescapedFormatString(concatenation, formatParameters, project, true);
+      }
+      else {
+        elseStr = "{" + formatParameters.size() + "}";
+        formatParameters.add(expression);
+      }
+    }
+    return elseStr.replaceAll("([<>|#])", "'$1'");
+  }
+
+  @NotNull
+  static String composeParametersText(@NotNull List<? extends UExpression> args) {
+    return args.stream().map(UExpression::getSourcePsi).filter(Objects::nonNull).map(psi -> psi.getText()).collect(Collectors.joining(","));
+  }
+
+  /**
+   * @param expression expression that refers to the property
+   * @return the resolved property; null if the property cannot be resolved
+   */
+  public static @Nullable Property resolveProperty(@NotNull UExpression expression) {
+    PsiElement psi = expression.getSourcePsi();
+    if (psi == null) return null;
+    if (expression.equals(UastContextKt.toUElement(psi.getParent()))) {
+      // In Kotlin, we should go one level up (from KtLiteralStringTemplateEntry to KtStringTemplateExpression)
+      // to find the property reference
+      psi = psi.getParent();
+    }
+    return resolveProperty(psi);
+  }
+
+  /**
+   * @param psi expression that refers to the property
+   * @return the resolved property; null if the property cannot be resolved
+   */
+  public static @Nullable Property resolveProperty(PsiElement psi) {
+    PsiReference[] references = psi.getReferences();
+    for (PsiReference reference : references) {
+      if (reference instanceof PropertyReference) {
+        ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
+        if (resolveResults.length == 1 && resolveResults[0].isValidResult()) {
+          PsiElement element = resolveResults[0].getElement();
+          if (element instanceof Property) {
+            return (Property)element;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

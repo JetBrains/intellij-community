@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBPanel;
@@ -49,7 +50,11 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     myApplyAction = applyAction;
   }
 
-  public void setError(String error) {
+  public @NotNull Consumer<? super InputEvent> getApplyAction() {
+    return myApplyAction;
+  }
+
+  public void setError(@NlsContexts.DialogMessage String error) {
     myTextField.putClientProperty("JComponent.outline", error != null ? "error" : null);
 
     if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);
@@ -115,7 +120,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     return res;
   }
 
-  private static class ErrorBorder implements Border {
+  private static final class ErrorBorder implements Border {
     private final Border errorDelegateBorder;
 
     private ErrorBorder(Border delegate) {errorDelegateBorder = delegate;}

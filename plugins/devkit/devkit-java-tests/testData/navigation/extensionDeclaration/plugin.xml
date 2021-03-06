@@ -9,5 +9,6 @@
 
   <extensions>
     <myEp implementation="MyExtension"/>
+    <myEp implementation="MyNestedClassExtension$Nested"/>
   </extensions>
 </idea-plugin>

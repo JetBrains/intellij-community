@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.psi.PsiMethod;
@@ -8,9 +8,9 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -32,7 +32,7 @@ public class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection 
   @NotNull
   @Override
   protected String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("equals.between.inconvertible.types.tooltip", args[0], args[1], args[2]);
+    return GroovyBundle.message("equals.between.inconvertible.types.tooltip", args[0], args[1], args[2]);
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {

@@ -31,7 +31,7 @@ public class JavaTreeGenerator implements TreeGenerator {
   @Override
   @Nullable
   public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull final CharTable table, @NotNull final PsiManager manager) {
-    if (original instanceof PsiKeyword || original instanceof PsiIdentifier) {
+    if (original instanceof PsiJavaToken) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());
     }
@@ -158,7 +158,7 @@ public class JavaTreeGenerator implements TreeGenerator {
     if (type instanceof PsiArrayType) {
       final ASTNode firstChild = typeElement.getFirstChildNode();
       LOG.assertTrue(firstChild.getElementType() == JavaElementType.TYPE);
-      encodeInfoInTypeElement(firstChild, ((PsiArrayType)type).getComponentType());
+      encodeInfoInTypeElement(firstChild, type.getDeepComponentType());
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();

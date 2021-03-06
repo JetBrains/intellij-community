@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
 const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
@@ -42,15 +44,16 @@ data class CredentialAttributes(
  * @param user Account name ("John") or path to SSH key file ("/Users/john/.ssh/id_rsa").
  * @param password Can be empty.
  */
-class Credentials(user: String?, val password: OneTimeString? = null) {
-  constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
+class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? = null) {
+  constructor(@NlsSafe user: String?, @NlsSafe password: String?) : this(user, password?.let(::OneTimeString))
 
-  constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
+  constructor(@NlsSafe user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
 
-  constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
+  constructor(@NlsSafe user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
   val userName = user.nullize()
 
+  @NlsSafe
   fun getPasswordAsString() = password?.toString()
 
   override fun equals(other: Any?) = other is Credentials && userName == other.userName && password == other.password
@@ -62,6 +65,7 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
 /** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
@@ -72,20 +76,3 @@ fun Credentials?.isFulfilled() = this != null && userName != null && !password.i
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
-
-/**
- * Tries to get credentials both by `newAttributes` and `oldAttributes`, and if they are available by `oldAttributes` migrates old to new,
- * i.e. removes `oldAttributes` from the credentials store, and adds `newAttributes` instead.
- */
-fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes: CredentialAttributes): Credentials? {
-  val safe = PasswordSafe.instance
-  var credentials = safe.get(newAttributes)
-  if (credentials == null) {
-    credentials = safe.get(oldAttributes)
-    if (credentials != null) {
-      safe.set(oldAttributes, null)
-      safe.set(newAttributes, credentials)
-    }
-  }
-  return credentials
-}

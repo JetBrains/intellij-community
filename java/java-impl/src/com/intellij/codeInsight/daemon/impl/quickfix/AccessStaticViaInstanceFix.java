@@ -22,13 +22,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -43,7 +43,7 @@ import java.util.List;
 public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(AccessStaticViaInstanceFix.class);
   private final boolean myOnTheFly;
-  private final String myText;
+  private final @IntentionName String myText;
 
   public AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult result, boolean onTheFly) {
     super(expression);
@@ -58,7 +58,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     return myText;
   }
 
-  private static String calcText(PsiMember member, PsiSubstitutor substitutor) {
+  private static @IntentionName String calcText(PsiMember member, PsiSubstitutor substitutor) {
     PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
     return QuickFixBundle.message("access.static.via.class.reference.text",
@@ -137,8 +137,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     if (editor == null) {
       return false;
     }
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilCore.toPsiElementArray(sideEffects), attributes, true, null);
+    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilCore.toPsiElementArray(sideEffects), 
+                                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
     try {
       hasSideEffects = PsiUtil.isStatement(factory.createStatementFromText(qualifierExpression.getText(), qualifierExpression));
     }
@@ -156,12 +156,11 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         protected String sideEffectsDescription() {
           if (canCopeWithSideEffects) {
             return MessageFormat.format(getFormatString(),
-                                        "expression '" + qualifierExpression.getText() + "'",
+                                        JavaBundle.message("side.effects.expression.presentation", qualifierExpression.getText()),
                                         myExpression.getText(), //before text
-                                        qualifierExpression.getText() + ";<br>" + qualifiedWithClassName.getText());//after text
+                                        qualifierExpression.getText() + ";" + "<br>" + qualifiedWithClassName.getText());//after text
           }
-          return "<html><body>  There are possible side effects found in expression '" + qualifierExpression.getText() + "'<br>" +
-                 "You can <b>Remove</b> class reference along with whole expressions involved</body></html>";
+          return JavaBundle.message("side.effects.non.fixable.message", qualifierExpression.getText());
         }
       };
     dialog.show();

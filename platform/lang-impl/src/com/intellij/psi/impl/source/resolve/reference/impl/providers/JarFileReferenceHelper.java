@@ -32,24 +32,24 @@ import java.util.Collections;
 public class JarFileReferenceHelper extends FileReferenceHelper {
 
   @Override
-  public PsiFileSystemItem getPsiFileSystemItem(Project project, @NotNull VirtualFile file) {
+  public PsiFileSystemItem getPsiFileSystemItem(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
   }
 
   @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
-    return PsiFileReferenceHelper.getContextsForModule(module, "", null);
+    return PsiFileReferenceHelper.getContextsForScope(module.getProject(), "", module.getModuleWithDependenciesScope());
   }
 
   @Override
   @NotNull
-  public Collection<PsiFileSystemItem> getContexts(Project project, @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return Collections.emptyList();
   }
 
   @Override
-  public boolean isMine(Project project, @NotNull VirtualFile file) {
+  public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
     return ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(file);
   }
 }

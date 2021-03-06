@@ -62,7 +62,7 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
   private void showHistory() {
     List<XExpression> expressions = getRecentExpressions();
     if (!expressions.isEmpty()) {
-      ListPopupImpl historyPopup = new ListPopupImpl(getProject(), new BaseListPopupStep<XExpression>(null, expressions) {
+      ListPopupImpl historyPopup = new ListPopupImpl(getProject(), new BaseListPopupStep<>(null, expressions) {
         @Override
         public PopupStep onChosen(XExpression selectedValue, boolean finalChoice) {
           setExpression(selectedValue);

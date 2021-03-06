@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.XmlWriter;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +19,14 @@ public final class RadErrorComponent extends RadAtomicComponent {
 
   private final String myComponentClassName;
   private final Element myProperties;
-  private final String myErrorDescription;
+  private final @Nls String myErrorDescription;
 
   public static RadErrorComponent create(
     final ModuleProvider module,
     final String id,
     final String componentClassName,
     final Element properties,
-    @NotNull final String errorDescription
+    @NotNull final @Nls String errorDescription
   ) {
     return new RadErrorComponent(module, id, componentClassName, properties, errorDescription);
   }
@@ -35,7 +36,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
     final String id,
     @NotNull final String componentClassName,
     @Nullable final Element properties,
-    @NotNull final String errorDescription
+    @NotNull final @Nls String errorDescription
   ) {
     super(module, MyComponent.class, id);
 
@@ -50,7 +51,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
     return myComponentClassName;
   }
 
-  public String getErrorDescription() {
+  public @Nls String getErrorDescription() {
     return myErrorDescription;
   }
 

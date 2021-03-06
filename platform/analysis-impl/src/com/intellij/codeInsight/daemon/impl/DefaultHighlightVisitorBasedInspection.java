@@ -21,9 +21,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
@@ -36,21 +38,19 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
-    private static final String ANNOTATOR_SHORT_NAME = "Annotator";
+    private static final @NonNls String ANNOTATOR_SHORT_NAME = "Annotator";
 
     public AnnotatorBasedInspection() {
       super(false, true);
     }
-    @Nls
-    @NotNull
+
     @Override
-    public String getDisplayName() {
-      return getShortName();
+    public @Nls @NotNull String getDisplayName() {
+      return AnalysisBundle.message("inspection.display.name.annotator");
     }
 
-    @NotNull
     @Override
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return ANNOTATOR_SHORT_NAME;
     }
 
@@ -81,11 +81,11 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
   @Override
   public void checkFile(@NotNull PsiFile originalFile,
-                        @NotNull final InspectionManager manager,
+                        @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
-                        @NotNull final GlobalInspectionContext globalContext,
-                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    for (Pair<PsiFile, HighlightInfo> pair : runGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    for (Pair<PsiFile, HighlightInfo> pair : runAnnotatorsInGeneralHighlighting(originalFile, highlightErrorElements, runAnnotators)) {
       PsiFile file = pair.first;
       HighlightInfo info = pair.second;
       TextRange range = new TextRange(info.startOffset, info.endOffset);
@@ -105,16 +105,16 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   @NotNull
-  public static List<Pair<PsiFile,HighlightInfo>> runGeneralHighlighting(@NotNull PsiFile file,
-                                                                         boolean highlightErrorElements,
-                                                                         boolean runAnnotators) {
+  public static List<Pair<PsiFile,HighlightInfo>> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
+                                                                                     boolean highlightErrorElements,
+                                                                                     boolean runAnnotators) {
     ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
     MyPsiElementVisitor visitor = new MyPsiElementVisitor(highlightErrorElements, runAnnotators);
-    if (indicator == null) {
-      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
+    if (indicator instanceof DaemonProgressIndicator) {
+      file.accept(visitor);
     }
     else {
-      file.accept(visitor);
+      ProgressManager.getInstance().runProcess(() -> file.accept(visitor), new DaemonProgressIndicator());
     }
     return visitor.result;
   }
@@ -137,40 +137,47 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
 
     @Override
-    public void visitFile(@NotNull final PsiFile file) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+    public void visitFile(@NotNull PsiFile file) {
+      VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) {
         return;
       }
 
-      final Project project = file.getProject();
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      if (document == null) return;
-      ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
-      GlobalInspectionContextBase.assertUnderDaemonProgress();
+      result.addAll(runAnnotatorsInGeneralHighlightingPass(file, highlightErrorElements, runAnnotators));
+    }
+  }
 
-      TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
-      List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
-      List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
-      for (final GeneralHighlightingPass gpass : gpasses) {
-        gpass.setHighlightVisitorProducer(() -> {
-          gpass.incVisitorUsageCount(1);
+  @NotNull
+  private static List<Pair<PsiFile, HighlightInfo>> runAnnotatorsInGeneralHighlightingPass(@NotNull PsiFile file,
+                                                                                           boolean highlightErrorElements, boolean runAnnotators) {
+    Project project = file.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    if (document == null) return Collections.emptyList();
+    ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
+    GlobalInspectionContextBase.assertUnderDaemonProgress();
 
-          HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true);
-          return new HighlightVisitor[]{visitor};
-        });
-      }
+    TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
+    List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
+    List<GeneralHighlightingPass> gpasses = ContainerUtil.filterIsInstance(passes, GeneralHighlightingPass.class);
+    for (GeneralHighlightingPass gpass : gpasses) {
+      gpass.setHighlightVisitorProducer(() -> {
+        gpass.incVisitorUsageCount(1);
 
-      for (TextEditorHighlightingPass pass : gpasses) {
-        pass.doCollectInformation(progress);
-        List<HighlightInfo> infos = pass.getInfos();
-        for (HighlightInfo info : infos) {
-          if (info == null) continue;
-          //if (info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT) continue;
-          if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) <= 0) continue;
+        HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true);
+        return new HighlightVisitor[]{visitor};
+      });
+    }
+
+    List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
+    for (TextEditorHighlightingPass pass : gpasses) {
+      pass.doCollectInformation(progress);
+      List<HighlightInfo> infos = pass.getInfos();
+      for (HighlightInfo info : infos) {
+        if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
           result.add(Pair.create(file, info));
         }
       }
     }
+    return result;
   }
 }

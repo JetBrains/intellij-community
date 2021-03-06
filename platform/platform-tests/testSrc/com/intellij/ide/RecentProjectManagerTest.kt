@@ -35,7 +35,7 @@ class RecentProjectManagerTest {
     manager.loadState(state)
     assertThat(manager.state.additionalInfo.keys.joinToString("\n")).isEqualTo("/IdeaProjects/untitled")
     @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths.joinToString("\n")).isEqualTo("/IdeaProjects/untitled")
+    assertThat(manager.state.recentPaths).isEmpty()
   }
 
   @Test
@@ -68,7 +68,7 @@ class RecentProjectManagerTest {
     manager.loadState(state)
     assertThat(manager.state.additionalInfo.keys.joinToString("\n")).isEqualTo("/IdeaProjects/untitled")
     @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths.joinToString("\n")).isEqualTo("/IdeaProjects/untitled")
+    assertThat(manager.state.recentPaths).isEmpty()
   }
 
   @Test
@@ -110,10 +110,7 @@ class RecentProjectManagerTest {
       /IdeaProjects/untitled
     """.trimIndent())
     @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths.joinToString("\n")).isEqualTo("""
-      /IdeaProjects/untitled
-      /IdeaProjects/untitled2
-    """.trimIndent())
+    assertThat(manager.state.recentPaths).isEmpty()
   }
 
   @Test
@@ -185,10 +182,7 @@ class RecentProjectManagerTest {
       /home/WebstormProjects/untitled
     """.trimIndent())
     @Suppress("DEPRECATION")
-    assertThat(manager.state.recentPaths.joinToString("\n")).isEqualTo("""
-      /home/WebstormProjects/untitled
-      /home/WebstormProjects/conference-data
-    """.trimIndent())
+    assertThat(manager.state.recentPaths).isEmpty()
   }
 
   @Test

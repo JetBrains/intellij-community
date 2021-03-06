@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.sdk.impl.AppEngineSdkUtil;
@@ -24,6 +10,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -47,11 +34,11 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JPanel mySdkEditorPanel;
   private JCheckBox myRunEnhancerOnMakeCheckBox;
   private JPanel myFilesToEnhancePanel;
-  private final JList myFilesList;
-  private JComboBox myPersistenceApiComboBox;
+  private final JList<String> myFilesList;
+  private JComboBox<String> myPersistenceApiComboBox;
   private JPanel myFilesPanel;
   private final AppEngineSdkEditor mySdkEditor;
-  private final DefaultListModel myFilesListModel;
+  private final DefaultListModel<@NlsSafe String> myFilesListModel;
 
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
     myFacetConfiguration = facetConfiguration;
@@ -75,8 +62,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
       }
     });
 
-    myFilesListModel = new DefaultListModel();
-    myFilesList = new JBList(myFilesListModel);
+    myFilesListModel = new DefaultListModel<>();
+    myFilesList = new JBList<>(myFilesListModel);
     myFilesList.setCellRenderer(new FilesListCellRenderer());
     myFilesPanel.add(ToolbarDecorator.createDecorator(myFilesList)
                        .setAddAction(new AnActionButtonRunnable() {
@@ -123,7 +110,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private List<String> getConfiguredFiles() {
     final List<String> files = new ArrayList<>();
     for (int i = 0; i < myFilesListModel.getSize(); i++) {
-      files.add((String)myFilesListModel.getElementAt(i));
+      files.add(myFilesListModel.getElementAt(i));
     }
     return files;
   }
@@ -148,14 +135,10 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getDisplayName());
   }
 
-  private void fillFilesList(final List<String> paths) {
-    for (String path : paths) {
+  private void fillFilesList(final List<@NlsSafe String> paths) {
+    for (@NlsSafe String path : paths) {
       myFilesListModel.addElement(path);
     }
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 
   @Override
@@ -168,7 +151,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     AppEngineWebIntegration.getInstance().setupDevServer(((AppEngineFacet)facet).getSdk());
   }
 
-  private class FilesListCellRenderer extends DefaultListCellRenderer {
+  private final class FilesListCellRenderer extends DefaultListCellRenderer {
     private FilesListCellRenderer() {
       setUI(new RightAlignedLabelUI());
     }

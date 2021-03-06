@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class AddNewArrayExpressionFix implements IntentionAction {
+public class AddNewArrayExpressionFix implements IntentionActionWithFixAllOption {
   private final PsiArrayInitializerExpression myInitializer;
   private final PsiType myType;
 
@@ -66,12 +66,17 @@ public class AddNewArrayExpressionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiManager manager = file.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    doFix();
+  }
+
+  public void doFix() {
+    if (myType == null) return;
+    Project project = myInitializer.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     @NonNls String text = "new " + myType.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
-    newExpr = (PsiNewExpression) CodeStyleManager.getInstance(manager.getProject()).reformat(newExpr);
+    newExpr = (PsiNewExpression) CodeStyleManager.getInstance(project).reformat(newExpr);
     myInitializer.replace(newExpr);
   }
 

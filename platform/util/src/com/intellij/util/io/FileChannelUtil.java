@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ExceptionUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.channels.FileChannel;
 
-class FileChannelUtil {
+public final class FileChannelUtil {
   private static final Logger LOG = Logger.getInstance(FileChannelUtil.class);
 
   private static final Class<?> sunNioChFileChannelImpl = setupFileChannelImpl();
@@ -37,28 +37,30 @@ class FileChannelUtil {
       }
     }
     catch (NoSuchMethodException e) {
-      LOG.info("interruptible FileChannel-s will be used for indexes");
+      LOG.info("interruptible FileChannels will be used for indexes");
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
     }
     if (setUnInterruptible != null) {
-      LOG.info("un-interruptible FileChannel-s will be used for indexes");
-    } else {
-      LOG.info("interruptible FileChannel-s will be used for indexes");
+      LOG.info("uninterruptible FileChannels will be used for indexes");
+    }
+    else {
+      LOG.info("interruptible FileChannels will be used for indexes");
     }
     return setUnInterruptible;
   }
 
   @NotNull
-  static FileChannel unInterruptible(@NotNull FileChannel channel) {
+  public static FileChannel unInterruptible(@NotNull FileChannel channel) {
     try {
       if (setUnInterruptible != null && sunNioChFileChannelImpl != null && sunNioChFileChannelImpl.isInstance(channel)) {
         setUnInterruptible.invoke(channel);
       }
     }
     catch (Throwable e) {
-      ExceptionUtil.rethrow(e);
+      ExceptionUtilRt.rethrowUnchecked(e);
+      throw new RuntimeException(e);
     }
     return channel;
   }

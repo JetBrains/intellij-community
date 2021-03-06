@@ -1,16 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.vfs
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.util.LocalTimeCounter
 import com.intellij.vcs.log.Hash
@@ -20,19 +24,18 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.util.GitFileUtils
+import org.jetbrains.annotations.NonNls
 import java.io.*
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 class GitIndexVirtualFile(private val project: Project,
                           val root: VirtualFile,
-                          val filePath: FilePath) : VirtualFile() {
-  private val lock = ReentrantReadWriteLock()
-  private val refresher: GitIndexFileSystemRefresher get() = project.service()
+                          val filePath: FilePath) : VirtualFile(), VirtualFilePathWrapper {
+  private val refresher: GitIndexFileSystemRefresher get() = GitIndexFileSystemRefresher.getInstance(project)
 
   private val cachedData: AtomicReference<CachedData?> = AtomicReference()
 
@@ -40,8 +43,13 @@ class GitIndexVirtualFile(private val project: Project,
   private var modificationStamp = LocalTimeCounter.currentTime()
 
   init {
-    refresher.runTask(false) {
-      cachedData.compareAndSet(null, readCachedData())
+    val task = Runnable { cachedData.compareAndSet(null, readCachedData()) }
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(task, GitBundle.message("stage.vfs.read.process", name),
+                                                                        false, project)
+    }
+    else {
+      task.run()
     }
   }
 
@@ -50,16 +58,18 @@ class GitIndexVirtualFile(private val project: Project,
   override fun getChildren(): Array<VirtualFile> = EMPTY_ARRAY
   override fun isWritable(): Boolean = true
   override fun isDirectory(): Boolean = false
-  override fun isValid(): Boolean = cachedData.get() != null
+  override fun isValid(): Boolean = cachedData.get() != null && !project.isDisposed
   override fun getName(): String = filePath.name
+  override fun getPresentableName(): String = GitBundle.message("stage.vfs.presentable.file.name", filePath.name)
   override fun getPath(): String = encode(project, root, filePath)
+  override fun getPresentablePath(): String = filePath.path
+  override fun enforcePresentableName(): Boolean = true
   override fun getLength(): Long = cachedData.get()?.length ?: 0
   override fun getTimeStamp(): Long = 0
   override fun getModificationStamp(): Long = modificationStamp
+  override fun getFileType(): FileType = filePath.virtualFile?.fileType ?: super.getFileType()
   override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {
-    refresher.runTask(asynchronous) {
-      getRefresh()?.also { refresher.execute(listOf(it), postRunnable) } ?: writeInEdt { postRunnable?.run() }
-    }
+    refresher.refresh(listOf(this), asynchronous, postRunnable)
   }
 
   internal fun getRefresh(): Refresh? {
@@ -83,14 +93,14 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   private fun write(requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
-    val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
-    refresher.changeContent(this, requestor, modificationStamp) {
-      lock.write {
+    try {
+      val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
+      refresher.changeContent(this, requestor, modificationStamp) {
         val oldCachedData = cachedData.get()
         if (oldCachedData != readCachedData()) {
           // TODO
           LOG.warn("Skipping write for $this as it is not up to date")
-          return@write
+          return@changeContent
         }
 
         val isExecutable = oldCachedData?.isExecutable ?: false
@@ -103,6 +113,9 @@ class GitIndexVirtualFile(private val project: Project,
         }
       }
     }
+    catch (e: Exception) {
+      throw IOException(e)
+    }
   }
 
   @Throws(IOException::class)
@@ -112,10 +125,24 @@ class GitIndexVirtualFile(private val project: Project,
 
   @Throws(IOException::class)
   override fun contentsToByteArray(): ByteArray {
-    return try {
-      lock.read {
-        GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
+    try {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
+          contentToByteArrayImpl()
+        }, GitBundle.message("stage.vfs.read.process", name), false, project)
       }
+      else {
+        return contentToByteArrayImpl()
+      }
+    }
+    catch (e: Exception) {
+      throw IOException(e)
+    }
+  }
+
+  private fun contentToByteArrayImpl(): ByteArray {
+    return try {
+      GitFileUtils.getFileContent(project, root, "", VcsFileUtil.relativePath(root, filePath))
     }
     catch (e: VcsException) {
       throw IOException(e)
@@ -123,10 +150,8 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   private fun readCachedData(): CachedData? {
-    lock.read {
-      val stagedFile = GitIndexUtil.listStaged(project, root, listOf(filePath)).singleOrNull() ?: return null
-      return CachedData(HashImpl.build(stagedFile.blobHash), calculateLength(stagedFile.blobHash), stagedFile.isExecutable)
-    }
+    val stagedFile = GitIndexUtil.listStaged(project, root, listOf(filePath)).singleOrNull() ?: return null
+    return CachedData(HashImpl.build(stagedFile.blobHash), calculateLength(stagedFile.blobHash), stagedFile.isExecutable)
   }
 
   @Throws(VcsException::class)
@@ -146,6 +171,7 @@ class GitIndexVirtualFile(private val project: Project,
 
     other as GitIndexVirtualFile
 
+    if (project != other.project) return false
     if (root != other.root) return false
     if (filePath != other.filePath) return false
 
@@ -153,12 +179,10 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   override fun hashCode(): Int {
-    var result = root.hashCode()
-    result = 31 * result + filePath.hashCode()
-    return result
+    return Objects.hash(project, root, filePath)
   }
 
-  override fun toString(): String {
+  override fun toString(): @NonNls String {
     return "GitIndexVirtualFile: [${root.name}]/${VcsFileUtil.relativePath(root, filePath)}"
   }
 
@@ -174,7 +198,7 @@ class GitIndexVirtualFile(private val project: Project,
       return cachedData.compareAndSet(oldCachedData, newCachedData)
     }
 
-    override fun toString(): String {
+    override fun toString(): @NonNls String {
       return "GitIndexVirtualFile.Refresh: ${this@GitIndexVirtualFile}"
     }
   }
@@ -199,6 +223,10 @@ class GitIndexVirtualFile(private val project: Project,
       val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR))
 
       return Triple(project, root, filePath)
+    }
+
+    fun extractPresentableUrl(path: String): String {
+      return path.substringAfterLast(SEPARATOR).replace('/', File.separatorChar)
     }
   }
 

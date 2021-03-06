@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -12,10 +14,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +52,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
           }
         }
       }
-      
+
       private void processExpression(@NotNull PsiExpression expression) {
         if (expression instanceof PsiLiteralExpression) {
           processLiteral((PsiLiteralExpression)expression);
@@ -134,7 +133,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
         return null;
       }
 
-      private boolean hasNeighbor(@NotNull String neighbors, @Nullable Token prev, @Nullable Token next) {
+      private boolean hasNeighbor(@NotNull @NonNls String neighbors, @Nullable Token prev, @Nullable Token next) {
         return prev != null && neighbors.indexOf(prev.character) >= 0 ||
                next != null && neighbors.indexOf(next.character) >= 0;
       }
@@ -155,7 +154,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       }
       this.length = length;
     }
-    
+
     public String fixed() {
       return Character.isUpperCase(character) ? toString().toLowerCase(Locale.ROOT) : toString().toUpperCase(Locale.ROOT);
     }
@@ -165,20 +164,20 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       return StringUtil.repeat(String.valueOf(character), length);
     }
   }
-  
-  private static class Problem {
-    final Token token;
-    final String usedName;
-    final String intendedName;
 
-    private Problem(Token token, String usedName, String intendedName) {
+  private static final class Problem {
+    final Token token;
+    final @NlsSafe String usedName;
+    final @NlsSafe String intendedName;
+
+    private Problem(Token token, @NlsSafe String usedName, @NlsSafe String intendedName) {
       this.token = token;
       this.usedName = usedName;
       this.intendedName = intendedName;
     }
 
     @Override
-    public String toString() {
+    public @InspectionMessage String toString() {
       String key = Character.isUpperCase(token.character) ? "inspection.suspicious.date.format.message.upper"
                                                           : "inspection.suspicious.date.format.message.lower";
       return InspectionGadgetsBundle.message(key, token, usedName, token.fixed(), intendedName);
@@ -214,7 +213,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       if (literal == null) return;
       String text = literal.getText();
       if (myRange.getEndOffset() >= text.length()) return;
-      String existing = text.substring(myRange.getStartOffset(), myRange.getEndOffset());
+      String existing = myRange.substring(text);
       if (!existing.equals(myToken.toString())) return;
       text = text.substring(0, myRange.getStartOffset()) + myToken.fixed() + text.substring(myRange.getEndOffset());
       PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text, literal);

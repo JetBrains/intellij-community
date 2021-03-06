@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,16 +35,16 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
-import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
-public class ShowSerializedXmlAction extends DumbAwareAction {
+public final class ShowSerializedXmlAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ShowSerializedXmlAction.class);
 
   @Override
@@ -75,25 +75,21 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
   }
 
   private static void generateAndShowXml(final Module module, final String className) {
-    final List<URL> urls = new ArrayList<>();
+    final List<Path> files = new ArrayList<>();
     final List<String> list = OrderEnumerator.orderEntries(module).recursively().runtimeOnly().getPathsList().getPathList();
     for (String path : list) {
-      try {
-        urls.add(new File(FileUtil.toSystemIndependentName(path)).toURI().toURL());
-      }
-      catch (MalformedURLException e1) {
-        LOG.info(e1);
-      }
+      files.add(Paths.get(path));
     }
 
     final Project project = module.getProject();
-    UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(XmlSerializer.class.getClassLoader()).get();
+    UrlClassLoader loader = UrlClassLoader.build().files(files).parent(XmlSerializer.class.getClassLoader()).get();
     final Class<?> aClass;
     try {
       aClass = Class.forName(className, true, loader);
     }
     catch (ClassNotFoundException e) {
-      Messages.showErrorDialog(project, "Cannot find class '" + className + "'", CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project, DevKitBundle.message("action.ShowSerializedXml.message.cannot.find.class", className),
+                               CommonBundle.getErrorTitle());
       LOG.info(e);
       return;
     }
@@ -103,7 +99,9 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       o = new SampleObjectGenerator().createValue(aClass, FList.emptyList());
     }
     catch (Exception e) {
-      Messages.showErrorDialog(project, "Cannot generate class '" + className + "': " + e.getMessage(), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(project,
+                               DevKitBundle.message("action.ShowSerializedXml.message.cannot.generate.class", className, e.getMessage()),
+                               CommonBundle.getErrorTitle());
       LOG.info(e);
       return;
     }
@@ -118,8 +116,8 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       Messages.showErrorDialog(project, e.getMessage() + (cause != null ? ": " + cause.getMessage() : ""), CommonBundle.getErrorTitle());
       return;
     }
-    final String text = JDOMUtil.writeElement(element);
-    Messages.showIdeaMessageDialog(project, text, "Serialized XML for '" + className + "'",
+    final @NlsSafe String text = JDOMUtil.writeElement(element);
+    Messages.showIdeaMessageDialog(project, text, DevKitBundle.message("action.ShowSerializedXml.dialog.title", className),
                                    new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);
   }
 

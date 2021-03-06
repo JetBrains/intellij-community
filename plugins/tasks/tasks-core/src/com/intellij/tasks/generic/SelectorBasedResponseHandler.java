@@ -12,6 +12,7 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,7 +232,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   protected abstract List<Object> selectTasksList(@NotNull String response, int max) throws Exception;
 
   @Nullable
-  protected abstract String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception;
+  protected abstract @Nls String selectString(@NotNull Selector selector, @NotNull Object context) throws Exception;
 
   @Nullable
   @Override

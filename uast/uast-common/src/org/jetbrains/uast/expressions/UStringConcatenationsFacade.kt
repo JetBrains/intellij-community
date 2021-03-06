@@ -19,7 +19,7 @@ import org.jetbrains.uast.*
 class UStringConcatenationsFacade private constructor(private val uContext: UExpression, val uastOperands: Sequence<UExpression>) {
 
   @Deprecated("use factory method `UStringConcatenationsFacade.createFromUExpression`",
-              ReplaceWith("UStringConcatenationsFacade.createFromUExpression"))
+              ReplaceWith("UStringConcatenationsFacade.createFromUExpression(uContext)"))
   @ApiStatus.Experimental
   constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext, false) ?: emptySequence())
 
@@ -117,8 +117,9 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
     }
 
     @JvmStatic
-    fun createFromUExpression(uContext: UExpression?): UStringConcatenationsFacade? {
-      val operands = buildLazyUastOperands(uContext, false) ?: return null
+    @JvmOverloads
+    fun createFromUExpression(uContext: UExpression?, flatten: Boolean = false): UStringConcatenationsFacade? {
+      val operands = buildLazyUastOperands(uContext, flatten) ?: return null
       return UStringConcatenationsFacade(uContext!!, operands)
     }
 
@@ -132,6 +133,7 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
     }
 
     @JvmStatic
+    @Deprecated("doesn't support concatenation for Kotlin", ReplaceWith("createFromUExpression"))
     fun create(context: PsiElement?): UStringConcatenationsFacade? {
       if (context == null || context !is PsiLanguageInjectionHost && context.firstChild !is PsiLanguageInjectionHost) {
         return null

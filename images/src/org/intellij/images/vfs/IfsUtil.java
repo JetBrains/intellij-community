@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +43,7 @@ import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class IfsUtil {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.images.vfs.IfsUtil");
+  private static final Logger LOG = Logger.getInstance(IfsUtil.class);
 
   public static final String ICO_FORMAT = "ico";
   public static final String SVG_FORMAT = "svg";
@@ -57,7 +58,7 @@ public final class IfsUtil {
    *
    * @param file File
    * @return true if file image is loaded.
-   * @throws java.io.IOException if image can not be loaded
+   * @throws IOException if image can not be loaded
    */
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
@@ -176,7 +177,7 @@ public final class IfsUtil {
     return file.getUserData(FORMAT_KEY);
   }
 
-  public static String getReferencePath(Project project, VirtualFile file) {
+  public static @NlsSafe String getReferencePath(Project project, VirtualFile file) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
     if (sourceRoot != null) {

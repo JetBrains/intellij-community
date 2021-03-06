@@ -2,8 +2,10 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class InternalDataCollectorDebugLogger implements DataCollectorDebugLogger {
   private final Logger myLogger;
 

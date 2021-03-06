@@ -77,9 +77,10 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
         if (!b.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
         }
-
-        g2.setColor(getBackgroundColor(b));
-        g2.fill(r);
+        if (b.isContentAreaFilled()) {
+          g2.setColor(getBackgroundColor(b));
+          g2.fill(r);
+        }
 
         paintContents(g2, b);
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -27,10 +13,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 /**
@@ -110,13 +96,12 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     PsiLocalVariable outOfScopeVariable = myOutOfScopeVariable;
-    LOG.assertTrue(outOfScopeVariable != null);
     PsiManager manager = file.getManager();
     outOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(outOfScopeVariable, PsiModifier.FINAL, false);
     PsiElement commonParent = PsiTreeUtil.findCommonParent(outOfScopeVariable, myUnresolvedReference);
     LOG.assertTrue(commonParent != null);
-    PsiElement child = outOfScopeVariable.getTextRange().getStartOffset() < myUnresolvedReference.getTextRange().getStartOffset() ? 
+    PsiElement child = outOfScopeVariable.getTextRange().getStartOffset() < myUnresolvedReference.getTextRange().getStartOffset() ?
                        outOfScopeVariable : myUnresolvedReference;
 
     while(child.getParent() != commonParent) child = child.getParent();
@@ -160,7 +145,7 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
       outOfScopeVariable.delete();
     }
 
-    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<>(), file) != null) {
+    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new HashMap<>(), file) != null) {
       initialize(addedVar);
     }
   }
@@ -180,7 +165,7 @@ public final class BringVariableIntoScopeFix implements IntentionAction {
 
   @Override
   public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new BringVariableIntoScopeFix(PsiTreeUtil.findSameElementInCopy(myUnresolvedReference, target), 
+    return new BringVariableIntoScopeFix(PsiTreeUtil.findSameElementInCopy(myUnresolvedReference, target),
                                          PsiTreeUtil.findSameElementInCopy(myOutOfScopeVariable, target));
   }
 }

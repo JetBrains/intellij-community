@@ -26,6 +26,8 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,15 +46,20 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
   @Nullable
   @Override
   public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
-    if ((flags & TargetElementUtilBase.ELEMENT_NAME_ACCEPTED) == 0){
+    if ((flags & TargetElementUtilBase.ELEMENT_NAME_ACCEPTED) == 0) {
       return null;
     }
+
     final PsiElement element = ref.getElement();
-    PsiElement result = ref.resolve();
+    final var resolveContext = PyResolveContext
+      .defaultContext()
+      .withTypeEvalContext(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()));
+
+    PsiElement result = PyResolveUtil.resolveDeclaration(ref, resolveContext);
     Set<PsiElement> visited = new HashSet<>();
     visited.add(result);
     while (result instanceof PyReferenceExpression || result instanceof PyTargetExpression) {
-      PsiElement nextResult = ((PyReferenceOwner)result).getReference(PyResolveContext.defaultContext()).resolve();
+      PsiElement nextResult = PyResolveUtil.resolveDeclaration(((PyReferenceOwner)result).getReference(resolveContext), resolveContext);
       if (nextResult != null && !visited.contains(nextResult) &&
           PsiTreeUtil.getParentOfType(element, ScopeOwner.class) == PsiTreeUtil.getParentOfType(result, ScopeOwner.class) &&
           (nextResult instanceof PyReferenceExpression || nextResult instanceof PyTargetExpression || nextResult instanceof PyParameter)) {

@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.List;
@@ -49,23 +50,18 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
   private final @NotNull Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   private final @NotNull ExternalSystemFacadeManager myFacadeManager;
-  private final @NotNull ExternalSystemProgressNotificationManager myProgressNotificationManager;
 
   public ExternalSystemProcessingManager() {
     Application app = ApplicationManager.getApplication();
-
     myFacadeManager = app.getService(ExternalSystemFacadeManager.class);
-    myProgressNotificationManager = app.getService(ExternalSystemProgressNotificationManager.class);
     if (app.isUnitTestMode()) {
       return;
     }
-
-    myProgressNotificationManager.addNotificationListener(this);
+    app.getService(ExternalSystemProgressNotificationManager.class).addNotificationListener(this, this);
   }
 
   @Override
   public void dispose() {
-    myProgressNotificationManager.removeNotificationListener(this);
     myAlarm.cancelAllRequests();
   }
 
@@ -84,6 +80,10 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
       }
     }
     return false;
+  }
+
+  public @Nullable ExternalSystemTask findTask(@NotNull ExternalSystemTaskId id) {
+    return myTasksDetails.get(id);
   }
 
   public @Nullable ExternalSystemTask findTask(@NotNull ExternalSystemTaskType type,
@@ -203,5 +203,11 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> update(), delay);
     }
+  }
+
+  @TestOnly
+  public static ExternalSystemProcessingManager getInstance() {
+    Application application = ApplicationManager.getApplication();
+    return application.getService(ExternalSystemProcessingManager.class);
   }
 }

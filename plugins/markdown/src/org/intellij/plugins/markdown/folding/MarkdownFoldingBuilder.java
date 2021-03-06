@@ -49,6 +49,9 @@ public class MarkdownFoldingBuilder extends CustomFoldingBuilder implements Dumb
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
+    if (root.getLanguage() != root.getContainingFile().getViewProvider().getBaseLanguage()) {
+      return;
+    }
     root.accept(new MarkdownElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -138,7 +141,7 @@ public class MarkdownFoldingBuilder extends CustomFoldingBuilder implements Dumb
   public static PsiElement skipNewLinesBackward(@Nullable PsiElement element) {
     if (element == null) return null;
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-      if (e.getNode().getElementType() != EOL) return e;
+      if (!MarkdownPsiUtil.WhiteSpaces.isNewLine(e)) return e;
     }
     return null;
   }

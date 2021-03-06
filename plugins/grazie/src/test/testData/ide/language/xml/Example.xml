@@ -3,7 +3,7 @@
            xsi:noNamespaceSchemaLocation="Example.xsd">
     <orderperson><TYPO descr="Typo: In word 'johnn'">johnn</TYPO> Smith</orderperson>
     <shipto>
-        <name>it <warning descr="EN_A_VS_AN">an</warning> friend</name>
+        <name><warning descr="PRP_THE">it</warning> <warning descr="EN_A_VS_AN">an</warning> friend</name>
         <address>Some street 23</address>
     </shipto>
 </shiporder>

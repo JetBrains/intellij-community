@@ -15,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
@@ -27,6 +28,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +64,7 @@ public class ToolEditorDialog extends DialogWrapper {
   private JBCheckBox myShowConsoleOnStdErrCheckbox;
   private RawCommandLineEditor myOutputFilterField;
 
-  protected ToolEditorDialog(JComponent parent, String title) {
+  protected ToolEditorDialog(JComponent parent, @NlsContexts.DialogTitle String title) {
     super(parent, true);
 
     myArgumentsField.setDialogCaption("Program Arguments");
@@ -131,7 +133,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
     myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.ArrowRight,
                                                                      AllIcons.General.ArrowDown,
-                                                                     "Advanced Options") {
+                                                                     ToolsBundle.message("dialog.separator.advanced.options")) {
       @Override
       protected RefreshablePanel createPanel() {
         return new RefreshablePanel() {
@@ -241,13 +243,13 @@ public class ToolEditorDialog extends DialogWrapper {
   /**
    * Initialize controls
    */
-  protected void setData(Tool tool, String[] existingGroups) {
+  protected void setData(Tool tool, String @Nls [] existingGroups) {
     myNameField.setText(tool.getName());
     myDescriptionField.setText(tool.getDescription());
     if (myGroupCombo.getItemCount() > 0) {
       myGroupCombo.removeAllItems();
     }
-    for (String existingGroup : existingGroups) {
+    for (@Nls String existingGroup : existingGroups) {
       if (existingGroup != null) {
         myGroupCombo.addItem(existingGroup);
       }

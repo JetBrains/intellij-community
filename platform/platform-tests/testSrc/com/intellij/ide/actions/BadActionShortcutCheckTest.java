@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -31,18 +31,17 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    new RunAll()
-      .append(() -> myLoggedWarnings.clear())
-      .append(() -> LoggedErrorProcessor.restoreDefaultProcessor())
-      .append(() -> super.tearDown())
-      .run();
+    new RunAll(
+      () -> myLoggedWarnings.clear(),
+      () -> LoggedErrorProcessor.restoreDefaultProcessor(),
+      () -> super.tearDown()
+    ).run();
   }
 
   public void testActionCanChangeShortcut() {
     AnAction action1 = new AnAction() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-      }
+      public void actionPerformed(@NotNull AnActionEvent e) { }
     };
     AnAction action2 = ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE);
     JPanel component = new JPanel();

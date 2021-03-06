@@ -24,6 +24,7 @@ import com.intellij.uiDesigner.inspections.StringDescriptorInspection;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -55,7 +56,7 @@ public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection
   }
 
   @Nullable
-  private static String checkDescriptor(final StringDescriptor descriptor, final Module module) {
+  private static @Nls String checkDescriptor(final StringDescriptor descriptor, final Module module) {
     final String bundleName = descriptor.getDottedBundleName();
     final String key = descriptor.getKey();
     if (bundleName == null && key == null) return null;

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+
 /**
  * @author peter
  */
@@ -197,6 +198,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
           assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
         }}
       })
+      def project = project // https://issues.apache.org/jira/browse/GROOVY-9562
       futures << ((CoreProgressManager)ProgressManager.instance).runProcessWithProgressAsynchronously(new Task.Backgroundable(myFixture.project, "findClass") {
         @Override
         void run(@NotNull ProgressIndicator indicator) { ReadAction.run {

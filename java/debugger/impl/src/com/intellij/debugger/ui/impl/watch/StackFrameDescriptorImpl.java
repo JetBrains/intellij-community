@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
@@ -12,9 +12,10 @@ import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -134,7 +135,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       return "";
     }
     ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
-    StringBuilder label = new StringBuilder();
+    @NlsSafe StringBuilder label = new StringBuilder();
     Method method = myMethodOccurrence.getMethod();
     if (method != null) {
       myName = method.name();
@@ -208,7 +209,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     catch (EvaluateException ignored) {
     }
-    return JBUI.scale(EmptyIcon.create(6));//AllIcons.Debugger.StackFrame;
+    //AllIcons.Debugger.StackFrame;
+    return JBUIScale.scaleIcon(EmptyIcon.create(6));
   }
 
   public Icon getIcon() {

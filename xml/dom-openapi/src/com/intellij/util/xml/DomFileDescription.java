@@ -14,6 +14,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentInstanceMap;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Use {@code com.intellij.dom.fileMetaData} to register.
+ * Use {@code com.intellij.dom.fileMetaData} extension point to register.
  *
  * @author peter
  * @see MergingFileDescription
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DomFileDescription<T> {
 
   /**
-   * @deprecated use {@code com.intellij.dom.fileMetaData} extension instead
+   * @deprecated Register with {@code com.intellij.dom.fileMetaData} extension point instead.
    */
   @Deprecated
   public static final ExtensionPointName<DomFileDescription> EP_NAME = ExtensionPointName.create("com.intellij.dom.fileDescription");
@@ -68,6 +69,7 @@ public class DomFileDescription<T> {
    * @deprecated use dom.implementation extension point instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final <Dom extends DomElement> void registerImplementation(Class<Dom> domElementClass, Class<? extends Dom> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
   }
@@ -81,6 +83,7 @@ public class DomFileDescription<T> {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
     myNamespacePolicies.put(namespaceKey, policy);
   }
@@ -120,11 +123,12 @@ public class DomFileDescription<T> {
   /**
    * @return some version. Override and change (e.g. {@code super.getVersion()+1}) when after some changes some files stopped being
    * described by this description or vice versa, so that the
-   * {@link DomService#getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)}
+   * {@link DomService#getDomFileCandidates(Class, com.intellij.psi.search.GlobalSearchScope)}
    * index is rebuilt correctly.
    * @deprecated use "domVersion" attribute of {@code com.intellij.dom.fileMetaData} extension instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public int getVersion() {
     return myRootTagName.hashCode();
   }

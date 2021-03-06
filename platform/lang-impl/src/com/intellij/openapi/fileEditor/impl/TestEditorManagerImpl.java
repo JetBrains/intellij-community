@@ -21,7 +21,10 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -48,11 +51,17 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   private final TestEditorSplitter myTestEditorSplitter = new TestEditorSplitter();
 
   private final Project myProject;
-  private int counter = 0;
+  private int counter;
 
   private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
   private VirtualFile myActiveFile;
-  private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
+  private static final MyLightVirtualFile LIGHT_VIRTUAL_FILE = new MyLightVirtualFile();
+  private static class MyLightVirtualFile extends LightVirtualFile {
+    MyLightVirtualFile() {super("Dummy.java");}
+    void clearUserDataOnDispose() {
+      clearUserData();
+    }
+  }
 
   TestEditorManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -87,15 +96,11 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject,
-                                                  () -> result.set(openFileImpl3(new OpenFileDescriptor(myProject, file), focusEditor)),
-                                                  "", null);
-    return result.get();
-
+    return openFileInCommand(new OpenFileDescriptor(myProject, file));
   }
 
-  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(OpenFileDescriptor openFileDescriptor, boolean focusEditor) {
+  @NotNull
+  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull FileEditorNavigatable openFileDescriptor) {
     VirtualFile file = openFileDescriptor.getFile();
     boolean isNewEditor = !myVirtualFile2Editor.containsKey(file);
 
@@ -123,7 +128,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     return result;
   }
 
-  private void modifyTabWell(Runnable tabWellModification) {
+  private void modifyTabWell(@NotNull Runnable tabWellModification) {
     if (myProject.isDisposed()) return;
 
     FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
@@ -180,7 +185,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   private String createNewTabbedContainerName() {
     counter++;
-    return "SplitTabContainer" + ((Object) counter).toString();
+    return "SplitTabContainer" + counter;
   }
 
 
@@ -363,6 +368,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   public void dispose() {
     closeAllFiles();
+    LIGHT_VIRTUAL_FILE.clearUserDataOnDispose();
   }
 
   @Override
@@ -431,11 +437,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject,
-                                                  () -> result.set(openFileImpl3(descriptor, focusEditor)),
-                                                  "", null);
-    Pair<FileEditor[], FileEditorProvider[]> pair = result.get();
+    Pair<FileEditor[], FileEditorProvider[]> pair = openFileInCommand(descriptor);
 
     for (FileEditor editor : pair.first) {
       if (editor instanceof TextEditor) {
@@ -446,7 +448,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @NotNull
-  private Editor doOpenTextEditor(@NotNull OpenFileDescriptor descriptor) {
+  private Pair<FileEditor[], FileEditorProvider[]> openFileInCommand(@NotNull FileEditorNavigatable descriptor) {
+    Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(descriptor)), "", null);
+    return result.get();
+  }
+
+  @NotNull
+  private Editor doOpenTextEditor(@NotNull FileEditorNavigatable descriptor) {
     VirtualFile file = descriptor.getFile();
     Editor editor = myVirtualFile2Editor.get(file);
 
@@ -472,7 +481,9 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     }
 
     editor.getSelectionModel().removeSelection();
-    descriptor.navigateIn(editor);
+    if (descriptor instanceof OpenFileDescriptor) {
+      ((OpenFileDescriptor)descriptor).navigateIn(editor);
+    }
     myActiveFile = file;
 
     return editor;
@@ -480,12 +491,9 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   @NotNull
-  public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject,
-                                                  () -> result.set(openFileImpl3(descriptor, focusEditor)),
-                                                  "", null);
-    return Arrays.asList(result.get().first);
+  public List<FileEditor> openFileEditor(@NotNull FileEditorNavigatable descriptor, boolean focusEditor) {
+    Pair<FileEditor[], FileEditorProvider[]> pair = openFileInCommand(descriptor);
+    return Arrays.asList(pair.first);
   }
 
   @Override

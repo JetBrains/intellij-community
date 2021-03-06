@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -32,7 +32,7 @@ public final class JBTabsDemoAction extends AnAction {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout(0, 0));
     final int[] count = new int[1];
-    final JBTabsImpl tabs = new JBTabsImpl(null, null, Disposer.newDisposable());
+    final JBTabsImpl tabs = new JBTabsImpl(null, null, ApplicationManager.getApplication());
 
     //final JPanel flow = new JPanel(new FlowLayout(FlowLayout.CENTER));
     //frame.getContentPane().add(flow);

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.actions;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.RunProfile;
@@ -22,6 +23,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,11 +35,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+public class StopAction extends DumbAwareAction {
   private WeakReference<JBPopup> myActivePopupRef = null;
 
   private static boolean isPlaceGlobal(@NotNull AnActionEvent e) {
     return ActionPlaces.isMainMenuOrActionSearch(e.getPlace())
+           || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
+           || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
            || ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace())
            || ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace());
@@ -45,7 +49,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   @Override
   public void update(@NotNull final AnActionEvent e) {
     boolean enable = false;
-    Icon icon = getTemplatePresentation().getIcon();
+    Icon icon = getActionIcon(e);
     String description = getTemplatePresentation().getDescription();
     Presentation presentation = e.getPresentation();
     if (isPlaceGlobal(e)) {
@@ -93,6 +97,10 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     presentation.setDescription(description);
   }
 
+  protected Icon getActionIcon(@NotNull final AnActionEvent e) {
+    return getTemplatePresentation().getIcon();
+  }
+
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -111,13 +119,13 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       Pair<List<HandlerItem>, HandlerItem>
-        handlerItems = getItemsList(stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
+        handlerItems = getItemsList(project, stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
         return;
       }
 
       HandlerItem stopAllItem =
-        new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), AllIcons.Actions.Suspend,
+        new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), getActionIcon(e),
                         true) {
           @Override
           void stop() {
@@ -140,7 +148,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
 
       IPopupChooserBuilder<HandlerItem> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
-        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
+        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
           @Nullable
           @Override
           public String getTextFor(HandlerItem item) {
@@ -183,6 +191,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
       if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
+                                || ActionPlaces.NEW_TOOLBAR.equals(e.getPlace())
+                                || ActionPlaces.STATE_WIDGET_ACTION_BAR.equals(e.getPlace())
                                 || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
         popup.showUnderneathOf(component);
       }
@@ -199,7 +209,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   @Nullable
-  private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
+  private Pair<List<HandlerItem>, HandlerItem> getItemsList(Project project, List<? extends RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
     if (descriptors.isEmpty()) {
       return null;
     }
@@ -209,7 +219,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     for (final RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
       if (handler != null) {
-        HandlerItem item = new HandlerItem(descriptor.getDisplayName(), descriptor.getIcon(), false) {
+        HandlerItem item = new HandlerItem(getDisplayName(project, descriptor), descriptor.getIcon(), false) {
           @Override
           void stop() {
             ExecutionManagerImpl.stopProcess(descriptor);
@@ -223,6 +233,11 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     }
 
     return Pair.create(items, selected);
+  }
+
+  @BuildEventsNls.Title
+  protected String getDisplayName(final Project project, final RunContentDescriptor descriptor) {
+    return descriptor.getDisplayName();
   }
 
   @Nullable
@@ -274,11 +289,11 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   }
 
   abstract static class HandlerItem {
-    final String displayName;
+    final @Nls String displayName;
     final Icon icon;
     final boolean hasSeparator;
 
-    HandlerItem(String displayName, Icon icon, boolean hasSeparator) {
+    HandlerItem(@Nls String displayName, Icon icon, boolean hasSeparator) {
       this.displayName = displayName;
       this.icon = icon;
       this.hasSeparator = hasSeparator;

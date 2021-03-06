@@ -46,7 +46,7 @@ import java.util.List;
 public abstract class ElementCreator implements WriteActionAware {
   private static final Logger LOG = Logger.getInstance(ElementCreator.class);
   private final Project myProject;
-  private final String myErrorTitle;
+  private final @NlsContexts.DialogTitle String myErrorTitle;
 
   protected ElementCreator(Project project, @NlsContexts.DialogTitle String errorTitle) {
     myProject = project;
@@ -79,7 +79,7 @@ public abstract class ElementCreator implements WriteActionAware {
   }
 
   @Nullable
-  private Exception executeCommand(String commandName, ThrowableRunnable<? extends Exception> invokeCreate) {
+  private Exception executeCommand(@NlsContexts.Command String commandName, ThrowableRunnable<? extends Exception> invokeCreate) {
     final Exception[] exception = new Exception[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
@@ -106,7 +106,7 @@ public abstract class ElementCreator implements WriteActionAware {
     Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
   }
 
-  public static String getErrorMessage(Throwable t) {
+  public static @NlsContexts.DialogMessage String getErrorMessage(Throwable t) {
     String errorMessage = CreateElementActionBase.filterMessage(t.getMessage());
     if (StringUtil.isEmpty(errorMessage)) {
       errorMessage = t.toString();

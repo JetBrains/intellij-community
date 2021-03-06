@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -16,6 +17,8 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
@@ -26,14 +29,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -42,6 +42,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
@@ -49,23 +50,51 @@ import java.util.List;
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
-  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(16)));
+  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(16));
   protected Color myBackgroundColor;
-  protected ColorKey myBackgroundColorKey;
+  protected @NotNull ColorKey myBackgroundColorKey = EditorColors.NOTIFICATION_BACKGROUND;
   @Nullable private Key<?> myProviderKey;
   private Project myProject;
+  private final @NotNull Supplier<? extends EditorColorsScheme> mySchemeSupplier;
+
+  @ApiStatus.Internal
+  protected static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
     this();
     myBackgroundColor = backgroundColor;
   }
 
-  public EditorNotificationPanel(@Nullable ColorKey backgroundColorKey) {
+  public EditorNotificationPanel(@NotNull ColorKey backgroundColorKey) {
     this();
     myBackgroundColorKey = backgroundColorKey;
   }
 
+  /**
+   * Uses LookAndFeel <code>Label.foreground</code> color for the label and
+   * <code>JBUI.CurrentTheme.Link.Foreground.ENABLED</code> for links foreground.
+   */
   public EditorNotificationPanel() {
+    this(GLOBAL_SCHEME_SUPPLIER);
+  }
+
+  /**
+   * If fileEditor is a <code>TextEditor</code> based then use the editor colors scheme for foreground colors:
+   * EditorColorsScheme default foreground (<code>EditorColorsScheme.getDefaultForeground()</code> for the label and
+   * <code>CodeInsightColors.HYPERLINK_ATTRIBUTES</code>'s foreground color for links foreground.
+   *
+   * Most often this component is created from <code>EditorNotifications.Provider.createNotificationPanel</code> methods where
+   * <code>FileEditor</code> is available. So this constructor is preferred over the default one.
+   *
+   * @param fileEditor is editor instance. null is equivalent to default constructor.
+   */
+  @ApiStatus.Internal
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor) {
+    this(fileEditorSupplier(fileEditor));
+  }
+
+  @ApiStatus.Internal
+  public EditorNotificationPanel(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     super(new BorderLayout());
 
     JPanel panel = new NonOpaquePanel(new BorderLayout());
@@ -77,6 +106,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, myGearLabel);
     setBorder(JBUI.Borders.empty(0, 10));
+
+    mySchemeSupplier = schemeSupplier;
+    if (mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER) {
+      myLabel.setForeground(new JBColor(() -> mySchemeSupplier.get().getDefaultForeground()));
+    }
+  }
+
+  @Override
+  public Color getBackground() {
+    return ObjectUtils.notNull(myBackgroundColor,
+                        ObjectUtils.notNull(GLOBAL_SCHEME_SUPPLIER.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()));
   }
 
   public void setProject(Project project) {
@@ -108,18 +148,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   public EditorNotificationPanel icon(@NotNull Icon icon) {
     myLabel.setIcon(icon);
     return this;
-  }
-
-  @Override
-  public Color getBackground() {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    if (myBackgroundColor != null) return myBackgroundColor;
-    if (myBackgroundColorKey != null) {
-      Color color = globalScheme.getColor(myBackgroundColorKey);
-      if (color != null) return color;
-    }
-    Color color = globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND);
-    return color != null ? color : UIUtil.getToolTipBackground();
   }
 
   @NotNull
@@ -209,7 +237,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   @Nullable
-  protected String getIntentionActionText() {
+  protected @IntentionName String getIntentionActionText() {
     return null;
   }
 
@@ -222,6 +250,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   @Nls
   protected String getIntentionActionFamilyName() {
     return IdeBundle.message("intention.family.editor.notification");
+  }
+
+  private static Supplier<EditorColorsScheme> fileEditorSupplier(@Nullable FileEditor fileEditor) {
+    if (fileEditor instanceof TextEditor) {
+      Editor editor = ((TextEditor)fileEditor).getEditor();
+      return () -> editor.getColorsScheme();
+    }
+    else {
+      return GLOBAL_SCHEME_SUPPLIER;
+    }
   }
 
   private void logNotificationActionInvocation(@NotNull Object handlerClass) {
@@ -266,7 +304,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     };
   }
 
-  private static class ActionHyperlinkLabel extends HyperlinkLabel {
+  private static final class ActionHyperlinkLabel extends HyperlinkLabel {
     private final boolean myShowInIntentionMenu;
     private final ActionHandler myHandler;
 
@@ -294,7 +332,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
+  private final class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
@@ -327,7 +365,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return myOptions.isEmpty() ? Collections.emptyList() : myOptions.subList(1, myOptions.size());
     }
 
-    @Nls
     @NotNull
     @Override
     public String getText() {
@@ -368,7 +405,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private static class MyLinkOption implements IntentionAction {
+  private static final class MyLinkOption implements IntentionAction {
     private final HyperlinkLabel myLabel;
 
     private MyLinkOption(HyperlinkLabel label) {
@@ -409,7 +446,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private static class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
+  private static final class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
     private final JLabel myLabel;
 
     private MySettingsOption(JLabel label) {

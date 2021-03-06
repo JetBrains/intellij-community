@@ -30,6 +30,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
+    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
   }
 
   @Override
@@ -81,7 +82,9 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
         actions = replacingActions != null ? JBIterable.from(replacingActions) :
                   providers.flatMap(p -> p.getVcsActions(project, vcs, dataContext));
       }
-      else actions = JBIterable.empty();
+      else {
+        actions = JBIterable.empty();
+      }
       return actions.toList().toArray(EMPTY_ARRAY);
     }
   }
@@ -96,7 +99,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
         return EMPTY_ARRAY;
       }
       else {
-        return new AnAction[] { Separator.create(pair.second.getDisplayName()) };
+        return new AnAction[]{Separator.create(pair.second.getDisplayName())};
       }
     }
   }

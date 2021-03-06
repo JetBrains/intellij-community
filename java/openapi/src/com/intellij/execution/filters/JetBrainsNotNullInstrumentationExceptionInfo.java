@@ -3,13 +3,15 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo {
+public final class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo {
   /**
    * @see com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter.NotNullState#getNullParamMessage(String)
    */
@@ -18,6 +20,7 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
   private final String myParameterName;
   private final String myClassName;
   private final String myMethodName;
+  private final String myFullClassName;
   private final int myWantLines;
 
   private JetBrainsNotNullInstrumentationExceptionInfo(int offset,
@@ -25,10 +28,11 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
                                                        @NotNull String exceptionMessage,
                                                        @NotNull String parameterName,
                                                        @NotNull String className,
-                                                       @NotNull String methodName, 
+                                                       @NotNull String methodName,
                                                        int wantLines) {
     super(offset, exceptionClassName, exceptionMessage);
     myParameterName = parameterName;
+    myFullClassName = className;
     myClassName = StringUtil.getShortName(className, '/');
     myMethodName = methodName;
     myWantLines = wantLines;
@@ -53,7 +57,13 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
     if (method == null) return null;
     PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return null;
-    if (!myClassName.equals(psiClass.getName())) return null;
+    if (!myClassName.equals(psiClass.getName())) {
+      PsiClass aClass = ClassUtil.findPsiClass(method.getManager(), myFullClassName.replace('/', '.'), null, true);
+      if (aClass == null || !aClass.isInheritor(psiClass, true)) return null;
+      PsiMethod subClassMethod = aClass.findMethodBySignature(method, false);
+      if (subClassMethod == null) return null;
+      method = subClassMethod;
+    }
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getName().equals(myParameterName)) {
@@ -72,22 +82,22 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
     switch (myWantLines) {
       case 2:
         if (line.contains(myClassName+".$$$reportNull$$$0")) {
-          return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(), 
-                                                                  myParameterName, myClassName, myMethodName, 1); 
+          return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(),
+                                                                  myParameterName, myFullClassName, myMethodName, 1);
         }
         break;
       case 1:
         if (line.contains(myClassName+"."+myMethodName)) {
           return new JetBrainsNotNullInstrumentationExceptionInfo(getClassNameOffset(), getExceptionClassName(), getExceptionMessage(),
-                                                                  myParameterName, myClassName, myMethodName, 0);
+                                                                  myParameterName, myFullClassName, myMethodName, 0);
         }
     }
     return null;
   }
 
   static JetBrainsNotNullInstrumentationExceptionInfo tryCreate(int offset,
-                                                                @NotNull String exceptionClassName,
-                                                                @NotNull String exceptionMessage) {
+                                                                @NotNull @NonNls String exceptionClassName,
+                                                                @NotNull @NonNls String exceptionMessage) {
     if (!exceptionClassName.equals("java.lang.IllegalArgumentException")) return null;
     if (!exceptionMessage.startsWith("Argument ")) return null;
     Matcher matcher = INSTRUMENTATION_MESSAGE_PATTERN.matcher(exceptionMessage);
@@ -96,6 +106,6 @@ public class JetBrainsNotNullInstrumentationExceptionInfo extends ExceptionInfo 
     String className = matcher.group(2);
     String methodName = matcher.group(3);
     return new JetBrainsNotNullInstrumentationExceptionInfo(offset, exceptionClassName, exceptionMessage, parameterName, className,
-                                                            methodName, 2); 
+                                                            methodName, 2);
   }
 }

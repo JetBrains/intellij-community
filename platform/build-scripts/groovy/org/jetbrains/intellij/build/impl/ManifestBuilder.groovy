@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -9,7 +9,11 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 
 import java.nio.channels.FileChannel
-import java.nio.file.*
+import java.nio.file.FileVisitOption
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.function.Function
@@ -18,7 +22,7 @@ import java.util.function.Function
  * Recursively computes hashes of files under given paths and writes them in sha*sum utility format.
  */
 @CompileStatic
-class ManifestBuilder {
+final class ManifestBuilder {
   private static final String NAME = "product-info"
   private static final String CHARSET = "UTF-8"
   private static final String SEPARATOR = " *"

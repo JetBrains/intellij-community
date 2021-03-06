@@ -46,7 +46,7 @@
         </constraints>
         <properties/>
       </component>
-      <component id="466fc" class="com.intellij.ui.components.labels.ActionLink" binding="mySetIcon" custom-create="true">
+      <component id="466fc" class="com.intellij.ui.components.AnActionLink" binding="mySetIcon" custom-create="true">
         <constraints>
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -54,7 +54,7 @@
           <text resource-bundle="messages/IdeBundle" key="link.change.project.icon"/>
         </properties>
       </component>
-      <component id="3c805" class="com.intellij.ui.components.labels.ActionLink" binding="mySetIconDark" custom-create="true">
+      <component id="3c805" class="com.intellij.ui.components.AnActionLink" binding="mySetIconDark" custom-create="true">
         <constraints>
           <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -62,7 +62,7 @@
           <text resource-bundle="messages/IdeBundle" key="link.change.project.icon"/>
         </properties>
       </component>
-      <component id="4a23c" class="com.intellij.ui.components.labels.ActionLink" binding="myClear" custom-create="true">
+      <component id="4a23c" class="com.intellij.ui.components.AnActionLink" binding="myClear" custom-create="true">
         <constraints>
           <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -70,7 +70,7 @@
           <text resource-bundle="messages/IdeBundle" key="link.reset.project.icon"/>
         </properties>
       </component>
-      <component id="48a91" class="com.intellij.ui.components.labels.ActionLink" binding="myClearDark" custom-create="true">
+      <component id="48a91" class="com.intellij.ui.components.AnActionLink" binding="myClearDark" custom-create="true">
         <constraints>
           <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

@@ -123,6 +123,7 @@
   extends(".*expression")=expression
   extends(".*condition")=condition
   generateTokenAccessors(".*block")=false
+  generateTokenAccessors("redirection")=false
   extraRoot(".*block")=true
 }
 
@@ -155,7 +156,8 @@ command ::= shell_command [heredoc | redirection+]
 
 redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (number | '-')
-                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
+                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') redirection_target
+private redirection_target ::= process_substitution | <<parseUntilSpace w>> {name="redirection target"}
 process_substitution ::= ('<(' | '>(') list ')' {pin=1}
 
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
@@ -182,7 +184,7 @@ private in_for_clause ::= w (';' newlines | newlines in_clause?)
 select_command ::= select w select_expression newlines any_block
 private select_expression ::=  in_clause | list_terminator?
 
-private in_clause ::= "in" w+ list_terminator newlines
+private in_clause ::= in w+ list_terminator newlines
 list_terminator ::= '\n' | ';' {recoverWhile = list_terminator_recover}
 private list_terminator_recover ::= !(do | '{' | '\n')
 
@@ -214,22 +216,24 @@ private compound_list_recover ::= !(elif | else | then | fi)
 private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
   pin=1
 } // todo with pin
-private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '\n') newlines
+private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n') newlines
 
 function_definition ::= &(function | word '(') function_definition_inner {
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
 }
-private function_definition_inner ::= word argument_list newlines block
-                                     | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
+private function_definition_inner ::= word argument_list newlines (block | parentheses_block)
+                                     | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines (block | parentheses_block)
                                      { pin(".*")="function|argument_list" }
 
 private argument_list ::= '(' ')' {recoverWhile = argument_list_recover}
-private argument_list_recover ::= !('\n'| '{')
+private argument_list_recover ::= !('\n'| '{' | '(')
 
 conditional_command ::=  '[[' condition* (']]'|']'  <<differentBracketsWarning>>)
                        | '['  condition* ( ']'|']]' <<differentBracketsWarning>>) {pin(".*")=1}
 
 private any_block ::= block | do_block
+
+parentheses_block ::= '('  block_compound_list ')' { pin=1 }
 do_block ::= do  block_compound_list done {
   pin(".*")=1
   implements="com.intellij.sh.psi.ShLazyDoBlock"
@@ -248,7 +252,7 @@ block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_o
   elementType=compound_list
   recoverWhile=block_compound_list_recover
 }
-private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done)
+private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done | '(' | ')')
 
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {pin=1}
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}
@@ -264,7 +268,7 @@ private simple_command_element_inner ::=  literal assignment_command?
                                         | old_arithmetic_expansion {pin(".*")=1}
 
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-            HEREDOC_CONTENT*
+            HEREDOC_CONTENT?
             (HEREDOC_MARKER_END | <<eof>>)
 private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
 
@@ -301,6 +305,7 @@ array_assignment ::= newlines '='? expression newlines
 
 literal ::= word | string | number | variable {
   extends=simple_command_element
+  implements="com.intellij.model.psi.UrlReferenceHost"
   mixin="com.intellij.sh.psi.impl.ShLiteralMixin"
   methods=[getReferences]
 }
@@ -370,16 +375,19 @@ condition ::=
   | logical_or_condition
   | logical_and_condition
   | equality_condition
+  | regex_condition
   | comparison_condition
   | logical_bitwise_condition
   | literal_condition
   | parentheses_condition
 
 assignment_condition ::= condition '=' condition
-logical_or_condition ::= condition '||' condition
-logical_and_condition ::= condition '&&' condition
-equality_condition ::= condition ('==' | '!=' | '=~') condition
+logical_or_condition ::= condition newlines '||' newlines condition
+logical_and_condition ::= condition newlines '&&' newlines condition
+equality_condition ::= condition ('==' | '!=') condition
+regex_condition ::= condition '=~' regex_pattern
 comparison_condition ::= condition ('<' | '>') condition
 logical_bitwise_condition ::= '!' simple_command
 parentheses_condition ::= '(' condition ')'
 literal_condition ::= (w newlines | newlines w)
+regex_pattern ::= w+

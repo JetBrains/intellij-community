@@ -17,11 +17,16 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class PatternBasedPackageSet extends PackageSetBase {
@@ -97,5 +102,30 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
     }
 
     return Pattern.compile(builder.toString());
+  }
+
+  protected static boolean matchesLibrary(final Pattern libPattern,
+                                          final VirtualFile file,
+                                          final ProjectFileIndex fileIndex) {
+    if (libPattern != null) {
+      final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(file);
+      for (OrderEntry orderEntry : entries) {
+        if (orderEntry instanceof LibraryOrderEntry) {
+          final String libraryName = ((LibraryOrderEntry)orderEntry).getLibraryName();
+          if (libraryName != null) {
+            if (libPattern.matcher(libraryName).matches()) return true;
+          } else {
+            final String presentableName = orderEntry.getPresentableName();
+            final String fileName = new File(presentableName).getName();
+            if (libPattern.matcher(fileName).matches()) return true;
+          }
+        } else if (orderEntry instanceof JdkOrderEntry) {
+          final String jdkName = ((JdkOrderEntry)orderEntry).getJdkName();
+          if (jdkName != null && libPattern.matcher(jdkName).matches()) return true;
+        }
+      }
+      return false;
+    }
+    return true;
   }
 }

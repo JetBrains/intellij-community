@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -35,10 +35,8 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     myCopyingHandler = copyingHandler;
   }
 
-  @NotNull
-  private static SourceFileFilter createCompositeFilter(@NotNull final SourceFileFilter baseFilter, @NotNull final FileFilter filter) {
-    if (filter.equals(FileUtilRt.ALL_FILES)) return baseFilter;
-    return new CompositeSourceFileFilter(baseFilter, filter);
+  private static SourceFileFilter createCompositeFilter(SourceFileFilter baseFilter, FileFilter filter) {
+    return filter == FileFilters.EVERYTHING ? baseFilter : new CompositeSourceFileFilter(baseFilter, filter);
   }
 
   @Override
@@ -80,7 +78,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     if (outSrcMapping.getState(targetPath) == null) {
       ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
-        logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_NAME, "Copying file:");
+        logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_ID, "Copying file:");
       }
       myCopyingHandler.copyFile(file, targetFile, context);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));

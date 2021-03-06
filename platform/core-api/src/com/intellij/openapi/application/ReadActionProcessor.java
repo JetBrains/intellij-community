@@ -19,9 +19,6 @@ package com.intellij.openapi.application;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 public abstract class ReadActionProcessor<T> implements Processor<T> {
   @Override
   public boolean process(final T t) {

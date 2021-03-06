@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +31,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-/**
- * @author cdr
-*/
 public class ChangeFileEncodingAction extends AnAction implements DumbAware, LightEditCompatible {
   private final boolean allowDirectories;
 
@@ -100,7 +98,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
                                               Editor editor,
                                               Document document,
                                               byte[] bytes,
-                                              @Nullable String clearItemText) {
+                                              @Nullable @NlsActions.ActionText String clearItemText) {
     return new ChooseFileEncodingAction(myFile) {
      @Override
      public void update(@NotNull final AnActionEvent e) {
@@ -109,7 +107,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, charset -> "Change encoding to '" + charset.displayName() + "'");
+       return createCharsetsActionGroup(clearItemText, null, charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));
        // no 'clear'
      }
 
@@ -193,7 +191,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
     CommandProcessor.getInstance().executeCommand(project, () -> {
       UndoManager undoManager = UndoManager.getInstance(project);
       undoManager.undoableActionPerformed(action);
-    }, IdeBundle.message("command.change.encoding.for.0", virtualFile.getName()), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
+    }, IdeBundle.message("change.encoding.command.name", virtualFile.getName()), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
 
     return true;
   }

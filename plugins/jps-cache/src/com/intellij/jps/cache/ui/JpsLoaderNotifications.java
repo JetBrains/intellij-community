@@ -3,9 +3,11 @@ package com.intellij.jps.cache.ui;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 
-public class JpsLoaderNotifications {
-  public static final NotificationGroup STICKY_NOTIFICATION_GROUP = new NotificationGroup("Compile Output Loader",
+public final class JpsLoaderNotifications {
+  public static final NotificationGroup ATTENTION = new NotificationGroup("Compile Output Loader: Attention",
                                                                                     NotificationDisplayType.STICKY_BALLOON, true);
-  public static final NotificationGroup NONE_NOTIFICATION_GROUP = new NotificationGroup("Compile Output Loader Status",
+  public static final NotificationGroup STANDARD = new NotificationGroup("Compile Output Loader: Standard",
+                                                                                    NotificationDisplayType.BALLOON, true);
+  public static final NotificationGroup EVENT_LOG = new NotificationGroup("Compile Output Loader: Event Log",
                                                                                     NotificationDisplayType.NONE, true);
 }

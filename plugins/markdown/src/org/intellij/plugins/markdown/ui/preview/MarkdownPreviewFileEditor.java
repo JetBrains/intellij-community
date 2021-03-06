@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.*;
@@ -13,92 +14,50 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.StartupUiUtil;
-import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
-import org.intellij.plugins.markdown.settings.MarkdownCssSettings;
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.owasp.html.HtmlPolicyBuilder;
-import org.owasp.html.PolicyFactory;
-import org.owasp.html.Sanitizers;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
-  private final static long PARSING_CALL_TIMEOUT_MS = 50L;
+  private static final long PARSING_CALL_TIMEOUT_MS = 50L;
+  private static final long RENDERING_DELAY_MS = 20L;
 
-  private final static long RENDERING_DELAY_MS = 20L;
+  private static @Nullable Boolean ourIsDefaultMarkdownPreviewSettings = null;
 
-  final static NotNullLazyValue<PolicyFactory> SANITIZER_VALUE = new NotNullLazyValue<PolicyFactory>() {
-    @NotNull
-    @Override
-    protected PolicyFactory compute() {
-      return Sanitizers.BLOCKS
-        .and(Sanitizers.FORMATTING)
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https").allowElements("img")
-               .allowAttributes("alt", "src", "title").onElements("img")
-               .allowAttributes("border", "height", "width").onElements("img")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("http", "https").allowElements("input")
-               .allowAttributes("type", "class", "checked", "disabled").onElements("input")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("http", "https").allowElements("li")
-               .allowAttributes("class").onElements("li")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https", "mailto").allowElements("a")
-               .allowAttributes("href", "title").onElements("a")
-               .toFactory())
-        .and(Sanitizers.TABLES)
-        .and(new HtmlPolicyBuilder()
-               .allowElements("body", "pre", "hr", "code", "tr", "span")
-               .allowAttributes(HtmlGenerator.Companion.getSRC_ATTRIBUTE_NAME()).globally()
-               .allowAttributes("class").onElements("code", "tr", "span")
-               .toFactory());
-    }
-  };
-  @NotNull
-  private final JPanel myHtmlPanelWrapper;
-  @Nullable
-  private MarkdownHtmlPanel myPanel;
-  @Nullable
-  private MarkdownHtmlPanelProvider.ProviderInfo myLastPanelProviderInfo = null;
-  @NotNull
   private final Project myProject;
-  @NotNull
   private final VirtualFile myFile;
-  @Nullable
-  private final Document myDocument;
-  @NotNull
+  private final @Nullable Document myDocument;
+
+  private final JPanel myHtmlPanelWrapper;
+  private @Nullable MarkdownHtmlPanel myPanel;
+  private @Nullable MarkdownHtmlPanelProvider.ProviderInfo myLastPanelProviderInfo = null;
   private final Alarm myPooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  @NotNull
   private final Alarm mySwingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private final Object REQUESTS_LOCK = new Object();
-  @Nullable
-  private Runnable myLastScrollRequest = null;
-  @Nullable
-  private Runnable myLastHtmlOrRefreshRequest = null;
+  private @Nullable Runnable myLastScrollRequest = null;
+  private @Nullable Runnable myLastHtmlOrRefreshRequest = null;
 
   private volatile int myLastScrollOffset;
-  @NotNull
-  private String myLastRenderedHtml = "";
+  private @NotNull String myLastRenderedHtml = "";
+
+  private Editor mainEditor;
 
   public MarkdownPreviewFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
@@ -114,11 +73,8 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
         }
 
         @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
-          myPooledAlarm.addRequest(() -> {
-            //myLastScrollOffset = e.getOffset();
-            updateHtml(true);
-          }, PARSING_CALL_TIMEOUT_MS);
+        public void documentChanged(@NotNull DocumentEvent e) {
+          myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
         }
       }, this);
     }
@@ -129,22 +85,18 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       @Override
       public void componentShown(ComponentEvent e) {
         mySwingAlarm.addRequest(() -> {
-          if (myPanel != null) {
-            return;
+          if (myPanel == null) {
+            attachHtmlPanel();
           }
-
-          attachHtmlPanel();
         }, 0, ModalityState.stateForComponent(getComponent()));
       }
 
       @Override
       public void componentHidden(ComponentEvent e) {
         mySwingAlarm.addRequest(() -> {
-          if (myPanel == null) {
-            return;
+          if (myPanel != null) {
+            detachHtmlPanel();
           }
-
-          detachHtmlPanel();
         }, 0, ModalityState.stateForComponent(getComponent()));
       }
     });
@@ -156,12 +108,27 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     MessageBusConnection settingsConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
     MarkdownApplicationSettings.SettingsChangedListener settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
     settingsConnection.subscribe(MarkdownApplicationSettings.SettingsChangedListener.TOPIC, settingsChangedListener);
+    settingsConnection.subscribe(MarkdownApplicationSettings.FontChangedListener.TOPIC, createFontChangedListener());
+  }
+
+  @NotNull
+  private MarkdownApplicationSettings.FontChangedListener createFontChangedListener() {
+    return new MarkdownApplicationSettings.FontChangedListener() {
+      @Override
+      public void fontChanged() {
+        if (myPanel != null && mainEditor != null) {
+          myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
+        }
+      }
+    };
+  }
+
+  public void setMainEditor(Editor editor) {
+    this.mainEditor = editor;
   }
 
   public void scrollToSrcOffset(final int offset) {
-    if (myPanel == null) {
-      return;
-    }
+    if (myPanel == null) return;
 
     // Do not scroll if html update request is online
     // This will restrain preview from glitches on editing
@@ -174,45 +141,38 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       if (myLastScrollRequest != null) {
         mySwingAlarm.cancelRequest(myLastScrollRequest);
       }
-      myLastScrollRequest = () -> {
-        if (myPanel == null) {
-          return;
-        }
 
-        myLastScrollOffset = offset;
-        myPanel.scrollToMarkdownSrcOffset(myLastScrollOffset);
-        synchronized (REQUESTS_LOCK) {
-          myLastScrollRequest = null;
+      myLastScrollRequest = () -> {
+        if (myPanel != null) {
+          myLastScrollOffset = offset;
+          myPanel.scrollToMarkdownSrcOffset(myLastScrollOffset);
+          synchronized (REQUESTS_LOCK) {
+            myLastScrollRequest = null;
+          }
         }
       };
+
       mySwingAlarm.addRequest(myLastScrollRequest, RENDERING_DELAY_MS, ModalityState.stateForComponent(getComponent()));
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myHtmlPanelWrapper;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    if (myPanel == null) {
-      return null;
-    }
-    return myPanel.getComponent();
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return "Markdown HTML Preview";
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    return myPanel != null ? myPanel.getComponent() : null;
   }
 
   @Override
-  public void setState(@NotNull FileEditorState state) {
+  public @NotNull String getName() {
+    return MarkdownBundle.message("markdown.editor.preview.name");
   }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) { }
 
   @Override
   public boolean isModified() {
@@ -226,86 +186,80 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
 
   @Override
   public void selectNotify() {
-    if (myPanel == null) {
-      return;
+    if (myPanel != null) {
+      updateHtmlPooled();
     }
-
-    updateHtmlPooled();
   }
 
   @Override
-  public void deselectNotify() {
-  }
+  public void deselectNotify() { }
 
   @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
   @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
-  @Nullable
   @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+  public @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
     return null;
   }
 
-  @Nullable
   @Override
-  public FileEditorLocation getCurrentLocation() {
+  public @Nullable FileEditorLocation getCurrentLocation() {
     return null;
   }
 
   @Override
   public void dispose() {
-    if (myPanel == null) {
-      return;
+    if (myPanel != null) {
+      Disposer.dispose(myPanel);
     }
-    Disposer.dispose(myPanel);
   }
 
-  @NotNull
-  private MarkdownHtmlPanelProvider retrievePanelProvider(@NotNull MarkdownApplicationSettings settings) {
+  private @NotNull MarkdownHtmlPanelProvider retrievePanelProvider(@NotNull MarkdownApplicationSettings settings) {
     final MarkdownHtmlPanelProvider.ProviderInfo providerInfo = settings.getMarkdownPreviewSettings().getHtmlPanelProviderInfo();
 
     MarkdownHtmlPanelProvider provider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo);
 
     if (provider.isAvailable() != MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
+      if (ourIsDefaultMarkdownPreviewSettings == null) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourIsDefaultMarkdownPreviewSettings = settings.getMarkdownPreviewSettings() == MarkdownPreviewSettings.DEFAULT;
+      }
       settings.setMarkdownPreviewSettings(new MarkdownPreviewSettings(settings.getMarkdownPreviewSettings().getSplitEditorLayout(),
                                                                       MarkdownPreviewSettings.DEFAULT.getHtmlPanelProviderInfo(),
-                                                                      settings.getMarkdownPreviewSettings().isUseGrayscaleRendering(),
                                                                       settings.getMarkdownPreviewSettings().isAutoScrollPreview(),
                                                                       settings.getMarkdownPreviewSettings().isVerticalSplit()));
 
-      Messages.showMessageDialog(
-        myHtmlPanelWrapper,
-        MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.getName()),
-        CommonBundle.getErrorTitle(),
-        Messages.getErrorIcon()
-      );
+      if (!ourIsDefaultMarkdownPreviewSettings) {
+        Messages.showMessageDialog(
+          myHtmlPanelWrapper,
+          MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.getName()),
+          CommonBundle.getErrorTitle(),
+          Messages.getErrorIcon()
+        );
+      }
 
-      provider = MarkdownHtmlPanelProvider.getProviders()[0];
+      provider = Objects.requireNonNull(
+        ContainerUtil.find(
+          MarkdownHtmlPanelProvider.getProviders(),
+          p -> p.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE
+        )
+      );
     }
 
     myLastPanelProviderInfo = settings.getMarkdownPreviewSettings().getHtmlPanelProviderInfo();
     return provider;
   }
 
-
-  /**
-   * Is always run from pooled thread
-   */
-  private void updateHtml(final boolean preserveScrollOffset) {
-    if (myPanel == null) {
+  // Is always run from pooled thread
+  private void updateHtml() {
+    if (myPanel == null || myDocument == null || !myFile.isValid() || Disposer.isDisposed(this)) {
       return;
     }
 
-    if (!myFile.isValid() || myDocument == null || Disposer.isDisposed(this)) {
-      return;
-    }
-
-    final String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
+    String html = MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
     if (!myFile.isValid() || Disposer.isDisposed(this)) {
@@ -316,26 +270,21 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       if (myLastHtmlOrRefreshRequest != null) {
         mySwingAlarm.cancelRequest(myLastHtmlOrRefreshRequest);
       }
-      myLastHtmlOrRefreshRequest = () -> {
-        if (myPanel == null) {
-          return;
-        }
 
-        final String currentHtml = "<html><head></head>" + SANITIZER_VALUE.getValue().sanitize(html) + "</html>";
+      myLastHtmlOrRefreshRequest = () -> {
+        if (myPanel == null) return;
+
+        String currentHtml = "<html><head></head>" + html + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
-          myPanel.setHtml(myLastRenderedHtml);
-
-          if (preserveScrollOffset) {
-            scrollToSrcOffset(myLastScrollOffset);
-          }
+          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset());
         }
 
-        myPanel.render();
         synchronized (REQUESTS_LOCK) {
           myLastHtmlOrRefreshRequest = null;
         }
       };
+
       mySwingAlarm.addRequest(myLastHtmlOrRefreshRequest, RENDERING_DELAY_MS, ModalityState.stateForComponent(getComponent()));
     }
   }
@@ -353,27 +302,13 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     myPanel = retrievePanelProvider(settings).createHtmlPanel();
     myHtmlPanelWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
     myHtmlPanelWrapper.repaint();
-    updatePanelCssSettings(myPanel, settings.getMarkdownCssSettings());
     myLastRenderedHtml = "";
     updateHtmlPooled();
   }
 
   private void updateHtmlPooled() {
     myPooledAlarm.cancelAllRequests();
-    myPooledAlarm.addRequest(() -> updateHtml(true), 0);
-  }
-
-  private static void updatePanelCssSettings(@NotNull MarkdownHtmlPanel panel, @NotNull final MarkdownCssSettings cssSettings) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
-    final String customCssURI = cssSettings.isUriEnabled()
-                                ? cssSettings.getStylesheetUri()
-                                : MarkdownCssSettings.getDefaultCssSettings(StartupUiUtil.isUnderDarcula()).getStylesheetUri();
-
-    panel.setCSS(inlineCss, customCssURI);
-
-    panel.render();
+    myPooledAlarm.addRequest(() -> updateHtml(), 0);
   }
 
   private static boolean isPreviewShown(@NotNull Project project, @NotNull VirtualFile file) {
@@ -399,14 +334,13 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
           if (myPanel == null) {
             attachHtmlPanel();
           }
-          else if (myLastPanelProviderInfo == null
-                   || MarkdownHtmlPanelProvider.createFromInfo(myLastPanelProviderInfo).equals(retrievePanelProvider(settings))) {
+          else if (myLastPanelProviderInfo == null ||
+                   MarkdownHtmlPanelProvider.createFromInfo(myLastPanelProviderInfo).equals(retrievePanelProvider(settings))) {
             detachHtmlPanel();
             attachHtmlPanel();
           }
 
-          myPanel.setHtml(myLastRenderedHtml);
-          updatePanelCssSettings(myPanel, settings.getMarkdownCssSettings());
+          myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
         }
       }, 0, ModalityState.stateForComponent(getComponent()));
     }

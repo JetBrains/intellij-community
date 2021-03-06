@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 
 /**
@@ -22,7 +23,7 @@ import com.intellij.openapi.editor.Editor;
  */
 public class SelectedTextMacro extends EditorMacro {
   public SelectedTextMacro() {
-    super("SelectedText", "Text selected in the editor");
+    super("SelectedText", IdeBundle.message("ide.macro.text.selected.in.the.editor"));
   }
 
   @Override

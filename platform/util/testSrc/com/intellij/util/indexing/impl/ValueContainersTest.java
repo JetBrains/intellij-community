@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -8,15 +8,15 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.EnumeratorStringDescriptor;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,7 +25,7 @@ public class ValueContainersTest extends TestCase {
   public void testNullValueSingleId() {
     runSimpleAddRemoveIteration(new Void[] {null}, new int[][]{{5}});
   }
-  
+
   public void testNullValueSameIdTrice() {
     runSimpleAddRemoveIteration(new Void[] {null}, new int[][]{{5, 5, 5}});
   }
@@ -50,7 +50,7 @@ public class ValueContainersTest extends TestCase {
         return id;
       }
     }
-    
+
     ValueContainerImpl<MutableValue> container = new ValueContainerImpl<>();
     MutableValue value1 = new MutableValue(1);
     container.addValue(value1.id, value1);
@@ -63,30 +63,30 @@ public class ValueContainersTest extends TestCase {
     assertTrue(iterator.hasNext());
     MutableValue valueFromIterator = iterator.next();
     assertEquals(value2, valueFromIterator);
-    assertEquals(new Integer(0), iterator.getFileSetObject());
+    assertEquals(Integer.valueOf(0), iterator.getFileSetObject());
     assertFalse(iterator.hasNext());
-    
+
     container.addValue(value1.id, value1);
     value1.id = 2;
     value2.id = 1;
 
     iterator = container.getValueIterator();
-    Set<MutableValue> processed = new THashSet<>();
-    
-    for(int i = 0; i < 2; ++i) {
+    Set<MutableValue> processed = new HashSet<>();
+
+    for (int i = 0; i < 2; ++i) {
       assertTrue(iterator.hasNext());
       valueFromIterator = iterator.next();
 
       assertTrue(processed.add(valueFromIterator));
       if (value1 == valueFromIterator) {
-        assertEquals(new Integer(1), iterator.getFileSetObject());
+        assertEquals(Integer.valueOf(1), iterator.getFileSetObject());
       }
       else {
         assertEquals(value2, valueFromIterator);
-        assertEquals(new Integer(0), iterator.getFileSetObject());
+        assertEquals(Integer.valueOf(0), iterator.getFileSetObject());
       }
     }
-    
+
     assertFalse(iterator.hasNext());
   }
 
@@ -104,17 +104,17 @@ public class ValueContainersTest extends TestCase {
       @Override
       public Map<String, String> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
-        THashMap<String, String> map = new THashMap<>(size);
+        Map<String, String> map = new HashMap<>(size);
         for (int i = 0; i < size; i++) {
           map.put(EnumeratorStringDescriptor.INSTANCE.read(in), EnumeratorStringDescriptor.INSTANCE.read(in));
         }
         return map;
       }
     }
-    ValueContainerImpl<THashMap<String, String>> container = new ValueContainerImpl<>();
-    container.addValue(111, new THashMap<>());
-    container.addValue(222, new THashMap<>());
-    THashMap<String, String> value = new THashMap<>();
+    ValueContainerImpl<Map<String, String>> container = new ValueContainerImpl<>();
+    container.addValue(111, new HashMap<>());
+    container.addValue(222, new HashMap<>());
+    Map<String, String> value = new HashMap<>();
     value.put("some", "awesome");
     container.addValue(333, value);
 
@@ -141,19 +141,19 @@ public class ValueContainersTest extends TestCase {
   }
 
   private static <T> void runSimpleAddRemoveIteration(T[] values, int[][] inputIds) {
-    HashMap<T, TIntArrayList> valueToIdList = new HashMap<>();
+    HashMap<T, IntArrayList> valueToIdList = new HashMap<>();
     ValueContainerImpl<T> container = new ValueContainerImpl<>();
 
     for(int i = 0; i < values.length; ++i) {
-      TIntArrayList list = new TIntArrayList(inputIds.length);
-      TIntHashSet set = new TIntHashSet(inputIds.length);
+      IntArrayList list = new IntArrayList(inputIds.length);
+      IntSet set = new IntOpenHashSet(inputIds.length);
       T value = values[i];
-      
+
       for (int inputId : inputIds[i]) {
         container.addValue(inputId, value);
         if (set.add(inputId)) list.add(inputId);
       }
-      list.sort();
+      list.sort(null);
       valueToIdList.put(value, list);
     }
 
@@ -164,13 +164,13 @@ public class ValueContainersTest extends TestCase {
       assertTrue(valueIterator.hasNext());
 
       T value = valueIterator.next();
-      TIntArrayList list = valueToIdList.get(value);
-      assertTrue(list != null);
+      IntArrayList list = valueToIdList.get(value);
+      assertNotNull(list);
 
       Object object = valueIterator.getFileSetObject();
 
       if (list.size() == 1) {
-        assertEquals(new Integer(list.getQuick(0)), object);
+        assertEquals(Integer.valueOf(list.getInt(0)), object);
       }
       else {
         assertTrue(object instanceof ChangeBufferingList);
@@ -178,29 +178,29 @@ public class ValueContainersTest extends TestCase {
 
       ValueContainer.IntPredicate predicate = valueIterator.getValueAssociationPredicate();
 
-      for (int inputId : list.toNativeArray()) assertTrue(predicate.contains(inputId));
+      for (int inputId : list.toIntArray()) assertTrue(predicate.contains(inputId));
 
       ValueContainer.IntIterator iterator = valueIterator.getInputIdsIterator();
       assertEquals(list.size(), iterator.size());
 
-      for (int ignore : list.toNativeArray()) {
+      for (int ignore : list.toIntArray()) {
         assertTrue(iterator.hasNext());
-        assertTrue(list.indexOf(iterator.next()) != -1);
+        assertTrue(list.contains(iterator.next()));
       }
 
-      assertTrue(!iterator.hasNext());
+      assertFalse(iterator.hasNext());
     }
 
     assertFalse(valueIterator.hasNext());
-    
+
     valueToIdList.forEach((key, value) -> {
-      for (int inputId : value.toNativeArray()) {
+      for (int inputId : value.toIntArray()) {
         container.removeAssociatedValue(inputId);
       }
     });
-    
+
     assertEquals(0, container.size());
     valueIterator = container.getValueIterator();
-    assertTrue(!valueIterator.hasNext());
+    assertFalse(valueIterator.hasNext());
   }
 }

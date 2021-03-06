@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.ide.IdeBundle;
@@ -56,7 +56,7 @@ public abstract class SchemesToImportPopup<T> {
     @Override
     public Component getListCellRendererComponent(@NotNull JList list, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       Scheme c = (Scheme)val;
-      myNameLabel.setText(c.getName());
+      myNameLabel.setText(c.getDisplayName());
 
       updateColors(isSelected);
       return myPanel;

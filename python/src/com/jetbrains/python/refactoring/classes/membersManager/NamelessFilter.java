@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Filters out named elements (ones that subclasses {@link com.intellij.psi.PsiNamedElement}) and {@link com.jetbrains.python.psi.PyElement})
+ * Filters out named elements (ones that subclasses {@link PsiNamedElement}) and {@link PyElement})
  * that are null or has null name.
  * You need it sometimes when code has errors (i.e. bad formatted code with annotation may treat annotation as method with null name.
  *

@@ -33,7 +33,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class DocStringSectionHeaderCompletionContributor extends CompletionContributor {
   public DocStringSectionHeaderCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
@@ -56,7 +56,7 @@ public class DocStringSectionHeaderCompletionContributor extends CompletionContr
                final String prefix = StringUtil.trimLeading(document.getText(linePrefixRange));
                result = result.withPrefixMatcher(prefix).caseInsensitive();
                final Iterable<String> names = format == DocStringFormat.GOOGLE ? GoogleCodeStyleDocString.PREFERRED_SECTION_HEADERS
-                                                                               : NumpyDocString.PREFERRED_SECTION_HEADERS; 
+                                                                               : NumpyDocString.PREFERRED_SECTION_HEADERS;
                for (String tag : names) {
                  result.addElement(LookupElementBuilder.create(tag));
                }

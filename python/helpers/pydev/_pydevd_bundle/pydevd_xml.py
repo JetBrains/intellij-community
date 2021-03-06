@@ -12,9 +12,10 @@ from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, pandas_to_str, is_string
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
+    should_evaluate_full_value, should_evaluate_shape
 
 try:
     import types
@@ -234,23 +235,6 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
 
-def is_builtin(x):
-    return getattr(x, '__module__', None) == BUILTINS_MODULE_NAME
-
-
-def is_numpy(x):
-    if not getattr(x, '__module__', None) == 'numpy':
-        return False
-    type_name = x.__name__
-    return type_name == 'dtype' or type_name == 'bool_' or type_name == 'str_' or 'int' in type_name or 'uint' in type_name \
-           or 'float' in type_name or 'complex' in type_name
-
-
-def should_evaluate_full_value(val):
-    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
-                                                       and not isinstance(val, (list, tuple, dict, set, frozenset)))
-
-
 def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
@@ -360,15 +344,16 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         pass
 
     if is_pandas_container(type_qualifier, typeName, v):
-        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+        value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
     xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
 
     xml_shape = ''
     try:
-        if is_numeric_container(type_qualifier, typeName, v):
-            xml_shape = ' shape="%s"' % make_valid_xml_value(str(v.shape))
-        elif hasattr(v, '__len__') and not is_string(v):
-            xml_shape = ' shape="%s"' % make_valid_xml_value("%s" % str(len(v)))
+        if should_evaluate_shape():
+            if hasattr(v, 'shape') and not callable(v.shape):
+                xml_shape = ' shape="%s"' % make_valid_xml_value(str(tuple(v.shape)))
+            elif hasattr(v, '__len__') and not is_string(v):
+                xml_shape = ' shape="%s"' % make_valid_xml_value("%s" % str(len(v)))
     except:
         pass
 

@@ -1,9 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.messages.Topic;
@@ -15,7 +13,7 @@ import java.util.List;
 public abstract class ExternalAnnotationsManager {
   public static final String ANNOTATIONS_XML = "annotations.xml";
 
-  public static final Topic<ExternalAnnotationsListener> TOPIC = Topic.create("external annotations", ExternalAnnotationsListener.class);
+  public static final Topic<ExternalAnnotationsListener> TOPIC = new Topic<>("external annotations", ExternalAnnotationsListener.class);
 
   /**
    * Describes where to place the new annotation
@@ -37,15 +35,13 @@ public abstract class ExternalAnnotationsManager {
      */
     NEED_ASK_USER,
     /**
-     * User actively cancelled the annotation addition, so it should not be added at all. 
+     * User actively cancelled the annotation addition, so it should not be added at all.
      */
     NOWHERE
   }
 
-  private static final NotNullLazyKey<ExternalAnnotationsManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(ExternalAnnotationsManager.class);
-
   public static ExternalAnnotationsManager getInstance(@NotNull Project project) {
-    return INSTANCE_KEY.getValue(project);
+    return project.getService(ExternalAnnotationsManager.class);
   }
 
   public abstract boolean hasAnnotationRootsForFile(@NotNull VirtualFile file);
@@ -134,6 +130,9 @@ public abstract class ExternalAnnotationsManager {
    */
   public abstract @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
+  /**
+   * @return null if were unable to load external annotations
+   */
   public abstract @Nullable List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
   public static class CanceledConfigurationException extends RuntimeException {}

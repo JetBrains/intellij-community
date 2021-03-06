@@ -74,14 +74,13 @@ public class TestFailedLineInspection extends LocalInspectionTool {
   }
 
   private static class RunActionFix implements LocalQuickFix, Iconable {
-    private final ConfigurationContext myContext;
     private final Executor myExecutor;
     private final RunnerAndConfigurationSettings myConfiguration;
 
     RunActionFix(PsiElement element, String executorId) {
       myExecutor = ExecutorRegistry.getInstance().getExecutorById(executorId);
-      myContext = new ConfigurationContext(element);
-      myConfiguration = myContext.getConfiguration();
+      ConfigurationContext context = new ConfigurationContext(element);
+      myConfiguration = context.getConfiguration();
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)

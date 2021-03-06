@@ -1,16 +1,23 @@
 <html>
 <body>
-This inspection analyzes method control and data flow to report possible conditions that are always <b>true</b> or <b>false</b>,
-expressions whose value is statically proven to be constant, and situations that can lead to nullability contract violations.<p/>
-  
-Variables, method parameters and return values marked as <code>@Nullable</code> or <code>@NotNull</code> are treated as nullable (or not-null, respectively)
-and used during the analysis to check nullability contracts, e.g. report <code>NullPointerException</code> (NPE) errors that might be produced.<p/>
+Reports code that always produces the same result, throws an exception, or may violate nullability contracts.
+<p>Examples:</p>
+<pre>
+<code>if (array.length &lt; index) {
+  System.out.println(array[index]);
+} // Array index is always out of bounds
 
-More complex contracts can be defined using <code>@Contract</code> annotation, for example:<p/>
-<code>@Contract("_, null -> null")</code> &mdash; method returns null if its second argument is null<br/>
-<code>@Contract("_, null -> null; _, !null -> !null")</code> &mdash; method returns null if its second argument is null and not-null otherwise<br/>
-<code>@Contract("true -> fail")</code> &mdash; a typical <code>assertFalse</code> method which throws an exception if <code>true</code> is passed to it<br/>
-<p/>
-The inspection can be configured to use custom <code>@Nullable</code>/<code>@NotNull</code> annotations (by default the ones from annotations.jar will be used)
+if (str == null) System.out.println("str is null");
+System.out.println(str.trim());
+// the last statement may throw an NPE
+
+@NotNull
+Integer square(@Nullable Integer input) {
+    // the method contract is violated
+    return input == null ? null : input * input;
+}</code></pre>
+<p>
+  Use the inspection options to fine-tune annotation processing policy and adjust the list of situations that should be checked.
+</p>
 </body>
 </html>

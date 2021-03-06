@@ -46,7 +46,8 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
       }
 
       if (!isKeyword(tokenType)) {
-        consumer.consumeToken(element, text, false, 0, new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()), PlainTextSplitter.getInstance());
+        consumer.consumeToken(element, text, false, 0, new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()),
+                              PlainTextSplitter.getInstance());
       }
       lexer.advance();
     }
@@ -54,8 +55,8 @@ class CustomFileTypeTokenizer extends Tokenizer<PsiElement> {
 
   private static boolean isKeyword(IElementType tokenType) {
     return tokenType == CustomHighlighterTokenType.KEYWORD_1 ||
-          tokenType == CustomHighlighterTokenType.KEYWORD_2 ||
-          tokenType == CustomHighlighterTokenType.KEYWORD_3 ||
-          tokenType == CustomHighlighterTokenType.KEYWORD_4;
+           tokenType == CustomHighlighterTokenType.KEYWORD_2 ||
+           tokenType == CustomHighlighterTokenType.KEYWORD_3 ||
+           tokenType == CustomHighlighterTokenType.KEYWORD_4;
   }
 }

@@ -55,7 +55,7 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     return (UndoManagerImpl)UndoManager.getInstance(getProject());
   }
 
-  private static class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
+  private static final class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final JComponent myComponent = new JPanel();
     private final Document[] myDocuments;
 
@@ -115,7 +115,7 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
     private static class State implements FileEditorState {
       @Override
-      public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+      public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
         return false;
       }
     }

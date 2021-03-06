@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
@@ -20,7 +21,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TreeUtil {
+public final class TreeUtil {
   private static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
   public static void ensureParsed(ASTNode node) {
@@ -229,6 +230,17 @@ public class TreeUtil {
     return (FileElement)parent;
   }
 
+  public static FileASTNode getFileElement(@NotNull ASTNode element) {
+    ASTNode parent = element;
+    while (parent != null && !(parent instanceof FileASTNode)) {
+      parent = parent.getTreeParent();
+    }
+    if (parent == null) {
+      parent = element.getUserData(CONTAINING_FILE_KEY_AFTER_REPARSE);
+    }
+    return (FileASTNode)parent;
+  }
+
   @Nullable
   public static ASTNode prevLeaf(final ASTNode node) {
     return prevLeaf((TreeElement)node, null);
@@ -288,7 +300,7 @@ public class TreeUtil {
                                                  final IElementType searchedType,
                                                  final CommonParentState commonParent,
                                                  final boolean expandChameleons) {
-    class MyVisitor extends RecursiveTreeElementWalkingVisitor {
+    final class MyVisitor extends RecursiveTreeElementWalkingVisitor {
       private TreeElement result;
 
       private MyVisitor(boolean doTransform) {

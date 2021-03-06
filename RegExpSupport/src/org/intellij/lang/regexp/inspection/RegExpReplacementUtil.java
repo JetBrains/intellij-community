@@ -5,7 +5,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class RegExpReplacementUtil {
+public final class RegExpReplacementUtil {
 
   /**
    * Dummy text that never needs escaping
@@ -26,7 +29,7 @@ public class RegExpReplacementUtil {
   public static void replaceInContext(@NotNull PsiElement element, @NotNull String text) {
     final PsiFile file = element.getContainingFile();
     text = escapeForContext(text, file);
-    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(file);
+    final Document document = file.getViewProvider().getDocument();
     assert document != null;
     final TextRange replaceRange = element.getTextRange();
     document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), text);

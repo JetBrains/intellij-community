@@ -184,6 +184,11 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     if (model == null) return null;
 
     WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName(MavenDomBundle.message("fix.add.dependency")).run(() -> {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      Document document = documentManager.getDocument(DomUtil.getFile(model));
+      if (document != null) {
+        documentManager.commitDocument(document);
+      }
       XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
       String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
       setChildTagValue(tag, "source", option);
@@ -191,7 +196,6 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
       if (level.isPreview()) {
         setChildTagValue(tag, "compilerArgs","--enable-preview");
       }
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
       }

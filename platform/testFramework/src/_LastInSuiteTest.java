@@ -1,6 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -15,7 +14,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManagerKt;
@@ -23,6 +21,7 @@ import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
@@ -97,7 +96,7 @@ public class _LastInSuiteTest extends TestCase {
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
     System.gc();
-    String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
+    String heapDump = TestApplicationManagerKt.publishHeapDump("dynamicExtension");
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensionPointToNonPlatformExtensions.forEach((ep, references) -> {
@@ -172,7 +171,7 @@ public class _LastInSuiteTest extends TestCase {
     if (Boolean.getBoolean("idea.test.guimode")) {
       Application application = ApplicationManager.getApplication();
       application.invokeAndWait(() -> {
-        IdeEventQueue.getInstance().flushQueue();
+        UIUtil.dispatchAllInvocationEvents();
         application.exit(true, true, false);
       });
       ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);

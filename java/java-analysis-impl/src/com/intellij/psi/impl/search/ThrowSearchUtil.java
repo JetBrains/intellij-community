@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -32,7 +19,7 @@ import java.util.Set;
 /**
  * Author: msk
  */
-public class ThrowSearchUtil {
+public final class ThrowSearchUtil {
   private static final Logger LOG = Logger.getInstance(ThrowSearchUtil.class);
 
   private ThrowSearchUtil() {
@@ -157,7 +144,7 @@ public class ThrowSearchUtil {
     return getSearchRoots(element) != null;
   }
 
-  public static String getSearchableTypeName(final PsiElement e) {
+  public static @NlsSafe String getSearchableTypeName(final PsiElement e) {
     if (e instanceof PsiThrowStatement) {
       final PsiThrowStatement aThrow = (PsiThrowStatement)e;
       final PsiType type = aThrow.getException().getType();

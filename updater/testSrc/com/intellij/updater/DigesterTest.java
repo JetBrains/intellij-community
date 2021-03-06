@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -51,11 +52,11 @@ public class DigesterTest extends UpdaterTestCase {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
     File simpleLink = getTempFile("Readme.simple.link");
-    Utils.createLink("Readme.txt", simpleLink);
+    IoTestUtil.createSymbolicLink(simpleLink.toPath(), Paths.get("Readme.txt"));
     File relativeLink = getTempFile("Readme.relative.link");
-    Utils.createLink("./Readme.txt", relativeLink);
+    IoTestUtil.createSymbolicLink(relativeLink.toPath(), Paths.get("./Readme.txt"));
     File absoluteLink = getTempFile("Readme.absolute.link");
-    Utils.createLink(dataDir.getPath() + "/Readme.txt", absoluteLink);
+    IoTestUtil.createSymbolicLink(absoluteLink.toPath(), Paths.get(dataDir.getPath() + "/Readme.txt"));
 
     assertEquals(CHECKSUMS.LINK_TO_README_TXT, Digester.digestRegularFile(simpleLink, false));
     assertEquals(CHECKSUMS.LINK_TO_DOT_README_TXT, Digester.digestRegularFile(relativeLink, false));

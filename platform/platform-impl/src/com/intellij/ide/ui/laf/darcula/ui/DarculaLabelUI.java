@@ -2,6 +2,8 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ui.components.labels.DropDownLink;
+import com.intellij.ui.scale.JBUIScale;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -29,5 +31,16 @@ public class DarculaLabelUI extends BasicLabelUI {
 
   protected int getMnemonicIndex(JLabel l) {
     return DarculaLaf.isAltPressed() ? l.getDisplayedMnemonicIndex() : -1;
+  }
+
+  @Override
+  protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
+                            Rectangle viewR, Rectangle iconR, Rectangle textR) {
+    String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
+
+    if (label instanceof DropDownLink) {
+      iconR.y += JBUIScale.scale(1);
+    }
+    return result;
   }
 }

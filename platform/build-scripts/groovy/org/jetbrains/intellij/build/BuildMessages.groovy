@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
+import java.util.function.Supplier
+
 @CompileStatic
-interface BuildMessages {
+interface BuildMessages extends System.Logger {
   void info(String message)
 
   void warning(String message)
@@ -34,7 +36,7 @@ interface BuildMessages {
 
   void setParameter(String parameterName, String value)
 
-  def <V> V block(String blockName, Closure<V> body)
+  def <V> V block(String blockName, Supplier<V> task)
 
   void artifactBuilt(String relativeArtifactPath)
 

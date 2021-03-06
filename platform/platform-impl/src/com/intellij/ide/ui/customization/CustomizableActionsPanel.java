@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -83,10 +84,12 @@ public class CustomizableActionsPanel {
 
   private ActionToolbarImpl createToolbar() {
     ActionGroup addGroup = new DefaultActionGroup(new AddActionActionTreeSelectionAction()/*, new AddGroupAction()*/, new AddSeparatorAction());
+    addGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.add.action.group"));
     addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
     addGroup.setPopup(true);
     ActionGroup restoreGroup = new DefaultActionGroup(new RestoreSelectionAction(), new RestoreAllAction());
     restoreGroup.setPopup(true);
+    restoreGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.restore.action.group"));
     restoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(addGroup, new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), restoreGroup), true);
@@ -259,7 +262,8 @@ public class CustomizableActionsPanel {
         if (userObject instanceof Group) {
           Group group = (Group)userObject;
           String name = group.getName();
-          append(name != null ? name : ObjectUtils.notNull(group.getId(), "<unnamed group>"));
+          @NlsSafe String id = group.getId();
+          append(name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group")));
           icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
         }
         else if (userObject instanceof String) {
@@ -277,14 +281,15 @@ public class CustomizableActionsPanel {
         else if (userObject instanceof Pair) {
           String actionId = (String)((Pair)userObject).first;
           AnAction action = ActionManager.getInstance().getAction(actionId);
-          append(action != null ? action.getTemplatePresentation().getText() : actionId);
+          String text = action != null ? action.getTemplatePresentation().getText() : null;
+          append(StringUtil.isNotEmpty(text) ? text : actionId);
           icon = (Icon)((Pair)userObject).second;
         }
         else if (userObject instanceof Separator) {
           append("-------------");
         }
         else if (userObject instanceof QuickList) {
-          append(((QuickList)userObject).getName());
+          append(((QuickList)userObject).getDisplayName());
           icon = null; // AllIcons.Actions.QuickList;
         }
         else if (userObject != null) {
@@ -610,7 +615,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class AddActionActionTreeSelectionAction extends TreeSelectionAction {
+  private final class AddActionActionTreeSelectionAction extends TreeSelectionAction {
     private AddActionActionTreeSelectionAction() {
       super(IdeBundle.messagePointer("button.add.action"));
     }
@@ -653,7 +658,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class AddSeparatorAction extends TreeSelectionAction {
+  private final class AddSeparatorAction extends TreeSelectionAction {
     private AddSeparatorAction() {
       super(IdeBundle.messagePointer("button.add.separator"));
     }
@@ -683,7 +688,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class RemoveAction extends TreeSelectionAction {
+  private final class RemoveAction extends TreeSelectionAction {
     private RemoveAction() {
       super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
       ShortcutSet shortcutSet = KeymapUtil.filterKeyStrokes(CommonShortcuts.getDelete(),
@@ -710,7 +715,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class EditIconAction extends TreeSelectionAction {
+  private final class EditIconAction extends TreeSelectionAction {
     private EditIconAction() {
       super(IdeBundle.messagePointer("button.edit.action.icon"), Presentation.NULL_STRING, AllIcons.Actions.Edit);
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel);
@@ -748,7 +753,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MoveUpAction extends TreeSelectionAction {
+  private final class MoveUpAction extends TreeSelectionAction {
     private MoveUpAction() {
       super(IdeBundle.messagePointer("button.move.up"), Presentation.NULL_STRING, AllIcons.Actions.MoveUp);
       registerCustomShortcutSet(CommonShortcuts.MOVE_UP, myPanel);
@@ -782,7 +787,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class MoveDownAction extends TreeSelectionAction {
+  private final class MoveDownAction extends TreeSelectionAction {
     private MoveDownAction() {
       super(IdeBundle.messagePointer("button.move.down"), Presentation.NULL_STRING, AllIcons.Actions.MoveDown);
       registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, myPanel);
@@ -817,7 +822,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class RestoreSelectionAction extends DumbAwareAction {
+  private final class RestoreSelectionAction extends DumbAwareAction {
     private RestoreSelectionAction() {
       super(IdeBundle.messagePointer("button.restore.selected.groups"));
     }
@@ -874,7 +879,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private class RestoreAllAction extends DumbAwareAction {
+  private final class RestoreAllAction extends DumbAwareAction {
     private RestoreAllAction() {
       super(IdeBundle.messagePointer("button.restore.all"));
     }

@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmField;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -39,5 +40,6 @@ public interface PsiField extends PsiJvmMember, PsiVariable, PsiDocCommentOwner,
 
   @NotNull
   @Override
+  @NlsSafe
   String getName();
 }

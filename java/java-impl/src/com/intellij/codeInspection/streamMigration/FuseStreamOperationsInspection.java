@@ -4,6 +4,7 @@ package com.intellij.codeInspection.streamMigration;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -137,9 +137,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
             if (newTerminal == null) return;
             PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
             if (nameElement == null) return;
-            String fusedSteps = newTerminal.fusedElements()
-              .mapLastOrElse(s -> StreamEx.of(", ", s), s -> StreamEx.of(" and ", s))
-              .flatMap(Function.identity()).skip(1).joining();
+            String fusedSteps = newTerminal.fusedElements().collect(NlsMessages.joiningAnd());
             holder.registerProblem(nameElement,
                                    JavaBundle.message("inspection.fuse.stream.operations.message", fusedSteps),
                                    new FuseStreamOperationsFix(fusedSteps, myStrictMode));

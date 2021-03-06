@@ -88,4 +88,11 @@ class StringSubstring {
       if (<warning descr="Condition 's2.length() != 4' is always 'false'">s2.length() != 4</warning>) {}
     }
   }
+  
+  void testSubstringVarRef(String s, int from, int length) {
+    String s1 = s.substring(0, length);
+    if (<warning descr="Condition 's1.length() == length' is always 'true'">s1.length() == length</warning>) {}
+    String s2 = s.substring(from, from + length);
+    if (<warning descr="Condition 's2.length() == length' is always 'true'">s2.length() == length</warning>) {}
+  }
 }

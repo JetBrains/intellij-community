@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -29,6 +30,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,11 +124,18 @@ public class IterateOverIterableIntention implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
+      return;
+    }
     final TemplateImpl template = getTemplate();
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final PsiExpression iterableExpression = getIterableExpression(editor, file);
       LOG.assertTrue(iterableExpression != null);
+      PsiElement element = PsiTreeUtil.skipSiblingsForward(iterableExpression, PsiWhiteSpace.class, PsiComment.class);
+      if (PsiUtil.isJavaToken(element, JavaTokenType.SEMICOLON)) {
+        WriteAction.run(() -> element.delete());
+      }
       TextRange textRange = iterableExpression.getTextRange();
       selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
     }

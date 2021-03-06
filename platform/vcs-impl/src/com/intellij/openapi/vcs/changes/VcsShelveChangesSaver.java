@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,11 +10,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
-import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -22,83 +21,83 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.createSystemShelve
 
 public class VcsShelveChangesSaver {
   private static final Logger LOG = Logger.getInstance(VcsShelveChangesSaver.class);
-  private final Project myProject;
-  private final String myStashMessage;
-  private final ShelveChangesManager myShelveManager;
-  private final ChangeListManagerEx myChangeManager;
-  private final ProjectLevelVcsManager myVcsManager;
+  private final Project project;
+  private final @Nls String myStashMessage;
   private final ProgressIndicator myProgressIndicator;
-  private Map<String, ShelvedChangeList> myShelvedLists;
+  private final Map<String, ShelvedChangeList> myShelvedLists = new HashMap<>(); // LocalChangeList.id -> shelved changes
 
   public VcsShelveChangesSaver(@NotNull Project project,
                                @NotNull ProgressIndicator indicator,
-                               @NotNull String stashMessage) {
-    myProject = project;
-    myShelveManager = ShelveChangesManager.getInstance(project);
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myChangeManager = ChangeListManagerImpl.getInstanceImpl(project);
+                               @NotNull @Nls String stashMessage) {
+    this.project = project;
     myProgressIndicator = indicator;
     myStashMessage = stashMessage;
   }
 
-  @Nullable
-  public Map<String, ShelvedChangeList> getShelvedLists() {
-    return myShelvedLists;
+  @NotNull
+  public List<ShelvedChangeList> getShelvedLists() {
+    return new ArrayList<>(myShelvedLists.values());
   }
 
   public void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
-    final Map<String, Map<VirtualFile, Collection<Change>>> lists =
-      new LocalChangesUnderRoots(myChangeManager, myVcsManager).getChangesByLists(rootsToSave);
 
     String oldProgressTitle = myProgressIndicator.getText();
-    myProgressIndicator.setText(VcsBundle.getString("vcs.shelving.changes"));
-    List<VcsException> exceptions = new ArrayList<>(1);
-    myShelvedLists = new HashMap<>();
+    myProgressIndicator.setText(VcsBundle.message("vcs.shelving.changes"));
 
-    for (Map.Entry<String, Map<VirtualFile, Collection<Change>>> entry : lists.entrySet()) {
-      final Map<VirtualFile, Collection<Change>> map = entry.getValue();
-      final Set<Change> changes = new HashSet<>();
-      for (Collection<Change> changeCollection : map.values()) {
-        changes.addAll(changeCollection);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    Collection<Change> allChanges = changeListManager.getAllChanges();
+
+    Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
+    if (changeListManager.areChangeListsEnabled()) {
+      for (LocalChangeList list : changeListManager.getChangeLists()) {
+        Collection<Change> changes = filterChangesByRoots(list.getChanges(), rootsSet);
+        if (!changes.isEmpty()) {
+          String name = createSystemShelvedChangeListName(myStashMessage, list.getName());
+          ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, name, false, true);
+          myShelvedLists.put(list.getId(), shelved);
+        }
       }
+    }
+    else {
+      Collection<Change> changes = filterChangesByRoots(allChanges, rootsSet);
       if (!changes.isEmpty()) {
-        final ShelvedChangeList list = VcsShelveUtils
-          .shelveChanges(myProject, myShelveManager, changes, createSystemShelvedChangeListName(myStashMessage, entry.getKey()), exceptions,
-                         false, true);
-        myShelvedLists.put(entry.getKey(), list);
+        ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, myStashMessage, false, true);
+        myShelvedLists.put(null, shelved);
       }
     }
-    if (! exceptions.isEmpty()) {
-      LOG.info("save " + exceptions, exceptions.get(0));
-      myShelvedLists = null;  // no restore here since during shelving changes are not rolled back...
-      throw exceptions.get(0);
-    } else {
-     doRollback(rootsToSave);
-    }
+
+    doRollback(rootsToSave, allChanges);
+
     myProgressIndicator.setText(oldProgressTitle);
   }
 
   public void load() {
-    if (myShelvedLists != null) {
-      LOG.info("load ");
-      String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
-      for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
-        VcsShelveUtils
-          .doSystemUnshelve(myProject, listEntry.getValue(), myChangeManager.findChangeList(listEntry.getKey()), myShelveManager,
-                            VcsBundle.getString("vcs.unshelving.conflict.left"),
-                            VcsBundle.getString("vcs.unshelving.conflict.right"));
-      }
-      myProgressIndicator.setText(oldProgressTitle);
+    LOG.info("load");
+    String oldProgressTitle = myProgressIndicator.getText();
+    myProgressIndicator.setText(VcsBundle.message("vcs.unshelving.changes"));
+    for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
+      VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
+                                      ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
+                                      ShelveChangesManager.getInstance(project),
+                                      VcsBundle.message("vcs.unshelving.conflict.left"),
+                                      VcsBundle.message("vcs.unshelving.conflict.right"));
     }
+    myProgressIndicator.setText(oldProgressTitle);
   }
 
-  protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
+  protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                            @NotNull Collection<Change> shelvedChanges) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
-    List<Change> changes4Rollback = ContainerUtil
-      .filter(myChangeManager.getAllChanges(), change -> rootsSet.contains(myVcsManager.getVcsRootFor(ChangesUtil.getFilePath(change))));
+    List<Change> changes4Rollback = filterChangesByRoots(ChangeListManager.getInstance(project).getAllChanges(), rootsSet);
+    new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true);
+  }
 
-    new RollbackWorker(myProject, myStashMessage, true).doRollback(changes4Rollback, true);
+  @NotNull
+  private List<Change> filterChangesByRoots(@NotNull Collection<Change> changes, @NotNull Set<? extends VirtualFile> rootsToSave) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    return ContainerUtil.filter(changes, change -> {
+      return rootsToSave.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
+    });
   }
 }

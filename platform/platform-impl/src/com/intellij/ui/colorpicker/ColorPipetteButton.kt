@@ -15,9 +15,8 @@
  */
 package com.intellij.ui.colorpicker
 
-import com.intellij.ui.colorpicker.ColorPickerModel
-import java.awt.*
-import javax.swing.*
+import java.awt.Color
+import javax.swing.JButton
 
 class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private val pipette: ColorPipette) : JButton() {
 
@@ -35,10 +34,19 @@ class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private
 
     private val originalColor = model.color
 
-    override fun picked(pickedColor: Color) = model.setColor(pickedColor, this@ColorPipetteButton)
+    override fun picked(pickedColor: Color) {
+      model.setColor(pickedColor, this@ColorPipetteButton)
+      model.firePipettePicked(pickedColor)
+    }
 
-    override fun update(updatedColor: Color) = model.setColor(updatedColor, this@ColorPipetteButton)
+    override fun update(updatedColor: Color) {
+      model.setColor(updatedColor, this@ColorPipetteButton)
+      model.firePipetteUpdated(updatedColor)
+    }
 
-    override fun cancel() = model.setColor(originalColor, this@ColorPipetteButton)
+    override fun cancel() {
+      model.setColor(originalColor, this@ColorPipetteButton)
+      model.firePipetteCancelled()
+    }
   }
 }

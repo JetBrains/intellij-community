@@ -4,6 +4,7 @@ package com.intellij.ide.actions.runAnything;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,7 +13,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 class RunAnythingIconHandler implements PropertyChangeListener {
-  private static final String FOREGROUND_PROPERTY = "foreground";
+  private static final @NonNls String FOREGROUND_PROPERTY = "foreground";
   protected static final String MATCHED_PROVIDER_PROPERTY = "JTextField.match";
 
   private final Consumer<? super ExtendableTextComponent.Extension> myConsumer;

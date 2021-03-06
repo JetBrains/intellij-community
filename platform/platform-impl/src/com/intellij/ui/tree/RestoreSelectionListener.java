@@ -30,7 +30,7 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
               if (tree.getSelectionModel().isSelectionEmpty()) {
                 // restore a path selection only if nothing is selected now
                 Reference<TreePath> reference = new Reference<>();
-                TreeVisitor visitor = new TreeVisitor.ByTreePath<Object>(path, o -> o) {
+                TreeVisitor visitor = new TreeVisitor.ByTreePath<>(path, o -> o) {
                   @NotNull
                   @Override
                   protected Action visit(@NotNull TreePath path, Object component) {

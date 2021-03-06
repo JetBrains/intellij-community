@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.BitUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -13,16 +13,11 @@ import java.awt.*;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public class PropertyCollector {
-  private final ConcurrentMap<Class<?>, List<MutableAccessor>> classToOwnFields = new ConcurrentHashMap<>();
-
-  private final boolean collectAccessors;
-  private final boolean collectPrivateFields;
-  private final boolean collectFinalFields;
+  private final ClassValue<List<MutableAccessor>> classToOwnFields;
 
   public static final byte COLLECT_ACCESSORS = 0x01;
   /**
@@ -34,29 +29,49 @@ public class PropertyCollector {
    */
   public static final byte COLLECT_FINAL_FIELDS = 0x04;
 
+  private final Configuration configuration;
+
+  public PropertyCollector(@NotNull Configuration configuration) {
+    this.configuration = configuration;
+    classToOwnFields = new PropertyCollectorListClassValue(configuration);
+  }
+
   public PropertyCollector(@MagicConstant(flags = {COLLECT_ACCESSORS, COLLECT_PRIVATE_FIELDS, COLLECT_FINAL_FIELDS}) byte flags) {
-    this.collectAccessors = BitUtil.isSet(flags, COLLECT_ACCESSORS);
-    this.collectPrivateFields = BitUtil.isSet(flags, COLLECT_PRIVATE_FIELDS);
-    this.collectFinalFields = BitUtil.isSet(flags, COLLECT_FINAL_FIELDS);
+    this(new Configuration(BitUtil.isSet(flags, COLLECT_ACCESSORS),
+                           BitUtil.isSet(flags, COLLECT_PRIVATE_FIELDS),
+                           BitUtil.isSet(flags, COLLECT_FINAL_FIELDS)));
   }
 
   /**
-   * Result is not cached because caller should cache it if need.
+   * Result is not cached because caller should cache it if needed.
    */
   public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
+    return doCollect(aClass, configuration, classToOwnFields);
+  }
+
+  public static @NotNull List<MutableAccessor> doCollect(@NotNull Class<?> aClass,
+                                                         @NotNull Configuration configuration,
+                                                         @Nullable ClassValue<List<MutableAccessor>> classToOwnFields) {
     List<MutableAccessor> accessors = new ArrayList<>();
 
-    Map<String, Couple<Method>> nameToAccessors;
+    Map<String, Pair<Method, Method>> nameToAccessors;
     // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
-    if (!collectAccessors || aClass == Rectangle.class) {
+    if (!configuration.collectAccessors || aClass == Rectangle.class) {
       nameToAccessors = Collections.emptyMap();
     }
     else {
-      nameToAccessors = collectPropertyAccessors(aClass, accessors);
+      nameToAccessors = collectPropertyAccessors(aClass, accessors, configuration);
     }
 
     int propertyAccessorCount = accessors.size();
-    collectFieldAccessors(aClass, accessors);
+    Class<?> currentClass = aClass;
+    do {
+      accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
+    }
+    while ((currentClass = currentClass.getSuperclass()) != null && !configuration.isAnnotatedAsTransient(currentClass) &&
+           currentClass != Object.class && currentClass != AtomicReference.class); // AtomicReference is a superclass of UserDataHolderBase
+                                                                                   // which is a superclass of many serializable objects
+                                                                                   // and we mustn't consider AtomicReference.getOpaque etc. as serializable properties
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
     // so, we must remove duplicated accessor
@@ -78,58 +93,11 @@ public class PropertyCollector {
     return accessors;
   }
 
-  private void collectFieldAccessors(@NotNull Class<?> originalClass, @NotNull List<? super MutableAccessor> totalProperties) {
-    Class<?> currentClass = originalClass;
-    do {
-      List<MutableAccessor> ownFields = classToOwnFields.get(currentClass);
-      if (ownFields != null) {
-        if (!ownFields.isEmpty()) {
-          totalProperties.addAll(ownFields);
-        }
-        continue;
-      }
-
-      for (Field field : currentClass.getDeclaredFields()) {
-        int modifiers = field.getModifiers();
-        if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
-          continue;
-        }
-
-        if (!hasStoreAnnotations(field)) {
-          if (!collectPrivateFields && !(Modifier.isPublic(modifiers))) {
-            continue;
-          }
-
-          if (!collectFinalFields && Modifier.isFinal(modifiers)) {
-            Class<?> fieldType = field.getType();
-            // we don't want to allow final fields of all types, but only supported
-            if (!(Collection.class.isAssignableFrom(fieldType) || Map.class.isAssignableFrom(fieldType))) {
-              continue;
-            }
-          }
-
-          if (isAnnotatedAsTransient(field)) {
-            continue;
-          }
-        }
-
-        if (ownFields == null) {
-          ownFields = new ArrayList<>();
-        }
-        ownFields.add(new FieldAccessor(field));
-      }
-
-      classToOwnFields.putIfAbsent(currentClass, ContainerUtil.notNullize(ownFields));
-      if (ownFields != null) {
-        totalProperties.addAll(ownFields);
-      }
-    }
-    while ((currentClass = currentClass.getSuperclass()) != null && !isAnnotatedAsTransient(currentClass) && currentClass != Object.class);
-  }
-
-  private @NotNull Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
+  private static @NotNull Map<String, Pair<Method, Method>> collectPropertyAccessors(@NotNull Class<?> aClass,
+                                                                                     @NotNull List<? super MutableAccessor> accessors,
+                                                                                     @NotNull Configuration configuration) {
     // (name,(getter,setter))
-    final Map<String, Couple<Method>> candidates = new TreeMap<>();
+    final Map<String, Pair<Method, Method>> candidates = new TreeMap<>();
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
         continue;
@@ -141,7 +109,7 @@ public class PropertyCollector {
         continue;
       }
 
-      Couple<Method> candidate = candidates.get(propertyData.name);
+      Pair<Method, Method> candidate = candidates.get(propertyData.name);
       if (candidate == null) {
         candidate = Couple.getEmpty();
       }
@@ -152,12 +120,12 @@ public class PropertyCollector {
       candidates.put(propertyData.name, candidate);
     }
 
-    for (Iterator<Map.Entry<String, Couple<Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
-      Map.Entry<String, Couple<Method>> candidate = iterator.next();
-      Couple<Method> methods = candidate.getValue();
+    for (Iterator<Map.Entry<String, Pair<Method, Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<String, Pair<Method, Method>> candidate = iterator.next();
+      Pair<Method, Method> methods = candidate.getValue();
       Method getter = methods.first;
       Method setter = methods.second;
-      if (isAcceptableProperty(getter, setter)) {
+      if (isAcceptableProperty(getter, setter, configuration)) {
         accessors.add(new PropertyAccessor(candidate.getKey(), getter.getReturnType(), getter, setter));
       }
       else {
@@ -165,10 +133,6 @@ public class PropertyCollector {
       }
     }
     return candidates;
-  }
-
-  protected void clearSerializationCaches() {
-    classToOwnFields.clear();
   }
 
   private static @Nullable NameAndIsSetter getPropertyData(@NotNull String methodName) {
@@ -211,29 +175,25 @@ public class PropertyCollector {
     return new String(chars);
   }
 
-  private boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter) {
-    if (getter == null || isAnnotatedAsTransient(getter)) {
+  private static boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter, @NotNull Configuration configuration) {
+    if (getter == null || configuration.isAnnotatedAsTransient(getter)) {
+      return false;
+    }
+    if (getter.getDeclaringClass() == AtomicReference.class) {
       return false;
     }
 
     if (setter == null) {
       // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
-      return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) && hasStoreAnnotations(getter);
+      return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) &&
+             configuration.hasStoreAnnotations(getter);
     }
 
-    if (isAnnotatedAsTransient(setter) || !getter.getReturnType().equals(setter.getParameterTypes()[0])) {
+    if (configuration.isAnnotatedAsTransient(setter) || !getter.getReturnType().equals(setter.getParameterTypes()[0])) {
       return false;
     }
 
     return true;
-  }
-
-  protected boolean isAnnotatedAsTransient(@NotNull AnnotatedElement element) {
-    return false;
-  }
-
-  protected boolean hasStoreAnnotations(@NotNull AccessibleObject element) {
-    return false;
   }
 
   private static final class NameAndIsSetter {
@@ -244,5 +204,72 @@ public class PropertyCollector {
       this.name = name;
       this.isSetter = isSetter;
     }
+  }
+
+  public static class Configuration {
+    private final boolean collectAccessors;
+    private final boolean collectPrivateFields;
+    private final boolean collectFinalFields;
+
+    public Configuration(boolean collectAccessors, boolean collectPrivateFields, boolean collectFinalFields) {
+      this.collectAccessors = collectAccessors;
+      this.collectPrivateFields = collectPrivateFields;
+      this.collectFinalFields = collectFinalFields;
+    }
+
+    public boolean isAnnotatedAsTransient(@NotNull AnnotatedElement element) {
+      return false;
+    }
+
+    public boolean hasStoreAnnotations(@NotNull AccessibleObject element) {
+      return false;
+    }
+  }
+
+  private static final class PropertyCollectorListClassValue extends ClassValue<List<MutableAccessor>> {
+    private final @NotNull PropertyCollector.Configuration configuration;
+
+    private PropertyCollectorListClassValue(@NotNull Configuration configuration) {
+      this.configuration = configuration;
+    }
+
+    @Override
+    protected List<MutableAccessor> computeValue(Class<?> type) {
+      return doCollectOwnFields(type, configuration);
+    }
+  }
+
+  private static @NotNull List<MutableAccessor> doCollectOwnFields(@NotNull Class<?> type, @NotNull Configuration configuration) {
+    List<MutableAccessor> result = null;
+    for (Field field : type.getDeclaredFields()) {
+      int modifiers = field.getModifiers();
+      if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+        continue;
+      }
+
+      if (!configuration.hasStoreAnnotations(field)) {
+        if (!configuration.collectPrivateFields && !(Modifier.isPublic(modifiers))) {
+          continue;
+        }
+
+        if (!configuration.collectFinalFields && Modifier.isFinal(modifiers)) {
+          Class<?> fieldType = field.getType();
+          // we don't want to allow final fields of all types, but only supported
+          if (!(Collection.class.isAssignableFrom(fieldType) || Map.class.isAssignableFrom(fieldType))) {
+            continue;
+          }
+        }
+
+        if (configuration.isAnnotatedAsTransient(field)) {
+          continue;
+        }
+      }
+
+      if (result == null) {
+        result = new ArrayList<>();
+      }
+      result.add(new FieldAccessor(field));
+    }
+    return result == null ? Collections.emptyList() : result;
   }
 }

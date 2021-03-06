@@ -19,11 +19,13 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenPropertiesPanel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -62,6 +64,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
    * @deprecated use {@link SelectPropertiesStep#SelectPropertiesStep(Project, AbstractMavenModuleBuilder)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public SelectPropertiesStep(@Nullable Project project, MavenModuleBuilder builder) {
     this(project, (AbstractMavenModuleBuilder)builder);
   }
@@ -70,7 +73,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
     myEnvironmentForm = new MavenEnvironmentForm();
 
     Project project = myProjectOrNull == null ? ProjectManager.getInstance().getDefaultProject() : myProjectOrNull;
-    myEnvironmentForm.getData(MavenProjectsManager.getInstance(project).getGeneralSettings().clone());
+    myEnvironmentForm.initializeFormData(MavenProjectsManager.getInstance(project).getGeneralSettings().clone(), project);
 
     myEnvironmentPanel.add(myEnvironmentForm.createComponent(), BorderLayout.CENTER);
 
@@ -112,11 +115,11 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   public boolean validate() throws ConfigurationException {
     File mavenHome = MavenUtil.resolveMavenHomeDirectory(myEnvironmentForm.getMavenHome());
     if (mavenHome == null) {
-      throw new ConfigurationException("Maven home directory is not specified");
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.maven.home.directory.not.specified"));
     }
 
     if (!MavenUtil.isValidMavenHome(mavenHome)) {
-      throw new ConfigurationException("Maven home directory is invalid: " + mavenHome);
+      throw new ConfigurationException(MavenProjectBundle.message("dialog.message.maven.home.directory.invalid", mavenHome));
     }
 
     return true;

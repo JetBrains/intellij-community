@@ -147,7 +147,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       if (descriptor != null) {
         final XmlElementDescriptor[] childDescriptors = descriptor.getElementsDescriptors(tag);
         if (childDescriptors != null && childDescriptors.length > 1) {
-          return (o1, o2) -> findDescriptor(childDescriptors, o1.getTagName()) - findDescriptor(childDescriptors, o2.getTagName());
+          return Comparator.comparingInt(o -> findDescriptor(childDescriptors, o.getTagName()));
         }
       }
     }

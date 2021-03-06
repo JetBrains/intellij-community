@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.navigation.ClassImplementationsSearch;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +14,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.CommonProcessors;
 
 import java.nio.file.Paths;
@@ -23,9 +23,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author cdr
- */
 public class GotoImplementationTest extends JavaCodeInsightTestCase {
 
   private static Collection<PsiElement> getClassImplementations(final PsiClass psiClass) {
@@ -37,13 +34,9 @@ public class GotoImplementationTest extends JavaCodeInsightTestCase {
 
   @Override
   protected void setUpProject() {
-    final String root = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/alexProject";
+    String root = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/navigation/alexProject";
     VirtualFile vfsRoot = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(root));
-
-    VirtualFile projectFile = vfsRoot.findChild("test.ipr");
-    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get(projectFile.getPath()));
-
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
+    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(vfsRoot.findChild("test.ipr").getPath()), getTestRootDisposable());
   }
 
   public void test() {
@@ -83,7 +76,5 @@ public class GotoImplementationTest extends JavaCodeInsightTestCase {
       myJavaFacade.findClass("com.test.TestIImpl1", GlobalSearchScope.moduleScope(module3))
     ));
     assertEquals(expectedImpls3, new HashSet<>(getClassImplementations(test3)));
-
   }
-
 }

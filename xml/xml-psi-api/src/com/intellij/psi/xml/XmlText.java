@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +25,12 @@ public interface XmlText extends XmlTagChild {
   /**
    * Substituted text
    */
-  String getValue();
-  void setValue(String s) throws IncorrectOperationException;
+  @NlsSafe String getValue();
+  void setValue(@NlsSafe String s) throws IncorrectOperationException;
 
   XmlElement insertAtOffset(XmlElement element, int displayOffset) throws IncorrectOperationException;
 
-  void insertText(String text, int displayOffset) throws IncorrectOperationException;
+  void insertText(@NlsSafe String text, int displayOffset) throws IncorrectOperationException;
   void removeText(int displayStart, int displayEnd) throws IncorrectOperationException;
 
   int physicalToDisplay(int offset);

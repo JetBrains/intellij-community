@@ -8,7 +8,7 @@ import org.languagetool.rules.Category
 import org.languagetool.rules.Rule
 import java.util.*
 
-data class RuleWithLang(val rule: Rule, val lang: Lang, val enabled: Boolean, var enabledInTree: Boolean) : Comparable<RuleWithLang> {
+internal data class RuleWithLang(val rule: Rule, val lang: Lang, val enabled: Boolean, var enabledInTree: Boolean) : Comparable<RuleWithLang> {
   override fun compareTo(other: RuleWithLang) = rule.description.compareTo(other.rule.description)
 
   override fun equals(other: Any?): Boolean {
@@ -30,10 +30,10 @@ data class RuleWithLang(val rule: Rule, val lang: Lang, val enabled: Boolean, va
   }
 }
 
-typealias RulesMap = Map<Lang, Map<ComparableCategory, SortedSet<RuleWithLang>>>
+internal typealias RulesMap = Map<Lang, Map<ComparableCategory, SortedSet<RuleWithLang>>>
 
-class ComparableCategory(val category: Category, val lang: Lang) : Comparable<ComparableCategory> {
-  override fun compareTo(other: ComparableCategory) = category.getName(lang.jLanguage).compareTo(other.category.getName(lang.jLanguage))
+internal class ComparableCategory(val category: Category, val lang: Lang) : Comparable<ComparableCategory> {
+  override fun compareTo(other: ComparableCategory) = category.name.compareTo(other.category.name)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -51,7 +51,7 @@ class ComparableCategory(val category: Category, val lang: Lang) : Comparable<Co
   }
 }
 
-fun LangTool.allRulesWithLangs(state: GrazieConfig.State = GrazieConfig.get()): RulesMap {
+internal fun LangTool.allRulesWithLangs(state: GrazieConfig.State = GrazieConfig.get()): RulesMap {
   val langs = state.enabledLanguages
 
   val result = TreeMap<Lang, SortedMap<ComparableCategory, SortedSet<RuleWithLang>>>(Comparator.comparing(Lang::nativeName))

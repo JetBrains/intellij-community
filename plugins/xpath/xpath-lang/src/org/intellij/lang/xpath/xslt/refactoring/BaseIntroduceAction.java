@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,12 +33,14 @@ import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> extends XsltRefactoringActionBase {
+    @NlsContexts.Command
     protected abstract String getCommandName();
 
     protected abstract Settings getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions);
@@ -48,10 +51,10 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
     public String getErrorMessage(Editor editor, PsiFile file, XmlAttribute context) {
         if (context != null) {
             if (XsltSupport.isPatternAttribute(context)) {
-                return "Match patterns may not contain variable references.";
+                return XPathBundle.message("notification.content.match.patterns.may.not.contain.variable.references");
             }
             if (XsltSupport.isXPathAttribute(context) && editor.getSelectionModel().hasSelection()) {
-                return "Please select a complete XPath expression to extract.";
+                return XPathBundle.message("notification.content.please.select.complete.xpath.expression.to.extract");
             }
         }
         return super.getErrorMessage(editor, file, context);
@@ -112,11 +115,11 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         if (matchingExpressions.size() > 0) {
             final SelectionModel selectionModel = editor.getSelectionModel();
           highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(),
-                                             EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+                                             EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
             for (XPathExpression expr : matchingExpressions) {
                 final TextRange range = XsltCodeInsightUtil.getRangeInsideHostingFile(expr);
               highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(),
-                                                 EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+                                                 EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
 
                 final XmlTag tag = PsiTreeUtil.getContextOfType(expr, XmlTag.class, true);
                 assert tag != null;

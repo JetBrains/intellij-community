@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -14,7 +15,6 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -81,7 +81,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       }
       else {
         RangeHighlighter newHighlighter =
-          model.addRangeHighlighter(indent.startOffset, indent.endOffset, 0, null, HighlighterTargetArea.EXACT_RANGE);
+          model.addRangeHighlighter(null, indent.startOffset, indent.endOffset, 0, HighlighterTargetArea.EXACT_RANGE);
         newHighlighter.setCustomRenderer(RENDERER);
         StringContentIndentUtil.setIndent(newHighlighter, newIndent);
         newHighlighters.add(newHighlighter);
@@ -94,7 +94,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     StringContentIndentUtil.updateTimestamp(myEditor);
   }
 
-  private static class StringContentIndent {
+  private static final class StringContentIndent {
 
     private final int column;
     private final int startOffset;
@@ -150,7 +150,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static class IndentCollector extends JavaRecursiveElementWalkingVisitor {
+  private static final class IndentCollector extends JavaRecursiveElementWalkingVisitor {
 
     private final Document myDocument;
     private final List<StringContentIndent> myIndents = new ArrayList<>();
@@ -185,7 +185,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       return myIndents;
     }
 
-    private static class TextBlockModel {
+    private static final class TextBlockModel {
       private final int myBaseIndent;
       private final TextRange myRange;
 
@@ -213,7 +213,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         IndentType indentType = findIndentType(lines, indent);
         if (indentType == null) return -1;
         if (indentType == IndentType.TABS) {
-          indent *= CodeStyle.getSettings(literal.getProject()).getTabSize(StdFileTypes.JAVA);
+          indent *= CodeStyle.getSettings(literal.getProject()).getTabSize(JavaFileType.INSTANCE);
         }
         return indent;
       }

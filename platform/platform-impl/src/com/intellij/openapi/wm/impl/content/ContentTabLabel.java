@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
@@ -11,8 +13,10 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
@@ -21,34 +25,33 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtilities;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 class ContentTabLabel extends BaseLabel {
-  private static final int MAX_WIDTH = JBUIScale.scale(300);
+  private static final int MAX_WIDTH = JBUIScale.scale(400);
   private static final int DEFAULT_HORIZONTAL_INSET = JBUIScale.scale(12);
   private static final int ICONS_GAP = JBUIScale.scale(3);
-
-  private final ActiveIcon myCloseIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
-                                                        JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
+  private final LayeredIcon myActiveCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true));
+  private final LayeredIcon myRegularCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
+  private final ActiveIcon myCloseIcon = new ActiveIcon(myActiveCloseIcon, myRegularCloseIcon);
   @NotNull
   private final Content myContent;
   private final TabContentLayout myLayout;
 
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
-  private String myText;
+  private @NlsContexts.Label String myText;
   private int myIconWithInsetsWidth;
 
   private final AdditionalIcon closeTabIcon = new AdditionalIcon(myCloseIcon) {
-    private static final String ACTION_NAME = "Close tab";
 
     @NotNull
     @Override
@@ -70,9 +73,14 @@ class ContentTabLabel extends BaseLabel {
     @Override
     public Runnable getAction() {
       return () -> {
+        Content content = getContent();
+        if (content.isPinned()) {
+          content.setPinned(false);
+          return;
+        }
         ContentManager contentManager = myUi.window.getContentManagerIfCreated();
         if (contentManager != null) {
-          contentManager.removeContent(getContent(), true);
+          contentManager.removeContent(content, true);
         }
       };
     }
@@ -85,8 +93,11 @@ class ContentTabLabel extends BaseLabel {
     @NotNull
     @Override
     public String getTooltip() {
+      if (getContent().isPinned()) {
+        return IdeBundle.message("action.unpin.tab.tooltip");
+      }
       String text = KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
-      return text.isEmpty() || !isSelected() ? ACTION_NAME : ACTION_NAME + " (" + text + ")";
+      return text.isEmpty() || !isSelected() ? IdeBundle.message("tooltip.close.tab") : IdeBundle.message("tooltip.close.tab") + " (" + text + ")";
     }
   };
 
@@ -151,12 +162,16 @@ class ContentTabLabel extends BaseLabel {
   };
 
   @Override
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     myText = text;
     updateText();
   }
 
   private void updateText() {
+    if (myText != null && myText.startsWith("<html>")) {
+      super.setText(myText); // SwingUtilities2.clipString does not support HTML
+      return;
+    }
     FontMetrics fm = getFontMetrics(getFont());
     int textWidth = UIUtilities.stringWidth(this, fm, myText);
     int prefWidth = myIconWithInsetsWidth + textWidth;
@@ -198,9 +213,21 @@ class ContentTabLabel extends BaseLabel {
       if (Content.IS_CLOSABLE.equals(property)) {
         repaint();
       }
+      if (Content.PROP_PINNED.equals(property)) {
+        updateCloseIcon();
+      }
     });
-
+    if (myContent.isPinned()) {
+      SwingUtilities.invokeLater(this::updateCloseIcon);
+    }
     setMaximumSize(new Dimension(MAX_WIDTH, getMaximumSize().height));
+  }
+
+  private void updateCloseIcon() {
+    boolean pinned = getContent().isPinned();
+    myActiveCloseIcon.setIcon(pinned ? AllIcons.Actions.PinTab : JBUI.CurrentTheme.ToolWindow.closeTabIcon(true), 0);
+    myRegularCloseIcon.setIcon(pinned ? AllIcons.Actions.PinTab : JBUI.CurrentTheme.ToolWindow.closeTabIcon(false), 0);
+    repaint();
   }
 
   protected void fillIcons(@NotNull List<? super AdditionalIcon> icons) {
@@ -256,7 +283,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    Map<Boolean, List<AdditionalIcon>> map = new THashMap<>();
+    Map<Boolean, List<AdditionalIcon>> map = new HashMap<>();
     for (AdditionalIcon myAdditionalIcon : myAdditionalIcons) {
       if (myAdditionalIcon.getAvailable()) {
         map.computeIfAbsent(myAdditionalIcon.getAfterText(), k -> new SmartList<>()).add(myAdditionalIcon);

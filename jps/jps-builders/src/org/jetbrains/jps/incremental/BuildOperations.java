@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.FileCollectionFactory;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -43,7 +30,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildOperations {
+public final class BuildOperations {
   private BuildOperations() { }
 
   public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target, boolean readOnly) throws IOException {
@@ -82,7 +69,7 @@ public class BuildOperations {
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
-    final THashSet<File> currentFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    Set<File> currentFiles = FileCollectionFactory.createCanonicalFileSet();
     FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
@@ -147,12 +134,12 @@ public class BuildOperations {
     try {
       final Map<T, Set<File>> cleanedSources = new HashMap<>();
 
-      final THashSet<File> dirsToDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
       final Collection<String> deletedPaths = new ArrayList<>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
         private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>(); // cache the mapping locally
-        private final TObjectIntHashMap<T> idsCache = new TObjectIntHashMap<>();
+        private final Object2IntMap<T> idsCache = new Object2IntOpenHashMap<>();
 
         @Override
         public boolean apply(T target, File file, R sourceRoot) throws IOException {
@@ -167,7 +154,7 @@ public class BuildOperations {
             idsCache.put(target, targetId);
           }
           else {
-            targetId = idsCache.get(target);
+            targetId = idsCache.getInt(target);
           }
           final String srcPath = file.getPath();
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
@@ -181,7 +168,7 @@ public class BuildOperations {
             dataManager.getOutputToTargetRegistry().removeMapping(deletedForThisSource, targetId);
             Set<File> cleaned = cleanedSources.get(target);
             if (cleaned == null) {
-              cleaned = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+              cleaned = FileCollectionFactory.createCanonicalFileSet();
               cleanedSources.put(target, cleaned);
             }
             cleaned.add(file);
@@ -236,7 +223,7 @@ public class BuildOperations {
               throw e;
             }
           }
-          deletedPaths.add(FileUtil.toSystemIndependentName(f.toString()));
+          deletedPaths.add(FileUtilRt.toSystemIndependentName(f.toString()));
           return FileVisitResult.CONTINUE;
         }
 

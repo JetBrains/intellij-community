@@ -1,10 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.batch;
 
+import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix;
+import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -20,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,6 +40,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,33 +48,40 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
+public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(I18nizeMultipleStringsDialog.class);
   private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
   private static final @NonNls String LAST_USED_CONTEXT = "I18N_FIX_LAST_USED_CONTEXT";
 
   @NotNull private final Project myProject;
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
-  private final Function<D, List<UsageInfo>> myUsagePreviewProvider;
+  private final @NotNull Function<? super D, ? extends List<UsageInfo>> myUsagePreviewProvider;
   private final Set<Module> myContextModules;
-  private final @Nullable ResourceBundleManager myResourceBundleManager;
+  private final ResourceBundleManager myResourceBundleManager;
   private JComboBox<String> myPropertiesFile;
   private UsagePreviewPanel myUsagePreviewPanel;
   private JBTable myTable;
   private final Icon myMarkAsNonNlsButtonIcon;
+  private TextFieldWithHistory myRBEditorTextField;
+  private boolean myShowCodeInfo;
 
   public I18nizeMultipleStringsDialog(@NotNull Project project,
                                       @NotNull List<I18nizedPropertyData<D>> keyValuePairs,
                                       @NotNull Set<PsiFile> contextFiles,
-                                      @NotNull Function<D, List<UsageInfo>> usagePreviewProvider, Icon markAsNonNlsButtonIcon) {
+                                      @NotNull Function<? super D, ? extends List<UsageInfo>> usagePreviewProvider,
+                                      Icon markAsNonNlsButtonIcon,
+                                      boolean canShowCodeInfo) {
     super(project, true);
     myProject = project;
     myKeyValuePairs = keyValuePairs;
@@ -75,6 +89,8 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     ResourceBundleManager resourceBundleManager;
     try {
       resourceBundleManager = ResourceBundleManager.getManager(contextFiles, project);
+      LOG.assertTrue(resourceBundleManager != null);
+      myShowCodeInfo = canShowCodeInfo && resourceBundleManager.canShowJavaCodeInfo();
     }
     catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
       LOG.error(e);
@@ -85,6 +101,30 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     myContextModules = contextFiles.stream().map(ModuleUtilCore::findModuleForFile).filter(Objects::nonNull).collect(Collectors.toSet());
     setTitle(PropertiesBundle.message("i18nize.multiple.strings.dialog.title"));
     init();
+  }
+
+  public String getI18NText(String propertyKey, String propertyValue, String paramsString) {
+    I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
+    if (textGenerator != null) {
+      return textGenerator.getI18nizedConcatenationText(propertyKey, paramsString, getPropertiesFile(), null);
+    }
+
+    String templateName = paramsString.isEmpty() ? myResourceBundleManager.getTemplateName()
+                                                 : myResourceBundleManager.getConcatenationTemplateName();
+    LOG.assertTrue(templateName != null);
+    FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
+    Map<String, String> attributes = new HashMap<>();
+    attributes.put(JavaI18nizeQuickFixDialog.PROPERTY_KEY_OPTION_KEY, propertyKey);
+    attributes.put(JavaI18nizeQuickFixDialog.RESOURCE_BUNDLE_OPTION_KEY, myRBEditorTextField != null ? myRBEditorTextField.getText() : null);
+    attributes.put(JavaI18nizeQuickFixDialog.PROPERTY_VALUE_ATTR, propertyValue);
+    attributes.put(I18nizeConcatenationQuickFix.PARAMETERS_OPTION_KEY, paramsString);
+    try {
+      return template.getText(attributes);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return "";
+    }
   }
 
   @Override
@@ -120,7 +160,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     if (!files.isEmpty()) {
       String contextString = getContextString();
-      String preselectedFile;
+      @NlsSafe String preselectedFile;
       if (contextString != null && contextString.equals(PropertiesComponent.getInstance(myProject).getValue(LAST_USED_CONTEXT))) {
         preselectedFile = PropertiesComponent.getInstance(myProject).getValue(LAST_USED_PROPERTIES_FILE);
       }
@@ -129,7 +169,26 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       }
       myPropertiesFile.setSelectedItem(ObjectUtils.notNull(preselectedFile, files.get(0)));
     }
-    return component;
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(component, BorderLayout.NORTH);
+
+    if (myShowCodeInfo && hasResourceBundleInTemplate()) {
+      myRBEditorTextField = new TextFieldWithStoredHistory("RESOURCE_BUNDLE_KEYS");
+      if (!myRBEditorTextField.getHistory().isEmpty()) {
+        myRBEditorTextField.setSelectedIndex(0);
+      }
+      panel.add(UI.PanelFactory.panel(myRBEditorTextField)
+                  .withLabel(JavaI18nBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
+                  .withComment(JavaI18nBundle.message("comment.if.the.resource.bundle.is.invalid.either.declare.it.as.an.object"))
+                  .createPanel(), BorderLayout.SOUTH);
+    }
+
+    return panel;
+  }
+
+  private boolean hasResourceBundleInTemplate() {
+    return JavaI18nizeQuickFixDialog.showResourceBundleTextField(myResourceBundleManager.getTemplateName(), myProject) ||
+           JavaI18nizeQuickFixDialog.showResourceBundleTextField(myResourceBundleManager.getConcatenationTemplateName(), myProject);
   }
 
   public PropertiesFile getPropertiesFile() {
@@ -213,7 +272,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
   private void updateUsagePreview(JBTable table) {
     int index = table.getSelectionModel().getLeadSelectionIndex();
-    if (index != -1) {
+    if (index != -1 && index < myKeyValuePairs.size()) {
       myUsagePreviewPanel.updateLayout(myUsagePreviewProvider.apply(myKeyValuePairs.get(index).getContextData()));
     }
     else {
@@ -226,6 +285,9 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     TableUtil.stopEditing(myTable);
     PropertiesComponent.getInstance(myProject).setValue(LAST_USED_PROPERTIES_FILE, (String)myPropertiesFile.getSelectedItem());
     PropertiesComponent.getInstance(myProject).setValue(LAST_USED_CONTEXT, getContextString());
+    if (myRBEditorTextField != null) {
+      myRBEditorTextField.addCurrentTextToHistory();
+    }
     super.doOKAction();
   }
 
@@ -248,7 +310,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == 0 ? "Key" : "Value";
+      return column == 0 ? JavaI18nBundle.message("key.column.name") : JavaI18nBundle.message("value.column.name");
     }
 
     @Override

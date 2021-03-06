@@ -3,20 +3,23 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+
 /**
- * Reports some project lifecycle events. Note that these events are published on application-level {@link com.intellij.util.messages.MessageBus}.
- * They're also delivered for subscribers on project levels, but they will need to check that the events are relevant, i.e. the
- * {@code project} parameter is the project those subscribers are associated with.
+ * Reports some project lifecycle events.
  */
 public interface ProjectLifecycleListener {
-  Topic<ProjectLifecycleListener> TOPIC = new Topic<>(ProjectLifecycleListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
+  @Topic.AppLevel
+  Topic<ProjectLifecycleListener> TOPIC = new Topic<>(ProjectLifecycleListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * @deprecated Do not use.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void projectComponentsInitialized(@NotNull Project project) {
   }
 
@@ -24,13 +27,24 @@ public interface ProjectLifecycleListener {
    * @deprecated Deprecated for performance and stability reasons. Please find another solution.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void beforeProjectLoaded(@NotNull Project project) {
+  }
+
+  /**
+   * @deprecated Deprecated for performance and stability reasons. Please find another solution.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  default void beforeProjectLoaded(@NotNull Path projectPath, @NotNull Project project) {
+    beforeProjectLoaded(project);
   }
 
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ProjectManagerListener#projectClosed(Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void afterProjectClosed(@SuppressWarnings("unused") @NotNull Project project) {
   }
 }

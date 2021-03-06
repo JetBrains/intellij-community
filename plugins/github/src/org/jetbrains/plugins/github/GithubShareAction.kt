@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.github
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -21,14 +20,15 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.ui.JBUI
@@ -54,16 +54,11 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
-import org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper
-import org.jetbrains.plugins.github.util.GithubGitHelper
-import org.jetbrains.plugins.github.util.GithubNotifications
-import org.jetbrains.plugins.github.util.GithubUtil
+import org.jetbrains.plugins.github.util.*
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
-import java.awt.FlowLayout
 import java.io.IOException
-import java.util.*
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -102,22 +97,12 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
 
     @JvmStatic
     fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
-      FileDocumentManager.getInstance().saveAllDocuments();
+      FileDocumentManager.getInstance().saveAllDocuments()
 
       val gitRepository = GithubGitHelper.findGitRepository(project, file)
-
-      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
-      val authManager = service<GithubAuthenticationManager>()
-      if (!authManager.ensureHasAccounts(project)) return
-      val accounts = authManager.getAccounts()
-
-      val progressManager = service<ProgressManager>()
-      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
-      val accountInformationProvider = service<GithubAccountInformationProvider>()
-      val gitHelper = service<GithubGitHelper>()
-      val git = service<Git>()
-
-      val possibleRemotes = gitRepository?.let(gitHelper::getAccessibleRemoteUrls).orEmpty()
+      val possibleRemotes = gitRepository
+        ?.let(project.service<GHProjectRepositoriesManager>()::findKnownRepositories)
+        ?.map { it.gitRemote.url }.orEmpty()
       if (possibleRemotes.isNotEmpty()) {
         val existingRemotesDialog = GithubExistingRemotesDialog(project, possibleRemotes)
         DialogManager.show(existingRemotesDialog)
@@ -125,6 +110,14 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           return
         }
       }
+
+      if (!service<GithubAccountsMigrationHelper>().migrate(project)) return
+      val authManager = service<GithubAuthenticationManager>()
+      val progressManager = service<ProgressManager>()
+      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
+      val accountInformationProvider = service<GithubAccountInformationProvider>()
+      val gitHelper = service<GithubGitHelper>()
+      val git = service<Git>()
 
       val accountInformationLoader = object : (GithubAccount, Component) -> Pair<Boolean, Set<String>> {
         private val loadedInfo = mutableMapOf<GithubAccount, Pair<Boolean, Set<String>>>()
@@ -145,7 +138,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       }
 
       val shareDialog = GithubShareDialog(project,
-                                          accounts,
+                                          authManager.getAccounts(),
                                           authManager.getDefaultAccount(project),
                                           gitRepository?.remotes?.map { it.name }?.toSet() ?: emptySet(),
                                           accountInformationLoader)
@@ -158,7 +151,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
       val isPrivate: Boolean = shareDialog.isPrivate()
       val remoteName: String = shareDialog.getRemoteName()
       val description: String = shareDialog.getDescription()
-      val account: GithubAccount = shareDialog.getAccount()
+      val account: GithubAccount = shareDialog.getAccount()!!
 
       val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
       object : Task.Backgroundable(project, GithubBundle.message("share.process")) {
@@ -186,7 +179,9 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           val repositoryManager = GitUtil.getRepositoryManager(project)
           val repository = repositoryManager.getRepositoryForRoot(root)
           if (repository == null) {
-            GithubNotifications.showError(project, GithubBundle.message("share.error.failed.to.create.repo"),
+            GithubNotifications.showError(project,
+                                          GithubNotificationIdsHolder.SHARE_CANNOT_FIND_GIT_REPO,
+                                          GithubBundle.message("share.error.failed.to.create.repo"),
                                           GithubBundle.message("cannot.find.git.repo"))
             return
           }
@@ -213,14 +208,20 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
             return
           }
 
-          GithubNotifications.showInfoURL(project, GithubBundle.message("share.process.successfully.shared"), name, url)
+          GithubNotifications.showInfoURL(project,
+                                          GithubNotificationIdsHolder.SHARE_PROJECT_SUCCESSFULLY_SHARED,
+                                          GithubBundle.message("share.process.successfully.shared"),
+                                          name,
+                                          url)
         }
 
         private fun createEmptyGitRepository(project: Project,
                                              root: VirtualFile): Boolean {
           val result = Git.getInstance().init(project, root)
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
+            VcsNotifier.getInstance(project).notifyError(GithubNotificationIdsHolder.GIT_REPO_INIT_REPO,
+                                                         GitBundle.message("initializing.title"),
+                                                         result.errorOutputAsHtmlString)
             LOG.info("Failed to create empty git repo: " + result.errorOutputAsJoinedString)
             return false
           }
@@ -233,7 +234,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                                  root: VirtualFile,
                                                  repository: GitRepository,
                                                  indicator: ProgressIndicator,
-                                                 name: String,
+                                                 @NlsSafe name: String,
                                                  url: String): Boolean {
           // check if there is no commits
           if (!repository.isFresh) {
@@ -266,7 +267,10 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
 
             val files2commit = dialog.selectedFiles
             if (!dialog.isOK || files2commit.isEmpty()) {
-              GithubNotifications.showInfoURL(project, GithubBundle.message("share.process.empty.project.created"), name, url)
+              GithubNotifications.showInfoURL(project,
+                                              GithubNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
+                                              GithubBundle.message("share.process.empty.project.created"),
+                                              name, url)
               return false
             }
 
@@ -291,7 +295,8 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           }
           catch (e: VcsException) {
             LOG.warn(e)
-            GithubNotifications.showErrorURL(project, GithubBundle.message("share.error.cannot.finish"),
+            GithubNotifications.showErrorURL(project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED,
+                                             GithubBundle.message("share.error.cannot.finish"),
                                              GithubBundle.message("share.error.created.project"),
                                              " '$name' ",
                                              GithubBundle.message("share.error.init.commit.failed") + GithubUtil.getErrorTextFromException(
@@ -318,7 +323,8 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
                                       url: String): Boolean {
           val currentBranch = repository.currentBranch
           if (currentBranch == null) {
-            GithubNotifications.showErrorURL(project, GithubBundle.message("share.error.cannot.finish"),
+            GithubNotifications.showErrorURL(project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
+                                             GithubBundle.message("share.error.cannot.finish"),
                                              GithubBundle.message("share.error.created.project"),
                                              " '$name' ",
                                              GithubBundle.message("share.error.push.no.current.branch"),
@@ -327,17 +333,21 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
           }
           val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
           if (!result.success()) {
-            GithubNotifications.showErrorURL(project, GithubBundle.message("share.error.cannot.finish"),
+            GithubNotifications.showErrorURL(project, GithubNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED,
+                                             GithubBundle.message("share.error.cannot.finish"),
                                              GithubBundle.message("share.error.created.project"),
                                              " '$name' ",
-                                             GithubBundle.message("share.error.push.failed", result.errorOutputAsHtmlString), url)
+                                             GithubBundle.message("share.error.push.failed", result.errorOutputAsHtmlString),
+                                             url)
             return false
           }
           return true
         }
 
         override fun onThrowable(error: Throwable) {
-          GithubNotifications.showError(project, GithubBundle.message("share.error.failed.to.create.repo"), error)
+          GithubNotifications.showError(project,
+                                        GithubNotificationIdsHolder.SHARE_CANNOT_CREATE_REPO,
+                                        GithubBundle.message("share.error.failed.to.create.repo"), error)
         }
       }.queue()
     }
@@ -359,10 +369,7 @@ class GithubShareAction : DumbAwareAction(GithubBundle.messagePointer("share.act
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
       }
       for (remote in remotes) {
-        remotesPanel.add(JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)).apply {
-          add(LinkLabel.create(remote, Runnable { BrowserUtil.browse(remote) }))
-          add(JBLabel(AllIcons.Ide.External_link_arrow))
-        })
+        remotesPanel.add(BrowserLink(remote, remote))
       }
 
       val messagesPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)

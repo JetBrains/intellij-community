@@ -26,9 +26,11 @@ public class ShShebangCompletionContributor extends CompletionContributor implem
                                                                               "/usr/bin/env ksh",
                                                                               "/usr/bin/env tcsh");
 
-  @NonNls private static final CompletionProvider<CompletionParameters> SHEBANG_COMPLETION_PROVIDER = new CompletionProvider<CompletionParameters>() {
+  @NonNls private static final CompletionProvider<CompletionParameters> SHEBANG_COMPLETION_PROVIDER = new CompletionProvider<>() {
     @Override
-    protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
       PsiElement original = parameters.getOriginalPosition();
       if (original == null) return;
       int textLength = parameters.getOffset() - parameters.getPosition().getTextRange().getStartOffset();

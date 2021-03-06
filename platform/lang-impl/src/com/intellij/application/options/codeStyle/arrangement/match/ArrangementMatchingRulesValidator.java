@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,6 +32,7 @@ public class ArrangementMatchingRulesValidator {
   }
 
   @Nullable
+  @Nls
   protected String validate(int index) {
     if (myRulesModel.getSize() < index) {
       return null;

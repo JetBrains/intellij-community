@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.junit4;
 
 import com.intellij.junit3.TestRunnerUtil;
@@ -35,7 +21,7 @@ import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.*;
 
-public class JUnit4TestRunnerUtil {
+public final class JUnit4TestRunnerUtil {
 
   public static Request buildRequest(String[] suiteClassNames, final String name, boolean notForked) {
     if (suiteClassNames.length == 0) {
@@ -91,6 +77,7 @@ public class JUnit4TestRunnerUtil {
             }
 
             return classMethods.isEmpty() ? allClasses : allClasses.filterWith(new Filter() {
+              @Override
               public boolean shouldRun(Description description) {
                 if (description.isTest()) {
                   final Set<String> methods = classMethods.get(JUnit4ReflectionUtil.getClassName(description));
@@ -121,6 +108,7 @@ public class JUnit4TestRunnerUtil {
                 return true;
               }
 
+              @Override
               public String describe() {
                 return "Tests";
               }
@@ -151,10 +139,12 @@ public class JUnit4TestRunnerUtil {
                 final Request classRequest = JUnit45ClassesRequestBuilder.createIgnoreIgnoredClassRequest(clazz, true);
                 final Filter ignoredTestFilter = Filter.matchMethodDescription(testMethodDescription);
                 return classRequest.filterWith(new Filter() {
+                  @Override
                   public boolean shouldRun(Description description) {
                     return ignoredTestFilter.shouldRun(description);
                   }
 
+                  @Override
                   public String describe() {
                     return "Ignored " + methodName;
                   }
@@ -188,6 +178,7 @@ public class JUnit4TestRunnerUtil {
             return Request.method(clazz, methodName);
           }
           return Request.aClass(clazz).filterWith(new Filter() {
+            @Override
             public boolean shouldRun(Description description) {
               if (description.isTest() && description.getDisplayName().startsWith("warning(junit.framework.TestSuite$")) {
                 return true;
@@ -196,6 +187,7 @@ public class JUnit4TestRunnerUtil {
               return methodFilter.shouldRun(description);
             }
 
+            @Override
             public String describe() {
               return methodFilter.describe();
             }
@@ -248,6 +240,7 @@ public class JUnit4TestRunnerUtil {
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
         final Constructor<? extends Runner> runnerConstructor = runnerClass.getConstructor(Class.class);
         return Request.runner(runnerConstructor.newInstance(clazz)).filterWith(new Filter() {
+          @Override
           public boolean shouldRun(Description description) {
             final String descriptionMethodName = description.getMethodName();
             //filter by params
@@ -264,6 +257,7 @@ public class JUnit4TestRunnerUtil {
             return true;
           }
 
+          @Override
           public String describe() {
             if (parameterString == null) {
               return methodName + " with any parameter";
@@ -315,11 +309,11 @@ public class JUnit4TestRunnerUtil {
       if (clazz == null) {
         clazz = suiteClassName;
       }
-      System.err.print(MessageFormat.format(ResourceBundle.getBundle("RuntimeBundle").getString("junit.class.not.found"), clazz));
+      System.err.print(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), clazz));
       System.exit(1);
     }
     catch (Exception e) {
-      System.err.println(MessageFormat.format(ResourceBundle.getBundle("RuntimeBundle").getString("junit.cannot.instantiate.tests"),
+      System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.cannot.instantiate.tests"),
                                               e.toString()));
       System.exit(1);
     }

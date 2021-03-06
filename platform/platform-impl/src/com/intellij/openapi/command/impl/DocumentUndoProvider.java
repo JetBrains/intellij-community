@@ -3,10 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.DocumentReferenceManager;
-import com.intellij.openapi.command.undo.UndoConstants;
-import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -108,12 +105,12 @@ public final class DocumentUndoProvider implements DocumentListener {
   }
 
   private static boolean shouldRecordActions(@NotNull Document document) {
-    if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
+    if (UndoUtil.isUndoDisabledFor(document)) return false;
 
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
     if (vFile == null) return true;
     return vFile.getUserData(AbstractFileViewProvider.FREE_THREADED) != Boolean.TRUE &&
-           vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
+           !UndoUtil.isUndoDisabledFor(vFile);
   }
 
   private static void registerUndoableAction(@NotNull UndoManagerImpl undoManager, @NotNull DocumentEvent e) {
@@ -130,7 +127,7 @@ public final class DocumentUndoProvider implements DocumentListener {
     VirtualFile file = ref.getFile();
 
     // Allow undo even from refresh if requested
-    if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
+    if (file != null && UndoUtil.isForceUndoFlagSet(file)) {
       return true;
     }
     return !UndoManagerImpl.isRefresh() || undoManager.isUndoOrRedoAvailable(ref);

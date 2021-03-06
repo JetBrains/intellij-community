@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -15,6 +16,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,12 +30,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PluginDescriptorStructureUtil {
+public final class PluginDescriptorStructureUtil {
   public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
 
+  @NonNls 
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
 
+  @NonNls
   private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
     .put("psi", "PSI")
     .put("dom", "DOM")
@@ -57,9 +61,7 @@ public class PluginDescriptorStructureUtil {
   private PluginDescriptorStructureUtil() {
   }
 
-
-  @NotNull
-  public static String getTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String getTagDisplayText(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return safeGetTagDisplayText(tag);
@@ -86,17 +88,15 @@ public class PluginDescriptorStructureUtil {
     else if (element instanceof Separator) {
       return "----------";
     }
-    
+
     return toDisplayName(element.getXmlElementName()); // default
   }
 
-  @NotNull
-  public static String safeGetTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String safeGetTagDisplayText(@Nullable XmlTag tag) {
     return tag != null ? toDisplayName(tag.getLocalName()) : DevKitBundle.message("error.plugin.xml.tag.invalid");
   }
 
-  @Nullable
-  public static Icon getTagIcon(@Nullable XmlTag tag) {
+  public static @Nullable Icon getTagIcon(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return tag != null ? DEFAULT_ICON : null;
@@ -105,8 +105,7 @@ public class PluginDescriptorStructureUtil {
     return ObjectUtils.notNull(ElementPresentationManager.getIcon(element), DEFAULT_ICON);
   }
 
-  @Nullable
-  public static String getTagLocationString(@Nullable XmlTag tag) {
+  public static @Nullable String getTagLocationString(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return null;
@@ -122,7 +121,7 @@ public class PluginDescriptorStructureUtil {
       return getExtensionsLocation((Extensions)element);
     }
     if (element instanceof ExtensionPoints) {
-      return getExtensionPointsLocation((ExtensionPoints)element);
+      return getExtensionPointsLocation(element);
     }
     if (element instanceof ExtensionPoint) {
       return getExtensionPointLocation((ExtensionPoint)element);
@@ -149,7 +148,7 @@ public class PluginDescriptorStructureUtil {
       return getVendorLocation((Vendor)element);
     }
     if (element.getParent() instanceof IdeaPlugin && element instanceof GenericDomValue) {
-      return getTopLevelNodeLocation((GenericDomValue)element);
+      return getTopLevelNodeLocation((GenericDomValue<?>)element);
     }
 
     return guessTagLocation(element);
@@ -159,8 +158,7 @@ public class PluginDescriptorStructureUtil {
     return pluginModule.getValue().getStringValue();
   }
 
-  @Nullable
-  private static String getIdeaVersionLocation(IdeaVersion element) {
+  private static @Nullable String getIdeaVersionLocation(IdeaVersion element) {
     String since = element.getSinceBuild().getStringValue();
     if (StringUtil.isNotEmpty(since)) {
       String until = element.getUntilBuild().getStringValue();
@@ -169,13 +167,11 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getExtensionsLocation(Extensions element) {
+  private static @Nullable String getExtensionsLocation(Extensions element) {
     return element.getDefaultExtensionNs().getStringValue();
   }
 
-  @Nullable
-  private static String getExtensionPointsLocation(ExtensionPoints element) {
+  private static @Nullable String getExtensionPointsLocation(DomElement element) {
     DomElement parent = element.getParent();
     if (parent instanceof IdeaPlugin) {
       return ((IdeaPlugin)parent).getPluginId();
@@ -183,8 +179,7 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getExtensionPointLocation(ExtensionPoint element) {
+  private static @Nullable String getExtensionPointLocation(ExtensionPoint element) {
     String epInterface = element.getInterface().getStringValue();
     if (StringUtil.isNotEmpty(epInterface)) {
       return toShortName(epInterface);
@@ -196,29 +191,24 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getWithLocation(With element) {
+  private static @Nullable String getWithLocation(With element) {
     return element.getAttribute().getStringValue();
   }
 
-  @Nullable
-  private static String getComponentLocation(Component element) {
+  private static @Nullable String getComponentLocation(Component element) {
     String implementationClassText = element.getImplementationClass().getRawText();
     return toShortName(implementationClassText);
   }
 
-  @Nullable
-  private static String getGroupLocation(Group element) {
+  private static @Nullable String getGroupLocation(ActionOrGroup element) {
     return element.getId().getStringValue();
   }
 
-  @Nullable
-  private static String getAddToGroupLocation(AddToGroup element) {
+  private static @Nullable String getAddToGroupLocation(AddToGroup element) {
     return element.getGroupId().getStringValue();
   }
 
-  @Nullable
-  private static String getExtensionLocation(Extension element) {
+  private static @Nullable String getExtensionLocation(Extension element) {
     DomElement parent = element.getParent();
     if (parent instanceof Extensions) {
       String extensionsNamespace = ((Extensions)parent).getDefaultExtensionNs().getStringValue();
@@ -252,21 +242,18 @@ public class PluginDescriptorStructureUtil {
     return guessTagLocation(element);
   }
 
-  @Nullable
-  private static String getKeyboardShortcutLocation(KeyboardShortcut element) {
+  private static @Nullable String getKeyboardShortcutLocation(KeyboardShortcut element) {
     return element.getFirstKeystroke().getStringValue();
   }
 
-  @NotNull
-  private static String getVendorLocation(Vendor element) {
+  private static @NotNull String getVendorLocation(Vendor element) {
     return element.getValue();
   }
 
-  @Nullable
-  private static String getTopLevelNodeLocation(GenericDomValue element) {
+  private static @Nullable String getTopLevelNodeLocation(GenericDomValue<?> element) {
     if (element instanceof Dependency) {
       Dependency dependency = (Dependency)element;
-      String result = dependency.getRawText();
+      @NonNls String result = dependency.getRawText();
 
       Boolean optional = dependency.getOptional().getValue();
       if (optional != null && optional) {
@@ -282,8 +269,7 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String guessTagLocation(DomElement element) {
+  private static @Nullable String guessTagLocation(DomElement element) {
     String location = toShortName(firstNotNullAttribute(
       element, "instance", "class", "implementation", "implementationClass", "interface", "interfaceClass"));
 
@@ -300,9 +286,9 @@ public class PluginDescriptorStructureUtil {
     }
 
     DomGenericInfo genericInfo = element.getGenericInfo();
-    List<? extends DomAttributeChildDescription> attrDescriptions = genericInfo.getAttributeChildrenDescriptions();
+    List<? extends DomAttributeChildDescription<?>> attrDescriptions = genericInfo.getAttributeChildrenDescriptions();
     String possibleOnlyAttrValue = null;
-    for (DomAttributeChildDescription description : attrDescriptions) {
+    for (DomAttributeChildDescription<?> description : attrDescriptions) {
       String value = description.getDomAttributeValue(element).getStringValue();
       if (StringUtil.isEmpty(value)) {
         continue;
@@ -325,22 +311,18 @@ public class PluginDescriptorStructureUtil {
       return possibleOnlyAttrValue;
     }
 
-    // check if tag doesn't have attributes and subtags and use it's text content as a location in such cases
+    // check if tag doesn't have attributes and subtags and use its text content as a location in such cases
     if (attrDescriptions.isEmpty() && genericInfo.getFixedChildrenDescriptions().isEmpty()) {
       if (element instanceof GenericDomValue) {
-        return ((GenericDomValue)element).getRawText();
+        return ((GenericDomValue<?>)element).getRawText();
       }
-      /*if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getStringValue();
-      }*/
     }
 
     return null;
   }
 
 
-  @Nullable
-  private static String toShortName(@Nullable String fqName) {
+  private static @Nullable @NlsSafe String toShortName(@Nullable String fqName) {
     if (fqName == null || fqName.contains(" ")) {
       return null;
     }
@@ -351,8 +333,7 @@ public class PluginDescriptorStructureUtil {
     return fqName;
   }
 
-  @NotNull
-  private static String toDisplayName(@NotNull String tagName) {
+  private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
     String[] words = NameUtil.nameToWords(result);
@@ -370,11 +351,10 @@ public class PluginDescriptorStructureUtil {
     return result;
   }
 
-  @Nullable
-  private static String firstNotNullAttribute(DomElement element, String... attributes) {
+  private static @Nullable @NonNls String firstNotNullAttribute(DomElement element, @NonNls String... attributes) {
     DomGenericInfo genericInfo = element.getGenericInfo();
     for (String attribute : attributes) {
-      DomAttributeChildDescription description = genericInfo.getAttributeChildDescription(attribute);
+      DomAttributeChildDescription<?> description = genericInfo.getAttributeChildDescription(attribute);
       if (description == null) {
         continue;
       }
@@ -388,22 +368,19 @@ public class PluginDescriptorStructureUtil {
     return null;
   }
 
-  @Nullable
-  private static String getSubTagText(DomElement element, @SuppressWarnings("SameParameterValue") String subTagName) {
+  private static @Nullable String getSubTagText(DomElement element, @SuppressWarnings("SameParameterValue") String subTagName) {
     DomFixedChildDescription subTagDescription = element.getGenericInfo().getFixedChildDescription(subTagName);
     if (subTagDescription == null) {
       return null;
     }
-    return subTagDescription.getValues(element).stream()
-      .filter(e -> e instanceof ExtensionDomExtender.SimpleTagValue)
-      .map(e -> (ExtensionDomExtender.SimpleTagValue)e)
+    return StreamEx.of(subTagDescription.getValues(element))
+      .select(ExtensionDomExtender.SimpleTagValue.class)
       .map(ExtensionDomExtender.SimpleTagValue::getStringValue)
       .findAny()
       .orElse(null);
   }
 
-  @Nullable
-  private static DomElement getDomElement(@Nullable XmlTag tag) {
+  private static @Nullable DomElement getDomElement(@Nullable XmlTag tag) {
     if (tag == null) {
       return null;
     }

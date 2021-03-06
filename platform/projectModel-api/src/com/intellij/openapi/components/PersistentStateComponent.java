@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,8 @@ public interface PersistentStateComponent<T> {
   }
 
   /**
-   * If class also is a component, then this method will be called after loading state (even if not state) but only once throughout the life cycle
+   * If class also is a service, then this method will be called after loading state (even if no state)
+   * but only once throughout the life cycle.
    */
   default void initializeComponent() {
   }

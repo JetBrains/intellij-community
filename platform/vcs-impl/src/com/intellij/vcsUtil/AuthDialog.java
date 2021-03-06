@@ -33,7 +33,7 @@ public class AuthDialog extends DialogWrapper {
    */
   public AuthDialog(@NotNull Project project,
                     @NotNull @NlsContexts.DialogTitle String title,
-                    @Nullable String description,
+                    @Nullable @NlsContexts.Label String description,
                     @Nullable String login,
                     @Nullable String password,
                     boolean rememberByDefault) {

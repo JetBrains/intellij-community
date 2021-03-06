@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * can be used
  * <p>
  * The creating of an environment happens in two phases:
- * 1. first, environment request should be created and fulfilled – {@link this#createRequest()};
+ * 1. first, environment request should be created and fulfilled, see {@link this#createRequest()};
  * 2. then fulfilled request should be used for preparing target environment.
  * <p>
  * Usually, the client will look like this:
@@ -54,8 +53,10 @@ public interface TargetEnvironmentFactory {
 
   /**
    * Prepares the actual environment.
-   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed {@link ProgressIndicator}
+   * Might be time-consuming operation, so it's strongly recommended to support cancellation using passed {@link TargetEnvironmentAwareRunProfileState.TargetProgressIndicator}.
+   * Throw localised exception to notify that preparation failed, and execution should not be proceeded.
    */
   @NotNull
-  TargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request, @NotNull ProgressIndicator indicator);
+  TargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request,
+                                             @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator);
 }

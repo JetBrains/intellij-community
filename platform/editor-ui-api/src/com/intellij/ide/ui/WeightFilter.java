@@ -1,5 +1,7 @@
 package com.intellij.ide.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.awt.image.RGBImageFilter;
 
 abstract class WeightFilter extends RGBImageFilter {
@@ -19,6 +21,7 @@ abstract class WeightFilter extends RGBImageFilter {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return myName;
   }

@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   private final ASTNode myRoot;
 
@@ -39,8 +41,7 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
     int count = 0;
     while (child != null) {
       if (count >= store.length) {
-        ASTNode[] newStore = new ASTNode[count * 3 / 2];
-        System.arraycopy(store, 0, newStore, 0, count);
+        ASTNode[] newStore = Arrays.copyOf(store, count * 3 / 2);
         into.set(newStore);
         store = newStore;
       }

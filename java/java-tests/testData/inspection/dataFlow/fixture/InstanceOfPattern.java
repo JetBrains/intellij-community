@@ -15,7 +15,7 @@ public class InstanceOfPattern {
   }
   
   void testNullCheck(String s) {
-    if (s instanceof String s1) {
+    if (s instanceof <error descr="Pattern type 'String' is the same as expression type">String</error> s1) {
       System.out.println(s1);
     }
   }

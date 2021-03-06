@@ -18,6 +18,7 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
+@SuppressWarnings("EmptyFinallyBlock")
 public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
@@ -26,8 +27,9 @@ public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testClassInitializer() {
+    //noinspection EmptyTryBlock
     doTest("class C {\n" +
-           "  {\n" +
+           "  static {\n" +
            "    try {\n" +
            "      /*Nested 'try' statement*/try/**/{\n" +
            "      } finally{}\n" +
@@ -37,8 +39,9 @@ public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testInsideLambda() {
+    //noinspection EmptyTryBlock
     doTest("class C {\n" +
-           "  void m() {\n" +
+           "  static void m() {\n" +
            "   try {\n" +
            "     new Thread(() -> {try {} finally {}});\n" +
            "   } finally {}\n" +

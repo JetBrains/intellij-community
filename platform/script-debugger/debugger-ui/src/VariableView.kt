@@ -32,7 +32,6 @@ class VariableView(override val variableName: String, private val variable: Vari
   private var _memberFilter: MemberFilter? = null
 
   @Volatile private var remainingChildren: List<Variable>? = null
-  @Volatile private var remainingChildrenOffset: Int = 0
 
   override fun watchableAsEvaluationExpression(): Boolean = context.watchableAsEvaluationExpression()
 
@@ -70,6 +69,7 @@ class VariableView(override val variableName: String, private val variable: Vari
               }
               else {
                 value = it.value
+                variable.value = it.value
                 computePresentation(it.value, node)
               }
             }
@@ -112,6 +112,11 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
+    if (variable is ObjectProperty && variable.name == PROTOTYPE_PROP) {
+      setObjectPresentation(value as ObjectValue, icon, node)
+      return
+    }
+
     when (value.type) {
       ValueType.OBJECT, ValueType.NODE -> context.viewSupport.computeObjectPresentation((value as ObjectValue), variable, context, node, icon)
 
@@ -137,6 +142,10 @@ class VariableView(override val variableName: String, private val variable: Vari
   }
 
   override fun computeChildren(node: XCompositeNode) {
+    computeChildren(0, node)
+  }
+
+  private fun computeChildren(remainingChildrenOffset: Int, node: XCompositeNode) {
     node.setAlreadySorted(true)
 
     if (value !is ObjectValue) {
@@ -144,14 +153,15 @@ class VariableView(override val variableName: String, private val variable: Vari
       return
     }
 
-    val list = remainingChildren
-    if (list != null) {
+    if (remainingChildrenOffset > 0) {
+      val list = remainingChildren!!
       val to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size)
       val isLast = to == list.size
       node.addChildren(createVariablesList(list, remainingChildrenOffset, to, this, _memberFilter), isLast)
       if (!isLast) {
-        node.tooManyChildren(list.size - to)
-        remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW
+        node.tooManyChildren(list.size - to) {
+          computeChildren(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, node)
+        }
       }
       return
     }
@@ -223,13 +233,39 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     remainingChildren = processNamedObjectProperties(variables, node, this@VariableView, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null)
-    if (remainingChildren != null) {
-      remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW
-    }
+
 
     if (functionValue != null) {
       // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
       node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren && remainingChildren == null)
+    }
+  }
+
+  private fun processNamedObjectProperties(variables: List<Variable>,
+                                   node: XCompositeNode,
+                                   context: VariableContext,
+                                   memberFilter: MemberFilter,
+                                   maxChildrenToAdd: Int,
+                                   defaultIsLast: Boolean): List<Variable>? {
+    val list = filterAndSort(variables, memberFilter)
+    if (list.isEmpty()) {
+      if (defaultIsLast) {
+        node.addChildren(XValueChildrenList.EMPTY, true)
+      }
+      return null
+    }
+
+    val to = Math.min(maxChildrenToAdd, list.size)
+    val isLast = to == list.size
+    node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast)
+    if (isLast) {
+      return null
+    }
+    else {
+      node.tooManyChildren(list.size - to) {
+        computeChildren(XCompositeNode.MAX_CHILDREN_TO_SHOW, node)
+      }
+      return list
     }
   }
 
@@ -421,6 +457,10 @@ class VariableView(override val variableName: String, private val variable: Vari
         return
       }
 
+      if (value is PresentationProvider && value.computePresentation(node, icon)) {
+        return
+      }
+
       val valueString = value.valueString
       // only WIP reports normal description
       if (valueString != null && (valueString.endsWith(")") || valueString.endsWith(']')) &&
@@ -495,4 +535,4 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
   }
 }
 
-private const val PROTOTYPE_PROP = "__proto__"
+const val PROTOTYPE_PROP = "__proto__"

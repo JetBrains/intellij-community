@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
@@ -12,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getQualifierType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
@@ -40,9 +43,21 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
     val session = GroovyInferenceSessionBuilder(expression, it, result.contextSubstitutor)
       .resolveMode(false)
       .build()
-    session.inferSubst().substitute(PsiUtil.getSmartReturnType(it.method).devoid(expression))
+    val returnType = getSmartReturnTypeInContext(it.method, expression)
+    session.inferSubst().substitute(returnType.devoid(expression))
   }
 }
+
+val forbidInteriorReturnTypeInference : Key<Unit> = Key.create("shouldInferReturnType")
+
+fun getSmartReturnTypeInContext(method: PsiMethod, context: PsiElement): PsiType? =
+  if (context.parentOfType<GrMethod>()?.getUserData(forbidInteriorReturnTypeInference) != null) {
+    method.returnType
+  }
+  else {
+    PsiUtil.getSmartReturnType(method)
+  }
+
 
 fun buildQualifier(ref: GrReferenceExpression?, state: ResolveState): Argument {
   val qualifierExpression = ref?.qualifierExpression

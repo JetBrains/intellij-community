@@ -1,39 +1,39 @@
 - element: '&xxx'
   position: 'LogicalPosition: (1, 21)'
   view: |
-    Usage (2 usages)
+    <root> (2)
      Anchor
       xxx
-     Found usages (2 usages)
-      Value read (2 usages)
-       light_idea_test_case (2 usages)
-         (2 usages)
-         anchorsAndAliases.yml (2 usages)
+     Found usages (2)
+      Value read (2)
+       light_idea_test_case (2)
+         (2)
+         anchorsAndAliases.yml (2)
           4Second occurrence: *xxx
           5Thrid: *xxx
     
 - element: '&xxx'
   position: 'LogicalPosition: (5, 20)'
   view: |
-    Usage (1 usage)
+    <root> (1)
      Anchor
       xxx
-     Found usages (1 usage)
-      Value read (1 usage)
-       light_idea_test_case (1 usage)
-         (1 usage)
-         anchorsAndAliases.yml (1 usage)
+     Found usages (1)
+      Value read (1)
+       light_idea_test_case (1)
+         (1)
+         anchorsAndAliases.yml (1)
           7Reuse anchor: *xxx
     
 - element: '&yyy'
   position: 'LogicalPosition: (2, 9)'
   view: |
-    Usage (1 usage)
+    <root> (1)
      Anchor
       yyy
-     Found usages (1 usage)
-      Value read (1 usage)
-       light_idea_test_case (1 usage)
-         (1 usage)
-         anchorsAndAliases.yml (1 usage)
+     Found usages (1)
+      Value read (1)
+       light_idea_test_case (1)
+         (1)
+         anchorsAndAliases.yml (1)
           8Simple: *yyy

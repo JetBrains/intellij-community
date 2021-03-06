@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -68,7 +69,8 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
       surroundWith(types[0], parent, selected, treeComponent);
     }
     else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<CompositePackagingElementType>("Surround With...", types) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<CompositePackagingElementType>(
+        JavaUiBundle.message("popup.title.surround.with"), types) {
         @Override
         public Icon getIconFor(CompositePackagingElementType aValue) {
           return aValue.getCreateElementIcon();

@@ -55,5 +55,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

@@ -1,12 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HighlightableComponent extends JComponent implements Accessible {
+  @Nls
   protected String myText = "";
   protected Icon myIcon;
   protected int myIconTextGap;
@@ -38,10 +42,10 @@ public class HighlightableComponent extends JComponent implements Accessible {
   }
 
   @Override public void updateUI() {
-    UISettings.setupComponentAntialiasing(this);
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
   }
 
-  public void setText(@Nullable String text) {
+  public void setText(@Nullable @Nls String text) {
     String oldAccessibleName = null;
     if (accessibleContext != null) {
       oldAccessibleName = accessibleContext.getAccessibleName();
@@ -99,7 +103,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
         }
 
         // must be before and overlap
-        if (startOffset < hRegion.startOffset && endOffset > hRegion.startOffset){
+        if (startOffset < hRegion.startOffset) {
 
           if (endOffset < hRegion.endOffset){
             myHighlightedRegions.add(i, new HighlightedRegion(startOffset, hRegion.startOffset, attributes));
@@ -158,21 +162,19 @@ public class HighlightableComponent extends JComponent implements Accessible {
             break;
           }
 
-          if (endOffset > oldEndOffset){
-            myHighlightedRegions.add(i + 1, new HighlightedRegion(startOffset, oldEndOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
-            if (i < myHighlightedRegions.size() - 1){
-              addHighlighter(i + 1, oldEndOffset, endOffset, attributes);
-            }
-            else{
-              myHighlightedRegions.add(i + 2, new HighlightedRegion(hRegion.endOffset, endOffset, attributes));
-            }
-
-            if (startOffset == hRegion.startOffset){
-              myHighlightedRegions.remove(hRegion);
-            }
-
-            break;
+          myHighlightedRegions.add(i + 1, new HighlightedRegion(startOffset, oldEndOffset, TextAttributes.merge(hRegion.textAttributes, attributes)));
+          if (i < myHighlightedRegions.size() - 1){
+            addHighlighter(i + 1, oldEndOffset, endOffset, attributes);
           }
+          else{
+            myHighlightedRegions.add(i + 2, new HighlightedRegion(hRegion.endOffset, endOffset, attributes));
+          }
+
+          if (startOffset == hRegion.startOffset){
+            myHighlightedRegions.remove(hRegion);
+          }
+
+          break;
         }
       }
     }
@@ -236,7 +238,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     // paint icon
 
     if (myIcon != null) {
-      int x = isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
+      int x = getIconOffset();
       myIcon.paintIcon(this, g, x, (getHeight() - myIcon.getIconHeight()) / 2);
     }
 
@@ -342,6 +344,10 @@ public class HighlightableComponent extends JComponent implements Accessible {
       return 2;
     }
     return myIcon.getIconWidth() + myIconTextGap;
+  }
+
+  protected int getIconOffset() {
+    return isIconAtRight() ? getWidth() - myIcon.getIconWidth() : 0;
   }
 
   @Nullable

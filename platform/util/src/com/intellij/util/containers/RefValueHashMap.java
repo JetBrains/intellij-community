@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Getter;
@@ -10,11 +10,12 @@ import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.HashMap;
 import java.util.*;
 
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "childrenArray()")
-abstract class RefValueHashMap<K,V> implements Map<K,V>{
-  private final Map<K,MyReference<K,V>> myMap;
+abstract class RefValueHashMap<K, V> implements Map<K, V> {
+  private final Map<K, MyReference<K, V>> myMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
   @NotNull
@@ -33,7 +34,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
   }
 
   RefValueHashMap() {
-    myMap = new THashMap<>();
+    myMap = new HashMap<>();
   }
 
   RefValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
@@ -94,7 +95,7 @@ abstract class RefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean isEmpty() {
-    return myMap.isEmpty(); 
+    return myMap.isEmpty();
   }
 
   @Override

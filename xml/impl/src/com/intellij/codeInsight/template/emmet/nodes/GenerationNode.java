@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet.nodes;
 
-import com.google.common.base.Strings;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -16,14 +15,15 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -125,9 +125,6 @@ public class GenerationNode extends UserDataHolderBase {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
     GenerationNode generationNode = this;
-    if (generationNode != this) {
-      return generationNode.generate(callback, generator, Collections.emptyList(), insertSurroundedText, segmentsLimit);
-    }
 
     boolean shouldNotReformatTemplate = false;
     boolean oneLineTemplateExpanding = false;
@@ -275,7 +272,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
 
       for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-        if (Strings.isNullOrEmpty(attribute.getValue())) {
+        if (Strings.isEmpty(attribute.getValue())) {
           template.addVariable(prepareVariableName(attribute.getKey()), "", "", true);
         }
       }
@@ -347,7 +344,7 @@ public class GenerationNode extends UserDataHolderBase {
 
   private static int gotoChild(Project project, CharSequence text, int offset, int start, int end) {
     PsiFile file = PsiFileFactory.getInstance(project)
-      .createFileFromText("dummy.xml", StdFileTypes.XML, text, LocalTimeCounter.currentTime(), false);
+      .createFileFromText("dummy.xml", XmlFileType.INSTANCE, text, LocalTimeCounter.currentTime(), false);
 
     PsiElement element = file.findElementAt(offset);
     if (offset < end && element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {

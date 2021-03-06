@@ -52,7 +52,7 @@ class StatisticsEventLogMessageBuilder {
 
   companion object {
     private val gson = Gson()
-    private val systemFields = setOf("last", "created", "system_event_id")
+    private val systemFields = setOf("last", "created", "system_event_id", "system_headless")
     private const val projectIdPrefixSize = 8
     private const val projectIdSuffixSize = 2
     private const val maxProjectIdSize = projectIdPrefixSize + projectIdSuffixSize

@@ -59,6 +59,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     val viewer = TextMergeTool.INSTANCE.createComponent(context, request) as TextMergeViewer
     try {
       val toolbar = viewer.init()
+      viewer.viewer.rediff()
       UIUtil.dispatchAllInvocationEvents()
 
       val builder = TestBuilder(viewer, toolbar.toolbarActions ?: emptyList())

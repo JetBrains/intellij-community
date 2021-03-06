@@ -85,7 +85,13 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       val callExpr = argList.parent as? PyCallExpression ?: return false
 
       val builtinCache = PyBuiltinCache.getInstance(expr)
-      val strOrUnicodeType = builtinCache.strOrUnicodeType ?: return false
+      val languageLevel = LanguageLevel.forElement(expr)
+      val bytesOrUnicodeType = PyUnionType.union(
+        listOfNotNull(
+          builtinCache.getBytesType(languageLevel),
+          builtinCache.getUnicodeType(languageLevel)
+        )
+      ) ?: return false
       val osPathLikeType = builtinCache.getObjectType(PyNames.BUILTIN_PATH_LIKE) ?: return false
 
       val typeEvalContext = TypeEvalContext.codeInsightFallback(expr.project)
@@ -96,11 +102,12 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           val mapping = PyCallExpressionHelper.mapArguments(callExpr, it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
+        .mapNotNull(PyUnionType::toNonWeakType)
         .toList()
-        .let { PyUnionType.union(it) }
+        .let(PyUnionType::union)
         .let {
           it != null &&
-          PyTypeChecker.match(strOrUnicodeType, it, typeEvalContext) &&
+          PyTypeChecker.match(bytesOrUnicodeType, it, typeEvalContext) &&
           PyTypeChecker.match(osPathLikeType, it, typeEvalContext)
         }
     }

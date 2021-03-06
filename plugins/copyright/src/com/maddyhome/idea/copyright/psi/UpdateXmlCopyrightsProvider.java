@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +12,7 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.XmlOptions;
 
-public class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider {
+public final class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider {
   @Override
   public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {
     return new UpdateXmlFileCopyright(project, module, file, options);

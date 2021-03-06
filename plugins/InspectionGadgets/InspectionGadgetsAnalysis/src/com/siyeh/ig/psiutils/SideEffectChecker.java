@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SideEffectChecker {
+public final class SideEffectChecker {
   private static final Set<String> ourSideEffectFreeClasses = ContainerUtil.set(
     Object.class.getName(),
     Short.class.getName(),
@@ -303,7 +303,7 @@ public class SideEffectChecker {
 
     // all Throwable descendants from java.lang are side effects free
     if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName) || "java.io".equals(packageName)) {
-      PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
+      PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, aClass.getResolveScope());
       if (throwableClass != null && com.intellij.psi.util.InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
         return true;
       }

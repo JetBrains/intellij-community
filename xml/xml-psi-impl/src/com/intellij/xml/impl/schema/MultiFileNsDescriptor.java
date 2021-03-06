@@ -83,7 +83,7 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
 
   @Nullable
   @Override
-  public TypeDescriptor getTypeDescriptor(String name, XmlTag context) {
+  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     return getFirst(descriptor -> descriptor.getTypeDescriptor(name, context));
   }
 

@@ -7,27 +7,37 @@ import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() throws Exception {
-
-    openFiles(STRING);
+    openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
+
+    myManager.closeAllFiles();
+    openFiles(STRING);
+    assertOpenFiles("foo.xml", "1.txt", "2.txt", "3.txt");
   }
 
   @Override
@@ -65,7 +75,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
     myManager.openFile(getFile("/src/3.txt"), true);
-    assertOpenFiles("3.txt", "foo.xml");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
+    assertOpenFiles("foo.xml", "3.txt");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
 
     myManager.closeAllFiles();
 
@@ -319,6 +329,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         public String getName() {
           return "mockEditor";
         }
+
+        @Override
+        public VirtualFile getFile() {
+          return file;
+        }
       };
     }
 
@@ -358,7 +373,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @NotNull
     @Override
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-      return new MyTextEditor(FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
+      return new MyTextEditor(file, FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
     }
 
     @NotNull
@@ -375,11 +390,16 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   private static final class MyTextEditor extends Mock.MyFileEditor implements TextEditor {
+    private final VirtualFile myFile;
     private final Editor myEditor;
     private final String myName;
     private final int myTargetOffset;
 
-    private MyTextEditor(Document document, String name, int targetOffset) {
+    private MyTextEditor(VirtualFile file,
+                         Document document,
+                         String name,
+                         int targetOffset) {
+      myFile = file;
       myEditor = EditorFactory.getInstance().createEditor(document);
       myName = name;
       myTargetOffset = targetOffset;
@@ -420,6 +440,21 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     @Override
     public void navigateTo(@NotNull Navigatable navigatable) {}
+
+    @Override
+    public VirtualFile getFile() {
+      return myFile;
+    }
+  }
+
+  public void testMustNotAllowToTypeIntoFileRenamedToUnknownExtension() throws Exception {
+    File ioFile = IoTestUtil.createTestFile("test.txt", "");
+    VirtualFile file = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile));
+    assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
+    FileEditorManager.getInstance(getProject()).openFile(file, true);
+    HeavyPlatformTestCase.rename(file, "test.unkneownExtensiosn");
+    assertEquals(UnknownFileType.INSTANCE, file.getFileType());
+    assertFalse(FileEditorManager.getInstance(getProject()).isFileOpen(file)); // must close
   }
 }
 

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl.config;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PlainTextDescriptor implements TextDescriptor {
-  private final String myText;
-  private final String myFileName;
+  private final @Nls String myText;
+  private final @NonNls String myFileName;
 
-  public PlainTextDescriptor(@NotNull String text, @NonNls @NotNull String fileName) {
+  public PlainTextDescriptor(@NotNull @Nls String text, @NotNull @NonNls String fileName) {
     myText = text;
     myFileName = fileName;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,31 +32,26 @@ import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.proxy.SharedProxyConfig;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-@State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"))
+@State(name = "HttpConfigurable", storages = @Storage("proxy.settings.xml"), reportStatistic = false)
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable {
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
-  private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
+  private static final Path PROXY_CREDENTIALS_FILE = Paths.get(PathManager.getOptionsPath(), "proxy.settings.pwd");
 
   public boolean PROXY_TYPE_IS_SOCKS;
   public boolean USE_HTTP_PROXY;
@@ -70,8 +64,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean KEEP_PROXY_PASSWORD;
   public transient String LAST_ERROR;
 
-  private final THashMap<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new THashMap<>();
-  private final Set<CommonProxy.HostInfo> myGenericCancelled = new THashSet<>();
+  private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
+  private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();
 
   public String PROXY_EXCEPTIONS;
   public boolean USE_PAC_URL;
@@ -87,21 +81,20 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   private transient final NotNullLazyValue<Properties> myProxyCredentials = NotNullLazyValue.createValue(() -> {
     try {
+      if (!Files.exists(PROXY_CREDENTIALS_FILE)) {
+        return new Properties();
+      }
+
       return myEncryptionSupport.load(PROXY_CREDENTIALS_FILE);
     }
-    catch (FileNotFoundException ignored) { }
     catch (Throwable th) {
       LOG.info(th);
     }
     return new Properties();
   });
 
-  @SuppressWarnings("UnusedDeclaration")
-  public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<>(null);
-  public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<>(null);
-
   public static HttpConfigurable getInstance() {
-    return ServiceManager.getService(HttpConfigurable.class);
+    return ApplicationManager.getApplication().getService(HttpConfigurable.class);
   }
 
   public static boolean editConfigurable(@Nullable JComponent parent) {
@@ -150,8 +143,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public void initializeComponent() {
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
-    CommonProxy.getInstance().setCustom(name, mySelector);
-    CommonProxy.getInstance().setCustomAuth(name, new IdeaWideAuthenticator(this));
+    CommonProxy commonProxy = CommonProxy.getInstance();
+    commonProxy.setCustom(name, mySelector);
+    commonProxy.setCustomAuth(name, new IdeaWideAuthenticator(this));
   }
 
   /** @deprecated use {@link #initializeComponent()} */
@@ -161,26 +155,21 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     initializeComponent();
   }
 
-  @NotNull
-  public ProxySelector getOnlyBySettingsSelector() {
+  public @NotNull ProxySelector getOnlyBySettingsSelector() {
     return mySelector;
   }
 
   @Override
   public void dispose() {
-    final String name = getClass().getName();
-    CommonProxy.getInstance().removeCustom(name);
-    CommonProxy.getInstance().removeCustomAuth(name);
+    String name = getClass().getName();
+    CommonProxy commonProxy = CommonProxy.getInstance();
+    commonProxy.removeCustom(name);
+    commonProxy.removeCustomAuth(name);
   }
 
   private void correctPasswords(@NotNull HttpConfigurable to) {
     synchronized (myLock) {
-      to.myGenericPasswords.retainEntries(new TObjectObjectProcedure<CommonProxy.HostInfo, ProxyInfo>() {
-        @Override
-        public boolean execute(CommonProxy.HostInfo hostInfo, ProxyInfo proxyInfo) {
-          return proxyInfo.isStore();
-        }
-      });
+      to.myGenericPasswords.values().removeIf(it -> !it.isStore());
     }
   }
 
@@ -199,15 +188,18 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
   }
 
-  public void setGenericPasswordCanceled(final String host, final int port) {
+  private void setGenericPasswordCanceled(final String host, final int port) {
     synchronized (myLock) {
       myGenericCancelled.add(new CommonProxy.HostInfo(null, host, port));
     }
   }
 
   public PasswordAuthentication getGenericPassword(@NotNull String host, int port) {
-    final ProxyInfo proxyInfo;
+    ProxyInfo proxyInfo;
     synchronized (myLock) {
+      if (myGenericPasswords.isEmpty()) {
+        return null;
+      }
       proxyInfo = myGenericPasswords.get(new CommonProxy.HostInfo(null, host, port));
     }
     if (proxyInfo == null) {
@@ -216,6 +208,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return new PasswordAuthentication(proxyInfo.getUsername(), decode(String.valueOf(proxyInfo.getPasswordCrypt())).toCharArray());
   }
 
+  @SuppressWarnings("WeakerAccess")
   public void putGenericPassword(final String host, final int port, @NotNull PasswordAuthentication authentication, boolean remember) {
     PasswordAuthentication coded = new PasswordAuthentication(authentication.getUserName(), encode(String.valueOf(authentication.getPassword())).toCharArray());
     synchronized (myLock) {
@@ -254,9 +247,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8));
   }
 
-  public PasswordAuthentication getGenericPromptedAuthentication(final String prefix, final String host, final String prompt, final int port, final boolean remember) {
+  public PasswordAuthentication getGenericPromptedAuthentication(final @Nls String prefix, final @NlsSafe String host, final String prompt, final int port, final boolean remember) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myTestGenericAuthRunnable.get();
+      return null;
     }
 
     final Ref<PasswordAuthentication> value = Ref.create();
@@ -271,7 +264,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
         return;
       }
 
-      AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + host,
+      AuthenticationDialog dialog = new AuthenticationDialog(PopupUtil.getActiveComponent(), prefix + ": "+ host,
                                                              IdeBundle.message("dialog.message.please.enter.credentials.for", prompt), "", "", remember);
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -305,7 +298,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myTestGenericAuthRunnable.get();
+      return null;
     }
     final PasswordAuthentication[] value = new PasswordAuthentication[1];
     runAboveAll(() -> {
@@ -529,7 +522,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Contract("null -> false")
-  public boolean isProxyException(@Nullable String uriHost) {
+  private boolean isProxyException(@Nullable String uriHost) {
     if (StringUtil.isEmptyOrSpaces(uriHost) || StringUtil.isEmptyOrSpaces(PROXY_EXCEPTIONS)) {
       return false;
     }
@@ -665,7 +658,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings({"unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
     return ContainerUtil.map(properties, p -> KeyValue.create(p.first, p.second));

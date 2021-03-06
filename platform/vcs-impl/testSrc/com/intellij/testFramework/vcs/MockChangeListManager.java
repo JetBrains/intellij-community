@@ -42,11 +42,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                 @NotNull InvokeAfterUpdateMode mode,
                                 String title,
@@ -61,6 +56,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
                                 Consumer<? super VcsDirtyScopeManager> dirtyScopeManager,
                                 ModalityState state) {
     afterUpdate.run();
+  }
+
+  @Override
+  public boolean areChangeListsEnabled() {
+    return true;
   }
 
   @Override
@@ -183,6 +183,16 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public @NotNull List<FilePath> getUnversionedFilesPaths() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull FileStatus getStatus(@NotNull FilePath file) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   @Override
   public FileStatus getStatus(@NotNull VirtualFile file) {
@@ -263,12 +273,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
+  public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
+  public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
     throw new UnsupportedOperationException();
   }
 
@@ -293,6 +303,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public @NotNull List<FilePath> getIgnoredFilePaths() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String getSwitchedBranch(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
   }
@@ -312,7 +327,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void waitForUpdate(@Nullable String operationName) {
+  public void waitForUpdate() {
     throw new UnsupportedOperationException();
   }
 

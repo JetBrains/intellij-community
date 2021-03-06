@@ -2,6 +2,8 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,13 +18,14 @@ public abstract class NodeDescriptor<E> {
   protected final Project myProject;
   private final NodeDescriptor<?> myParentDescriptor;
 
-  protected String myName;
+  protected @NlsSafe String myName;
   @Nullable protected Icon myClosedIcon;
 
   /**
    * @deprecated Unused. Left for API compatibility.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected Icon myOpenIcon;
   protected Color myColor;
 
@@ -61,7 +64,7 @@ public abstract class NodeDescriptor<E> {
   public abstract E getElement();
 
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     // NB!: this method may return null if node is not valid
     // it contradicts the specification, but the fix breaks existing behaviour
     // see com.intellij.ide.util.FileStructurePopup#getSpeedSearchText
@@ -72,6 +75,7 @@ public abstract class NodeDescriptor<E> {
    * @deprecated Use {@link #getIcon()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final Icon getOpenIcon() {
     return getIcon();
   }
@@ -80,6 +84,7 @@ public abstract class NodeDescriptor<E> {
    * @deprecated Use {@link #getIcon()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public final Icon getClosedIcon() {
     return getIcon();
   }

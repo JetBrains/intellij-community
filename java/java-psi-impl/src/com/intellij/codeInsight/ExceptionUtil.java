@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.Pair;
@@ -16,7 +16,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class ExceptionUtil {
+public final class ExceptionUtil {
   @NonNls private static final String CLONE_METHOD_NAME = "clone";
 
   private ExceptionUtil() {}
@@ -305,7 +304,7 @@ public class ExceptionUtil {
       // plus all exceptions thrown in instance class initializers
       if (aClass != null) {
         final PsiClassInitializer[] initializers = aClass.getInitializers();
-        final Set<PsiClassType> thrownByInitializer = new THashSet<>();
+        final Set<PsiClassType> thrownByInitializer = new HashSet<>();
         for (PsiClassInitializer initializer : initializers) {
           if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
           thrownByInitializer.clear();
@@ -328,7 +327,7 @@ public class ExceptionUtil {
 
     if (unhandledExceptions != null) {
       if (foundExceptions == null) {
-        foundExceptions = new THashSet<>();
+        foundExceptions = new HashSet<>();
       }
       foundExceptions.addAll(unhandledExceptions);
     }
@@ -719,9 +718,9 @@ public class ExceptionUtil {
   }
 
   public static boolean isGeneralExceptionType(@NotNull final PsiType type) {
-    final String canonicalText = type.getCanonicalText();
-    return CommonClassNames.JAVA_LANG_THROWABLE.equals(canonicalText) ||
-           CommonClassNames.JAVA_LANG_EXCEPTION.equals(canonicalText);
+    return type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE) ||
+           type.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) ||
+           type.equalsToText(CommonClassNames.JAVA_LANG_ERROR);
   }
 
   public static boolean isHandled(@NotNull PsiClassType exceptionType, @NotNull PsiElement throwPlace) {

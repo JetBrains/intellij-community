@@ -190,6 +190,9 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -255,6 +258,7 @@
       <val name="pure" val="true"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.lang.Class java.lang.String getPackageName()'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -400,6 +404,13 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Class java.net.URL getResource(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.Class java.net.URL getResource(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String)'>
@@ -765,6 +776,9 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.ProcessBuilder java.lang.ProcessBuilder command(java.lang.String...) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
@@ -1068,11 +1082,19 @@
   <item name="java.lang.String java.lang.String copyValueOf(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.String java.lang.String format(java.lang.String, java.lang.Object...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.String java.lang.String format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name='java.lang.String java.lang.String format(java.util.Locale, java.lang.String, java.lang.Object...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.String java.lang.String format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1086,8 +1108,20 @@
   <item name='java.lang.String java.lang.String join(java.lang.CharSequence, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.lang.String java.lang.String replace(char, char)">
+  <item name='java.lang.String java.lang.String repeat(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.String java.lang.String repeat(int) 0'>
+        <annotation name='org.jetbrains.annotations.Range'>
+            <val name="from" val="0"/>
+            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+        </annotation>
+    </item>
+    <item name="java.lang.String java.lang.String replace(char, char)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.String java.lang.String replace(java.lang.CharSequence, java.lang.CharSequence)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1273,6 +1307,12 @@
   </item>
   <item name="java.lang.String void getChars(int, int, char[], int) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.lang.SuppressWarnings java.lang.String[] value()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.lang.System java.lang.String getProperty(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls"/>

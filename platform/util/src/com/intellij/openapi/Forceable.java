@@ -19,7 +19,9 @@
  */
 package com.intellij.openapi;
 
+import java.io.IOException;
+
 public interface Forceable {
   boolean isDirty();
-  void force();
+  void force() throws IOException;
 }

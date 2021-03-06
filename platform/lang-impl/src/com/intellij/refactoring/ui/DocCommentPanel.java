@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
@@ -31,7 +32,7 @@ public class DocCommentPanel extends JPanel {
   private JRadioButton myRbJavaDocCopy = null;
   private final TitledBorder myBorder;
 
-  public DocCommentPanel(String title) {
+  public DocCommentPanel(@NlsContexts.BorderTitle String title) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     myBorder = IdeBorderFactory.createTitledBorder(title, true,
                                                    new Insets(IdeBorderFactory.TITLED_BORDER_TOP_INSET,

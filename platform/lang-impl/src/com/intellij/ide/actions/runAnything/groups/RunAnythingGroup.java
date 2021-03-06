@@ -1,12 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,8 +22,9 @@ import java.util.Optional;
  * Represents 'run anything' list group.
  */
 public abstract class RunAnythingGroup {
-  public static final Function<String, NameUtil.MatcherBuilder> RUN_ANYTHING_MATCHER_BUILDER =
-    pattern -> NameUtil.buildMatcher("*" + pattern);
+  public static final Function<String, NameUtil.MatcherBuilder> RUN_ANYTHING_MATCHER_BUILDER = pattern -> {
+    return NameUtil.buildMatcher("*" + pattern);
+  };
 
   /**
    * {@link #myMoreIndex} is a group's 'load more..' index in the main list.
@@ -38,7 +42,7 @@ public abstract class RunAnythingGroup {
    * @return Current group title in the main list.
    */
   @NotNull
-  public abstract String getTitle();
+  public abstract @NlsContexts.PopupTitle String getTitle();
 
   /**
    * @return Current group maximum number of items to be shown.
@@ -88,7 +92,7 @@ public abstract class RunAnythingGroup {
    * @return group title if {@code titleIndex} is equals to group {@link #myTitleIndex} and {@code null} if nothing found
    */
   @Nullable
-  public static String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
+  public static @NlsContexts.PopupTitle String getTitle(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
     return Optional.ofNullable(findGroup(groups, titleIndex)).map(RunAnythingGroup::getTitle).orElse(null);
   }
 
@@ -148,7 +152,7 @@ public abstract class RunAnythingGroup {
    * Joins {@link #myTitleIndex} and {@link #myMoreIndex} of all groups; using for navigating by 'TAB' between groups.
    */
   public static int[] getAllIndexes(@NotNull Collection<? extends RunAnythingGroup> groups) {
-    TIntArrayList list = new TIntArrayList();
+    IntList list = new IntArrayList();
     for (RunAnythingGroup runAnythingGroup : groups) {
       list.add(runAnythingGroup.myTitleIndex);
     }
@@ -156,7 +160,7 @@ public abstract class RunAnythingGroup {
       list.add(runAnythingGroup.myMoreIndex);
     }
 
-    return list.toNativeArray();
+    return list.toIntArray();
   }
 
   /**
@@ -164,7 +168,7 @@ public abstract class RunAnythingGroup {
    */
   @Nullable
   public static RunAnythingGroup findGroupByMoreIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int moreIndex) {
-    return groups.stream().filter(runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex).findFirst().orElse(null);
+    return ContainerUtil.find(groups, runAnythingGroup -> moreIndex == runAnythingGroup.myMoreIndex);
   }
 
   /**
@@ -172,7 +176,7 @@ public abstract class RunAnythingGroup {
    */
   @Nullable
   public static RunAnythingGroup findGroupByTitleIndex(@NotNull Collection<? extends RunAnythingGroup> groups, int titleIndex) {
-    return groups.stream().filter(runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex).findFirst().orElse(null);
+    return ContainerUtil.find(groups, runAnythingGroup -> titleIndex == runAnythingGroup.myTitleIndex);
   }
 
   /**

@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class ImageSerializer {
+public final class ImageSerializer {
   public static String imageToBytes(Image image) throws IOException {
     //noinspection UndesirableClassUsage
     BufferedImage bi = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);

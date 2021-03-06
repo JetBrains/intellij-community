@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import org.jetbrains.annotations.ApiStatus;
+
 public enum EffectType {
   LINE_UNDERSCORE,
   WAVE_UNDERSCORE,
@@ -23,5 +25,6 @@ public enum EffectType {
   BOLD_LINE_UNDERSCORE,
   BOLD_DOTTED_LINE,
   SEARCH_MATCH,
-  ROUNDED_BOX
+  ROUNDED_BOX,
+  @ApiStatus.Experimental SLIGHTLY_WIDER_BOX
 }

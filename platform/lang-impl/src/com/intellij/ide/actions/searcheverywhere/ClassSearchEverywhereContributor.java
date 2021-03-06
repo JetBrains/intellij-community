@@ -1,27 +1,45 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.GotoClassAction;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
 import com.intellij.ide.util.gotoByName.LanguageRef;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.navigation.AnonymousElementProvider;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,6 +58,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
 
   @NotNull
   @Override
+  @Nls
   public String getGroupName() {
     return GotoClassPresentationUpdater.getTabTitlePluralized();
   }
@@ -47,12 +66,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   @NotNull
   @Override
   public String getFullGroupName() {
-    return String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
-  }
-
-  @NotNull
-  public String includeNonProjectItemsText() {
-    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
+    //noinspection HardCodedStringLiteral
+    @Nls String res = String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
+    return res;
   }
 
   @Override
@@ -70,10 +86,15 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return model;
   }
 
+  @Override
+  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
+    return new SearchEverywhereCommandInfo("c", IdeBundle.message("search.everywhere.filter.classes.description"), this);
+  }
+
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(includeNonProjectItemsText(), myFilter, onChanged);
+    return doGetActions(myFilter, new LangFilterCollector(), onChanged);
   }
 
   @NotNull
@@ -99,7 +120,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
     String path = pathToAnonymousClass(searchText);
     if (path != null) {
-      psiElement = GotoClassAction.getElement(psiElement, path);
+      psiElement = getElement(psiElement, path);
     }
     return super.preparePsi(psiElement, modifiers, searchText);
   }
@@ -115,7 +136,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     VirtualFile file = PsiUtilCore.getVirtualFile(psi);
     String memberName = getMemberName(searchText);
     if (file != null && memberName != null) {
-      Navigatable delegate = GotoClassAction.findMember(memberName, searchText, psi, file);
+      Navigatable delegate = findMember(memberName, searchText, psi, file);
       if (delegate != null) {
         return new Navigatable() {
           @Override
@@ -169,6 +190,105 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
 
     String name = searchedText.substring(index + 1).trim();
     return StringUtil.isEmpty(name) ? null : name;
+  }
+
+  @Nullable
+  public static Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
+    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
+    final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
+    final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
+    if (builder == null || editors.length == 0) {
+      return null;
+    }
+
+    final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
+    try {
+      final StructureViewTreeElement element = findElement(view.getTreeModel().getRoot(), psiElement, 4);
+      if (element == null) {
+        return null;
+      }
+
+      MinusculeMatcher matcher = NameUtil.buildMatcher(memberPattern).build();
+      int max = Integer.MIN_VALUE;
+      Object target = null;
+      for (TreeElement treeElement : element.getChildren()) {
+        if (treeElement instanceof StructureViewTreeElement) {
+          Object value = ((StructureViewTreeElement)treeElement).getValue();
+          if (value instanceof PsiElement && value instanceof Navigatable &&
+              fullPattern.equals(CopyReferenceAction.elementToFqn((PsiElement)value))) {
+            return (Navigatable)value;
+          }
+
+          String presentableText = treeElement.getPresentation().getPresentableText();
+          if (presentableText != null) {
+            final int degree = matcher.matchingDegree(presentableText);
+            if (degree > max) {
+              max = degree;
+              target = ((StructureViewTreeElement)treeElement).getValue();
+            }
+          }
+        }
+      }
+      return target instanceof Navigatable ? (Navigatable)target : null;
+    }
+    finally {
+      Disposer.dispose(view);
+    }
+  }
+
+  @Nullable
+  private static StructureViewTreeElement findElement(StructureViewTreeElement node, PsiElement element, int hopes) {
+    final Object value = node.getValue();
+    if (value instanceof PsiElement) {
+      if (((PsiElement)value).isEquivalentTo(element)) return node;
+      if (hopes != 0) {
+        for (TreeElement child : node.getChildren()) {
+          if (child instanceof StructureViewTreeElement) {
+            final StructureViewTreeElement e = findElement((StructureViewTreeElement)child, element, hopes - 1);
+            if (e != null) {
+              return e;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
+    final String[] classes = path.split("\\$");
+    List<Integer> indexes = new ArrayList<>();
+    for (String cls : classes) {
+      if (cls.isEmpty()) continue;
+      try {
+        indexes.add(Integer.parseInt(cls) - 1);
+      }
+      catch (Exception e) {
+        return element;
+      }
+    }
+    PsiElement current = element;
+    for (int index : indexes) {
+      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+      if (index >= 0 && index < anonymousClasses.length) {
+        current = anonymousClasses[index];
+      }
+      else {
+        return current;
+      }
+    }
+    return current;
+  }
+
+  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
+    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
+      final PsiElement[] elements = provider.getAnonymousElements(element);
+      if (elements.length > 0) {
+        return elements;
+      }
+    }
+    return PsiElement.EMPTY_ARRAY;
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {

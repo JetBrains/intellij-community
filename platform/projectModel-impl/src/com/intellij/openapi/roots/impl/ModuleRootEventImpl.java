@@ -18,11 +18,14 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- *  @author dsl
+ * This is an internal class, use {@link ProjectRootManagerEx#makeRootsChange(java.lang.Runnable, boolean, boolean)} to fire {@code rootsChanged} event.
  */
+@ApiStatus.Internal
 public class ModuleRootEventImpl extends ModuleRootEvent {
   private final boolean myFiletypes;
 

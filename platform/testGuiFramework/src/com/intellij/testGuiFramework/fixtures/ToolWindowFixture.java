@@ -177,7 +177,7 @@ public abstract class ToolWindowFixture {
 
   protected boolean isActive() {
     //noinspection ConstantConditions
-    return execute(new GuiQuery<Boolean>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected Boolean executeInEDT() throws Throwable {
         return myToolWindow.isActive();
@@ -224,7 +224,7 @@ public abstract class ToolWindowFixture {
 
   public boolean isVisible() {
     //noinspection ConstantConditions
-    return execute(new GuiQuery<Boolean>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected Boolean executeInEDT() throws Throwable {
         if (!myToolWindow.isVisible()) {
@@ -242,7 +242,7 @@ public abstract class ToolWindowFixture {
       protected void executeInEDT() throws Throwable {
         Stream<Content> contentStream = Arrays.stream(myToolWindow.getContentManager().getContents());
         Optional<Content> contentOptional = contentStream.filter(content -> content.getTabName().equals(tabName)).findAny();
-        if (!contentOptional.isPresent()) {
+        if (contentOptional.isEmpty()) {
           throw new ComponentLookupException("Unable to find content with tab name: \"" + tabName +
                                              "\" for ToolWindow with id: \"" + myToolWindowId + "\"");
         }
@@ -256,7 +256,7 @@ public abstract class ToolWindowFixture {
   }
 
   public static void clickToolwindowButton(String toolWindowStripeButtonName, Robot robot) {
-    final StripeButton stripeButton = robot.finder().find(new GenericTypeMatcher<StripeButton>(StripeButton.class) {
+    final StripeButton stripeButton = robot.finder().find(new GenericTypeMatcher<>(StripeButton.class) {
       @Override
       protected boolean isMatching(@NotNull StripeButton button) {
         return (button.getText().equals(toolWindowStripeButtonName));
@@ -267,7 +267,7 @@ public abstract class ToolWindowFixture {
 
   public static void showToolwindowStripes(Robot robot) {
     if (UISettings.getInstance().getHideToolStripes()) {
-      final JLabel toolwindowsWidget = robot.finder().find(new GenericTypeMatcher<JLabel>(JLabel.class) {
+      final JLabel toolwindowsWidget = robot.finder().find(new GenericTypeMatcher<>(JLabel.class) {
         @Override
         protected boolean isMatching(@NotNull JLabel label) {
           if (label instanceof StatusBarWidget) {

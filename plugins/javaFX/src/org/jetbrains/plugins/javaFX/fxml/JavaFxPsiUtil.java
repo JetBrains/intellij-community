@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -41,12 +28,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
@@ -56,8 +39,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class JavaFxPsiUtil {
-
+public final class JavaFxPsiUtil {
   private static final Logger LOG = Logger.getInstance(JavaFxPsiUtil.class);
 
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
@@ -484,7 +466,7 @@ public class JavaFxPsiUtil {
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
       if (!hasBuilder(psiClass)) {
-        messageConsumer.accept("Unable to instantiate");
+        messageConsumer.accept(JavaFXBundle.message("unable.to.instantiate"));
         return false;
       }
     }
@@ -640,16 +622,17 @@ public class JavaFxPsiUtil {
 
   private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
                                              @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
-    messageConsumer.accept("Unable to coerce " + HighlightUtil.formatClass(fromClass) + " to " + targetType.getCanonicalText(),
-                           Validator.ValidationHost.ErrorType.ERROR);
+    messageConsumer.accept(
+      JavaFXBundle.message("unable.to.coerce.error", HighlightUtil.formatClass(fromClass), targetType.getCanonicalText()),
+      Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                               @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
-    messageConsumer.accept("Conversion between unrelated types, " + HighlightUtil.formatClass(fromClass) +
-                           " to " + targetType.getCanonicalText(),
-                           Validator.ValidationHost.ErrorType.WARNING);
+                                               @NotNull BiConsumer<? super @InspectionMessage String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
+    messageConsumer.accept(
+      JavaFXBundle.message("conversion.between.unrelated.types.error", HighlightUtil.formatClass(fromClass), targetType.getCanonicalText()),
+      Validator.ValidationHost.ErrorType.WARNING);
     return true;
   }
 
@@ -776,7 +759,7 @@ public class JavaFxPsiUtil {
     final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager
       .getCachedValue(rootTag, () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT));
     if (skipController && cachedIds.containsKey(FxmlConstants.CONTROLLER)) {
-      final Map<String, XmlAttributeValue> filteredIds = new THashMap<>(cachedIds);
+      final Map<String, XmlAttributeValue> filteredIds = new HashMap<>(cachedIds);
       filteredIds.remove(FxmlConstants.CONTROLLER);
       return filteredIds;
     }
@@ -785,7 +768,7 @@ public class JavaFxPsiUtil {
 
   @NotNull
   private static Map<String, XmlAttributeValue> prepareFileIds(XmlTag rootTag) {
-    final Map<String, XmlAttributeValue> fileIds = new THashMap<>();
+    final Map<String, XmlAttributeValue> fileIds = new HashMap<>();
     for (XmlTag tag : SyntaxTraverser.psiTraverser().withRoot(rootTag).filter(XmlTag.class)) {
       final XmlAttribute idAttribute = tag.getAttribute(FxmlConstants.FX_ID);
       if (idAttribute != null) {
@@ -870,7 +853,7 @@ public class JavaFxPsiUtil {
 
   @NotNull
   private static Map<String, PsiMember> prepareReadableProperties(@NotNull PsiClass psiClass) {
-    final Map<String, PsiMember> acceptableMembers = new THashMap<>();
+    final Map<String, PsiMember> acceptableMembers = new HashMap<>();
     for (PsiMethod method : psiClass.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       if (PropertyUtilBase.isSimplePropertyGetter(method)) {
@@ -894,7 +877,7 @@ public class JavaFxPsiUtil {
   @NotNull
   private static Map<String, PsiMember> prepareWritableProperties(@NotNull PsiClass psiClass) {
     // todo search for setter in corresponding builder class, e.g. MyDataBuilder.setText() + MyData.getText(), reuse logic from hasBuilder()
-    final Map<String, PsiMember> acceptableMembers = new THashMap<>();
+    final Map<String, PsiMember> acceptableMembers = new HashMap<>();
     for (String propertyName : prepareConstructorNamedArgProperties(psiClass)) {
       if (!acceptableMembers.containsKey(propertyName)) {
         final PsiField field = psiClass.findFieldByName(propertyName, true);
@@ -971,7 +954,7 @@ public class JavaFxPsiUtil {
 
   @NotNull
   private static Set<String> prepareConstructorNamedArgProperties(@NotNull PsiClass psiClass) {
-    final Set<String> properties = new THashSet<>();
+    final Set<String> properties = new HashSet<>();
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
         final PsiParameter[] parameters = constructor.getParameterList().getParameters();
@@ -1119,17 +1102,17 @@ public class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static String validateEnumConstant(@NotNull PsiClass enumClass, @NonNls @Nullable String name) {
+  public static @Nls String validateEnumConstant(@NotNull PsiClass enumClass, @NonNls @Nullable String name) {
     if (!enumClass.isEnum() || name == null) return null;
     final Set<String> constantNames = CachedValuesManager.getCachedValue(enumClass, () ->
       CachedValueProvider.Result.create(Arrays.stream(enumClass.getFields())
                                           .filter(PsiEnumConstant.class::isInstance)
                                           .map(PsiField::getName)
                                           .map(StringUtil::toUpperCase)
-                                          .collect(Collectors.toCollection(THashSet::new)),
+                                          .collect(Collectors.toCollection(HashSet::new)),
                                         PsiModificationTracker.MODIFICATION_COUNT));
     if (!constantNames.contains(StringUtil.toUpperCase(name))) {
-      return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
+      return JavaFXBundle.message("enum.constant.not.found", name, enumClass.getQualifiedName());
     }
     return null;
   }
@@ -1202,8 +1185,8 @@ public class JavaFxPsiUtil {
         final PsiMethod[] injectControllerMethods = fxmlLoader.findMethodsByName("setController", false);
         if (injectControllerMethods.length == 1) {
           final GlobalSearchScope globalSearchScope = GlobalSearchScope
-            .getScopeRestrictedByFileTypes(containingFile.getResolveScope(), StdFileTypes.JAVA);
-          final VirtualFile[] virtualFiles = CacheManager.SERVICE.getInstance(project).getVirtualFilesWithWord(
+            .getScopeRestrictedByFileTypes(containingFile.getResolveScope(), JavaFileType.INSTANCE);
+          final VirtualFile[] virtualFiles = CacheManager.getInstance(project).getVirtualFilesWithWord(
             ClassUtil.extractClassName(JavaFxCommonNames.JAVAFX_FXML_FXMLLOADER), UsageSearchContext.IN_CODE, globalSearchScope, true);
           if (virtualFiles.length == 0) {
             return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);

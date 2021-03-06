@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
     return node;
   }
-  private String errMsg(@NotNull RMNode<T> node) {
+  private @NonNls String errMsg(@NotNull RMNode<T> node) {
     System.gc();
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(t -> {
@@ -184,7 +185,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   private void updateAffectedNodes(@NotNull DocumentEvent e, int reTargetShift,
-                                   @NotNull List<IntervalNode<T>> affected) {
+                                   @NotNull List<? extends IntervalNode<T>> affected) {
     // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
     for (int i = affected.size() - 1; i >= 0; i--) {
       IntervalNode<T> node = affected.get(i);

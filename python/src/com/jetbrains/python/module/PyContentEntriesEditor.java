@@ -9,38 +9,29 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
-import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
-import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeCellRenderer;
-import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
-import com.intellij.openapi.roots.ui.configuration.ContentFolderRef;
-import com.intellij.openapi.roots.ui.configuration.ContentRootPanel;
-import com.intellij.openapi.roots.ui.configuration.ExternalContentFolderRef;
-import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
+import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.tree.TreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.tree.TreeCellRenderer;
+import java.awt.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 
 public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final List<PyRootTypeProvider> myRootTypeProviders;
@@ -223,9 +214,9 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
           Collection<VirtualFilePointer> pointers = roots.get(getContentEntry());
           if (!pointers.isEmpty()) {
             List<ExternalContentFolderRef> folderRefs = ContainerUtil.map(pointers, ExternalContentFolderRef::new);
-            final JComponent sourcesComponent = createFolderGroupComponent(provider.getDescription(),
+            final JComponent sourcesComponent = createFolderGroupComponent(provider.getRootsGroupTitle(),
                                                                            folderRefs,
-                                                                           provider.getColor(), null);
+                                                                           provider.getRootsGroupColor(), null);
             this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH,
                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
           }
@@ -291,7 +282,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
               return provider.getIcon();
             }
           }
-          return super.updateIcon(entry, file, originalIcon);
+          // JavaModuleSourceRootEditHandler gives every directory under a source root a package icon.
+          // Since we use the same icon for explicit namespace package "roots", we forcibly replace icons
+          // for other "false" packages with the one for a plain directory to avoid confusion.
+          Icon defaultIcon = super.updateIcon(entry, file, originalIcon);
+          if (defaultIcon == PlatformIcons.PACKAGE_ICON) {
+            return PlatformIcons.FOLDER_ICON;
+          }
+          return defaultIcon;
         }
       };
     }

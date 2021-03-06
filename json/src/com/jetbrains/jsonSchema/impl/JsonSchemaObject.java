@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -33,7 +34,7 @@ import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 /**
  * @author Irina.Chernushina on 8/28/2015.
  */
-public class JsonSchemaObject {
+public final class JsonSchemaObject {
   private static final Logger LOG = Logger.getInstance(JsonSchemaObject.class);
 
   public static final String MOCK_URL = "mock:///";
@@ -1267,7 +1268,7 @@ public class JsonSchemaObject {
       final Pair<Pattern, String> pair = compilePattern(pattern);
       myPatternError = pair.getSecond();
       myCompiledPattern = pair.getFirst();
-      myValuePatternCache = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+      myValuePatternCache = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
     }
 
     @Nullable
@@ -1299,7 +1300,7 @@ public class JsonSchemaObject {
       mySchemasMap = new HashMap<>();
       schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
       myCachedPatterns = new HashMap<>();
-      myCachedPatternProperties = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+      myCachedPatternProperties = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
       mySchemasMap.keySet().forEach(key -> {
         final Pair<Pattern, String> pair = compilePattern(key);
         if (pair.getSecond() == null) {

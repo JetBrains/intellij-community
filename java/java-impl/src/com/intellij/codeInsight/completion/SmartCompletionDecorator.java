@@ -27,7 +27,6 @@ import java.util.Set;
 */
 public class SmartCompletionDecorator extends LookupElementDecorator<LookupElement> {
   @NotNull private final Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
-  private PsiElement myPosition;
 
   SmartCompletionDecorator(LookupElement item, @NotNull Collection<? extends ExpectedTypeInfo> expectedTypeInfos) {
     super(item);
@@ -51,7 +50,8 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
       return TailType.NONE;
     }
 
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(myPosition, PsiExpression.class, true);
+    PsiExpression enclosing =
+      PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiExpression.class, false);
 
     if (enclosing != null) {
       final PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
@@ -103,7 +103,6 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
       replaceMethodCallIfNeeded(context);
     }
     context.commitDocument();
-    myPosition = getPosition(context, this);
 
     TailType tailType = computeTailType(context);
 
@@ -159,13 +158,4 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     return helper.inferTypeArguments(method.getTypeParameters(), new PsiType[]{expected}, new PsiType[]{returnType}, LanguageLevel.HIGHEST);
   }
 
-  @Nullable
-  public static PsiElement getPosition(InsertionContext context, LookupElement element) {
-    PsiElement position = context.getFile().findElementAt(context.getStartOffset() + element.getLookupString().length() - 1);
-    if (position instanceof PsiJavaToken && ">".equals(position.getText())) {
-      // In case of generics class
-      return position.getParent().getParent();
-    }
-    return position;
-  }
 }

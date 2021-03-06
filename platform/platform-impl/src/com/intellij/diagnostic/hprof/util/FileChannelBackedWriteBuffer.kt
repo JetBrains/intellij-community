@@ -106,6 +106,19 @@ class FileChannelBackedWriteBuffer(
     position += 2 + bytes.size
   }
 
+  fun writeBytes(bytes: ByteBuffer) {
+    val remaining = bytes.remaining()
+    if (remaining > tempBuf.remaining()) {
+      flushBuffer()
+      channel.write(bytes)
+    }
+    else {
+      tempBuf.put(bytes)
+    }
+    position += remaining
+  }
+
+
   fun position(): Int {
     return position
   }

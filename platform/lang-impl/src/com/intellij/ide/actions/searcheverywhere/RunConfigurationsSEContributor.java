@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.execution.Executor;
@@ -169,7 +169,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
   private final Renderer renderer = new Renderer();
 
-  private class Renderer extends JPanel implements ListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper> {
+  private final class Renderer extends JPanel implements ListCellRenderer<ChooseRunConfigurationPopup.ItemWrapper> {
 
     private final SimpleColoredComponent runConfigInfo = new SimpleColoredComponent();
     private final SimpleColoredComponent executorInfo = new SimpleColoredComponent();
@@ -226,16 +226,16 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       KeyStroke enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       KeyStroke shiftEnterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
       if (debugExecutor != null) {
-        executorInfo.append(debugExecutor.getId(), commandAttributes);
+        executorInfo.append(debugExecutor.getActionName(), commandAttributes);
         executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         if (runExecutor != null) {
-          executorInfo.append(" / " + runExecutor.getId(), commandAttributes);
+          executorInfo.append(" / " + runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", shortcutAttributes);
         }
       }
       else {
         if (runExecutor != null) {
-          executorInfo.append(runExecutor.getId(), commandAttributes);
+          executorInfo.append(runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         }
       }
@@ -246,7 +246,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       Optional.ofNullable(ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class))
         .map(settings -> findExecutor(settings, mode))
         .ifPresent(executor -> {
-          executorInfo.append(executor.getId(), attributes);
+          executorInfo.append(executor.getActionName(), attributes);
           executorInfo.setIcon(executor.getToolWindowIcon());
         });
     }

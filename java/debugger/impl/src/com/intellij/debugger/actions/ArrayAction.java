@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -75,8 +76,8 @@ public abstract class ArrayAction extends DebuggerAction {
     if (value instanceof JavaValue) {
       ValueDescriptorImpl descriptor = ((JavaValue)value).getDescriptor();
       Renderer lastRenderer = descriptor.getLastRenderer();
-      if (lastRenderer instanceof CompoundNodeRenderer) {
-        ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)lastRenderer).getChildrenRenderer();
+      if (lastRenderer instanceof CompoundReferenceRenderer) {
+        ChildrenRenderer childrenRenderer = ((CompoundReferenceRenderer)lastRenderer).getChildrenRenderer();
         if (childrenRenderer instanceof ExpressionChildrenRenderer) {
           lastRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
           if (lastRenderer == null) {
@@ -111,8 +112,8 @@ public abstract class ArrayAction extends DebuggerAction {
             ((JavaValue)container).setRenderer(newRenderer, node);
             node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
-          else if (lastRenderer instanceof CompoundNodeRenderer) {
-            final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
+          else if (lastRenderer instanceof CompoundReferenceRenderer) {
+            final CompoundReferenceRenderer compoundRenderer = (CompoundReferenceRenderer)lastRenderer;
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
               ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, newRenderer);
@@ -139,9 +140,9 @@ public abstract class ArrayAction extends DebuggerAction {
   }
 
   private static class NamedArrayConfigurable extends ArrayRendererConfigurable implements Configurable {
-    private final String myTitle;
+    private final @NlsContexts.ConfigurableName String myTitle;
 
-    NamedArrayConfigurable(String title, ArrayRenderer renderer) {
+    NamedArrayConfigurable(@NlsContexts.ConfigurableName String title, ArrayRenderer renderer) {
       super(renderer);
       myTitle = title;
     }
@@ -163,7 +164,7 @@ public abstract class ArrayAction extends DebuggerAction {
     protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
                                                        ArrayRenderer original,
                                                        @NotNull DebuggerContextImpl debuggerContext,
-                                                       String title) {
+                                                       @NlsContexts.ConfigurableName String title) {
       ArrayRenderer clonedRenderer = original.clone();
       clonedRenderer.setForced(true);
       if (ShowSettingsUtil.getInstance().editConfigurable(debuggerContext.getProject(), new NamedArrayConfigurable(title, clonedRenderer))) {

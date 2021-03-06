@@ -2,5 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 abstract class GHSimpleLoadingModel<T> : GHEventDispatcherLoadingModel() {
-  abstract val result: T?
+  override var loading: Boolean = false
+    protected set
+  override var resultAvailable: Boolean = false
+    protected set
+  override var error: Throwable? = null
+    protected set
+  var result: T? = null
+    protected set
 }

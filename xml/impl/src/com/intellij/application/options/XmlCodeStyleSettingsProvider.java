@@ -16,17 +16,20 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Methods moved to {@link XmlLanguageCodeStyleSettingsProvider}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
@@ -54,7 +57,7 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return new XmlCodeStyleSettings(settings);
   }
 
-  public static String getConfigurableDisplayNameText() {
+  public static @ConfigurableName String getConfigurableDisplayNameText() {
     return XmlBundle.message("title.xml");
   }
 }

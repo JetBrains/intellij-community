@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class SceneBuilderInfo {
+public final class SceneBuilderInfo {
   public static final SceneBuilderInfo EMPTY = new SceneBuilderInfo(null, null);
 
   public final String path;

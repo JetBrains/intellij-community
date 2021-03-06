@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("NamedParamsUtil")
 
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -14,15 +17,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
-const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
-const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
+@NonNls const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
+@NlsSafe const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
 const val GROOVY_TRANSFORM_NAMED_VARIANT = "groovy.transform.NamedVariant"
 const val GROOVY_TRANSFORM_NAMED_PARAM = "groovy.transform.NamedParam"
 const val GROOVY_TRANSFORM_NAMED_PARAMS = "groovy.transform.NamedParams"
 const val GROOVY_TRANSFORM_NAMED_DELEGATE = "groovy.transform.NamedDelegate"
+private val NAVIGABLE_ELEMENT: Key<PsiElement> = Key("GROOVY_NAMED_VARIANT_NAVIGATION_ELEMENT")
 
 
 fun collectNamedParams(mapParameter: PsiParameter): List<NamedParamData> {
@@ -47,7 +52,8 @@ private fun constructNamedParameter(annotation: PsiAnnotation, owner: PsiParamet
   val classValue = annotation.findAttributeValue("type") as? GrExpression ?: return null
   val type = ResolveUtil.getClassReferenceFromExpression(classValue) ?: return null
   val required = GrAnnotationUtil.inferBooleanAttribute(annotation, "required") ?: false
-  return NamedParamData(name, type, owner, annotation, required)
+  val navigableElement = annotation.getUserData(NAVIGABLE_ELEMENT) ?: annotation
+  return NamedParamData(name, type, owner, navigableElement, required)
 }
 
 /**
@@ -67,6 +73,19 @@ fun collectAllParamsFromNamedVariantMethod(method: GrMethod): List<Pair<String, 
  */
 internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<NamedParamData> {
   val result = mutableListOf<NamedParamData>()
+  val useAllParameters = method.parameterList.parameters.all {
+    PsiImplUtil.getAnnotation(it, GROOVY_TRANSFORM_NAMED_PARAM) == null &&
+    PsiImplUtil.getAnnotation(it, GROOVY_TRANSFORM_NAMED_DELEGATE) == null
+  }
+  if (useAllParameters) {
+    val anno = method.getAnnotation(GROOVY_TRANSFORM_NAMED_VARIANT)
+    return if (anno != null && GrAnnotationUtil.inferBooleanAttribute(anno, "autoDelegate") == true) {
+      val parameter = method.parameters.singleOrNull() ?: return emptyList()
+      getNamedParamDataFromClass(parameter.type, parameter, parameter)
+    } else {
+      method.parameters.map { NamedParamData(it.name, it.type, it, it, !it.isOptional) }
+    }
+  }
   for (parameter in method.parameterList.parameters) {
     val type = parameter.type
 
@@ -77,14 +96,17 @@ internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<Na
       result.add(NamedParamData(name, type, parameter, namedParamsAnn, required))
       continue
     }
-
     val psiAnnotation = PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_DELEGATE) ?: continue
-    val parameterClass = (type as? PsiClassType)?.resolve() ?: continue
-    getProperties(parameterClass).forEach { (propertyName, propertyType) ->
-      result.add(NamedParamData(propertyName, propertyType, parameter, psiAnnotation))
-    }
+    result.addAll(getNamedParamDataFromClass(type, parameter, psiAnnotation))
   }
   return result
+}
+
+fun getNamedParamDataFromClass(type : PsiType, parameter: PsiParameter, navigationElement: PsiElement) : List<NamedParamData> {
+  val parameterClass = (type as? PsiClassType)?.resolve() ?: return emptyList()
+  return getProperties(parameterClass).map { (propertyName, propertyType) ->
+    NamedParamData(propertyName, propertyType, parameter, navigationElement)
+  }
 }
 
 private fun getProperties(psiClass: PsiClass): Map<String, PsiType?> {
@@ -112,4 +134,13 @@ private fun getCodeProperties(typeDef: GrTypeDefinition): Map<String, PsiType?> 
     result.putAll(getProperties(it))
   }
   return result
+}
+
+internal fun addNamedParamAnnotation(modifierList: GrLightModifierList, namedParam: NamedParamData) {
+  modifierList.addAnnotation(GROOVY_TRANSFORM_NAMED_PARAM).let {
+    it.addAttribute("type", namedParam.type?.presentableText ?: CommonClassNames.JAVA_LANG_OBJECT)
+    it.addAttribute("value", "\"${namedParam.name}\"")
+    it.addAttribute("required", "${namedParam.required}")
+    it.putUserData(NAVIGABLE_ELEMENT, namedParam.navigationElement)
+  }
 }

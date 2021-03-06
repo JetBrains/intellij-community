@@ -81,7 +81,7 @@ public class PyUiUtil {
       .map(file -> ReadAction.compute(() -> psiManager.findFile(file)))
       .nonNull()
       .forEach(file -> {
-        codeAnalyzer.cleanFileLevelHighlights(project, Pass.LOCAL_INSPECTIONS, file);
+        codeAnalyzer.cleanFileLevelHighlights(Pass.LOCAL_INSPECTIONS, file);
       });
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.NavigatableInterceptor;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
@@ -17,6 +18,7 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.internal.statistic.BookmarkCounterCollector;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -43,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -282,7 +285,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final FavoriteTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
-      return selectedNodeDescriptors.length == 1 ? selectedNodeDescriptors[0].getElement() : null;
+      return selectedNodeDescriptors.length == 1 ? new NavigatableInterceptor(selectedNodeDescriptors[0].getElement(), this::logNavigation) : null;
     }
     FavoritesManager favoriteManager = FavoritesManager.getInstance(myProject);
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
@@ -292,7 +295,7 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
         selectedElements.addAll(ContainerUtil.map(favoriteManager.getVirtualFiles(listname, false), file -> new OpenFileDescriptor(myProject, file)));
       }
       selectedElements.addAll(getSelectedElements(Navigatable.class));
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[0]);
+      return selectedElements.isEmpty() ? null : NavigatableInterceptor.wrap(selectedElements.toArray(new Navigatable[0]), this::logNavigation);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -399,6 +402,11 @@ public final class FavoritesTreeViewPanel extends JPanel implements DataProvider
       return myFavoritesTreeStructure.getDataFromProviders(nodes, dataId);
     }
     return null;
+  }
+
+  private Unit logNavigation(Navigatable navigatable, Boolean focusEditor) {
+    BookmarkCounterCollector.favoritesNavigate.log(myProject, navigatable.getClass());
+    return Unit.INSTANCE;
   }
 
   private <T> List<T> getSelectedElements(Class<T> klass) {

@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.GuiUtils.invokeLaterIfNeeded
 import com.intellij.util.ui.UIUtil
 import java.util.*
@@ -14,7 +15,7 @@ import javax.swing.event.HyperlinkEvent
 
 abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Project,
                                            private val myGroupId: String,
-                                           private val myTitle: String,
+                                           @NlsContexts.NotificationTitle private val myTitle: String,
                                            private val myType: NotificationType) {
   private val myState = HashMap<Key, MyNotification>()
   private val myListener = MyListener()
@@ -26,7 +27,7 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
 
   protected abstract fun ask(obj: T, description: String?): Boolean
   protected abstract fun getKey(obj: T): Key
-  protected abstract fun getNotificationContent(obj: T): String
+  protected abstract fun getNotificationContent(obj: T): @NlsContexts.NotificationContent String
 
   protected fun getStateFor(key: Key) = synchronized(myLock) { myState.containsKey(key) }
 
@@ -87,8 +88,8 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
   }
 
   protected inner class MyNotification(groupId: String,
-                                       title: String,
-                                       content: String,
+                                       @NlsContexts.NotificationTitle title: String,
+                                       @NlsContexts.NotificationContent content: String,
                                        type: NotificationType,
                                        listener: NotificationListener?,
                                        val obj: T) : Notification(groupId, title, content, type, listener) {

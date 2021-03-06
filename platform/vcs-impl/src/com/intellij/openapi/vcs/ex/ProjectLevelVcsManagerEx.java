@@ -2,12 +2,16 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,21 +26,23 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract ContentManager getContentManager();
 
   @NotNull
-  public abstract VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
+  public abstract PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
 
   @NotNull
-  public abstract VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option);
+  public abstract PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option);
 
-  public abstract List<VcsShowOptionsSettingImpl> getAllOptions();
+  @NotNull
+  public abstract List<PersistentVcsShowSettingOption> getAllOptions();
 
-  public abstract List<VcsShowConfirmationOptionImpl> getAllConfirmations();
+  @NotNull
+  public abstract List<PersistentVcsShowConfirmationOption> getAllConfirmations();
 
   public abstract void notifyDirectoryMappingChanged();
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
-                                                       String displayActionName,
+                                                       @Nls String displayActionName,
                                                        ActionInfo actionInfo,
                                                        boolean canceled);
 

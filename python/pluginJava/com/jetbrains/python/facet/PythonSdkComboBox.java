@@ -22,7 +22,7 @@ public class PythonSdkComboBox extends ComboboxWithBrowseButton {
   private Project myProject;
 
   public PythonSdkComboBox() {
-    getComboBox().setRenderer(new PySdkListCellRenderer(null));
+    getComboBox().setRenderer(new PySdkListCellRenderer());
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -17,6 +18,10 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
@@ -46,15 +51,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
     DataKey.create("ClassesTable.ReferenceCountProvider");
 
-  private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
   private static final JBColor CLICKABLE_COLOR = new JBColor(new Color(250, 251, 252), new Color(62, 66, 69));
-  private static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final SimpleTextAttributes LINK_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, SimpleTextAttributes.LINK_ATTRIBUTES.getFgColor());
   private static final SimpleTextAttributes UNDERLINE_LINK_ATTRIBUTES = SimpleTextAttributes.LINK_ATTRIBUTES;
-  private static final String NO_LOADED_CLASSES_MESSAGE = "No classes loaded.";
-  private static final String LOAD_CLASS_LINK = "Load classes";
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
@@ -72,6 +73,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private boolean myOnlyWithInstances;
   private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
   private String myFilteringPattern = "";
+  private final MergingUpdateQueue myFilterTypingMergeQueue = new MergingUpdateQueue(
+    "Classes table typing merging queue", 500, true,
+    this, this, this, true).setRestartTimerOnAdd(true);
 
   private volatile List<TypeInfo> myItems = Collections.unmodifiableList(new ArrayList<>());
   private boolean myIsShowCounts = true;
@@ -139,7 +143,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     diffColumn.setMinWidth(JBUIScale.scale(DIFF_COLUMN_MIN_WIDTH));
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
-    sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
+    sorter.setRowFilter(new RowFilter<>() {
       @Override
       public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
         int ix = entry.getIdentifier();
@@ -147,8 +151,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
 
         boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
-          || myOnlyWithInstances && !diff.hasInstance()
-          || myOnlyTracked && myParent.getStrategy(ref) == null;
+                                            || myOnlyWithInstances && !diff.hasInstance()
+                                            || myOnlyTracked && myParent.getStrategy(ref) == null;
         return !(isFilteringOptionsRefused) && myMatcher.matches(ref.name());
       }
     });
@@ -238,8 +242,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         setBackground(mouseOnTable ? CLICKABLE_COLOR : JBColor.background());
         SimpleTextAttributes linkAttributes = mouseOnTable ? UNDERLINE_LINK_ATTRIBUTES : LINK_ATTRIBUTES;
         getEmptyText().clear()
-                      .appendText(NO_LOADED_CLASSES_MESSAGE).appendText(" ")
-                      .appendText(LOAD_CLASS_LINK, linkAttributes).appendText(" ");
+                      .appendText(XDebuggerBundle.message("memory.view.no.classes.loaded")).appendText(" ")
+                      .appendText(XDebuggerBundle.message("memory.view.load.classes"), linkAttributes).appendText(" ");
       }
     };
 
@@ -256,7 +260,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   void exitClickableMode() {
     releaseMouseListener();
-    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+    getEmptyText().setText(StatusText.getDefaultEmptyText());
   }
 
   private void releaseMouseListener() {
@@ -276,11 +280,20 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   void setFilterPattern(String pattern) {
     if (!myFilteringPattern.equals(pattern)) {
       myFilteringPattern = pattern;
-      myMatcher = NameUtil.buildMatcher("*" + pattern).build();
-      fireTableDataChanged();
-      if (getSelectedClass() == null && getRowCount() > 0) {
-        getSelectionModel().setSelectionInterval(0, 0);
-      }
+      myFilterTypingMergeQueue.queue(new Update(myMatcher, true) {
+        @Override
+        public void run() {
+          String newPattern = "*" + myFilteringPattern;
+          if (myMatcher.getPattern().equals(newPattern)) {
+            return;
+          }
+          myMatcher = NameUtil.buildMatcher(newPattern).build();
+          fireTableDataChanged();
+          if (getSelectedClass() == null && getRowCount() > 0) {
+            getSelectionModel().setSelectionInterval(0, 0);
+          }
+        }
+      });
     }
   }
 
@@ -319,7 +332,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     updateCountsInternal(class2Count);
   }
 
-  void hideContent(@NotNull String emptyText) {
+  void hideContent(@NotNull @NlsContexts.StatusText String emptyText) {
     releaseMouseListener();
     getEmptyText().setText(emptyText);
 
@@ -332,7 +345,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private void updateCountsInternal(@NotNull Map<TypeInfo, Long> class2Count) {
     releaseMouseListener();
-    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+    getEmptyText().setText(StatusText.getDefaultEmptyText());
 
     final TypeInfo selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
@@ -378,7 +391,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return myParent.getData(dataId);
   }
 
-  public void clean(@NotNull String emptyText) {
+  public void clean(@NotNull @NlsContexts.StatusText String emptyText) {
     clearSelection();
     releaseMouseListener();
     getEmptyText().setText(emptyText);
@@ -394,7 +407,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private boolean isUnderMouseCursor() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    if (ApplicationManager.getApplication().isUnitTestMode() || 
+        ApplicationManager.getApplication().isHeadlessEnvironment()) return false;
     try {
       return getMousePosition() != null;
     }
@@ -458,19 +472,19 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   protected AbstractTableColumnDescriptor @NotNull [] getColumnDescriptors() {
     return new AbstractTableColumnDescriptor[]{
-      new AbstractTableColumnDescriptor("Class", TypeInfo.class) {
+      new AbstractTableColumnDescriptor(XDebuggerBundle.message("memory.view.table.column.name.class"), TypeInfo.class) {
         @Override
         public Object getValue(int ix) {
           return getTypeInfoAt(ix);
         }
       },
-      new AbstractTableColumnDescriptor("Count", Long.class) {
+      new AbstractTableColumnDescriptor(XDebuggerBundle.message("memory.view.table.column.name.count"), Long.class) {
         @Override
         public Object getValue(int ix) {
           return myCounts.getOrDefault(getTypeInfoAt(ix), UNKNOWN_VALUE).myCurrentCount;
         }
       },
-      new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
+      new AbstractTableColumnDescriptor(XDebuggerBundle.message("memory.view.table.column.name.diff"), DiffValue.class) {
         @Override
         public Object getValue(int ix) {
           return myCounts.getOrDefault(getTypeInfoAt(ix), UNKNOWN_VALUE);
@@ -544,7 +558,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   public abstract static class MyTableCellRenderer extends ColoredTableCellRenderer {
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
+    protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean isSelected,
                                          boolean hasFocus, int row, int column) {
 
       if (hasFocus) {
@@ -595,6 +609,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private class MyCountColumnRenderer extends MyNumericRenderer {
     @Override
     void appendText(@NotNull Object value, int row) {
+      //noinspection HardCodedStringLiteral
       append(value.toString());
     }
   }
@@ -624,6 +639,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         else {
           append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (newInstancesCount != 0) {
+            //noinspection HardCodedStringLiteral
             append(String.format(" (%d)", newInstancesCount), myClickableCellAttributes);
           }
         }

@@ -1,8 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.module.Module;
@@ -11,37 +16,54 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newCounterMetric;
-
 /**
  * @author gregsh
  */
-public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "project.structure";
-  }
+final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
+  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 5);
+
+  private final EventId1<Integer> MODULES_TOTAL = GROUP.registerEvent("modules.total", EventFields.Count);
+  private final EventId1<Integer> CONTENT_ROOTS_TOTAL = GROUP.registerEvent("content.roots.total", EventFields.Count);
+  private final EventId1<Integer> SOURCE_ROOTS_TOTAL = GROUP.registerEvent("source.roots.total", EventFields.Count);
+  private final EventId1<Integer> EXCLUDED_ROOTS_TOTAL = GROUP.registerEvent("excluded.roots.total", EventFields.Count);
+  private final EventId2<Integer, String> SOURCE_ROOT = GROUP.registerEvent(
+    "source.root", EventFields.Count,
+    EventFields.String("type", Arrays.asList("cookbooks-root",
+                                             "java-resource",
+                                             "java-source",
+                                             "java-test-resource",
+                                             "java-test",
+                                             "kotlin-resource",
+                                             "kotlin-source",
+                                             "kotlin-test-resource",
+                                             "kotlin-test")));
+  private final EventId1<Integer> PACKAGE_PREFIX = GROUP.registerEvent("package.prefix", EventFields.Count);
+  private final EventId1<Integer> NAMED_SCOPES_TOTAL_LOCAL = GROUP.registerEvent("named.scopes.total.local", EventFields.Count);
+  private final EventId1<Integer> NAMED_SCOPES_TOTAL_SHARED = GROUP.registerEvent("named.scopes.total.shared", EventFields.Count);
+  private final EventId PROJECT_IN_WSL = GROUP.registerEvent("project.in.wsl");
 
   @Override
-  public int getVersion() {
-    return 3;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
@@ -52,7 +74,7 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
       .flatMap(JpsModelSerializerExtension::getModuleSourceRootPropertiesSerializers)
       .toMap(JpsElementPropertiesSerializer::getType, JpsElementPropertiesSerializer::getTypeId);
     int contentRoots = 0, sourceRoots = 0, excludedRoots = 0, packagePrefix = 0;
-    TObjectIntHashMap<String> types = new TObjectIntHashMap<>();
+    Object2IntMap<String> types = new Object2IntOpenHashMap<>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
 
     for (Module module : modules) {
@@ -66,30 +88,35 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
             packagePrefix++;
           }
           String key = typeNames.get(source.getRootType());
-          if (key == null) continue;
-          if (!types.increment(key)) {
-            types.put(key, 1);
+          if (key == null) {
+            continue;
           }
+          types.mergeInt(key, 1, Math::addExact);
         }
       }
     }
 
     final Set<MetricEvent> result = new HashSet<>();
-    result.add(newCounterMetric("modules.total", modules.length));
-    result.add(newCounterMetric("content.roots.total", contentRoots));
-    result.add(newCounterMetric("source.roots.total", sourceRoots));
-    result.add(newCounterMetric("excluded.roots.total", excludedRoots));
-    types.forEachEntry(
-      (key, count) -> result.add(newCounterMetric("source.root", count, new FeatureUsageData().addData("type", key)))
-    );
+    result.add(MODULES_TOTAL.metric(modules.length));
+    result.add(CONTENT_ROOTS_TOTAL.metric(contentRoots));
+    result.add(SOURCE_ROOTS_TOTAL.metric(sourceRoots));
+    result.add(EXCLUDED_ROOTS_TOTAL.metric(excludedRoots));
+    for (Object2IntMap.Entry<String> entry : types.object2IntEntrySet()) {
+      result.add(SOURCE_ROOT.metric(entry.getIntValue(), entry.getKey()));
+    }
     if (PlatformUtils.isIntelliJ()) {
-      result.add(newCounterMetric("package.prefix", packagePrefix));
+      result.add(PACKAGE_PREFIX.metric(packagePrefix));
     }
 
     NamedScope[] localScopes = NamedScopeManager.getInstance(project).getEditableScopes();
-    result.add(newCounterMetric("named.scopes.total.local", localScopes.length));
+    result.add(NAMED_SCOPES_TOTAL_LOCAL.metric(localScopes.length));
     NamedScope[] sharedScopes = DependencyValidationManager.getInstance(project).getEditableScopes();
-    result.add(newCounterMetric("named.scopes.total.shared", sharedScopes.length));
+    result.add(NAMED_SCOPES_TOTAL_SHARED.metric(sharedScopes.length));
+
+    String basePath = project.getBasePath();
+    if (basePath != null && FileUtil.toSystemDependentName(basePath).startsWith(WSLDistribution.UNC_PREFIX)) {
+      result.add(PROJECT_IN_WSL.metric());
+    }
 
     return result;
   }

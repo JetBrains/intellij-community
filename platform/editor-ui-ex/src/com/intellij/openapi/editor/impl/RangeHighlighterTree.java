@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
@@ -30,15 +31,17 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     myMarkupModel = markupModel;
   }
 
+  @Override
+  protected boolean keepIntervalsOnWeakReferences() {
+    return false;
+  }
+
   @NotNull
-  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRangeInterval rangeInterval,
-                                                         boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar) {
+  MarkupIterator<RangeHighlighterEx> overlappingIterator(@NotNull TextRange rangeInterval, boolean onlyRenderedInGutter) {
     MarkupIterator<RangeHighlighterEx> iterator =
-      overlappingIterator(rangeInterval, node -> (!onlyRenderedInGutter || node.isFlagSet(RHNode.RENDERED_IN_GUTTER_FLAG)) &&
-                                                 (!onlyRenderedInScrollBar || node.isFlagSet(RHNode.RENDERED_IN_SCROLL_BAR_FLAG)));
-    return new FilteringMarkupIterator<>(iterator, highlighter -> (!onlyRenderedInGutter || highlighter.isRenderedInGutter()) &&
-                                                                  (!onlyRenderedInScrollBar || highlighter.isRenderedInScrollBar()));
+      overlappingIterator(rangeInterval, node -> (!onlyRenderedInGutter || node.isFlagSet(RHNode.RENDERED_IN_GUTTER_FLAG)));
+
+    return new FilteringMarkupIterator<>(iterator, highlighter -> !onlyRenderedInGutter || highlighter.isRenderedInGutter());
   }
 
   void updateRenderedFlags(RangeHighlighterEx highlighter) {
@@ -60,7 +63,14 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     if (d != 0) {
       return d;
     }
-    return super.compareEqualStartIntervals(i1, i2);
+    int result = super.compareEqualStartIntervals(i1, i2);
+    if (result != 0) {
+      return result;
+    }
+
+    boolean persistent1 = o1.isFlagSet(RHNode.IS_PERSISTENT);
+    boolean persistent2 = o2.isFlagSet(RHNode.IS_PERSISTENT);
+    return persistent1 == persistent2 ? 0 : persistent1 ? -1 : 1;
   }
 
   @NotNull
@@ -72,7 +82,7 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
   static class RHNode extends RMNode<RangeHighlighterEx> {
     private static final byte RENDERED_IN_GUTTER_FLAG = STICK_TO_RIGHT_FLAG << 1;
-    private static final byte RENDERED_IN_SCROLL_BAR_FLAG = (byte) (RENDERED_IN_GUTTER_FLAG << 1);
+    static final byte IS_PERSISTENT = (byte)(RENDERED_IN_GUTTER_FLAG << 1);
 
     final int myLayer;
 
@@ -86,44 +96,32 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
            int layer) {
       super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
-    }
-
-    //range highlighters are strongly referenced
-    @Override
-    protected Getter<RangeHighlighterEx> createGetter(@NotNull RangeHighlighterEx interval) {
-      //noinspection unchecked
-      return (Getter<RangeHighlighterEx>)interval;
+      setFlag(IS_PERSISTENT, key.isPersistent());
     }
 
     private void recalculateRenderFlags() {
       boolean renderedInGutter = false;
-      boolean renderedInScrollBar = false;
       for (Getter<RangeHighlighterEx> getter : intervals) {
         RangeHighlighterEx h = getter.get();
         renderedInGutter |= h.isRenderedInGutter();
-        renderedInScrollBar |= h.isRenderedInScrollBar();
       }
       Node<RangeHighlighterEx> left = getLeft();
       if (left != null) {
         renderedInGutter |= left.isFlagSet(RENDERED_IN_GUTTER_FLAG);
-        renderedInScrollBar |= left.isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG);
       }
       Node<RangeHighlighterEx> right = getRight();
       if (right != null) {
         renderedInGutter |= right.isFlagSet(RENDERED_IN_GUTTER_FLAG);
-        renderedInScrollBar |= right.isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG);
       }
       setFlag(RENDERED_IN_GUTTER_FLAG, renderedInGutter);
-      setFlag(RENDERED_IN_SCROLL_BAR_FLAG, renderedInScrollBar);
     }
 
     private void recalculateRenderFlagsUp() {
       RHNode n = this;
       while (n != null) {
         boolean prevInGutter = n.isFlagSet(RENDERED_IN_GUTTER_FLAG);
-        boolean prevInScrollBar = n.isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG);
         n.recalculateRenderFlags();
-        if (n.isFlagSet(RENDERED_IN_GUTTER_FLAG) == prevInGutter && n.isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG) == prevInScrollBar) break;
+        if (n.isFlagSet(RENDERED_IN_GUTTER_FLAG) == prevInGutter) break;
         n = (RHNode)n.getParent();
       }
     }
@@ -131,8 +129,7 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     @Override
     void addInterval(@NotNull RangeHighlighterEx h) {
       super.addInterval(h);
-      if (h.isRenderedInGutter() && !isFlagSet(RENDERED_IN_GUTTER_FLAG) ||
-          h.isRenderedInScrollBar() && !isFlagSet(RENDERED_IN_SCROLL_BAR_FLAG)) {
+      if (!isFlagSet(RENDERED_IN_GUTTER_FLAG) && h.isRenderedInGutter()) {
         recalculateRenderFlagsUp();
       }
     }
@@ -140,7 +137,7 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     @Override
     void removeIntervalInternal(int i) {
       RangeHighlighterEx h = intervals.get(i).get();
-      boolean recalculateFlags = h.isRenderedInGutter() || h.isRenderedInScrollBar();
+      boolean recalculateFlags = h.isRenderedInGutter();
       super.removeIntervalInternal(i);
       if (recalculateFlags) recalculateRenderFlagsUp();
     }

@@ -193,6 +193,6 @@ public class NonAsciiCharactersInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public JComponent createOptionsPanel() {
-    return new NonAsciiCharactersInspectionForm(this).myPanel;
+    return new NonAsciiCharactersInspectionFormUi(this).getPanel();
   }
 }

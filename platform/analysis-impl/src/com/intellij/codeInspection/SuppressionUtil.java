@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection;
 
@@ -25,7 +25,10 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class SuppressionUtil extends SuppressionUtilCore {
+public final class SuppressionUtil extends SuppressionUtilCore {
+
+  public static final @NonNls String FILE_PREFIX = "file:";
+
   /**
    * Common part of regexp for suppressing in line comments for different languages.
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
@@ -37,6 +40,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
 
   @NonNls
   public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP + ".*");  // for Java, C, JS line comments
+  public static final Pattern SUPPRESS_IN_FILE_LINE_COMMENT_PATTERN = Pattern.compile("//" + FILE_PREFIX + COMMON_SUPPRESS_REGEXP + ".*");
 
   @NonNls
   public static final String ALL = "ALL";

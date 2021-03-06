@@ -16,6 +16,8 @@
  */
 package org.jetbrains.builtInWebServer.ssi;
 
+import org.jetbrains.annotations.NonNls;
+
 import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
@@ -307,6 +309,7 @@ final class ExpressionParseTree {
 
 
     @Override
+    @NonNls
     public String toString() {
       return left + " NOT";
     }
@@ -330,6 +333,7 @@ final class ExpressionParseTree {
 
 
     @Override
+    @NonNls
     public String toString() {
       return left + " " + right + " AND";
     }
@@ -353,6 +357,7 @@ final class ExpressionParseTree {
 
 
     @Override
+    @NonNls
     public String toString() {
       return left + " " + right + " OR";
     }
@@ -402,6 +407,7 @@ final class ExpressionParseTree {
 
 
     @Override
+    @NonNls
     public String toString() {
       return left + " " + right + " EQ";
     }
@@ -421,6 +427,7 @@ final class ExpressionParseTree {
 
 
     @Override
+    @NonNls
     public String toString() {
       return left + " " + right + " GT";
     }
@@ -440,6 +447,7 @@ final class ExpressionParseTree {
 
 
     @Override
+    @NonNls
     public String toString() {
       return left + " " + right + " LT";
     }

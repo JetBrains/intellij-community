@@ -1,16 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Function
 
-class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
+class MavenParsingContext(val ideaProject: Project,
+                          private val myTaskId: ExternalSystemTaskId,
+                          val targetFileMapper: Function<String, String>) {
 
   lateinit var projectsInReactor: List<String>
   val startedProjects = CopyOnWriteArrayList<String>()
 
-  private val context = ContainerUtil.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
+  private val context = ConcurrentCollectionFactory.createConcurrentIntObjectMap<ArrayList<MavenExecutionEntry>>()
   private var lastAddedThreadId: Int = 0
 
   val lastId: Any
@@ -104,13 +109,13 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
   }
 
 
-  inner class ProjectExecutionEntry internal constructor(name: String, threadId: Int) : MavenExecutionEntry(name, threadId) {
+  inner class ProjectExecutionEntry internal constructor(@NlsSafe name: String, threadId: Int) : MavenExecutionEntry(name, threadId) {
 
     override val parentId: Any
       get() = this@MavenParsingContext.myTaskId
   }
 
-  inner class MojoExecutionEntry internal constructor(name: String,
+  inner class MojoExecutionEntry internal constructor(@NlsSafe name: String,
                                                       threadId: Int,
                                                       private val myProject: ProjectExecutionEntry?) : MavenExecutionEntry(name, threadId) {
 
@@ -118,7 +123,7 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
       get() = myProject?.id ?: this@MavenParsingContext.myTaskId
   }
 
-  inner class NodeExecutionEntry internal constructor(name: String,
+  inner class NodeExecutionEntry internal constructor(@NlsSafe name: String,
                                                       threadId: Int,
                                                       private val parent: MavenExecutionEntry?) : MavenExecutionEntry(name, threadId) {
     override val parentId: Any
@@ -149,7 +154,8 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
     return null
   }
 
-  abstract inner class MavenExecutionEntry(val name: String, private val myThreadId: Int) {
+  abstract inner class MavenExecutionEntry(@NlsSafe @get:NlsSafe val name: String, private val myThreadId: Int) {
+
     val id = Any()
 
     abstract val parentId: Any

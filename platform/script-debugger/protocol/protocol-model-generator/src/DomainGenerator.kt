@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.util.SmartList
@@ -25,7 +26,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
       val returnType = if (hasResponse) generator.naming.commandResult.getShortName(command.name()) else "Unit"
       generateTopLevelOutputClass(generator.naming.params, command.name(), command.description, "${generator.naming.requestClassName}<$returnType>", {
         append('"')
-        if (!domain.domain().isEmpty()) {
+        if (domain.domain().isNotEmpty()) {
           append(domain.domain()).append('.')
         }
         append(command.name()).append('"')
@@ -240,10 +241,10 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
       }
       out.append(", ").append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append('>')
       out.append("(\"")
-      if (!domainName.isNullOrEmpty()) {
+      if (domainName.isNotEmpty()) {
         out.append(domainName).append('.')
       }
-      out.append(event.name()).append("\")").block() {
+      out.append(event.name()).append("\")").block {
         out.append("override fun read(protocolReader: ")
         out.append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append(", ").append(JSON_READER_PARAMETER_DEF).append(")")
         out.append(" = protocolReader.").append(generator.naming.eventData.getParseMethodName(domainName, event.name())).append("(reader)")

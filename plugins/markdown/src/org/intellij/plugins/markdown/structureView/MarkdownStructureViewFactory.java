@@ -1,15 +1,13 @@
 package org.intellij.plugins.markdown.structureView;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.StructureViewModelBase;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.*;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,7 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
     };
   }
 
-  private static class MarkdownStructureViewModel extends StructureViewModelBase {
+  private static class MarkdownStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
     MarkdownStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
       super(psiFile, editor, new MarkdownStructureElement(psiFile));
     }
@@ -45,7 +43,7 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
     @Override
     protected Object findAcceptableElement(PsiElement element) {
       // walk up the psi-tree until we find an element from the structure view
-      while (element != null && !PRESENTABLE_TYPES.contains(PsiUtilCore.getElementType(element))) {
+      while (element != null && !(element instanceof PsiFile) && !PRESENTABLE_TYPES.contains(PsiUtilCore.getElementType(element))) {
         IElementType parentType = PsiUtilCore.getElementType(element.getParent());
 
         final PsiElement previous = element.getPrevSibling();
@@ -58,6 +56,16 @@ public class MarkdownStructureViewFactory implements PsiStructureViewFactory {
       }
 
       return element;
+    }
+
+    @Override
+    public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+      return false;
+    }
+
+    @Override
+    public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+      return MarkdownTokenTypeSets.HEADER_LEVEL_6_SET.contains(PsiUtilCore.getElementType((PsiElement)element.getValue()));
     }
   }
 }

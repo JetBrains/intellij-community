@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -29,14 +29,15 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -47,6 +48,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,7 +59,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
  * @author Denis Zhdanov
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
+public final class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
   public static final com.intellij.openapi.util.Key<Boolean> CREATE_EMPTY_DIRECTORIES =
     com.intellij.openapi.util.Key.create("createEmptyDirectories");
 
@@ -69,7 +72,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   @Override
-  public void importData(@NotNull Collection<DataNode<ContentRootData>> toImport,
+  public void importData(@NotNull Collection<? extends DataNode<ContentRootData>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
@@ -87,7 +90,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       forceDirectoriesCreation = projectDataNode.getUserData(CREATE_EMPTY_DIRECTORIES) == Boolean.TRUE;
     }
 
-    Set<Module> modulesToExpand = new THashSet<>();
+    Set<Module> modulesToExpand = CollectionFactory.createSmallMemoryFootprintSet();
     MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ModuleData.class);
 
     filterAndReportDuplicatingContentRoots(byModule, project);
@@ -143,7 +146,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
     sourceFolderManager.removeSourceFolders(module);
 
-    final Set<ContentEntry> importedContentEntries = ContainerUtil.newIdentityTroveSet();
+    final Set<ContentEntry> importedContentEntries = new ReferenceOpenHashSet<>();
     for (final DataNode<ContentRootData> node : data) {
       final ContentRootData contentRoot = node.getData();
 
@@ -221,7 +224,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static Set<String> getSourceRoots(@NotNull ContentRootData contentRoot) {
-    Set<String> sourceRoots = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> sourceRoots = CollectionFactory.createFilePathSet();
     for (ExternalSystemSourceType externalSrcType : ExternalSystemSourceType.values()) {
       final JpsModuleSourceRootType<?> type = getJavaSourceRootType(externalSrcType);
       if (type == null) continue;
@@ -269,7 +272,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
     String url = pathToUrl(path);
 
-    if (!FileUtil.exists(path)) {
+    if (!Files.exists(Path.of(path))) {
       logDebug("Source folder [%s] does not exist and will not be created, will add when dir is created", url);
       logUnitTest("Adding source folder listener to watch [%s] for creation in project [hashCode=%d]", url, module.getProject().hashCode());
       sourceFolderManager.addSourceFolder(module, url, sourceRootType);
@@ -309,7 +312,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void createEmptyDirectory(@NotNull String path) {
-    if (FileUtil.exists(path)) return;
+    if (Files.exists(Path.of(path))) return;
     ExternalSystemApiUtil.doWriteAction(() -> {
       try {
         VfsUtil.createDirectoryIfMissing(path);
@@ -397,14 +400,14 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   @Nullable
-  private static String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
+  private static @Nls String prepareMessageAndLogWarnings(@NotNull Map<String, DuplicateModuleReport> toReport) {
     String firstMessage = null;
     LOG.warn("Duplicating content roots detected.");
     for (Map.Entry<String, DuplicateModuleReport> entry : toReport.entrySet()) {
       String path = entry.getKey();
       DuplicateModuleReport report = entry.getValue();
-      String message = String.format("Path [%s] of module [%s] was removed from modules [%s]", path, report.getOriginalName(),
-                                     StringUtil.join(report.getDuplicatesNames(), ", "));
+      String message = ExternalSystemBundle.message("duplicate.content.roots.removed", path, report.getOriginalName(),
+                                                    StringUtil.join(report.getDuplicatesNames(), ", "));
       if (firstMessage == null) {
         firstMessage = message;
       }
@@ -415,13 +418,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
   private static void showNotificationsPopup(@NotNull Project project,
                                              int reportsCount,
-                                             @NotNull String notificationMessage) {
+                                             @NotNull @Nls String notificationMessage) {
     int extraReportsCount = reportsCount - 1;
     if (extraReportsCount > 0) {
-      notificationMessage += "<br>Also " + extraReportsCount + " more "
-                             + StringUtil.pluralize("path", extraReportsCount)
-                             + " " + (extraReportsCount == 1 ? "was" : "were") +
-                             " deduplicated. See idea log for details";
+      notificationMessage += ExternalSystemBundle.message("duplicate.content.roots.extra", extraReportsCount);
     }
 
     Notification notification = new Notification("Content root duplicates",
@@ -432,11 +432,11 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
 
-  private static class DuplicateModuleReport {
+  private static final class DuplicateModuleReport {
     private final ModuleData myOriginal;
     private final List<ModuleData> myDuplicates = new ArrayList<>();
 
-    public DuplicateModuleReport(@NotNull ModuleData original) {
+    private DuplicateModuleReport(@NotNull ModuleData original) {
       myOriginal = original;
     }
 

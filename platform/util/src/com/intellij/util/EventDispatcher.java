@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -90,18 +90,16 @@ public final class EventDispatcher<T extends EventListener> {
   }
 
   public static @Nullable Object handleObjectMethod(Object proxy, Object[] args, String methodName) {
-    if (methodName.equals("toString")) {
-      return "Multicaster";
-    }
-    else if (methodName.equals("hashCode")) {
-      return System.identityHashCode(proxy);
-    }
-    else if (methodName.equals("equals")) {
-      return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
-    }
-    else {
-      LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
-      return null;
+    switch (methodName) {
+      case "toString":
+        return "Multicaster";
+      case "hashCode":
+        return System.identityHashCode(proxy);
+      case "equals":
+        return proxy == args[0] ? Boolean.TRUE : Boolean.FALSE;
+      default:
+        LOG.error("Incorrect Object's method invoked for proxy:" + methodName);
+        return null;
     }
   }
 
@@ -153,7 +151,7 @@ public final class EventDispatcher<T extends EventListener> {
     return exceptions;
   }
 
-  public static void throwExceptions(@NotNull List<Throwable> exceptions) {
+  public static void throwExceptions(@NotNull List<? extends Throwable> exceptions) {
     if (exceptions.size() == 1) {
       ExceptionUtil.rethrow(exceptions.get(0));
     }

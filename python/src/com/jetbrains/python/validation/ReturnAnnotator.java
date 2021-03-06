@@ -7,13 +7,14 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
 public class ReturnAnnotator extends PyAnnotator {
   @Override
-  public void visitPyReturnStatement(final PyReturnStatement node) {
+  public void visitPyReturnStatement(final @NotNull PyReturnStatement node) {
     final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
     if (function == null) {
       getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.return.outside.of.function")).create();
@@ -24,7 +25,7 @@ public class ReturnAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyYieldExpression(final PyYieldExpression node) {
+  public void visitPyYieldExpression(final @NotNull PyYieldExpression node) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
     if (!(owner instanceof PyFunction || owner instanceof PyLambdaExpression)) {
       getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.yield.outside.of.function")).create();

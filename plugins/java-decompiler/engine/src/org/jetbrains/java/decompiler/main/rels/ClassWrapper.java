@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -59,10 +59,10 @@ public class ClassWrapper {
       try {
         if (mt.containsCode()) {
           if (maxSec == 0 || testMode) {
-            root = MethodProcessorRunnable.codeToJava(mt, md, varProc);
+            root = MethodProcessorRunnable.codeToJava(classStruct, mt, md, varProc);
           }
           else {
-            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(mt, md, varProc, DecompilerContext.getCurrentContext());
+            MethodProcessorRunnable mtProc = new MethodProcessorRunnable(classStruct, mt, md, varProc, DecompilerContext.getCurrentContext());
 
             Thread mtThread = new Thread(mtProc, "Java decompiler");
             long stopAt = System.currentTimeMillis() + maxSec * 1000L;

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +90,7 @@ public class RootsCalculator {
     return myLocationCache.getLocation(myVcs, getFilePath(file), false);
   }
 
-  private static void logRoots(@NotNull String prefix, @NotNull Collection<? extends VirtualFile> roots) {
+  private static void logRoots(@NonNls @NotNull String prefix, @NotNull Collection<? extends VirtualFile> roots) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(prefix + ": " + join(roots, VirtualFile::getPath, ", "));
     }

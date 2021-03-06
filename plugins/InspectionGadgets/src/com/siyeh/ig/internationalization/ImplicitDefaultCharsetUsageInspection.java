@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -17,9 +17,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
-  private static class CharsetOverload {
+  private static final class CharsetOverload {
     static final CharsetOverload NONE = new CharsetOverload(null, Collections.emptyList());
 
     final PsiMethod myMethod;
@@ -118,32 +118,23 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
   }
 
   private static class ImplicitDefaultCharsetUsageVisitor extends BaseInspectionVisitor {
+    private static final CallMatcher METHODS = CallMatcher.anyOf(
+      CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "getBytes").parameterCount(0),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toByteArray").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toByteArray").parameterTypes("java.io.Reader"),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toCharArray", "toString", "readLines").parameterTypes("java.io.InputStream"),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toString").parameterTypes("java.net.URI"),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toString").parameterTypes("java.net.URL"),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toInputStream").parameterTypes(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE),
+      CallMatcher.staticCall("org.apache.commons.io.IOUtils", "toInputStream").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
+    );
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String name = methodExpression.getReferenceName();
-      if (!"getBytes".equals(name)) {
-        return;
+      if (METHODS.test(expression)) {
+        registerMethodCallError(expression, expression);
       }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() == 1) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass ==  null) {
-        return;
-      }
-      final String qName = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(qName)) {
-        return;
-      }
-      registerMethodCallError(expression, expression);
     }
 
     @Override
@@ -221,7 +212,11 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     }
   }
 
-  private static class AddUtf8CharsetFix extends InspectionGadgetsFix {
+  private static final class AddUtf8CharsetFix extends InspectionGadgetsFix {
+    /**
+     * Refers to the method but it is read-only
+     */
+    @SafeFieldForPreview
     private final CharsetOverload myCharsetOverload;
 
     private AddUtf8CharsetFix(CharsetOverload charsetOverload) {

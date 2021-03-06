@@ -16,6 +16,7 @@
 
 package com.intellij.history.integration.ui;
 
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
@@ -31,9 +32,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.util.containers.UtilKt.stream;
 
 public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   VirtualFile f;
@@ -81,7 +81,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   public void testLocalHistoryActionDisabledWithoutProject() {
     LocalHistoryAction a = new LocalHistoryAction() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
+      protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
       }
     };
     assertStatus(a, myRoot, myProject, true);
@@ -133,7 +133,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   private AnActionEvent createEventFor(AnAction a, final VirtualFile[] files, final Project p) {
     DataContext dc = id -> {
-      if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(id)) return stream(files);
+      if (VcsDataKeys.VIRTUAL_FILES.is(id)) return JBIterable.of(files);
       if (CommonDataKeys.EDITOR.is(id)) return editor;
       if (CommonDataKeys.PROJECT.is(id)) return p;
       return null;

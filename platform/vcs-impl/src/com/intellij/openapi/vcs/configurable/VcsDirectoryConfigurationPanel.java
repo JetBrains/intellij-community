@@ -11,24 +11,21 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
-import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -59,16 +56,16 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private final Project myProject;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private final String myProjectMessage;
+  private final @Nls String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
-  private final ComboBox<VcsDescriptor> myVcsComboBox = new ComboBox<>();
+  private final ComboBox<AbstractVcs> myVcsComboBox;
   private final List<ModuleVcsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<MapInfo, MapInfo> DIRECTORY;
   private ListTableModel<MapInfo> myModel;
-  private final Map<String, VcsDescriptor> myAllVcss;
+  private final List<AbstractVcs> myAllVcss;
   private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
   private final boolean myIsDisabled;
   private final VcsConfiguration myVcsConfiguration;
@@ -78,7 +75,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
   private JBLoadingPanel myLoadingPanel;
 
-  private static class MapInfo {
+  private static final class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR); //NON-NLS
     static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
       if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
@@ -87,8 +84,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       return o1.type.compareTo(o2.type);
     };
 
-    static MapInfo unregistered(@NotNull String path, @NotNull String vcs) {
-      return new MapInfo(new VcsDirectoryMapping(path, vcs), Type.UNREGISTERED);
+    static MapInfo unregistered(@NotNull VcsDirectoryMapping mapping) {
+      return new MapInfo(mapping, Type.UNREGISTERED);
     }
 
     static MapInfo registered(@NotNull VcsDirectoryMapping mapping, boolean valid) {
@@ -129,12 +126,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     }
 
     @Override
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+    protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       if (value instanceof MapInfo) {
         MapInfo info = (MapInfo)value;
 
         if (!selected && (info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED)) {
-          setBackground(getUnregisteredRootBackground());
+          setBackground(UIUtil.getDecoratedRowColor());
         }
 
         if (info == MapInfo.SEPARATOR) {
@@ -143,7 +140,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         }
 
         if (info.mapping.isDefaultMapping()) {
-          append(VcsDirectoryMapping.PROJECT_CONSTANT, getAttributes(info));
+          append(VcsDirectoryMapping.PROJECT_CONSTANT.get(), getAttributes(info));
           return;
         }
 
@@ -170,11 +167,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   @NotNull
-  private static Color getUnregisteredRootBackground() {
-    return new JBColor(UIUtil.getLabelBackground(), new Color(0x45494A));
-  }
-
-  @NotNull
   private static SimpleTextAttributes getAttributes(@NotNull MapInfo info) {
     if (info == MapInfo.SEPARATOR) {
       return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD | SimpleTextAttributes.STYLE_SMALLER, null);
@@ -191,7 +183,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private final ColumnInfo<MapInfo, String> VCS_SETTING =
-    new ColumnInfo<MapInfo, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
+    new ColumnInfo<>(VcsBundle.message("column.name.configure.vcses.vcs")) {
       @Override
       public String valueOf(final MapInfo object) {
         return object.mapping.getVcs();
@@ -213,25 +205,30 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       public TableCellRenderer getRenderer(final MapInfo info) {
         return new ColoredTableCellRenderer() {
           @Override
-          protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          protected void customizeCellRenderer(@NotNull JTable table,
+                                               Object value,
+                                               boolean selected,
+                                               boolean hasFocus,
+                                               int row,
+                                               int column) {
             if (info == MapInfo.SEPARATOR) {
               if (!selected) {
-                setBackground(getUnregisteredRootBackground());
+                setBackground(UIUtil.getDecoratedRowColor());
               }
               return;
             }
 
             if (info.type == MapInfo.Type.UNREGISTERED && !selected) {
-              setBackground(getUnregisteredRootBackground());
+              setBackground(UIUtil.getDecoratedRowColor());
             }
 
             final String vcsName = info.mapping.getVcs();
             String text;
-            if (vcsName.length() == 0) {
+            if (vcsName.isEmpty()) {
               text = VcsBundle.message("none.vcs.presentation");
             }
             else {
-              final VcsDescriptor vcs = myAllVcss.get(vcsName);
+              AbstractVcs vcs = ContainerUtil.find(myAllVcss, it -> vcsName.equals(it.getName()));
               if (vcs != null) {
                 text = vcs.getDisplayName();
               }
@@ -249,14 +246,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         return new AbstractTableCellEditor() {
           @Override
           public Object getCellEditorValue() {
-            final VcsDescriptor selectedVcs = (VcsDescriptor)myVcsComboBox.getSelectedItem();
-            return ((selectedVcs == null) || selectedVcs.isNone()) ? "" : selectedVcs.getName();
+            AbstractVcs selectedVcs = myVcsComboBox.getItem();
+            return selectedVcs == null ? "" : selectedVcs.getName(); //NON-NLS handled by custom renderer
           }
 
           @Override
           public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            String vcsName = (String)value;
-            myVcsComboBox.setSelectedItem(myAllVcss.get(vcsName));
+            myVcsComboBox.setSelectedItem(value);
             return myVcsComboBox;
           }
         };
@@ -266,7 +262,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       @Override
       public String getMaxStringValue() {
         String maxString = null;
-        for (String name : myAllVcss.keySet()) {
+        for (AbstractVcs vcs : myAllVcss) {
+          String name = vcs.getDisplayName();
           if (maxString == null || maxString.length() < name.length()) {
             maxString = name;
           }
@@ -283,18 +280,18 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
     myVcsConfiguration = getInstance(myProject);
-    myProjectMessage = XmlStringUtil.wrapInHtml(StringUtil.escapeXmlEntities(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
-                                                DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage()
-                                                  .replace('\n', ' '));
+    myProjectMessage = new HtmlBuilder()
+      .append(VcsDirectoryMapping.PROJECT_CONSTANT.get())
+      .append(" - ")
+      .append(DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage().replace('\n', ' '))
+      .wrapWithHtmlBody().toString();
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
-    myAllVcss = new HashMap<>();
-    for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
-      myAllVcss.put(vcsDescriptor.getName(), vcsDescriptor);
-    }
+
+    myAllVcss = asList(myVcsManager.getAllSupportedVcss());
 
     myDirectoryMappingTable = new TableView<>();
+    myDirectoryMappingTable.setShowGrid(false);
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
@@ -307,7 +304,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     add(createMainComponent());
 
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
-    DIRECTORY = new ColumnInfo<MapInfo, MapInfo>(VcsBundle.message("column.info.configure.vcses.directory")) {
+    DIRECTORY = new ColumnInfo<>(VcsBundle.message("column.info.configure.vcses.directory")) {
       @Override
       public MapInfo valueOf(final MapInfo mapping) {
         return mapping;
@@ -320,7 +317,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     };
     initializeModel();
 
-    myVcsComboBox.setModel(buildVcsWrappersModel(myProject));
+    myVcsComboBox = buildVcsesComboBox(myProject);
     myVcsComboBox.addItemListener(e -> {
       if (myDirectoryMappingTable.isEditing()) {
         myDirectoryMappingTable.stopEditing();
@@ -365,7 +362,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
           List<MapInfo> newMappings = new ArrayList<>(mappings);
           newMappings.add(MapInfo.SEPARATOR);
           for (VcsRootError error : errors) {
-            newMappings.add(MapInfo.unregistered(error.getMapping(), error.getVcsKey().getName()));
+            newMappings.add(MapInfo.unregistered(error.getMapping()));
           }
           myModel.setItems(newMappings);
         }
@@ -388,12 +385,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   @NotNull
-  public static DefaultComboBoxModel<VcsDescriptor> buildVcsWrappersModel(@NotNull Project project) {
-    final VcsDescriptor[] vcsDescriptors = ProjectLevelVcsManager.getInstance(project).getAllVcss();
-    final VcsDescriptor[] result = new VcsDescriptor[vcsDescriptors.length + 1];
-    result[0] = VcsDescriptor.createFictive();
-    System.arraycopy(vcsDescriptors, 0, result, 1, vcsDescriptors.length);
-    return new DefaultComboBoxModel<>(result);
+  public static ComboBox<AbstractVcs> buildVcsesComboBox(@NotNull Project project) {
+    AbstractVcs[] allVcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss();
+    ComboBox<AbstractVcs> comboBox = new ComboBox<>(ArrayUtil.append(allVcses, null));
+    comboBox.setRenderer(SimpleListCellRenderer.create(VcsBundle.message("none.vcs.presentation"), AbstractVcs::getDisplayName));
+    return comboBox;
   }
 
   private void addMapping() {
@@ -470,9 +466,10 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
     mappings.removeAll(selection);
 
-    Collection<MapInfo> removedValidRoots = ContainerUtil.mapNotNull(selection, info -> info.type == MapInfo.Type.NORMAL && myCheckers.get(info.mapping.getVcs()) != null ?
-                                                                                    MapInfo.unregistered(info.mapping.getDirectory(), info.mapping.getVcs()) :
-                                                                                    null);
+    Collection<MapInfo> removedValidRoots = ContainerUtil.mapNotNull(selection, info -> {
+      return info.type == MapInfo.Type.NORMAL && myCheckers.get(info.mapping.getVcs()) != null ?
+             MapInfo.unregistered(info.mapping) : null;
+    });
     mappings.addAll(removedValidRoots);
     sortAndAddSeparatorIfNeeded(mappings);
 

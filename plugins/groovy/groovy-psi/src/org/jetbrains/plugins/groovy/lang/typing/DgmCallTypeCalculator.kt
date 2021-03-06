@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CollectionUtil.createSimilarCollection
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_GROOVY_METHODS
@@ -23,7 +25,7 @@ class DgmCallTypeCalculator : GrCallTypeCalculator {
     }
 
     val methodName = method.name
-    if (methodName == "find") {
+    if (methodName == FIND) {
       return (arguments.first().type as? PsiArrayType)?.componentType
     }
 
@@ -33,7 +35,7 @@ class DgmCallTypeCalculator : GrCallTypeCalculator {
 
     val receiverType = arguments.first().type
     var itemType = getItemType(receiverType)
-    if ("flatten" == methodName && itemType != null) {
+    if (FLATTEN == methodName && itemType != null) {
       while (true) {
         itemType = getItemType(itemType) ?: break
       }
@@ -44,6 +46,12 @@ class DgmCallTypeCalculator : GrCallTypeCalculator {
 
   companion object {
 
+    @NlsSafe
+    private const val FIND = "find"
+    @NlsSafe
+    private const val FLATTEN = "flatten"
+
+    @NonNls
     private val interestingNames = setOf(
       "unique",
       "findAll",

@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.Sets;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -44,14 +45,15 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
     String myModuleName = null;
     int myRelativeLevel = 0;
 
-    public String getText() {
+    @NotNull
+    public @IntentionName String getText() {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
-        return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
+        return PyPsiBundle.message("INTN.convert.to.from.import", relative_names[0], relative_names[1]);
       }
       else {
-        return PyPsiBundle.message("INTN.convert.to.import.$0", name);
+        return PyPsiBundle.message("INTN.convert.to.plain.import", name);
       }
     }
 
@@ -115,7 +117,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.import.qualify");
+    return PyPsiBundle.message("INTN.NAME.convert.import.qualify");
   }
 
   @Override

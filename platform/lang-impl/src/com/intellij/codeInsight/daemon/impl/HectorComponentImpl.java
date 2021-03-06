@@ -2,12 +2,12 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -119,7 +119,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
 
-    final HyperlinkLabel configurator = new HyperlinkLabel(EditorBundle.message("iw.configure.inspections"));
+    HyperlinkLabel configurator = new HyperlinkLabel(DaemonBundle.message("popup.action.configure.inspections"));
     gc.insets.right = 5;
     gc.insets.bottom = 10;
     gc.weightx = 0;
@@ -216,7 +216,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
       oldHector.cancel();
     } else {
       myHectorRef = new WeakReference<>(hector);
-      UIEventLogger.logUIEvent(UIEventId.HectorPopupDisplayed);
+      UIEventLogger.HectorPopupDisplayed.log(myFile.getProject());
       hector.show(point);
     }
   }

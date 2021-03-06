@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -15,9 +16,13 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -29,6 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -44,38 +50,42 @@ import java.util.Map;
 
 public class MavenServerCMDState extends CommandLineState {
 
+  private static boolean setupThrowMainClass = false;
+
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
   @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
+  @NonNls private static final String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
+    "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
 
-  private final MavenServerConnector myServerConnector;
-  private final Project myProject;
+  protected final Sdk myJdk;
+  protected final String myVmOptions;
+  protected final MavenDistribution myDistribution;
+  protected final Integer myDebugPort;
 
-  public MavenServerCMDState(MavenServerConnector serverConnector, Project project) {
+  public MavenServerCMDState(@NotNull Sdk jdk,
+                             @Nullable String vmOptions,
+                             @NotNull MavenDistribution mavenDistribution,
+                             @Nullable Integer debugPort) {
     super(null);
-    myServerConnector = serverConnector;
-    myProject = project;
+    myJdk = jdk;
+    myVmOptions = vmOptions;
+    myDistribution = mavenDistribution;
+    myDebugPort = debugPort;
   }
 
-  SimpleJavaParameters createJavaParameters() {
+  protected SimpleJavaParameters createJavaParameters() {
     final SimpleJavaParameters params = new SimpleJavaParameters();
 
-    params.setJdk(myServerConnector.getJdk());
+    params.setJdk(myJdk);
 
-    params.setWorkingDirectory(PathManager.getBinPath());
+    params.setWorkingDirectory(getWorkingDirectory());
 
 
     Map<String, String> defs = new THashMap<>();
-    defs.putAll(MavenUtil.getPropertiesFromMavenOpts());
+    defs.putAll(getMavenOpts());
 
-    // pass ssl-related options
-    for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
-      Object key = each.getKey();
-      Object value = each.getValue();
-      if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
-        defs.put((String)key, (String)value);
-      }
-    }
+    configureSslRelatedOptions(defs);
 
     defs.put("java.awt.headless", "true");
     for (Map.Entry<String, String> each : defs.entrySet()) {
@@ -84,11 +94,18 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
+    if (myDebugPort != null) {
+      params.getVMParametersList()
+        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=*:" + myDebugPort);
+    }
+
+    params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
+
     boolean xmxSet = false;
 
-    if (myServerConnector.getVMOptions() != null) {
+    if (myVmOptions != null) {
       ParametersList mavenOptsList = new ParametersList();
-      mavenOptsList.addParametersString(myServerConnector.getVMOptions());
+      mavenOptsList.addParametersString(myVmOptions);
 
       for (String param : mavenOptsList.getParameters()) {
         if (param.startsWith("-Xmx")) {
@@ -97,34 +114,65 @@ public class MavenServerCMDState extends CommandLineState {
         params.getVMParametersList().add(param);
       }
     }
+    params.getVMParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
 
-    final File mavenHome;
-    final String mavenVersion;
-    final MavenDistribution distribution = myServerConnector.getMavenDistribution();
+    setupMainClass(params, myDistribution.getVersion());
 
-    if (distribution == null) {
-      MavenLog.LOG.warn("Not found maven at ");
-      MavenDistribution embedded = MavenServerManager.resolveEmbeddedMavenHome();
-      mavenHome = embedded.getMavenHome();
-      mavenVersion = embedded.getVersion();
-      showInvalidMavenNotification(mavenVersion);
+    params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
+
+    final List<String> classPath = collectRTLibraries(myDistribution.getVersion());
+    params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
+    params.getClassPath().addAll(classPath);
+    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
+
+    String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
+    if (embedderXmx != null) {
+      params.getVMParametersList().add("-Xmx" + embedderXmx);
     }
     else {
-      mavenHome = distribution.getMavenHome();
-      mavenVersion = distribution.getVersion();
-    }
-    MavenLog.LOG.debug("", distribution, " chosen as maven home");
-    assert mavenVersion != null;
-
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-      params.setMainClass(MAIN_CLASS36);
-    }
-    else {
-      params.setMainClass(MAIN_CLASS);
+      if (!xmxSet) {
+        params.getVMParametersList().add("-Xmx768m");
+      }
     }
 
-    params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
 
+    String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
+    if (mavenEmbedderParameters != null) {
+      params.getProgramParametersList().addParametersString(mavenEmbedderParameters);
+    }
+
+    String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
+    if (mavenEmbedderCliOptions != null) {
+      params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
+    }
+
+    //TODO: WSL
+    //MavenUtil.addEventListener(mavenVersion, params);
+    return params;
+  }
+
+  private void configureSslRelatedOptions(Map<String, String> defs) {
+    for (Map.Entry<Object, Object> each : System.getProperties().entrySet()) {
+      Object key = each.getKey();
+      Object value = each.getValue();
+      if (key instanceof String && value instanceof String && ((String)key).startsWith("javax.net.ssl")) {
+        defs.put((String)key, (String)value);
+      }
+    }
+  }
+
+  protected Map<String, String> getMavenOpts() {
+    return MavenUtil.getPropertiesFromMavenOpts();
+  }
+
+  @NotNull
+  protected String getWorkingDirectory() {
+    return PathManager.getBinPath();
+  }
+
+
+  @NotNull
+  protected List<String> collectRTLibraries(String mavenVersion) {
     final List<String> classPath = new ArrayList<>();
     classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
@@ -138,38 +186,20 @@ public class MavenServerCMDState extends CommandLineState {
     classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
 
     ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
-    params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
-    params.getClassPath().addAll(classPath);
-    params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(mavenVersion, mavenHome));
+    return classPath;
+  }
 
-    String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
-    if (embedderXmx != null) {
-      params.getVMParametersList().add("-Xmx" + embedderXmx);
+  private static void setupMainClass(SimpleJavaParameters params, String mavenVersion) {
+    if (setupThrowMainClass && ApplicationManager.getApplication().isUnitTestMode()) {
+      setupThrowMainClass = false;
+      params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
+    }
+    else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      params.setMainClass(MAIN_CLASS36);
     }
     else {
-      if (!xmxSet) {
-        params.getVMParametersList().add("-Xmx768m");
-      }
+      params.setMainClass(MAIN_CLASS);
     }
-
-    String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
-    if (mavenEmbedderDebugPort != null) {
-      params.getVMParametersList()
-        .addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
-    }
-
-    String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
-    if (mavenEmbedderParameters != null) {
-      params.getProgramParametersList().addParametersString(mavenEmbedderParameters);
-    }
-
-    String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
-    if (mavenEmbedderCliOptions != null) {
-      params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
-    }
-
-    MavenUtil.addEventListener(mavenVersion, params);
-    return params;
   }
 
   @NotNull
@@ -181,7 +211,7 @@ public class MavenServerCMDState extends CommandLineState {
 
   @Override
   @NotNull
-  protected OSProcessHandler startProcess() throws ExecutionException {
+  protected ProcessHandler startProcess() throws ExecutionException {
     SimpleJavaParameters params = createJavaParameters();
     GeneralCommandLine commandLine = params.toCommandLine();
     OSProcessHandler processHandler = new OSProcessHandler.Silent(commandLine);
@@ -189,39 +219,13 @@ public class MavenServerCMDState extends CommandLineState {
     return processHandler;
   }
 
-  private void showInvalidMavenNotification(@Nullable String mavenVersion) {
-    String message = invalidHomeMessageToShow(myServerConnector.getMavenDistribution(), mavenVersion, myProject);
-
-    NotificationListener listener = new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("configurable.MavenSettings.display.name"));
-      }
-    };
-
-    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(myProject);
+  @TestOnly
+  public static void setThrowExceptionOnNextServerStart() {
+    setupThrowMainClass = true;
   }
 
-  private static String invalidHomeMessageToShow(@Nullable MavenDistribution mavenDistribution,
-                                                 String substitutedVersion,
-                                                 Project project) {
-    if (mavenDistribution != null && StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_2, mavenDistribution.getName())) {
-      if (project == null) {
-        return RunnerBundle.message("bundled.maven.maven2.not.supported");
-      }
-      else {
-        return RunnerBundle.message("bundled.maven.maven2.not.supported.with.fix");
-      }
-    }
-    else {
-      String wrongDir = mavenDistribution == null ? null : mavenDistribution.getMavenHome().getAbsolutePath();
-      if (project == null) {
-        return RunnerBundle
-          .message("external.maven.home.invalid.substitution.warning", wrongDir, substitutedVersion);
-      }
-      else {
-        return RunnerBundle.message("external.maven.home.invalid.substitution.warning.with.fix", wrongDir, substitutedVersion);
-      }
-    }
+  @TestOnly
+  public static void resetThrowExceptionOnNextServerStart() {
+    setupThrowMainClass = false;
   }
 }

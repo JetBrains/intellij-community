@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -17,10 +18,9 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.io.exists
-import com.intellij.util.io.move
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
@@ -30,24 +30,26 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-internal const val PLUGIN_NAME = "Settings Repository"
-
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager
 }
 
-class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
+class IcsManager @JvmOverloads constructor(dir: Path,
+                                           parentDisposable: Disposable,
+                                           val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) : Disposable {
   val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
-  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
+  val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"), this)
   val readOnlySourcesManager = ReadOnlySourceManager(this, dir)
 
   init {
+    Disposer.register(parentDisposable, this)
+
     settings = try {
       loadSettings(settingsFile)
     }
@@ -55,6 +57,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       LOG.error(e)
       IcsSettings()
     }
+  }
+
+  override fun dispose() {
   }
 
   val repositoryService: RepositoryService = GitRepositoryService()
@@ -139,7 +144,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
     app.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
 
-    val messageBusConnection = app.messageBus.connect()
+    val messageBusConnection = app.messageBus.simpleConnect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
         autoSyncManager.autoSync(true)
@@ -151,7 +156,9 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       }
 
       override fun projectClosed(project: Project) {
-        autoSyncManager.autoSync()
+        if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+          autoSyncManager.autoSync()
+        }
       }
     })
   }
@@ -210,27 +217,19 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   }
 }
 
-class IcsApplicationLoadListener : ApplicationLoadListener {
+internal class IcsApplicationLoadListener : ApplicationLoadListener {
   var icsManager: IcsManager by Delegates.notNull()
     private set
 
-  override fun beforeApplicationLoaded(application: Application, configPath: String) {
+  override fun beforeApplicationLoaded(application: Application, configPath: Path) {
     if (application.isUnitTestMode) {
       return
     }
 
     val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) Paths.get(configPath, "settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
-    icsManager = IcsManager(pluginSystemDir)
-
-    if (!pluginSystemDir.exists()) {
-      LOG.runAndLogException {
-        val oldPluginDir = appSystemDir.resolve("settingsRepository")
-        if (oldPluginDir.exists()) {
-          oldPluginDir.move(pluginSystemDir)
-        }
-      }
-    }
+    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
+    @Suppress("IncorrectParentDisposable") // this plugin is special and can't be dynamic anyway
+    icsManager = IcsManager(pluginSystemDir, application)
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {

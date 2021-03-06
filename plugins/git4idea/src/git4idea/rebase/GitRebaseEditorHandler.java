@@ -16,6 +16,9 @@
 package git4idea.rebase;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
+
+import java.io.File;
 
 /**
  * <p>Serves as the GIT_EDITOR during interactive rebase: it is called by Git instead of vim,
@@ -23,15 +26,16 @@ import org.jetbrains.annotations.NotNull;
  * <p>This handler should be registered in the {@link GitRebaseEditorService}.</p>
  */
 public interface GitRebaseEditorHandler {
+  int ERROR_EXIT_CODE = GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
 
   /**
    * Handle the request from Git to edit some information during rebase.
    * Such information can be: the list of commits to be interactively rebased, or a commit message to be reworded.
    *
-   * @param path the path of the file to edit: default text should be read from this file and should be saved to this file after editing.
+   * @param path the file to edit: default text should be read from this file and should be saved to this file after editing.
    * @return the exit code which will be returned to Git from the editor.
    */
-  int editCommits(@NotNull String path);
+  int editCommits(@NotNull File path);
 
   /**
    * Tells if the interactive rebase editor (with the list of commits to rebase) was cancelled by user.

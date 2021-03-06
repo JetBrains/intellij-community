@@ -5,7 +5,7 @@ import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
 import org.jetbrains.annotations.NotNull;
 
-public class CommandLineArgs {
+public final class CommandLineArgs {
   public static final String DISABLE_NON_BUNDLED_PLUGINS = "disableNonBundledPlugins";
   public static final String DONT_REOPEN_PROJECTS = "dontReopenProjects";
   @SuppressWarnings("SpellCheckingInspection")

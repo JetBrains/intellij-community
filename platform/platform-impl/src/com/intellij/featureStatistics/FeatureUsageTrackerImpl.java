@@ -4,15 +4,12 @@ package com.intellij.featureStatistics;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -26,8 +23,17 @@ import java.util.Set;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
-@State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
+@State(
+  name = "FeatureUsageStatistics",
+  storages = {
+    @Storage(value = FeatureUsageTrackerImpl.FEATURES_USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED, deprecated = true),
+    @Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true)
+  }
+)
 public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
+  public static final String FEATURES_USAGE_STATISTICS_XML = "features.usage.statistics.xml";
+
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;
   private long FIRST_RUN_TIME = 0;
@@ -51,6 +57,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
   private boolean isToBeShown(String featureId, Project project, final long timeUnit) {
     ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry == null) return false;
     FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
     if (descriptor == null || !descriptor.isUnused()) {
       return false;
@@ -81,9 +88,12 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
   @Override
   public boolean isToBeAdvertisedInLookup(@NonNls String featureId, Project project) {
-    FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
-    if (descriptor != null && System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
-      return true;
+    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry != null) {
+      FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
+      if (descriptor != null && System.currentTimeMillis() - descriptor.getLastTimeUsed() > 10 * DAY) {
+        return true;
+      }
     }
 
     return isToBeShown(featureId, project, HOUR);
@@ -193,13 +203,16 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
 
   @Override
   public void triggerFeatureShown(String featureId) {
-    FeatureDescriptor descriptor = ProductivityFeaturesRegistry.getInstance().getFeatureDescriptor(featureId);
-    if (descriptor != null) {
-      descriptor.triggerShown();
+    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+    if (registry != null) {
+      FeatureDescriptor descriptor = registry.getFeatureDescriptor(featureId);
+      if (descriptor != null) {
+        descriptor.triggerShown();
+      }
     }
   }
 
-  public static class ProductivityUtilValidator extends CustomWhiteListRule {
+  public static class ProductivityUtilValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -215,14 +228,14 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
       final String group = getEventDataField(context, "group");
       if (isValid(data, id, group)) {
         ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-        FeatureDescriptor descriptor = registry.getFeatureDescriptor(id);
+        FeatureDescriptor descriptor = registry == null ? null : registry.getFeatureDescriptor(id);
         if (descriptor != null) {
           final String actualGroup = descriptor.getGroupId();
           if (StringUtil.equals(group, "unknown") || StringUtil.equals(group, actualGroup)) {
             final Class<? extends ProductivityFeaturesProvider> provider = descriptor.getProvider();
             final PluginInfo info =
               provider == null ? PluginInfoDetectorKt.getPlatformPlugin() : getPluginInfo(provider);
-            context.setPluginInfo(info);
+            context.setPayload(PLUGIN_INFO, info);
             return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
           }
         }

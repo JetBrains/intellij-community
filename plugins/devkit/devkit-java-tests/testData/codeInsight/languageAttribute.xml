@@ -14,6 +14,11 @@
 
     <myLanguageEP language="<error descr="Cannot resolve language with id ''INVALID_VALUE''">INVALID_VALUE</error>"/>
     <myLanguageEP language="<error descr="Cannot resolve language with id ''AbstractLanguageIDMustNotBeVisible''">AbstractLanguageIDMustNotBeVisible</error>"/>
+
+
+    <myLanguageEP hostLanguage="MyLanguageID"/>
+    <myLanguageEP hostLanguage="<error descr="Cannot resolve language with id ''INVALID_VALUE''">INVALID_VALUE</error>"/>
+
   </extensions>
 
 </idea-plugin>

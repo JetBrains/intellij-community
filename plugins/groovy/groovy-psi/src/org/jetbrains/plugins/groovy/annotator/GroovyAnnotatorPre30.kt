@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
-import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.ConvertLambdaToClosureAction
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
@@ -36,16 +36,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isApplicationExpression
 
 internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
-  private fun error(typeArgumentList: PsiElement, msg: String) {
+  private fun error(typeArgumentList: PsiElement, @InspectionMessage msg: String) {
     holder.newAnnotation(HighlightSeverity.ERROR, msg).range(typeArgumentList).create()
   }
 
   override fun visitModifierList(modifierList: GrModifierList) {
     val modifier = modifierList.getModifier(PsiModifier.DEFAULT) ?: return
-    error(modifier, GroovyBundle.message("default.modifier.in.old.versions"))
+    error(modifier, message("default.modifier.in.old.versions"))
   }
 
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
@@ -61,6 +62,12 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
       }
       else if (variableDeclaration.variables.size > 1) {
         holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.multiple.variables.in.for")).create()
+      }
+    }
+    else if (variableDeclaration.isTuple) {
+      val initializer = variableDeclaration.tupleInitializer
+      if (initializer != null && initializer.isApplicationExpression()) {
+        error(initializer, message("unsupported.tuple.application.initializer"))
       }
     }
   }
@@ -88,17 +95,15 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitInExpression(expression: GrInExpression) {
     super.visitInExpression(expression)
-    val negation = expression.negationToken
-    if (negation != null) {
-      error(negation, message("unsupported.negated.in"))
+    if (GrInExpression.isNegated(expression)) {
+      error(expression.operationToken, message("unsupported.negated.in"))
     }
   }
 
   override fun visitInstanceofExpression(expression: GrInstanceOfExpression) {
     super.visitInstanceofExpression(expression)
-    val negation = expression.negationToken
-    if (negation != null) {
-      error(negation, message("unsupported.negated.instanceof"))
+    if (GrInstanceOfExpression.isNegated(expression)) {
+      error(expression.operationToken, message("unsupported.negated.instanceof"))
     }
   }
 
@@ -125,7 +130,10 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     if (tokenType === T_METHOD_REFERENCE) {
       val fix = ReplaceDotFix(tokenType, T_METHOD_CLOSURE)
       val message = message("operator.is.not.supported.in", tokenType)
-      val descriptor = InspectionManager.getInstance(expression.project).createProblemDescriptor(dot, dot, message, ProblemHighlightType.ERROR, true)
+      val descriptor = InspectionManager.getInstance(expression.project).createProblemDescriptor(
+        dot, dot, message,
+        ProblemHighlightType.ERROR, true
+      )
       holder.newAnnotation(HighlightSeverity.ERROR, message).range(dot)
         .newLocalQuickFix(fix, descriptor).registerFix()
         .create()
@@ -140,7 +148,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitLambdaExpression(expression: GrLambdaExpression) {
     super.visitLambdaExpression(expression)
     holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.lambda")).range(expression.arrow)
-    .withFix(ConvertLambdaToClosureAction(expression))
+      .withFix(ConvertLambdaToClosureAction(expression))
       .create()
   }
 
@@ -180,7 +188,7 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitClosure(closure: GrClosableBlock) {
     super.visitClosure(closure)
     if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
-      holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("ambiguous.code.block")).create()
+      holder.newAnnotation(HighlightSeverity.ERROR, message("ambiguous.code.block")).create()
     }
   }
 
@@ -233,6 +241,13 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitCodeReferenceElement(refElement: GrCodeReferenceElement) {
     refElement.annotations.forEach {
       error(it, message("unsupported.type.annotations"))
+    }
+  }
+
+  override fun visitTupleAssignmentExpression(expression: GrTupleAssignmentExpression) {
+    val rValue = expression.rValue
+    if (rValue != null && rValue.isApplicationExpression()) {
+      error(rValue, message("unsupported.tuple.application.initializer"))
     }
   }
 }

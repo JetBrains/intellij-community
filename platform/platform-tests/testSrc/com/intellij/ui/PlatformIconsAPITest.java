@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class PlatformIconsAPITest extends TestCase {
   public void testIconsAvailable() {
     ArrayList<String> missedIcons = new ArrayList<>();
     for (String path: PUBLIC_API_ICONS) {
-      if (AllIcons.class.getClassLoader().getResource(path) == null) {
+      if (AllIcons.class.getClassLoader().getResource(StringUtil.trimStart(path, "/")) == null) {
         missedIcons.add(path);
       }
     }
@@ -482,12 +483,6 @@ public class PlatformIconsAPITest extends TestCase {
     "/hierarchy/subtypes.png",
     "/hierarchy/supertypes.png",
     "/icon.png",
-    "/icon_128.png",
-    "/icon_CE.png",
-    "/icon_CE_128.png",
-    "/icon_CE_64.png",
-    "/icon_CEsmall.png",
-    "/icon_small.png",
     "/icons/ide/nextStep.png",
     "/icons/ide/nextStepInverted.png",
     "/ide/emptyFatalError.png",
@@ -969,15 +964,10 @@ public class PlatformIconsAPITest extends TestCase {
     "/vcs/Unshelve.png",
     "/vcs/unshelveSilent.png",
     "/webreferences/server.png",
-    "/welcome/createDesktopEntry.png",
     "/welcome/createNewProject.png",
     "/welcome/CreateNewProjectfromExistingFiles.png",
-    "/welcome/fromVCS.png",
     "/welcome/importProject.png",
     "/welcome/openProject.png",
-    "/welcome/project/remove-hover.png",
-    "/welcome/project/remove.png",
-    "/welcome/register.png",
     "/windows/closeActive.png",
     "/windows/closeHover.png",
     "/windows/closeInactive.png",

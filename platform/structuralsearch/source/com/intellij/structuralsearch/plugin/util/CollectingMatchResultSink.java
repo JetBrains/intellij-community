@@ -12,7 +12,7 @@ public class CollectingMatchResultSink extends DefaultMatchResultSink {
   private final List<MatchResult> matches = new SmartList<>();
 
   @Override
-  public void newMatch(MatchResult result) {
+  public void newMatch(@NotNull MatchResult result) {
     matches.add(result);
   }
 

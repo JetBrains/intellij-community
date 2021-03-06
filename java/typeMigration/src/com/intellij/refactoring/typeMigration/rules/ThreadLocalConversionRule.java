@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -185,7 +171,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                         toMakeFinal);
   }
 
-  private static String createThreadLocalInitializerReplacement(PsiType to,
+  private static @NonNls String createThreadLocalInitializerReplacement(PsiType to,
                                                                   PsiType from,
                                                                   PsiExpression initializer,
                                                                   String boxedTypeName) {
@@ -210,7 +196,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
            "}";
   }
 
-  private static String toPrimitive(String replaceByArg, PsiType from, PsiElement context) {
+  private static @NonNls String toPrimitive(@NonNls String replaceByArg, PsiType from, PsiElement context) {
     return PsiUtil.isLanguageLevel5OrHigher(context)
            ? replaceByArg
            : from instanceof PsiPrimitiveType ? "((" +
@@ -222,7 +208,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                 "Value()" : "((" + from.getCanonicalText() + ")" + replaceByArg + ")";
   }
 
-  private static String toBoxed(String replaceByArg, PsiType from, PsiElement context) {
+  private static @NonNls String toBoxed(@NonNls String replaceByArg, PsiType from, PsiElement context) {
     return PsiUtil.isLanguageLevel5OrHigher(context)
            ? replaceByArg
            : from instanceof PsiPrimitiveType ? "new " + ((PsiPrimitiveType)from).getBoxedTypeName() +
@@ -232,12 +218,12 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                 : replaceByArg;
   }
 
-  private static String getBoxedWrapper(final PsiType from,
-                                        final PsiType to,
-                                        @NotNull String arg,
-                                        TypeMigrationLabeler labeler,
-                                        PsiElement context,
-                                        @Nullable String tryType) {
+  private static @NonNls String getBoxedWrapper(final PsiType from,
+                                                final PsiType to,
+                                                @NotNull @NonNls String arg,
+                                                TypeMigrationLabeler labeler,
+                                                PsiElement context,
+                                                @Nullable String tryType) {
     if (from instanceof PsiPrimitiveType) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
       final PsiClass threadLocalClass = resolveResult.getElement();
@@ -261,7 +247,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return toBoxed(arg, from, context);
   }
 
-  private static class WrappingWithInnerClassOrLambdaDescriptor extends ArrayInitializerAwareConversionDescriptor {
+  private static final class WrappingWithInnerClassOrLambdaDescriptor extends ArrayInitializerAwareConversionDescriptor {
     private final List<? extends PsiVariable> myVariablesToMakeFinal;
 
     private WrappingWithInnerClassOrLambdaDescriptor(@NonNls final String stringToReplace,

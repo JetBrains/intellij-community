@@ -4,6 +4,7 @@ package com.intellij.psi.javadoc;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public interface JavadocTagInfo {
@@ -21,7 +22,7 @@ public interface JavadocTagInfo {
    * @param value Doc tag to check.
    * @return Returns null if correct, error message otherwise.
    */
-  @Nullable
+  @Nullable @Nls
   String checkTagValue(PsiDocTagValue value);
 
   @Nullable

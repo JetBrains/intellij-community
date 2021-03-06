@@ -1,10 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,11 +68,11 @@ public class ZoomingDelegate {
   }
 
   protected void scrollTo(int vOffset, int hOffset) {
-    JScrollPane pane = JBScrollPane.findScrollPane(myViewportComponent);
-    JScrollBar vsb = pane.getVerticalScrollBar();
-    vsb.setValue(vOffset);
-    JScrollBar hsb = pane.getHorizontalScrollBar();
-    hsb.setValue(hOffset);
+    JScrollPane pane = ComponentUtil.getScrollPane(myViewportComponent);
+    JScrollBar vsb = pane == null ? null : pane.getVerticalScrollBar();
+    if (vsb != null) vsb.setValue(vOffset);
+    JScrollBar hsb = pane == null ? null : pane.getHorizontalScrollBar();
+    if (hsb != null) hsb.setValue(hOffset);
   }
 
   protected Point convertToContentCoordinates(Point point) {

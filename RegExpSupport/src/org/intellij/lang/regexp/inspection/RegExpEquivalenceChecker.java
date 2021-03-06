@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +11,7 @@ import java.util.Comparator;
 /**
  * @author Bas Leijdekkers
  */
-class RegExpEquivalenceChecker {
+final class RegExpEquivalenceChecker {
 
   private static final Comparator<PsiElement> TEXT_COMPARATOR = Comparator.comparing(PsiElement::getText);
 

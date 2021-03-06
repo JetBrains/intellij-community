@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.Gray;
 import com.intellij.ui.scale.JBUIScale;
@@ -23,14 +24,14 @@ import static com.intellij.openapi.util.Pair.pair;
 
 public final class LegalNoticeDialog extends DialogWrapper {
   public static final class Builder {
-    private final String title;
-    private final String message;
+    private final @NlsContexts.DialogTitle String title;
+    private final @NlsContexts.DialogMessage String message;
     private Project project;
     private Component parent;
-    private String cancelText;
-    private Pair<String, Integer> customAction;
+    private @NlsContexts.Button String cancelText;
+    private Pair<@Nls String, Integer> customAction;
 
-    private Builder(String title, String message) {
+    private Builder(@NlsContexts.DialogTitle String title, @NlsContexts.DialogMessage String message) {
       this.title = title;
       this.message = message;
     }
@@ -63,8 +64,8 @@ public final class LegalNoticeDialog extends DialogWrapper {
     }
   }
 
-  public static Builder build(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
-                              @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
+  public static Builder build(@NotNull @NlsContexts.DialogTitle String title,
+                              @NotNull @NlsContexts.DialogMessage String message) {
     return new Builder(title, message);
   }
 

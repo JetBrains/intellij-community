@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -13,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -359,7 +359,7 @@ public final class StringEditorDialog extends DialogWrapper{
             PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
-                                                                                                         StdFileTypes.PROPERTIES, new TreeFileChooser.PsiFileFilter() {
+                                                                                                         PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
               @Override
               public boolean accept(PsiFile file) {
                 final VirtualFile virtualFile = file.getVirtualFile();

@@ -9,8 +9,9 @@ import com.intellij.vcs.commit.ChangeListCommitState
 import com.intellij.vcs.commit.CommitHandlersNotifier
 import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflow
+import org.jetbrains.annotations.Nls
 
-class AlienCommitWorkflow(val vcs: AbstractVcs, changeListName: String, changes: List<Change>, commitMessage: String?) :
+class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, changes: List<Change>, commitMessage: String?) :
   SingleChangeListCommitWorkflow(vcs.project, setOf(vcs), changes, initialCommitMessage = commitMessage) {
   val changeList = AlienLocalChangeList(changes, changeListName)
 

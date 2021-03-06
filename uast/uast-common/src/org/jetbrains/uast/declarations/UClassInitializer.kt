@@ -13,6 +13,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UClassInitializer : UDeclaration, PsiClassInitializer {
 
   @Suppress("OverridingDeprecatedMember")
+  @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiClassInitializer
 
   /**

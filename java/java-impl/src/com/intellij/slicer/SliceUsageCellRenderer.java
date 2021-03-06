@@ -15,6 +15,8 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
@@ -27,9 +29,6 @@ import com.intellij.usages.TextChunk;
 import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author cdr
- */
 class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
   @Override
   public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {
@@ -51,10 +50,10 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     }
 
     if (javaSliceUsage != null && javaSliceUsage.indexNesting != 0) {
-      append(
-        " (Tracking container '" + getContainerName(javaSliceUsage) +
-        (javaSliceUsage.syntheticField.isEmpty() ? "" : "." + javaSliceUsage.syntheticField) + "' contents)",
-        SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      append(" " + JavaBundle.message("slice.usage.message.tracking.container.contents",
+                                      getContainerName(javaSliceUsage),
+                                      javaSliceUsage.syntheticField.isEmpty() ? "" : "." + javaSliceUsage.syntheticField),
+             SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     PsiElement element = sliceUsage.getElement();
@@ -76,15 +75,29 @@ class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
                       : aClass != null ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) : null;
     if (location != null) {
       SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
-      append(" in " + location, attributes);
+      append(" " + JavaBundle.message("slice.usage.message.location", location), attributes);
     }
 
     Language language = element == null ? JavaLanguage.INSTANCE : element.getLanguage();
     if (language != JavaLanguage.INSTANCE) {
       SliceLanguageSupportProvider foreignSlicing = LanguageSlicing.getProvider(element);
       if (foreignSlicing == null) {
-        append(" (in " + language.getDisplayName() + " file - stopped here)", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+        append(" " + JavaBundle.message("slice.usage.message.in.file.stopped.here", language.getDisplayName()),
+               SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
       }
+    }
+    SliceValueFilter filter = sliceUsage.params.valueFilter;
+    SliceUsage parent = sliceUsage.getParent();
+    SliceValueFilter parentFilter = parent == null ? null : parent.params.valueFilter;
+    String filterText = filter == null ? "" : filter.getPresentationText(sliceUsage.getElement());
+    String parentFilterText = parentFilter == null || parent.getElement() == null ? "" :
+                              parentFilter.getPresentationText(parent.getElement());
+    if (!filterText.isEmpty() && !filterText.equals(parentFilterText)) {
+      String message = LangBundle.message("slice.analysis.title.filter", filterText);
+      append(" " + message, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
+    if (javaSliceUsage != null && javaSliceUsage.requiresAssertionViolation) {
+      append(" " + JavaBundle.message("slice.usage.message.assertion.violated"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 

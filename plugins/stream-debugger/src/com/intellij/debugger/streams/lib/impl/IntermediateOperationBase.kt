@@ -7,11 +7,12 @@ import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.openapi.util.NlsSafe
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class IntermediateOperationBase(override val name: String,
+abstract class IntermediateOperationBase(override val name: @NlsSafe String,
                                          private val handlerFactory: (Int, IntermediateStreamCall, Dsl) -> IntermediateCallHandler,
                                          override val traceInterpreter: CallTraceInterpreter,
                                          override val valuesOrderResolver: ValuesOrderResolver) : IntermediateOperation {

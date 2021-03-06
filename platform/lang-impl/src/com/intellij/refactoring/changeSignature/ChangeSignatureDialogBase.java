@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -37,6 +38,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,10 +107,10 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
   @Nullable
-  protected abstract CallerChooserBase<Method> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<Method>> callback);
+  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<Method>> callback);
 
   @Nullable
-  protected abstract String validateAndCommitData();
+  protected abstract @NlsContexts.DialogMessage String validateAndCommitData();
 
   protected abstract String calculateSignature();
 
@@ -123,7 +125,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     setParameterInfos(method.getParameters());
 
-    setTitle(ChangeSignatureHandler.REFACTORING_NAME);
+    setTitle(RefactoringBundle.message("changeSignature.refactoring.name"));
     init();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     doUpdateSignature();
@@ -297,7 +299,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     final JComponent optionsPanel = createOptionsPanel();
 
     final JPanel subPanel = new JPanel(new BorderLayout());
-    final List<Pair<String, JPanel>> panels = createAdditionalPanels();
+    final List<Pair<@NlsContexts.TabTitle String, JPanel>> panels = createAdditionalPanels();
     if (myMethod.canChangeParameters()) {
       final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
@@ -318,7 +320,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     else {
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
       tabbedPane.addTab(RefactoringBundle.message("parameters.border.title"), panel);
-      for (Pair<String, JPanel> extraPanel : panels) {
+      for (Pair<@NlsContexts.TabTitle String, JPanel> extraPanel : panels) {
         tabbedPane.addTab(extraPanel.first, extraPanel.second);
       }
       main = new JPanel(new BorderLayout());
@@ -380,7 +382,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
 
   @NotNull
-  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+  protected List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     return Collections.emptyList();
   }
 
@@ -395,7 +397,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
 
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
-    myParametersTable = new TableView<ParameterTableModelItem>(myParametersTableModel) {
+    myParametersTable = new TableView<>(myParametersTableModel) {
 
       @Override
       public void removeEditor() {
@@ -445,6 +447,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       }
     };
 
+    myParametersTable.setShowGrid(false);
     myParametersTable.setCellSelectionEnabled(true);
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
@@ -467,7 +470,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
       myPropagateParamChangesButton.setEnabled(false);
       myPropagateParamChangesButton.setVisible(false);
-      myParametersTable.setStriped(true);
 
       myParametersTableModel.addTableModelListener(mySignatureUpdater);
 
@@ -634,7 +636,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
     if (myMethodsToPropagateParameters != null && !mayPropagateParameters()) {
       Messages.showWarningDialog(myProject, RefactoringBundle.message("changeSignature.parameters.wont.propagate"),
-                                 ChangeSignatureHandler.REFACTORING_NAME);
+                                 RefactoringBundle.message("changeSignature.refactoring.name"));
       myMethodsToPropagateParameters = null;
     }
 

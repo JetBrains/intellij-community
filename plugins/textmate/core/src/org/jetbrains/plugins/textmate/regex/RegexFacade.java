@@ -13,7 +13,7 @@ import org.joni.exception.JOniException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public class RegexFacade {
+public final class RegexFacade {
   private static final Regex FAILED_REGEX = new Regex("^$", UTF8Encoding.INSTANCE);
   private static final Logger LOGGER = Logger.getInstance(RegexFacade.class);
 
@@ -83,7 +83,7 @@ public class RegexFacade {
     return REGEX_CACHE.computeIfAbsent(regexString, RegexFacade::new);
   }
 
-  private static class LastMatch {
+  private static final class LastMatch {
     private final Object lastId;
     private final int lastOffset;
     private final MatchData lastMatch;

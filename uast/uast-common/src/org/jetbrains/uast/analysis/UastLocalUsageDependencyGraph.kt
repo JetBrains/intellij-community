@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.Logger
@@ -13,13 +13,18 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
-import gnu.trove.THashSet
+import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 private val LOG = Logger.getInstance(UastLocalUsageDependencyGraph::class.java)
 
+/**
+ * Dependency graph of UElements in some scope.
+ * Dependencies of element are elements needed to compute value of this element.
+ * Handles variable assignments and branching
+ */
 @ApiStatus.Experimental
 class UastLocalUsageDependencyGraph private constructor(element: UElement) {
   val dependents: Map<UElement, Set<Dependent>>
@@ -45,6 +50,9 @@ class UastLocalUsageDependencyGraph private constructor(element: UElement) {
       "reactor.local.dependency.graph"
     )
 
+    /**
+     * Creates or takes from cache of [element] dependency graph
+     */
     @JvmStatic
     fun getGraphByUElement(element: UElement): UastLocalUsageDependencyGraph? {
       val sourcePsi = element.sourcePsi ?: return null
@@ -68,7 +76,7 @@ private class VisitorWithVariablesTracking(
   val dependencies: MutableMap<UElement, MutableSet<Dependency>> = mutableMapOf()
 ) : AbstractUastVisitor() {
 
-  private val elementsProcessedAsReceiver: MutableSet<UExpression> = THashSet()
+  private val elementsProcessedAsReceiver: MutableSet<UExpression> = HashSet()
 
   private fun createVisitor(scope: LocalScopeContext) =
     VisitorWithVariablesTracking(scope, currentDepth, dependents, dependencies)
@@ -222,6 +230,26 @@ private class VisitorWithVariablesTracking(
     return@checkedDepthCall true
   }
 
+  override fun visitExpressionList(node: UExpressionList) = checkedDepthCall(node) {
+    ProgressManager.checkCanceled()
+    if (node.kind.name != UAST_KT_ELVIS_NAME) {
+      return super.visitExpressionList(node)
+    }
+
+    val firstExpression = (node.expressions.first() as? UDeclarationsExpression)
+      ?.declarations
+      ?.first()
+      ?.castSafelyTo<ULocalVariable>()
+      ?.uastInitializer
+      ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
+    val ifExpression = node.expressions.getOrNull(1)
+                         ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
+
+    registerDependency(Dependent.CommonDependent(node), firstExpression.and(ifExpression))
+
+    return@checkedDepthCall super.visitExpressionList(node)
+  }
+
   override fun visitSwitchExpression(node: USwitchExpression): Boolean = checkedDepthCall(node) {
     ProgressManager.checkCanceled()
     node.expression?.accept(this)
@@ -313,23 +341,29 @@ private class VisitorWithVariablesTracking(
     return@checkedDepthCall true
   }
 
+  // Ignore class nodes
+  override fun visitClass(node: UClass): Boolean = true
+
+  // Ignore field nodes
+  override fun visitField(node: UField): Boolean = true
+
   private fun registerDependency(dependent: Dependent,
                                  dependency: Dependency) {
     for (el in dependency.elements) {
-      dependents.getOrPut(el) { THashSet() }.add(dependent)
+      dependents.getOrPut(el) { HashSet() }.add(dependent)
     }
-    dependencies.getOrPut(dependent.element) { THashSet() }.add(dependency)
+    dependencies.getOrPut(dependent.element) { HashSet() }.add(dependency)
   }
 
   companion object {
-    val maxBuildDepth = Registry.intValue("reactor.default.recursion.depth.limit", 30)
+    val maxBuildDepth = Registry.intValue("uast.usage.graph.default.recursion.depth.limit", 30)
 
     object BuildOverflowException : RuntimeException("graph building is overflowed", null, false, false)
   }
 }
 
 private fun UExpression.extractBranchesResultAsDependency(): Dependency {
-  val branchResults = THashSet<UExpression>().apply { accumulateBranchesResult(this) }
+  val branchResults = HashSet<UExpression>().apply { accumulateBranchesResult(this) }
 
   if (branchResults.size > 1)
     return Dependency.BranchingDependency(branchResults)
@@ -345,21 +379,17 @@ private fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression
     is USwitchExpression -> body.expressions.filterIsInstance<USwitchClauseExpression>()
       .mapNotNull { it.lastExpression }
       .forEach { it.accumulateBranchesResult(results) }
+    is UTryExpression -> {
+      tryClause.lastExpression?.accumulateBranchesResult(results)
+      catchClauses.mapNotNull { it.body.lastExpression }.forEach { it.accumulateBranchesResult(results) }
+    }
     else -> results += this
   }
 }
 
 private val UExpression.lastExpression: UExpression?
   get() = when (this) {
-    is USwitchClauseExpressionWithBody -> {
-      //FIXME: workaround for KT-35574
-      if (lang.id == "kotlin" && getParentOfType<USwitchExpression>()?.getExpressionType() != null) {
-        // skip last break statement, which doesn't make sense
-        body.expressions.getOrNull(body.expressions.lastIndex - 1)
-      } else {
-        body.expressions.lastOrNull()
-      }
-    }
+    is USwitchClauseExpressionWithBody -> body.expressions.lastOrNull()
     is UBlockExpression -> this.expressions.lastOrNull()
     is UExpressionList -> this.expressions.lastOrNull()
     else -> this
@@ -403,6 +433,10 @@ sealed class Dependency : UserDataHolderBase() {
   }
 
   data class BranchingDependency(override val elements: Set<UElement>) : Dependency()
+
+  fun and(other: Dependency): Dependency {
+    return BranchingDependency(elements + other.elements)
+  }
 }
 
 @Suppress("MemberVisibilityCanBePrivate")
@@ -420,8 +454,8 @@ object KotlinExtensionConstants {
 }
 
 private class LocalScopeContext(private val parent: LocalScopeContext?) {
-  private val definedInScopeVariables = THashSet<UElement>()
-  private val definedInScopeVariablesNames = THashSet<String>()
+  private val definedInScopeVariables = HashSet<UElement>()
+  private val definedInScopeVariablesNames = HashSet<String>()
 
   private val lastAssignmentOf = mutableMapOf<UElement, Set<UElement>>()
   private val lastDeclarationOf = mutableMapOf<String?, UElement>()
@@ -458,13 +492,15 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
   fun createChild() = LocalScopeContext(this)
 
   val variables: Iterable<UElement>
-    get() = generateSequence(this) { it.parent }
-      .flatMap { it.definedInScopeVariables.asSequence() }
-      .asIterable()
+    get() {
+      return generateSequence(this) { it.parent }
+        .flatMap { it.definedInScopeVariables.asSequence() }
+        .asIterable()
+    }
 
   fun mergeWith(others: Iterable<LocalScopeContext>) {
     for (variable in variables) {
-      this[variable] = THashSet<UElement>().apply {
+      this[variable] = HashSet<UElement>().apply {
         for (other in others) {
           other[variable]?.let { addAll(it) }
           other[variable]?.let { addAll(it) }
@@ -483,3 +519,5 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     }
   }
 }
+
+private const val UAST_KT_ELVIS_NAME = "elvis"

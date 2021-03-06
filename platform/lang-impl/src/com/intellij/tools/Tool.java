@@ -22,16 +22,18 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Tool implements SchemeElement {
   private static final Logger LOG = Logger.getInstance(Tool.class);
@@ -40,7 +42,7 @@ public class Tool implements SchemeElement {
 
   public static final String DEFAULT_GROUP_NAME = "External Tools";
   protected static final ProcessEvent NOT_STARTED_EVENT = new ProcessEvent(new NopProcessHandler(), -1);
-  private String myName;
+  private @NlsSafe String myName;
   private String myDescription;
   @NotNull private String myGroup = DEFAULT_GROUP_NAME;
 
@@ -67,14 +69,15 @@ public class Tool implements SchemeElement {
   public Tool() {
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return myDescription;
   }
 
+  @NlsSafe
   @NotNull
   public String getGroup() {
     return myGroup;
@@ -120,15 +123,15 @@ public class Tool implements SchemeElement {
     return mySynchronizeAfterExecution;
   }
 
-  public void setName(String name) {
+  public void setName(@NlsSafe String name) {
     myName = name;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@NlsSafe String description) {
     myDescription = description;
   }
 
-  public void setGroup(@NotNull String group) {
+  public void setGroup(@NonNls @NotNull String group) {
     myGroup = StringUtil.isEmpty(group) ? DEFAULT_GROUP_NAME : group;
   }
 

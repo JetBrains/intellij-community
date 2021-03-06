@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
@@ -45,15 +46,13 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author peter
@@ -65,11 +64,12 @@ public class InspectionValidatorWrapper implements Validator {
   private final InspectionManager myInspectionManager;
   private final InspectionProjectProfileManager myProfileManager;
   private final PsiDocumentManager myPsiDocumentManager;
+
   private static final ThreadLocal<Boolean> ourCompilationThreads = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  public InspectionValidatorWrapper(final CompilerManager compilerManager, final InspectionManager inspectionManager,
-                                    final InspectionProjectProfileManager profileManager, final PsiDocumentManager psiDocumentManager,
-                                    final PsiManager psiManager, final InspectionValidator validator) {
+  public InspectionValidatorWrapper(CompilerManager compilerManager, InspectionManager inspectionManager,
+                                    InspectionProjectProfileManager profileManager, PsiDocumentManager psiDocumentManager,
+                                    PsiManager psiManager, InspectionValidator validator) {
     myCompilerManager = compilerManager;
     myInspectionManager = inspectionManager;
     myProfileManager = profileManager;
@@ -79,7 +79,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @NotNull
-  public static InspectionValidatorWrapper create(final Project project, InspectionValidator validator) {
+  public static InspectionValidatorWrapper create(Project project, InspectionValidator validator) {
     return new InspectionValidatorWrapper(
       CompilerManager.getInstance(project),
       InspectionManager.getInstance(project),
@@ -94,8 +94,7 @@ public class InspectionValidatorWrapper implements Validator {
     return ourCompilationThreads.get().booleanValue();
   }
 
-  private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file,
-                                                            @NotNull LocalInspectionTool inspectionTool) {
+  private static List<ProblemDescriptor> runInspectionOnFile(@NotNull PsiFile file, @NotNull LocalInspectionTool inspectionTool) {
     InspectionManager inspectionManager = InspectionManager.getInstance(file.getProject());
     GlobalInspectionContext context = inspectionManager.createNewGlobalContext();
     return InspectionEngine.runInspectionOnFile(file, new LocalInspectionToolWrapper(inspectionTool), context);
@@ -106,7 +105,7 @@ public class InspectionValidatorWrapper implements Validator {
     private final PsiManager myPsiManager;
     private PsiElementsValidityState myValidityState;
 
-    MyValidatorProcessingItem(@NotNull final PsiFile psiFile) {
+    MyValidatorProcessingItem(@NotNull PsiFile psiFile) {
       myVirtualFile = psiFile.getVirtualFile();
       myPsiManager = psiFile.getManager();
     }
@@ -127,8 +126,8 @@ public class InspectionValidatorWrapper implements Validator {
     }
 
     private PsiElementsValidityState computeValidityState() {
-      final PsiElementsValidityState state = new PsiElementsValidityState();
-      final PsiFile psiFile = getPsiFile();
+      PsiElementsValidityState state = new PsiElementsValidityState();
+      PsiFile psiFile = getPsiFile();
       if (psiFile != null) {
         for (PsiElement psiElement : myValidator.getDependencies(psiFile)) {
           state.addDependency(psiElement);
@@ -144,20 +143,20 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
-  public ProcessingItem @NotNull [] getProcessingItems(final CompileContext context) {
-    final Project project = context.getProject();
+  public ProcessingItem @NotNull [] getProcessingItems(@NotNull CompileContext context) {
+    Project project = context.getProject();
     if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, project)) {
       return ProcessingItem.EMPTY_ARRAY;
     }
-    final ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
-    final List<ProcessingItem> items =
+    ExcludesConfiguration excludesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
+    List<ProcessingItem> items =
       DumbService.getInstance(project).runReadActionInSmartMode((Computable<List<ProcessingItem>>)() -> {
-        final CompileScope compileScope = context.getCompileScope();
+        CompileScope compileScope = context.getCompileScope();
         if (!myValidator.isAvailableOnScope(compileScope)) return null;
 
-        final ArrayList<ProcessingItem> items1 = new ArrayList<>();
+        ArrayList<ProcessingItem> items1 = new ArrayList<>();
 
-        final Processor<VirtualFile> processor = file -> {
+        Processor<VirtualFile> processor = file -> {
           if (!file.isValid()) {
             return true;
           }
@@ -167,9 +166,9 @@ public class InspectionValidatorWrapper implements Validator {
             return true;
           }
 
-          final Module module = context.getModuleByFile(file);
+          Module module = context.getModuleByFile(file);
           if (module != null) {
-            final PsiFile psiFile = myPsiManager.findFile(file);
+            PsiFile psiFile = myPsiManager.findFile(file);
             if (psiFile != null) {
               items1.add(new MyValidatorProcessingItem(psiFile));
             }
@@ -185,24 +184,22 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
-  public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
+  public ProcessingItem[] process(@NotNull CompileContext context, ProcessingItem @NotNull [] items) {
     context.getProgressIndicator().setText(myValidator.getProgressIndicatorText());
 
-    final List<ProcessingItem> processedItems = new ArrayList<>();
-    final List<LocalInspectionTool> inspections = new ArrayList<>();
-    for (final Class aClass : myValidator.getInspectionToolClasses(context)) {
-      try {
-        inspections.add((LocalInspectionTool)aClass.newInstance());
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new Error(e);
+    Map<Class<?>, LocalInspectionTool> allTools = getInspectionToolMap(context.getProject(), myProfileManager);
+
+    List<LocalInspectionTool> inspections = new ArrayList<>();
+    for (Class<? extends LocalInspectionTool> aClass : myValidator.getInspectionToolClasses(context)) {
+      LocalInspectionTool tool = allTools.get(aClass);
+      if (tool != null) {
+        inspections.add(tool);
       }
     }
+
+    List<ProcessingItem> processedItems = new ArrayList<>();
     for (int i = 0; i < items.length; i++) {
-      final MyValidatorProcessingItem item = (MyValidatorProcessingItem)items[i];
+      MyValidatorProcessingItem item = (MyValidatorProcessingItem)items[i];
       context.getProgressIndicator().checkCanceled();
       context.getProgressIndicator().setFraction((double)i / items.length);
 
@@ -221,14 +218,24 @@ public class InspectionValidatorWrapper implements Validator {
     return processedItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
-  private boolean checkFile(List<? extends LocalInspectionTool> inspections, final MyValidatorProcessingItem item, final CompileContext context) {
-    boolean hasErrors = false;
-    if (!checkUnderReadAction(item, context, () -> myValidator.checkAdditionally(item.getPsiFile()))) {
-      hasErrors = true;
+  private static @NotNull Map<Class<?>, LocalInspectionTool> getInspectionToolMap(@NotNull Project project,
+                                                                                  @NotNull InspectionProjectProfileManager profileManager) {
+    Map<Class<?>, LocalInspectionTool> allTools = new IdentityHashMap<>();
+    InspectionProfile profile = profileManager.getCurrentProfile();
+    for (Tools tools : profile.getAllEnabledInspectionTools(project)) {
+      InspectionProfileEntry inspectionProfileEntry = tools.getTool().getTool();
+      if (inspectionProfileEntry instanceof LocalInspectionTool) {
+        allTools.put(inspectionProfileEntry.getClass(), (LocalInspectionTool)inspectionProfileEntry);
+      }
     }
+    return allTools;
+  }
+
+  private boolean checkFile(List<? extends LocalInspectionTool> inspections, MyValidatorProcessingItem item, CompileContext context) {
+    boolean hasErrors = !checkUnderReadAction(item, context, () -> myValidator.checkAdditionally(item.getPsiFile()));
 
     if (!checkUnderReadAction(item, context, () -> {
-      final PsiFile file = item.getPsiFile();
+      PsiFile file = item.getPsiFile();
       if (file instanceof XmlFile) {
         return runXmlFileSchemaValidation((XmlFile)file);
       }
@@ -237,14 +244,12 @@ public class InspectionValidatorWrapper implements Validator {
       hasErrors = true;
     }
 
-
-    final InspectionProfile inspectionProfile = myProfileManager.getCurrentProfile();
-    for (final LocalInspectionTool inspectionTool : inspections) {
+    InspectionProfile inspectionProfile = myProfileManager.getCurrentProfile();
+    for (LocalInspectionTool inspectionTool : inspections) {
       if (!checkUnderReadAction(item, context, () -> {
-        final PsiFile file = item.getPsiFile();
+        PsiFile file = item.getPsiFile();
         if (file != null && getHighlightDisplayLevel(inspectionTool, inspectionProfile, file) != HighlightDisplayLevel.DO_NOT_SHOW) {
-          return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file)
-          );
+          return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file));
         }
         return Collections.emptyMap();
       })) {
@@ -255,24 +260,26 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
+  @NotNull
   public String getId() {
     return myValidator.getId();
   }
 
-  private boolean checkUnderReadAction(final MyValidatorProcessingItem item, final CompileContext context, final Computable<? extends Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
+  private boolean checkUnderReadAction(@NotNull MyValidatorProcessingItem item,
+                                       @NotNull CompileContext context,
+                                       @NotNull Computable<? extends Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
     return DumbService.getInstance(context.getProject()).runReadActionInSmartMode(() -> {
-      final PsiFile file = item.getPsiFile();
+      PsiFile file = item.getPsiFile();
       if (file == null) return false;
 
-      final Document document = myPsiDocumentManager.getCachedDocument(file);
+      Document document = myPsiDocumentManager.getCachedDocument(file);
       if (document != null && myPsiDocumentManager.isUncommited(document)) {
-        final String url = file.getViewProvider().getVirtualFile().getUrl();
+        String url = file.getViewProvider().getVirtualFile().getUrl();
         context.addMessage(CompilerMessageCategory.WARNING, JavaCompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
         return false;
       }
 
-      if (reportProblems(context, runnable.compute())) return false;
-      return true;
+      return !reportProblems(context, runnable.compute());
     });
   }
 
@@ -284,20 +291,20 @@ public class InspectionValidatorWrapper implements Validator {
     boolean errorsReported = false;
     for (Map.Entry<ProblemDescriptor, HighlightDisplayLevel> entry : problemsMap.entrySet()) {
       ProblemDescriptor problemDescriptor = entry.getKey();
-      final PsiElement element = problemDescriptor.getPsiElement();
-      final PsiFile psiFile = element.getContainingFile();
+      PsiElement element = problemDescriptor.getPsiElement();
+      PsiFile psiFile = element.getContainingFile();
       if (psiFile == null) continue;
 
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile == null) continue;
 
-      final CompilerMessageCategory category = myValidator.getCategoryByHighlightDisplayLevel(entry.getValue(), virtualFile, context);
-      final Document document = myPsiDocumentManager.getDocument(psiFile);
+      CompilerMessageCategory category = myValidator.getCategoryByHighlightDisplayLevel(entry.getValue(), virtualFile, context);
+      Document document = myPsiDocumentManager.getDocument(psiFile);
 
-      final int offset = problemDescriptor.getStartElement().getTextOffset();
+      int offset = problemDescriptor.getStartElement().getTextOffset();
       assert document != null;
-      final int line = document.getLineNumber(offset);
-      final int column = offset - document.getLineStartOffset(line);
+      int line = document.getLineNumber(offset);
+      int column = offset - document.getLineStartOffset(line);
       context.addMessage(category, problemDescriptor.getDescriptionTemplate(), virtualFile.getUrl(), line + 1, column + 1);
       if (CompilerMessageCategory.ERROR == category) {
         errorsReported = true;
@@ -306,14 +313,15 @@ public class InspectionValidatorWrapper implements Validator {
     return errorsReported;
   }
 
-  private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(final PsiFile file,
-                                                                                 final LocalInspectionTool inspectionTool,
-                                                                                 final HighlightDisplayLevel level) {
+  @NotNull
+  private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(PsiFile file,
+                                                                                 LocalInspectionTool inspectionTool,
+                                                                                 HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
     for (ProblemDescriptor descriptor : runInspectionOnFile(file, inspectionTool)) {
-      final ProblemHighlightType highlightType = descriptor.getHighlightType();
+      ProblemHighlightType highlightType = descriptor.getHighlightType();
 
-      final HighlightDisplayLevel highlightDisplayLevel;
+      HighlightDisplayLevel highlightDisplayLevel;
       if (highlightType == ProblemHighlightType.WEAK_WARNING) {
         highlightDisplayLevel = HighlightDisplayLevel.WEAK_WARNING;
       }
@@ -328,16 +336,16 @@ public class InspectionValidatorWrapper implements Validator {
     return problemsMap;
   }
 
-  private static HighlightDisplayLevel getHighlightDisplayLevel(final LocalInspectionTool inspectionTool,
-                                                                final InspectionProfile inspectionProfile, PsiElement file) {
-    final HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool.getShortName());
+  private static HighlightDisplayLevel getHighlightDisplayLevel(LocalInspectionTool inspectionTool,
+                                                                InspectionProfile inspectionProfile, PsiElement file) {
+    HighlightDisplayKey key = HighlightDisplayKey.find(inspectionTool.getShortName());
     return inspectionProfile.isToolEnabled(key, file) ? inspectionProfile.getErrorLevel(key, file) : HighlightDisplayLevel.DO_NOT_SHOW;
   }
 
   private Map<ProblemDescriptor, HighlightDisplayLevel> runXmlFileSchemaValidation(@NotNull XmlFile xmlFile) {
-    final AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile));
+    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile));
 
-    final List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
+    List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
     for (ExternalAnnotator<?, ?> annotator : annotators) {
       processAnnotator(xmlFile, holder, annotator);
     }
@@ -346,18 +354,18 @@ public class InspectionValidatorWrapper implements Validator {
     if (!holder.hasAnnotations()) return Collections.emptyMap();
 
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
-    for (final Annotation annotation : holder) {
-      final HighlightInfo info = HighlightInfo.fromAnnotation(annotation);
+    for (Annotation annotation : holder) {
+      HighlightInfo info = HighlightInfo.fromAnnotation(annotation);
       if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;
 
-      final PsiElement startElement = xmlFile.findElementAt(info.startOffset);
-      final PsiElement endElement = info.startOffset == info.endOffset ? startElement : xmlFile.findElementAt(info.endOffset - 1);
+      PsiElement startElement = xmlFile.findElementAt(info.startOffset);
+      PsiElement endElement = info.startOffset == info.endOffset ? startElement : xmlFile.findElementAt(info.endOffset - 1);
       if (startElement == null || endElement == null) continue;
 
-      final ProblemDescriptor descriptor =
+      ProblemDescriptor descriptor =
         myInspectionManager.createProblemDescriptor(startElement, endElement, info.getDescription(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                     false);
-      final HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
+      HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
       problemsMap.put(descriptor, level);
     }
     return problemsMap;
@@ -373,21 +381,20 @@ public class InspectionValidatorWrapper implements Validator {
     }
   }
 
-
   @Override
   @NotNull
+  @Nls
   public String getDescription() {
     return myValidator.getDescription();
   }
 
   @Override
-  public boolean validateConfiguration(final CompileScope scope) {
+  public boolean validateConfiguration(CompileScope scope) {
     return true;
   }
 
   @Override
-  public ValidityState createValidityState(final DataInput in) throws IOException {
+  public ValidityState createValidityState(DataInput in) throws IOException {
     return PsiElementsValidityState.load(in);
   }
-
 }

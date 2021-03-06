@@ -1,31 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
-import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
-
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.ForeignLeafType;
-import com.intellij.lang.ITokenTypeRemapper;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.LighterLazyParseableNode;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.TokenWrapper;
-import com.intellij.lang.WhitespaceSkippedCallback;
-import com.intellij.lang.WhitespacesAndCommentsBinder;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UnprotectedUserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -35,43 +18,34 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.LazyParseableElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.CustomLanguageASTComparator;
-import com.intellij.psi.tree.ICustomParsingType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.tree.ILazyParseableElementTypeBase;
-import com.intellij.psi.tree.ILeafElementType;
-import com.intellij.psi.tree.ILightLazyParseableElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
@@ -112,7 +86,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private IElementType myCachedTokenType;
 
-  private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
+  private final Int2ObjectMap<LazyParseableToken> myChameleonCache = new Int2ObjectOpenHashMap<>();
   private final MarkerPool myPool = new MarkerPool(this);
   private final MarkerOptionalData myOptionalData = new MarkerOptionalData();
   private final MarkerProduction myProduction = new MarkerProduction(myPool, myOptionalData);
@@ -193,7 +167,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private TokenSequence performLexing(@Nullable Object parentCachingNode) {
     TokenSequence fromParent = null;
 
-    if (parentCachingNode instanceof LazyParseableToken) {
+    if (parentCachingNode instanceof LazyParseableToken && shouldReuseCollapsedTokens(((LazyParseableToken)parentCachingNode).getTokenType())) {
       fromParent = ((LazyParseableToken)parentCachingNode).getParsedTokenSequence();
       assert fromParent == null || fromParent.lexStarts[fromParent.lexemeCount] == myText.length();
       ProgressIndicatorProvider.checkCanceled();
@@ -211,7 +185,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       return fromParent;
     }
 
-    return new TokenSequence.Builder(myText, myLexer).performLexing();
+    return TokenSequence.performLexing(myText, myLexer);
   }
 
   private static boolean doLexingOptimizationCorrectionCheck() {
@@ -293,9 +267,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
-    @NotNull
-    abstract WhitespacesAndCommentsBinder getBinder(boolean done);
-
     abstract void setLexemeIndex(int lexemeIndex, boolean done);
 
     abstract int getLexemeIndex(boolean done);
@@ -337,12 +308,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     @Override
     public int getEndIndex() {
       return myDoneLexeme;
-    }
-
-    @NotNull
-    @Override
-    WhitespacesAndCommentsBinder getBinder(boolean done) {
-      return myBuilder.myOptionalData.getBinder(markerId, done);
     }
 
     @Override
@@ -407,7 +372,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, @NotNull final String errorMessage) {
+    public void doneBefore(@NotNull final IElementType type, @NotNull final Marker before, @NotNull @Nls String errorMessage) {
       StartMarker marker = (StartMarker)before;
       ErrorItem errorItem = myBuilder.myPool.allocateErrorItem();
       errorItem.myMessage = errorMessage;
@@ -417,13 +382,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
 
     @Override
-    public void error(@NotNull String message) {
+    public void error(@NotNull @Nls String message) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.processDone(this, message, null);
     }
 
     @Override
-    public void errorBefore(@NotNull final String message, @NotNull final Marker before) {
+    public void errorBefore(@NotNull @Nls String message, @NotNull Marker before) {
       myType = TokenType.ERROR_ELEMENT;
       myBuilder.processDone(this, message, (StartMarker)before);
     }
@@ -626,18 +591,20 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       int[] lexStarts = new int[tokenCount + 1];
       System.arraycopy(getBuilder().myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
       int diff = getBuilder().myLexStarts[myStartIndex];
-      for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
+      for(int i = 0; i < tokenCount; ++i) {
+        lexStarts[i] -= diff;
+      }
       lexStarts[tokenCount] = getEndOffset() - getStartOffset();
 
       IElementType[] lexTypes = new IElementType[tokenCount + 1];
       System.arraycopy(getBuilder().myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
 
-      return new TokenSequence(lexStarts, lexTypes, tokenCount);
+      return new TokenSequence(lexStarts, lexTypes, tokenCount, getText());
     }
   }
 
   static class ErrorItem extends ProductionMarker {
-    private String myMessage;
+    private @NlsContexts.DetailedDescription String myMessage;
 
     ErrorItem(int markerId, PsiBuilderImpl builder) {
       super(markerId, builder);
@@ -647,13 +614,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     void clean() {
       super.clean();
       myMessage = null;
-    }
-
-    @NotNull
-    @Override
-    public WhitespacesAndCommentsBinder getBinder(boolean done) {
-      assert !done;
-      return DEFAULT_RIGHT_BINDER;
     }
 
     @Override
@@ -881,7 +841,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return myProduction.hasErrorsAfter((StartMarker)marker);
   }
 
-  private void processDone(@NotNull StartMarker marker, @Nullable String errorMessage, @Nullable StartMarker before) {
+  private void processDone(@NotNull StartMarker marker, @Nullable @Nls String errorMessage, @Nullable StartMarker before) {
     doValidityChecks(marker, before);
 
     if (errorMessage != null) {
@@ -984,7 +944,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return myParserDefinition instanceof ASTFactory ? (ASTFactory)myParserDefinition : null;
   }
 
-  private static class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
+  private static final class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
     private final DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> myDelegate;
     private final ASTConverter myConverter;
 
@@ -1012,7 +972,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private static final String UNBALANCED_MESSAGE =
+  private static final @NonNls String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. " +
     "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
 
@@ -1039,22 +999,23 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
 
-    myOptionalData.compact();
-
     myTokenTypeChecked = true;
     balanceWhiteSpaces();
 
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
-    final Stack<StartMarker> nodes = new Stack<>();
+    ObjectArrayList<StartMarker> nodes = new ObjectArrayList<>();
     nodes.push(rootMarker);
 
     int lastErrorIndex = -1;
     int maxDepth = 0;
     int curDepth = 0;
     boolean hasCollapsedChameleons = false;
-    for (int i = 1; i < myProduction.size(); i++) {
-      ProductionMarker item = myProduction.getStartMarkerAt(i);
+    int[] productions = myProduction.elements();
+    Object[] markers = myPool.elements();
+    for (int i = 1, size = myProduction.size(); i < size; i++) {
+      int id = productions[i];
+      ProductionMarker item = id > 0 ? (ProductionMarker)markers[id] : null;
 
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
@@ -1067,7 +1028,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (curDepth > maxDepth) maxDepth = curDepth;
       }
       else if (item instanceof ErrorItem) {
-        ((ErrorItem)item).myParent = curNode;
+        item.myParent = curNode;
         int curToken = item.myLexemeIndex;
         if (curToken == lastErrorIndex) continue;
         lastErrorIndex = curToken;
@@ -1077,7 +1038,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         if (isCollapsedChameleon(curNode)) {
           hasCollapsedChameleons = true;
         }
-        assertMarkersBalanced(myProduction.getDoneMarkerAt(i) == curNode, item);
+        assertMarkersBalanced(id < 0 && markers[-id] == curNode, item);
         curNode = nodes.pop();
         curDepth--;
       }
@@ -1124,19 +1085,36 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     RelativeTokenTextView tokenTextGetter = new RelativeTokenTextView();
     int lastIndex = 0;
 
+    int[] productions = myProduction.elements();
+    Object[] markers = myPool.elements();
     for (int i = 1, size = myProduction.size() - 1; i < size; i++) {
-      ProductionMarker starting = myProduction.getStartMarkerAt(i);
+      int id = productions[i];
+      ProductionMarker starting = id > 0 ? (ProductionMarker)markers[id] : null;
       if (starting instanceof StartMarker) {
         assertMarkersBalanced(((StartMarker)starting).isDone(), starting);
       }
       boolean done = starting == null;
-      ProductionMarker item = starting != null ? starting : Objects.requireNonNull(myProduction.getDoneMarkerAt(i));
+      ProductionMarker item = starting != null ? starting : (ProductionMarker)markers[-id];
 
-      WhitespacesAndCommentsBinder binder = item.getBinder(done);
+      WhitespacesAndCommentsBinder binder;
+      if (item instanceof ErrorItem) {
+        assert !done;
+        binder = DEFAULT_RIGHT_BINDER;
+      }
+      else {
+        binder = myOptionalData.getBinder(item.markerId, done);
+      }
       int lexemeIndex = item.getLexemeIndex(done);
 
       boolean recursive = binder instanceof WhitespacesAndCommentsBinder.RecursiveBinder;
-      int prevProductionLexIndex = recursive ? 0 : myProduction.getLexemeIndexAt(i - 1);
+      int prevProductionLexIndex;
+      if (recursive) {
+        prevProductionLexIndex = 0;
+      }
+      else {
+        int prevId = productions[i - 1];
+        prevProductionLexIndex = ((ProductionMarker)markers[Math.abs(prevId)]).getLexemeIndex(prevId < 0);
+      }
       int wsStartIndex = Math.max(lexemeIndex, lastIndex);
       while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
 
@@ -1250,7 +1228,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       else if (item instanceof ErrorItem) {
         final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
         curNode.rawAddChildrenWithoutNotifications(errorElement);
-        item = ((ErrorItem)item).myNext;
+        item = item.myNext;
         itemDone = false;
       }
 
@@ -1283,7 +1261,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     final int end = myLexStarts[startMarker.getEndIndex()];
     final IElementType markerType = startMarker.myType;
     final TreeElement leaf = createLeaf(markerType, start, end);
-    if (markerType instanceof ILazyParseableElementTypeBase && ((ILazyParseableElementTypeBase)markerType).reuseCollapsedTokens() &&
+    if (shouldReuseCollapsedTokens(markerType) &&
         startMarker.myLexemeIndex < startMarker.getEndIndex()) {
       int length = startMarker.getEndIndex() - startMarker.myLexemeIndex;
       int[] relativeStarts = new int[length + 1];
@@ -1293,10 +1271,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         types[i - startMarker.myLexemeIndex] = myLexTypes[i];
       }
       relativeStarts[length] = end - start;
-      leaf.putUserData(LAZY_PARSEABLE_TOKENS, new TokenSequence(relativeStarts, types, length));
+      leaf.putUserData(LAZY_PARSEABLE_TOKENS, new TokenSequence(relativeStarts, types, length, leaf.getChars()));
     }
     ast.rawAddChildrenWithoutNotifications(leaf);
     return startMarker.getEndIndex();
+  }
+
+  private static boolean shouldReuseCollapsedTokens(IElementType collapsed) {
+    return collapsed instanceof ILazyParseableElementTypeBase && ((ILazyParseableElementTypeBase)collapsed).reuseCollapsedTokens();
   }
 
   @NotNull
@@ -1304,7 +1286,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
       String error = marker.myBuilder.myOptionalData.getDoneError(marker.markerId);
-      return Factory.createErrorElement(Objects.requireNonNull(error));
+      Objects.requireNonNull(error);
+      return Factory.createErrorElement(error);
     }
 
     if (type == null) {
@@ -1328,7 +1311,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Nullable
-  public static String getErrorMessage(@NotNull LighterASTNode node) {
+  public static @NlsContexts.DetailedDescription String getErrorMessage(@NotNull LighterASTNode node) {
     if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
     if (node instanceof StartMarker) {
       final StartMarker marker = (StartMarker)node;
@@ -1340,13 +1323,14 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return null;
   }
 
-  private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
-    private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> myCustom;
-    private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
+  private static final class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
+    private final TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>
+      myCustom;
+    private final @NotNull List<? extends CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
-    private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
-                         @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators,
+    private MyComparator(TripleFunction<? super ASTNode, ? super LighterASTNode, ? super FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         @NotNull List<? extends CustomLanguageASTComparator> customLanguageASTComparators,
                          @NotNull MyTreeStructure treeStructure) {
       myCustom = custom;
       myCustomLanguageASTComparators = customLanguageASTComparators;
@@ -1600,9 +1584,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
         nodes = old;
       }
       else if (count >= old.length) {
-        LighterASTNode[] newStore = new LighterASTNode[count * 3 / 2];
-        System.arraycopy(old, 0, newStore, 0, count);
-        nodes = newStore;
+        nodes = Arrays.copyOf(old, count * 3 / 2);
       }
     }
 
@@ -1674,7 +1656,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  private static class ASTConverter implements Function<Node, ASTNode> {
+  private static final class ASTConverter implements Function<Node, ASTNode> {
     private final StartMarker myRoot;
     private final ASTFactory myASTFactory;
 

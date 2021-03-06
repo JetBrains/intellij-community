@@ -28,6 +28,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,8 +109,8 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     final PsiMethod existingMethod = containingClass.findMethodBySignature(methodPrototype, false);
     if (existingMethod != null) {
       editor.getCaretModel().moveToOffset(existingMethod.getTextOffset());
-      HintManager.getInstance().showErrorHint(editor, (existingMethod.isConstructor() ? "Constructor" : "Method") +
-                                                      " with the chosen signature already exists");
+      HintManager.getInstance().showErrorHint(editor,
+                                              JavaBundle.message("default.param.value.warning", existingMethod.isConstructor() ? 0 : 1));
       return;
     }
 

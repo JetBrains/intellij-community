@@ -1,10 +1,14 @@
 <html>
 <body>
-Reports a variety of redundant String-related operations like calling <b>string.toString()</b> or <b>string.substring(0)</b>.
-Also, reports usage of redundant String constructors like <b>new String()</b> (equivalent to <b>""</b>) or <b>new String(anotherString)</b>
-(equivalent to <b>anotherString</b>). Such code, when fixed, may change the program semantics if String referential equality is
-important (which is commonly considered as a bad practice). In this case, consider suppressing the warning or using the inspection option
-to disable reporting such problems.
+Reports redundant operations with Strings.
+Examples:
+<ul>
+  <li>calling <code>toString()</code> or <code>substring(0)</code> on a <code>String</code></li>
+  <li>calling <code>toString().substring()</code> on a <code>StringBuilder</code></li>
+  <li>using redundant <code>String</code> constructors. Note that the proposed quick-fix
+    affects <code>String</code> referential equality. If you need to preserve it (which is
+    considered a bad practice), suppress the warning or use the <strong>Do not report String constructors</strong> option.</li>
+</ul>
 <!-- tooltip end -->
 <p><small>New in 2018.1</small></p>
 </body>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.idea.Bombed;
@@ -6,7 +6,10 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.RunFirst;
+import com.intellij.testFramework.SelfSeedingTestCase;
+import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.testFramework.TestSorter;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,10 +29,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.ToIntFunction;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
@@ -53,12 +57,14 @@ public class TestCaseLoader {
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
    */
   private static final String ALL_TESTS_GROUP = "ALL";
-  private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
+
   /**
-   * By default test classes run in alphabetical order. Pass {@code "reversed"} to this property to run test classes in reversed alphabetical order.
+   * By default, test classes run in alphabetical order. Pass {@code "reversed"} to this property to run test classes in reversed alphabetical order.
    * This help to find problems when test A modifies global state causing test B to fail if it runs after A.
    */
   private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
+
+  private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
   private final List<Class<?>> myClassList = new ArrayList<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
@@ -73,11 +79,14 @@ public class TestCaseLoader {
 
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
+
     TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
     TestClassesFilter affectedTestsFilter = affectedTestsFilter();
-
-    myTestClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
-    System.out.println(myTestClassesFilter.toString());
+    if (affectedTestsFilter != null) {
+      testClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
+    }
+    myTestClassesFilter = testClassesFilter;
+    System.out.println(myTestClassesFilter);
   }
 
   private TestClassesFilter calcTestClassFilter(String classFilterName) {
@@ -86,6 +95,13 @@ public class TestCaseLoader {
       System.out.println("Using patterns: [" + patterns + "]");
       return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
     }
+
+    List<String> testGroupNames = getTestGroups();
+    if (testGroupNames.contains(ALL_TESTS_GROUP)) {
+      System.out.println("Using all classes");
+      return TestClassesFilter.ALL_CLASSES;
+    }
+
     List<URL> groupingFileUrls = Collections.emptyList();
     if (!StringUtil.isEmpty(classFilterName)) {
       try {
@@ -96,34 +112,31 @@ public class TestCaseLoader {
       }
     }
 
-    List<String> testGroupNames = getTestGroups();
+    System.out.println("Loading test groups from: " + groupingFileUrls);
     MultiMap<String, String> groups = MultiMap.createLinked();
-
     for (URL fileUrl : groupingFileUrls) {
       try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream(), StandardCharsets.UTF_8)) {
-        groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
+        GroupBasedTestClassFilter.readGroups(reader, groups);
       }
       catch (IOException e) {
-        e.printStackTrace();
         System.err.println("Failed to load test groups from " + fileUrl);
+        e.printStackTrace();
       }
     }
-
-    if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
-      System.out.println("Using all classes");
-      return TestClassesFilter.ALL_CLASSES;
-    }
     System.out.println("Using test groups: " + testGroupNames);
+    Set<String> testGroupNameSet = new HashSet<>(testGroupNames);
+    testGroupNameSet.removeAll(groups.keySet());
+    if (!testGroupNameSet.isEmpty()) {
+      System.err.println("Unknown test groups: " + testGroupNameSet);
+    }
     return new GroupBasedTestClassFilter(groups, testGroupNames);
   }
 
-  @Nullable
-  private static String getTestPatterns() {
+  private static @Nullable String getTestPatterns() {
     return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
   }
 
-  @NotNull
-  private static TestClassesFilter affectedTestsFilter() {
+  private static @Nullable TestClassesFilter affectedTestsFilter() {
     if (RUN_ONLY_AFFECTED_TESTS) {
       System.out.println("Trying to load affected tests.");
       File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
@@ -138,11 +151,10 @@ public class TestCaseLoader {
         }
       }
     }
-    System.out.println("No affected tests were found, will run with the standard test filter.");
-    return TestClassesFilter.ALL_CLASSES;
+    System.out.println("No affected tests were found, will run with the standard test filter");
+    return null;
   }
 
-  @NotNull
   private static List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
@@ -303,21 +315,22 @@ public class TestCaseLoader {
     return result;
   }
 
-  @NotNull
   private static TestSorter loadTestSorter() {
-    final String sorter = System.getProperty("intellij.build.test.sorter");
+    String sorter = System.getProperty("intellij.build.test.sorter");
     if (sorter != null) {
       try {
-        return (TestSorter)Class.forName(sorter).newInstance();
+        return (TestSorter)Class.forName(sorter).getConstructor().newInstance();
       }
-      catch (Throwable ignore) { }
+      catch (Throwable t) {
+        System.err.println("Sorter initialization failed: " + sorter);
+        t.printStackTrace();
+      }
     }
 
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
-      @NotNull
       @Override
-      public List<Class<?>> sorted(@NotNull List<Class<?>> tests, @NotNull ToIntFunction<? super Class<?>> ranker) {
+      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> tests, @NotNull ToIntFunction<? super Class<?>> ranker) {
         return ContainerUtil.sorted(tests, Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }
     };
@@ -345,41 +358,38 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
-  public void fillTestCases(String rootPackage, List<? extends File> classesRoots) {
-    long before = System.currentTimeMillis();
-    for (File classesRoot : classesRoots) {
-      int oldCount = getClassesCount();
-      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      loadTestCases(classesRoot.getName(), classFinder.getClasses());
-      int newCount = getClassesCount();
-      if (newCount != oldCount) {
-        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classesRoot);
+  public void fillTestCases(String rootPackage, List<Path> classesRoots) {
+    long t = System.nanoTime();
+
+    for (Path classesRoot : classesRoots) {
+      int count = getClassesCount();
+      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
+      count = getClassesCount() - count;
+      if (count > 0) {
+        System.out.println("Loaded " + count + " classes from class root " + classesRoot);
       }
     }
 
     if (myClassList.isEmpty()) { // nothing valuable to test
       clearClasses();
     }
-    long after = System.currentTimeMillis();
 
-    String message = "Number of test classes found: " + getClassesCount() + " time to load: " + (after - before) / 1000 + "s.";
-    System.out.println(message);
+    t = (System.nanoTime() - t) / 1_000_000;
+    System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0) {
-      // There is build failure condition logic in TeamCity that depends on the logged message.
-      // Be careful with changing it.
-      System.out.println("Expected some tests to be executed, but no test classes were found.");
+    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreEmptySuite")) {
+      // Specially formatted error message will fail the build
+      // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
+      System.out.println("##teamcity[message text='Expected some tests to be executed, but no test classes were found.' status='ERROR']");
     }
   }
 
-  @Nullable
-  public static <T extends Annotation> T getAnnotationInHierarchy(@NotNull Class<?> clazz, @NotNull Class<T> annotationClass) {
+  public static @Nullable <T extends Annotation> T getAnnotationInHierarchy(@NotNull Class<?> clazz, @NotNull Class<T> annotationClass) {
     Class<?> current = clazz;
     while (current != null) {
       T annotation = current.getAnnotation(annotationClass);
-      if (annotation != null) {
-        return annotation;
-      }
+      if (annotation != null) return annotation;
       current = current.getSuperclass();
     }
     return null;

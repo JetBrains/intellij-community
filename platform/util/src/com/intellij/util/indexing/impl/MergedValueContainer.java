@@ -5,14 +5,13 @@ import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class MergedValueContainer<Value> extends ValueContainer<Value> {
-  private final List<ValueContainer<Value>> myContainers;
+  private final @NotNull List<? extends ValueContainer<Value>> myContainers;
   private int mySize;
 
-  public MergedValueContainer(@NotNull List<ValueContainer<Value>> containers) {
+  public MergedValueContainer(@NotNull List<? extends ValueContainer<Value>> containers) {
     if (containers.isEmpty()) {
       throw new IllegalArgumentException();
     }

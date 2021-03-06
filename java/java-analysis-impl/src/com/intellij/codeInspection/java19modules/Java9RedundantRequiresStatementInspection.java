@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -15,7 +15,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ import java.util.*;
 /**
  * @author Pavel.Dolgov
  */
-public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchInspectionTool {
+public final class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java9RedundantRequiresStatementInspection.class);
 
   private static final Key<Set<String>> IMPORTED_JAVA_PACKAGES = Key.create("imported_java_packages");
@@ -90,9 +89,8 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     return true;
   }
 
-  @Nullable
   @Override
-  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+  public @NotNull RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new RedundantRequiresStatementAnnotator();
   }
 
@@ -245,7 +243,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
       if (importedPackages == null) {
         PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
-        importedPackages = javaModule != null ? new THashSet<>() : DONT_COLLECT_PACKAGES;
+        importedPackages = javaModule != null ? new HashSet<>() : DONT_COLLECT_PACKAGES;
         refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
       }
       return importedPackages;
@@ -254,7 +252,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     private static void setImportedPackages(RefModule refModule, boolean collectPackages) {
       Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
       if (importedPackages == null) {
-        refModule.putUserData(IMPORTED_JAVA_PACKAGES, collectPackages ? new THashSet<>() : DONT_COLLECT_PACKAGES);
+        refModule.putUserData(IMPORTED_JAVA_PACKAGES, collectPackages ? new HashSet<>() : DONT_COLLECT_PACKAGES);
       }
     }
   }

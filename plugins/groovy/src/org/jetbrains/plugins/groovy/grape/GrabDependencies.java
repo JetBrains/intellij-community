@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -43,7 +29,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -59,8 +48,8 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -86,13 +75,13 @@ public class GrabDependencies implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return "Grab the artifacts";
+    return GroovyBundle.message("grab.intention.name");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Grab";
+    return GroovyBundle.message("grab.family.name");
   }
 
   @Override
@@ -168,15 +157,17 @@ public class GrabDependencies implements IntentionAction {
     assert vfile != null;
 
     if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
-      Messages.showErrorDialog("Sorry, but IDEA cannot @Grab the dependencies without Ivy. Please add Ivy to your module dependencies and re-run the action.",
-                               "Ivy Missing");
+      Messages.showErrorDialog(
+        GroovyBundle.message("grab.error.ivy.missing.message"),
+        GroovyBundle.message("grab.error.ivy.missing.title")
+      );
       return;
     }
 
     Map<String, String> queries = prepareQueries(file);
 
-    final Map<String, GeneralCommandLine> lines = new HashMap<>();
-    for (String grabText : queries.keySet()) {
+    final Map<@NlsSafe String, GeneralCommandLine> lines = new HashMap<>();
+    for (@NlsSafe String grabText : queries.keySet()) {
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
       //javaParameters.getVMParametersList().add("-Xdebug");
@@ -186,48 +177,52 @@ public class GrabDependencies implements IntentionAction {
         DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, GRAPE_RUNNER, false, true, true, false);
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
         javaParameters.getProgramParametersList().add(queries.get(grabText));
-        javaParameters.setUseDynamicClasspath(true);
+        javaParameters.setUseDynamicClasspath(project);
         lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
-        String title = "Can't run @Grab: " + ExceptionUtil.getMessage(e);
+        String title = GroovyBundle.message("grab.error.0.title", ExceptionUtil.getMessage(e));
+        //noinspection HardCodedStringLiteral
         NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
         return;
       }
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab Annotations") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, GroovyBundle.message("grab.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        int jarCount = 0;
-        String messages = "";
+        int totalJarCount = 0;
+        HtmlBuilder messages = new HtmlBuilder();
 
-        for (Map.Entry<String, GeneralCommandLine> entry : lines.entrySet()) {
+        for (Map.Entry<@NlsSafe String, GeneralCommandLine> entry : lines.entrySet()) {
           String grabText = entry.getKey();
           indicator.setText2(grabText);
           try {
             final GrapeProcessHandler handler = new GrapeProcessHandler(entry.getValue(), module);
             handler.startNotify();
             handler.waitFor();
-            jarCount += handler.jarCount;
-            messages += "<b>" + grabText + "</b>: " + handler.messages + "<p>";
+            int jarCount = handler.jarCount;
+            totalJarCount += jarCount;
+            messages.append(HtmlChunk.p().children(
+              HtmlChunk.raw(GroovyBundle.message("grab.jar.count", grabText, jarCount)),
+              handler.messages
+            ));
           }
           catch (ExecutionException e) {
             LOG.error(e);
           }
         }
 
-        final String finalMessages = messages;
-        final String title = jarCount + " Grape dependency jar" + (jarCount == 1 ? "" : "s") + " added";
-        NOTIFICATION_GROUP.createNotification(title, finalMessages, NotificationType.INFORMATION, null).notify(project);
+        final String title = GroovyBundle.message("grab.result.title", totalJarCount);
+        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION, null).notify(project);
       }
     });
   }
 
-  static Map<String, String> prepareQueries(PsiFile file) {
+  static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
     final Set<GrAnnotation> grabs = new LinkedHashSet<>();
-    final Set<GrAnnotation> excludes = new THashSet<>();
-    final Set<GrAnnotation> resolvers = new THashSet<>();
+    final Set<GrAnnotation> excludes = new HashSet<>();
+    final Set<GrAnnotation> resolvers = new HashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -244,7 +239,7 @@ public class GrabDependencies implements IntentionAction {
 
     Function<GrAnnotation, String> mapper = grAnnotation -> grAnnotation.getText();
     String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
-    LinkedHashMap<String, String> result = new LinkedHashMap<>();
+    LinkedHashMap<@NlsSafe String, String> result = new LinkedHashMap<>();
     for (GrAnnotation grab : grabs) {
       String grabText = grab.getText();
       result.put(grabText, (grabText + " " + common).trim());
@@ -258,8 +253,8 @@ public class GrabDependencies implements IntentionAction {
   }
 
   private static class GrapeProcessHandler extends OSProcessHandler {
-    private final StringBuilder myStdOut = new StringBuilder();
-    private final StringBuilder myStdErr = new StringBuilder();
+    private final @NlsSafe StringBuilder myStdOut = new StringBuilder();
+    private final @NlsSafe StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;
 
     GrapeProcessHandler(GeneralCommandLine commandLine, Module module) throws ExecutionException {
@@ -314,7 +309,7 @@ public class GrabDependencies implements IntentionAction {
     }
 
     int jarCount;
-    String messages = "";
+    HtmlChunk messages = HtmlChunk.empty();
 
     @Override
     protected void notifyProcessTerminated(int exitCode) {
@@ -336,12 +331,11 @@ public class GrabDependencies implements IntentionAction {
         }
         WriteAction.runAndWait(() -> {
           jarCount = jars.size();
-          messages = jarCount + " jar";
-          if (jarCount != 1) {
-            messages += "s";
-          }
           if (jarCount == 0) {
-            messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
+            messages = new HtmlBuilder()
+              .append(processOutputChunk(myStdOut.toString()))
+              .append(processOutputChunk(myStdErr.toString()))
+              .toFragment();
           }
           if (!jars.isEmpty()) {
             addGrapeDependencies(jars);
@@ -352,5 +346,16 @@ public class GrabDependencies implements IntentionAction {
         super.notifyProcessTerminated(exitCode);
       }
     }
+  }
+
+  private static @NotNull HtmlChunk processOutputChunk(@NlsSafe @NotNull String string) {
+    if (string.isEmpty()) {
+      return HtmlChunk.empty();
+    }
+    @NlsSafe String[] lines = string.split("\n");
+    return new HtmlBuilder().appendWithSeparators(
+      HtmlChunk.br(),
+      ContainerUtil.map(lines, line -> HtmlChunk.text(line))
+    ).wrapWith("p");
   }
 }

@@ -17,14 +17,17 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
@@ -78,6 +81,10 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
     return true;
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new SurroundWithQuotesAnnotationParameterValueFix(PsiTreeUtil.findSameElementInCopy(myValue, target), myExpectedType);
+  }
 
   public static void register(@NotNull QuickFixActionRegistrar registrar,
                               @NotNull PsiJavaCodeReferenceElement ref) {

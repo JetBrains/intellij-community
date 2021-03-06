@@ -16,10 +16,11 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -35,10 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
-  private final Supplier<String> myLinearBranchesAction;
-  private final Supplier<String> myLinearBranchesDescription;
-  private final Supplier<String> myMergesAction;
-  private final Supplier<String> myMergesDescription;
+  private final Supplier<@NlsActions.ActionText String> myLinearBranchesAction;
+  private final Supplier<@NlsActions.ActionDescription String> myLinearBranchesDescription;
+  private final Supplier<@NlsActions.ActionText String> myMergesAction;
+  private final Supplier<@NlsActions.ActionDescription String> myMergesDescription;
 
   protected CollapseOrExpandGraphAction(@NotNull Supplier<String> linearBranchesAction,
                                         @NotNull Supplier<String> linearBranchesDescription,
@@ -63,22 +64,27 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    e.getPresentation().setEnabled(ui != null && !ui.getDataPack().isEmpty() &&
-                                   ui.getFilterUi().getFilters().getDetailsFilters().isEmpty());
-    if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-        properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
-      e.getPresentation().setText(myMergesAction.get());
-      e.getPresentation().setDescription(myMergesDescription.get());
-    }
-    else {
-      e.getPresentation().setText(myLinearBranchesAction.get());
-      e.getPresentation().setDescription(myLinearBranchesDescription.get());
+    boolean visible = ui != null && ui.getDataPack().getVisibleGraph().getActionController().isActionSupported(getGraphAction());
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && !ui.getDataPack().isEmpty());
+    if (visible) {
+      if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
+          properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+        e.getPresentation().setText(myMergesAction.get());
+        e.getPresentation().setDescription(myMergesDescription.get());
+      }
+      else {
+        e.getPresentation().setText(myLinearBranchesAction.get());
+        e.getPresentation().setDescription(myLinearBranchesDescription.get());
+      }
     }
   }
 
   protected abstract void executeAction(@NotNull MainVcsLogUi vcsLogUi);
 
-  protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull String title) {
+  protected abstract @NotNull GraphAction getGraphAction();
+
+  protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull @NlsContexts.ProgressTitle String title) {
     VisiblePack dataPack = logUi.getDataPack();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ActionController<Integer> actionController = dataPack.getVisibleGraph().getActionController();

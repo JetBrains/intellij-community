@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,7 +33,7 @@ public class JavaOverrideMethodsHandler implements ContextAwareActionHandler, La
     if (aClass == null) return;
 
     if (OverrideImplementExploreUtil.getMethodSignaturesToOverride(aClass).isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
+      HintManager.getInstance().showErrorHint(editor, JavaBundle.message("override.methods.error.no.methods"));
       return;
     }
     OverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);

@@ -35,12 +35,15 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
 
     final List<NamedScope> result = new ArrayList<>();
     result.add(new ChangeListScope(changeListManager));
-    List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
-    boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
-                                  changeLists.size() == 1 && changeLists.get(0).isBlank();
-    if (!skipSingleDefaultCL) {
-      for (ChangeList list : changeLists) {
-        result.add(new ChangeListScope(changeListManager, list.getName()));
+
+    if (changeListManager.areChangeListsEnabled()) {
+      List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
+      boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
+                                    changeLists.size() == 1 && changeLists.get(0).isBlank();
+      if (!skipSingleDefaultCL) {
+        for (ChangeList list : changeLists) {
+          result.add(new ChangeListScope(changeListManager, list.getName()));
+        }
       }
     }
     return result;
@@ -53,9 +56,11 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     if (ChangeListScope.ALL_CHANGED_FILES_SCOPE_NAME.equals(name)) {
       return new ChangeListScope(changeListManager);
     }
-    final LocalChangeList changeList = changeListManager.findChangeList(name);
-    if (changeList != null) {
-      return new ChangeListScope(changeListManager, changeList.getName());
+    if (changeListManager.areChangeListsEnabled()) {
+      final LocalChangeList changeList = changeListManager.findChangeList(name);
+      if (changeList != null) {
+        return new ChangeListScope(changeListManager, changeList.getName());
+      }
     }
     return null;
   }
@@ -65,7 +70,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     if (place == ScopePlace.SETTING) {
       if (myProject.isDefault()) return false;
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      return changeListManager.findChangeList(scope.getName()) != null;
+      return changeListManager.findChangeList(scope.getScopeId()) != null;
     }
     return false;
   }

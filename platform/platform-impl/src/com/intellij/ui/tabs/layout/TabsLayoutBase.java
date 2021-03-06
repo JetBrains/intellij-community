@@ -3,11 +3,13 @@ package com.intellij.ui.tabs.layout;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,4 +198,10 @@ public abstract class TabsLayoutBase implements TabsLayout {
     }
   }
 
+  @Override
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public int getDropSideFor(Point point) {
+    JComponent component = myCallback.getComponent();
+    return TabsUtil.getDropSideFor(point, component);
+  }
 }

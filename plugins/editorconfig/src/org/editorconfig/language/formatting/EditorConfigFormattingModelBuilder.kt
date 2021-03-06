@@ -1,22 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.formatting
 
-import com.intellij.formatting.FormattingModel
-import com.intellij.formatting.FormattingModelBuilder
-import com.intellij.formatting.FormattingModelProvider
-import com.intellij.formatting.SpacingBuilder
-import com.intellij.psi.PsiElement
+import com.intellij.formatting.*
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.psi.EditorConfigElementTypes
 
 class EditorConfigFormattingModelBuilder : FormattingModelBuilder {
-  override fun createModel(element: PsiElement, settings: CodeStyleSettings): FormattingModel {
+  override fun createModel(formattingContext: FormattingContext): FormattingModel {
+    val settings = formattingContext.codeStyleSettings
     val spacingBuilder = createSpacingBuilder(settings)
     val commonSettings = settings.getCommonSettings(EditorConfigLanguage)
     val shouldAlignSeparators = commonSettings.ALIGN_GROUP_FIELD_DECLARATIONS
-    val root = EditorConfigFormattingBlock(element.node, spacingBuilder, shouldAlignSeparators)
-    return FormattingModelProvider.createFormattingModelForPsiFile(element.containingFile, root, settings)
+    val root = EditorConfigFormattingBlock(formattingContext.node, spacingBuilder, shouldAlignSeparators)
+    return FormattingModelProvider.createFormattingModelForPsiFile(formattingContext.containingFile, root, settings)
   }
 
   private fun createSpacingBuilder(settings: CodeStyleSettings): SpacingBuilder {

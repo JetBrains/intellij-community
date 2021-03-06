@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.model.settings;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -45,7 +46,7 @@ public enum LocationSettingType {
   /**
    * @return human-readable description of the current setting type
    */
-  public String getDescription(@NotNull ProjectSystemId externalSystemId) {
+  public @Nls String getDescription(@NotNull ProjectSystemId externalSystemId) {
     return ExternalSystemBundle.message(myDescriptionKey, externalSystemId.getReadableName());
   }
 

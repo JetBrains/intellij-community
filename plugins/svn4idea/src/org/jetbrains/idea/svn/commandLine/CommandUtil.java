@@ -4,7 +4,9 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
@@ -21,11 +23,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CommandUtil {
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static java.util.Arrays.asList;
+
+public final class CommandUtil {
 
   private static final Logger LOG = Logger.getInstance(CommandUtil.class);
 
   private static final Map<Class<?>, JAXBContext> cachedContexts = new ConcurrentHashMap<>();
+
+  private static final @NonNls String IGNORE_SPACE_CHANGE_DIFF_EXTENSION = "--ignore-space-change";
+  private static final @NonNls String IGNORE_ALL_SPACE_DIFF_EXTENSION = "--ignore-all-space";
+  private static final @NonNls String IGNORE_EOL_STYLE_DIFF_EXTENSION = "--ignore-eol-style";
 
   /**
    * Puts given value to parameters if condition is satisfied
@@ -34,10 +43,14 @@ public class CommandUtil {
    * @param condition
    * @param value
    */
-  public static void put(@NotNull List<? super String> parameters, boolean condition, @NotNull String value) {
+  public static void put(@NotNull List<? super String> parameters, boolean condition, @NonNls @NotNull String value) {
     if (condition) {
       parameters.add(value);
     }
+  }
+
+  public static void put(@NotNull List<? super String> parameters, @NonNls @NotNull String @NotNull ... values) {
+    ContainerUtil.addAll(parameters, values);
   }
 
   public static void put(@NotNull List<? super String> parameters, @NotNull File path) {
@@ -47,7 +60,8 @@ public class CommandUtil {
   public static void put(@NotNull List<? super String> parameters, @NotNull File path, boolean usePegRevision) {
     if (usePegRevision) {
       put(parameters, path);
-    } else {
+    }
+    else {
       parameters.add(path.getAbsolutePath());
     }
   }
@@ -99,26 +113,22 @@ public class CommandUtil {
 
   public static void put(@NotNull List<? super String> parameters, @Nullable Depth depth, boolean sticky) {
     if (depth != null && !Depth.UNKNOWN.equals(depth)) {
-      parameters.add("--depth");
-      parameters.add(depth.getName());
+      put(parameters, "--depth", depth.getName());
 
       if (sticky) {
-        parameters.add("--set-depth");
-        parameters.add(depth.getName());
+        put(parameters, "--set-depth", depth.getName());
       }
     }
   }
 
   public static void put(@NotNull List<? super String> parameters, @Nullable Revision revision) {
     if (revision != null && !Revision.UNDEFINED.equals(revision) && !Revision.WORKING.equals(revision) && revision.isValid()) {
-      parameters.add("--revision");
-      parameters.add(format(revision));
+      put(parameters, "--revision", format(revision));
     }
   }
 
   public static void put(@NotNull List<? super String> parameters, @NotNull Revision startRevision, @NotNull Revision endRevision) {
-    parameters.add("--revision");
-    parameters.add(format(startRevision) + ":" + format(endRevision));
+    put(parameters, "--revision", format(startRevision) + ":" + format(endRevision));
   }
 
   @NotNull
@@ -127,34 +137,25 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<? super String> parameters, @Nullable DiffOptions diffOptions) {
-    if (diffOptions != null) {
-      StringBuilder builder = new StringBuilder();
+    if (diffOptions == null) return;
 
-      if (diffOptions.isIgnoreAllWhitespace()) {
-        builder.append(" --ignore-space-change");
-      }
-      if (diffOptions.isIgnoreAmountOfWhitespace()) {
-        builder.append(" --ignore-all-space");
-      }
-      if (diffOptions.isIgnoreEOLStyle()) {
-        builder.append(" --ignore-eol-style");
-      }
+    List<String> extensions = asList(
+      diffOptions.isIgnoreAllWhitespace() ? IGNORE_SPACE_CHANGE_DIFF_EXTENSION : null,
+      diffOptions.isIgnoreAmountOfWhitespace() ? IGNORE_ALL_SPACE_DIFF_EXTENSION : null,
+      diffOptions.isIgnoreEOLStyle() ? IGNORE_EOL_STYLE_DIFF_EXTENSION : null
+    );
+    String value = join(extensions, " ");
 
-      String value = builder.toString().trim();
-
-      if (!StringUtil.isEmpty(value)) {
-        parameters.add("--extensions");
-        parameters.add(value);
-      }
+    if (!StringUtil.isEmpty(value)) {
+      put(parameters, "--extensions", value);
     }
   }
 
   public static void putChangeLists(@NotNull List<? super String> parameters, @Nullable Iterable<String> changeLists) {
-    if (changeLists != null) {
-      for (String changeList : changeLists) {
-        parameters.add("--cl");
-        parameters.add(changeList);
-      }
+    if (changeLists == null) return;
+
+    for (String changeList : changeLists) {
+      put(parameters, "--cl", changeList);
     }
   }
 

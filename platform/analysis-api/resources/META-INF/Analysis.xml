@@ -8,8 +8,6 @@
     <extensionPoint name="gotoDeclarationHandler" interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"
                     dynamic="true"/>
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper" dynamic="true"/>
-    <extensionPoint name="completion.ignoringDumbnessAllowed" beanClass="com.intellij.codeInsight.completion.CompletionIgnoreDumbnessEP"
-                    dynamic="true"/>
     <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.Weigher"/>
     </extensionPoint>
@@ -47,6 +45,11 @@
     <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
+
+    <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType" dynamic="true"/>
+    <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
+
+    <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>

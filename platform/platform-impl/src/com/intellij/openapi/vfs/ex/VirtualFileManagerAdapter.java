@@ -2,11 +2,13 @@
 package com.intellij.openapi.vfs.ex;
 
 import com.intellij.openapi.vfs.VirtualFileManagerListener;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated Use {@link VirtualFileManagerListener} directly.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class VirtualFileManagerAdapter implements VirtualFileManagerListener {
   @Override
   public void beforeRefreshStart(boolean asynchronous) {

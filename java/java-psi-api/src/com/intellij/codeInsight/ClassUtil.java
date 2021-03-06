@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ClassUtil {
+public final class ClassUtil {
   private ClassUtil() { }
 
   @Nullable
@@ -49,7 +34,7 @@ public class ClassUtil {
     if (superClass != null && !superClass.hasModifierProperty(PsiModifier.ABSTRACT) && !superClass.isEnum() && aClass.getImplementsListTypes().length == 0) {
       return null;
     }
-    Set<PsiMethod> alreadyImplemented = new THashSet<>();
+    Set<PsiMethod> alreadyImplemented = new HashSet<>();
     for (HierarchicalMethodSignature signatureHierarchical : aClass.getVisibleSignatures()) {
       for (PsiMethod superS : signatureHierarchical.getMethod().findSuperMethods()) {
         add(superS, alreadyImplemented);
@@ -83,9 +68,9 @@ public class ClassUtil {
     return null;
   }
 
-  private static boolean add(PsiMethod method, Set<? super PsiMethod> alreadyImplemented) {
+  private static boolean add(PsiMethod method, @NotNull Set<? super PsiMethod> alreadyImplemented) {
     boolean already = alreadyImplemented.add(method);
-    if (!already) return already;
+    if (!already) return false;
 
     for (PsiMethod superSig : method.findSuperMethods()) {
       already &= add(superSig, alreadyImplemented);

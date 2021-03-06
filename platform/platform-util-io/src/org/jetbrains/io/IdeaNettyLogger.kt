@@ -4,7 +4,7 @@ package org.jetbrains.io
 import com.intellij.openapi.diagnostic.Logger
 import io.netty.util.internal.logging.AbstractInternalLogger
 
-internal class IdeaNettyLogger : AbstractInternalLogger("netty") {
+internal class IdeaNettyLogger : AbstractInternalLogger("netty") {//NON-NLS
   private fun getLogger() = Logger.getInstance("netty")
 
   override fun isInfoEnabled() = false

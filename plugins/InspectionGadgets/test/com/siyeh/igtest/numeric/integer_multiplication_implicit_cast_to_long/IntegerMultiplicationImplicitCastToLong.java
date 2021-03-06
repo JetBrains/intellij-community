@@ -85,4 +85,8 @@ public class IntegerMultiplicationImplicitCastToLong {
             }
         }
     }
+    
+    void testSquare(int val, int square) {
+        org.junit.Assert.assertEquals(val * val, square);
+    }
 }

@@ -1,5 +1,7 @@
 package org.jetbrains.idea.maven.aether;
 
+import org.jetbrains.annotations.Nls;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -10,7 +12,7 @@ public interface ProgressConsumer {
     }
   };
 
-  void consume(String message);
+  void consume(@Nls String message);
 
   default boolean isCanceled() {
     return false;

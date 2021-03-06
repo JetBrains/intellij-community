@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ui.TreeExpandCollapse;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Assertion;
 import com.intellij.util.ExceptionUtil;
@@ -56,6 +43,7 @@ public class TreeUtilTest extends TestCase {
     DefaultMutableTreeNode child11 = new DefaultMutableTreeNode("11");
     model.insertNodeInto(child11, child1, 0);
     JTree tree = new Tree(model);
+    TreeTestUtil.assertTreeUI(tree);
     TreeExpandCollapse.expandAll(tree);
     tree.clearSelection();
     TreeUtil.removeSelected(tree);
@@ -90,6 +78,7 @@ public class TreeUtilTest extends TestCase {
     DefaultMutableTreeNode node2 = new DefaultMutableTreeNode("2");
     model.insertNodeInto(node2, node1, 0);
     JTree tree = new Tree(model);
+    TreeTestUtil.assertTreeUI(tree);
     TreeExpandCollapse.expandAll(tree);
     tree.setSelectionPath(TreeUtil.getPathFromRoot(node2));
     TreeUtil.removeSelected(tree);
@@ -110,37 +99,10 @@ public class TreeUtilTest extends TestCase {
     DefaultMutableTreeNode last = new DefaultMutableTreeNode("3");
     model.insertNodeInto(last, root, 2);
     JTree tree = new Tree(model);
+    TreeTestUtil.assertTreeUI(tree);
     tree.setSelectionPath(TreeUtil.getPathFromRoot(last));
     TreeUtil.removeSelected(tree);
     assertSame(middle, tree.getSelectionPath().getLastPathComponent());
-  }
-
-  public void testFindCommonPath() {
-    TreePath rootPath = new TreePath("root");
-    TreePath path1 = rootPath.pathByAddingChild("1");
-    TreePath path1_1 = path1.pathByAddingChild("1_1");
-    TreePath path1_2 = path1.pathByAddingChild("1_2");
-    TreePath path2_1 = rootPath.pathByAddingChild("2").pathByAddingChild("2_1");
-    assertEquals(path1, TreeUtil.findCommonPath(new TreePath[]{path1_1, path1_2}));
-    assertEquals(path1, TreeUtil.findCommonPath(new TreePath[]{path1, path1_1}));
-    assertEquals(rootPath, TreeUtil.findCommonPath(new TreePath[]{path1_1, path1_2, path2_1}));
-  }
-
-  public void testSelectMaximals() {
-    String e1 = "a";
-    String e2 = "b";
-    TreePath path1 = new TreePath(new Object[]{e1, e2, "c"});
-    TreePath path2 = new TreePath(new Object[]{e1, e2});
-    TreePath path2a = new TreePath(new Object[]{e1, e2});
-    TreePath path3 = new TreePath("d");
-    TreePath[] maximals = TreeUtil.selectMaximals(new TreePath[]{path1, path2, path3});
-    Assertion.compareUnordered(maximals, new TreePath[]{path2, path3});
-    assertEquals(1, TreeUtil.selectMaximals(new TreePath[]{path2, path2a}).length);
-  }
-
-  public void testSelectMaximalsWhenNone() {
-    CHECK.empty(TreeUtil.selectMaximals(null));
-    CHECK.empty(TreeUtil.selectMaximals(new TreePath[0]));
   }
 
   public void testSorting() {

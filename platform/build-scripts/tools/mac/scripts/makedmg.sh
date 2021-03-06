@@ -84,7 +84,7 @@ sync;sync;sync
 hdiutil detach "$device"
 
 log "Compressing r/w disk image to ${RESULT_DMG}..."
-hdiutil convert "$TEMP_DMG" -quiet -format UDZO -imagekey zlib-level=9 -o "$RESULT_DMG"
+hdiutil convert "$TEMP_DMG" -quiet -format ULFO -imagekey lzfse-level=9 -o "$RESULT_DMG"
 rm -f "$TEMP_DMG"
 
 hdiutil internet-enable -no "$RESULT_DMG"

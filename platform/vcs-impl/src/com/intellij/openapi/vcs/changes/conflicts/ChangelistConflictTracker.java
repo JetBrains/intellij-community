@@ -43,6 +43,11 @@ public final class ChangelistConflictTracker {
   private final Object myCheckSetLock;
   private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
+  @NotNull
+  public static ChangelistConflictTracker getInstance(@NotNull Project project) {
+    return ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker();
+  }
+
   public ChangelistConflictTracker(@NotNull Project project, @NotNull ChangeListManager changeListManager) {
     myProject = project;
 
@@ -54,7 +59,7 @@ public final class ChangelistConflictTracker {
     myDocumentListener = new BulkAwareDocumentListener.Simple() {
       @Override
       public void afterDocumentChange(@NotNull Document document) {
-        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get()) {
+        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get() || !myChangeListManager.areChangeListsEnabled()) {
           return;
         }
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -91,6 +96,11 @@ public final class ChangelistConflictTracker {
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
         clearChanges(newDefaultList.getChanges());
       }
+
+      @Override
+      public void changeListAvailabilityChanged() {
+        optionsChanged();
+      }
     };
   }
 
@@ -108,12 +118,12 @@ public final class ChangelistConflictTracker {
     }
     if (files.isEmpty()) return;
 
-    myChangeListManager.invokeAfterUpdate(() -> {
+    myChangeListManager.invokeAfterUpdate(true, () -> {
       final LocalChangeList list = myChangeListManager.getDefaultChangeList();
       for (VirtualFile file : files) {
         checkOneFile(file, list);
       }
-    }, InvokeAfterUpdateMode.SILENT, null, null);
+    });
   }
 
   private void checkOneFile(@NotNull VirtualFile file, @NotNull LocalChangeList defaultList) {
@@ -242,7 +252,7 @@ public final class ChangelistConflictTracker {
   }
 
   public boolean hasConflict(@NotNull VirtualFile file) {
-    if (!myOptions.isTrackingEnabled()) {
+    if (!myOptions.isTrackingEnabled() || !myChangeListManager.areChangeListsEnabled()) {
       return false;
     }
     String path = file.getPath();

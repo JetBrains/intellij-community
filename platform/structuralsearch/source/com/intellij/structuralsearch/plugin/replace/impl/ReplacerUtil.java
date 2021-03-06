@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,18 +6,19 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.structuralsearch.StructuralSearchProfile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class ReplacerUtil {
+public final class ReplacerUtil {
   private ReplacerUtil() {
   }
 
-  public static PsiElement copySpacesAndCommentsBefore(PsiElement elementToReplace,
-                                                       PsiElement[] patternElements,
-                                                       String replacementToMake,
-                                                       PsiElement elementParent) {
+  public static PsiElement copySpacesAndCommentsBefore(@NotNull PsiElement elementToReplace,
+                                                       PsiElement @NotNull [] patternElements,
+                                                       @NotNull String replacementToMake,
+                                                       @NotNull PsiElement elementParent) {
     int i = 0;
     while (true) {    // if it goes out of bounds then deep error happens
       if (!(patternElements[i] instanceof PsiComment || patternElements[i] instanceof PsiWhiteSpace)) {

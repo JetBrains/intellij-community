@@ -1,16 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.HoverHyperlinkLabel;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +34,7 @@ import java.util.List;
 public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyText {
 
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
-  private static final Icon EMPTY_ICON = EmptyIcon.create(WARNING_ICON);
+  private static final Icon EMPTY_ICON = IconManager.getInstance().createEmptyIcon(WARNING_ICON);
   @NonNls private static final String REMOVE_KEY = "REMOVE_SELECTED";
 
   public interface RowHeightProvider {
@@ -44,7 +42,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   public interface Fix extends Runnable {
-    String getTitle();
+    @NlsContexts.LinkLabel String getTitle();
   }
 
   private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
@@ -157,8 +155,12 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return myTable.getEmptyText();
   }
 
+  public void setShowGrid(boolean v) {
+    myTable.setShowGrid(v);
+  }
+
   private void createUIComponents() {
-    myTable = new ChangesTrackingTableView<Item>() {
+    myTable = new ChangesTrackingTableView<>() {
       @Override
       protected void onCellValueChanged(int row, int column, Object value) {
         final Item original = getItems().get(row);
@@ -352,7 +354,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myTable.repaint();
   }
 
-  protected void displayMessageAndFix(@Nullable Pair<String, Fix> messageAndFix) {
+  protected void displayMessageAndFix(@Nullable Pair<@NlsContexts.DialogMessage String, Fix> messageAndFix) {
     if (messageAndFix != null) {
       myMessageLabel.setText(messageAndFix.first);
       myMessageLabel.setIcon(WARNING_ICON);
@@ -380,9 +382,9 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
 
   private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
-    private final NullableComputable<String> myWarningProvider;
+    private final NullableComputable<@NlsContexts.HintText String> myWarningProvider;
 
-    WarningIconCellRenderer(NullableComputable<String> warningProvider) {
+    WarningIconCellRenderer(NullableComputable<@NlsContexts.HintText String> warningProvider) {
       myWarningProvider = warningProvider;
     }
 

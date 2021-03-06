@@ -29,7 +29,8 @@ public class OffsetTranslator implements Disposable {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
-    myTranslation.addFirst(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end), replacement, 0, false));
+    myTranslation.addFirst(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end),
+                                                 replacement, 0, false, start, end-start, start));
     Disposer.register(originalFile.getProject(), this);
 
     final LinkedList<DocumentEvent> sinceCommit = new LinkedList<>();
@@ -38,7 +39,7 @@ public class OffsetTranslator implements Disposable {
       public void documentChanged(@NotNull DocumentEvent e) {
         if (isUpToDate()) {
           DocumentEventImpl inverse =
-            new DocumentEventImpl(originalDocument, e.getOffset(), e.getNewFragment(), e.getOldFragment(), 0, false);
+            new DocumentEventImpl(originalDocument, e.getOffset(), e.getNewFragment(), e.getOldFragment(), 0, false, e.getOffset(), e.getNewFragment().length(), e.getOffset());
           sinceCommit.addLast(inverse);
         }
       }

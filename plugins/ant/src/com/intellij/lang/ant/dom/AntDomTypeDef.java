@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
@@ -52,7 +53,7 @@ public abstract class AntDomTypeDef extends AntDomCustomClasspathComponent{
     return CustomAntElementsRegistry.getInstance(getAntProject()).hasTypeLoadingErrors(this);
   }
 
-  public final List<String> getErrorDescriptions() {
+  public final List<@NlsSafe String> getErrorDescriptions() {
     return CustomAntElementsRegistry.getInstance(getAntProject()).getTypeLoadingErrors(this);
   }
   

@@ -84,6 +84,11 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   }
 
   @Override
+  public boolean areResourceFilesFromSourceRootsCopiedToOutput() {
+    return false;
+  }
+
+  @Override
   public boolean addCustomModuleRoots(@NotNull OrderRootType type,
                                       @NotNull ModuleRootModel rootModel,
                                       @NotNull Collection<String> result,
@@ -136,11 +141,11 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     if (directorySet == null) return;
     if (isGradleAwareMake) {
       for (File outputDir : directorySet.getGradleOutputDirs()) {
-        result.add(VfsUtilCore.pathToUrl(outputDir.getAbsolutePath()));
+        result.add(VfsUtilCore.pathToUrl(outputDir.getPath()));
       }
     }
     else if (!directorySet.isCompilerOutputPathInherited()) {
-      result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getAbsolutePath()));
+      result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getPath()));
     }
   }
 }

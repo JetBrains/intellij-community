@@ -6,13 +6,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.application.WriteAction;
@@ -43,6 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,17 +57,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
-
-  @Override
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    final List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
-    return elements != null && !elements.isEmpty() && elements.get(0) instanceof PsiMethod ? elements.toArray() : null;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
+  private static final Set<String> NON_DOCUMENTED_JETBRAINS_ANNOTATIONS = Set.of(
+    "org.jetbrains.annotations.Debug.Renderer",
+    "org.intellij.lang.annotations.Flow",
+    "org.intellij.lang.annotations.Subst",
+    "org.jetbrains.annotations.Async.Schedule",
+    "org.jetbrains.annotations.Async.Execute"
+  );
 
   @Override
   @Nullable
@@ -115,7 +110,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   public void showParameterInfo(@NotNull final PsiExpressionList element, @NotNull final CreateParameterInfoContext context) {
     int offset = element.getTextRange().getStartOffset();
     if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
-      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(context.getEditor(), offset);
+      ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(context.getEditor(), offset);
       PsiElement parent = element.getParent();
       if (parent instanceof PsiCall && controller != null && controller.isHintShown(false)) {
         Object highlighted = controller.getHighlighted();
@@ -305,7 +300,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiMethod method = (PsiMethod)candidate.getElement();
       if (!method.isValid()) continue;
       if (candidate instanceof MethodCandidateInfo && !((MethodCandidateInfo)candidate).getSiteSubstitutor().isValid()) continue;
-      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(o, candidate, method == realResolve);
+      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(candidate, method == realResolve);
       assert substitutor != null;
 
       if (!method.isValid() || !substitutor.isValid()) {
@@ -487,7 +482,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {
+  private static PsiSubstitutor getCandidateInfoSubstitutor(CandidateInfo candidate, boolean resolveResult) {
     return candidate instanceof MethodCandidateInfo &&
            ((MethodCandidateInfo)candidate).isInferencePossible()
            ? ((MethodCandidateInfo)candidate)
@@ -656,7 +651,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     PsiParameter[] parms = method.getParameterList().getParameters();
     int numParams = parms.length;
-    StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
+    @Nls StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
     if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
       if (!method.isConstructor()) {
@@ -697,7 +692,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
           if (context.isSingleParameterInfo()) buffer.append("<b>");
           appendModifierList(buffer, param);
-          String type = paramType.getPresentableText(true);
+          String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
           buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
           String name = param.getName();
           if (!context.isSingleParameterInfo()) {
@@ -766,12 +761,18 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
+    if (DumbService.isDumb(owner.getProject())) return;
+
     int lastSize = buffer.length();
     Set<String> shownAnnotations = new HashSet<>();
-    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, !DumbService.isDumb(owner.getProject()))) {
+    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, true)) {
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
+        if (resolved == null) {
+          String qualifiedName = annotation.getQualifiedName();
+          if (NON_DOCUMENTED_JETBRAINS_ANNOTATIONS.contains(qualifiedName)) continue;
+        }
         if (resolved instanceof PsiClass &&
             (!JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)resolved) ||
              AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
@@ -800,7 +801,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiElement parameterOwner = context.getParameterOwner();
       PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

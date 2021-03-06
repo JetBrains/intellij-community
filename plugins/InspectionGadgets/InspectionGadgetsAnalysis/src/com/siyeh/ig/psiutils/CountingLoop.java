@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -30,26 +16,29 @@ import static com.intellij.util.ObjectUtils.tryCast;
  *
  * @author Tagir Valeev
  */
-public class CountingLoop {
+public final class CountingLoop {
   final @NotNull PsiLocalVariable myCounter;
   final @NotNull PsiLoopStatement myLoop;
   final @NotNull PsiExpression myInitializer;
   final @NotNull PsiExpression myBound;
   final boolean myIncluding;
   final boolean myDescending;
+  final boolean myMayOverflow;
 
   private CountingLoop(@NotNull PsiLoopStatement loop,
                        @NotNull PsiLocalVariable counter,
                        @NotNull PsiExpression initializer,
                        @NotNull PsiExpression bound,
                        boolean including,
-                       boolean descending) {
+                       boolean descending,
+                       boolean mayOverflow) {
     myInitializer = initializer;
     myCounter = counter;
     myLoop = loop;
     myBound = bound;
     myIncluding = including;
     myDescending = descending;
+    myMayOverflow = mayOverflow;
   }
 
   /**
@@ -98,6 +87,14 @@ public class CountingLoop {
     return myDescending;
   }
 
+  /**
+   * @return true if the loop variable may experience integer overflow before reaching the bound, 
+   * like for(int i = 10; i != -10; i++) will go through MAX_VALUE and MIN_VALUE. 
+   */
+  public boolean mayOverflow() {
+    return myMayOverflow;
+  }
+
   @Nullable
   public static CountingLoop from(PsiForStatement forStatement) {
     // check that initialization is for(int/long i = <initial_value>;...;...)
@@ -143,6 +140,6 @@ public class CountingLoop {
     if (!relationType.isSubRelation(RelationType.LT)) return null;
     if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
     if(VariableAccessUtils.variableIsAssigned(counter, forStatement.getBody())) return null;
-    return new CountingLoop(forStatement, counter, initializer, bound, closed, descending);
+    return new CountingLoop(forStatement, counter, initializer, bound, closed, descending, relationType == RelationType.NE);
   }
 }

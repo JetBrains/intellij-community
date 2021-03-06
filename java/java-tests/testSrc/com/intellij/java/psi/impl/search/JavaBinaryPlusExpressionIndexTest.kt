@@ -1,17 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.search
 
-import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.indexing.FileContentImpl
-import com.intellij.util.indexing.IndexingDataKeys
 import org.intellij.lang.annotations.Language
 
 class JavaBinaryPlusExpressionIndexTest : BasePlatformTestCase() {
   fun testIndex() {
     @Language("JAVA")
-    val file = myFixture.configureByText(StdFileTypes.JAVA, """
+    val file = myFixture.configureByText(JavaFileType.INSTANCE, """
             package org.some;
 
             class Xyz {

@@ -3,11 +3,12 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class PresentableId implements Cloneable {
+public final class PresentableId implements Cloneable {
   private final @Nullable String myId;
   private final @Nullable String myName;
 
@@ -60,6 +61,7 @@ public class PresentableId implements Cloneable {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "PresentableId{" +
             "myId='" + myId + '\'' +

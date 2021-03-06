@@ -1,11 +1,10 @@
 PsiJavaFile:Type5.java
   PsiTypeElement:Object[]...
-    PsiTypeElement:Object[]
-      PsiTypeElement:Object
-        PsiJavaCodeReferenceElement:Object
-          PsiIdentifier:Object('Object')
-          PsiReferenceParameterList
-            <empty list>
-      PsiJavaToken:LBRACKET('[')
-      PsiJavaToken:RBRACKET(']')
+    PsiTypeElement:Object
+      PsiJavaCodeReferenceElement:Object
+        PsiIdentifier:Object('Object')
+        PsiReferenceParameterList
+          <empty list>
+    PsiJavaToken:LBRACKET('[')
+    PsiJavaToken:RBRACKET(']')
     PsiJavaToken:ELLIPSIS('...')

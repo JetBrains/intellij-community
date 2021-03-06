@@ -6,7 +6,6 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.*;
@@ -22,6 +21,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,10 +32,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -80,6 +81,7 @@ public class CompilerManagerImpl extends CompilerManager {
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @NonInjectable
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public CompilerManagerImpl(@NotNull Project project, @SuppressWarnings("unused") @NotNull MessageBus messageBus) {
     this(project);
   }
@@ -91,7 +93,7 @@ public class CompilerManagerImpl extends CompilerManager {
     for (ProjectExtensionPointName<?> ep : Arrays.asList(COMPILABLE_TYPE_EP, BackendCompiler.EP_NAME)) {
       ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, project);
     }
-    COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<CompilerFactory>() {
+    COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull CompilerFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
         Compiler[] compilers = factory.createCompilers(CompilerManagerImpl.this);
@@ -116,7 +118,7 @@ public class CompilerManagerImpl extends CompilerManager {
           removeCompiler(compiler);
         }
       }
-    }, true, project);
+    }, true, null);
 
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();
@@ -333,7 +335,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, String contentName, Runnable onTaskFinished) {
+  public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, @NlsContexts.TabTitle String contentName, Runnable onTaskFinished) {
     final CompileDriver compileDriver = new CompileDriver(myProject);
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
   }
@@ -344,12 +346,6 @@ public class CompilerManagerImpl extends CompilerManager {
   public void addCompilationStatusListener(@NotNull CompilationStatusListener listener) {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     myListenerAdapters.put(listener, connection);
-    connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
-  }
-
-  @Override
-  public void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable) {
-    final MessageBusConnection connection = myProject.getMessageBus().connect(parentDisposable);
     connection.subscribe(CompilerTopics.COMPILATION_STATUS, listener);
   }
 
@@ -451,7 +447,7 @@ public class CompilerManagerImpl extends CompilerManager {
     final OutputCollector outputCollector = new OutputCollector();
     DiagnosticCollector diagnostic = new DiagnosticCollector();
 
-    final Set<File> sourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> sourceRoots = FileCollectionFactory.createCanonicalFileSet();
     if (!sourcePath.isEmpty()) {
       sourceRoots.addAll(sourcePath);
     }
@@ -573,7 +569,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  private class ListenerNotificator implements CompileStatusNotification {
+  private final class ListenerNotificator implements CompileStatusNotification {
     private final @Nullable CompileStatusNotification myDelegate;
 
     private ListenerNotificator(@Nullable CompileStatusNotification delegate) {

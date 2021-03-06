@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
   @Override
-  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, Consumer<PomTarget> consumer) {
+  public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<PomTarget> consumer) {
     PsiElement grCall = element.getParent();
     if (!(grCall instanceof GrMethodCall)) return;
 

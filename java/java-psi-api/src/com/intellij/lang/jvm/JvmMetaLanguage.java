@@ -44,7 +44,7 @@ public final class JvmMetaLanguage extends MetaLanguage {
   }
 
   private static boolean matchesRegisteredLanguage(@NotNull Language language, @NotNull ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> point) {
-    return ExtensionProcessingHelper.getByKey(point, language.getID(), LanguageExtensionPoint::getKey) != null;
+    return ExtensionProcessingHelper.getByKey(point, language.getID(), JvmMetaLanguage.class, LanguageExtensionPoint::getKey) != null;
   }
 
   private @Nullable static ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> getPoint() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -20,7 +21,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
@@ -75,12 +76,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kVAR;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.checkPrecedence;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.parenthesize;
 
-public class PsiImplUtil {
+public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
 
+  @NlsSafe
   private static final String MAIN_METHOD = "main";
   public static final Key<SoftReference<PsiCodeBlock>> PSI_CODE_BLOCK = Key.create("Psi_code_block");
   public static final Key<SoftReference<PsiTypeElement>> PSI_TYPE_ELEMENT = Key.create("psi.type.element");
@@ -159,7 +162,7 @@ public class PsiImplUtil {
       return oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 
-    //check priorities    
+    //check priorities
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
       GrExpression addedParenth = checkPrecedence(newExpr, oldExpr) ? parenthesize(newExpr, oldExpr.getContext()) : newExpr;
       if (newExpr != addedParenth) {
@@ -317,7 +320,7 @@ public class PsiImplUtil {
     ASTNode node = nameElement.getNode();
     LOG.assertTrue(node != null);
 
-    if (node.getElementType() == GroovyTokenTypes.mIDENT) {
+    if (node.getElementType() == GroovyTokenTypes.mIDENT || node.getElementType() == kVAR) {
       return nameElement.getText();
     }
 
@@ -344,7 +347,7 @@ public class PsiImplUtil {
 
   public static boolean isMainMethod(GrMethod method) {
     if (!method.getName().equals(MAIN_METHOD)) return false;
-    else if (!method.hasModifierProperty(PsiModifier.STATIC))return false;
+    else if (!GrModifierListUtil.hasCodeModifierProperty(method, PsiModifier.STATIC)) return false;
 
     final GrParameter[] parameters = method.getParameters();
 
@@ -427,6 +430,7 @@ public class PsiImplUtil {
   /**
    * see {@link AstBufferUtil#getTextSkippingWhitespaceComments(ASTNode)}
    */
+  @NotNull
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {
     final TreeElement treeElement = (TreeElement)node;
     final int length;
@@ -440,14 +444,14 @@ public class PsiImplUtil {
       final GroovyBufferVisitor textVisitor = new GroovyBufferVisitor(true, true, 0, buffer);
       treeElement.acceptTree(textVisitor);
     }
-    return StringFactory.createShared(buffer);
+    return new String(buffer);
   }
 
-  public static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
+  private static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
 
     private final boolean mySkipWhiteSpace;
 
-    public GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
+    GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, char @Nullable [] buffer) {
       super(skipWhitespace, skipComments, offset, buffer);
       mySkipWhiteSpace = skipWhitespace;
     }

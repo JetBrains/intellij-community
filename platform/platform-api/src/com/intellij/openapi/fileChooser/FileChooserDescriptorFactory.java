@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 /**
  * Common variants of {@link FileChooserDescriptor}.
  */
-public class FileChooserDescriptorFactory {
+public final class FileChooserDescriptorFactory {
   private FileChooserDescriptorFactory() { }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {
@@ -53,7 +53,7 @@ public class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createSingleFileDescriptor(final String extension) {
     return new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(
-      file -> Comparing.equal(file.getExtension(), extension, SystemInfo.isFileSystemCaseSensitive));
+      file -> Comparing.equal(file.getExtension(), extension, file.isCaseSensitive()));
   }
 
   public static FileChooserDescriptor createSingleFolderDescriptor() {

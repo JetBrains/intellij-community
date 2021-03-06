@@ -112,7 +112,8 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
     if (vft == null && !isAnnotatedAsTestOnly(member)) {
       return true;
     }
-    if (isInsideTestOnlyMethod(place) || isInsideTestOnlyField(place) || isInsideTestClass(place) || isUnderTestSources(place)) {
+    if (isInsideTestOnlyMethod(place) || isInsideTestOnlyField(place) || isInsideTestOnlyClass(place) || isInsideTestClass(place)
+        || isUnderTestSources(place)) {
       return true;
     }
 
@@ -161,8 +162,10 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Nullable
   private static PsiAnnotation findVisibleForTestingAnnotation(@NotNull PsiMember member) {
-    PsiAnnotation anno = AnnotationUtil.findAnnotation(member, "com.google.common.annotations.VisibleForTesting");
-    return anno != null ? anno : AnnotationUtil.findAnnotation(member, "com.android.annotations.VisibleForTesting");
+    return AnnotationUtil.findAnnotation(member, 
+                                         "com.google.common.annotations.VisibleForTesting",
+                                         "com.android.annotations.VisibleForTesting",
+                                         "org.jetbrains.annotations.VisibleForTesting");
   }
 
   private static boolean isInsideTestOnlyMethod(PsiElement e) {
@@ -171,6 +174,10 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static boolean isInsideTestOnlyField(PsiElement e) {
     return isAnnotatedAsTestOnly(getTopLevelParentOfType(e, PsiField.class));
+  }
+
+  private static boolean isInsideTestOnlyClass(@NotNull PsiElement e) {
+    return isAnnotatedAsTestOnly(getTopLevelParentOfType(e, PsiClass.class));
   }
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMember m) {

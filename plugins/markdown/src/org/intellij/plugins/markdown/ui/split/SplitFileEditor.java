@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.split;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -371,14 +372,14 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return otherState instanceof MyFileEditorState
              && (myFirstState == null || myFirstState.canBeMergedWith(((MyFileEditorState)otherState).myFirstState, level))
              && (mySecondState == null || mySecondState.canBeMergedWith(((MyFileEditorState)otherState).mySecondState, level));
     }
   }
 
-  private class DoublingEventListenerDelegate implements PropertyChangeListener {
+  private final class DoublingEventListenerDelegate implements PropertyChangeListener {
     @NotNull
     private final PropertyChangeListener myDelegate;
 

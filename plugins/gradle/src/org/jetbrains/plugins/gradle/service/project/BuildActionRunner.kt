@@ -20,8 +20,7 @@ import java.util.function.Consumer
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
  * Gradle that is present.
  *
- * In order to do this we require the current [resolverCtx], the [buildAction] that should be run and whether or not
- * to initialize task running for the Gradle operation ([initializeTaskExecution]).
+ * In order to do this we require the current [resolverCtx] and the [buildAction] that should be run
  *
  * We also require the [helper] which will be used to set up each [BuildActionExecuter]. We may need to set up more than one
  * of these if the version of Gradle that we are connecting to doesn't support the certain features.

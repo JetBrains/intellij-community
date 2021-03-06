@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.offlineViewer;
 
@@ -12,17 +10,16 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 
-public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
+public final class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
   private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor =
-    FactoryMap.create(key -> new THashMap<>());
+    FactoryMap.create(key -> new HashMap<>());
 
   public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content) {
     myContent = content;
@@ -52,6 +49,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return false;
   }
 
+  @SuppressWarnings("Convert2Diamond")
   @Override
   public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                     @NotNull InspectionToolWrapper wrapper,

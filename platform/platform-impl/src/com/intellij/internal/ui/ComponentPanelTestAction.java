@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -19,11 +19,12 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.BrowserLink;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
@@ -89,7 +90,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
-  private static class ComponentPanelTest extends DialogWrapper {
+  private static final class ComponentPanelTest extends DialogWrapper {
 
     private static final Set<String> ALLOWED_VALUES = ContainerUtil
       .set("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
@@ -106,11 +107,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private static final String LONG_TEXT3 = "<p>Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.</p>" +
       "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
+    private static final String GOT_IT_HEADER = "IDE features trainer";
+    private static final String GOT_IT_TEXT = "Learn the most useful shortcuts <icon src=\"AllIcons.Actions.More\"/> and essential IDE features interactively." +
+      " Use <icon src=\"AllIcons.Actions.Diff\" valign=\"1.0f\"/> for details.";
+    private static final String GOT_IT_TEXT2 = "Some textfield that actually means nothing";
+
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
 
     private JTabbedPane   pane;
     private final Project project;
+
+    private JButton abracadabraButton;
 
     private ComponentPanelTest(Project project) {
       super(project);
@@ -121,9 +129,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setTitle("Component Panel Test Action");
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @NotNull JComponent createCenterPanel() {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
@@ -135,7 +142,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("ComboBox", createComboBoxTab());
 
       pane.addChangeListener(e -> {
-        if (pane.getSelectedIndex() == 2) {
+        if (pane.getSelectedIndex() == 4) {
           myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
         } else {
           myAlarm.cancelRequest(progressTimerRequest);
@@ -164,6 +171,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       southPanel.add(placementCombo);
       southPanel.add(new Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)));
 
+      BrowserLink externalLink = new BrowserLink("External link", "http://google.com");
+      southPanel.add(externalLink);
       panel.addToBottom(southPanel);
 
       return panel;
@@ -255,13 +264,26 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }).createPanel(), gc);
 
+      // Abracadaba button
       gc.gridy++;
-      JButton button = new JButton("Abracadabra");
-      new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
+      abracadabraButton = new JButton("Abracadabra");
+      new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
+      topPanel.add(UI.PanelFactory.panel(abracadabraButton).withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
-      topPanel.add(UI.PanelFactory.panel(button).
-        withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
+      try {
+        new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
+          andShowCloseShortcut().
+          withShowCount(3).
+          withHeader(GOT_IT_HEADER).
+          withIcon(AllIcons.General.BalloonInformation).
+          withBrowserLink("Learn more", new URL("https://www.jetbrains.com/")).
+          show(abracadabraButton, GotItTooltip.BOTTOM_MIDDLE);
 
+        new GotItTooltip("textfield", GOT_IT_TEXT2, project).withShowCount(5).show(text1, GotItTooltip.BOTTOM_MIDDLE);
+
+      } catch (MalformedURLException ex) {}
+
+      // Combobox with comment
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).resizeX(false).
         withComment("Combobox comment").createPanel(), gc);
@@ -353,7 +375,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         { setIpad(JBUI.emptyInsets()); } // Reset standard pads
 
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected,
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,
                                              boolean hasFocus, int row, int column) {
           if (value == null) {
             append("No data", SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -396,7 +418,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                            Arrays.asList("Label 1",
                                          "Label 2 long long long long long long label",
                                          "Label 3", "Label 4", "Label 5", "Label 6"),
-                           t -> System.out.println("[" + t + "] selected"), false);
+                           t -> System.out.println("[" + t + "] selected"));
 
       JPanel p1 = UI.PanelFactory.grid().
       add(UI.PanelFactory.panel(new JTextField()).
@@ -507,7 +529,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     private JComponent createValidatorsPanel() {
       // JTextField component with browse button
       TextFieldWithBrowseButton tfbb = new TextFieldWithBrowseButton(e -> System.out.println("JTextField browse button pressed"));
-      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() != 5 ? new ValidationInfo("Enter 5 symbols",  tfbb) : null).
+      new ComponentValidator(getDisposable()).withValidator(() -> tfbb.getText().length() < 50 ? new ValidationInfo(tfbb.getText() + " is too short. Enter at least 50 symbols",  tfbb) : null).
         withOutlineProvider(ComponentValidator.CWBB_PROVIDER).
         andStartOnFocusLost().
         installOn(tfbb);
@@ -672,7 +694,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
-    private class ProgressTimerRequest implements Runnable {
+    private final class ProgressTimerRequest implements Runnable {
       private final JProgressBar myProgressBar;
 
       private ProgressTimerRequest(JProgressBar progressBar) {
@@ -811,8 +833,13 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       DefaultActionGroup toolbarActions = new DefaultActionGroup();
       toolbarActions.add(new SplitButtonAction(actions));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1).withShortCut("control K"));
-      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating2).withShortCut("control N"));
+      toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
+        {
+          GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
+          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+        }
+      }.withShortCut("control K"));
+      toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
@@ -917,7 +944,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       ComboBox<Item> comboBox = new ComboBox<>(new Model(builder1.build()));
       comboBox.setSwingPopup(false);
-      comboBox.setRenderer(new ColoredListCellRenderer<Item>() {
+      ColoredListCellRenderer<Item> renderer = new ColoredListCellRenderer<>() {
         @Override
         protected void customizeCellRenderer(@NotNull JList<? extends Item> list,
                                              Item value,
@@ -934,7 +961,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             append(" ->");
           }
         }
-      });
+      };
+      comboBox.setRenderer(renderer);
       pane.add(new JLabel("The ComboBox:"), "baseline");
       pane.add(comboBox, "baseline");
 

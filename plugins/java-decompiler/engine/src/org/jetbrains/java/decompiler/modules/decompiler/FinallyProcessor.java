@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -46,12 +47,8 @@ public class FinallyProcessor {
     varProcessor = varProc;
   }
 
-  public boolean iterateGraph(StructMethod mt, RootStatement root, ControlFlowGraph graph) {
-    return processStatementEx(mt, root, graph);
-  }
-
-  private boolean processStatementEx(StructMethod mt, RootStatement root, ControlFlowGraph graph) {
-    int bytecode_version = mt.getClassStruct().getBytecodeVersion();
+  public boolean iterateGraph(StructClass cl, StructMethod mt, RootStatement root, ControlFlowGraph graph) {
+    int bytecodeVersion = mt.getBytecodeVersion();
 
     LinkedList<Statement> stack = new LinkedList<>();
     stack.add(root);
@@ -77,22 +74,20 @@ public class FinallyProcessor {
           fin.setMonitor(var == null ? null : new VarExprent(var, VarType.VARTYPE_INT, varProcessor));
         }
         else {
-          Record inf = getFinallyInformation(mt, root, fin);
+          Record inf = getFinallyInformation(cl, mt, root, fin);
 
           if (inf == null) { // inconsistent finally
             catchallBlockIDs.put(handler.id, null);
           }
           else {
-
             if (DecompilerContext.getOption(IFernflowerPreferences.FINALLY_DEINLINE) && verifyFinallyEx(graph, fin, inf)) {
               finallyBlockIDs.put(handler.id, null);
             }
             else {
+              int varIndex = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
+              insertSemaphore(graph, getAllBasicBlocks(fin.getFirst()), head, handler, varIndex, inf, bytecodeVersion);
 
-              int varindex = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
-              insertSemaphore(graph, getAllBasicBlocks(fin.getFirst()), head, handler, varindex, inf, bytecode_version);
-
-              finallyBlockIDs.put(handler.id, varindex);
+              finallyBlockIDs.put(handler.id, varIndex);
             }
 
             DeadCodeHelper.removeDeadBlocks(graph); // e.g. multiple return blocks after a nested finally
@@ -110,7 +105,7 @@ public class FinallyProcessor {
     return false;
   }
 
-  private static class Record {
+  private static final class Record {
     private final int firstCode;
     private final Map<BasicBlock, Boolean> mapLast;
 
@@ -120,7 +115,7 @@ public class FinallyProcessor {
     }
   }
 
-  private Record getFinallyInformation(StructMethod mt, RootStatement root, CatchAllStatement fstat) {
+  private Record getFinallyInformation(StructClass cl, StructMethod mt, RootStatement root, CatchAllStatement fstat) {
     Map<BasicBlock, Boolean> mapLast = new HashMap<>();
 
     BasicBlockStatement firstBlockStatement = fstat.getHandler().getBasichead();
@@ -138,7 +133,7 @@ public class FinallyProcessor {
     }
 
     ExprProcessor proc = new ExprProcessor(methodDescriptor, varProcessor);
-    proc.processStatement(root, mt.getClassStruct());
+    proc.processStatement(root, cl);
 
     SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
     ssa.splitVariables(root, mt);
@@ -527,7 +522,7 @@ public class FinallyProcessor {
     return true;
   }
 
-  private static class Area {
+  private static final class Area {
     private final BasicBlock start;
     private final Set<BasicBlock> sample;
     private final BasicBlock next;

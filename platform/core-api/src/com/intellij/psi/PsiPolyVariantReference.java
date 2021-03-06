@@ -1,11 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.model.SymbolResolveResult;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * Inherit this interface if you want the reference to resolve to more than one element,
@@ -27,11 +23,4 @@ public interface PsiPolyVariantReference extends PsiReference {
    * @return the array of results for resolving the reference.
    */
   ResolveResult @NotNull [] multiResolve(boolean incompleteCode);
-
-  @NotNull
-  @Override
-  default Collection<? extends SymbolResolveResult> resolveReference() {
-    ResolveResult[] results = multiResolve(false);
-    return ContainerUtil.filter(results, it -> it.getElement() != null);
-  }
 }

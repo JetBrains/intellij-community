@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.preferences.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateSnippet;
@@ -146,7 +147,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
   @NotNull
   @Override
   public String getTitle() {
-    return "TextMate snippet";
+    return TextMateBundle.message("textmate.live.template.name");
   }
 
   @NotNull
@@ -200,7 +201,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
       assert item instanceof CustomLiveTemplateLookupElement;
       if (myFile != null) {
         WriteCommandAction.runWriteCommandAction(myProject,
-                                                 "Expand template",
+                                                 TextMateBundle.message("textmate.expand.live.template.command.name"),
                                                  null,
                                                  () -> ((CustomLiveTemplateLookupElement)item).expandTemplate(myEditor, myFile),
                                                  myFile);

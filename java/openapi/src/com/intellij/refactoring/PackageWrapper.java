@@ -45,13 +45,17 @@ public class PackageWrapper {
   public PsiManager getManager() { return myManager; }
 
   public PsiDirectory[] getDirectories() {
+    return getDirectories(GlobalSearchScope.projectScope(myManager.getProject()));
+  }
+
+  public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
     String qName = myQualifiedName;
     while (qName.endsWith(".")) {
       qName = StringUtil.trimEnd(qName, ".");
     }
     final PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(qName);
     if (aPackage != null) {
-      return aPackage.getDirectories();
+      return aPackage.getDirectories(scope);
     } else {
       return PsiDirectory.EMPTY_ARRAY;
     }

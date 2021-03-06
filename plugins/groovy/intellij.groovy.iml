@@ -42,38 +42,10 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-ant" level="project" />
-    <orderEntry type="module-library">
-      <library name="org.codehaus.groovy:groovy-groovydoc" type="repository">
-        <properties maven-id="org.codehaus.groovy:groovy-groovydoc:2.4.17">
-          <exclude>
-            <dependency maven-id="org.codehaus.groovy:groovy" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.17/groovy-groovydoc-2.4.17.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.17/groovy-templates-2.4.17.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-xml/2.4.17/groovy-xml-2.4.17.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovydoc/2.4.17/groovy-groovydoc-2.4.17-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-templates/2.4.17/groovy-templates-2.4.17-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-xml/2.4.17/groovy-xml-2.4.17-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="org.codehaus.groovy:groovy-groovysh" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-groovysh:2.4.17" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.4.17/groovy-groovysh-2.4.17.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-groovysh/2.4.17/groovy-groovysh-2.4.17-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
   </component>
 </module>

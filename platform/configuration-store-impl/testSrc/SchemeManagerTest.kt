@@ -5,6 +5,7 @@ import com.intellij.configurationStore.schemeManager.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.Disposer
@@ -19,26 +20,24 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.*
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.Function
-
-internal const val FILE_SPEC = "REMOTE"
 
 /**
  * Functionality without stream provider covered, ICS has own test suite
  */
 internal class SchemeManagerTest {
   companion object {
+    internal const val FILE_SPEC = "REMOTE"
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
@@ -51,11 +50,14 @@ internal class SchemeManagerTest {
   @Rule
   @JvmField
   val fsRule = InMemoryFsRule()
+  @Rule
+  @JvmField
+  val disposableRule = DisposableRule()
 
   private var localBaseDir: Path? = null
   private var remoteBaseDir: Path? = null
 
-  private fun getTestDataPath() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/options"
+  private fun getTestDataPath(): Path = Paths.get(PlatformTestUtil.getCommunityPath(), "platform/platform-tests/testData/options")
 
   @Test fun loadSchemes() {
     doLoadSaveTest("options1", "1->first;2->second")
@@ -423,8 +425,8 @@ internal class SchemeManagerTest {
   @Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
-    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default"
-    schemeManager.loadBundledScheme(bundledPath, this)
+    val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default.xml"
+    schemeManager.loadBundledScheme(bundledPath, this, null)
     val customScheme = TestScheme("default")
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
@@ -442,7 +444,7 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("default.xml")).isRegularFile()
 
     schemeManager = createSchemeManager(dir)
-    schemeManager.loadBundledScheme(bundledPath, this)
+    schemeManager.loadBundledScheme(bundledPath, this, null)
     schemeManager.loadSchemes()
 
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
@@ -570,28 +572,22 @@ internal class SchemeManagerTest {
 
   @Test
   fun `VFS - vf resolver`() {
-    val dir = tempDirManager.newPath(refreshVfs = true)
-    val busDisposable = Disposer.newDisposable()
-    try {
-      val requestedPaths = linkedSetOf<String>()
-      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
-        override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
-          requestedPaths.add(PathUtil.getFileName(path))
-          return super.resolveVirtualFile(path, reasonOperation)
-        }
-      })
+    val dir = tempDirManager.newPath()
+    val requestedPaths = linkedSetOf<String>()
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = null, virtualFileResolver = object: VirtualFileResolver {
+      override fun resolveVirtualFile(path: String, reasonOperation: StateStorageOperation): VirtualFile? {
+        requestedPaths.add(PathUtil.getFileName(path))
+        return super.resolveVirtualFile(path, reasonOperation)
+      }
+    })
 
-      val a = TestScheme("a", "a")
-      val b = TestScheme("b", "b")
-      schemeManager.setSchemes(listOf(a, b))
-      runInEdtAndWait { schemeManager.save() }
+    val a = TestScheme("a", "a")
+    val b = TestScheme("b", "b")
+    schemeManager.setSchemes(listOf(a, b))
+    runInEdtAndWait { schemeManager.save() }
 
-      schemeManager.reload()
-      assertThat(requestedPaths).containsExactly("VFS - vf resolver")
-    }
-    finally {
-      Disposer.dispose(busDisposable)
-    }
+    schemeManager.reload()
+    assertThat(requestedPaths).containsExactly(dir.fileName.toString())
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
@@ -599,6 +595,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
+    DefaultLogger.disableStderrDumping(disposableRule.disposable);
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
@@ -631,13 +628,13 @@ internal class SchemeManagerTest {
     val temp = tempDirManager.newPath()
     localBaseDir = temp.resolve("__local")
     remoteBaseDir = temp
-    FileUtil.copyDir(File("${getTestDataPath()}/$testData"), temp.resolve("REMOTE").toFile())
+    FileUtil.copyDir(getTestDataPath().resolve(testData).toFile(), temp.resolve("REMOTE").toFile())
   }
 }
 
 private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean) {
   val filesToScheme = StringUtil.split(expected, ";")
-  val fileToSchemeMap = Object2ObjectOpenHashMap<String, String>()
+  val fileToSchemeMap = HashMap<String, String>()
   for (fileToScheme in filesToScheme) {
     val index = fileToScheme.indexOf("->")
     fileToSchemeMap.put(fileToScheme.substring(0, index), fileToScheme.substring(index + 2))

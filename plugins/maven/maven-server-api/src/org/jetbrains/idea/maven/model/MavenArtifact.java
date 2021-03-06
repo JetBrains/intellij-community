@@ -363,4 +363,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     result = 31 * result + (myFile != null ? myFile.hashCode() : 0);
     return result;
   }
+
+  public MavenArtifact replaceFile(File newFile, File newLocalRepository) {
+    return new MavenArtifact(
+      myGroupId, myArtifactId, myVersion, myBaseVersion, myType, myClassifier,
+      myScope, myOptional, myExtension, newFile, newLocalRepository, myResolved, myStubbed);
+  }
 }

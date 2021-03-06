@@ -23,9 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +31,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,6 +41,7 @@ import java.util.List;
 import java.util.*;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
+@ApiStatus.NonExtendable
 public class UndoManagerImpl extends UndoManager {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
@@ -147,7 +146,8 @@ public class UndoManagerImpl extends UndoManager {
     return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
   }
 
-  private boolean isInsideCommand() {
+  @ApiStatus.Internal
+  public boolean isInsideCommand() {
     return myCommandLevel > 0;
   }
 
@@ -168,7 +168,7 @@ public class UndoManagerImpl extends UndoManager {
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
 
-  private void onCommandFinished(final Project project, final String commandName, final Object commandGroupId) {
+  private void onCommandFinished(final Project project, final @NlsContexts.Command String commandName, final Object commandGroupId) {
     commandFinished(commandName, commandGroupId);
     if (myCommandLevel == 0) {
       for (UndoProvider undoProvider : getUndoProviders()) {
@@ -212,7 +212,7 @@ public class UndoManagerImpl extends UndoManager {
     myCommandLevel++;
   }
 
-  private void commandFinished(String commandName, Object groupId) {
+  private void commandFinished(@NlsContexts.Command String commandName, Object groupId) {
     if (myCommandLevel == 0) return; // possible if command listener was added within command
     myCommandLevel--;
     if (myCommandLevel > 0) return;
@@ -289,6 +289,10 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   public void markCurrentCommandAsGlobal() {
+    if (myCurrentMerger == null) {
+      LOG.error("Must be called inside command");
+      return;
+    }
     myCurrentMerger.markAsGlobal();
   }
 
@@ -413,8 +417,8 @@ public class UndoManagerImpl extends UndoManager {
     return getDocumentReferences(editor);
   }
 
-  static @NotNull Set<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
-    Set<DocumentReference> result = new THashSet<>();
+  static @NotNull Collection<DocumentReference> getDocumentReferences(@NotNull FileEditor editor) {
+    ArrayList<DocumentReference> result = new ArrayList<>();
 
     if (editor instanceof DocumentReferenceProvider) {
       result.addAll(((DocumentReferenceProvider)editor).getDocumentReferences());
@@ -446,7 +450,7 @@ public class UndoManagerImpl extends UndoManager {
     return getUndoOrRedoActionNameAndDescription(editor, false);
   }
 
-  private @NotNull Pair<String, String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {
+  private @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoOrRedoActionNameAndDescription(@Nullable FileEditor editor, boolean undo) {
     String desc = isUndoOrRedoAvailable(editor, undo) ? doFormatAvailableUndoRedoAction(editor, undo) : null;
     if (desc == null) desc = "";
     String shortActionName = StringUtil.first(desc, 30, true);
@@ -536,7 +540,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @NotNull Collection<DocumentReference> collectReferencesWithoutMergers() {
-    Set<DocumentReference> result = new THashSet<>();
+    Set<DocumentReference> result = new HashSet<>();
     myUndoStacksHolder.collectAllAffectedDocuments(result);
     myRedoStacksHolder.collectAllAffectedDocuments(result);
     return result;
@@ -590,6 +594,14 @@ public class UndoManagerImpl extends UndoManager {
   @TestOnly
   public void clearUndoRedoQueueInTests(@NotNull Document document) {
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
+  }
+
+  @ApiStatus.Internal
+  public void clearDocumentReferences(@NotNull Document document) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myUndoStacksHolder.clearDocumentReferences(document);
+    myRedoStacksHolder.clearDocumentReferences(document);
+    myMerger.clearDocumentReferences(document);
   }
 
   @Override

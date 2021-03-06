@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.impl.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,7 @@ public class MavenSpyOutputParser {
   }
 
   private void artifactDownloading(int threadId, Map<String, String> parameters, Consumer<? super BuildEvent> messageConsumer) {
-    String artifactCoord = parameters.get("artifactCoord");
+    @NlsSafe String artifactCoord = parameters.get("artifactCoord");
     if (artifactCoord == null || !downloadingMap.add(artifactCoord)) {
       return;
     }
@@ -177,11 +178,11 @@ public class MavenSpyOutputParser {
   }
 
   private void artifactResolved(int threadId, Map<String, String> parameters, Consumer<? super BuildEvent> messageConsumer) {
-    String artifactCoord = parameters.get("artifactCoord");
+    @NlsSafe String artifactCoord = parameters.get("artifactCoord");
     if (artifactCoord == null) {
       return;
     }
-    String error = parameters.get("error");
+    @NlsSafe String error = parameters.get("error");
     if (error != null || downloadingMap.contains(artifactCoord)) {
       MavenParsingContext.MavenExecutionEntry parent = startFakeDownloadNodeIfNotStarted(threadId, parameters, messageConsumer);
       if (error != null) {

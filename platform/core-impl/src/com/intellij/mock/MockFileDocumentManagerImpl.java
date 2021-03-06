@@ -13,12 +13,15 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private static final Key<VirtualFile> MOCK_VIRTUAL_FILE_KEY = Key.create("MockVirtualFile");
   private final Function<? super CharSequence, ? extends Document> myFactory;
   @Nullable private final Key<Document> myCachedDocumentKey;
 
-  public MockFileDocumentManagerImpl(Function<? super CharSequence, ? extends Document> factory, @Nullable Key<Document> cachedDocumentKey) {
+  public MockFileDocumentManagerImpl(@Nullable Key<Document> cachedDocumentKey,
+                                     @NotNull Function<? super CharSequence, ? extends Document> factory) {
     myFactory = factory;
     myCachedDocumentKey = cachedDocumentKey;
   }
@@ -59,6 +62,10 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
 
   @Override
   public void saveAllDocuments() {
+  }
+
+  @Override
+  public void saveDocuments(@NotNull Predicate<? super Document> filter) {
   }
 
   @Override

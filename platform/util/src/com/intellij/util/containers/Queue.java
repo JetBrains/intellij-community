@@ -1,14 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
+/**
+ * @deprecated use {@link java.util.ArrayDeque} instead
+ */
+@Deprecated
 public class Queue<T> {
   private Object[] myArray;
   private int myFirst;
@@ -53,38 +55,12 @@ public class Queue<T> {
     return (T)myArray[last];
   }
 
-  public T peekLast() {
-    int last = myLast;
-    if (last == 0) {
-      last = myArray.length;
-    }
-    return getRaw(last - 1);
-  }
-
-
   public boolean isEmpty() {
     return size() == 0;
   }
 
   public int size() {
     return isWrapped ? myArray.length - myFirst + myLast : myLast - myFirst;
-  }
-
-  @NotNull
-  public List<T> toList() {
-    return Arrays.asList(normalize(size()));
-  }
-
-  public Object @NotNull [] toArray() {
-    return normalize(size());
-  }
-
-  public T @NotNull [] toArray(T[] array) {
-    if (array.length < size()) {
-      array = ArrayUtil.newArray(ArrayUtil.getComponentType(array), size());
-    }
-
-    return normalize(array);
   }
 
   public T pullFirst() {
@@ -131,24 +107,6 @@ public class Queue<T> {
     Arrays.fill(myArray, null);
     myFirst = myLast = 0;
     isWrapped = false;
-  }
-
-  public T set(int index, T value) {
-    int arrayIndex = myFirst + index;
-    if (isWrapped && arrayIndex >= myArray.length) {
-      arrayIndex -= myArray.length;
-    }
-    T old = getRaw(arrayIndex);
-    myArray[arrayIndex] = value;
-    return old;
-  }
-
-  public T get(int index) {
-    int arrayIndex = myFirst + index;
-    if (isWrapped && arrayIndex >= myArray.length) {
-      arrayIndex -= myArray.length;
-    }
-    return getRaw(arrayIndex);
   }
 
   public boolean process(@NotNull Processor<? super T> processor) {

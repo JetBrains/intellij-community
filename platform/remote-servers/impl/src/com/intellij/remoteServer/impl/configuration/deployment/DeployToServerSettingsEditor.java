@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.RuntimeConfigurationError;
@@ -24,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -33,7 +20,6 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConnectionTester;
-import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -59,6 +45,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   private SettingsEditor<D> myDeploymentSettingsEditor;
   private DeploymentSource myLastSelectedSource;
   private RemoteServer<S> myLastSelectedServer;
+  private D myDeploymentConfiguration;
 
   public DeployToServerSettingsEditor(@NotNull ServerType<S> type,
                                       @NotNull DeploymentConfigurator<D, S> deploymentConfigurator,
@@ -80,6 +67,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
 
   protected final void updateDeploymentSettingsEditor() {
     RemoteServer<S> selectedServer = myServerCombo.getSelectedServer();
+
     DeploymentSource selectedSource = getSelectedSource();
     if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
       return;
@@ -89,13 +77,24 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       updateBeforeRunOptions(myLastSelectedSource, false);
       updateBeforeRunOptions(selectedSource, true);
     }
-    if (selectedSource != null && selectedServer != null) {
-      myDeploymentSettingsComponent.removeAll();
-      myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
-      if (myDeploymentSettingsEditor != null) {
-        Disposer.register(this, myDeploymentSettingsEditor);
-        myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
-      }
+    if (selectedSource != null) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!Disposer.isDisposed(this)) {
+          myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
+
+          if (myDeploymentSettingsEditor != null) {
+            if (myDeploymentConfiguration != null) {
+              myDeploymentSettingsEditor.resetFrom(myDeploymentConfiguration);
+            }
+
+            myDeploymentSettingsEditor.addSettingsEditorListener(e -> fireEditorStateChanged());
+            Disposer.register(this, myDeploymentSettingsEditor);
+
+            myDeploymentSettingsComponent.removeAll();
+            myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
+          }
+        }
+      });
     }
     myLastSelectedSource = selectedSource;
     myLastSelectedServer = selectedServer;
@@ -114,6 +113,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
     resetSelectedSourceFrom(configuration);
 
     D deploymentConfiguration = configuration.getDeploymentConfiguration();
+    myDeploymentConfiguration = deploymentConfiguration;
     updateDeploymentSettingsEditor();
     if (deploymentConfiguration != null && myDeploymentSettingsEditor != null) {
       myDeploymentSettingsEditor.resetFrom(deploymentConfiguration);
@@ -136,6 +136,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
         deployment = myDeploymentConfigurator.createDefaultConfiguration(deploymentSource);
         configuration.setDeploymentConfiguration(deployment);
       }
+      myDeploymentConfiguration = deployment;
       if (myDeploymentSettingsEditor != null) {
         myDeploymentSettingsEditor.applyTo(deployment);
       }

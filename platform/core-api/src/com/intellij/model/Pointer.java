@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * <h3>Example 1</h3>
@@ -31,8 +33,7 @@ public interface Pointer<T> {
   /**
    * @return value or {@code null} if the value was invalidated or cannot be restored
    */
-  @Nullable
-  T dereference();
+  @Nullable T dereference();
 
   boolean equals(Object o);
 
@@ -44,9 +45,33 @@ public interface Pointer<T> {
    * Hard pointers should be used only for values that cannot be invalidated.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  static <T> Pointer<T> hardPointer(@NotNull T value) {
+  static <T> @NotNull Pointer<T> hardPointer(@NotNull T value) {
     return new HardPointer<>(value);
+  }
+
+  /**
+   * Creates a pointer which uses {@code underlyingPointer} value to restore its value with {@code restoration} function.
+   * <p/>
+   * Equality of {@code restoration} function is unreliable, because it might be a lambda.
+   * The {@code key} must be passed to check for equality instead,
+   * where two equal keys mean the same restoration logic will be applied.
+   */
+  @Contract(value = "_, _, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> delegatingPointer(@NotNull Pointer<? extends U> underlyingPointer,
+                                                      @NotNull Object key,
+                                                      @NotNull Function<? super U, ? extends T> restoration) {
+    return new DelegatingPointer.ByValue<>(underlyingPointer, key, restoration);
+  }
+
+  /**
+   * Creates same pointer as {@link #delegatingPointer}, which additionally passes itself
+   * into the {@code restoration} function to allow caching the pointer in the restored value.
+   */
+  @Contract(value = "_, _, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,
+                                                    @NotNull Object key,
+                                                    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
+    return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, key, restoration);
   }
 }
 

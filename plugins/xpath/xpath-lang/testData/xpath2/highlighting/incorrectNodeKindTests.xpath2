@@ -8,6 +8,6 @@ attribute(x, xs:integer, <error descr="Too many arguments">y</error>) |
 
 attribute(x, <error descr="QName expected">1</error>) |
 
-document-node(<error descr="element() or schema-element() expected">x</error>, <error descr="Too many arguments">y</error>) |
+document-node(<error descr="'element()' or 'schema-element()' expected">x</error>, <error descr="Too many arguments">y</error>) |
 
 processing-instruction(<error descr="String literal or NCName expected">1</error>) | processing-instruction(a, <error descr="Too many arguments">b</error>)

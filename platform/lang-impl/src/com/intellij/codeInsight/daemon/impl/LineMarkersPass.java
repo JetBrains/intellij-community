@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -32,11 +28,9 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.FunctionUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -149,7 +143,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
                                      @NotNull List<? extends LineMarkerProvider> providers,
                                      @NotNull PairConsumer<? super PsiElement, ? super LineMarkerInfo<?>> consumer) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Set<PsiFile> visitedInjectedFiles = new THashSet<>();
+    Set<PsiFile> visitedInjectedFiles = new HashSet<>();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
@@ -229,9 +223,13 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
           GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarker.getNavigationHandler();
-          LineMarkerInfo<?> converted =
-            new LineMarkerInfo<>(injectedElement, hostRange, icon, e -> injectedMarker.getLineMarkerTooltip(), navigationHandler,
-                                 GutterIconRenderer.Alignment.RIGHT);
+          //noinspection deprecation
+          LineMarkerInfo<PsiElement> converted = icon == null
+                                                 ? new LineMarkerInfo<>(injectedElement, hostRange)
+                                                 : new LineMarkerInfo<>(injectedElement, hostRange, icon,
+                                                                        e -> injectedMarker.getLineMarkerTooltip(),
+                                                                        navigationHandler, GutterIconRenderer.Alignment.RIGHT,
+                                                                        () -> gutterRenderer.getAccessibleName());
           consumer.consume(injectedElement, converted);
         }
       });
@@ -251,9 +249,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
 
   @NotNull
   public static LineMarkerInfo<PsiElement> createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
-    LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(startFrom, startFrom.getTextRange(), null,
-                                                           FunctionUtil.<Object, String>nullConstant(), null,
-                                                           GutterIconRenderer.Alignment.RIGHT);
+    LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(startFrom, startFrom.getTextRange());
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
     info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
     info.separatorPlacement = SeparatorPlacement.TOP;

@@ -27,23 +27,21 @@ import org.jetbrains.annotations.Nullable;
 
 public class CaretSpecificDataContext extends DataContextWrapper {
   private final Caret myCaret;
+  private final DataContext myCaretContext;
 
   public CaretSpecificDataContext(@NotNull DataContext delegate, @NotNull Caret caret) {
     super(delegate);
     myCaret = caret;
+    Project project = super.getData(CommonDataKeys.PROJECT);
+    FileEditorManager fm = project == null ? null : FileEditorManager.getInstance(project);
+    myCaretContext = fm == null ? null : dataId -> fm.getData(dataId, myCaret.getEditor(), myCaret);
   }
 
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    Project project = (Project)super.getData(CommonDataKeys.PROJECT.getName());
-    if (project != null) {
-      FileEditorManager fm = FileEditorManager.getInstance(project);
-      if (fm != null) {
-        Object data = fm.getData(dataId, myCaret.getEditor(), myCaret);
-        if (data != null) return data;
-      }
-    }
+    Object data = myCaretContext == null ? null : myCaretContext.getData(dataId);
+    if (data != null) return data;
     if (CommonDataKeys.CARET.is(dataId)) return myCaret;
     return super.getData(dataId);
   }

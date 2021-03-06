@@ -92,13 +92,9 @@ public interface CaretModel {
   }
 
   /**
-   * Caret position may be updated on document change (e.g. consider that user updates from VCS that causes addition of text
-   * before caret. Caret offset, visual and logical positions should be updated then). So, there is a possible case
-   * that caret model in in the process of caret position update now.
-   * <p/>
-   * Current method allows to check that.
-   *
-   * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
+   * Tells whether caret model is in consistent state currently. This might not be the case during document update, but client code can
+   * observe such a state only in specific circumstances. So unless you're implementing very low-level editor logic (involving
+   * {@code PrioritizedDocumentListener}), you don't need this method - you'll only see it return {@code true}.
    */
   default boolean isUpToDate() {
     return getCurrentCaret().isUpToDate();
@@ -186,6 +182,11 @@ public interface CaretModel {
   boolean supportsMultipleCarets();
 
   /**
+   * Maximum number of carets that can be created in the editor.
+   */
+  int getMaxCaretCount();
+
+  /**
    * Returns current caret - the one, query and update methods in the model operate at the moment. In the current implementation this is
    * either an iteration-current caret within the context of {@link #runForEachCaret(CaretAction)} method, or the 'primary' caret without that
    * context. Users {@link #runForEachCaret(CaretAction)} method should use caret parameter passed to
@@ -207,7 +208,8 @@ public interface CaretModel {
   int getCaretCount();
 
   /**
-   * Returns all carets currently existing in the document, ordered by their visual position in editor.
+   * Returns all carets currently existing in the document, ordered by their visual position in editor. Use {@link #getCaretCount()} if you
+   * only need to know the number of carets, it's much faster.
    */
   @NotNull
   List<Caret> getAllCarets();
@@ -230,7 +232,8 @@ public interface CaretModel {
    * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
    * for the given document are trimmed automatically.
    * Newly added caret will become a primary caret if and only if {@code makePrimary} value is {@code true}.
-   * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
+   * Does nothing if multiple carets are not supported, a maximum number of carets already exists in editor (see
+   * {@link #getMaxCaretCount()}), a caret already exists at specified location or selection of existing caret
    * includes the specified location, {@code null} is returned in this case.
    */
   @Nullable
@@ -240,7 +243,8 @@ public interface CaretModel {
    * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
    * for the given document are trimmed automatically.
    * Newly added caret will become a primary caret if and only if {@code makePrimary} value is {@code true}.
-   * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
+   * Does nothing if multiple carets are not supported, a maximum number of carets already exists in editor (see
+   * {@link #getMaxCaretCount()}), a caret already exists at specified location or selection of existing caret
    * includes the specified location, {@code null} is returned in this case.
    */
   @Nullable
@@ -261,10 +265,12 @@ public interface CaretModel {
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
+   * If the number of passed {@link CaretState} items is larger than {@link #getMaxCaretCount()}, excessive items will be ignored.
+   * Editor might display a user-visible notification in such a case.
+   * <p>
    * System selection will be updated, if such feature is supported by current editor.
    *
-   * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
-   * support multiple carets
+   * @throws IllegalArgumentException if {@code caretStates} list is empty
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()
@@ -276,11 +282,13 @@ public interface CaretModel {
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
+   * If the number of passed {@link CaretState} items is larger than {@link #getMaxCaretCount()}, excessive items will be ignored.
+   * Editor might display a user-visible notification in such a case.
+   * <p>
    * System selection will be updated, if such feature is supported by current editor
    * and corresponding invocation parameter is set to {@code true}.
    *
-   * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
-   * support multiple carets
+   * @throws IllegalArgumentException if {@code caretStates} list is empty
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()

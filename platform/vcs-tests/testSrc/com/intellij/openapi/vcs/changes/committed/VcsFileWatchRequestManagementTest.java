@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.mock.MockLocalFileSystem;
@@ -41,10 +41,10 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
 
   @Override
   protected void tearDown() {
-    new RunAll()
-      .append(() -> myMockLocalFileSystem.disposed())
-      .append(() -> super.tearDown())
-      .run();
+    new RunAll(
+      () -> myMockLocalFileSystem.disposed(),
+      () -> super.tearDown()
+    ).run();
   }
 
   public void testAdd() {
@@ -127,7 +127,7 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
                                                      new VcsDirectoryMapping(path5, anotherVcs)));
   }
 
-  private static class MyMockLocalFileSystem extends MockLocalFileSystem {
+  private static final class MyMockLocalFileSystem extends MockLocalFileSystem {
     private final Set<String> myAdd;
     private final Set<String> myRemove;
     private boolean myDisposed;

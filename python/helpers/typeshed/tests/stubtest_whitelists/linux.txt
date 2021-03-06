@@ -1,0 +1,55 @@
+_posixsubprocess.cloexec_pipe
+builtins.WindowsError
+curses.COLORS
+curses.COLOR_PAIRS
+curses.COLS
+curses.LINES
+distutils.command.bdist_msi
+grp.getgrgid
+grp.struct_group._asdict
+grp.struct_group._make
+grp.struct_group._replace
+ntpath.realpath
+os.EX_NOTFOUND
+os.SF_MNOWAIT
+os.SF_NODISKIO
+os.SF_SYNC
+os.chflags
+os.lchflags
+os.lchmod
+os.listxattr
+os.plock
+posix.EX_NOTFOUND
+select.EPOLL_RDHUP
+socket.socketpair
+spwd.getspnam
+spwd.struct_spwd._asdict
+spwd.struct_spwd._make
+spwd.struct_spwd._replace
+time.CLOCK_HIGHRES
+urllib.request.proxy_bypass
+
+# ==========
+# Whitelist entries that cannot or should not be fixed
+# ==========
+
+# Modules that do not exist on Linux systems
+_msi
+_winapi
+asyncio.windows_events
+asyncio.windows_utils
+msilib(.[a-z]+)?
+msvcrt
+winreg
+winsound
+
+# NamedTuple like, but not actually NamedTuples
+posix.[a-z]+_(param|result)._(asdict|make|replace)
+
+# Platform differences that cannot be captured by the type system
+fcntl.[A-Z0-9_]+
+os.SCHED_[A-Z_]+
+
+# Loadable SQLite extensions are disabled on GitHub runners
+(sqlite3(.dbapi2)?.Connection.enable_load_extension)?
+(sqlite3(.dbapi2)?.Connection.load_extension)?

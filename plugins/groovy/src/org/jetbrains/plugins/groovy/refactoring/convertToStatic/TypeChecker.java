@@ -1,24 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitorBase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeChecker extends GroovyStaticTypeCheckVisitor {
+public class TypeChecker extends GroovyStaticTypeCheckVisitorBase {
+
   List<ProblemFix> toApply = new ArrayList<>();
 
   @Override
   protected void registerError(@NotNull PsiElement location,
-                               @NotNull String description,
+                               @InspectionMessage @NotNull String description,
                                LocalQuickFix @Nullable [] fixes,
                                @NotNull ProblemHighlightType highlightType) {
 

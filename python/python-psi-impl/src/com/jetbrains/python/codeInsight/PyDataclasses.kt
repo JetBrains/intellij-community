@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassStub
@@ -49,15 +50,12 @@ fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDatac
 
 fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
   return PyUtil.getNullableParameterizedCachedValue(cls, context) {
-    val stub = cls.stub
-
-    if (it.maySwitchToAST(cls)) {
-      parseDataclassParametersFromAST(cls, it)
-    }
-    else {
-      val dataclassStub = if (stub == null) PyDataclassStubImpl.create(cls) else stub.getCustomStub(PyDataclassStub::class.java)
-      parseDataclassParametersFromStub(dataclassStub)
-    }
+    StubAwareComputation.on(cls)
+      .withCustomStub { stub -> stub.getCustomStub(PyDataclassStub::class.java) }
+      .overStub(::parseDataclassParametersFromStub)
+      .overAst { parseDataclassParametersFromAST(it, context) }
+      .withStubBuilder { PyDataclassStubImpl.create(it) }
+      .compute(context)
   }
 }
 

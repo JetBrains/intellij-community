@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,20 +27,20 @@ public class ApplyPatchDiffRequest extends DiffRequest implements ApplyPatchRequ
   @NotNull private final DocumentContent myResultContent;
   @NotNull private final AppliedTextPatch myAppliedPatch;
 
-  @NotNull private final String myLocalContent;
+  @NotNull private final @NonNls String myLocalContent;
 
-  @Nullable private final String myWindowTitle;
-  @NotNull private final String myLocalTitle;
-  @NotNull private final String myResultTitle;
-  @NotNull private final String myPatchTitle;
+  @Nullable private final @NlsContexts.DialogTitle String myWindowTitle;
+  @NotNull private final @NlsContexts.Label String myLocalTitle;
+  @NotNull private final @NlsContexts.Label String myResultTitle;
+  @NotNull private final @NlsContexts.Label String myPatchTitle;
 
   public ApplyPatchDiffRequest(@NotNull DocumentContent resultContent,
                                @NotNull AppliedTextPatch appliedPatch,
-                               @NotNull String localContent,
-                               @Nullable String windowTitle,
-                               @NotNull String localTitle,
-                               @NotNull String resultTitle,
-                               @NotNull String patchTitle) {
+                               @NotNull @NonNls String localContent,
+                               @Nullable @NlsContexts.DialogTitle String windowTitle,
+                               @NotNull @NlsContexts.Label String localTitle,
+                               @NotNull @NlsContexts.Label String resultTitle,
+                               @NotNull @NlsContexts.Label String patchTitle) {
     myResultContent = resultContent;
     myAppliedPatch = appliedPatch;
     myLocalContent = localContent;

@@ -5,6 +5,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +30,7 @@ public class PathMacroEditor extends DialogWrapper {
     boolean isOK(String name, String value);
   }
 
-  public PathMacroEditor(String title, String macroName, String value, Validator validator) {
+  public PathMacroEditor(@NlsContexts.DialogTitle String title, @NlsSafe String macroName, @NlsSafe String value, Validator validator) {
     super(true);
     setTitle(title);
     myValidator = validator;
@@ -41,21 +43,22 @@ public class PathMacroEditor extends DialogWrapper {
     };
     myNameField.getDocument().addDocumentListener(documentListener);
     myValueField.setText(value);
-    myValueField.addBrowseFolderListener(null, null, null, new FileChooserDescriptor(false, true, true, false, true, false), new TextComponentAccessor<JTextField>() {
-      @Override
-      public String getText(JTextField component) {
-        return component.getText();
-      }
+    myValueField.addBrowseFolderListener(null, null, null, new FileChooserDescriptor(false, true, true, false, true, false),
+                                         new TextComponentAccessor<>() {
+                                           @Override
+                                           public String getText(JTextField component) {
+                                             return component.getText();
+                                           }
 
-      @Override
-      public void setText(JTextField component, @NotNull String text) {
-        final int len = text.length();
-        if (len > 0 && text.charAt(len - 1) == File.separatorChar) {
-          text = text.substring(0, len - 1);
-        }
-        component.setText(text);
-      }
-    });
+                                           @Override
+                                           public void setText(JTextField component, @NotNull String text) {
+                                             final int len = text.length();
+                                             if (len > 0 && text.charAt(len - 1) == File.separatorChar) {
+                                               text = text.substring(0, len - 1);
+                                             }
+                                             component.setText(text);
+                                           }
+                                         });
     myValueField.getTextField().getDocument().addDocumentListener(documentListener);
 
     init();

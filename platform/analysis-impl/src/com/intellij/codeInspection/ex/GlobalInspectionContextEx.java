@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.google.common.collect.Lists;
@@ -16,9 +16,11 @@ import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +42,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
+  public static final Topic<InspectListener> INSPECT_TOPIC = new Topic<>(InspectListener.class, Topic.BroadcastDirection.NONE);
+
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);
   private static final int MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES = SystemProperties
     .getIntProperty("max.open.global.inspection.xml.files", 50);
@@ -46,6 +51,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   protected volatile Path myOutputDir;
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
+  Map<Path, Long> myProfile;
+  protected InspectionProblemConsumer myProblemConsumer = null;
 
   public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
 
@@ -67,8 +74,12 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     final Runnable action = () -> {
       myOutputDir = outputDir;
       try {
-        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
-        exportResultsSmart(inspectionsResults, outputDir);
+        try {
+          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
+        }
+        finally {
+          exportResultsSmart(inspectionsResults, outputDir);
+        }
       }
       finally {
         myOutputDir = null;
@@ -286,5 +297,28 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
   public @Nullable Path getOutputPath() {
     return myOutputDir;
+  }
+
+  public void startPathProfiling() {
+    myProfile = new ConcurrentHashMap<>();
+  }
+
+  public Map<Path, Long> getPathProfile() {
+    return myProfile;
+  }
+
+  void updateProfile(VirtualFile virtualFile, long millis) {
+    if (myProfile != null) {
+      Path path = Paths.get(virtualFile.getPath());
+      myProfile.merge(path, millis, Long::sum);
+    }
+  }
+
+  public InspectionProblemConsumer getProblemConsumer() {
+    return myProblemConsumer;
+  }
+
+  public void setProblemConsumer(InspectionProblemConsumer problemConsumer) {
+    myProblemConsumer = problemConsumer;
   }
 }

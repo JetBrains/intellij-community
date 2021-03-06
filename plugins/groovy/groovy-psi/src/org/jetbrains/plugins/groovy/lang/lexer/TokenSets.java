@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
@@ -14,6 +14,7 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElemen
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_LAMBDA_BODY;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_VAR;
 
 public interface TokenSets {
 
@@ -27,8 +28,6 @@ public interface TokenSets {
   TokenSet ALL_COMMENT_TOKENS = TokenSet.orSet(COMMENTS_TOKEN_SET, GROOVY_DOC_TOKENS);
 
   TokenSet SEPARATORS = TokenSet.create(mNLS, mSEMI);
-
-  TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(TokenType.WHITE_SPACE);
 
   TokenSet NUMBERS = TokenSet.create(
     mNUM_INT,
@@ -68,14 +67,15 @@ public interface TokenSets {
   TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
     mIDENT,
     mREGEX_LITERAL,
-    mDOLLAR_SLASH_REGEX_LITERAL
+    mDOLLAR_SLASH_REGEX_LITERAL,
+    KW_VAR
   ));
 
   TokenSet KEYWORDS = TokenSet.create(
     kABSTRACT, kAS, kASSERT,
     kBOOLEAN, kBREAK, kBYTE,
     kCASE, kCATCH, kCHAR, kCLASS, kCONTINUE,
-    kDEF, kDEFAULT, kDO, kDOUBLE,
+    kDEF, kVAR, kDEFAULT, kDO, kDOUBLE,
     kELSE, kEXTENDS, kENUM,
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,
@@ -92,20 +92,6 @@ public interface TokenSets {
 
   TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
-  TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(
-    NUMBERS,
-    KEYWORDS,
-    GroovyTokenSets.STRING_LITERALS,
-    TokenSet.create(
-      mIDENT,
-      mGSTRING_BEGIN,
-      mREGEX_BEGIN,
-      mDOLLAR_SLASH_REGEX_BEGIN,
-      mAT
-    )
-  );
-
-  TokenSet VISIBILITY_MODIFIERS = TokenSet.create(kPRIVATE, kPROTECTED, kPUBLIC);
 
   TokenSet MODIFIERS = TokenSet.create(
     kABSTRACT,
@@ -121,7 +107,8 @@ public interface TokenSets {
     kSTRICTFP,
     kVOLATILE,
     kSTRICTFP,
-    kDEF
+    kDEF,
+    kVAR
   );
 
   TokenSet STRING_LITERALS = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, TokenSet.create(
@@ -139,10 +126,6 @@ public interface TokenSets {
   ));
 
   TokenSet GSTRING_CONTENT_PARTS = TokenSet.create(GSTRING_CONTENT, GSTRING_INJECTION);
-
-  TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
-
-  TokenSet RELATIONS = TokenSet.create(mLT, mGT, mLE, mGE, kIN);
 
   TokenSet WHITE_SPACES_SET = TokenSet.create(mNLS, TokenType.WHITE_SPACE);
 
@@ -194,7 +177,7 @@ public interface TokenSets {
     .put(mSTAR_STAR_ASSIGN, mSTAR_STAR)
     .build();
 
-  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT);
+  TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR);
 
   TokenSet BLOCK_SET =
     TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY, BLOCK_LAMBDA_BODY);

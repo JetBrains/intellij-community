@@ -1,6 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -9,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.Rectangle
@@ -17,7 +21,13 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : SelectedEditorFilePath(onBoundsChanged) {
+internal class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(), CustomHeaderTitle {
+  companion object{
+    fun createInstance(frame: JFrame): CustomDecorationPath {
+      return CustomDecorationPath(frame)
+    }
+  }
+
   private val projectManagerListener = object : ProjectManagerListener {
     override fun projectOpened(project: Project) {
       checkOpenedProjects()
@@ -29,24 +39,40 @@ class CustomDecorationPath(val frame: JFrame, onBoundsChanged: () -> Unit) : Sel
   }
 
   private fun checkOpenedProjects() {
-    val instance = ProjectManager.getInstance()
-    project?.let { pr ->
-      multipleSameNamed = instance.openProjects.any { it != pr && it.name == pr.name }
+    val currentProject = project ?: return
+    val manager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
+    val currentPath = manager.getProjectPath(currentProject) ?: return
+    val currentName = manager.getProjectName(currentPath)
+    val sameNameInRecent = manager.getRecentPaths().any {
+      currentPath != it && currentName == manager.getProjectName(it)
     }
+    val sameNameInOpen = ProjectManager.getInstance().openProjects.any {
+      val path = manager.getProjectPath(it) ?: return@any false
+      val name = manager.getProjectName(path)
+      currentPath != path && currentName == name
+    }
+    multipleSameNamed = sameNameInRecent || sameNameInOpen
   }
 
   private val titleChangeListener = PropertyChangeListener{
-    updateProjectName()
+    updateProject()
   }
 
-  fun setActive(value: Boolean) {
+  override fun getCustomTitle(): String? {
+    if (LightEdit.owns(project)) {
+      return frame.title
+    }
+    return null
+  }
+
+  override fun setActive(value: Boolean) {
     val color = if (value) CustomFrameDecorations.titlePaneInfoForeground() else CustomFrameDecorations.titlePaneInactiveInfoForeground()
 
-    getView().foreground = color
+    view.foreground = color
   }
 
-  fun getListenerBounds(): List<RelativeRectangle> {
-    return if (!isClipped) {
+  override fun getBoundList(): List<RelativeRectangle> {
+    return if (!toolTipNeeded) {
       emptyList()
     }
     else {

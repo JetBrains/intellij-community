@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 /**
  * @author lesya
  */
-public class StringHash {
+public final class StringHash {
   private static final long initialHash = 0xe12398c6d9ae3b8aL;  // initial values
   private static final long[] mixMaster = {
       /* 000 */ 0x4476081a7043a46fL, 0x45768b8a6e7eac19L, 0xebd556c1cf055952L,
@@ -127,6 +113,10 @@ public class StringHash {
   private StringHash() {
   }
 
+  public static long calc(String arg) {
+    return buz(arg);
+  }
+
   /**
    * Calculates hash value of string using buzhash algorithm.
    * See http://www.serve.net/buz/hash.adt/java.008.html for details.
@@ -134,7 +124,7 @@ public class StringHash {
    * @param arg string to calculate hash value upon
    * @return calculated hash value
    */
-  public static long calc(String arg) {
+  public static long buz(CharSequence arg) {
     if (arg == null) return 0;
     long h = initialHash;
     for (int i = 0; i < arg.length(); ++i) {
@@ -147,7 +137,7 @@ public class StringHash {
    * Calculates hash value of byte array buzhash algorithm.
    * See http://www.serve.net/buz/hash.adt/java.008.html for details.
    *
-   * @param arg byte arrayg to calculate hash value upon
+   * @param arg byte array to calculate hash value upon
    * @return calculated hash value
    */
   public static long calc(byte[] arg) {
@@ -159,7 +149,11 @@ public class StringHash {
     return h;
   }
 
-  public static int murmur(String data, int seed) {
+  public static int murmur(CharSequence data) {
+    return murmur(data, 31);
+  }
+
+  public static int murmur(CharSequence data, int seed) {
     final int length = data.length();
     // 'm' and 'r' are mixing constants generated offline.
     // They're not really 'magic', they just happen to work well.

@@ -377,7 +377,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   @Override
-  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
+  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls, boolean onHover) {
     return JavaDocumentationProvider.fetchExternalJavadoc(element, project, docUrls);
   }
 

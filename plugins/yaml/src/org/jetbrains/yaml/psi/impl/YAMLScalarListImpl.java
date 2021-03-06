@@ -6,8 +6,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLScalarList;
@@ -34,8 +38,35 @@ public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScala
   @NotNull
   @Override
   protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
-    return "\n";
+    return "";
   }
+
+  @NotNull
+  @Override
+  public String getTextValue(@Nullable TextRange rangeInHost) {
+    String value = super.getTextValue(rangeInHost);
+    if (!StringUtil.isEmptyOrSpaces(value) && getChompingIndicator() == ChompingIndicator.KEEP && isEnding(rangeInHost)) {
+      value += "\n";
+    }
+    return value;
+  }
+
+  @Override
+  protected boolean shouldIncludeEolInRange(ASTNode child) {
+    if (getChompingIndicator() == ChompingIndicator.KEEP) return true;
+    
+    if (isEol(child) && isEolOrNull(child.getTreeNext())) {
+      return false;
+    }
+    ASTNode next = TreeUtil.findSibling(child.getTreeNext(), NON_SPACE_VALUES);
+    if (isEol(next) && isEolOrNull(TreeUtil.findSibling(next.getTreeNext(), NON_SPACE_VALUES)) && getChompingIndicator() == ChompingIndicator.STRIP) {
+      return false;
+    }
+
+    return true;
+  }
+  
+  private static final TokenSet NON_SPACE_VALUES = TokenSet.orSet(YAMLElementTypes.SCALAR_VALUES, YAMLElementTypes.EOL_ELEMENTS);
 
   @Override
   protected List<Pair<TextRange, String>> getEncodeReplacements(@NotNull CharSequence input) throws IllegalArgumentException {

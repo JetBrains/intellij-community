@@ -99,7 +99,7 @@ public class PivotalIntegrationTest extends LiveIntegrationTestCase<PivotalTrack
   // IDEA-206556
   public void testApiTokenNotStoredInSettings() {
     final String token = "secret";
-    myRepository.setAPIKey(token);
+    myRepository.setPassword(token);
     final Element serialized = XmlSerializer.serialize(myRepository);
     final String configContent = JDOMUtil.write(serialized);
     assertFalse(configContent.contains(token));

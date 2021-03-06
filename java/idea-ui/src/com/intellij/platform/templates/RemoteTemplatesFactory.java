@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtilRt;
@@ -32,7 +33,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
-public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
+public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 
   private static final String URL = "https://download.jetbrains.com/idea/project_templates/";
@@ -46,7 +47,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
           }
           catch (JDOMException e) {
             LOG.error(e);
-            return MultiMap.emptyInstance();
+            return MultiMap.empty();
           }
         });
     }
@@ -56,7 +57,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     catch (Exception e) {
       LOG.error(e);
     }
-    return MultiMap.emptyInstance();
+    return MultiMap.empty();
   });
 
   @Override
@@ -115,12 +116,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private static class RemoteProjectTemplate extends ArchivedProjectTemplate {
     private final ModuleType myModuleType;
     private final String myPath;
-    private final String myDescription;
+    private final @NlsContexts.DetailedDescription String myDescription;
 
-    RemoteProjectTemplate(String name,
+    RemoteProjectTemplate(@NlsContexts.Label String name,
                           Element element,
                           ModuleType moduleType,
-                          String path, String description) {
+                          String path, @NlsContexts.DetailedDescription String description) {
       super(name, element.getChildTextTrim("category"));
       myModuleType = moduleType;
       myPath = path;
@@ -133,8 +134,12 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     }
 
     @Override
-    public <T> T processStream(@NotNull final StreamProcessor<T> consumer) throws IOException {
-      return HttpRequests.request(URL + myPath).connect(request -> consumeZipStream(consumer, new ZipInputStream(request.getInputStream())));
+    public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
+      return HttpRequests.request(URL + myPath).connect(request -> {
+        try (ZipInputStream zip = new ZipInputStream(request.getInputStream())) {
+          return consumer.consume(zip);
+        }
+      });
     }
 
     @Nullable

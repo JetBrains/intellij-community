@@ -18,13 +18,13 @@ package com.intellij.openapi.options.colors.pages;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -145,7 +145,7 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
 
   @Override
   public Icon getIcon() {
-    return StdFileTypes.JAVA.getIcon();
+    return JavaFileType.INSTANCE.getIcon();
   }
 
   @Override

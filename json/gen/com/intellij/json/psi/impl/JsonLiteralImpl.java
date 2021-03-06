@@ -26,6 +26,7 @@ public abstract class JsonLiteralImpl extends JsonLiteralMixin implements JsonLi
     else super.accept(visitor);
   }
 
+  @Override
   public boolean isQuotedString() {
     return JsonPsiImplUtils.isQuotedString(this);
   }

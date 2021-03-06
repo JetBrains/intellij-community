@@ -10,7 +10,8 @@ class LabelIconCache {
   private val cache = SLRUMap<LabelIconId, LabelIcon>(40, 20)
 
   fun getIcon(component: JComponent, height: Int, bgColor: Color, colors: List<Color>): LabelIcon {
-    val id = LabelIconId(JBUIScale.sysScale(component.graphicsConfiguration), height, bgColor, colors)
+    val id = LabelIconId(JBUIScale.sysScale(component.graphicsConfiguration), height, bgColor.rgb,
+                         colors.map { it.rgb })
     var icon = cache.get(id)
     if (icon == null) {
       icon = LabelIcon(component, height, bgColor, colors)
@@ -19,5 +20,5 @@ class LabelIconCache {
     return icon
   }
 
-  private data class LabelIconId(val scale: Float, val height: Int, val bgColor: Color, val colors: List<Color>)
+  private data class LabelIconId(val scale: Float, val height: Int, val bgColor: Int, val colors: List<Int>)
 }

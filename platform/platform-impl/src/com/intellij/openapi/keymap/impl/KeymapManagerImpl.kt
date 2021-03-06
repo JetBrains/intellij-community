@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -24,8 +25,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.SmartHashSet
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import java.util.function.Function
@@ -36,10 +35,10 @@ internal const val KEYMAPS_DIR_PATH = "keymaps"
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
-@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportFile = KEYMAPS_DIR_PATH)
+@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportDirectory = KEYMAPS_DIR_PATH)
 class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
-  private val boundShortcuts = THashMap<String, String>()
+  private val boundShortcuts = HashMap<String, String>()
   private val schemeManager: SchemeManager<Keymap>
 
   companion object {
@@ -82,7 +81,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
     isKeymapManagerInitialized = true
 
-    if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
+    if (ConfigImportHelper.isNewUser()) {
       CtrlYActionChooser.askAboutShortcut()
     }
 
@@ -122,7 +121,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
         removeKeymap(ep.keymapName)
       }
-    }, ApplicationManager.getApplication())
+    }, null)
   }
 
   private fun fireKeymapAdded(keymap: Keymap) {
@@ -180,7 +179,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     while (true) {
       val next = boundShortcuts.get(id) ?: break
       if (visited == null) {
-        visited = SmartHashSet()
+        visited = HashSet()
       }
 
       id = next
@@ -216,7 +215,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     if (!activeKeymapName.isNullOrBlank()) {
       schemeManager.currentSchemeName = activeKeymapName
       if (schemeManager.currentSchemeName != activeKeymapName) {
-        notifyAboutMissingKeymap(activeKeymapName, "Cannot find keymap \"$activeKeymapName\"")
+        notifyAboutMissingKeymap(activeKeymapName, IdeBundle.message("notification.content.cannot.find.keymap", activeKeymapName), false)
       }
     }
   }

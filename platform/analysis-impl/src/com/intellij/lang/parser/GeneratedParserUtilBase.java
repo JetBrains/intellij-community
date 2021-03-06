@@ -24,8 +24,8 @@ import com.intellij.util.Function;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,15 +94,6 @@ public class GeneratedParserUtilBase {
       if (marker != null) marker.setCustomEdgeTokenBinders(param[0], param[1]);
       return marker;
     };
-
-  public static final Hook<String> LOG_HOOK = (builder, marker, param) -> {
-    PsiBuilderImpl.ProductionMarker m = (PsiBuilderImpl.ProductionMarker)marker;
-    int start = m == null ? builder.getCurrentOffset() : m.getStartOffset();
-    int end = m == null ? start : m.getEndOffset();
-    String prefix = "[" + start + ", " + end + "]" + (m == null ? "" : " " + m.getTokenType());
-    builder.mark().error(prefix + ": " + param);
-    return marker;
-  };
 
 
   public static boolean eof(PsiBuilder builder, int level) {
@@ -774,21 +765,26 @@ public class GeneratedParserUtilBase {
                                      boolean force,
                                      boolean advance) {
     int position = builder.rawTokenIndex();
-    StringBuilder sb = new StringBuilder();
-    state.appendExpected(sb, position, true);
-    boolean empty = sb.length() == 0;
-    if (!force && empty && !advance) return false;
+    String expected = state.getExpected(position, true);
+    if (!force && expected.isEmpty() && !advance) return false;
 
     String actual = trim(builder.getTokenText());
-    if (isEmpty(actual)) {
-      sb.append(empty ? AnalysisBundle.message("parsing.error.unmatched.input") : " " + AnalysisBundle.message("parsing.error.expected"));
+    String message;
+    if (expected.isEmpty()) {
+      if (isEmpty(actual)) {
+        message = AnalysisBundle.message("parsing.error.unmatched.input");
+      }
+      else {
+        message = AnalysisBundle.message("parsing.error.unexpected", first(actual, MAX_ERROR_TOKEN_TEXT, true));
+      }
+    } else {
+      if (isEmpty(actual)) {
+        message = AnalysisBundle.message("parsing.error.expected", expected);
+      }
+      else {
+        message = AnalysisBundle.message("parsing.error.expected.got", expected, first(actual, MAX_ERROR_TOKEN_TEXT, true));
+      }
     }
-    else {
-      if (!empty) sb.append(" ").append(AnalysisBundle.message("parsing.error.expected.got")).append(" ");
-      sb.append("'").append(first(actual, MAX_ERROR_TOKEN_TEXT, true)).append("'");
-      if (empty) sb.append(" ").append(AnalysisBundle.message("parsing.error.unexpected"));
-    }
-    String message = sb.toString();
     if (advance) {
       PsiBuilder.Marker mark = builder.mark();
       state.tokenAdvancer.parse(builder, frame.level + 1);
@@ -830,7 +826,7 @@ public class GeneratedParserUtilBase {
 
   public static class CompletionState implements Function<Object, String> {
     public final int offset;
-    public final Collection<String> items = new THashSet<>();
+    public final Collection<String> items = new HashSet<>();
 
     public CompletionState(int offset_) {
       offset = offset_;
@@ -941,8 +937,8 @@ public class GeneratedParserUtilBase {
     public Parser tokenAdvancer = TOKEN_ADVANCER;
     public boolean altMode;
 
-    final LimitedPool<Variant> VARIANTS = new LimitedPool<>(VARIANTS_POOL_SIZE, () -> new Variant());
-    final LimitedPool<Frame> FRAMES = new LimitedPool<>(FRAMES_POOL_SIZE, () -> new Frame());
+    final LimitedPool<Variant> VARIANTS = new LimitedPool<>(VARIANTS_POOL_SIZE, Variant::new);
+    final LimitedPool<Frame> FRAMES = new LimitedPool<>(FRAMES_POOL_SIZE, Frame::new);
 
     public static ErrorState get(PsiBuilder builder) {
       return ((Builder)builder).state;
@@ -959,7 +955,8 @@ public class GeneratedParserUtilBase {
       if (state.braces != null && state.braces.length == 0) state.braces = null;
     }
 
-    public void appendExpected(@NotNull StringBuilder sb, int position, boolean expected) {
+    public @NotNull String getExpected(int position, boolean expected) {
+      StringBuilder sb = new StringBuilder();
       MyList<Variant> list = expected ? variants : unexpected;
       String[] strings = new String[list.size()];
       long[] hashes = new long[strings.length];
@@ -998,6 +995,7 @@ public class GeneratedParserUtilBase {
         int idx = sb.lastIndexOf(", ");
         sb.replace(idx, idx + 1, " " + AnalysisBundle.message("parsing.error.or"));
       }
+      return sb.toString();
     }
 
     public void clearVariants(Frame frame) {
@@ -1033,7 +1031,7 @@ public class GeneratedParserUtilBase {
     public int position;
     public int level;
     public int modifiers;
-    public String name;
+    @NonNls public String name;
     public int variantCount;
     public int errorReportedAt;
     public int lastVariantAt;
@@ -1065,7 +1063,7 @@ public class GeneratedParserUtilBase {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       String mod = modifiers == _NONE_ ? "_NONE_, " :
         ((modifiers & _COLLAPSE_) != 0? "_CAN_COLLAPSE_, ": "") +
         ((modifiers & _LEFT_) != 0? "_LEFT_, ": "") +
@@ -1115,8 +1113,8 @@ public class GeneratedParserUtilBase {
 
   private static final int MAX_CHILDREN_IN_TREE = 10;
   private static void checkSiblings(IElementType chunkType,
-                                    ArrayDeque<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parens,
-                                    ArrayDeque<Pair<PsiBuilder.Marker, Integer>> siblings) {
+                                    Deque<Pair<PsiBuilder.Marker, PsiBuilder.Marker>> parens,
+                                    Deque<Pair<PsiBuilder.Marker, Integer>> siblings) {
     main:
     while (!siblings.isEmpty()) {
       Pair<PsiBuilder.Marker, PsiBuilder.Marker> parenPair = parens.peek();

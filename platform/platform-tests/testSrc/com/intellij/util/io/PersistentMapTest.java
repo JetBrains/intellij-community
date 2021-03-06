@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -76,9 +62,9 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
 
       map.close();
-      assertTrue(map.getValueStorage().getSize() > 2 * PersistentHashMapValueStorage.SOFT_MAX_RETAINED_LIMIT);
+      assertTrue(PersistentMapImpl.unwrap(map).getValueStorage().getSize() > 2 * PersistentHashMapValueStorage.SOFT_MAX_RETAINED_LIMIT);
       map = mapConstructor.createMap(myFile);
-      map.compact();
+      PersistentMapImpl.unwrap(map).compact();
 
       for (int i = 0; i < keys; ++i) {
         Collection<String> strings = map.get(i);
@@ -96,20 +82,20 @@ public class PersistentMapTest extends PersistentMapTestBase {
     assertEquals("AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
     assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
-    assertEquals(1, myMap.getSize());
+    assertEquals(1, getMapSize());
 
     myMap.put("BBB", "BBB_VALUE");
     assertEquals("BBB_VALUE", myMap.get("BBB"));
     assertEquals(ContainerUtil.set("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
-    assertEquals(2, myMap.getSize());
+    assertEquals(2, getMapSize());
 
     myMap.put("AAA", "ANOTHER_AAA_VALUE");
     assertEquals("ANOTHER_AAA_VALUE", myMap.get("AAA"));
     assertEquals(ContainerUtil.set("AAA", "BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
-    assertEquals(2, myMap.getSize());
+    assertEquals(2, getMapSize());
 
     myMap.remove("AAA");
-    assertEquals(1, myMap.getSize());
+    assertEquals(1, getMapSize());
     assertNull(myMap.get("AAA"));
     assertEquals("BBB_VALUE", myMap.get("BBB"));
     assertEquals(ContainerUtil.set("BBB"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
@@ -118,13 +104,13 @@ public class PersistentMapTest extends PersistentMapTestBase {
     assertNull(myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
     assertEquals(new HashSet<>(), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
-    assertEquals(0, myMap.getSize());
+    assertEquals(0, getMapSize());
 
     myMap.put("AAA", "FINAL_AAA_VALUE");
     assertEquals("FINAL_AAA_VALUE", myMap.get("AAA"));
     assertNull(myMap.get("BBB"));
     assertEquals(ContainerUtil.set("AAA"), new HashSet<>(myMap.getAllKeysWithExistingMapping()));
-    assertEquals(1, myMap.getSize());
+    assertEquals(1, getMapSize());
   }
 
   public void testOpeningClosing() throws IOException {
@@ -161,7 +147,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
   public void testPutCompactGet() throws IOException {
     myMap.put("a", "b");
-    myMap.compact();
+    compactMap();
     assertEquals("b", myMap.get("a"));
   }
 
@@ -184,7 +170,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
         assertEquals(key + "_value", val);
       }
     }
-    myMap.compact();
+    compactMap();
 
     { // after compact
       final Collection<String> allKeys = new HashSet<>(myMap.getAllKeysWithExistingMapping());
@@ -329,13 +315,13 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     myMap.close();
 
-    int garbageSizeOnClose = myMap.getGarbageSize();
-    int sizeOnClose = myMap.getSize();
+    int garbageSizeOnClose = getGarbageSize();
+    int sizeOnClose = getMapSize();
 
     myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
 
-    final int garbageSizeOnOpen = myMap.getGarbageSize();
-    int sizeOnOpen = myMap.getSize();
+    final int garbageSizeOnOpen = getGarbageSize();
+    int sizeOnOpen = getMapSize();
 
     assertEquals(garbageSizeOnClose, garbageSizeOnOpen);
     assertEquals(sizeOnClose, sizeOnOpen);
@@ -350,14 +336,14 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     }
 
-    myMap.compact();
+    compactMap();
 
-    assertEquals(0, myMap.getGarbageSize());
+    assertEquals(0, getGarbageSize());
 
     myMap.close();
     myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
 
-    final int garbageSizeAfterCompact = myMap.getGarbageSize();
+    final int garbageSizeAfterCompact = getGarbageSize();
     assertEquals(0, garbageSizeAfterCompact);
     assertEquals(sizeOnOpen, myMap.getAllKeysWithExistingMapping().size());
 
@@ -395,7 +381,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
           assertEquals(testMapping.get(key), val);
         }
       }
-      map.compact();
+      PersistentMapImpl.unwrap(map).compact();
 
       { // after compact
         final Collection<Integer> allKeys = new HashSet<>(map.getAllKeysWithExistingMapping());
@@ -415,15 +401,10 @@ public class PersistentMapTest extends PersistentMapTestBase {
     myMap.put("AAA", "AAA_VALUE");
 
     myMap.close();
-    myMap = new PersistentHashMap<String, String>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE) {
-      @Override
-      protected boolean isReadOnly() {
-        return true;
-      }
-    };
+    myMap = PersistentMapBuilder.newBuilder(myFile.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE).readonly().build();
 
     try {
-      myMap.compact();
+      compactMap();
       fail();
     } catch (IncorrectOperationException ignore) {}
 
@@ -456,7 +437,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.put("Foo", "Bar");
       assertTrue(myMap.containsMapping("Foo"));
       myMap.close();
-      assertEquals(55,PersistentHashMap.getDataFile(myFile.toPath()).toFile().length());
+      assertEquals(55, PersistentMapImpl.getDataFile(myFile.toPath()).toFile().length());
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);
@@ -519,7 +500,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.get(key);
       fail();
     } catch (IOException ignore) {
-      assertTrue(myMap.isCorrupted());
+      assertTrue(PersistentMapImpl.unwrap(myMap).isCorrupted());
     }
 
     createInitializedMap(key, value, defaultMapConstructor);
@@ -530,7 +511,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.put(key, value + value);
       fail();
     } catch (IOException ignore) {
-      assertTrue(myMap.isCorrupted());
+      assertTrue(PersistentMapImpl.unwrap(myMap).isCorrupted());
     }
 
     createInitializedMap(key, value, defaultMapConstructor);
@@ -538,15 +519,15 @@ public class PersistentMapTest extends PersistentMapTestBase {
     myMap = brokenMapDescritor.createMap(myFile);
 
     try {
-      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+      myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(DataOutput out) throws IOException {
+        public void append(@NotNull DataOutput out) throws IOException {
           throw new IOException();
         }
       });
       fail();
     } catch (IOException ignore) {
-      assertTrue(myMap.isCorrupted());
+      assertTrue(PersistentMapImpl.unwrap(myMap).isCorrupted());
     }
   }
 

@@ -80,9 +80,15 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
   @Nullable
   protected PsiElement findSuppressionLeaf(PsiElement leaf, @Nullable final String id, int offset) {
     while (leaf != null && leaf.getTextOffset() >= offset) {
-      if (leaf instanceof PsiComment || leaf instanceof XmlProlog || leaf instanceof XmlText) {
-        @NonNls String text = leaf.getText();
-        if (isSuppressedFor(text, id)) return leaf;
+      if (isSuppressedInComment(leaf, id)) {
+        return leaf;
+      }
+      else if (leaf instanceof XmlText || leaf instanceof XmlProlog) {
+        for (PsiElement child : leaf.getChildren()) {
+          if (isSuppressedInComment(child, id)) {
+            return leaf;
+          }
+        }
       }
       leaf = leaf.getPrevSibling();
       if (leaf instanceof XmlTag) {
@@ -92,7 +98,10 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     return null;
   }
 
-  private boolean isSuppressedFor(@NonNls final String text, @Nullable final String id) {
+  private boolean isSuppressedInComment(@NotNull PsiElement element, @Nullable String id) {
+    if (!(element instanceof PsiComment)) return false;
+
+    String text = element.getText();
     if (!text.contains(getPrefix())) {
       return false;
     }

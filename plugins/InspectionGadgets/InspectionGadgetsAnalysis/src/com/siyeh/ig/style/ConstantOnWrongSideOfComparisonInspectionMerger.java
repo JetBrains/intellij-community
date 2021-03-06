@@ -3,6 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConstantOnWrongSideOfComparisonInspectionMerger extends InspectionElementsMergerBase {
 
-  private static final String CONSTANT_ON_LHS = "ConstantOnLHSOfComparison";
-  private static final String CONSTANT_ON_RHS = "ConstantOnRHSOfComparison";
+  @NonNls private static final String CONSTANT_ON_LHS = "ConstantOnLHSOfComparison";
+  @NonNls private static final String CONSTANT_ON_RHS = "ConstantOnRHSOfComparison";
 
   @NotNull
   @Override

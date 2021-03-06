@@ -1,16 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.chains;
 
 import com.intellij.diff.chains.SimpleDiffRequestChain.DiffRequestProducerWrapper;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ListSelection;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +30,10 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     myDispatcher.addListener(listener, disposable);
   }
 
+  public void removeListener(@NotNull Listener listener) {
+    myDispatcher.removeListener(listener);
+  }
+
   @NotNull
   @Override
   public List<? extends DiffRequestProducer> getRequests() {
@@ -41,7 +45,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public ListSelection<? extends DiffRequestProducer> loadRequestsInBackground() {
     try {
       return loadRequestProducers();
@@ -51,7 +55,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void onAssigned(boolean isAssigned) {
     if (isAssigned) {
       if (myAssignments == 0 && myIndicator == null) {
@@ -70,7 +74,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private ProgressIndicator startLoading() {
     if (myRequests != null) return null;
 
@@ -83,7 +87,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     }, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void applyLoadedChanges(@NotNull ListSelection<? extends DiffRequestProducer> producers) {
     if (myRequests != null) return;
 
@@ -95,11 +99,11 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected abstract ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException;
 
   public interface Listener extends EventListener {
-    @CalledInAwt
+    @RequiresEdt
     void onRequestsLoaded();
   }
 }

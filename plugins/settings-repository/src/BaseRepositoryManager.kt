@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.AppUIExecutor
@@ -155,7 +155,7 @@ suspend fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvi
   var processedFiles: List<VirtualFile>? = null
   withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
     val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
-      override fun getMultipleFileDialogTitle() = "Settings Repository: Conflicts"
+      override fun getMultipleFileDialogTitle() = icsMessage("merge.settings.dialog.title")
     })
     fileMergeDialog.show()
     processedFiles = fileMergeDialog.processedFiles

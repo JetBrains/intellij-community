@@ -19,7 +19,7 @@ import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.PathUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,7 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -125,7 +127,7 @@ public class ProgramParametersConfigurator {
 
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext) {
     try {
-      return macro instanceof PromptingMacro ? ((PromptingMacro)macro).expand(dataContext) : macro.preview();
+      return macro instanceof PromptingMacro ? macro.expand(dataContext) : macro.preview();
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;
@@ -156,7 +158,7 @@ public class ProgramParametersConfigurator {
       if (projectDirectory != null) return projectDirectory;
     }
 
-    if (projectDirectory != null && !PathUtil.isAbsolute(workingDirectory)) {
+    if (projectDirectory != null && !OSAgnosticPathUtil.isAbsolute(workingDirectory)) {
       workingDirectory = projectDirectory + '/' + workingDirectory;
     }
 
@@ -189,7 +191,14 @@ public class ProgramParametersConfigurator {
         ExecutionBundle.message("dialog.message.working.directory.null.for.project.module", project.getName(), project.getBasePath(),
                                 module == null ? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
     }
-    if (!new File(workingDir).exists()) {
+    boolean exists;
+    try {
+      exists = Files.exists(Paths.get(workingDir));
+    }
+    catch (InvalidPathException e) {
+      exists = false;
+    }
+    if (!exists) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("dialog.message.working.directory.doesn.t.exist", workingDir));
     }
   }

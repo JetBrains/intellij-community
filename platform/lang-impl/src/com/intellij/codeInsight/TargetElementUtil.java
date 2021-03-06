@@ -8,8 +8,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -48,7 +48,7 @@ public class TargetElementUtil  {
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
 
   public static TargetElementUtil getInstance() {
-    return ServiceManager.getService(TargetElementUtil.class);
+    return ApplicationManager.getApplication().getService(TargetElementUtil.class);
   }
 
   public int getAllAccepted() {

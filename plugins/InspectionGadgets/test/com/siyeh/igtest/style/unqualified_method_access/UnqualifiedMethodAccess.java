@@ -9,17 +9,17 @@ public class UnqualifiedMethodAccess extends JPanel {
 
   void foo() {}
   void bar() {
-    <warning descr="Instance method call 'foo' is not qualified with 'this'">foo</warning>();
+    <warning descr="Instance method call 'foo()' is not qualified with 'this'">foo</warning>();
   }
 
   void foo(String s) {
     this.foo();
     class A {
       void a() {
-        <warning descr="Instance method call 'a' is not qualified with 'this'">a</warning>();
+        <warning descr="Instance method call 'a()' is not qualified with 'this'">a</warning>();
         new Object() {
           void b() {
-            <warning descr="Instance method call 'a' is not qualified with 'this'">a</warning>();
+            <warning descr="Instance method call 'a()' is not qualified with 'this'">a</warning>();
           }
         };
       }
@@ -31,8 +31,8 @@ public class UnqualifiedMethodAccess extends JPanel {
       void bar() {
         new Object() {
           void foo() {
-            <warning descr="Instance method call 'bar' is not qualified with 'this'">bar</warning>();
-            <warning descr="Instance method call 'foo' is not qualified with 'this'">foo</warning>();
+            <warning descr="Instance method call 'bar()' is not qualified with 'this'">bar</warning>();
+            <warning descr="Instance method call 'foo()' is not qualified with 'this'">foo</warning>();
           }
         };
       }

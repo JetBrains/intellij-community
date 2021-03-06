@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
@@ -18,12 +18,8 @@ internal class JavaSoftKeywordHighlightingPassFactory : TextEditorHighlightingPa
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    val visit = file is PsiJavaFile &&
-                (file.name == PsiJavaModule.MODULE_INFO_FILE && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_9) ||
-                 file.languageLevel.isAtLeast(LanguageLevel.JDK_10))
-    return if (visit) JavaSoftKeywordHighlightingPass(file as PsiJavaFile, editor.document) else null
-  }
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? =
+    if (file is PsiJavaFile) JavaSoftKeywordHighlightingPass(file, editor.document) else null
 }
 
 private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, document: Document) :
@@ -32,7 +28,9 @@ private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, doc
   private val results = mutableListOf<HighlightInfo>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    file.accept(JavaSoftKeywordHighlightingVisitor(results, file.languageLevel))
+    if (file.name == PsiJavaModule.MODULE_INFO_FILE || file.languageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+      file.accept(JavaSoftKeywordHighlightingVisitor(results, file.languageLevel))
+    }
   }
 
   override fun doApplyInformationToEditor() {
@@ -41,14 +39,21 @@ private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, doc
 }
 
 private class JavaSoftKeywordHighlightingVisitor(private val results: MutableList<HighlightInfo>, private val level: LanguageLevel) :
-  JavaRecursiveElementVisitor() {
+  JavaRecursiveElementWalkingVisitor() {
 
   override fun visitKeyword(keyword: PsiKeyword) {
     if (JavaLexer.isSoftKeyword(keyword.node.chars, level)) {
-      val info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create()
-      if (info != null) {
-        results += info
-      }
+      highlightAsKeyword(keyword)
+    }
+    else if (JavaTokenType.NON_SEALED_KEYWORD == keyword.tokenType) {
+      highlightAsKeyword(keyword)
+    }
+  }
+
+  private fun highlightAsKeyword(keyword: PsiKeyword) {
+    val info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create()
+    if (info != null) {
+      results += info
     }
   }
 }

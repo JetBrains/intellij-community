@@ -16,13 +16,14 @@
 
 package com.intellij.openapi.fileEditor;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * File editor which supports possibility to navigate to {@link com.intellij.pom.Navigatable} element
+ * File editor which supports possibility to navigate to {@link Navigatable} element
  *
  * @author spleaner
+ * @see FileEditorNavigatable
  */
 public interface NavigatableFileEditor extends FileEditor {
 
@@ -34,7 +35,7 @@ public interface NavigatableFileEditor extends FileEditor {
   boolean canNavigateTo(@NotNull final Navigatable navigatable);
 
   /**
-   * Navigate editor to the given navigatable if {@link #canNavigateTo(com.intellij.pom.Navigatable)} is true
+   * Navigate editor to the given navigatable if {@link #canNavigateTo(Navigatable)} is true
    *
    * @param navigatable navigation target
    */

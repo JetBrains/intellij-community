@@ -23,12 +23,16 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -38,13 +42,13 @@ import java.util.List;
 
 public class OutputParser{
 
-  private static final String JAVAC = "javac";
+  private static final @NonNls String JAVAC = "javac";
 
   private static final Logger LOG = Logger.getInstance(OutputParser.class);
   private final Project myProject;
   private final AntBuildMessageView myMessageView;
   private final WeakReference<ProgressIndicator> myProgress;
-  private final String myBuildName;
+  private final @Nls String myBuildName;
   private final OSProcessHandler myProcessHandler;
   private volatile boolean isStopped;
   private List<String> myJavacMessages;
@@ -55,7 +59,7 @@ public class OutputParser{
                       OSProcessHandler processHandler,
                       AntBuildMessageView errorsView,
                       ProgressIndicator progress,
-                      String buildName) {
+                      @Nls String buildName) {
     myProject = project;
     myProcessHandler = processHandler;
     myMessageView = errorsView;
@@ -88,25 +92,25 @@ public class OutputParser{
     isStopped = stopped;
   }
 
-  private void setProgressStatistics(String s) {
+  private void setProgressStatistics(@NlsContexts.ProgressText String s) {
     final ProgressIndicator progress = myProgress.get();
     if (progress != null) {
       progress.setText2(s);
     }
   }
 
-  private void setProgressText(String s) {
+  private void setProgressText(@NlsContexts.ProgressText String s) {
     final ProgressIndicator progress = myProgress.get();
     if (progress != null) {
       progress.setText(s);
     }
   }
 
-  private void printRawError(String text) {
+  private void printRawError(@Nls String text) {
     myMessageView.outputError(text, 0);
   }
 
-  public final void readErrorOutput(String text) {
+  public final void readErrorOutput(@NlsSafe String text) {
     if (!myFirstLineProcessed) {
       myFirstLineProcessed = true;
       myStartedSuccessfully = false;
@@ -118,7 +122,7 @@ public class OutputParser{
   }
 
 
-  protected final void processTag(char tagName, final String tagValue, @AntMessage.Priority int priority) {
+  protected final void processTag(char tagName, @NlsSafe final String tagValue, @AntMessage.Priority int priority) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.valueOf(tagName) + priority + "=" + tagValue);
     }

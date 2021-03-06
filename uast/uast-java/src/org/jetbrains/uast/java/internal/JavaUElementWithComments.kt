@@ -21,13 +21,16 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UParameter
 
 interface JavaUElementWithComments : UElement {
   override val comments: List<UComment>
     get() {
       val psi = sourcePsi ?: return emptyList()
       val childrenComments = psi.children.filterIsInstance<PsiComment>().map { UComment(it, this) }
-      if (this !is UExpression) return childrenComments
+      if (this !is UExpression &&
+          this !is UParameter     // void method(/* prior */ int a)  <-  /* prior */ is on the level of PsiParameterList
+      ) return childrenComments
       return childrenComments +
              psi.nearestCommentSibling(forward = true)?.let { listOf(UComment(it, this)) }.orEmpty() +
              psi.nearestCommentSibling(forward = false)?.let { listOf(UComment(it, this)) }.orEmpty()

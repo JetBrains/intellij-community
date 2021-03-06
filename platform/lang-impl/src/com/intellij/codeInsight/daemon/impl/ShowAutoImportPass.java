@@ -1,45 +1,49 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
@@ -81,6 +85,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
+    SlowOperations.allowSlowOperations(() -> doShowImports());
+  }
+
+  private void doShowImports() {
     int caretOffset = myEditor.getCaretModel().getOffset();
     importUnambiguousImports(caretOffset);
     if (isImportHintEnabled()) {
@@ -133,10 +141,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
     PsiFile templateFile = PsiUtilCore.getTemplateLanguageFile(psiFile);
     if (templateFile == null) return false;
-    boolean isJsp = templateFile.getFileType().getName().equals("JSP") || templateFile.getFileType().getName().equals("JSPX");
-    return isJsp ?
-           CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-           CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(), importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
   @NotNull
@@ -176,41 +181,51 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (actions.isEmpty()) return;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) return;
-    Editor editor = EditorFactory.getInstance().createEditor(document, file.getProject());
-    try {
-      for (HintAction action : actions) {
-        action.fixSilently(editor);
-      }
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
+    Editor editor = new ImaginaryEditor(file.getProject(), document);
+    for (HintAction action : actions) {
+      action.fixSilently(editor);
     }
   }
+
+  /**
+   * Run syntax highlighting and extract hint actions from resulting quick fixes. e.g. import suggestions.
+   * Must be run outside EDT.
+   */
   @NotNull
   public static List<HintAction> getImportHints(@NotNull PsiFile file) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // really can't run highlighting from within EDT
       // also, guard against recursive call optimize imports->add imports->optimize imports (in AddImportAction.doAddImport())
-      return Collections.emptyList();
+      throw new IllegalStateException("Must not be run from within EDT"); //return Collections.emptyList();
     }
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null || !hasUnresolvedReferences(file)) return Collections.emptyList();
+    if (document == null || InjectedLanguageManager.getInstance(project).isInjectedFragment(file) || !hasUnresolvedReferences(file)) {
+      return Collections.emptyList();
+    }
 
-    DaemonProgressIndicator progress = new DaemonProgressIndicator();
-    AtomicReference<List<HighlightInfo>> infos = new AtomicReference<>(Collections.emptyList());
-    ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
-        ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-          infos.set(DaemonCodeAnalyzerEx.getInstanceEx(project).runMainPasses(file, document, progress));
-        }, progress);
+    List<HintAction> result = new ArrayList<>();
+    HighlightInfo fakeInfo = new HighlightInfo(null, null, HighlightInfoType.ERROR, 0, 0,
+                                           null, null, HighlightSeverity.ERROR, false,
+                                           null, false, 0, null,
+                                           null, null, -1);
+    QuickFixActionRegistrarImpl registrar = new QuickFixActionRegistrarImpl(fakeInfo);
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        ProgressManager.checkCanceled();
+        if (element instanceof PsiReference && ((PsiReference)element).resolve() == null) {
+          UnresolvedReferenceQuickFixProvider.registerReferenceFixes((PsiReference)element, registrar);
+        }
+        super.visitElement(element);
+      }
     });
-
-    List<HintAction> result = new ArrayList<>(infos.get().size());
-    Editor editor = null;
-    for (HighlightInfo info : infos.get()) {
-      for (HintAction action : extractHints(info)) {
-        if (action.isAvailable(project, null, file)) {
-          result.add(action);
+    if (fakeInfo.quickFixActionRanges != null) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker : fakeInfo.quickFixActionRanges) {
+        ProgressManager.checkCanceled();
+        IntentionAction action = marker.first.getAction();
+        if (action instanceof HintAction && action.isAvailable(project, null, file)) {
+          result.add((HintAction)action);
         }
       }
     }
@@ -218,13 +233,17 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private static boolean hasUnresolvedReferences(@NotNull PsiFile file) {
+    if (file instanceof PsiCompiledElement) return false;
     Ref<Boolean> result = new Ref<>(false);
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof PsiReference && ((PsiReference)element).resolve() == null) {
-          result.set(true);
-          stopWalking();
+        for (PsiReference reference : element.getReferences()) {
+          if (reference.resolve() == null) {
+            result.set(true);
+            stopWalking();
+            break;
+          }
         }
         super.visitElement(element);
       }
@@ -254,10 +273,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
 
   @NotNull
-  public static String getMessage(final boolean multiple, @NotNull String name) {
+  public static @NlsContexts.HintText String getMessage(final boolean multiple, @NotNull String name) {
     final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
-    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    hintText +=
+      " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     return hintText;
   }
 }

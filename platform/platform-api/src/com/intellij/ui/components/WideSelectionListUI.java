@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.BackgroundSupplier;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +48,7 @@ public final class WideSelectionListUI extends BasicListUI {
     if (paintBounds != null) {
       boolean focused = row == leadSelectionIndex && (!list.isFocusable() || list.hasFocus());
       Object value = model.getElementAt(row);
-      Color background = getBackground(list, value, row);
+      Color background = getBackground(list, value, row, selected);
       if (background != null) {
         g.setColor(background);
         g.fillRect(rowBounds.x, rowBounds.y, rowBounds.width, rowBounds.height);
@@ -70,10 +73,10 @@ public final class WideSelectionListUI extends BasicListUI {
       if (JList.VERTICAL == list.getLayoutOrientation()) {
         x = 0;
         width = list.getWidth();
-        Container parent = list.getParent();
-        if (parent instanceof JViewport) {
+        JViewport viewport = ComponentUtil.getViewport(list);
+        if (viewport != null) {
           x = -list.getX();
-          width = parent.getWidth();
+          width = viewport.getWidth();
         }
       }
       if (!selected) {
@@ -94,7 +97,15 @@ public final class WideSelectionListUI extends BasicListUI {
   }
 
   @Nullable
-  private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row) {
+  private static Color getBackground(@NotNull JList<Object> list, @Nullable Object value, int row, boolean selected) {
+    // to be consistent with com.intellij.ui.tree.ui.DefaultTreeUI#getBackground
+    if (selected) {
+      return RenderingUtil.getSelectionBackground(list);
+    }
+    if (row == ListHoverListener.getHoveredIndex(list)) {
+      Color background = RenderingUtil.getHoverBackground(list);
+      if (background != null) return background;
+    }
     if (value instanceof ColoredItem) {
       Color background = ((ColoredItem)value).getColor();
       if (background != null) return background;
@@ -105,8 +116,8 @@ public final class WideSelectionListUI extends BasicListUI {
       if (background != null) return background;
     }
     if (list instanceof ListCellBackgroundSupplier) {
-      //noinspection unchecked
-      Color background = ((ListCellBackgroundSupplier<Object>)list).getCellBackground(value, row);
+      ListCellBackgroundSupplier<Object> supplier = (ListCellBackgroundSupplier<Object>)list;
+      Color background = supplier.getCellBackground(value, row);
       if (background != null) return background;
     }
     return null;
@@ -149,7 +160,7 @@ public final class WideSelectionListUI extends BasicListUI {
     if (bounds != null && index1 == index2 && list instanceof JBList && JList.VERTICAL == list.getLayoutOrientation()) {
       if (((JBList<?>)list).getExpandableItemsHandler().getExpandedItems().contains(index1)) {
         // increase paint area for list item with shown extendable popup
-        JScrollPane pane = JBScrollPane.findScrollPane(list);
+        JScrollPane pane = ComponentUtil.getScrollPane(list);
         JScrollBar bar = pane == null ? null : pane.getVerticalScrollBar();
         if (bar != null && !bar.isOpaque()) bounds.width += bar.getWidth();
       }

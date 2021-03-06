@@ -13,7 +13,7 @@ internal data class NodeComparator(
     if (node1 === node2) return 0
     if (node1 == null) return +1
     if (node2 == null) return -1
-    if (node1 is ProblemNode && node2 is ProblemNode) return compare(node1.problem, node2.problem)
+    if (node1 is ProblemNode && node2 is ProblemNode) return compare(node1, node2)
     if (node1 is ProblemNode) return -1 // problem node before other nodes
     if (node2 is ProblemNode) return +1
     if (sortFoldersFirst && node1 is FileNode && node2 is FileNode) {
@@ -23,18 +23,23 @@ internal data class NodeComparator(
     return naturalCompare(node1.name, node2.name)
   }
 
-  private fun compare(problem1: Problem, problem2: Problem): Int {
+  private fun compare(node1: ProblemNode, node2: ProblemNode): Int {
     if (sortBySeverity) {
-      val result = problem1.severity.compareTo(problem2.severity)
+      val result = node2.severity.compareTo(node1.severity)
       if (result != 0) return result
     }
     return if (sortByName) {
-      val result = naturalCompare(problem1.description, problem2.description)
-      if (result != 0) result else problem1.offset.compareTo(problem2.offset)
+      val result = naturalCompare(node1.text, node2.text)
+      if (result != 0) result else comparePosition(node1, node2)
     }
     else {
-      val result = problem1.offset.compareTo(problem2.offset)
-      if (result != 0) result else naturalCompare(problem1.description, problem2.description)
+      val result = comparePosition(node1, node2)
+      if (result != 0) result else naturalCompare(node1.text, node2.text)
     }
+  }
+
+  private fun comparePosition(node1: ProblemNode, node2: ProblemNode): Int {
+    val result = node1.line.compareTo(node2.line)
+    return if (result != 0) result else node1.column.compareTo(node2.column)
   }
 }

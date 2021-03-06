@@ -16,12 +16,14 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -46,7 +48,7 @@ import java.util.List;
 public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
 
-  public GenerateGetterSetterHandlerBase(String chooserTitle) {
+  public GenerateGetterSetterHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     super(chooserTitle);
   }
 
@@ -74,14 +76,14 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return chooseMembers(allMembers, false, false, project, editor);
   }
 
-  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final String templatesTitle) {
+  protected static JComponent getHeaderPanel(final Project project, final TemplatesManager templatesManager, final @Nls String templatesTitle) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel templateChooserLabel = new JLabel(templatesTitle);
     panel.add(templateChooserLabel, BorderLayout.WEST);
     final ComboBox<TemplateResource> comboBox = new ComboBox<>();
     templateChooserLabel.setLabelFor(comboBox);
     comboBox.setRenderer(SimpleListCellRenderer.create("", TemplateResource::getName));
-    final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
+    final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
       new ComponentWithBrowseButton<>(comboBox, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -97,7 +99,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
               return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
             }
           };
-          ui.setHint("Visibility is applied according to File | Settings | Editor | Code Style | Java | Code Generation");
+          ui.setHint(JavaBundle.message("generate.getter.setter.header.visibility.hint."));
           ui.selectNodeInTree(templatesManager.getDefaultTemplate());
           if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
             setComboboxModel(templatesManager, comboBox);
@@ -117,15 +119,15 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     return panel;
   }
 
-  private static void setComboboxModel(TemplatesManager templatesManager, ComboBox comboBox) {
+  private static void setComboboxModel(TemplatesManager templatesManager, ComboBox<TemplateResource> comboBox) {
     final Collection<TemplateResource> templates = templatesManager.getAllTemplates();
-    comboBox.setModel(new DefaultComboBoxModel(templates.toArray(new TemplateResource[0])));
+    comboBox.setModel(new DefaultComboBoxModel<>(templates.toArray(new TemplateResource[0])));
     comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
   }
 
   @Override
-  protected abstract String getNothingFoundMessage();
-  protected abstract String getNothingAcceptedMessage();
+  protected abstract @NlsContexts.HintText String getNothingFoundMessage();
+  protected abstract @NlsContexts.HintText String getNothingAcceptedMessage();
 
   public boolean canBeAppliedTo(PsiClass targetClass) {
     final ClassMember[] allMembers = getAllOriginalMembers(targetClass);

@@ -12,6 +12,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.*
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -58,9 +59,10 @@ class GrazieDescriptionComponent : GrazieUIComponent.ViewOnly {
       }
       else false
 
-      description.text = getDescriptionPaneContent(selection).also {
+      @NlsSafe val context = getDescriptionPaneContent(selection).also {
         description.isVisible = it.isNotBlank()
       }
+      description.text = context
     }
 
   override val component = panel(MigLayout(createLayoutConstraints().flowY().fillX().gridGapY("7"))) {
@@ -78,6 +80,7 @@ class GrazieDescriptionComponent : GrazieUIComponent.ViewOnly {
                                            || rule.incorrectExamples?.isNotEmpty().orFalse()
                                            || LangTool.getRuleLanguages(rule.id)?.let { it.size > 1 }.orFalse()
 
+  @NlsSafe
   private fun getDescriptionPaneContent(it: Any): String {
     return when {
       it is Lang -> html {

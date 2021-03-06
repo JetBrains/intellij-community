@@ -7,24 +7,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
-import org.jetbrains.annotations.CalledInAwt;
+
+import java.awt.*;
+import java.util.function.Supplier;
+import javax.swing.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.function.Supplier;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -33,7 +33,7 @@ import java.util.function.Supplier;
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
-  @NonNls public static String TAB_NAME = "Log"; // used as tab id, not user-visible
+  @NonNls public static final String TAB_NAME = "Log"; // used as tab id, not user-visible
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
@@ -72,7 +72,9 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Override
   public void initTabContent(@NotNull Content content) {
     myContent = content;
-    myContent.setTabName(TAB_NAME);
+    // Display name is always used for presentation, tab name is used as an id.
+    // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
+    myContent.setTabName(TAB_NAME); //NON-NLS
     updateDisplayName();
 
     myProjectLog.createLogInBackground(true);
@@ -84,17 +86,17 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
       myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, VcsLogManager.LogWindowKind.TOOL_WINDOW, false);
-      VcsLogPanel panel = createPanel(logManager, myUi);
+      VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);
 
       updateDisplayName();
-      myUi.addFilterListener(this::updateDisplayName);
+      myUi.getFilterUi().addFilterListener(this::updateDisplayName);
 
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
       myOnCreatedListener = null;
@@ -107,12 +109,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  @NotNull
-  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, @NotNull VcsLogUiEx ui) {
-    return new VcsLogPanel(logManager, ui);
-  }
-
-  @CalledInAwt
+  @RequiresEdt
   private void disposeMainUi() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
@@ -132,7 +129,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
    *
    * @param consumer consumer to execute.
    */
-  @CalledInAwt
+  @RequiresEdt
   public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
@@ -164,6 +161,14 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @Override
     public Boolean fun(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();
+    }
+  }
+
+  public static class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
+    @Override
+    public void preloadTabContent(@NotNull Content content) {
+      content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
+                          ChangesViewContentManager.TabOrderWeight.BRANCHES.getWeight());
     }
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.icons.AllIcons;
@@ -10,6 +11,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -43,16 +45,16 @@ class BlockingAnnotationsPanel {
   private final JBTable myTable;
   private final JPanel myComponent;
   protected final ListWrappingTableModel myTableModel;
-  private final String myCustomEmptyText;
-  private final String myCustomAddLinkText;
+  private final @NlsContexts.StatusText String myCustomEmptyText;
+  private final @NlsContexts.StatusText String myCustomAddLinkText;
 
   BlockingAnnotationsPanel(Project project,
-                           String name,
+                           @NlsContexts.ColumnName String name,
                            String defaultAnnotation,
                            List<String> annotations,
                            List<String> defaultAnnotations,
-                           String customEmptyText,
-                           String customAddLinkText) {
+                           @NlsContexts.StatusText String customEmptyText,
+                           @NlsContexts.StatusText String customAddLinkText) {
     myProject = project;
     myDefaultAnnotation = defaultAnnotation;
     myDefaultAnnotations = new HashSet<>(defaultAnnotations);
@@ -73,7 +75,7 @@ class BlockingAnnotationsPanel {
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table,
+      protected void customizeCellRenderer(@NotNull JTable table,
                                            Object value,
                                            boolean selected,
                                            boolean hasFocus,
@@ -164,7 +166,7 @@ class BlockingAnnotationsPanel {
 
   private void chooseAnnotation(String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser("Choose " + title, GlobalSearchScope.allScope(myProject), new ClassFilter() {
+      .createNoInnerClassesScopeChooser(JvmAnalysisBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {
           return PsiAnnotation.TargetType.METHOD.equals(AnnotationTargetUtil.findAnnotationTarget(aClass, PsiAnnotation.TargetType.METHOD));

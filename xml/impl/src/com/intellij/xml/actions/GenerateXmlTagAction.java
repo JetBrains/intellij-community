@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -31,11 +17,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -231,7 +216,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return tag;
   }
 
-  private static String getNamespace(XmlElementDescriptor descriptor) {
+  private static @NlsSafe String getNamespace(XmlElementDescriptor descriptor) {
     return descriptor instanceof XmlElementDescriptorImpl ? ((XmlElementDescriptorImpl)descriptor).getNamespace() : "";
   }
 
@@ -312,8 +297,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       myNSLabel = new JLabel();
       myPanel.add(myNSLabel, BorderLayout.EAST);
 
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      Font font = scheme.getFont(EditorFontType.PLAIN);
+      Font font = EditorFontType.getGlobalPlainFont();
       myNameLabel.setFont(font);
       myNSLabel.setFont(font);
     }

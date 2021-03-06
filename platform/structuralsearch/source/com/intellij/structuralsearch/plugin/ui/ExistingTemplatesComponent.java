@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -18,7 +18,6 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.TextTransferable;
@@ -36,7 +35,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.regex.Pattern;
 
-public class ExistingTemplatesComponent {
+public final class ExistingTemplatesComponent {
   private static final Pattern SPLIT = Pattern.compile("(?<!/)/(?!/)"); // slash not preceded or followed by another slash
 
   private final Tree patternTree;
@@ -124,7 +123,7 @@ public class ExistingTemplatesComponent {
     historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    ListSpeedSearch<Configuration> speedSearch = new ListSpeedSearch<>(historyList, (Function<Configuration, String>)Configuration::getName);
+    ListSpeedSearch<Configuration> speedSearch = new ListSpeedSearch<>(historyList, Configuration::getName);
     historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
     configureSelectTemplateAction(historyList);
   }

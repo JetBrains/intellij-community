@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -11,12 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.stripBraces;
-import static com.siyeh.ig.psiutils.ParenthesesUtils.stripParentheses;
 
 /**
  * A model which represents an 'if' condition which could be replaced with '?:', '&&' or '||' expression
  */
-public class IfConditionalModel extends ConditionalModel {
+public final class IfConditionalModel extends ConditionalModel {
 
   private final @NotNull PsiStatement myThenBranch;
   private final @NotNull PsiStatement myElseBranch;
@@ -62,7 +62,7 @@ public class IfConditionalModel extends ConditionalModel {
    *   if(bar) return "foobar";
    * }
    * return "none";}</pre>
-   * The model for inner {@code if} could be extracted with {@code condition = bar; thenBranch = "foobar"; elseBranch = "none"} when 
+   * The model for inner {@code if} could be extracted with {@code condition = bar; thenBranch = "foobar"; elseBranch = "none"} when
    * this parameter is true.
    * @return null if statement can't be converted, model otherwise
    */
@@ -71,6 +71,8 @@ public class IfConditionalModel extends ConditionalModel {
     model = extractFromAssignment(ifStatement);
     if (model != null) return model;
     model = extractFromImplicitAssignment(ifStatement);
+    if (model != null) return model;
+    model = extractFromOverwrittenDeclaration(ifStatement);
     if (model != null) return model;
     model = extractFromImplicitReturn(ifStatement, allowOuterControlFlow);
     if (model != null) return model;
@@ -81,6 +83,33 @@ public class IfConditionalModel extends ConditionalModel {
     model = extractFromImplicitYield(ifStatement);
     if (model != null) return model;
     return extractFromMethodCall(ifStatement);
+  }
+
+  private static @Nullable IfConditionalModel extractFromOverwrittenDeclaration(PsiIfStatement ifStatement) {
+    if (ifStatement.getElseBranch() != null) return null;
+    PsiStatement thenStatement = ifStatement.getThenBranch();
+    if (thenStatement == null) return null;
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
+    if (condition == null) return null;
+    PsiExpressionStatement thenBranch = tryCast(stripBraces(thenStatement), PsiExpressionStatement.class);
+    if (thenBranch == null) return null;
+    PsiDeclarationStatement prevStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(ifStatement), PsiDeclarationStatement.class);
+    if (prevStatement == null) return null;
+    PsiElement[] elements = prevStatement.getDeclaredElements();
+    if (elements.length != 1) return null;
+    PsiLocalVariable local = tryCast(elements[0], PsiLocalVariable.class);
+    if (local == null) return null;
+    PsiExpression initializer = local.getInitializer();
+    if (initializer == null || !ExpressionUtils.isSafelyRecomputableExpression(initializer)) return null;
+    PsiAssignmentExpression thenExpression = tryCast(thenBranch.getExpression(), PsiAssignmentExpression.class);
+    if (thenExpression == null || thenExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
+    PsiExpression thenRhs = thenExpression.getRExpression();
+    if (thenRhs == null) return null;
+    if (ExpressionUtils.resolveLocalVariable(thenExpression.getLExpression()) != local) return null;
+    PsiType elseType = initializer.getType();
+    PsiType thenType = thenExpression.getType();
+    if (elseType == null || !elseType.equals(thenType)) return null;
+    return new IfConditionalModel(condition, thenRhs, initializer, thenBranch, prevStatement, local.getType());
   }
 
   private static @Nullable IfConditionalModel extractFromImplicitAssignment(@NotNull PsiIfStatement ifStatement) {
@@ -96,7 +125,7 @@ public class IfConditionalModel extends ConditionalModel {
   private static @Nullable IfConditionalModel extractFromAssignment(@Nullable PsiExpression condition,
                                                                     @Nullable PsiStatement thenStatement,
                                                                     @Nullable PsiStatement elseStatement, boolean explicit) {
-    condition = stripParentheses(condition);
+    condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (condition == null) return null;
     PsiExpressionStatement thenBranch = tryCast(stripBraces(thenStatement), PsiExpressionStatement.class);
     PsiExpressionStatement elseBranch = tryCast(stripBraces(elseStatement), PsiExpressionStatement.class);
@@ -145,7 +174,7 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   private static @Nullable IfConditionalModel extractFromReturn(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = stripParentheses(ifStatement.getCondition());
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
     if (condition == null) return null;
     PsiReturnStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiReturnStatement.class);
     PsiReturnStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiReturnStatement.class);
@@ -153,7 +182,7 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   private static @Nullable IfConditionalModel extractFromImplicitReturn(@NotNull PsiIfStatement ifStatement, boolean allowReturnInOuterBranch) {
-    PsiExpression condition = stripParentheses(ifStatement.getCondition());
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
     if (condition == null) return null;
     if (ifStatement.getElseBranch() != null) return null;
     PsiReturnStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiReturnStatement.class);
@@ -165,7 +194,7 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   private static @Nullable IfConditionalModel extractFromImplicitYield(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = stripParentheses(ifStatement.getCondition());
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
     if (condition == null) return null;
     if (ifStatement.getElseBranch() != null) return null;
     PsiYieldStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiYieldStatement.class);
@@ -174,7 +203,7 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   private static @Nullable IfConditionalModel extractFromYield(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = stripParentheses(ifStatement.getCondition());
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
     if (condition == null) return null;
     PsiYieldStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiYieldStatement.class);
     PsiYieldStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiYieldStatement.class);
@@ -210,7 +239,7 @@ public class IfConditionalModel extends ConditionalModel {
   }
 
   private static @Nullable IfConditionalModel extractFromMethodCall(@NotNull PsiIfStatement ifStatement) {
-    PsiExpression condition = stripParentheses(ifStatement.getCondition());
+    PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
     if (condition == null) return null;
     PsiExpressionStatement thenBranch = tryCast(stripBraces(ifStatement.getThenBranch()), PsiExpressionStatement.class);
     PsiExpressionStatement elseBranch = tryCast(stripBraces(ifStatement.getElseBranch()), PsiExpressionStatement.class);

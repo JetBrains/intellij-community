@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -134,7 +124,7 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     configure();
     assertSize(1, FunctionalExpressionSearch.search(findClass("pkg.p1.p2.p3.I")).findAll());
   }
-  
+
   public void testInsideArrayInitializer() {
     myFixture.addClass("public interface Foo { void run() {}}");
     myFixture.addClass("public interface Bar { void run() {}}");
@@ -178,14 +168,45 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
                        "{ field = () -> {}; } " +
                        "}");
 
-    assertSize(1, FunctionalExpressionSearch.search(sam).findAll());
-    for (VirtualFile file : JavaFunctionalExpressionSearcher.getFilesToSearchInPsi(sam)) {
+    CommonProcessors.CollectProcessor<PsiFunctionalExpression> result = new CommonProcessors.CollectProcessor<>();
+    JavaFunctionalExpressionSearcher.Session session = new JavaFunctionalExpressionSearcher.Session(
+      new FunctionalExpressionSearch.SearchParameters(sam, GlobalSearchScope.allScope(getProject())),
+      result
+    );
+    session.processResults();
+    assertSize(1, result.getResults());
+    for (VirtualFile file : session.getFilesLookedInside()) {
       assertFalse(file.getName(), file.getName().startsWith("_"));
     }
   }
 
-  private PsiClass findClass(String i) {
-    return JavaPsiFacade.getInstance(getProject()).findClass(i, GlobalSearchScope.allScope(getProject()));
+  public void testReturnedFunExpressionsDoNotHoldAst() {
+    PsiClass sam = myFixture.addClass("interface I { void foo(); }");
+    PsiFile usages = myFixture.addFileToProject("Some.java", "class Some { " +
+                                                              "{ I[] is = { () -> {}, this::toString }; }" +
+                                                              "}");
+    assertFalse(((PsiFileImpl) usages).isContentsLoaded());
+    assertNull(((PsiFileImpl) usages).derefStub());
+
+    Collection<PsiFunctionalExpression> all = FunctionalExpressionSearch.search(sam).findAll();
+    assertSize(2, all);
+    for (PsiFunctionalExpression expression : all) {
+      LeakHunter.checkLeak(expression, ASTNode.class);
+    }
+  }
+
+  public void testNoAstLoadingInObviousCases() {
+    PsiClass sam = myFixture.addClass("interface I { void foo(); }");
+    PsiFile usages = myFixture.addFileToProject("Some.java", "class Some { " +
+                                                              "void bar(I i) {}" +
+                                                             "{ bar(() -> {}); }; }" +
+                                                              "}");
+    assertOneElement(FunctionalExpressionSearch.search(sam).findAll());
+    assertFalse(((PsiFileImpl) usages).isContentsLoaded());
+  }
+
+  private PsiClass findClass(String fqName) {
+    return myFixture.findClass(fqName);
   }
 
   private void configure() {
@@ -204,7 +225,6 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     configure();
 
     PsiClass predicate = findClass(Predicate.class.getName());
-    assert predicate != null;
     final PsiFunctionalExpression next = assertOneElement(FunctionalExpressionSearch.search(predicate).findAll());
     assertEquals(expected, next.getText());
   }
@@ -233,6 +253,12 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     PsiClass[] fooClasses = ((PsiJavaFile)file).getClasses();
     assertOneElement(FunctionalExpressionSearch.search(fooClasses[0]).findAll());
     assertOneElement(FunctionalExpressionSearch.search(fooClasses[1]).findAll());
+  }
+
+  public void testInvalidCode() {
+    configure();
+    // whatever, but it shouldn't throw
+    assertEmpty(FunctionalExpressionSearch.search(findClass("I")).findAll());
   }
 
   @Override

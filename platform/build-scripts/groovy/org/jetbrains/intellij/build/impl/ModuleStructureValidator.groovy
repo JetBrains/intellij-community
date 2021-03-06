@@ -12,36 +12,41 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 
 @CompileStatic
-class ModuleStructureValidator {
-
+final class ModuleStructureValidator {
   private static QName includeName = new QName("http://www.w3.org/2001/XInclude", "include")
   private static QName fallbackName = new QName("http://www.w3.org/2001/XInclude", "fallback")
 
-  private static HashSet<String> pathAttributes = new HashSet<String>([
+  private static Set<String> pathAttributes = Set.of(
     "interface", "implementation", "class", "topic", "instance", "provider",
     "implements", "headlessImplementation", "serviceInterface", "serviceImplementation",
-    "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass",
+    "interfaceClass", "implementationClass", "beanClass", "schemeClass", "factoryClass", "handlerClass", "hostElementClass", "targetClass",
     "forClass", "className", "predicateClassName", "displayNameSupplierClassName", "preloaderClassName",
-    "treeRenderer"])
+    "treeRenderer"
+  )
 
-  private static HashSet<String> nonPathAttributes = new HashSet<String>([
-    "id", "value", "key", "testServiceImplementation", "defaultExtensionNs", "qualifiedName", "childrenEPName"])
+  private static Set<String> nonPathAttributes = Set.of(
+    "id", "value", "key", "testServiceImplementation", "defaultExtensionNs", "qualifiedName", "childrenEPName"
+  )
 
-  private static HashSet<String> pathElements = new HashSet<String>(["interface-class", "implementation-class"])
-  private static HashSet<String> predefinedTypes = new HashSet<String>(["java.lang.Object"])
+  private static Set<String> pathElements = Set.of("interface-class", "implementation-class")
+  private static Set<String> predefinedTypes = Set.of("java.lang.Object")
+  private static Set<String> ignoreModules = Set.of("intellij.java.testFramework", "intellij.platform.uast.tests")
 
   private BuildContext buildContext
-  private MultiMap<String, String> moduleJars
-  private HashSet<String> moduleNames
-  private ArrayList<GString> errors
-  private ArrayList<GString> warnings
+  private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
+  private Set<String> moduleNames = new HashSet<String>()
+  private List<GString> errors = new ArrayList<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
-    this.moduleJars = moduleJars
-    this.moduleNames = new HashSet<String>(moduleJars.values())
-    this.errors = new ArrayList<>()
-    this.warnings = new ArrayList<>()
+    for (moduleJar in moduleJars.entrySet()) {
+      // Filter out jars with relative paths in name
+      if (moduleJar.key.contains("\\") || moduleJar.key.contains("/"))
+        continue
+
+      this.moduleJars.put(moduleJar.key, moduleJar.value)
+      this.moduleNames.addAll(moduleJar.value)
+    }
   }
 
   void validate() {
@@ -49,21 +54,21 @@ class ModuleStructureValidator {
     validateJarModules()
 
     buildContext.messages.info("Validating modules...")
-    def visitedModules = new HashSet<JpsModule>()
+    Set<JpsModule> visitedModules = new HashSet<JpsModule>()
     for (moduleName in moduleNames) {
+      if (ignoreModules.contains(moduleName)) {
+        continue
+      }
       validateModuleDependencies(visitedModules, buildContext.findModule(moduleName))
     }
 
     buildContext.messages.info("Validating xml descriptors...")
     validateXmlDescriptors()
 
-    if (warnings.isEmpty() && errors.isEmpty()) {
+    if (errors.isEmpty()) {
       buildContext.messages.info("Validation finished successfully")
     }
     else {
-      if (warnings.any()) {
-        buildContext.messages.warning("Validation warnings: \n" + warnings.join("\n"))
-      }
       if (errors.any()) {
         buildContext.messages.warning("Validation errors: \n" + errors.join("\n"))
       }
@@ -81,7 +86,7 @@ class ModuleStructureValidator {
     for (module in modulesInJars.keySet()) {
       def jars = modulesInJars.get(module)
       if (jars.size() > 1) {
-        warnings.add("Module '$module' contains in several JARs: " + jars.join("; "))
+        buildContext.messages.warning("Module '$module' contains in several JARs: " + jars.join("; "))
       }
     }
   }
@@ -97,6 +102,7 @@ class ModuleStructureValidator {
         // Skip test dependencies
         def role = dependency.container.getChild(JpsJavaDependencyExtensionRole.INSTANCE)
         if (role != null && role.scope.name() == "TEST") continue
+        if (role != null && role.scope.name() == "RUNTIME") continue
 
         // Skip localization modules
         def dependantModule = ((JpsModuleDependency)dependency).module
@@ -152,7 +158,7 @@ class ModuleStructureValidator {
       if (descriptorFile == null) {
         def isOptional = (((Node)includeNode).children().any { it instanceof Node && ((Node)it).name() == fallbackName })
         if (isOptional) {
-          warnings.add("Can not find optional xml descriptor '$ref' referenced in '${descriptor.name}'")
+          buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
         }
         else {
           errors.add("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'")
@@ -180,7 +186,7 @@ class ModuleStructureValidator {
   }
 
   private void validateXmlRegistrations(HashSet<File> descriptors) {
-    def classes = new HashSet<String>(predefinedTypes.collect())
+    def classes = new HashSet<String>(predefinedTypes)
     for (moduleName in moduleNames) {
       def outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(buildContext.findModule(moduleName), false)
       outputDirectory.eachFileRecurse(FileType.FILES) {
@@ -217,26 +223,29 @@ class ModuleStructureValidator {
       }
 
       if (value.startsWith("com.") || value.startsWith("org.")) {
-        warnings.add(
+        buildContext.messages.warning(
           "Attribute '$name' contains qualified path '$value'. Add attribute into 'ModuleStructureValidator.pathAttributes' or 'ModuleStructureValidator.nonPathAttributes' collection.")
       }
     }
 
     for (child in xml.children()) {
       if (child instanceof Node) {
-        for (pathElement in pathElements) {
-          if (!(child.name() == pathElement)) continue
-          checkRegistration(source, child.text(), classes)
+        Node node = (Node)child
+        for (String pathElement in pathElements) {
+          if (node.name() == pathElement) {
+            checkRegistration(source, node.text(), classes)
+          }
         }
 
-        validateXmlRegistrationsRec(source, (Node)child, classes)
+        validateXmlRegistrationsRec(source, node, classes)
       }
     }
   }
 
   private void checkRegistration(String source, String value, HashSet<String> classes) {
-    if (value.isEmpty()) return
-    if (classes.contains(value)) return
+    if (value.isEmpty() || classes.contains(value)) {
+      return
+    }
     errors.add("Unresolved registration '$value' in $source")
   }
 }

@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class PsiImplUtil {
+public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
 
   private PsiImplUtil() { }
@@ -274,7 +275,7 @@ public class PsiImplUtil {
     }
     final PsiTypeParameter[] typeParameters = classClass.getTypeParameters();
     if (typeParameters.length == 1) {
-      substitutor = substitutor.put(typeParameters[0], operandType);
+      substitutor = substitutor.put(typeParameters[0], operandType instanceof PsiClassType ? ((PsiClassType)operandType).rawType() : operandType);
     }
 
     return new PsiImmediateClassType(classClass, substitutor);
@@ -300,24 +301,6 @@ public class PsiImplUtil {
     return null;
   }
 
-  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
-  @Deprecated
-  public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType @NotNull ... types) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
-  }
-
-  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
-  @Deprecated
-  public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, PsiAnnotation.TargetType @NotNull ... types) {
-    return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
-  }
-
-  /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
-  @Deprecated
-  public static PsiAnnotation.TargetType @NotNull [] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
-    return AnnotationTargetUtil.getTargetsForLocation(owner);
-  }
-
   @Nullable
   public static ASTNode findDocComment(@NotNull CompositeElement element) {
     TreeElement node = element.getFirstChildNode();
@@ -332,8 +315,8 @@ public class PsiImplUtil {
    * @deprecated types should be proceed by the callers themselves
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    PsiUtilCore.ensureValid(expression);
     PsiUtil.ensureValidType(type);
 
     PsiExpression topLevel = expression;
@@ -394,9 +377,18 @@ public class PsiImplUtil {
                                                  member.hasModifierProperty(PsiModifier.PUBLIC) &&
                                                  ((PsiMethod)member).findSuperMethods().length > 0)) {
       //member from anonymous class can be called from outside the class
-      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class)
-                                                                           : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
-      return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
+      PsiElement scope = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class)
+                                                                  : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
+      if (scope instanceof PsiDeclarationStatement) {
+        PsiElement[] elements = ((PsiDeclarationStatement)scope).getDeclaredElements();
+        if (elements.length == 1 &&
+            elements[0] instanceof PsiLocalVariable &&
+            ((PsiLocalVariable)elements[0]).getTypeElement().isInferredType()) {
+          // Inferred type: can be used in the surrounding code block as well
+          scope = scope.getParent();
+        }
+      }
+      return new LocalSearchScope(scope != null ? scope : aClass);
     }
 
     PsiModifierList modifierList = member.getModifierList();
@@ -618,11 +610,7 @@ public class PsiImplUtil {
   }
 
   public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<? super PsiAnnotation> annotations) {
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
-        annotations.add(annotation);
-      }
-    }
+    AnnotationTargetUtil.collectStrictlyTypeUseAnnotations(modifierList, annotations);
   }
 
   private static final Key<Boolean> TYPE_ANNO_MARK = Key.create("type.annotation.mark");
@@ -763,6 +751,11 @@ public class PsiImplUtil {
       return JavaResolveResult.EMPTY_ARRAY;
     }
     PsiFile psiFile = SharedImplUtil.getContainingFile(fileElement);
+    return multiResolveImpl(element, psiFile, incompleteCode, resolver);
+  }
+
+  public static <T extends PsiJavaCodeReferenceElement> @NotNull JavaResolveResult @NotNull [] multiResolveImpl(
+    @NotNull T element, PsiFile psiFile, boolean incompleteCode, ResolveCache.@NotNull PolyVariantContextResolver<? super T> resolver) {
     PsiManager manager = psiFile == null ? null : psiFile.getManager();
     if (manager == null) {
       PsiUtilCore.ensureValid(element);

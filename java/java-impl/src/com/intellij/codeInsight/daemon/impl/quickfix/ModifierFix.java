@@ -3,8 +3,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -27,13 +29,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
   private static final Logger LOG = Logger.getInstance(ModifierFix.class);
 
   @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
-  private volatile String myName;
+  private volatile @IntentionName String myName;
   private final boolean myStartInWriteAction;
 
   public ModifierFix(PsiModifierList modifierList,
@@ -61,7 +63,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     myStartInWriteAction = !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
-  private String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
+  private @IntentionName String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
     String name = null;
     PsiElement parent = variable != null ? variable : modifierList != null ? modifierList.getParent() : null;
     if (parent instanceof PsiClass) {
@@ -100,10 +102,18 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return myName;
   }
 
+  @Override
+  public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
+    return action instanceof ModifierFix &&
+           ((ModifierFix)action).myModifier.equals(myModifier) &&
+           ((ModifierFix)action).myShouldHave == myShouldHave;
+  }
+
   @NotNull
   @Override
   public String getFamilyName() {
-    return QuickFixBundle.message("fix.modifiers.family");
+    return myShouldHave ? QuickFixBundle.message("add.modifier.fix.family", myModifier)
+                        : QuickFixBundle.message("remove.modifier.fix.family", myModifier);
   }
 
   @Override
@@ -222,7 +232,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         final List<PsiModifierList> modifierLists = new ArrayList<>();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(
-            new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiMethod>() {
+            new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
               @Override
               public boolean execute(@NotNull PsiMethod inheritor) {
                 PsiModifierList list = inheritor.getModifierList();

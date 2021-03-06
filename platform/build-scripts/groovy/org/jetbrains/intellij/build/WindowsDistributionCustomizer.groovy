@@ -27,9 +27,14 @@ abstract class WindowsDistributionCustomizer {
   boolean include32BitLauncher = true
 
   /**
-   * If {@code true} a Zip archive containing the installation with bundled JetBrains RE will be produced
+   * If {@code true} a Zip archive containing the installation will be produced
    */
   boolean buildZipArchive = true
+
+  /**
+   * If {@code true} JetBrains RE jre will be added to a zip archive
+   */
+  boolean zipArchiveWithBundledJre = true
 
   /**
    * If {@code true} Windows Installer will associate *.ipr files with the IDE in Registry
@@ -60,7 +65,11 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Name of the root directory in Windows .zip archive
    */
-  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
+  @SuppressWarnings('GrMethodMayBeStatic')
+  // method is used by AndroidStudioProperties.groovy (https://bit.ly/3heXKlQ)
+  String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+    return ""
+  }
 
   /**
    * Name of the root product windows installation directory and Desktop ShortCut

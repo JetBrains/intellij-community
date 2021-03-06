@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,10 +11,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ArrayListSet;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
@@ -21,6 +25,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -36,11 +41,10 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
-
-public class MavenProjectsTree {
-
+public final class MavenProjectsTree {
   private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
 
   private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".7";
@@ -69,7 +73,7 @@ public class MavenProjectsTree {
   private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new HashMap<>();
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<>();
 
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
   private final Project myProject;
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
@@ -88,10 +92,6 @@ public class MavenProjectsTree {
     return myProject;
   }
 
-  public MavenWrapperConfiguration getWrapperConfiguration(MavenProject project) {
-    return null;
-
-  }
 
   public MavenProjectReaderProjectLocator getProjectLocator() {
     return myProjectLocator;
@@ -231,8 +231,8 @@ public class MavenProjectsTree {
   public List<VirtualFile> getExistingManagedFiles() {
     List<VirtualFile> result = new ArrayList<>();
     for (String path : getManagedFilesPaths()) {
-      VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      if (f != null) result.add(f);
+      VirtualFile f = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+      if (f != null && f.exists()) result.add(f);
     }
     return result;
   }
@@ -714,7 +714,7 @@ public class MavenProjectsTree {
     if (isManagedFile(path)) return true;
 
     for (MavenProject each : getProjects()) {
-      if (FileUtil.pathsEqual(path, each.getPath())) return true;
+      if (VfsUtilCore.pathEqualsTo(each.getFile(), path)) return true;
       if (each.getModulePaths().contains(path)) return true;
     }
     return false;
@@ -901,7 +901,7 @@ public class MavenProjectsTree {
     return Collections.unmodifiableList(customNonFilteredExtensions);
   }
 
-  public int getFilterConfigCrc(ProjectFileIndex fileIndex) {
+  public int getFilterConfigCrc(@NotNull ProjectFileIndex fileIndex) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     readLock();
@@ -1060,6 +1060,20 @@ public class MavenProjectsTree {
     return findProject(artifact.getMavenId());
   }
 
+  public MavenProject findSingleProjectInReactor(MavenId id) {
+    readLock();
+    try {
+      List<MavenProject> list = myMavenIdToProjectMapping.values().stream().filter(
+        it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
+              StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())
+      ).collect(Collectors.toList());
+      return list.size() == 1 ? list.get(0) : null;
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
   MavenWorkspaceMap getWorkspaceMap() {
     readLock();
     try {
@@ -1187,8 +1201,7 @@ public class MavenProjectsTree {
         projectIds.add(project.getMavenId());
       }
 
-      final Set<File> projectPaths = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-
+      Set<File> projectPaths = FileCollectionFactory.createCanonicalFileSet();
       for (MavenProject project : projects) {
         projectPaths.add(new File(project.getFile().getPath()));
       }
@@ -1261,8 +1274,16 @@ public class MavenProjectsTree {
     myStructureReadLock.unlock();
   }
 
+  /**
+   * @deprecated use #addListener(Listener, Disposable)
+   */
+  @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);
+  }
+
+  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
+    myListeners.add(l, disposable);
   }
 
   void fireProfilesChanged() {
@@ -1371,7 +1392,7 @@ public class MavenProjectsTree {
   public abstract static class SimpleVisitor extends Visitor<Object> {
   }
 
-  private static class MavenProjectTimestamp {
+  private static final class MavenProjectTimestamp {
     private final long myPomTimestamp;
     private final long myParentLastReadStamp;
     private final long myProfilesTimestamp;
@@ -1491,7 +1512,8 @@ public class MavenProjectsTree {
     }
   }
 
-  private static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
+  @ApiStatus.Internal
+  public static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
     @Override
     public int computeHashCode(MavenCoordinate object) {
       String artifactId = object.getArtifactId();

@@ -4,7 +4,6 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,11 +92,6 @@ public class PackageDirectoryCache {
     return info;
   }
 
-  public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName) {
-    final PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
-  }
-
   public @NotNull Set<String> getSubpackageNames(final @NotNull String packageName, @NotNull GlobalSearchScope scope) {
     final PackageInfo info = getPackageInfo(packageName);
     if (info == null) return Collections.emptySet();
@@ -119,12 +113,15 @@ public class PackageDirectoryCache {
     return new PackageDirectoryCache(map);
   }
 
-  private class PackageInfo {
+  private final class PackageInfo {
     final @NotNull String myQname;
     final @NotNull List<? extends VirtualFile> myPackageDirectories;
-    final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages = new VolatileNotNullLazyValue<MultiMap<String, VirtualFile>>() {
-      @Override
-      protected @NotNull MultiMap<String, VirtualFile> compute() {
+    final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages;
+
+    PackageInfo(@NotNull String qname, @NotNull List<? extends VirtualFile> packageDirectories) {
+      myQname = qname;
+      myPackageDirectories = packageDirectories;
+      mySubPackages = NotNullLazyValue.volatileLazy(() -> {
         MultiMap<String, VirtualFile> result = MultiMap.createLinked();
         for (VirtualFile directory : myPackageDirectories) {
           ProgressManager.checkCanceled();
@@ -137,12 +134,7 @@ public class PackageDirectoryCache {
           }
         }
         return result;
-      }
-    };
-
-    PackageInfo(@NotNull String qname, @NotNull List<? extends VirtualFile> packageDirectories) {
-      myQname = qname;
-      myPackageDirectories = packageDirectories;
+      });
     }
 
     @NotNull

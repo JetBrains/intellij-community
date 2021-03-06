@@ -16,15 +16,35 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Sergey Evdokimov
  */
-public abstract class MavenGeneralConfigurable extends MavenGeneralPanel implements SearchableConfigurable {
-  protected abstract MavenGeneralSettings getState();
+public class MavenGeneralConfigurable extends MavenGeneralPanel implements SearchableConfigurable {
+
+  private final Project myProject;
+
+  public MavenGeneralConfigurable(Project project) {
+    myProject = project;
+  }
+
+  private MavenGeneralSettings getState() {
+    return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
+  }
+
+  @Override
+  public JComponent createComponent() {
+    if (myProject.isDefault()) {
+      showCheckBoxWithAdvancedSettings();
+    }
+    return super.createComponent();
+  }
 
   @Override
   public boolean isModified() {
@@ -40,7 +60,7 @@ public abstract class MavenGeneralConfigurable extends MavenGeneralPanel impleme
 
   @Override
   public void reset() {
-    getData(getState());
+    initializeFormData(getState(), myProject);
   }
 
   @Override

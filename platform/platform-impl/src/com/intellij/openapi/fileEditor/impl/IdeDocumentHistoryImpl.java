@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.EditorEventListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
@@ -28,11 +30,10 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -40,16 +41,17 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.DateFormatUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,11 +60,9 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 
-@State(name = "IdeDocumentHistory", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), reportStatistic = false)
 public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance(IdeDocumentHistoryImpl.class);
 
@@ -77,7 +77,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private boolean myBackInProgress;
   private boolean myForwardInProgress;
-  private Object myLastGroupId;
+  private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myRegisteredBackPlaceInLastGroup;
 
   // change's navigation
@@ -87,12 +87,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private PlaceInfo myCommandStartPlace;
   private boolean myCurrentCommandIsNavigation;
   private boolean myCurrentCommandHasChanges;
-  private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
+  private final Set<VirtualFile> myChangedFilesInCurrentCommand = new HashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private final PersistentHashMap<String, Long> myRecentFilesTimestampsMap;
+  private final SynchronizedClearableLazy<PersistentHashMap<String, Long>> recentFileTimestampMap;
 
-  private final List<String> myRecentlyChangedFiles = new ArrayList<>();
+  private final RecentlyChangedFilesState state = new RecentlyChangedFilesState();
 
   public IdeDocumentHistoryImpl(@NotNull Project project) {
     myProject = project;
@@ -153,56 +153,61 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         }
       }
     };
+
+    recentFileTimestampMap = new SynchronizedClearableLazy<>(() -> initRecentFilesTimestampMap(myProject));
+
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(listener, this);
     multicaster.addCaretListener(listener, this);
 
-    myRecentFilesTimestampsMap = initRecentFilesTimestampMap(project);
+    FileEditorProvider.EP_FILE_EDITOR_PROVIDER.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionRemoved(@NotNull FileEditorProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        String editorTypeId = provider.getEditorTypeId();
+        Predicate<PlaceInfo> clearStatePredicate = e -> editorTypeId.equals(e.getEditorTypeId());
+        if (myChangePlaces.removeIf(clearStatePredicate)) {
+          myCurrentIndex = myChangePlaces.size();
+        }
+        myBackPlaces.removeIf(clearStatePredicate);
+        myForwardPlaces.removeIf(clearStatePredicate);
+        if (myCommandStartPlace != null && myCommandStartPlace.getEditorTypeId().equals(editorTypeId)) {
+          myCommandStartPlace = null;
+        }
+      }
+    }, this);
   }
 
   protected FileEditorManagerEx getFileEditorManager() {
     return FileEditorManagerEx.getInstanceEx(myProject);
   }
 
-  private @NotNull PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
+  private @NotNull static PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
     Path file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat");
-
-    PersistentHashMap<String, Long> map;
     try {
-      map = IOUtil.openCleanOrResetBroken(() -> createMap(file), file);
+      return IOUtil.openCleanOrResetBroken(() -> createMap(file), file);
     }
     catch (IOException e) {
       LOG.error("Cannot create PersistentHashMap in " + file, e);
       throw new RuntimeException(e);
     }
-
-    Disposer.register(this, () -> {
-      try {
-        map.close();
-      }
-      catch (IOException e) {
-        LOG.info("Cannot close persistent viewed files timestamps hash map", e);
-      }
-    });
-    return map;
   }
 
-  private static @NotNull PersistentHashMap<String, Long> createMap(Path file) throws IOException {
+  private static @NotNull PersistentHashMap<String, Long> createMap(@NotNull Path file) throws IOException {
     return new PersistentHashMap<>(file,
                                    EnumeratorStringDescriptor.INSTANCE,
                                    EnumeratorLongDescriptor.INSTANCE,
                                    256,
                                    0,
-                                   new PagedFileStorage.StorageLockContext(true));
+                                   new StorageLockContext(true));
   }
 
   private void registerViewed(@NotNull VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || !UISettings.getInstance().getShowInplaceComments()) {
       return;
     }
 
     try {
-      myRecentFilesTimestampsMap.put(file.getPath(), System.currentTimeMillis());
+      recentFileTimestampMap.getValue().put(file.getPath(), System.currentTimeMillis());
     }
     catch (IOException e) {
       LOG.info("Cannot put a timestamp from a persistent hash map", e);
@@ -217,7 +222,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     try {
-      Long timestamp = getInstance(project).getRecentFilesTimestamps().get(file.getPath());
+      Long timestamp = ((IdeDocumentHistoryImpl)getInstance(project)).recentFileTimestampMap.getValue().get(file.getPath());
       if (timestamp != null) {
         component.append(" ").append(DateFormatUtil.formatPrettyDateTime(timestamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
       }
@@ -227,26 +232,41 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
   }
 
-  static class RecentlyChangedFilesState {
-    // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
-    @SuppressWarnings("WeakerAccess")
-    public List<String> CHANGED_PATHS = new ArrayList<>();
+  static final class RecentlyChangedFilesState {
+    @XCollection(style = XCollection.Style.v2)
+    public final List<String> changedPaths = new ArrayList<>();
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      return changedPaths.equals(((RecentlyChangedFilesState)o).changedPaths);
+    }
+
+    @Override
+    public int hashCode() {
+      return changedPaths.hashCode();
+    }
   }
 
   @Override
   public RecentlyChangedFilesState getState() {
-    synchronized (myRecentlyChangedFiles) {
-      RecentlyChangedFilesState state = new RecentlyChangedFilesState();
-      state.CHANGED_PATHS.addAll(myRecentlyChangedFiles);
-      return state;
+    synchronized (state) {
+      RecentlyChangedFilesState stateSnapshot = new RecentlyChangedFilesState();
+      stateSnapshot.changedPaths.addAll(state.changedPaths);
+      return stateSnapshot;
     }
   }
 
   @Override
   public void loadState(@NotNull RecentlyChangedFilesState state) {
-    synchronized (myRecentlyChangedFiles) {
-      myRecentlyChangedFiles.clear();
-      myRecentlyChangedFiles.addAll(state.CHANGED_PATHS);
+    synchronized (this.state) {
+      this.state.changedPaths.clear();
+      this.state.changedPaths.addAll(state.changedPaths);
     }
   }
 
@@ -287,8 +307,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   final void onCommandFinished(Project project, Object commandGroupId) {
-    if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) myRegisteredBackPlaceInLastGroup = false;
-    myLastGroupId = commandGroupId;
+    Object lastGroupId = SoftReference.dereference(myLastGroupId);
+    if (!CommandMerger.canMergeGroup(commandGroupId, lastGroupId)) myRegisteredBackPlaceInLastGroup = false;
+    if (commandGroupId != lastGroupId) {
+      myLastGroupId = commandGroupId == null ? null : new WeakReference<>(commandGroupId);
+    }
 
     if (myCommandStartPlace != null && myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
       if (!myBackInProgress) {
@@ -343,12 +366,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
-    synchronized (myRecentlyChangedFiles) {
+    synchronized (state) {
       String path = placeInfo.getFile().getPath();
-      myRecentlyChangedFiles.remove(path);
-      myRecentlyChangedFiles.add(path);
-      while (myRecentlyChangedFiles.size() > limit) {
-        myRecentlyChangedFiles.remove(0);
+      List<String> changedPaths = state.changedPaths;
+      changedPaths.remove(path);
+      changedPaths.add(path);
+      while (changedPaths.size() > limit) {
+        changedPaths.remove(0);
       }
     }
 
@@ -357,32 +381,26 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   @Override
-  public VirtualFile[] getChangedFiles() {
+  public @NotNull List<VirtualFile> getChangedFiles() {
     List<VirtualFile> files = new ArrayList<>();
-
     List<String> paths;
-    synchronized (myRecentlyChangedFiles) {
-      paths = new ArrayList<>(myRecentlyChangedFiles);
+    synchronized (state) {
+      paths = state.changedPaths.isEmpty() ? Collections.emptyList() : new ArrayList<>(state.changedPaths);
     }
+
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (String path : paths) {
-      final VirtualFile file = lfs.findFileByPath(path);
+      VirtualFile file = lfs.findFileByPath(path);
       if (file != null) {
         files.add(file);
       }
     }
-
-    return VfsUtilCore.toVirtualFileArray(files);
-  }
-
-  @Override
-  public PersistentHashMap<String, Long> getRecentFilesTimestamps() {
-    return myRecentFilesTimestampsMap;
+    return files;
   }
 
   boolean isRecentlyChanged(@NotNull VirtualFile file) {
-    synchronized (myRecentlyChangedFiles) {
-      return myRecentlyChangedFiles.contains(file.getPath());
+    synchronized (state) {
+      return state.changedPaths.contains(file.getPath());
     }
   }
 
@@ -477,12 +495,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public @NotNull List<PlaceInfo> getBackPlaces() {
-    return ContainerUtil.immutableList(myBackPlaces);
+    return Collections.unmodifiableList(myBackPlaces);
   }
 
   @Override
   public List<PlaceInfo> getChangePlaces() {
-    return ContainerUtil.immutableList(myChangePlaces);
+    return Collections.unmodifiableList(myChangePlaces);
   }
 
   @Override
@@ -495,7 +513,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     removePlaceInfo(placeInfo, myChangePlaces, true);
   }
 
-  private void removePlaceInfo(@NotNull PlaceInfo placeInfo, @NotNull LinkedList<PlaceInfo> places, boolean changed) {
+  private void removePlaceInfo(@NotNull PlaceInfo placeInfo, @NotNull Collection<PlaceInfo> places, boolean changed) {
     boolean removed = places.remove(placeInfo);
     if (removed) {
       myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, changed);
@@ -537,17 +555,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
-    boolean removed = false;
-    for (Iterator<PlaceInfo> iterator = backPlaces.iterator(); iterator.hasNext(); ) {
-      PlaceInfo info = iterator.next();
-      final VirtualFile file = info.myFile;
-      if (!file.isValid()) {
-        iterator.remove();
-        removed = true;
-      }
-    }
-
-    return removed;
+    return backPlaces.removeIf(info -> !info.myFile.isValid());
   }
 
   @Override
@@ -586,13 +594,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   // used by Rider
   @SuppressWarnings("WeakerAccess")
-  protected PlaceInfo createPlaceInfo(final @NotNull FileEditor fileEditor, final FileEditorProvider fileProvider) {
+  protected PlaceInfo createPlaceInfo(@NotNull FileEditor fileEditor, FileEditorProvider fileProvider) {
     if (!fileEditor.isValid()) {
       return null;
     }
 
     FileEditorManagerEx editorManager = getFileEditorManager();
-    final VirtualFile file = editorManager.getFile(fileEditor);
+    VirtualFile file = fileEditor.getFile();
     LOG.assertTrue(file != null);
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
@@ -706,9 +714,18 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Override
   public final void dispose() {
     myLastGroupId = null;
+    PersistentHashMap<String, Long> map = recentFileTimestampMap.getValueIfInitialized();
+    if (map != null) {
+      try {
+        map.close();
+      }
+      catch (IOException e) {
+        LOG.info("Cannot close persistent viewed files timestamps hash map", e);
+      }
+    }
   }
 
-  protected void executeCommand(Runnable runnable, String name, Object groupId) {
+  protected void executeCommand(Runnable runnable, @NlsContexts.Command String name, Object groupId) {
     CommandProcessor.getInstance().executeCommand(myProject, runnable, name, groupId);
   }
 

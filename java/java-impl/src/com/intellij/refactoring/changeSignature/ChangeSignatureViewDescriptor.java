@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
   private final PsiMethod myMethod;
-  private final String myProcessedElementsHeader;
+  private final @NlsContexts.ListItem String myProcessedElementsHeader;
 
   public ChangeSignatureViewDescriptor(PsiMethod method) {
     myMethod = method;

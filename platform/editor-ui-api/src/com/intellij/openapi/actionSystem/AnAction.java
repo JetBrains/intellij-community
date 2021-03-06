@@ -13,11 +13,15 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -71,6 +75,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
+  private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -137,7 +142,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @NotNull Icon icon) {
+  public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @Nullable Icon icon) {
     this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
@@ -300,11 +305,11 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @return template presentation
    */
-  @NotNull
-  public final Presentation getTemplatePresentation() {
+  public final @NotNull Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
-    if (presentation == null){
-      myTemplatePresentation = presentation = createTemplatePresentation();
+    if (presentation == null) {
+      presentation = createTemplatePresentation();
+      myTemplatePresentation = presentation;
     }
     return presentation;
   }
@@ -363,6 +368,9 @@ public abstract class AnAction implements PossiblyDumbAware {
     return myWorksInInjected;
   }
 
+  /** @deprecated not used anymore */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean isTransparentUpdate() {
     return this instanceof TransparentUpdate;
   }
@@ -383,13 +391,54 @@ public abstract class AnAction implements PossiblyDumbAware {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
-  public void applyTextOverride(AnActionEvent e) {
-    Supplier<String> override = myActionTextOverrides.get(e.getPlace());
+  @ApiStatus.Internal
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace, String id) {
+    Supplier<String> value = myActionTextOverrides.get(fromPlace);
+    if (value == null) {
+      LOG.error("Missing override-text for action " + id + " and place specified in use-text-of-place: " + fromPlace);
+      return;
+    }
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, value);
+  }
+
+
+
+  @ApiStatus.Internal
+  public void applyTextOverride(@NotNull AnActionEvent event) {
+    applyTextOverride(event.getPlace(), event.getPresentation());
+  }
+
+  @ApiStatus.Internal
+  public void applyTextOverride(@NotNull String place, @NotNull Presentation presentation) {
+    Supplier<String> override = myActionTextOverrides.get(place);
     if (override != null) {
-      e.getPresentation().setText(override);
+      presentation.setText(override);
     }
   }
 
+  @ApiStatus.Internal
+  protected void copyActionTextOverrides(AnAction targetAction) {
+    for (String place : myActionTextOverrides.keySet()) {
+      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
+    }
+  }
+
+  public void addSynonym(@NotNull Supplier<@Nls String> text) {
+    if (mySynonyms == Collections.<Supplier<String>>emptyList()) {
+      mySynonyms = new SmartList<>(text);
+    }
+    else {
+      mySynonyms.add(text);
+    }
+  }
+
+  public @NotNull List<Supplier<@Nls String>> getSynonyms() {
+    return mySynonyms;
+  }
+
+  /** @deprecated not used anymore */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public interface TransparentUpdate {
   }
 
@@ -399,6 +448,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   @Override
+  @Nls
   public String toString() {
     return getTemplatePresentation().toString();
   }

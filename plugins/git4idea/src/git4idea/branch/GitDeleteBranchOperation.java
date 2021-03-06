@@ -10,19 +10,20 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitSharedSettings;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
@@ -38,6 +39,7 @@ import java.util.regex.Pattern;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.containers.ContainerUtil.exists;
+import static git4idea.GitNotificationIdsHolder.BRANCH_DELETION_ROLLBACK_ERROR;
 import static git4idea.util.GitUIUtil.bold;
 import static git4idea.util.GitUIUtil.code;
 
@@ -130,14 +132,17 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     boolean unmergedCommits = !myUnmergedToBranches.isEmpty();
-    String message = GitBundle.message("delete.branch.operation.deleted.branch.bold", myBranchName);
+    HtmlBuilder message = new HtmlBuilder().appendRaw(GitBundle.message("delete.branch.operation.deleted.branch.bold", myBranchName));
     if (unmergedCommits) {
-      message += UIUtil.BR;
-      message += GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded");
+      message.br().append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
     }
 
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
-    notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> restoreInBackground(notification)));
+    Notification notification = STANDARD_NOTIFICATION.createNotification("", message.toString(), NotificationType.INFORMATION, null,
+                                                                         "git.branch.deleted");
+    notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
+      notification.expire();
+      restoreInBackground(notification);
+    }));
     if (unmergedCommits) {
       notification.addAction(NotificationAction.createSimple(() -> getViewCommits(), () -> viewUnmergedCommitsInBackground(notification)));
     }
@@ -145,7 +150,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         hasNoOtherTrackingBranch(myTrackedBranches, myBranchName) &&
         trackedBranchIsNotProtected()) {
       notification.addAction(NotificationAction.createSimple(() -> getDeleteTrackedBranch(), () -> {
-        notification.hideBalloon();
+        notification.expire();
         deleteTrackedBranchInBackground();
       }));
     }
@@ -178,7 +183,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (!result.totalSuccess()) {
-      myNotifier.notifyError(GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
+      myNotifier.notifyError(BRANCH_DELETION_ROLLBACK_ERROR,
+                             GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }
@@ -194,7 +200,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       // restore tracking
       GitRemoteBranch trackedBranch = myTrackedBranches.get(repository);
       if (trackedBranch != null) {
-        GitCommandResult setTrackResult = setUpTracking(repository, myBranchName, trackedBranch.getNameForLocalOperations());
+        GitCommandResult setTrackResult = myGit.setUpstream(repository, trackedBranch.getNameForLocalOperations(), myBranchName);
         if (!setTrackResult.success()) {
           LOG.warn("Couldn't set " + myBranchName + " to track " + trackedBranch + " in " + repository.getRoot().getName() + ": " +
                    setTrackResult.getErrorOutputAsJoinedString());
@@ -207,18 +213,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private GitCommandResult setUpTracking(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String trackedBranch) {
-    GitLineHandler handler = new GitLineHandler(myProject, repository.getRoot(), GitCommand.BRANCH);
-    if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository)) {
-      handler.addParameters("--set-upstream-to", trackedBranch, branchName);
-    }
-    else {
-      handler.addParameters("--set-upstream", branchName, trackedBranch);
-    }
-    return myGit.runCommand(handler);
-  }
-
-  @NotNull
+  @NlsContexts.NotificationTitle
   private String getErrorTitle() {
     return GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName);
   }
@@ -232,12 +227,13 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
-                             getSuccessfulRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("delete.branch.operation.you.may.rollback.not.to.let.branches.diverge", myBranchName);
+    return new HtmlBuilder().append(GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
+                                                      getSuccessfulRepositories().size()))
+      .br()
+      .appendRaw(successfulRepositoriesJoined())
+      .br()
+      .append(GitBundle.message("delete.branch.operation.you.may.rollback.not.to.let.branches.diverge", myBranchName))
+      .toString();
   }
 
   @NotNull
@@ -368,7 +364,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError(GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
+      myNotifier.notifyError(BRANCH_DELETION_ROLLBACK_ERROR,
+                             GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
                              result.getErrorOutputWithReposIndication(),
                              true);
     }

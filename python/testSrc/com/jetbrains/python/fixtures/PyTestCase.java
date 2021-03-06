@@ -45,9 +45,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -69,11 +71,9 @@ import java.util.function.Consumer;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
-  public static final String PYTHON_2_MOCK_SDK = "2.7";
-  public static final String PYTHON_3_MOCK_SDK = "3.7";
 
-  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
-  protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
+  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(LanguageLevel.PYTHON27);
+  protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
 
@@ -265,6 +265,8 @@ public abstract class PyTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+      PyModuleNameCompletionContributor.ENABLED = true;
       setLanguageLevel(null);
       myFixture.tearDown();
       myFixture = null;
@@ -506,7 +508,6 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @NotNull
   protected CommonCodeStyleSettings.IndentOptions getIndentOptions() {
-    //noinspection ConstantConditions
     return getCommonCodeStyleSettings().getIndentOptions();
   }
 
@@ -563,12 +564,12 @@ public abstract class PyTestCase extends UsefulTestCase {
     Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
 
-  public <T> void assertContainsInRelativeOrder(@NotNull final Iterable<T> actual, final T @Nullable ... expected) {
+  public <T> void assertContainsInRelativeOrder(@NotNull final Iterable<? extends T> actual, final T @Nullable ... expected) {
     final List<T> actualList = Lists.newArrayList(actual);
     if (expected.length > 0) {
       T prev = expected[0];
       int prevIndex = actualList.indexOf(prev);
-      assertTrue(prevIndex >= 0);
+      assertTrue(prev + " is not found in " + actualList, prevIndex >= 0);
       for (int i = 1; i < expected.length; i++) {
         final T next = expected[i];
         final int nextIndex = actualList.indexOf(next);

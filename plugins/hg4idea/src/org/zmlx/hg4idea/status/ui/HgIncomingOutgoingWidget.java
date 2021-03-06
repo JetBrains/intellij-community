@@ -39,7 +39,7 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
   @NotNull private final Icon myEnabledIcon;
   @NotNull private final Icon myDisabledIcon;
 
-  private volatile String myTooltip = "";
+  private volatile @Nls String myTooltip = "";
   private Icon myCurrentIcon;
 
   public HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {
@@ -50,7 +50,7 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
 
-    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
     busConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
     busConnection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
     busConnection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());

@@ -52,7 +52,7 @@ class TextComponentScrollingModel implements ScrollingModel {
     final int position = myTextComponent.getCaretPosition();
     try {
       final Rectangle rectangle = myTextComponent.modelToView(position);
-      myTextComponent.scrollRectToVisible(rectangle);
+      if (rectangle != null) myTextComponent.scrollRectToVisible(rectangle);
     }
     catch (BadLocationException e) {
       throw new RuntimeException(e);

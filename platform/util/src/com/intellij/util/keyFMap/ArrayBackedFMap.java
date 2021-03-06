@@ -5,13 +5,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayBackedFMap implements KeyFMap {
-  static final int ARRAY_THRESHOLD = 8;
-  // Invariant: keys are always sorted
-  private final int[] keys;
-  private final Object[] values;
+import java.util.Arrays;
 
-  ArrayBackedFMap(int @NotNull [] keys, Object @NotNull [] values) {
+class ArrayBackedFMap implements KeyFMap {
+  static final int ARRAY_THRESHOLD = 8;
+  // Invariant: keys are always sorted, never mutated inplace
+  private final int[] keys;
+  private final @NotNull Object @NotNull [] values; //never mutated inplace
+
+  ArrayBackedFMap(int @NotNull [] keys, @NotNull Object @NotNull [] values) {
     this.keys = keys;
     this.values = values;
   }
@@ -108,18 +110,21 @@ public class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public Key @NotNull [] getKeys() {
+  public @NotNull Key @NotNull [] getKeys() {
     return getKeysByIndices(keys);
   }
 
-  static Key @NotNull [] getKeysByIndices(int[] indexes) {
+  static @NotNull Key @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
     Key[] result = new Key[indexes.length];
 
-    for (int i = 0; i < indexes.length; i++) {
-      result[i] = Key.getKeyByIndex(indexes[i]);
+    int o = 0;
+    for (int index : indexes) {
+      Key<Object> key = Key.getKeyByIndex(index);
+      if (key != null) {
+        result[o++] = key;
+      }
     }
-
-    return result;
+    return o == result.length ? result : Arrays.copyOf(result, o);
   }
 
   @Override
@@ -149,7 +154,7 @@ public class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public boolean equalsByReference(KeyFMap o) {
+  public boolean equalsByReference(@NotNull KeyFMap o) {
     if (this == o) return true;
     if (!(o instanceof ArrayBackedFMap)) return false;
 

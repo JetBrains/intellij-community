@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.TooltipTitle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,6 +27,7 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +52,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return enabled ? myIcon : myDisabledIcon;
   }
   private boolean mySmallVariant = true;
-  private String myPopupTitle;
+  protected @NlsContexts.PopupTitle String myPopupTitle;
 
 
   protected ComboBoxAction() {
@@ -69,7 +71,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   @NotNull
-  private ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+  protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     DefaultActionGroup group = createPopupActionGroup(component, context);
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       myPopupTitle, group, context, false, shouldShowDisabledActions(), false, disposeCallback, getMaxRows(), getPreselectCondition());
@@ -108,7 +110,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     mySmallVariant = smallVariant;
   }
 
-  public void setPopupTitle(String popupTitle) {
+  public void setPopupTitle(@NlsContexts.PopupTitle String popupTitle) {
     myPopupTitle = popupTitle;
   }
 
@@ -136,10 +138,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return 1;
   }
 
-  protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
+  public class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
     private boolean myForcePressed;
-    private String myTooltipText;
+    private @TooltipTitle String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -157,7 +159,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      setMargin(JBUI.insets(0, 5, 0, 2));
+      setMargin(JBUI.insets(0, 8, 0, 5));
       if (isSmallVariant()) {
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
@@ -205,6 +207,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       });
     }
 
+    @TestOnly
+    public Presentation getPresentation() {
+      return myPresentation;
+    }
+
     @Override
     protected void fireActionPerformed(ActionEvent event) {
       if (!myForcePressed) {
@@ -248,7 +255,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     protected DataContext getDataContext() {
-      return DataManager.getInstance().getDataContext(this);
+      return ActionToolbar.getDataContextFor(this);
     }
 
     @Override
@@ -295,10 +302,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
+      Insets i = getInsets();
       int width = prefSize.width + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0) +
        (myPresentation == null || !isArrowVisible(myPresentation) ? 0 : JBUIScale.scale(16));
 
-      Dimension size = new Dimension(width, isSmallVariant() ? JBUIScale.scale(24) : Math.max(JBUIScale.scale(24), prefSize.height));
+      int height = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + i.top + i.bottom;
+      if (!isSmallVariant()) {
+        height = Math.max(height, prefSize.height);
+      }
+      Dimension size = new Dimension(width, height);
       JBInsets.addTo(size, getMargin());
       return size;
     }
@@ -364,7 +376,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override public void updateUI() {
       super.updateUI();
-      setMargin(JBUI.insets(0, 5, 0, 2));
+      updateMargin();
+    }
+
+    protected void updateMargin() {
+      setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
     /**

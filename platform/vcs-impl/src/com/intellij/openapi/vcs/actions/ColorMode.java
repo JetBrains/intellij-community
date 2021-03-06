@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -38,6 +40,7 @@ public enum ColorMode {
     myDescriptionKey = descriptionKey;
   }
 
+  @NlsActions.ActionText
   public String getDescription() {
     return VcsBundle.message(myDescriptionKey);
   }

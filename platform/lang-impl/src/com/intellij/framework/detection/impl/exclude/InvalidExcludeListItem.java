@@ -15,15 +15,17 @@
  */
 package com.intellij.framework.detection.impl.exclude;
 
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.EmptyIcon;
 
 class InvalidExcludeListItem extends ExcludeListItem {
-  private final String myFileUrl;
+  private final @NlsSafe String myFileUrl;
   private final String myFrameworkTypeId;
 
-  InvalidExcludeListItem(String frameworkTypeId, String fileUrl) {
+  InvalidExcludeListItem(String frameworkTypeId, @NlsSafe String fileUrl) {
     myFrameworkTypeId = frameworkTypeId;
     myFileUrl = fileUrl;
   }
@@ -41,9 +43,10 @@ class InvalidExcludeListItem extends ExcludeListItem {
   @Override
   public void renderItem(ColoredListCellRenderer renderer) {
     if (myFrameworkTypeId != null) {
+      //noinspection HardCodedStringLiteral
       renderer.append(myFrameworkTypeId, SimpleTextAttributes.ERROR_ATTRIBUTES);
       if (myFileUrl != null) {
-        renderer.append(" in " + myFileUrl, SimpleTextAttributes.ERROR_ATTRIBUTES);
+        renderer.append(ProjectBundle.message("framework.detection.in.0", myFileUrl), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
     else {

@@ -112,7 +112,7 @@ public class FoldingAnchorsOverlayStrategyTest extends BasePlatformTestCase {
     Collection<DisplayedFoldingAnchor> actualAnchors = new FoldingAnchorsOverlayStrategy((EditorImpl)myFixture.getEditor())
       .getAnchorsToDisplay(0, myFixture.getEditor().getDocument().getTextLength(), Collections.singletonList(activeFoldRegion));
     List<DisplayedFoldingAnchor> sortedActualAnchors = new ArrayList<>(actualAnchors);
-    Collections.sort(sortedActualAnchors, (o1, o2) -> o1.visualLine - o2.visualLine);
+    Collections.sort(sortedActualAnchors, Comparator.comparingInt(o -> o.visualLine));
 
     assertEquals("Wrong number of anchors", expectedAnchorParameters.length / 2, sortedActualAnchors.size());
     int i = 0;

@@ -5,7 +5,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -19,12 +18,12 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static java.util.Collections.unmodifiableSet;
 
-public class OptionsEditorContext {
+public final class OptionsEditorContext {
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
 
   Configurable myCurrentConfigurable;
   Set<Configurable> myModified = new CopyOnWriteArraySet<>();
-  Map<Configurable, ConfigurationException> myErrors = new THashMap<>();
+  Map<Configurable, ConfigurationException> myErrors = new HashMap<>();
   private boolean myHoldingFilter;
   private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<>();
   private final MultiMap<Configurable, Configurable> myParentToChildrenMap = new MultiMap<>();
@@ -111,7 +110,7 @@ public class OptionsEditorContext {
     }
 
     if (myErrors.containsKey(configurable)) {
-      Map<Configurable, ConfigurationException> newErrors = new THashMap<>(myErrors);
+      Map<Configurable, ConfigurationException> newErrors = new HashMap<>(myErrors);
       newErrors.remove(configurable);
       fireErrorsChanged(newErrors, null);
     }

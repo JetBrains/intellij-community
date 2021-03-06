@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SearchEverywhereUsageTriggerCollector {
+public final class SearchEverywhereUsageTriggerCollector {
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -31,12 +31,17 @@ public class SearchEverywhereUsageTriggerCollector {
   public static final String SELECTED_ITEM_NUMBER = "selectedItemNumber";
   public static final String TYPED_SYMBOL_KEYS = "typedSymbolKeys";
   public static final String TYPED_NAVIGATION_KEYS = "typedNavigationKeys";
+  public static final String TYPED_BACKSPACES_DATA_KEY = "typedBackspaces";
+  public static final String SESSION_ID_LOG_DATA_KEY = "sessionId";
+  public static final String COLLECTED_RESULTS_DATA_KEY = "collectedResults";
+  public static final String SELECTED_INDEXES_DATA_KEY = "selectedIndexes";
+  public static final String TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount";
 
-  public static void trigger(@NotNull Project project, @NotNull String feature) {
+  public static void trigger(@Nullable Project project, @NotNull String feature) {
     trigger(project, feature, new FeatureUsageData());
   }
 
-  public static void trigger(@NotNull Project project, @NotNull String feature, @NotNull FeatureUsageData data) {
+  public static void trigger(@Nullable Project project, @NotNull String feature, @NotNull FeatureUsageData data) {
     FUCounterUsageLogger.getInstance().logEvent(project, "searchEverywhere", feature, data);
   }
 

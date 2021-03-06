@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
@@ -21,12 +22,15 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -105,7 +109,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     return selectFileSystem(protocol, systems);
   }
 
-  protected @Nullable VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<VirtualFileSystem> candidates) {
+  protected @Nullable VirtualFileSystem selectFileSystem(@NotNull String protocol, @NotNull List<? extends VirtualFileSystem> candidates) {
     int size = candidates.size();
     if (size == 0) {
       return null;
@@ -195,8 +199,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @ApiStatus.Internal
-  public List<AsyncFileListener> getAsyncFileListeners() {
-    return Collections.unmodifiableList(myAsyncFileListeners);
+  public void addAsyncFileListenersTo(@NotNull List<? super AsyncFileListener> listeners) {
+    listeners.addAll(myAsyncFileListeners);
   }
 
   @Override
@@ -224,6 +228,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
       try {
         listener.beforeRefreshStart(asynchronous);
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -241,6 +248,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
     for (final VirtualFileManagerListener listener : myVirtualFileManagerListeners) {
       try {
         listener.afterRefreshFinish(asynchronous);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -321,5 +331,43 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   @Override
   public @NotNull CharSequence getVFileName(int nameId) {
     throw new AbstractMethodError();
+  }
+
+  @Override
+  public VirtualFile findFileByUrl(@NotNull String url) {
+    return findByUrl(url, false);
+  }
+
+  @Override
+  public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+    return findByUrl(url, true);
+  }
+
+  @Nullable
+  private VirtualFile findByUrl(@NotNull String url, boolean refresh) {
+    int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
+    VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
+    if (fileSystem == null) return null;
+    String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
+  }
+
+  @Override
+  public @Nullable VirtualFile findFileByNioPath(@NotNull Path path) {
+    return findByNioPath(path, false);
+  }
+
+  @Override
+  public @Nullable VirtualFile refreshAndFindFileByNioPath(@NotNull Path path) {
+    return findByNioPath(path, true);
+  }
+
+  @Nullable
+  private VirtualFile findByNioPath(@NotNull Path nioPath, boolean refresh) {
+    if (!FileSystems.getDefault().equals(nioPath.getFileSystem())) return null;
+    VirtualFileSystem fileSystem = getFileSystem(StandardFileSystems.FILE_PROTOCOL);
+    if (fileSystem == null) return null;
+    String path = nioPath.toString();
+    return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
   }
 }

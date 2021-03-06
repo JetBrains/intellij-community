@@ -71,8 +71,8 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
                                       final Editor editor,
                                       final RangeMarker bounds,
                                       final int caretOffset,
-                                      final Ref<Boolean> indented,
-                                      final List<IndentTransferableData> values) {
+                                      final Ref<? super Boolean> indented,
+                                      final List<? extends IndentTransferableData> values) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }
@@ -159,4 +159,8 @@ public class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTrans
     return document.getLineStartOffset(line);
   }
 
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }

@@ -81,8 +81,8 @@ public abstract class AbstractMatchingVisitor {
     PsiElement e2 = element2.getFirstChild();
     return (e == null && isLeftLooseMatching()) ||
            (e2 == null && isRightLooseMatching()) ||
-           matchInAnyOrder(new FilteringNodeIterator(new SiblingNodeIterator(e), getNodeFilter()),
-                           new FilteringNodeIterator(new SiblingNodeIterator(e2), getNodeFilter()));
+           matchInAnyOrder(new FilteringNodeIterator(SiblingNodeIterator.create(e), getNodeFilter()),
+                           new FilteringNodeIterator(SiblingNodeIterator.create(e2), getNodeFilter()));
   }
 
   public boolean matchOptionally(PsiElement @NotNull [] elements1, PsiElement @NotNull [] elements2) {
@@ -105,15 +105,15 @@ public abstract class AbstractMatchingVisitor {
 
   public boolean matchSequentially(PsiElement el1, PsiElement el2) {
     //if (el1==null || el2==null) return el1 == el2;
-    return matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(el1), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(el2), getNodeFilter()));
+    return matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(el1), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(el2), getNodeFilter()));
   }
 
   public boolean matchSequentiallyOptionally(PsiElement el1, PsiElement el2) {
     return (el1 == null && isLeftLooseMatching()) ||
            (el2 == null && isRightLooseMatching()) ||
-           matchSequentially(new FilteringNodeIterator(new SiblingNodeIterator(el1), getNodeFilter()),
-                             new FilteringNodeIterator(new SiblingNodeIterator(el2), getNodeFilter()));
+           matchSequentially(new FilteringNodeIterator(SiblingNodeIterator.create(el1), getNodeFilter()),
+                             new FilteringNodeIterator(SiblingNodeIterator.create(el2), getNodeFilter()));
   }
 
   public final boolean matchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2) {

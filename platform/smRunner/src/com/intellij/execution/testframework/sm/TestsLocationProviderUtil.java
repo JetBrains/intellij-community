@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.navigation.ChooseByNameContributor;
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class TestsLocationProviderUtil {
+public final class TestsLocationProviderUtil {
   private static final int MIN_PROXIMITY_THRESHOLD = 1;
 
   private TestsLocationProviderUtil() { }
@@ -48,8 +48,7 @@ public class TestsLocationProviderUtil {
     if (fileName == null) {
       return Collections.emptyList();
     }
-    final List<VirtualFile> target = findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
-    return target.isEmpty() && file != null ? Collections.singletonList(file) : target;
+    return findFilesClosestToTarget(folders, collectCandidates(project, fileName, true), MIN_PROXIMITY_THRESHOLD);
   }
 
   /**
@@ -59,9 +58,9 @@ public class TestsLocationProviderUtil {
    * @param minProximityThreshold
    * @return
    */
-  public static List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
-                                                           final List<? extends FileInfo> candidates,
-                                                           final int minProximityThreshold) {
+  public static @NotNull List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
+                                                                    final @NotNull List<? extends FileInfo> candidates,
+                                                                    final int minProximityThreshold) {
     // let's find all files with similar relative path
 
     if (candidates.isEmpty()) {

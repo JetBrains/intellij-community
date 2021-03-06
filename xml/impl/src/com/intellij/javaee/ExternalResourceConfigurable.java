@@ -49,7 +49,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
 
   @Override
   public String getDisplayName() {
-    return XmlBundle.message("display.name.edit.external.resource");
+    return XmlBundle.message("xml.external.resource.display.name");
   }
 
   @Override
@@ -61,7 +61,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
       }
     };
 
-    myExtPanel = new AddEditRemovePanel<NameLocationPair>(new ExtUrlsTableModel(), myPairs, XmlBundle.message("label.edit.external.resource.configure.external.resources")) {
+    myExtPanel = new AddEditRemovePanel<>(new ExtUrlsTableModel(), myPairs, XmlBundle.message(
+      "xml.external.resource.label.external.resources")) {
       @Override
       protected NameLocationPair addItem() {
         return addExtLocation();
@@ -78,7 +79,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         return editExtLocation(o);
       }
     };
-    myExtPanel.getTable().setShowColumns(true);
+    myExtPanel.getTable().setShowGrid(false);
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
@@ -95,7 +96,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         setModified(true);
       }
     });
-    myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, XmlBundle.message("label.edit.external.resource.configure.ignored.resources")) {
+    myIgnorePanel = new AddEditRemovePanel<>(new IgnoredUrlsModel(), myIgnoredUrls, XmlBundle.message(
+      "xml.external.resource.label.ignored.resources")) {
       @Override
       protected String addItem() {
         return addIgnoreLocation();
@@ -112,6 +114,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         return editIgnoreLocation(o);
       }
     };
+    myIgnorePanel.getTable().setShowGrid(false);
 
     myPanel.add(myExtPanel,
                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -121,8 +124,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
     myExtPanel.setData(myPairs);
     myIgnorePanel.setData(myIgnoredUrls);
 
-    myExtPanel.getEmptyText().setText(XmlBundle.message("no.external.resources"));
-    myIgnorePanel.getEmptyText().setText(XmlBundle.message("no.ignored.resources"));
+    myExtPanel.getEmptyText().setText(XmlBundle.message("xml.external.resource.empty.text.no.external.resources"));
+    myIgnorePanel.getEmptyText().setText(XmlBundle.message("xml.external.resource.empty.text.no.ignored.resources"));
 
     return myPanel;
   }
@@ -273,7 +276,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
   }
 
   private static class IgnoredUrlsModel extends AddEditRemovePanel.TableModel<String> {
-    private final String[] myNames = {XmlBundle.message("column.name.edit.external.resource.uri")};
+    private final String[] myNames = {XmlBundle.message("xml.external.resource.column.name.uri")};
 
     @Override
     public int getColumnCount() {
@@ -296,8 +299,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
 
     {
       List<String> names = new ArrayList<>();
-      names.add(XmlBundle.message("column.name.edit.external.resource.uri"));
-      names.add(XmlBundle.message("column.name.edit.external.resource.location"));
+      names.add(XmlBundle.message("xml.external.resource.column.name.uri"));
+      names.add(XmlBundle.message("xml.external.resource.column.name.location"));
       if (myProject != null) {
         names.add("Project");
       }

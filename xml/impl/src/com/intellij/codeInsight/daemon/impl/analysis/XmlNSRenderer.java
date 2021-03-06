@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import java.awt.*;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNSRenderer<T> extends ColoredListCellRenderer<T> {
+public class XmlNSRenderer extends ColoredListCellRenderer<String> {
 
   public static final XmlNSRenderer INSTANCE = new XmlNSRenderer();
 
@@ -38,12 +39,12 @@ public class XmlNSRenderer<T> extends ColoredListCellRenderer<T> {
   }
 
   @Override
-  protected void customizeCellRenderer(@NotNull final JList<? extends T> list,
-                                       final T value,
+  protected void customizeCellRenderer(@NotNull final JList<? extends String> list,
+                                       final @NlsSafe String value,
                                        final int index,
                                        final boolean selected,
                                        final boolean hasFocus) {
-    append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     setIcon(AllIcons.Nodes.Static);
     setPaintFocusBorder(false);
   }

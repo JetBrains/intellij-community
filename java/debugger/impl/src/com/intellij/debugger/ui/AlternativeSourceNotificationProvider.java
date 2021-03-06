@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.components.JBList;
@@ -82,8 +83,11 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
 
     if (DumbService.getInstance(project).isDumb()) return null;
 
-    ArrayList<PsiClass> alts = ContainerUtil.newArrayList(
-      JavaPsiFacade.getInstance(project).findClasses(name, javaSession.getSearchScope()));
+    PsiClass[] altClasses = JavaPsiFacade.getInstance(project).findClasses(name, javaSession.getSearchScope());
+    if (altClasses.length == 0) {
+      altClasses = JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project));
+    }
+    ArrayList<PsiClass> alts = ContainerUtil.newArrayList(altClasses);
     ContainerUtil.removeDuplicates(alts);
 
     setFileProcessed(file, true);
@@ -110,7 +114,7 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
         }
       }
 
-      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, locationDeclName);
+      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, fileEditor, locationDeclName);
     }
     return null;
   }
@@ -148,9 +152,12 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
   private static class AlternativeSourceNotificationPanel extends EditorNotificationPanel {
     AlternativeSourceNotificationPanel(ComboBoxClassElement[] alternatives,
                                               final PsiClass aClass,
-                                              final Project project,
-                                              final VirtualFile file,
+                                              @NotNull Project project,
+                                              @NotNull VirtualFile file,
+                                              @NotNull FileEditor fileEditor,
                                               String locationDeclName) {
+      super(fileEditor);
+
       setText(JavaDebuggerBundle.message("editor.notification.alternative.source", aClass.getQualifiedName()));
       final ComboBox<ComboBoxClassElement> switcher = new ComboBox<>(alternatives);
       switcher.addActionListener(new ActionListener() {

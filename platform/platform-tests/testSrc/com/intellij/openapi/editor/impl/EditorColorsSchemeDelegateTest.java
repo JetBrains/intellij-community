@@ -119,7 +119,7 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
     }));
   }
 
-  private static void doInEditor(@NotNull Document document, Consumer<Editor> task) {
+  private static void doInEditor(@NotNull Document document, Consumer<? super Editor> task) {
     EditorFactory factory = EditorFactory.getInstance();
     Editor editor = factory.createEditor(document);
     try {

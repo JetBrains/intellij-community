@@ -17,11 +17,11 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -29,7 +29,6 @@ import java.util.List;
  * @author peter
  */
 abstract class WeighingActionGroup extends ActionGroup {
-  private final PresentationFactory myPresentationFactory = new PresentationFactory();
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -40,18 +39,16 @@ abstract class WeighingActionGroup extends ActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    ActionGroup delegate = getDelegate();
-    AnAction[] children = delegate.getChildren(e);
-    if (e == null) {
-      return children;
-    }
+    return getDelegate().getChildren(e);
+  }
 
-    List<AnAction> visibleActions = Utils.expandActionGroup(false, delegate, myPresentationFactory, e.getDataContext(), e.getPlace());
-
+  @NotNull
+  @Override
+  public List<AnAction> afterExpandGroup(@NotNull List<AnAction> visibleActions, @NotNull UpdateSession updater) {
     LinkedHashSet<AnAction> heaviest = null;
     double maxWeight = Presentation.DEFAULT_WEIGHT;
     for (AnAction action : visibleActions) {
-      Presentation presentation = myPresentationFactory.getPresentation(action);
+      Presentation presentation = updater.presentation(action);
       if (presentation.isEnabled() && presentation.isVisible()) {
         if (presentation.getWeight() > maxWeight) {
           maxWeight = presentation.getWeight();
@@ -64,10 +61,10 @@ abstract class WeighingActionGroup extends ActionGroup {
     }
 
     if (heaviest == null) {
-      return children;
+      return visibleActions;
     }
 
-    final DefaultActionGroup chosen = new DefaultActionGroup();
+    ArrayList<AnAction> chosen = new ArrayList<>();
     boolean prevSeparator = true;
     for (AnAction action : visibleActions) {
       final boolean separator = action instanceof Separator;
@@ -84,11 +81,10 @@ abstract class WeighingActionGroup extends ActionGroup {
         chosen.add(action);
       }
     }
-
-    ActionGroup other = new ExcludingActionGroup(delegate, heaviest);
+    ActionGroup other = new ExcludingActionGroup(getDelegate(), heaviest);
     other.setPopup(true);
-    other.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
-    return new AnAction[]{chosen, new Separator(), other};
+    updater.presentation(other).setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    return JBIterable.from(chosen).append(new Separator()).append(other).toList();
   }
 
   protected boolean shouldBeChosenAnyway(AnAction action) {

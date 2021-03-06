@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<GradleResourcesTarget> {
+public final class GradleResourcesTargetType extends ModuleBasedBuildTargetType<GradleResourcesTarget> {
   public static final GradleResourcesTargetType PRODUCTION = new GradleResourcesTargetType("gradle-resources-production", false);
   public static final GradleResourcesTargetType TEST = new GradleResourcesTargetType("gradle-resources-test", true);
 

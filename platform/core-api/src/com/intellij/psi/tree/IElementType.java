@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
@@ -8,10 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -161,6 +158,13 @@ public class IElementType {
 
   @Override
   public String toString() {
+    return getDebugName();
+  }
+
+  @NonNls
+  @NotNull
+  @ApiStatus.Internal
+  public String getDebugName() {
     return myDebugName;
   }
 
@@ -238,8 +242,8 @@ public class IElementType {
     return matches.toArray(new IElementType[0]);
   }
 
-  public static class TombstoneElementType extends IElementType {
-    public TombstoneElementType(@NotNull String debugName) {
+  public static final class TombstoneElementType extends IElementType {
+    public TombstoneElementType(@NotNull @NonNls String debugName) {
       super(debugName, Language.ANY);
     }
   }

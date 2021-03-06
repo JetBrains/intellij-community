@@ -53,6 +53,7 @@ public class CompileQrcAction extends AnAction {
       path = QtFileType.findQtTool(module, "pyside-rcc");
     }
     if (path == null) {
+      //noinspection DialogTitleCapitalization
       Messages.showErrorDialog(project, PyBundle.message("qt.cannot.find.pyrcc4.or.pysidercc"),
                                PyBundle.message("qt.compile.qrc.file"));
       return;
@@ -71,12 +72,13 @@ public class CompileQrcAction extends AnAction {
       ProcessHandler process = new OSProcessHandler(cmdLine);
       ProcessTerminatedListener.attach(process);
       new RunContentExecutor(project, process)
-        .withTitle("Compile .qrc")
+        .withTitle(PyBundle.message("qt.run.tab.title.compile.qrc"))
         .run();
     }
     catch (ExecutionException ex) {
-      Messages.showErrorDialog(project, PyBundle.message("qt.run.error", path, ex.getMessage()), PyBundle.message(
-        "qt.compile.qrc.file"));
+      //noinspection DialogTitleCapitalization
+      Messages.showErrorDialog(project, PyBundle.message("qt.run.error", path, ex.getMessage()),
+                               PyBundle.message("qt.compile.qrc.file"));
     }
   }
 
@@ -109,6 +111,7 @@ public class CompileQrcAction extends AnAction {
         setTitle(PyBundle.message("qt.qrc.compile", vFiles [0].getName()));
       }
       else {
+        //noinspection DialogTitleCapitalization
         setTitle(PyBundle.message("qt.qrc.compile.files", vFiles.length));
       }
       myOutputFileField.addBrowseFolderListener(PyBundle.message("qt.qrc.compiler.select.output.path"), null, project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());

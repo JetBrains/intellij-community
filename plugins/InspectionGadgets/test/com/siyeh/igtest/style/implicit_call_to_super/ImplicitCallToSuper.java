@@ -3,7 +3,7 @@ public class ImplicitCallToSuper {
   <warning descr="Implicit call to 'super()'">ImplicitCallToSuper</warning>() {}
 }
 class A {
-  <error descr="Illegal type: 'void'">void</error> () {}
+  <error descr="Identifier expected">void</error> () {}
 }
 class B {
   B() {

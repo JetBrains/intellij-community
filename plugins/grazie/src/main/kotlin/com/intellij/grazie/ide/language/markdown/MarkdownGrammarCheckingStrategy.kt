@@ -6,6 +6,10 @@ import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.psi.PsiElement
 
 class MarkdownGrammarCheckingStrategy : GrammarCheckingStrategy {
+  companion object {
+    private val HEADER_IGNORED_RULES = RuleGroup("SENT_START_NUM", "PUNCTUATION_PARAGRAPH_END")
+  }
+
   override fun isMyContextRoot(element: PsiElement) = MarkdownPsiUtils.isHeaderContent(element) || MarkdownPsiUtils.isParagraph(element)
 
   override fun isEnabledByDefault() = true
@@ -17,7 +21,9 @@ class MarkdownGrammarCheckingStrategy : GrammarCheckingStrategy {
     else -> GrammarCheckingStrategy.ElementBehavior.TEXT
   }
 
-  override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup? {
-    return if (MarkdownPsiUtils.isInOuterListItem(child)) RuleGroup.CASING else null
+  override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement) = when {
+    MarkdownPsiUtils.isHeaderContent(root) -> HEADER_IGNORED_RULES
+    MarkdownPsiUtils.isInOuterListItem(child) -> RuleGroup.CASING
+    else -> null
   }
 }

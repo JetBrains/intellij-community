@@ -7,21 +7,26 @@ import com.intellij.codeInsight.intention.impl.config.PlainTextDescriptor;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplate;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class EditablePostfixTemplateMetaData implements BeforeAfterMetaData {
 
-  @NotNull
-  private final String myAfterText;
-  private final String myBeforeText;
+  private static final @NlsSafe String EXPR = "$EXPR$";
+  private static final @NlsSafe String END = "$END$";
+
+  private final @NotNull @Nls String myAfterText;
+  private final @NotNull @Nls String myBeforeText;
 
   public EditablePostfixTemplateMetaData(@NotNull EditablePostfixTemplate template) {
     TemplateImpl liveTemplate = template.getLiveTemplate();
     String text = liveTemplate.getString();
 
-    myBeforeText = "<spot>$EXPR$</spot>" + template.getKey();
-    myAfterText = StringUtil.replace(text, "$END$", "<spot></spot>", true);
+    myBeforeText = HtmlChunk.tag("spot").addText(EXPR).toString() + template.getKey();
+    myAfterText = StringUtil.replace(text, END, HtmlChunk.tag("spot").toString(), true);
   }
 
   @Override

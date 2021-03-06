@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -18,7 +20,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 /**
  * @author Eugene Zhuravlev
  */
-public class CmdlineProtoUtil {
+public final class CmdlineProtoUtil {
 
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
                                                                                         List<? extends TargetTypeBuildScope> scopes,
@@ -31,7 +33,7 @@ public class CmdlineProtoUtil {
     );
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(String project,
+  public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(@NotNull String project,
                                                                                 List<? extends TargetTypeBuildScope> scopes,
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
@@ -61,7 +63,7 @@ public class CmdlineProtoUtil {
   }
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
-                                                                                          String project,
+                                                                                          @NotNull String project,
                                                                                           List<? extends TargetTypeBuildScope> scopes,
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
@@ -97,7 +99,7 @@ public class CmdlineProtoUtil {
     return CmdlineRemoteProto.Message.KeyValuePair.newBuilder().setKey(key).setValue(value).build();
   }
 
-  public static CmdlineRemoteProto.Message.Failure createFailure(String description, @Nullable Throwable cause) {
+  public static CmdlineRemoteProto.Message.Failure createFailure(@Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Throwable cause) {
     final CmdlineRemoteProto.Message.Failure.Builder builder = CmdlineRemoteProto.Message.Failure.newBuilder();
     if (description != null) {
       builder.setDescription(description);
@@ -121,19 +123,19 @@ public class CmdlineProtoUtil {
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();
   }
 
-  public static BuilderMessage createCompileProgressMessageResponse(String text) {
-    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, -1.0f);
+  public static BuilderMessage createCompileProgressMessageResponse(@Nls(capitalization = Nls.Capitalization.Sentence) String text) {
+    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, -1.0f, Collections.emptyList());
   }
 
-  public static BuilderMessage createCompileProgressMessageResponse(String text, float done) {
-    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
+  public static BuilderMessage createCompileProgressMessageResponse(@Nls(capitalization = Nls.Capitalization.Sentence) String text, float done) {
+    return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done, Collections.emptyList());
   }
 
   public static BuilderMessage createCompileMessage(final BuildMessage.Kind kind,
-                                                                               String text,
-                                                                               String path,
-                                                                               long beginOffset, long endOffset, long offset, long line,
-                                                                               long column, float done) {
+                                                    @Nls(capitalization = Nls.Capitalization.Sentence) String text,
+                                                    String path,
+                                                    long beginOffset, long endOffset, long offset, long line,
+                                                    long column, float done, Collection<String> moduleNames) {
 
     final BuilderMessage.CompileMessage.Builder builder = BuilderMessage.CompileMessage.newBuilder();
     switch (kind) {
@@ -181,6 +183,9 @@ public class CmdlineProtoUtil {
     }
     if (done >= 0.0f) {
       builder.setDone(done);
+    }
+    if (!moduleNames.isEmpty()) {
+      builder.addAllModuleNames(moduleNames);
     }
     return BuilderMessage.newBuilder().setType(BuilderMessage.Type.COMPILE_MESSAGE).setCompileMessage(builder.build()).build();
   }

@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -56,7 +56,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
   protected PsiType evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     Project project = evaluationContext.getProject();
     SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-    ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
+    ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
       @Override
       public ExpressionEvaluator compute() throws EvaluateException {
         return EvaluatorBuilderImpl.getInstance().build(myElement, position);

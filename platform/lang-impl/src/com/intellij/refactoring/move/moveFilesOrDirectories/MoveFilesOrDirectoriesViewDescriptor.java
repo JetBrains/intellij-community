@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -24,12 +25,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myElementsToMove;
-  private String myProcessedElementsHeader;
-  private final String myCodeReferencesText;
+  private @NlsContexts.ListItem String myProcessedElementsHeader;
+  private final @Nls String myCodeReferencesText;
 
   MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, PsiDirectory newParent) {
     myElementsToMove = elementsToMove;

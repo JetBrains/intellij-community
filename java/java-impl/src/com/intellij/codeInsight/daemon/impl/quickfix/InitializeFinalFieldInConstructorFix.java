@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,12 +90,14 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
 
     final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
 
-    final List<PsiExpression> rExpressions = new ArrayList<>(constructors.size());
+    final List<SmartPsiElementPointer<PsiExpression>> rExprPointers = new ArrayList<>(constructors.size());
     for (PsiMethod constructor : constructors) {
-      rExpressions.add(addFieldInitialization(constructor, suggestedInitializers, field, project));
+      PsiExpression initializer = addFieldInitialization(constructor, suggestedInitializers, field, project);
+      rExprPointers.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(initializer));
     }
     Document doc = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(field.getContainingFile()));
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+    List<PsiExpression> rExpressions = ContainerUtil.mapNotNull(rExprPointers, SmartPsiElementPointer::getElement);
     AddVariableInitializerFix.runAssignmentTemplate(rExpressions, suggestedInitializers, editor);
   }
 

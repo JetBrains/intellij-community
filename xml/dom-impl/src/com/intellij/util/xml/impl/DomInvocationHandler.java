@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.impl.source.xml.XmlStubBasedTagBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.util.PsiUtilCore;
@@ -789,7 +790,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
-    return getCollectionChildren(description, true);
+    return getCollectionChildren(description, XmlStubBasedTagBase.shouldProcessIncludesNow());
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {

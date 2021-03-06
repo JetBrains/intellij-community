@@ -10,13 +10,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ThreeState;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,25 +80,5 @@ public final class PythonUnitTestUtil {
       }
     }
     return locations;
-  }
-
-  /**
-   * @deprecated use {@link PythonUnitTestDetectorsKt#isUnitTestCaseClass(PyClass, TypeEvalContext)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isUnitTestCaseClass(@NotNull PyClass pyClass) {
-    return PythonUnitTestDetectorsKt.isUnitTestCaseClass(pyClass, TypeEvalContext.codeInsightFallback(pyClass.getProject()));
-  }
-
-  /**
-   * @deprecated use {@link PythonUnitTestDetectorsBasedOnSettings#isTestClass(PyClass, ThreeState, TypeEvalContext)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isTestClass(@NotNull final PyClass cls,
-                                    @NotNull final ThreeState testCaseClassRequired,
-                                    @Nullable TypeEvalContext context) {
-    return PythonUnitTestDetectorsBasedOnSettings.isTestClass(cls, testCaseClassRequired, context);
   }
 }

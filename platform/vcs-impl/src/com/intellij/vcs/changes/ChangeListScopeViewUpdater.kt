@@ -3,32 +3,59 @@ package com.intellij.vcs.changes
 
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeList
+import com.intellij.openapi.vcs.changes.ChangeListAdapter
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.LocalChangeListsLoadedListener
 import com.intellij.packageDependencies.DependencyValidationManager
-import com.intellij.util.ui.UIUtil
 
 class ChangeListScopeViewUpdater(private val project: Project) : ChangeListAdapter() {
-  override fun changeListAdded(list: ChangeList) {
-    fireListeners()
-  }
-
-  override fun changeListRemoved(list: ChangeList) {
-    fireListeners()
-  }
-
-  override fun changeListRenamed(list: ChangeList, oldName: String) {
-    fireListeners()
-  }
-
-  override fun changeListsChanged() {
-    val pane = ProjectView.getInstance(project).getProjectViewPaneById(ScopeViewPane.ID) as? ScopeViewPane ?: return
-    if (pane.selectedScope is ChangeListScope) {
-      pane.updateSelectedScope()
+  class InitialRefresh(private val project: Project) : LocalChangeListsLoadedListener {
+    override fun processLoadedLists(lists: MutableList<LocalChangeList>) {
+      updateAvailableScopesList(project)
     }
   }
 
-  private fun fireListeners() {
-    UIUtil.invokeLaterIfNeeded { DependencyValidationManager.getInstance(project).fireScopeListeners() }
+  override fun changeListAdded(list: ChangeList) {
+    updateAvailableScopesList(project)
+  }
+
+  override fun changeListRemoved(list: ChangeList) {
+    updateAvailableScopesList(project)
+  }
+
+  override fun changeListRenamed(list: ChangeList, oldName: String) {
+    updateAvailableScopesList(project)
+  }
+
+  override fun changeListAvailabilityChanged() {
+    updateAvailableScopesList(project)
+  }
+
+  override fun changeListsChanged() {
+    updateActiveScope(project)
+  }
+
+  companion object {
+    private fun updateActiveScope(project: Project) {
+      ApplicationManager.getApplication().invokeLater {
+        if (project.isDisposed) return@invokeLater
+        val projectView = project.serviceIfCreated<ProjectView>() ?: return@invokeLater
+        val pane = projectView.getProjectViewPaneById(ScopeViewPane.ID) as? ScopeViewPane ?: return@invokeLater
+        if (pane.selectedScope is ChangeListScope) {
+          pane.updateSelectedScope()
+        }
+      }
+    }
+
+    private fun updateAvailableScopesList(project: Project) {
+      ApplicationManager.getApplication().invokeLater {
+        if (project.isDisposed) return@invokeLater
+        DependencyValidationManager.getInstance(project).fireScopeListeners()
+      }
+    }
   }
 }

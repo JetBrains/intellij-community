@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory.Transformer;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -33,9 +22,11 @@ import java.util.*;
 
 public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
+  private Project myProject;
 
-  public MavenEmbedderWrapper(@Nullable RemoteObjectWrapper<?> parent) {
+  public MavenEmbedderWrapper(@NotNull Project project, @Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
+    myProject = project;
   }
 
   @Override
@@ -93,7 +84,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                    myCustomization.failOnUnresolvedDependency,
                                    myCustomization.console,
                                    myCustomization.indicator,
-                                   myCustomization.alwaysUpdateSnapshot,
+                                   myCustomization.alwaysUpdateSnapshot || ApplicationManager.getApplication().isUnitTestMode(),
                                    myCustomization.userProperties,
                                    ourToken);
   }
@@ -111,8 +102,20 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                                    @NotNull final Collection<String> inactiveProfiles)
     throws MavenProcessCanceledException {
     return performCancelable(() -> {
-      final List<File> ioFiles = ContainerUtil.map(files, file -> new File(file.getPath()));
-      return getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
+      Transformer transformer = files.isEmpty() ?
+                                Transformer.ID :
+                                RemotePathTransformerFactory.createForProject(myProject);
+      final List<File> ioFiles = ContainerUtil.map(files, file -> new File(transformer.toRemotePath(file.getPath())));
+      Collection<MavenServerExecutionResult> results =
+        getOrCreateWrappee().resolveProject(ioFiles, activeProfiles, inactiveProfiles, ourToken);
+      if (transformer != Transformer.ID) {
+        for (MavenServerExecutionResult result : results) {
+          MavenServerExecutionResult.ProjectData data = result.projectData;
+          if (data == null) continue;
+          new MavenBuildPathsChange((String s) -> transformer.toIdePath(s)).perform(data.mavenModel);
+        }
+      }
+      return results;
     });
   }
 
@@ -120,8 +123,15 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public String evaluateEffectivePom(@NotNull final VirtualFile file,
                                      @NotNull final Collection<String> activeProfiles,
                                      @NotNull final Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
+    return evaluateEffectivePom(new File(file.getPath()), activeProfiles, inactiveProfiles);
+  }
+
+  @Nullable
+  public String evaluateEffectivePom(@NotNull final File file,
+                                     @NotNull final Collection<String> activeProfiles,
+                                     @NotNull final Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
     return performCancelable(() -> getOrCreateWrappee()
-      .evaluateEffectivePom(new File(file.getPath()), new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), ourToken));
+      .evaluateEffectivePom(file, new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles), ourToken));
   }
 
   @NotNull
@@ -278,7 +288,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     myCustomization = null;
   }
 
-  private static class Customization {
+  private static final class Customization {
     private final MavenServerConsole console;
     private final MavenServerProgressIndicator indicator;
 

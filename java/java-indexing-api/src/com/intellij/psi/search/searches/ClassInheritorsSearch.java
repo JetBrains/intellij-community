@@ -10,14 +10,13 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
+public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
   public static final ExtensionPointName<QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
@@ -144,19 +143,9 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       }
       return AbstractQuery.wrapInReadAction(directQuery);
     }
-    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
-                                             psiClass -> ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
-  }
-
-  /**
-   * @deprecated use {@link #search(PsiClass, SearchScope, boolean)} instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static Query<PsiClass> search(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance) {
-    DeprecatedMethodException.report("Use ClassInheritorsSearch.search(PsiClass, SearchScope, boolean, boolean, boolean) instead");
-    return search(aClass, scope, checkDeep, checkInheritance, true);
+    return INSTANCE.createUniqueResultsQuery(parameters, psiClass -> {
+      return ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass));
+    });
   }
 
   @NotNull
@@ -171,7 +160,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         throw new ProcessCanceledException();
       }
       PsiFile file = aClass.getContainingFile();
-      return (file != null ? file : aClass).getUseScope();
+      return PsiSearchHelper.getInstance(aClass.getProject()).getUseScope(file != null ? file : aClass);
     }), checkDeep);
   }
 

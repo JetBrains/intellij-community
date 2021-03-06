@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.events.BuildEvent;
@@ -9,6 +9,8 @@ import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +20,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTa
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 @ApiStatus.Experimental
@@ -30,12 +33,19 @@ public class MavenLogOutputParser implements BuildOutputParser {
   private final MavenSpyOutputParser mavenSpyOutputParser;
   private final MavenParsingContext myParsingContext;
 
+  public MavenLogOutputParser(@NotNull Project project,
+                              @NotNull ExternalSystemTaskId taskId,
+                              @NotNull List<MavenLoggedEventParser> registeredEvents) {
+    this(project, taskId, Function.identity(), registeredEvents);
+  }
 
-  public MavenLogOutputParser(ExternalSystemTaskId taskId,
-                              List<MavenLoggedEventParser> registeredEvents) {
+  public MavenLogOutputParser(@NotNull Project project,
+                              @NotNull ExternalSystemTaskId taskId,
+                              @NotNull Function<String, String> targetFileMapper,
+                              @NotNull List<MavenLoggedEventParser> registeredEvents) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
-    myParsingContext = new MavenParsingContext(taskId);
+    myParsingContext = new MavenParsingContext(project, taskId, targetFileMapper);
     mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
   }
 
@@ -80,7 +90,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
         if (!event.supportsType(logLine.myType)) {
           continue;
         }
-        if (event.checkLogLine(myParsingContext.getLastId(), logLine, mavenLogReader, messageConsumer)) {
+        if (event.checkLogLine(myParsingContext.getLastId(), myParsingContext, logLine, mavenLogReader, messageConsumer)) {
           return true;
         }
       }
@@ -89,7 +99,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     return false;
   }
 
-  private void sendMessageToAllParents(String line, Consumer<? super BuildEvent> messageConsumer) {
+  private void sendMessageToAllParents(@NlsSafe String line, Consumer<? super BuildEvent> messageConsumer) {
     List<MavenParsingContext.MavenExecutionEntry> ids = myParsingContext.getAllEntriesReversed();
     for (MavenParsingContext.MavenExecutionEntry entry : ids) {
       if (entry.getId() == myTaskId) {

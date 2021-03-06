@@ -6,10 +6,10 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
@@ -47,7 +46,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final MergingUpdateQueue myUpdateMerger;
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public EditorNotificationsImpl(@NotNull Project project) {
     myUpdateMerger = new MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project)
@@ -89,7 +88,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     });
 
     EP_PROJECT.getPoint(project).addExtensionPointListener(
-      new ExtensionPointListener<Provider<?>>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
           updateAllNotifications();
@@ -99,13 +98,13 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
           updateNotifications(extension);
         }
-      }, false, project);
+      }, false, null);
   }
 
   @Override
   public void updateNotifications(@NotNull Provider<?> provider) {
     Key<? extends JComponent> key = provider.getKey();
-    for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+    for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFilesWithRemotes()) {
       List<FileEditor> editors = getEditors(file);
 
       for (FileEditor editor : editors) {
@@ -121,24 +120,19 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         return;
       }
 
-      List<FileEditor> editors = getEditors(file);
-
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        Iterator<FileEditor> it = editors.iterator();
-        while (it.hasNext()) {
-          FileEditor e = it.next();
-          if (!e.getComponent().isShowing()) {
-            e.putUserData(PENDING_UPDATE, Boolean.TRUE);
-            it.remove();
-          }
+      List<FileEditor> editors = ContainerUtil.filter(getEditors(file), fileEditor -> {
+        boolean visible = EditorActivityManager.getInstance().isVisible(fileEditor);
+        if (!visible) {
+          fileEditor.putUserData(PENDING_UPDATE, Boolean.TRUE);
         }
-      }
+        return visible;
+      });
+
       if (!editors.isEmpty()) updateEditors(file, editors);
     });
   }
 
-  @NotNull
-  private List<FileEditor> getEditors(@NotNull VirtualFile file) {
+  private @NotNull List<FileEditor> getEditors(@NotNull VirtualFile file) {
     return ContainerUtil.filter(
       FileEditorManager.getInstance(myProject).getAllEditors(file),
       editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
@@ -158,21 +152,30 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       .submit(NonUrgentExecutor.getInstance());
   }
 
-  @NotNull
-  private List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<? extends FileEditor> editors) {
+  private @NotNull List<Runnable> calcNotificationUpdates(@NotNull VirtualFile file, @NotNull List<? extends FileEditor> editors) {
     List<Provider<?>> providers = DumbService.getDumbAwareExtensions(myProject, EP_PROJECT);
-    List<Runnable> updates = new SmartList<>();
+    List<Runnable> updates = null;
     for (FileEditor editor : editors) {
       for (Provider<?> provider : providers) {
+        // light project is not disposed in tests
+        if (myProject.isDisposed()) {
+          return Collections.emptyList();
+        }
+
         JComponent component = provider.createNotificationPanel(file, editor, myProject);
         if (component instanceof EditorNotificationPanel) {
-          ((EditorNotificationPanel) component).setProviderKey(provider.getKey());
-          ((EditorNotificationPanel) component).setProject(myProject);
+          ((EditorNotificationPanel)component).setProviderKey(provider.getKey());
+          ((EditorNotificationPanel)component).setProject(myProject);
         }
-        updates.add(() -> updateNotification(editor, provider.getKey(), component, PluginInfoDetectorKt.getPluginInfo(provider.getClass())));
+        if (updates == null) {
+          updates = new SmartList<>();
+        }
+        updates.add(() -> {
+          updateNotification(editor, provider.getKey(), component, PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+        });
       }
     }
-    return updates;
+    return updates == null ? Collections.emptyList() : updates;
   }
 
   private void updateNotification(@NotNull FileEditor editor,
@@ -221,7 +224,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     myUpdateMerger.queue(new Update("update") {
       @Override
       public void run() {
-        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
+        for (VirtualFile file : fileEditorManager.getOpenFilesWithRemotes()) {
           updateNotifications(file);
         }
       }
@@ -229,13 +232,12 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   public static class RefactoringListenerProvider implements RefactoringElementListenerProvider {
-    @Nullable
     @Override
-    public RefactoringElementListener getListener(@NotNull final PsiElement element) {
+    public @Nullable RefactoringElementListener getListener(final @NotNull PsiElement element) {
       if (element instanceof PsiFile) {
         return new RefactoringElementAdapter() {
           @Override
-          protected void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
+          protected void elementRenamedOrMoved(final @NotNull PsiElement newElement) {
             if (newElement instanceof PsiFile) {
               final VirtualFile vFile = newElement.getContainingFile().getVirtualFile();
               if (vFile != null) {
@@ -245,7 +247,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
           }
 
           @Override
-          public void undoElementMovedOrRenamed(@NotNull final PsiElement newElement, @NotNull final String oldQualifiedName) {
+          public void undoElementMovedOrRenamed(final @NotNull PsiElement newElement, final @NotNull String oldQualifiedName) {
             elementRenamedOrMoved(newElement);
           }
         };

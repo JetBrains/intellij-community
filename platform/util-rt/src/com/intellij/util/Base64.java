@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 /**
  * DEPRECATED, please use {@link java.util.Base64} instead
  */
-public class Base64 {
+public final class Base64 {
   private Base64() { }
 
   public static String encode(byte[] bytes) {
@@ -38,7 +24,7 @@ public class Base64 {
   private static char[] encodeBlock(byte[] bytes, int offset) {
     int j = 0;
     int s = bytes.length - offset - 1;
-    int l = s < 2 ? s : 2;
+    int l = Math.min(s, 2);
     for (int i = 0; i <= l; i++) {
       byte b = bytes[offset + i];
       int n = b >= 0 ? ((int)(b)) : b + 256;

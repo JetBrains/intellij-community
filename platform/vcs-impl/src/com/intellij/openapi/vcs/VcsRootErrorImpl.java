@@ -3,20 +3,19 @@ package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author Nadya Zabrodina
  */
 public class VcsRootErrorImpl implements VcsRootError {
 
   private final @NotNull Type myType;
-  private final @NotNull String myMapping;
-  private final @NotNull VcsKey myVcsKey;
+  private final @NotNull VcsDirectoryMapping myMapping;
 
-
-  public VcsRootErrorImpl(@NotNull Type type, @NotNull String mapping, @NotNull String key) {
+  public VcsRootErrorImpl(@NotNull Type type, @NotNull VcsDirectoryMapping mapping) {
     myType = type;
     myMapping = mapping;
-    myVcsKey = new VcsKey(key);
   }
 
   @Override
@@ -27,19 +26,13 @@ public class VcsRootErrorImpl implements VcsRootError {
 
   @Override
   @NotNull
-  public String getMapping() {
+  public VcsDirectoryMapping getMapping() {
     return myMapping;
   }
 
   @Override
-  @NotNull
-  public VcsKey getVcsKey() {
-    return myVcsKey;
-  }
-
-  @Override
   public String toString() {
-    return String.format("VcsRootError{%s - %s}", myType, myMapping);
+    return String.format("VcsRootError{%s - %s}", myType, myMapping); //NON-NLS
   }
 
   @Override
@@ -49,17 +42,14 @@ public class VcsRootErrorImpl implements VcsRootError {
 
     VcsRootError error = (VcsRootError)o;
 
-    if (!myMapping.equals(error.getMapping())) return false;
+    if (!Objects.equals(myMapping, error.getMapping())) return false;
     if (myType != error.getType()) return false;
 
     return true;
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
   public int hashCode() {
-    int result = myType != null ? myType.hashCode() : 0;
-    result = 31 * result + myMapping.hashCode();
-    return result;
+    return Objects.hash(myType, myMapping);
   }
 }

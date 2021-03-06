@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.Paths;
@@ -17,11 +17,11 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
-  public void testRefreshingSynchronously() throws Exception {
+  public void testRefreshingSynchronously() {
     doTestRefreshing(false);
   }
 
-  public void testRefreshingAsynchronously() throws Exception {
+  public void testRefreshingAsynchronously() {
     doTestRefreshing(true);
   }
 
@@ -65,7 +65,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     }
   }
 
-  private void doTestRefreshing(boolean async) throws Exception {
+  private void doTestRefreshing(boolean async) {
     int before = getRevisionsFor(myRoot).size();
 
     createFileExternally("f1.txt");
@@ -78,7 +78,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertEquals(before + 1, getRevisionsFor(myRoot).size());
   }
 
-  public void testChangeSetName() throws Exception {
+  public void testChangeSetName() {
     createFileExternally("f.txt");
     refreshVFS();
     Revision r = getRevisionsFor(myRoot).get(1);
@@ -90,7 +90,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     CommandProcessor.getInstance().executeCommand(myProject, ExternalChangesAndRefreshingTest::refreshVFS, "", null);
   }
 
-  public void testCommandDuringRefresh() throws Exception {
+  public void testCommandDuringRefresh() {
     createFileExternally("f.txt");
 
     VirtualFileListener l = new VirtualFileListener() {
@@ -110,15 +110,17 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testFileCreationDuringRefresh() throws Exception {
-    final String path = createFileExternally("f.txt");
+    String path = createFileExternally("f.txt");
     setContentExternally(path, "content");
 
-    final String[] content = new String[1];
+    String[] content = new String[1];
     VirtualFileListener l = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
         try {
-          if (!e.getFile().getPath().equals(path)) return;
+          if (!e.getFile().getPath().equals(path)) {
+            return;
+          }
           content[0] = new String(e.getFile().contentsToByteArray(), StandardCharsets.UTF_8);
         }
         catch (IOException ex) {

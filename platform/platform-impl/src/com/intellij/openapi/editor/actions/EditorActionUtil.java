@@ -1,16 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -20,21 +13,18 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.SystemProperties;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.MouseEvent;
 
 import static java.lang.Character.*;
 
-public class EditorActionUtil {
+public final class EditorActionUtil {
   protected static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
@@ -43,7 +33,7 @@ public class EditorActionUtil {
 
   /**
    * Tries to change given editor's viewport position in vertical dimension by the given number of visual lines.
-   * 
+   *
    * @param editor     target editor which viewport position should be changed
    * @param lineShift  defines viewport position's vertical change length
    * @param columnShift  defines viewport position's horizontal change length
@@ -64,7 +54,7 @@ public class EditorActionUtil {
     if (!moveCaret) {
       return;
     }
-    
+
     Rectangle viewRectangle = getVisibleArea(editor);
     int lineNumber = editor.getCaretModel().getVisualPosition().line;
     VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
@@ -102,10 +92,10 @@ public class EditorActionUtil {
     int caretOffset = editor.getCaretModel().getOffset();
     int newCaretOffset = indentLine(project, editor, lineNumber, indent, caretOffset);
     editor.getCaretModel().moveToOffset(newCaretOffset);
-  }  
-  
+  }
+
   // This method avoid moving caret directly, so it's suitable for invocation in bulk mode.
-  // It does calculate (and returns) target caret position. 
+  // It does calculate (and returns) target caret position.
   public static int indentLine(Project project, @NotNull Editor editor, int lineNumber, int indent, int caretOffset) {
     return EditorCoreUtil.indentLine(project, editor, lineNumber, indent, caretOffset, shouldUseSmartTabs(project, editor));
   }
@@ -113,6 +103,47 @@ public class EditorActionUtil {
   public static boolean shouldUseSmartTabs(Project project, @NotNull Editor editor) {
     if (!(editor instanceof EditorEx)) return false;
     return CodeStyle.getIndentOptions(project, editor.getDocument()).SMART_TABS;
+  }
+
+  /**
+   * Selects the entire lines covering the current selection, if any.
+   * If there's no selection, selects a single line of text at the caret position.
+   * Because the resulting selection always includes the line ending character,
+   * repeated invocations of this method extend the selection to include each next line one by one.
+   */
+  public static void selectEntireLines(@NotNull Caret caret) {
+    selectEntireLines(caret, false);
+  }
+
+  /**
+   * Selects the entire lines covering the current selection, if any.
+   * If there's no selection, or 'resetToSingleLineAtCaret' is true, selects a single line of text at the caret position.
+   * Unless 'resetToSingleLineAtCaret' is set, and because the resulting selection always includes the line ending character,
+   * repeated invocations of this method extend the selection to include each next line one by one.
+   *
+   * @param resetToSingleLineAtCaret discard the the current selection, if any,
+   *                                 and select just a single line at the caret position.
+   */
+  public static void selectEntireLines(@NotNull Caret caret, boolean resetToSingleLineAtCaret) {
+    Editor editor = caret.getEditor();
+    int lineNumber = caret.getLogicalPosition().line;
+    Document document = editor.getDocument();
+    if (lineNumber >= document.getLineCount()) {
+      return;
+    }
+
+    Pair<LogicalPosition, LogicalPosition> lines =
+      EditorUtil.calcSurroundingRange(editor,
+                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
+                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
+    LogicalPosition lineStart = lines.first;
+    LogicalPosition nextLineStart = lines.second;
+
+    int start = editor.logicalPositionToOffset(lineStart);
+    int end = editor.logicalPositionToOffset(nextLineStart);
+
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    caret.setSelection(start, end);
   }
 
   @NotNull
@@ -544,7 +575,7 @@ public class EditorActionUtil {
 
   /**
    * Moves caret to visual line end.
-   * 
+   *
    * @param editor target editor
    * @param isWithSelection whether selection should be set from original caret position to its target position
    * @param ignoreTrailingWhitespace if {@code true}, line end will be determined while ignoring trailing whitespace, unless caret is
@@ -694,7 +725,7 @@ public class EditorActionUtil {
 
       int caret = caretModel.getOffset();
       final FoldRegion collapsedUnderCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caret);
-      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() && 
+      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand() &&
           Boolean.TRUE.equals(collapsedUnderCaret.getUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY))) {
         if (caret > collapsedUnderCaret.getStartOffset() && columnShift > 0) {
           caretModel.moveToOffset(collapsedUnderCaret.getEndOffset());
@@ -826,53 +857,8 @@ public class EditorActionUtil {
 
   @NotNull
   private static Rectangle getVisibleArea(@NotNull Editor editor) {
-    return SystemProperties.isTrueSmoothScrollingEnabled() ? editor.getScrollingModel().getVisibleAreaOnScrollingFinished()
-                                                           : editor.getScrollingModel().getVisibleArea();
-  }
-
-  /**
-   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {
-    return new EditorPopupHandler() {
-      @Override
-      public void invokePopup(final EditorMouseEvent event) {
-        if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-          showEditorPopup(event, group);
-        }
-      }
-    };
-  }
-
-  /**
-   * @deprecated Use {@link EditorEx#setContextMenuGroupId(String)} or
-   * {@link EditorEx#installPopupHandler(com.intellij.openapi.editor.ex.EditorPopupHandler)} instead. To be removed in version 2020.2.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static EditorPopupHandler createEditorPopupHandler(@NotNull final ActionGroup group) {
-    return new EditorPopupHandler() {
-      @Override
-      public void invokePopup(final EditorMouseEvent event) {
-        showEditorPopup(event, group);
-      }
-    };
-  }
-
-  private static void showEditorPopup(final EditorMouseEvent event, @NotNull final ActionGroup group) {
-    if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
-      MouseEvent e = event.getMouseEvent();
-      final Component c = e.getComponent();
-      if (c != null && c.isShowing()) {
-        popupMenu.getComponent().show(c, e.getX(), e.getY());
-      }
-      e.consume();
-    }
+    ScrollingModel model = editor.getScrollingModel();
+    return EditorCoreUtil.isTrueSmoothScrollingEnabled() ? model.getVisibleAreaOnScrollingFinished() : model.getVisibleArea();
   }
 
   private static boolean isBetweenWhitespaces(@NotNull CharSequence text, int offset) {

@@ -52,7 +52,7 @@ public class FileFixture {
       @Override
       public boolean test() {
         //noinspection ConstantConditions
-        return execute(new GuiQuery<Boolean>() {
+        return execute(new GuiQuery<>() {
           @Override
           protected Boolean executeInEDT() throws Throwable {
             return isOpenAndSelected();
@@ -90,7 +90,7 @@ public class FileFixture {
       @Override
       public boolean test() {
         //noinspection ConstantConditions
-        return execute(new GuiQuery<Boolean>() {
+        return execute(new GuiQuery<>() {
           @Override
           protected Boolean executeInEDT() throws Throwable {
             return DaemonCodeAnalyzerEx.getInstanceEx(myProject).isErrorAnalyzingFinished(getPsiFile());
@@ -113,7 +113,7 @@ public class FileFixture {
     waitUntilErrorAnalysisFinishes();
 
     final Document document = getNotNullDocument();
-    Collection<HighlightInfo> highlightInfos = execute(new GuiQuery<Collection<HighlightInfo>>() {
+    Collection<HighlightInfo> highlightInfos = execute(new GuiQuery<>() {
       @Override
       protected Collection<HighlightInfo> executeInEDT() throws Throwable {
         CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<>();
@@ -127,7 +127,7 @@ public class FileFixture {
 
   @NotNull
   private PsiFile getPsiFile() {
-    final PsiFile psiFile = execute(new GuiQuery<PsiFile>() {
+    final PsiFile psiFile = execute(new GuiQuery<>() {
       @Override
       protected PsiFile executeInEDT() throws Throwable {
         return PsiManager.getInstance(myProject).findFile(myVirtualFile);
@@ -143,7 +143,7 @@ public class FileFixture {
     pause(new Condition("Waiting for code analysis " + severity + " count to reach " + expected) {
       @Override
       public boolean test() {
-        Collection<HighlightInfo> highlightInfos = execute(new GuiQuery<Collection<HighlightInfo>>() {
+        Collection<HighlightInfo> highlightInfos = execute(new GuiQuery<>() {
           @Override
           protected Collection<HighlightInfo> executeInEDT() throws Throwable {
             CommonProcessors.CollectProcessor<HighlightInfo> processor = new CommonProcessors.CollectProcessor<>();
@@ -184,7 +184,7 @@ public class FileFixture {
 
   @Nullable
   public static Document getDocument(@NotNull final VirtualFile file) {
-    return execute(new GuiQuery<Document>() {
+    return execute(new GuiQuery<>() {
       @Override
       protected Document executeInEDT() throws Throwable {
         return FileDocumentManager.getInstance().getDocument(file);

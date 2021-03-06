@@ -25,6 +25,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 public abstract class GradleBaseInspection extends BaseInspection {
   @Override
   public String @NotNull [] getGroupPath() {
-    return new String[]{GradleConstants.GRADLE_NAME, getGroupDisplayName()};
+    return new String[]{GradleConstants.GRADLE_NAME, getGroupDisplayName()}; //NON-NLS GRADLE_NAME
   }
 }

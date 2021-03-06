@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -183,11 +184,11 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     }
   }
 
-  static String getNextName() {
+  static @NlsActions.ActionText String getNextName() {
     return ExecutionBundle.message("next.faled.test.action.name");
   }
 
-  static String getPreviousName() {
+  static @NlsActions.ActionText String getPreviousName() {
     return ExecutionBundle.message("prev.faled.test.action.name");
   }
 }

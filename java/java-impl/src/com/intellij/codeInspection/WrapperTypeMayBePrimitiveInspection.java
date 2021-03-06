@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -15,12 +15,9 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.JavaPsiBoxingUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +72,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     };
   }
 
-  private static class BoxingInfo {
+  private static final class BoxingInfo {
     private final @NotNull PsiVariable myVariable;
     boolean myHasReferences = false;
 
@@ -119,7 +116,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     private static final int IN_LOOP_OPERATION_MULTIPLIER = 10;
 
     // name to list of boxes
-    private final Map<String, List<BoxingInfo>> myBoxingMap = new HashMap<>();
+    private final Map<PsiVariable, List<BoxingInfo>> myBoxingMap = new HashMap<>();
 
     @Override
     public void visitClass(PsiClass aClass) {
@@ -134,18 +131,17 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiExpression initializer = variable.getInitializer();
       BoxingInfo boxingInfo = new BoxingInfo(variable);
       if (initializer != null && !boxingInfo.checkExpression(initializer)) return;
-      String name = variable.getName();
       ArrayList<BoxingInfo> infos = new ArrayList<>();
       infos.add(boxingInfo);
-      myBoxingMap.put(name, infos);
+      myBoxingMap.put(variable, infos);
     }
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      String name = expression.getReferenceName();
-      if (name == null) return;
-      List<BoxingInfo> infos = myBoxingMap.get(name);
+      final PsiVariable variable = tryCast(expression.resolve(), PsiVariable.class);
+      if (variable == null) return;
+      List<BoxingInfo> infos = myBoxingMap.get(variable);
       if (infos == null) return;
       Iterator<BoxingInfo> iterator = infos.iterator();
       while (iterator.hasNext()) {
@@ -161,7 +157,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
         break;
       }
       if (infos.isEmpty()) {
-        myBoxingMap.remove(name);
+        myBoxingMap.remove(variable);
       }
     }
 
@@ -195,14 +191,14 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiLoopStatement loop =
         PsiTreeUtil.getParentOfType(expression, PsiLoopStatement.class, false, PsiClass.class, PsiLambdaExpression.class, PsiMethod.class);
       if (loop != null
-          && StreamEx.of(scopeElements).anyMatch(scopeElement -> PsiTreeUtil.isAncestor(scopeElement, loop, false))
-                           && !PsiTreeUtil.isAncestor(loop, boxingInfo.myVariable, true)) {
+          && ContainerUtil.or(scopeElements, scopeElement -> PsiTreeUtil.isAncestor(scopeElement, loop, false))
+          && !PsiTreeUtil.isAncestor(loop, boxingInfo.myVariable, true)) {
         impact *= IN_LOOP_OPERATION_MULTIPLIER;
       }
       return impact;
     }
 
-    @Nullable("When use not allows unboxing")
+    @Nullable("When use does not allow unboxing")
     private static Integer afterBoxingRemovalReferenceImpact(@NotNull PsiReferenceExpression expression,
                                                              @NotNull BoxingInfo boxingInfo) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
@@ -251,12 +247,28 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiCallExpression callExpression = (PsiCallExpression)grandParent;
       PsiMethod method = callExpression.resolveMethod();
       if (method == null) return null;
+      if (!changedCallResolvesToSameMethod(callExpression, arguments[argumentsIndex], method)) return null;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       int parameterIndex = parameters.length < argumentsIndex + 1 ? parameters.length - 1 : argumentsIndex;
       if (parameterIndex < 0) return null;
       PsiParameter parameter = parameters[parameterIndex];
       PsiType type = parameter.getType();
       return type instanceof PsiPrimitiveType ? -1 : 1;
+    }
+
+    private static boolean changedCallResolvesToSameMethod(PsiCallExpression call, PsiExpression argument, PsiMethod method) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+      final PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) return false;
+      final int indexOfArgument = ArrayUtil.indexOf(argumentList.getExpressions(), argument);
+      final PsiCallExpression callCopy = (PsiCallExpression)call.copy();
+      final PsiExpression argumentCopy = Objects.requireNonNull(callCopy.getArgumentList()).getExpressions()[indexOfArgument];
+      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(argumentCopy.getType());
+      if (unboxedType == null) return false;
+      final PsiExpression argumentWithNewType =
+        factory.createExpressionFromText("(" + unboxedType.getCanonicalText() + ")(" + argumentCopy.getText() + ")", argumentCopy);
+      argumentCopy.replace(argumentWithNewType);
+      return callCopy.resolveMethod() == method;
     }
 
     /**
@@ -270,7 +282,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return isRelational ? 0 : 1;
     }
 
-    @Nullable("When use not allows unboxing")
+    @Nullable("When use does not allow unboxing")
     private static Integer polyadicExpressionImpactAfterBoxingRemoval(@NotNull PsiPolyadicExpression polyadic,
                                                                       PsiReferenceExpression reference) {
       final PsiExpression[] operands = polyadic.getOperands();

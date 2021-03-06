@@ -12,7 +12,7 @@ PyFile:KeywordAsDefaultParameterValue.py
       PyNamedParameter('fields')
         PsiElement(Py:IDENTIFIER)('fields')
         PsiElement(Py:EQ)('=')
-        PsiErrorElement:expression expected
+        PsiErrorElement:Expression expected
           PsiElement(Py:FROM_KEYWORD)('from')
       PsiElement(Py:RPAR)(')')
     PsiElement(Py:COLON)(':')

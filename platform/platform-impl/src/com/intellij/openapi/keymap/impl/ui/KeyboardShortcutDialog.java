@@ -2,6 +2,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -54,19 +55,16 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   }
 
   @Override
-  @NotNull
-  Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
+  @NotNull Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
     String sysAct = getSystemShortcutAction(shortcut.getFirstKeyStroke());
     Collection<String> keymapConflicts = keymap.getConflicts(actionId, shortcut).keySet();
     if (sysAct == null) {
       return keymapConflicts;
     }
-    if (keymapConflicts == null || keymapConflicts.isEmpty()) {
+    if (keymapConflicts.isEmpty()) {
       return Collections.singletonList(sysAct);
     }
-
-    List<String> result = new ArrayList<>();
-    result.addAll(keymapConflicts);
+    List<String> result = new ArrayList<>(keymapConflicts);
     result.add(sysAct);
     return result;
   }
@@ -74,8 +72,8 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   @Override
   protected void addSystemActionsIfPresented(Group group) {
     if (mySystemShortcuts != null) {
-      Group macOsSysGroup = new Group("MacOS shortcuts", AllIcons.Nodes.KeymapOther);
-      mySystemShortcuts.forEach((ks, actid) -> macOsSysGroup.addActionId(actid));
+      @SuppressWarnings("DialogTitleCapitalization") Group macOsSysGroup = new Group(IdeBundle.message("action.group.macos.shortcuts.text"), AllIcons.Nodes.KeymapOther);
+      mySystemShortcuts.forEach((ks, id) -> macOsSysGroup.addActionId(id));
       group.addGroup(macOsSysGroup);
     }
   }

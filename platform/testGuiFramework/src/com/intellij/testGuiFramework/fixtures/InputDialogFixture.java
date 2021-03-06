@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.ui.DialogWrapper;
@@ -16,11 +16,11 @@ import javax.swing.text.JTextComponent;
 
 import static org.junit.Assert.assertNotNull;
 
-public class InputDialogFixture extends IdeaDialogFixture<DialogWrapper> {
+public final class InputDialogFixture extends IdeaDialogFixture<DialogWrapper> {
   @NotNull
   public static InputDialogFixture findByTitle(@NotNull Robot robot, @NotNull final String title) {
     final Ref<DialogWrapper> wrapperRef = new Ref<>();
-    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!title.equals(dialog.getTitle()) || !dialog.isShowing()) {

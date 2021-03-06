@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   @Deprecated public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
   public static final Key<Boolean> TERMINATION_REQUESTED = Key.create("TERMINATION_REQUESTED");
 
-  private final List<ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<@NotNull ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private enum State {INITIAL, RUNNING, TERMINATING, TERMINATED}
   private final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
@@ -79,7 +80,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    * detaching in this method. This method is called from {@link #detachProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
    * background thread and return without waiting for it. If the performed detaching is completed,
-   * {@link #notifyProcessTerminated(int)} must be called in any thread (not necessary from this method).
+   * {@link #notifyProcessDetached()} must be called in any thread (not necessary from this method).
    */
   protected abstract void detachProcessImpl();
 
@@ -157,7 +158,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     return myExitCode;
   }
 
-  public void addProcessListener(final ProcessListener listener) {
+  public void addProcessListener(final @NotNull ProcessListener listener) {
     myListeners.add(listener);
   }
 
@@ -171,7 +172,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     });
   }
 
-  public void removeProcessListener(final ProcessListener listener) {
+  public void removeProcessListener(final @NotNull ProcessListener listener) {
     myListeners.remove(listener);
   }
 
@@ -291,7 +292,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
     private void runPendingTasks() {
       final Runnable[] tasks;
       synchronized (myPendingTasks) {
-        tasks = myPendingTasks.toArray(new Runnable[0]);
+        tasks = myPendingTasks.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
         myPendingTasks.clear();
       }
       for (Runnable task : tasks) {

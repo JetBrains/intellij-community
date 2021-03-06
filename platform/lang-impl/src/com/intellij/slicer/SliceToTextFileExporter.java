@@ -5,7 +5,6 @@ package com.intellij.slicer;
 
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,7 +12,7 @@ import java.util.List;
 public class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
   @NotNull private final UsageViewSettings myUsageViewSettings;
-  private final String myLineSeparator = SystemProperties.getLineSeparator();
+  private final String myLineSeparator = System.lineSeparator();
 
   public SliceToTextFileExporter(@NotNull SliceTreeBuilder builder, @NotNull UsageViewSettings usageViewSettings) {
     myBuilder = builder;

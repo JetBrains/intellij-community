@@ -1,25 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,6 +58,7 @@ import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +73,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.refactoring.changeSignature.ChangeSignatureHandler.REFACTORING_NAME;
 
 /**
  * @author Konstantin Bulenkov
@@ -188,14 +188,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  @NotNull
-  protected List<Pair<String,JPanel>> createAdditionalPanels() {
+  protected @NotNull List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
     myExceptionsModel = new ExceptionsTableModel(getMethod().getThrowsList());
     myExceptionsModel.setTypeInfos(getMethod());
 
     final JBTable table = new JBTable(myExceptionsModel);
-    table.setStriped(true);
+    table.setShowGrid(false);
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
@@ -248,7 +247,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected LanguageFileType getFileType() {
-    return StdFileTypes.JAVA;
+    return JavaFileType.INSTANCE;
   }
 
   @NotNull
@@ -282,13 +281,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           final String defaultValue = item.defaultValueCodeFragment.getText();
           String tail = "";
           if (StringUtil.isNotEmpty(defaultValue)) {
-            tail += " default value = " + defaultValue;
+            tail += " " + RefactoringBundle.message("changeSignature.default.value.label") + " " + defaultValue;
           }
           if (item.parameter.isUseAnySingleVariable()) {
             if (StringUtil.isNotEmpty(defaultValue)) {
               tail += ";";
             }
-            tail += " Use any var.";
+            tail += " " + JavaRefactoringBundle.message("changeSignature.use.any.var");
           }
           if (!StringUtil.isEmpty(tail)) {
             text += " //" + tail;
@@ -319,12 +318,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             myTypeEditor.addDocumentListener(getSignatureUpdater());
             myTypeEditor.setPreferredWidth(getTable().getWidth() / 2);
             myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
-            add(createLabeledPanel("Type:", myTypeEditor), BorderLayout.WEST);
+            add(createLabeledPanel(RefactoringBundle.message("column.name.type"), myTypeEditor), BorderLayout.WEST);
 
             myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
             myNameEditor.addDocumentListener(getSignatureUpdater());
             myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
-            add(createLabeledPanel("Name:", myNameEditor), BorderLayout.CENTER);
+            add(createLabeledPanel(JavaBundle.message("dialog.create.field.from.parameter.field.name.label"), myNameEditor), BorderLayout.CENTER);
             new TextFieldCompletionProvider() {
 
               @Override
@@ -460,7 +459,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   private int getColumnWidth(int index) {
     int letters = getTypesMaxLength() + (index == 0 ? 1 : getNamesMaxLength() + 2);
-    Font font = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+    Font font = EditorFontType.getGlobalPlainFont();
     font = new Font(font.getFontName(), font.getStyle(), 12);
     return  letters * Toolkit.getDefaultToolkit().getFontMetrics(font).stringWidth("W");
   }
@@ -509,7 +508,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
     if (myMethodsToPropagateExceptions != null && !mayPropagateExceptions()) {
-      Messages.showWarningDialog(myProject, JavaRefactoringBundle.message("changeSignature.exceptions.wont.propagate"), REFACTORING_NAME);
+      Messages.showWarningDialog(myProject, JavaRefactoringBundle.message("changeSignature.exceptions.wont.propagate"), 
+                                 RefactoringBundle.message("changeSignature.refactoring.name"));
       myMethodsToPropagateExceptions = null;
     }
     super.invokeRefactoring(processor);
@@ -561,7 +561,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
+  protected CallerChooserBase<PsiMethod> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<PsiMethod>> callback) {
     return new JavaCallerChooser(getMethod(), myProject, title, treeToReuse, callback);
   }
 
@@ -645,7 +645,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         }
 
         PsiClassType throwable = JavaPsiFacade.getElementFactory(myProject)
-          .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
+          .createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return JavaRefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

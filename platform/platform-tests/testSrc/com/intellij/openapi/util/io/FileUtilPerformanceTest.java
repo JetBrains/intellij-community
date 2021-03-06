@@ -33,7 +33,7 @@ public class FileUtilPerformanceTest {
     PlatformTestUtil.startPerformanceTest("toCanonicalPath", 1_000, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
-        assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
+        assert canonicalPath.length() == 18 : canonicalPath;
       }
     }).assertTiming();
   }
@@ -45,7 +45,7 @@ public class FileUtilPerformanceTest {
     PlatformTestUtil.startPerformanceTest("toCanonicalPathSimple", 210, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(mySimpleTestPath, '/');
-        assert canonicalPath != null && canonicalPath.length() == 8 : canonicalPath;
+        assert canonicalPath.length() == 8 : canonicalPath;
       }
     }).assertTiming();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import java.util.concurrent.TimeUnit
 
 apply from: 'archivesCleanup.gradle'
@@ -10,10 +10,11 @@ task setupJbre() {
 }
 
 def targetOs = System.getProperty("intellij.build.target.os", "all")
+def targetArch = System.getProperty("intellij.build.target.arch")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
 def forcedPrefix = System.getProperty("intellij.build.bundled.jre.prefix")
-jbrTasks(jreBuild, jreVersion, targetOs, forcedPrefix)
+jbrTasks(jreBuild, jreVersion, targetOs, targetArch, forcedPrefix)
 
 /**
  * Update this method together with:
@@ -39,11 +40,12 @@ static def splitJbrBuild(String jreBuild, String version) {
   }
 }
 
-def jbrTasks(String defaultBuild, int version, String targetOs, String forcedPrefix) {
+def jbrTasks(String defaultBuild, int version, String targetOs, String targetArch, String forcedPrefix) {
   platformsToDownload(targetOs).each { platform ->
-    archToDownload(platform).each { arch ->
+    archToDownload(platform, targetArch).each { arch ->
       prefixes(arch, forcedPrefix).each { prefix ->
-        def jbrBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
+        def jbrBuild = project.ext.has("jreBuild_${platform}_${arch}") ? project.ext["jreBuild_${platform}_${arch}"] :
+                       (project.ext.has("jreBuild_${platform}") ? project.ext["jreBuild_${platform}"] : defaultBuild)
         def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), version.toString())
         def jbrArtifactName = "$prefix$update-$platform-$arch-$buildNumber"
         downloadJbrTask(jbrArtifactName, jbrBuild.toString())
@@ -69,7 +71,9 @@ def downloadJbrTask(String artifactName, String build) {
         src "${jreUrl()}/${artifactName}.tar.gz"
         dest outputFile
         tempAndMove true
-        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+        connectTimeout TimeUnit.SECONDS.toMillis(30).toInteger()
+        readTimeout TimeUnit.MINUTES.toMillis(5).toInteger()
+        retries 10
       }
     }
     setupJbre.dependsOn(it)
@@ -88,11 +92,14 @@ static def platformsToDownload(targetOs) {
 }
 
 enum Arch {
-  x86, x64
+  x86, x64, aarch64
 }
 
-static def archToDownload(platform) {
-  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64]
+static def archToDownload(String platform, String targetArch) {
+  if (targetArch != null) {
+    return [Arch.valueOf(targetArch)]
+  }
+  platform != 'osx' ? [Arch.x86, Arch.x64] : [Arch.x64, Arch.aarch64]
 }
 
 /**
@@ -107,6 +114,6 @@ static def prefixes(Arch arch, String forcedPrefix) {
     ['jbr-']
   }
   else {
-    ['jbr-', 'jbr_jcef-', 'jbr_jfx-']
+    ['jbr_dcevm-']
   }
 }

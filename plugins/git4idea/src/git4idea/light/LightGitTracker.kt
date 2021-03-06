@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.light
 
 import com.intellij.ide.FrameStateListener
@@ -7,7 +7,6 @@ import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,13 +18,15 @@ import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.sendRequests
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
 import git4idea.index.LightFileStatus
 import git4idea.index.getFileStatus
 import git4idea.util.lastInstance
-import git4idea.util.toShortenedString
+import git4idea.util.toShortenedLogString
 import git4idea.util.without
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
@@ -39,8 +40,8 @@ class LightGitTracker : Disposable {
 
   private val highlighterManager: LightGitEditorHighlighterManager
 
-  val gitExecutable: String
-    get() = GitExecutableManager.getInstance().pathToGit
+  val gitExecutable: GitExecutable
+    get() = GitExecutableManager.getInstance().getExecutable(null)
 
   @Volatile
   private var hasGit: Boolean = false
@@ -214,18 +215,19 @@ class LightGitTracker : Disposable {
       val Blank = State()
     }
 
-    override fun toString(): String {
-      return "State(location=$location, statuses=${statuses.toShortenedString()})"
+    @NonNls
+    override fun toString(): @NonNls String {
+      return "State(location=$location, statuses=${statuses.toShortenedLogString()})"
     }
   }
 
   private sealed class StateUpdater(val state: State) {
     object Clear : StateUpdater(State.Blank) {
-      override fun toString(): String = "Clear"
+      override fun toString(): @NonNls String = "Clear"
     }
 
     class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
-      override fun toString(): String {
+      override fun toString(): @NonNls String {
         return "Update(state=$state, updateLocation=$updateLocation)"
       }
     }
@@ -233,25 +235,26 @@ class LightGitTracker : Disposable {
 
   private sealed class Request {
     class Location(val file: VirtualFile) : Request() {
-      override fun toString(): String {
+      override fun toString(): @NonNls String {
         return "Location(file=$file)"
       }
     }
 
+    @NonNls
     class Status(val files: Collection<VirtualFile>) : Request() {
-      override fun toString(): String {
-        return "Status(files=${files.toShortenedString()}"
+      override fun toString(): @NonNls String {
+        return "Status(files=${files.toShortenedLogString()}"
       }
     }
 
     object CheckGit : Request() {
-      override fun toString(): String = "CheckGit"
+      override fun toString(): @NonNls String = "CheckGit"
     }
   }
 
   companion object {
     fun getInstance(): LightGitTracker {
-      return ServiceManager.getService(LightGitTracker::class.java)
+      return ApplicationManager.getApplication().getService(LightGitTracker::class.java)
     }
   }
 }

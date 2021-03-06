@@ -12,7 +12,7 @@ import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldRegion {
+public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
   private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
 
@@ -30,7 +30,7 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
                  @NotNull String placeholder,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super(editor.getDocument(), startOffset, endOffset,false);
+    super(editor.getDocument(), startOffset, endOffset,false, true);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;

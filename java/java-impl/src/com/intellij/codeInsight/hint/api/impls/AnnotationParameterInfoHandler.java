@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.hint.api.impls;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
@@ -23,47 +22,28 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
 public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiAnnotationParameterList,PsiAnnotationMethod>, DumbAware {
-  @Override
-  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    return null;
-  }
-
-  @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
 
   @Override
   public PsiAnnotationParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final PsiAnnotation annotation = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiAnnotation.class);
 
     if (annotation != null) {
-      final PsiJavaCodeReferenceElement nameReference = annotation.getNameReferenceElement();
+      PsiClass aClass = annotation.resolveAnnotationType();
+      if (aClass != null) {
+        final PsiMethod[] methods = aClass.getMethods();
 
-      if (nameReference != null) {
-        final PsiElement resolved = nameReference.resolve();
+        if (methods.length != 0) {
+          context.setItemsToShow(methods);
 
-        if (resolved instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)resolved;
+          final PsiAnnotationMethod annotationMethod = findAnnotationMethod(context.getFile(), context.getOffset());
+          if (annotationMethod != null) context.setHighlightedElement(annotationMethod);
 
-          if (aClass.isAnnotationType()) {
-            final PsiMethod[] methods = aClass.getMethods();
-
-            if (methods.length != 0) {
-              context.setItemsToShow(methods);
-
-              final PsiAnnotationMethod annotationMethod = findAnnotationMethod(context.getFile(), context.getOffset());
-              if (annotationMethod != null) context.setHighlightedElement(annotationMethod);
-
-              return annotation.getParameterList();
-            }
-          }
+          return annotation.getParameterList();
         }
       }
     }

@@ -3,7 +3,7 @@ import java.util.function.Function;
 class Main {
     private static void localVariableDeclaration() {
         var a = 1;
-        <error descr="'var' is not allowed in a compound declaration">var b = 2</error>, <error descr="'var' is not allowed in a compound declaration">c = 3.0;</error>
+        <error descr="'var' is not allowed in a compound declaration">var b = 2</error>, <error descr="'var' is not allowed in a compound declaration">c;</error>
         <error descr="'var' is not allowed as an element type of an array">var</error> d[] = new int[4];
         var d1 = new int[] {4};
         var d2 = new int[4];
@@ -61,5 +61,29 @@ class Main {
     private void tryWithResources(AutoCloseable c) throws Exception {
         try (<error descr="Cannot infer type: variable initializer is 'null'">var</error> v = null) { }
         try (var v = c; var v1 = c) { }
+    }
+
+    class Hello {}
+    private void checkUnresolvedTypeInForEach(String[] iterableStrings,
+                                              Hello iterableExistingHello,
+                                              <error descr="Cannot resolve symbol 'World'">World</error> iterableUnresolvedWorld) {
+        for (String arg: iterableStrings) { }
+        for (String arg: <error descr="foreach not applicable to type 'Main.Hello'">iterableExistingHello</error>) { }
+        for (String arg: iterableUnresolvedWorld) {}
+    }
+
+    interface A {}
+    interface B {}
+    void test(Object x) {
+        java.util.Optional.of((A & B)x).ifPresent(valueOfAandB -> {
+            for(Object foo : <error descr="foreach not applicable to type 'Main.A & Main.B'">valueOfAandB</error>) {
+                System.out.println(foo);
+            }
+        });
+        java.util.Optional.of((A & <error descr="Cannot resolve symbol 'World'">World</error>)x).ifPresent(valueOfAandUnresolvedWorld -> {
+            for(Object foo : <error descr="foreach not applicable to type 'Main.A & World'">valueOfAandUnresolvedWorld</error>) {
+                System.out.println(foo);
+            }
+        });
     }
 }

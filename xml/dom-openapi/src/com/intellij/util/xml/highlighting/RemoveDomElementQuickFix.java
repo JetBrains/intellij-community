@@ -42,13 +42,13 @@ public class RemoveDomElementQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return XmlDomBundle.message(myIsTag ? "remove.element.fix.name" : "remove.attribute.fix.name", myName);
+    return XmlDomBundle.message(myIsTag ? "dom.quickfix.remove.element.name" : "dom.quickfix.remove.attribute.name", myName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlDomBundle.message("remove.element.fix.family");
+    return XmlDomBundle.message("dom.quickfix.remove.element.family");
   }
 
   @Override

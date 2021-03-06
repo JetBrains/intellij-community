@@ -1,0 +1,3 @@
+fragment gitRefName on Ref {
+  name
+}

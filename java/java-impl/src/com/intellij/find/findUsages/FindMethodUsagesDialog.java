@@ -47,7 +47,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
       options.isImplicitToString = isSelected(myCbImplicitToString);
     }
     options.isCheckDeepInheritance = true;
-    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.method.started", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(myPsiElement.getProject(), EVENT_LOG_GROUP, "find.method.started", createFeatureUsageData(options));
   }
 
   @Override

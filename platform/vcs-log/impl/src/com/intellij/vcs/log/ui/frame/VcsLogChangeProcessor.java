@@ -48,7 +48,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   @Override
-  protected Stream<Wrapper> getSelectedChanges() {
+  public Stream<Wrapper> getSelectedChanges() {
     boolean hasSelection = myBrowser.getViewer().getSelectionModel().getSelectionCount() != 0;
     return wrap(hasSelection ? VcsTreeModelData.selected(myBrowser.getViewer())
                              : VcsTreeModelData.all(myBrowser.getViewer()));
@@ -56,7 +56,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   @Override
-  protected Stream<Wrapper> getAllChanges() {
+  public Stream<Wrapper> getAllChanges() {
     return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -47,9 +48,9 @@ public class EditTaskDialog extends DialogWrapper {
   private JPanel myPanel;
   private JTextField mySummary;
   private JBLabel myBranchLabel;
-  private ComboBox myBranch;
+  private ComboBox<VcsTaskHandler.TaskInfo> myBranch;
   private JBLabel myChangelistLabel;
-  private ComboBox myChangelist;
+  private ComboBox<LocalChangeList> myChangelist;
 
   public static void editTask(LocalTaskImpl task, Project project) {
     new EditTaskDialog(project, task).show();
@@ -58,7 +59,7 @@ public class EditTaskDialog extends DialogWrapper {
   protected EditTaskDialog(Project project, LocalTaskImpl task) {
     super(project);
     myTask = task;
-    setTitle("Edit Task " + (task.isIssue() ? task.getPresentableId() : ""));
+    setTitle(TaskBundle.message("dialog.title.edit.task.choice", task.getPresentableId(), task.isIssue() ? 0 : 1));
 
 //    mySummary.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, "");
     mySummary.setText(task.getSummary());
@@ -72,16 +73,22 @@ public class EditTaskDialog extends DialogWrapper {
     }
     else {
       ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-      List<LocalChangeList> changeLists = changeListManager.getChangeLists();
-      changeLists.add(null);
-      myChangelist.setModel(new CollectionComboBoxModel<>(changeLists));
-      final List<ChangeListInfo> lists = task.getChangeLists();
-      if (!lists.isEmpty()) {
-        LocalChangeList list = changeListManager.getChangeList(lists.get(0).id);
-        myChangelist.setSelectedItem(list);
+      if (changeListManager.areChangeListsEnabled()) {
+        List<LocalChangeList> changeLists = new ArrayList<>(changeListManager.getChangeLists());
+        changeLists.add(null);
+        myChangelist.setModel(new CollectionComboBoxModel<>(changeLists));
+        final List<ChangeListInfo> lists = task.getChangeLists();
+        if (!lists.isEmpty()) {
+          LocalChangeList list = changeListManager.getChangeList(lists.get(0).id);
+          myChangelist.setSelectedItem(list);
+        }
+        else {
+          myChangelist.setSelectedItem(null);
+        }
       }
       else {
-        myChangelist.setSelectedItem(null);
+        myChangelistLabel.setVisible(false);
+        myChangelist.setVisible(false);
       }
 
       VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
@@ -110,11 +117,11 @@ public class EditTaskDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myTask.setSummary(mySummary.getText());
+    myTask.setSummary(mySummary.getText()); //NON-NLS
     if (myChangelist.isVisible()) {
       List<ChangeListInfo> changeLists = myTask.getChangeLists();
       changeLists.clear();
-      LocalChangeList item = (LocalChangeList)myChangelist.getSelectedItem();
+      LocalChangeList item = myChangelist.getItem();
       if (item != null) {
         changeLists.add(new ChangeListInfo(item));
       }
@@ -122,7 +129,7 @@ public class EditTaskDialog extends DialogWrapper {
     if (myBranch.isVisible()) {
       List<BranchInfo> branches = myTask.getBranches();
       branches.clear();
-      VcsTaskHandler.TaskInfo branch = (VcsTaskHandler.TaskInfo)myBranch.getSelectedItem();
+      VcsTaskHandler.TaskInfo branch = myBranch.getItem();
       if (branch != null) {
         List<BranchInfo> infos = BranchInfo.fromTaskInfo(branch, false);
         branches.addAll(infos);

@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @deprecated use {@link com.intellij.diff.merge.MergeRequest} instead
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class MergeRequest extends DiffRequest {
   protected MergeRequest(@Nullable Project project) {
     super(project);

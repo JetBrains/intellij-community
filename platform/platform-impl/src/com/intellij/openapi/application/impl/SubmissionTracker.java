@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class SubmissionTracker {
+final class SubmissionTracker {
   private static final Logger LOG = Logger.getInstance(SubmissionTracker.class);
   private static final String TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE =
     "Too many non-blocking read actions submitted at once";

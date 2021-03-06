@@ -101,7 +101,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
     }
     else {
       if (myLibrary instanceof LibraryEx && ((LibraryEx)myLibrary).isDisposed()) {
-        return "<unknown>";
+        return ProjectModelBundle.message("disposed.library.title");
       }
 
       final String[] urls = myLibrary.getUrls(OrderRootType.CLASSES);
@@ -110,7 +110,7 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
         return PathUtil.toPresentableUrl(url);
       }
       else {
-        return ProjectModelBundle.message("library.empty.library.item");
+        return ProjectModelBundle.message("empty.library.title");
       }
     }
   }

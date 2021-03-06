@@ -22,7 +22,7 @@ class GroovyResolveCacheTest extends GroovyLatestTest {
   @Test
   void 'test drop caches on out of code block change'() {
     int counter = 0
-    AstTransformationSupport.EP_NAME.getPoint(null).registerExtension({
+    AstTransformationSupport.EP_NAME.getPoint().registerExtension({
       counter++
     } as AstTransformationSupport, fixture.testRootDisposable)
     def file = fixture.addFileToProject(
@@ -47,7 +47,7 @@ class GroovyResolveCacheTest extends GroovyLatestTest {
   @Test
   void 'test do not drop caches on code block change'() {
     int counter = 0
-    AstTransformationSupport.EP_NAME.getPoint(null).registerExtension({
+    AstTransformationSupport.EP_NAME.getPoint().registerExtension({
       counter++
     } as AstTransformationSupport, fixture.testRootDisposable)
     def file = fixture.addFileToProject(

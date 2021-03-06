@@ -50,6 +50,10 @@ public class a {
   }
 
   void fvoid() {}
+  
+  void unboxing(Byte b) {
+    byte temp = <error descr="Operator '<<' cannot be applied to 'java.lang.Byte', 'int'">b << 4</error>;
+  }
 
 }
 

@@ -15,6 +15,10 @@
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
             icon="TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
+      <override-text place="EditorTabPopup"/>
+      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
     <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
@@ -47,6 +51,34 @@
     </action>
     <action id="Terminal.SwitchFocusToEditor" class="org.jetbrains.plugins.terminal.action.TerminalSwitchFocusToEditorAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
+    </action>
+    <action id="Terminal.CopySelectedText" class="org.jetbrains.plugins.terminal.action.TerminalCopySelectedTextAction">
+      <!-- use keyboard-shortcuts of $Copy with Ctrl+Shift+C on Linux  -->
+      <keyboard-shortcut first-keystroke="control shift C" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control C" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control INSERT" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
+    </action>
+    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction">
+      <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
+      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="shift INSERT" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
+    </action>
+    <action id="Terminal.SelectAll" class="org.jetbrains.plugins.terminal.action.TerminalSelectAllAction"/>
+    <action id="Terminal.SmartCommandExecution.Run" class="org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction">
+      <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
+    </action>
+    <action id="Terminal.SmartCommandExecution.Debug" class="org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction">
+      <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
+    </action>
+    <action id="Terminal.ClearBuffer" class="org.jetbrains.plugins.terminal.action.TerminalClearBufferAction">
+      <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
   </actions>
 

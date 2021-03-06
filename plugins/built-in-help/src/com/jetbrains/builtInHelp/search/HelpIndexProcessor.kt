@@ -9,13 +9,16 @@ import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import org.jetbrains.annotations.NonNls
 
 
 abstract class HelpIndexProcessor {
 
   companion object {
     val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+    @NonNls
     val STORAGE_PREFIX = "/search/"
+    @NonNls
     val EMPTY_RESULT = "[]"
   }
 

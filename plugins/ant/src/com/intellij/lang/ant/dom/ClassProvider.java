@@ -15,7 +15,9 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,7 @@ abstract class ClassProvider {
   abstract Class lookupClass();
 
   @Nullable
-  abstract String getError();
+  abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getError();
 
   static ClassProvider create(Class clazz) {
     return clazz == null? EMPTY : new LoadedClassProvider(clazz);
@@ -73,7 +75,7 @@ abstract class ClassProvider {
   private static final class LazyLoadClassProvider extends ClassProvider {
     private final String myClassName;
     private final ClassLoader myClassLoader;
-    private Pair<Class, String> myResult;
+    private Pair<Class, @Nls String> myResult;
 
     LazyLoadClassProvider(String className, ClassLoader classLoader) {
       myClassName = className;
@@ -88,27 +90,27 @@ abstract class ClassProvider {
 
     @Override
     @Nullable
-    public String getError() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) String getError() {
       return getResult().getSecond();
     }
 
     @NotNull
-    private Pair<Class, String> getResult() {
+    private Pair<Class, @Nls String> getResult() {
       Pair<Class, String> result = myResult;
       if (result == null) {
         Class clazz = null;
-        String error = null;
+        @Nls(capitalization = Nls.Capitalization.Sentence) String error = null;
         try {
           clazz = myClassLoader.loadClass(myClassName);
         }
         catch (ClassNotFoundException e) {
-          error = "Class not found " + e.getMessage();
+          error = AntBundle.message("ant.error.class.not.found", e.getMessage());
         }
         catch (NoClassDefFoundError e) {
-          error = "Class definition not found " + e.getMessage();
+          error = AntBundle.message("ant.error.class.definition.not.found", e.getMessage());
         }
         catch (UnsupportedClassVersionError e) {
-          error = "Unsupported class version " + e.getMessage();
+          error = AntBundle.message("ant.error.unsupported.class.version", e.getMessage());
         }
         myResult = result = Pair.create(clazz, error);
       }

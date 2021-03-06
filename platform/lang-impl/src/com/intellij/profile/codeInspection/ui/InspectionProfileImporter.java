@@ -36,7 +36,7 @@ public class InspectionProfileImporter implements SchemeImporter<NewInspectionPr
   public NewInspectionProfile importScheme(@NotNull Project project,
                                            @NotNull VirtualFile selectedFile,
                                            @NotNull NewInspectionProfile currentScheme,
-                                           @NotNull SchemeFactory<NewInspectionProfile> schemeFactory) throws SchemeImportException {
+                                           @NotNull SchemeFactory<? extends NewInspectionProfile> schemeFactory) throws SchemeImportException {
     throw new UnsupportedOperationException();
   }
 }

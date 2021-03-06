@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
  */
 public abstract class JobLauncher {
   public static JobLauncher getInstance() {
-    return ServiceManager.getService(JobLauncher.class);
+    return ApplicationManager.getApplication().getService(JobLauncher.class);
   }
 
   /**
@@ -64,6 +64,7 @@ public abstract class JobLauncher {
    * @deprecated use {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,

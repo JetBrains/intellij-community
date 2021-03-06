@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
 import java.util.List;
@@ -34,7 +35,7 @@ public class MoveChangesLineStatusAction extends LineStatusActionBase {
   }
 
   @Override
-  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
+  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor, @Nullable Range range) {
     moveToAnotherChangelist((PartialLocalLineStatusTracker)tracker, editor);
   }
 

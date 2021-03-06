@@ -10,21 +10,17 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 
 class MavenRepositoriesDataServiceTest: LightIdeaTestCase() {
 
   private lateinit var myModelsProvider: IdeModifiableModelsProvider
 
-  @Before
   override fun setUp() {
     super.setUp()
     myModelsProvider = IdeModifiableModelsProviderImpl(getProject())
   }
 
-  @After
   override fun tearDown() {
     try {
       val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(getProject())

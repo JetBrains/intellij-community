@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,6 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -28,6 +15,10 @@ import java.util.Collection;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static java.util.Collections.emptySet;
 
+/**
+ * @deprecated Use {@link DumbAwareAction} instead.
+ */
+@Deprecated
 public abstract class AbstractVcsAction extends DumbAwareAction {
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
@@ -53,11 +44,11 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
   protected abstract void actionPerformed(@NotNull VcsContext e);
 
   /**
-   * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}. Use
-   * {@link com.intellij.openapi.actionSystem.AsyncUpdateAction} directly if async update is necessary.
+   * @deprecated Only sync update is currently supported by {@link AbstractVcsAction}.
    */
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected boolean forceSyncUpdate(@NotNull AnActionEvent e) {
     return true;
   }
@@ -67,6 +58,7 @@ public abstract class AbstractVcsAction extends DumbAwareAction {
    * @deprecated Use {@link AbstractVcsAction#update(VcsContext, Presentation)}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected void performUpdate(@NotNull Presentation presentation, @NotNull VcsContext vcsContext) {
     update(vcsContext, presentation);
   }

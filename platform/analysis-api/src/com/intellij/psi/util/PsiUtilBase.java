@@ -46,6 +46,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       return null;
     }
 
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
+
     int caretOffset = caret.getOffset();
     int mostProbablyCorrectLanguageOffset = caretOffset == caret.getSelectionEnd() ? caret.getSelectionStart() : caretOffset;
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
@@ -79,6 +83,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
     PsiUtilCore.ensureValid(file);
 
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file;
+    }
+
     final Language language = getLanguageInEditor(caret, project);
 
     if (language == file.getLanguage()) return file;
@@ -89,6 +97,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file;
+    }
+
     PsiElement elt = getElementAtOffset(file, offset);
     ensureValid(elt);
     return elt.getContainingFile();
@@ -96,7 +108,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
 
   @Nullable
   public static Language reallyEvaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
-    if (file instanceof PsiBinaryFile) {
+    if (file instanceof PsiBinaryFile || file instanceof PsiFileWithOneLanguage) {
       return file.getLanguage();
     }
     Language lang = null;

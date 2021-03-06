@@ -19,7 +19,7 @@ public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.builtin");
+    return PyPsiBundle.message("QFIX.NAME.convert.builtin");
   }
 
   @Override

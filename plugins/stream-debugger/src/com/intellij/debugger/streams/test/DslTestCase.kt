@@ -4,7 +4,6 @@ package com.intellij.debugger.streams.test
 import com.intellij.debugger.streams.trace.dsl.CodeContext
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.testFramework.exceptionCases.AbstractExceptionCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -391,16 +390,12 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
   }
 
   fun testTryWithUnspecifiedCatch() {
-    assertException(object : AbstractExceptionCase<IllegalStateException>() {
-      override fun tryClosure() {
+    assertThrows(IllegalStateException::class.java) {
         doTest {
           tryBlock {
           }
         }
       }
-
-      override fun getExpectedExceptionClass(): Class<IllegalStateException> = IllegalStateException::class.java
-    })
   }
 
   fun testTimeVariableDeclaration() {

@@ -63,8 +63,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
   @Before
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     projectRepoVirtualFile = myRepo.getDir();
     registerMockVcsHelper();
   }
@@ -149,6 +149,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     fillFile(projectRepo, new String[]{"com", "b.txt"}, "local change");
     createFileInCommand(projectRepoVirtualFile.findChild("com"), "c.txt", "other file");
 
+    myChangeListManager.ensureUpToDate();
 
     assertIsChanged(HgFileStatusEnum.MODIFIED, "com", "b.txt");
     assertIsChanged(HgFileStatusEnum.ADDED, "com", "c.txt");
@@ -162,6 +163,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     HgRevisionNumber parentAfterUpdate = new HgParentsCommand(myProject).executeInCurrentThread(projectRepoVirtualFile).get(0);
     assertEquals(parentAfterUpdate, incomingHead);
 
+    myChangeListManager.ensureUpToDate();
     assertIsChanged(HgFileStatusEnum.MODIFIED, "com", "b.txt");
     assertIsChanged(HgFileStatusEnum.ADDED, "com", "c.txt");
   }

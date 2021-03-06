@@ -18,6 +18,7 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import icons.DvcsImplIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
     return result;
   }
 
+  @Nls
   @NotNull
   private static String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
     return StringUtil.join(pickers, VcsCherryPicker::getActionTitle, "/");

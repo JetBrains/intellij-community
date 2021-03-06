@@ -1,59 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GHRepositoryPath;
-import org.jetbrains.plugins.github.api.GithubServerPath;
+
+import static com.intellij.util.hosting.GitHostingUrlUtil.removeProtocolPrefix;
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubUrlUtil {
-  @NotNull
-  public static String removeProtocolPrefix(String url) {
-    int index = url.indexOf('@');
-    if (index != -1) {
-      return url.substring(index + 1).replace(':', '/');
-    }
-    index = url.indexOf("://");
-    if (index != -1) {
-      return url.substring(index + 3);
-    }
-    return url;
-  }
-
-  /**
-   * Will only work correctly after {@link #removeProtocolPrefix(String)}
-   */
-  @NotNull
-  public static String removePort(@NotNull String url) {
-    int index = url.indexOf(':');
-    if (index == -1) return url;
-    int slashIndex = url.indexOf('/');
-    if (slashIndex != -1 && slashIndex < index) return url;
-
-    String beforePort = url.substring(0, index);
-    if (slashIndex == -1) {
-      return beforePort;
-    }
-    else {
-      return beforePort + url.substring(slashIndex);
-    }
-  }
-
-  @NotNull
-  public static String removeTrailingSlash(@NotNull String s) {
+public final class GithubUrlUtil {
+  private static @NlsSafe @NotNull String removeTrailingSlash(@NotNull String s) {
     if (s.endsWith("/")) {
       return s.substring(0, s.length() - 1);
     }
     return s;
-  }
-
-  @Deprecated
-  @NotNull
-  public static String getApiUrl(@NotNull String urlFromSettings) {
-    return GithubServerPath.from(urlFromSettings).toApiUrl();
   }
 
   /**
@@ -81,8 +45,7 @@ public class GithubUrlUtil {
     return new GHRepositoryPath(username, reponame);
   }
 
-  @NotNull
-  private static String removeEndingDotGit(@NotNull String url) {
+  private static @NlsSafe @NotNull String removeEndingDotGit(@NotNull String url) {
     url = removeTrailingSlash(url);
     final String DOT_GIT = ".git";
     if (url.endsWith(DOT_GIT)) {
@@ -100,6 +63,7 @@ public class GithubUrlUtil {
    * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static String getHostFromUrl(@NotNull String url) {
     String path = removeProtocolPrefix(url).replace(':', '/');
@@ -116,6 +80,7 @@ public class GithubUrlUtil {
    * @deprecated {@link org.jetbrains.plugins.github.api.GHRepositoryCoordinates}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
     GHRepositoryPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);

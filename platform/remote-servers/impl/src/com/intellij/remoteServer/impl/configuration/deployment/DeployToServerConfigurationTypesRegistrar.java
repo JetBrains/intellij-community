@@ -19,7 +19,7 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationIni
       .registerExtensions(ContainerUtil.map(ServerType.EP_NAME.getExtensionList(), type -> new DeployToServerConfigurationType(type)));
 
     ServerType.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<ServerType>() {
+      new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull ServerType addedServer, @NotNull PluginDescriptor pluginDescriptor) {
           getConfigurationTypesExtPoint().registerExtension(new DeployToServerConfigurationType(addedServer));
@@ -46,16 +46,17 @@ public class DeployToServerConfigurationTypesRegistrar implements ApplicationIni
 
   @Nullable
   private static DeployToServerConfigurationType findDeployConfigurationType(@NotNull ServerType<?> serverType) {
+    String serverTypeId = serverType.getId();
     return (DeployToServerConfigurationType)ConfigurationType.CONFIGURATION_TYPE_EP
-      .findFirstSafe(next -> isDeployForServerType(next, serverType));
+      .findFirstSafe(next -> isDeployForServerType(next, serverTypeId));
   }
 
   private static ExtensionPointImpl<ConfigurationType> getConfigurationTypesExtPoint() {
-    return (ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint(null);
+    return (ExtensionPointImpl<ConfigurationType>)ConfigurationType.CONFIGURATION_TYPE_EP.getPoint();
   }
 
-  private static boolean isDeployForServerType(@NotNull ConfigurationType configurationType, @NotNull ServerType<?> serverType) {
+  private static boolean isDeployForServerType(@NotNull ConfigurationType configurationType, @NotNull String serverTypeId) {
     return configurationType instanceof DeployToServerConfigurationType &&
-           ((DeployToServerConfigurationType)configurationType).isForServerType(serverType);
+           ((DeployToServerConfigurationType)configurationType).isForServerType(serverTypeId);
   }
 }

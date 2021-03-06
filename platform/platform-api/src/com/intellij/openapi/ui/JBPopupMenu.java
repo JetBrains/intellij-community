@@ -1,13 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,6 +33,9 @@ import java.awt.event.MouseWheelEvent;
  * @author ignatov
  */
 public class JBPopupMenu extends JPopupMenu {
+
+  private static final Logger LOG = Logger.getInstance(JBPopupMenu.class);
+
   private final MyLayout myLayout;
 
   public JBPopupMenu() {
@@ -70,6 +82,84 @@ public class JBPopupMenu extends JPopupMenu {
     if (layout instanceof MyLayout) {
       ((MyLayout)layout).paintIfNeeded(g);
     }
+  }
+
+  /**
+   * @param component the component above which the popup menu is to appear
+   * @param menu      the popup menu to show above the specified component
+   */
+  public static void showAbove(@NotNull Component component, @NotNull JPopupMenu menu) {
+    // We need `menu.show(component, 0, -menu.getHeight());`, but `menu.getHeight()` will return 0 if the menu hasn't been shown yet.
+    // Let's show it somewhere, and once it's shown, move it to the desired location.
+    menu.show(component, 0, 0);
+    UiNotifyConnector.doWhenFirstShown(menu, () -> {
+      Window window = UIUtil.getWindow(menu);
+      if (window == null) {
+        LOG.error("Cannot find window for menu popup " + menu + ", " + menu.isShowing());
+      }
+      else {
+        Point diff = SwingUtilities.convertPoint(component, 0, 0, window);
+        window.setLocation(window.getX(), window.getY() + diff.y - window.getHeight());
+      }
+    });
+  }
+
+  /**
+   * @param component the component near which the popup menu is to appear
+   * @param menu      the popup menu to show near the specified component
+   */
+  public static void showAtRight(@NotNull Component component, @NotNull JPopupMenu menu) {
+    menu.show(component, component.getWidth(), 0);
+  }
+
+  /**
+   * @param component the component below which the popup menu is to appear
+   * @param menu      the popup menu to show below the specified component
+   */
+  public static void showBelow(@NotNull Component component, @NotNull JPopupMenu menu) {
+    menu.show(component, 0, component.getHeight());
+  }
+
+  /**
+   * @param component the component below which the popup menu is to appear
+   * @param place     the place used for {@link AnActionEvent}
+   * @param group     Group from which the actions for the menu are taken.
+   * @see ActionManager#createActionPopupMenu(String, ActionGroup)
+   */
+  public static void showBelow(@NotNull Component component, @NonNls @NotNull String place, @NotNull ActionGroup group) {
+    showBelow(component, ActionManager.getInstance().createActionPopupMenu(place, group).getComponent());
+  }
+
+  /**
+   * @param event the mouse event that specifies a popup position
+   * @param menu  the popup menu to show in the given mouse position
+   */
+  public static void showByEvent(@NotNull MouseEvent event, @NotNull JPopupMenu menu) {
+    menu.show(event.getComponent(), event.getX(), event.getY());
+  }
+
+  public static void showByEditor(@NotNull Editor editor, @NotNull JPopupMenu menu) {
+    Component invoker = editor.getContentComponent();
+    Point caretPoint = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
+    menu.show(invoker, caretPoint.x, caretPoint.y);
+  }
+
+  /**
+   * @param event the mouse event that specifies a popup position
+   * @param place the place used for {@link AnActionEvent}
+   * @param group Group from which the actions for the menu are taken.
+   * @see ActionManager#createActionPopupMenu(String, ActionGroup)
+   */
+  public static void showByEvent(@NotNull MouseEvent event, @NonNls @NotNull String place, @NotNull ActionGroup group) {
+    showByEvent(event, ActionManager.getInstance().createActionPopupMenu(place, group).getComponent());
+  }
+
+  /**
+   * @param point the relative point that specifies a popup position
+   * @param menu  the popup menu to show in the given mouse position
+   */
+  public static void showAt(@NotNull RelativePoint point, @NotNull JPopupMenu menu) {
+    menu.show(point.getComponent(), point.getPoint().x, point.getPoint().y);
   }
 
   private static class MyLayout extends DefaultMenuLayout implements ActionListener {

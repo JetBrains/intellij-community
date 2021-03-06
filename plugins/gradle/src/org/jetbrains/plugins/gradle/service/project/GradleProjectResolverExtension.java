@@ -63,16 +63,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @Nullable
   GradleProjectResolverExtension getNext();
 
-  /**
-   * @deprecated is not used anymore
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  default ProjectData createProject() {
-    throw new UnsupportedOperationException();
-  }
-
   void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
   @Nullable
@@ -119,7 +109,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   /**
    * Allows to request gradle tooling models after "sync" tasks are run
    *
-   * @see BuildActionExecuter.Builder#buildFinished(org.gradle.tooling.BuildAction, org.gradle.tooling.IntermediateResultHandler)
+   * @see BuildActionExecuter.Builder#buildFinished(org.gradle.tooling.BuildAction, IntermediateResultHandler)
    */
   @Nullable
   default ProjectImportModelProvider getModelProvider() {return null;}
@@ -128,20 +118,21 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * Allows to request gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
    * This can be used to setup "sync" tasks for the import
    *
-   * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, org.gradle.tooling.IntermediateResultHandler)
+   * @see BuildActionExecuter.Builder#projectsLoaded(org.gradle.tooling.BuildAction, IntermediateResultHandler)
    */
   @Nullable
   default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
 
   /**
    * @return whether or not this resolver requires Gradle task running infrastructure to be initialized, if any of the resolvers which are
-   * used by the resolution return true then the {@link org.gradle.tooling.BuildActionExecuter} will have
-   * {@link org.gradle.tooling.BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
+   * used by the resolution return true then the {@link BuildActionExecuter} will have
+   * {@link BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
    * any tasks that are scheduled by Gradle plugin in the model builders to be run.
    *
    * @deprecated not required anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default boolean requiresTaskRunning() {
     return false;
   }
@@ -216,8 +207,15 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   // flag that shows if tasks will be treated as tests invocation by the IDE (e.g., test events are expected)
   String TEST_EXECUTION_EXPECTED_KEY = "TEST_EXECUTION_EXPECTED";
 
+  // flag that shows a Gradle TestLauncher will be used to execute the build.
+  // Test events will be produces by TAPI and there is no need for console reporting
+  String TEST_LAUNCHER_WILL_BE_USED_KEY = "TEST_LAUNCHER_WILL_BE_USED";
+
   // port for callbacks which Gradle tasks communicate to IDE
   String DEBUG_DISPATCH_PORT_KEY = "DEBUG_DISPATCH_PORT";
+
+  // address for callbacks which Gradle tasks communicate to IDE
+  String DEBUG_DISPATCH_ADDR_KEY = "DEBUG_DISPATCH_ADDR";
 
   // options passed from project to Gradle
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
@@ -225,7 +223,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   /**
    * Allows extension to contribute to init script
    * @param taskNames gradle task names to be executed
-   * @param jvmParametersSetup jvm configuration that will be applied to Gradle jvm
    * @param initScriptConsumer consumer of init script text. Must be called to add script txt
    * @param parameters storage for passing optional named parameters
    */

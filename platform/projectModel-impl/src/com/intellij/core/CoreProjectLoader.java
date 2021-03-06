@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.configurationStore.DefaultStateSerializerKt;
@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class CoreProjectLoader {
+public final class CoreProjectLoader {
   public static boolean loadProject(MockProject project, @NotNull VirtualFile virtualFile) throws IOException, JDOMException {
     VirtualFile ideaDir = ProjectKt.getProjectStoreDirectory(virtualFile);
     if (ideaDir != null) {
@@ -63,19 +63,17 @@ public class CoreProjectLoader {
       ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).loadState(projectRootManagerState);
     }
 
-    VirtualFile libraries = dotIdea.findChild("libraries");
-    if (libraries != null) {
-      Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
+    Map<String, Element> data = DirectoryStorageUtil.loadFrom(dotIdea.toNioPath().resolve("libraries"), PathMacroManager.getInstance(project));
+    if (!data.isEmpty()) {
       Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new LibraryStateSplitter()), Element.class, null);
-      ((LibraryTableBase) LibraryTablesRegistrar.getInstance().getLibraryTable(project)).loadState(libraryTable);
+      ((LibraryTableBase)LibraryTablesRegistrar.getInstance().getLibraryTable(project)).loadState(libraryTable);
     }
 
     moduleManager.loadModules();
     project.projectOpened();
   }
 
-  @NotNull
-  static Map<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    return FileStorageCoreUtil.load(JDOMUtil.load(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager));
+  static @NotNull Map<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
+    return FileStorageCoreUtil.load(JDOMUtil.load(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager), false);
   }
 }

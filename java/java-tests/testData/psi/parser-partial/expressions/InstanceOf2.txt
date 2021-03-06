@@ -1,18 +1,19 @@
 PsiJavaFile:InstanceOf2.java
   PsiInstanceofExpression
-    PsiReferenceExpression:x
+    PsiReferenceExpression:a
       PsiReferenceParameterList
         <empty list>
-      PsiIdentifier:x('x')
+      PsiIdentifier:a('a')
     PsiWhiteSpace(' ')
     PsiKeyword:instanceof('instanceof')
     PsiWhiteSpace(' ')
-    PsiTypeTestPattern
-      PsiPatternVariable:v
-        PsiTypeElement:Foo
-          PsiJavaCodeReferenceElement:Foo
-            PsiIdentifier:Foo('Foo')
-            PsiReferenceParameterList
-              <empty list>
-        PsiWhiteSpace(' ')
-        PsiIdentifier:v('v')
+    PsiAnnotation
+      PsiJavaToken:AT('@')
+      PsiJavaCodeReferenceElement:NotNull
+        PsiIdentifier:NotNull('NotNull')
+        PsiReferenceParameterList
+          <empty list>
+      PsiAnnotationParameterList
+        <empty list>
+    PsiErrorElement:Type expected
+      <empty list>

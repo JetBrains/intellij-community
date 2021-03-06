@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -10,6 +10,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +21,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class ConfigurationSelectionUtil {
-  @NotNull
+public final class ConfigurationSelectionUtil {
+  @NotNull @NlsSafe
   public static String getDisplayText(@NotNull RunConfiguration configuration, @Nullable ExecutionTarget target) {
     return configuration.getType().getDisplayName() + " '" + configuration.getName() +
            "'" + (target != null && target != DefaultExecutionTarget.INSTANCE && !target.isExternallyManaged() ?
@@ -66,7 +67,7 @@ public class ConfigurationSelectionUtil {
           return FINAL_CHOICE;
         }
         else {
-          return new BaseListPopupStep<ExecutionTarget>(null, getTargets(selectedConfigs)) {
+          return new BaseListPopupStep<>(null, getTargets(selectedConfigs)) {
             @Override
             public boolean isSpeedSearchEnabled() {
               return true;

@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.console.pydev.ConsoleCommunication
@@ -110,9 +111,9 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     get() = PyConsoleUtil.getOrCreateIPythonData(myConsoleView.virtualFile).isIPythonEnabled
 
   private fun ipythonInPrompt() {
-    myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", USER_INPUT_KEY) {
+    myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", TextAttributes()) {
       override fun getAttributes(): TextAttributes {
-        val attrs = super.getAttributes()
+        val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY);
         attrs.fontType = Font.PLAIN
         return attrs
       }

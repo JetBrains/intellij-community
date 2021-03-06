@@ -11,11 +11,13 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
-@State(name = "GraziConfig", storages = [
-  Storage(value = "grazi_global.xml", deprecated = true),
-  Storage("grazie_global.xml")
+@State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
+  Storage("grazie_global.xml"),
+  Storage(value = "grazi_global.xml", deprecated = true)
 ])
 class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   @Suppress("unused")
@@ -71,10 +73,12 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
      *
      * *NOTE: By default availableLanguages are not included into equals. Check for it manually.*
      */
-    val availableLanguages: Set<Lang> by lazy { enabledLanguages.filter { it.jLanguage != null }.toSet() }
+    val availableLanguages: Set<Lang> by lazy {
+      enabledLanguages.asSequence().filter { lang -> lang.jLanguage != null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
+    }
 
     val missedLanguages: Set<Lang>
-      get() = enabledLanguages.filter { it.jLanguage == null }.toSet()
+      get() = enabledLanguages.asSequence().filter { it.jLanguage == null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
 
     override fun increment() = copy(version = version.next() ?: error("Attempt to increment latest version $version"))
 
@@ -98,6 +102,10 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     /** Update Grazie config state */
     @Synchronized
     fun update(change: (State) -> State) = instance.loadState(change(get()))
+  }
+
+  class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
+    override fun get() = "Grazie Config"
   }
 
   private var myState = State()

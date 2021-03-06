@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -23,24 +25,26 @@ import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.ColorIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.tree.ExpandVetoException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
@@ -52,8 +56,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class ScopeEditorPanel {
-
+public final class ScopeEditorPanel implements Disposable {
   private JPanel myButtonsPanel;
   private RawCommandLineEditor myPatternField;
   private JPanel myTreeToolbar;
@@ -64,11 +67,11 @@ public class ScopeEditorPanel {
   private JPanel myLegendPanel;
 
   private final Project myProject;
-  private final TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor<?> myTreeExpansionMonitor;
   private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
-  private String myErrorMessage;
+  private @Nls String myErrorMessage;
   private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
   private JLabel myCaretPositionLabel;
@@ -84,6 +87,11 @@ public class ScopeEditorPanel {
   private final MyAction myIncludeRec = new MyAction("button.include.recursively", this::includeSelected);
   private final MyAction myExclude = new MyAction("button.exclude", this::excludeSelected);
   private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
+
+  interface SettingsChangedListener {
+    Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
+    void settingsChanged();
+  }
 
   public ScopeEditorPanel(@NotNull final Project project, @NotNull NamedScopesHolder holder) {
     myProject = project;
@@ -144,19 +152,23 @@ public class ScopeEditorPanel {
     });
 
     initTree(myPackageTree);
-    new UiNotifyConnector(myPanel, new Activatable() {
-      @Override
-      public void showNotify() {
-      }
-
+    Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
       @Override
       public void hideNotify() {
         cancelCurrentProgress();
       }
+    }));
+    myPartiallyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
+    myRecursivelyIncluded.setIcon(JBUIScale.scaleIcon(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
+
+    SimpleMessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(SettingsChangedListener.TOPIC, () -> {
+      rebuild(false);
     });
-    myPartiallyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.PARTIAL_INCLUDED)));
-    myRecursivelyIncluded.setIcon(JBUI.scale(new ColorIcon(10, MyTreeCellRenderer.WHOLE_INCLUDED)));
   }
+  
+  @Override
+  public void dispose() { }
 
   private void updateCaretPositionText() {
     if (myErrorMessage != null) {
@@ -310,7 +322,10 @@ public class ScopeEditorPanel {
   }
 
   @Nullable
-  static PackageSet processComplementaryScope(@NotNull PackageSet current, PackageSet added, boolean checkComplementSet, boolean[] append) {
+  private static PackageSet processComplementaryScope(@NotNull PackageSet current,
+                                                      PackageSet added,
+                                                      boolean checkComplementSet,
+                                                      boolean[] append) {
     final String text = added.getText();
     if (current instanceof ComplementPackageSet &&
         Comparing.strEqual(((ComplementPackageSet)current).getComplementarySet().getText(), text)) {
@@ -355,11 +370,13 @@ public class ScopeEditorPanel {
     }
     return result;
   }
-
-
+  
   private JComponent createTreeToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
-    final Runnable update = () -> rebuild(true);
+    final Runnable update = () -> {
+      myProject.getMessageBus().syncPublisher(SettingsChangedListener.TOPIC).settingsChanged();
+      rebuild(true);
+    };
     if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
       group.add(new FlattenPackagesAction(update));
     }
@@ -446,16 +463,16 @@ public class ScopeEditorPanel {
     new TreeSpeedSearch(tree);
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
-      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+      public void treeWillExpand(TreeExpansionEvent event) {
         ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
       }
 
       @Override
-      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+      public void treeWillCollapse(TreeExpansionEvent event) {
       }
     });
 
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(), ActionManager.getInstance());
+    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions());
   }
 
   private ActionGroup createTreePopupActions() {
@@ -481,9 +498,6 @@ public class ScopeEditorPanel {
           ((PackageDependenciesNode)model.getRoot()).sortChildren();
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
-            if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
-              message = UIUtil.toHtml(message + "<br/>(Non-project files are not shown)");
-            }
             myMatchingCountLabel.setText(message);
             myMatchingCountLabel.setForeground(new JLabel().getForeground());
           }
@@ -646,7 +660,7 @@ public class ScopeEditorPanel {
 
     public MyPanelProgressIndicator(final boolean requestFocus) {
       //noinspection Convert2Lambda
-      super(new Consumer<JComponent>() {
+      super(new Consumer<>() {
         @Override
         public void consume(final JComponent component) {
           setToComponent(component, requestFocus);

@@ -16,11 +16,12 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
+import com.intellij.ide.highlighter.DTDFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,9 +48,9 @@ public class ConvertSchemaAction extends AnAction {
       final SchemaType type = getInputType(project, files);
       e.getPresentation().setEnabled(type != null);
       if (type == SchemaType.XML) {
-        e.getPresentation().setText(RelaxngBundle.message("generate.schema.from.xml.file.0", files.length > 1 ? "s" : ""));
+        e.getPresentation().setText(RelaxngBundle.message("relaxng.convert-schema.action.title.xml-files", files.length));
       } else {
-        e.getPresentation().setText(RelaxngBundle.message("convert.schema"));
+        e.getPresentation().setText(RelaxngBundle.message("relaxng.convert-schema.action.title.non-xml"));
       }
     } else {
       e.getPresentation().setEnabled(false);
@@ -61,7 +62,7 @@ public class ConvertSchemaAction extends AnAction {
 
     final VirtualFile file = files[0];
     final FileType type = file.getFileType();
-    if (type == StdFileTypes.XML) {
+    if (type == XmlFileType.INSTANCE) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile instanceof XmlFile) {
         final XmlDocument document = ((XmlFile)psiFile).getDocument();
@@ -76,13 +77,13 @@ public class ConvertSchemaAction extends AnAction {
       }
       if (files.length > 1) {
         for (VirtualFile virtualFile : files) {
-          if (virtualFile.getFileType() != StdFileTypes.XML || getInputType(project, virtualFile) != null) {
+          if (virtualFile.getFileType() != XmlFileType.INSTANCE || getInputType(project, virtualFile) != null) {
             return null;
           }
         }
       }
       return SchemaType.XML;
-    } else if (type == StdFileTypes.DTD && files.length == 1) {
+    } else if (type == DTDFileType.INSTANCE && files.length == 1) {
       return SchemaType.DTD;
     } else if (type == RncFileType.getInstance() && files.length == 1) {
       return SchemaType.RNC;

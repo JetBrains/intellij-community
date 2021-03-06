@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -30,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class ChangeListManagerSerialization {
+final class ChangeListManagerSerialization {
+  private static final int DISABLED_CHANGES_THRESHOLD = 100;
+
   @NonNls private static final String ATT_ID = "id";
   @NonNls private static final String ATT_NAME = "name";
   @NonNls private static final String ATT_COMMENT = "comment";
@@ -45,18 +33,22 @@ class ChangeListManagerSerialization {
   @NonNls private static final String NODE_LIST = "list";
   @NonNls private static final String NODE_CHANGE = "change";
 
-  public static void writeExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
-    for (LocalChangeList list : worker.getChangeLists()) {
-      element.addContent(writeChangeList(list));
+  static void writeExternal(@NotNull Element element,
+                            @Nullable List<? extends LocalChangeList> changeLists,
+                            boolean areChangeListsEnabled) {
+    if (changeLists == null) return;
+    for (LocalChangeList list : changeLists) {
+      element.addContent(writeChangeList(list, areChangeListsEnabled));
     }
   }
 
-  public static void readExternal(@NotNull Element element, @NotNull ChangeListWorker worker) {
+  @NotNull
+  static List<LocalChangeListImpl> readExternal(@NotNull Element element, @NotNull Project project) {
     List<LocalChangeListImpl> lists = new ArrayList<>();
     for (Element listNode : element.getChildren(NODE_LIST)) {
-      lists.add(readChangeList(listNode, worker.getProject()));
+      lists.add(readChangeList(listNode, project));
     }
-    worker.setChangeLists(removeDuplicatedLists(lists));
+    return new ArrayList<>(removeDuplicatedLists(lists));
   }
 
   @NotNull
@@ -86,7 +78,7 @@ class ChangeListManagerSerialization {
   }
 
   @NotNull
-  private static Element writeChangeList(@NotNull LocalChangeList list) {
+  private static Element writeChangeList(@NotNull LocalChangeList list, boolean areChangeListsEnabled) {
     Element listNode = new Element(NODE_LIST);
 
     if (list.isDefault()) listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
@@ -102,10 +94,13 @@ class ChangeListManagerSerialization {
     if (listData instanceof ChangeListData) {
       listNode.addContent(ChangeListData.writeExternal((ChangeListData)listData));
     }
-    
-    List<Change> changes = ContainerUtil.sorted(list.getChanges(), new ChangeComparator());
-    for (Change change : changes) {
-      listNode.addContent(writeChange(change));
+
+    Collection<Change> changes = list.getChanges();
+    if (areChangeListsEnabled || changes.size() < DISABLED_CHANGES_THRESHOLD) {
+      List<Change> sortedChanges = ContainerUtil.sorted(changes, new ChangeComparator());
+      for (Change change : sortedChanges) {
+        listNode.addContent(writeChange(change));
+      }
     }
 
     return listNode;

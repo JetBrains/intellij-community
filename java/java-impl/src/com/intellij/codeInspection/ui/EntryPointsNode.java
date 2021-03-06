@@ -1,17 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class EntryPointsNode extends InspectionNode {
+public final class EntryPointsNode extends InspectionNode {
   private volatile boolean myExcluded;
 
   public EntryPointsNode(@NotNull InspectionToolWrapper dummyWrapper,
@@ -25,14 +24,13 @@ public class EntryPointsNode extends InspectionNode {
     return AllIcons.Nodes.EntryPoints;
   }
 
-  @Nullable
   @Override
-  public String getTailText() {
+  public @NotNull String getTailText() {
     return "";
   }
 
   @Override
-  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull Object2IntMap<HighlightDisplayLevel> counter) {
     //do nothing here
   }
 

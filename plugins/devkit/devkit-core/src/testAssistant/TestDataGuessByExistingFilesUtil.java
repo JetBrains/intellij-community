@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -37,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
@@ -47,7 +48,7 @@ import java.util.*;
  *
  * @author Denis Zhdanov
  */
-public class TestDataGuessByExistingFilesUtil {
+public final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
 
   private TestDataGuessByExistingFilesUtil() {
@@ -145,8 +146,8 @@ public class TestDataGuessByExistingFilesUtil {
   private static TestDataDescriptor buildDescriptorFromExistingTestData(@NotNull PsiMethod method, @Nullable String testDataPath) {
     return CachedValuesManager.getCachedValue(method,
                                               () -> new CachedValueProvider.Result<>(
-                                                                                buildDescriptor(method, testDataPath),
-                                                                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+                                                buildDescriptor(method, testDataPath),
+                                                PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull
@@ -164,14 +165,14 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   @NotNull
-  private static TestDataDescriptor buildDescriptor(@NotNull String test,
+  private static TestDataDescriptor buildDescriptor(@NotNull String testName,
                                                     @NotNull PsiClass psiClass,
                                                     @Nullable String testDataPath) {
     String normalizedTestDataPath = testDataPath == null ? null : StringUtil.trimEnd(StringUtil.trimEnd(testDataPath, "/"), "\\");
 
     // PhpStorm has tests that use '$' symbol as a file path separator, e.g. 'test$while_stmt$declaration' test
     // stands for '/while_smt/declaration.php' file somewhere in a test data.
-    String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(test, "$"), test);
+    String possibleFileName = ContainerUtil.getLastItem(StringUtil.split(testName, "$"), testName);
     assert possibleFileName != null;
     if (possibleFileName.isEmpty()) {
       return TestDataDescriptor.NOTHING_FOUND;
@@ -179,12 +180,12 @@ public class TestDataGuessByExistingFilesUtil {
     Project project = psiClass.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     GotoFileModel gotoModel = new GotoFileModel(project);
-    String possibleFilePath = test.replace('$', '/');
+    String possibleFilePath = testName.replace('$', '/');
     Map<String, List<TestLocationDescriptor>> descriptorsByFileNames = new HashMap<>();
     Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiClass));
     Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
     ProgressIndicator indicator = EmptyProgressIndicator.notNullize(ProgressManager.getInstance().getProgressIndicator());
-    indicator.setText("Searching for \'" + test + "\' test data files...");
+    indicator.setText(DevKitBundle.message("testdata.progress.text.searching.for.test.data.files", testName));
     indicator.setIndeterminate(false);
     int fileNamesCount = fileNames.size();
     double currentIndex = 0;
@@ -214,7 +215,7 @@ public class TestDataGuessByExistingFilesUtil {
         }
 
         String filePath = file.getPath();
-        if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
+        if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, testName)) {
           continue;
         }
         String fileName = StringUtil.toLowerCase(PathUtil.getFileName(filePath));
@@ -257,7 +258,7 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static Collection<String> getAllFileNames(final String testName, final GotoFileModel model) {
-    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>() {
+    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>() {
       @Override
       public boolean accept(String name) {
         ProgressManager.checkCanceled();
@@ -364,7 +365,7 @@ public class TestDataGuessByExistingFilesUtil {
     return candidateMatchPosition > currentMatchPosition;
   }
 
-  private static class TestLocationDescriptor {
+  private static final class TestLocationDescriptor {
     final String pathPrefix;
     final String pathSuffix;
     final boolean startWithLowerCase;
@@ -429,7 +430,7 @@ public class TestDataGuessByExistingFilesUtil {
 
     @Override
     public String toString() {
-      return String.format("%s[...]%s", pathPrefix, pathSuffix);
+      return String.format("%s[...]%s", pathPrefix, pathSuffix); //NON-NLS
     }
   }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.highlighting;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CollectConsumer;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class ShTextOccurrencesUtil {
+public final class ShTextOccurrencesUtil {
   private ShTextOccurrencesUtil() {
   }
 
@@ -59,7 +60,7 @@ public class ShTextOccurrencesUtil {
     });
   }
 
-  private static boolean isWordExpandableOutside(@NotNull CharSequence documentText, @NotNull TextRange textRange) {
+  private static boolean isWordExpandableOutside(@NotNull CharSequence documentText, @NotNull Segment textRange) {
     if (textRange.getStartOffset() > 0) {
       char ch = documentText.charAt(textRange.getStartOffset() - 1);
       if (isWordPartCondition(ch)) {

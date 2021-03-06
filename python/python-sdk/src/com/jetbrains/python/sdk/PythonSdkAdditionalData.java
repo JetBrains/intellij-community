@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
-import com.google.common.collect.Sets;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -14,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -39,14 +39,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
-    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
-    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(ApplicationManager.getApplication());
+    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
+    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
   }
 
   protected PythonSdkAdditionalData(@NotNull PythonSdkAdditionalData from) {
     myFlavor = from.getFlavor();
-    myAddedPaths = from.myAddedPaths.clone(ApplicationManager.getApplication());
-    myExcludedPaths = from.myExcludedPaths.clone(ApplicationManager.getApplication());
+    myAddedPaths = from.myAddedPaths.clone(PythonPluginDisposable.getInstance());
+    myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
   }
 
@@ -148,7 +148,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
-    Set<VirtualFile> ret = Sets.newHashSet();
+    Set<VirtualFile> ret = new HashSet<>();
     Collections.addAll(ret, paths.getFiles());
     return ret;
   }

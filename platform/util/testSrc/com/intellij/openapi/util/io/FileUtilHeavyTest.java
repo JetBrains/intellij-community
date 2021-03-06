@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,12 +12,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
@@ -27,7 +28,7 @@ public class FileUtilHeavyTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
-  public void testProcessSimple() throws IOException {
+  public void testProcessSimple() {
     setupVisitorTestDirectories();
 
     Map<String, Integer> result = new HashMap<>();
@@ -45,7 +46,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testProcessStops() throws IOException {
+  public void testProcessStops() {
     setupVisitorTestDirectories();
 
     int[] cnt = {0};
@@ -59,7 +60,7 @@ public class FileUtilHeavyTest {
 
   @Test
   @SuppressWarnings("deprecation")
-  public void testProcessDirectoryFilter() throws IOException {
+  public void testProcessDirectoryFilter() {
     setupVisitorTestDirectories();
 
     Map<String, Integer> result = new HashMap<>();
@@ -137,7 +138,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void twoFilesOrder2() throws IOException {
+  public void twoFilesOrder2() {
     File first = tempDir.newFile("first");
     tempDir.newFile("second");
     assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first", "second")).isEqualTo(first.getPath());
@@ -199,16 +200,16 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testSymlinkDeletion() throws IOException {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     File targetDir = tempDir.newDirectory("target");
     File targetFile = tempDir.newFile("target/file");
     File directDirLink = new File(tempDir.getRoot(), "dirLink");
-    Files.createSymbolicLink(directDirLink.toPath(), targetDir.toPath());
+    IoTestUtil.createSymbolicLink(directDirLink.toPath(), targetDir.toPath());
     File directFileLink = new File(tempDir.getRoot(), "fileLink");
-    Files.createSymbolicLink(directFileLink.toPath(), targetFile.toPath());
+    IoTestUtil.createSymbolicLink(directFileLink.toPath(), targetFile.toPath());
     File linkParentDir = tempDir.newDirectory("linkParent");
-    Files.createSymbolicLink(new File(linkParentDir, "link").toPath(), targetDir.toPath());
+    IoTestUtil.createSymbolicLink(new File(linkParentDir, "link").toPath(), targetDir.toPath());
 
     FileUtil.delete(directFileLink);
     FileUtil.delete(directDirLink);
@@ -221,7 +222,7 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void testJunctionDeletion() throws IOException {
+  public void testJunctionDeletion() {
     IoTestUtil.assumeWindows();
 
     File targetDir = tempDir.newDirectory("target");
@@ -241,18 +242,18 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testRecursiveDeletionWithSymlink() throws IOException {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     File top = tempDir.newDirectory("top");
     tempDir.newFile("top/a-dir/file");
-    Files.createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
+    IoTestUtil.createSymbolicLink(top.toPath().resolve("z-link"), top.toPath().resolve("a-dir"));
 
     FileUtil.delete(top);
     assertThat(top).doesNotExist();
   }
 
   @Test
-  public void testRecursiveDeletionWithJunction() throws IOException {
+  public void testRecursiveDeletionWithJunction() {
     IoTestUtil.assumeWindows();
 
     File top = tempDir.newDirectory("top");
@@ -269,7 +270,9 @@ public class FileUtilHeavyTest {
       Path dir = Files.createDirectory(fs.getPath("dir"));
       Path file1 = Files.createFile(fs.getPath("dir", "file1"));
       Path file2 = Files.createFile(fs.getPath("dir", "file2"));
-      assertThat(Files.list(dir)).containsExactlyInAnyOrder(file1, file2);
+      try (Stream<Path> stream = Files.list(dir)) {
+        assertThat(stream).containsExactlyInAnyOrder(file1, file2);
+      }
 
       FileUtil.delete(dir);
       assertThat(dir).doesNotExist();
@@ -289,16 +292,16 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testToCanonicalPathSymLinksAware() throws IOException {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     File rootDir = tempDir.newDirectory("root");
     tempDir.newDirectory("root/dir1/dir2/dir3/dir4");
     String root = FileUtil.toSystemIndependentName(FileUtil.resolveShortWindowsName(rootDir.getPath()));
 
     // non-recursive link
-    Files.createSymbolicLink(new File(rootDir, "dir1/dir2_link").toPath(), new File(rootDir, "dir1/dir2").toPath());
+    IoTestUtil.createSymbolicLink(new File(rootDir, "dir1/dir2_link").toPath(), new File(rootDir, "dir1/dir2").toPath());
     // recursive links to a parent dir
-    Files.createSymbolicLink(new File(rootDir, "dir1/dir1_link").toPath(), new File(rootDir, "dir1").toPath());
+    IoTestUtil.createSymbolicLink(new File(rootDir, "dir1/dir1_link").toPath(), new File(rootDir, "dir1").toPath());
 
     // I) links should NOT be resolved when ../ stays inside the linked path
     // I.I) non-recursive links
@@ -373,5 +376,96 @@ public class FileUtilHeavyTest {
     File existingFile = IoTestUtil.createTestFile(existingDir, "foo.file");
     assertEquals(".." + File.separatorChar + relativePath,
                  FileUtil.getRelativePath(existingFile, new File(existingFile.getParent(), relativePath)));
+  }
+
+  @Test
+  public void fileToUri() {
+    File file = tempDir.newFile("test.txt");
+    assertEquals(file.toURI(), FileUtil.fileToUri(file));
+    assertEquals(file, new File(FileUtil.fileToUri(file)));
+
+    File dir = file.getParentFile();
+    assertEquals(StringUtil.trimTrailing(dir.toURI().toString(), '/'), FileUtil.fileToUri(dir).toString());
+    assertEquals(dir, new File(FileUtil.fileToUri(dir)));
+
+    if (SystemInfo.isWindows) {
+      File uncFile = new File(IoTestUtil.toLocalUncPath(file.getPath()));
+      assertEquals(uncFile.toURI(), FileUtil.fileToUri(uncFile));
+      assertEquals(uncFile, new File(FileUtil.fileToUri(uncFile)));
+
+      File uncDir = uncFile.getParentFile();
+      assertEquals(StringUtil.trimTrailing(uncDir.toURI().toString(), '/'), FileUtil.fileToUri(uncDir).toString());
+      assertEquals(uncDir, new File(FileUtil.fileToUri(uncDir)));
+    }
+  }
+
+  @Test
+  public void createDirectories() throws IOException {
+    Path existingDir = tempDir.newDirectory("existing").toPath();
+    NioFiles.createDirectories(existingDir);
+
+    Path nonExisting = tempDir.getRoot().toPath().resolve("d1/d2/d3/non-existing");
+    NioFiles.createDirectories(nonExisting);
+    assertThat(nonExisting).isDirectory();
+
+    Path existingFile = tempDir.newFile("file").toPath();
+    try {
+      NioFiles.createDirectories(existingFile);
+      fail("`createDirectories()` over an existing file shall not pass");
+    }
+    catch (FileAlreadyExistsException ignored) { }
+    try {
+      NioFiles.createDirectories(existingFile.resolve("dir"));
+      fail("`createDirectories()` over an existing file shall not pass");
+    }
+    catch (FileAlreadyExistsException ignored) { }
+
+    assumeSymLinkCreationIsSupported();
+
+    Path endLink = tempDir.getRoot().toPath().resolve("end-link");
+    IoTestUtil.createSymbolicLink(endLink, existingDir);
+    NioFiles.createDirectories(endLink);
+    assertThat(endLink).isDirectory().isSymbolicLink();
+
+    Path middleLinkDir = endLink.resolve("d1/d2");
+    NioFiles.createDirectories(middleLinkDir);
+    assertThat(middleLinkDir).isDirectory();
+
+    Path badLink = tempDir.getRoot().toPath().resolve("bad-link");
+    IoTestUtil.createSymbolicLink(badLink, Paths.get("bad-target"));
+    try {
+      NioFiles.createDirectories(badLink);
+      fail("`createDirectories()` over a dangling symlink shall not pass");
+    }
+    catch (FileAlreadyExistsException ignored) { }
+  }
+
+  @Test
+  public void setReadOnly() throws IOException {
+    Path f = tempDir.newFile("f").toPath();
+
+    NioFiles.setReadOnly(f, true);
+    try {
+      Files.writeString(f, "test");
+      fail("Writing to " + f + " should have failed");
+    }
+    catch (AccessDeniedException ignored) { }
+
+    NioFiles.setReadOnly(f, false);
+    Files.writeString(f, "test");
+
+    Path d = tempDir.newDirectory("d").toPath(), child = d.resolve("f");
+
+    NioFiles.setReadOnly(d, true);
+    if (!SystemInfo.isWindows) {
+      try {
+        Files.createFile(child);
+        fail("Creating " + child + " should have failed");
+      }
+      catch (AccessDeniedException ignored) { }
+    }
+
+    NioFiles.setReadOnly(d, false);
+    Files.createFile(child);
   }
 }

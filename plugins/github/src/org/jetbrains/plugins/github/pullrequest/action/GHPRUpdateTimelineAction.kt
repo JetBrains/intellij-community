@@ -12,13 +12,14 @@ class GHPRUpdateTimelineAction
                   { GithubBundle.message("pull.request.timeline.refresh.action.description") },
                   AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val context = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    e.presentation.isEnabled = context?.pullRequestDataProvider?.timelineLoader != null
+    val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    e.presentation.isEnabled = dataProvider?.timelineLoader != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val dataProvider = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider
-    if (dataProvider?.timelineLoader?.loadMore(true) != null)
+    val dataProvider = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
+    dataProvider.detailsData.reloadDetails()
+    if (dataProvider.timelineLoader?.loadMore(true) != null)
       dataProvider.reviewData.resetReviewThreads()
   }
 }

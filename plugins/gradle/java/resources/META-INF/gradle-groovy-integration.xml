@@ -47,6 +47,14 @@
                               implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
 
     <fileTypeUsageSchemaDescriptor schema="Gradle" implementationClass="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
+    <psi.symbolReferenceProvider hostLanguage="Groovy"
+                                 hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                                 targetClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectSymbol"
+                                 implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceProvider"/>
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectRenameUsageSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -78,7 +86,7 @@
   </extensions>
 
   <actions>
-    <group>
+    <group id="GenerateGradleDslGroup">
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
       <add-to-group group-id="Gradle.GenerateGroup" anchor="first"/>
     </group>

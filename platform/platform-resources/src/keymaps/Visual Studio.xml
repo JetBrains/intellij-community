@@ -153,6 +153,8 @@
   </action>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="W"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control W"/>
   </action>
   <action id="GotoNextBookmark">
     <keyboard-shortcut first-keystroke="ctrl K" second-keystroke="N"/>
@@ -276,7 +278,7 @@
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control U"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
-    <keyboard-shortcut first-keystroke="control M"/>
+    <keyboard-shortcut first-keystroke="control H"/>
   </action>
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="alt PAGE_DOWN"/>
@@ -391,11 +393,28 @@
   <action id="ActivateDatabaseToolWindow">
     <keyboard-shortcut first-keystroke="alt control 3"/>
   </action>
-  <action id="ActivateMessagesToolWindow"/>
+  <action id="ActivateCommitToolWindow"/>
   <action id="tasks.goto"/>
-  <action id="ExpandRegion"/>
-  <action id="CollapseRegion"/>
-  <action id="CollapseAllRegions"/>
+  <action id="ExpandRegion">
+  <keyboard-shortcut first-keystroke="control M" second-keystroke="E"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control E"/>
+  </action>
+  <action id="CollapseRegion">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="S"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control S"/>
+  </action>
+  <action id="CollapseAllRegions">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="A"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control A"/>
+  </action>
+  <action id="ExpandAllRegions">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="X"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control X"/>
+  </action>
+  <action id="EditorScrollToCenter">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="C"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control C"/>
+  </action>
   <action id="OpenFile">
     <keyboard-shortcut first-keystroke="control O"/>
   </action>
@@ -427,6 +446,7 @@
   <action id="ToggleFullScreen">
     <keyboard-shortcut first-keystroke="alt shift ENTER"/>
   </action>
+  <action id="SplitChooser"/>
   <action id="SurroundWith"/>
   <action id="MethodHierarchy"/>
   <action id="NextEditorTab"/>
@@ -492,6 +512,9 @@
   <action id="IncrementalSearch">
     <keyboard-shortcut first-keystroke="control I"/>
   </action>
+  <action id="BuildProject">
+    <keyboard-shortcut first-keystroke="control shift B"/>
+  </action>
 
   <!--  Rider-specific actions-->
 
@@ -516,6 +539,11 @@
   <action id="RiderBackendAction-EncapsulateField">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="E" />
     <keyboard-shortcut first-keystroke="control R" second-keystroke="control E" />
+  </action>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="O"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control O"/>
   </action>
 
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

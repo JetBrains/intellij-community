@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 
 /**
  * @author anna
@@ -32,7 +34,7 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   private final PsiTypeElement myTypeElement;
   private final PsiClassType myTargetClassType;
   private final PsiType myOriginalType;
-  private String myConflict;
+  private @Nls String myConflict;
 
   public ReplaceWithSubtypeUsageInfo(PsiTypeElement typeElement, PsiClassType classType, final PsiClass[] targetClasses) {
     super(typeElement);
@@ -40,7 +42,9 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
     myTargetClassType = classType;
     myOriginalType = myTypeElement.getType();
     if (targetClasses.length > 1) {
-      myConflict = typeElement.getText() + " can be replaced with any of " + StringUtil.join(targetClasses, psiClass -> psiClass.getQualifiedName(), ", ") ;
+      myConflict = JavaRefactoringBundle.message("inline.super.type.element.can.be.replaced",
+                                                 typeElement.getText(),
+                                                 StringUtil.join(targetClasses, psiClass -> psiClass.getQualifiedName(), ", "));
     }
   }
 
@@ -57,13 +61,10 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   @Override
   public String getConflictMessage() {
     if (!TypeConversionUtil.isAssignable(myOriginalType, myTargetClassType)) {
-      final String conflict = "No consistent substitution found for " +
-                              getElement().getText() +
-                              ". Expected \'" +
-                              myOriginalType.getPresentableText() +
-                              "\' but found \'" +
-                              myTargetClassType.getPresentableText() +
-                              "\'.";
+      final String conflict = JavaRefactoringBundle.message("inline.super.no.substitution",
+                                                            getElement().getText(),
+                                                            myOriginalType.getPresentableText(),
+                                                            myTargetClassType.getPresentableText());
       if (myConflict == null) {
         myConflict = conflict;
       } else {

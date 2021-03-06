@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -25,7 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class ParameterHintsPresentationManager implements Disposable {
+public final class ParameterHintsPresentationManager implements Disposable {
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
   private static final int ANIMATION_STEP_MS = 25;
@@ -34,7 +33,7 @@ public class ParameterHintsPresentationManager implements Disposable {
   private final Alarm myAlarm = new Alarm(this);
 
   public static ParameterHintsPresentationManager getInstance() {
-    return ServiceManager.getService(ParameterHintsPresentationManager.class);
+    return ApplicationManager.getApplication().getService(ParameterHintsPresentationManager.class);
   }
 
   private ParameterHintsPresentationManager() {
@@ -69,7 +68,7 @@ public class ParameterHintsPresentationManager implements Disposable {
       updateRenderer(editor, hint, null, null,true);
     }
     else {
-      Disposer.dispose(hint);  
+      Disposer.dispose(hint);
     }
   }
 
@@ -143,7 +142,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     return editor.getUserData(ANIMATION_STEP) != null;
   }
 
-  private static class MyRenderer extends HintRenderer {
+  private static final class MyRenderer extends HintRenderer {
     private int startWidth;
     private int steps;
     private int step;
@@ -163,17 +162,16 @@ public class ParameterHintsPresentationManager implements Disposable {
     @Override
     protected TextAttributes getTextAttributes(@NotNull Editor editor) {
       if (step > steps || startWidth != 0) {
-        return editor.getColorsScheme().getAttributes(current 
-                                                      ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT 
+        return editor.getColorsScheme().getAttributes(current
+                                                      ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
                                                       : highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
                                                                     : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
       }
       return null;
     }
 
-    @Nullable
     @Override
-    public String getContextMenuGroupId(@NotNull Inlay inlay) {
+    public @NotNull String getContextMenuGroupId(@NotNull Inlay inlay) {
       return "ParameterNameHints";
     }
 
@@ -186,7 +184,7 @@ public class ParameterHintsPresentationManager implements Disposable {
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
       step = animated ? 1 : steps + 1;
     }
-    
+
     public boolean nextStep() {
       return ++step <= steps;
     }

@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,10 +33,10 @@ import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class LightJavaModule extends LightElement implements PsiJavaModule {
+public final class LightJavaModule extends LightElement implements PsiJavaModule {
   private final LightJavaModuleReferenceElement myRefElement;
   private final VirtualFile myRoot;
-  private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = AtomicNotNullLazyValue.createValue(() -> findExports());
+  private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = NotNullLazyValue.atomicLazy(this::findExports);
 
   private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile root, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE);
@@ -45,26 +44,22 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     myRefElement = new LightJavaModuleReferenceElement(manager, name);
   }
 
-  @NotNull
-  public VirtualFile getRootVirtualFile() {
+  public @NotNull VirtualFile getRootVirtualFile() {
     return myRoot;
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return null;
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiRequiresStatement> getRequires() {
+  public @NotNull Iterable<PsiRequiresStatement> getRequires() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getExports() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getExports() {
     return myExports.getValue();
   }
 
@@ -95,33 +90,28 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     return exports;
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getOpens() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiUsesStatement> getUses() {
+  public @NotNull Iterable<PsiUsesStatement> getUses() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiProvidesStatement> getProvides() {
+  public @NotNull Iterable<PsiProvidesStatement> getProvides() {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameIdentifier() {
+  public @NotNull PsiJavaModuleReferenceElement getNameIdentifier() {
     return myRefElement;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myRefElement.getReferenceText();
   }
 
@@ -145,9 +135,8 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return notNull(myManager.findDirectory(myRoot), super.getNavigationElement());
   }
 
@@ -166,7 +155,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     return "PsiJavaModule:" + getName();
   }
 
-  private static class LightJavaModuleReferenceElement extends LightElement implements PsiJavaModuleReferenceElement {
+  private static final class LightJavaModuleReferenceElement extends LightElement implements PsiJavaModuleReferenceElement {
     private final String myText;
 
     private LightJavaModuleReferenceElement(@NotNull PsiManager manager, @NotNull String text) {
@@ -174,9 +163,8 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       myText = text;
     }
 
-    @NotNull
     @Override
-    public String getReferenceText() {
+    public @NotNull String getReferenceText() {
       return myText;
     }
 
@@ -199,33 +187,28 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       myPackageName = packageName;
     }
 
-    @NotNull
     @Override
-    public Role getRole() {
+    public @NotNull Role getRole() {
       return Role.EXPORTS;
     }
 
-    @Nullable
     @Override
-    public PsiJavaCodeReferenceElement getPackageReference() {
+    public @Nullable PsiJavaCodeReferenceElement getPackageReference() {
       return null;
     }
 
-    @Nullable
     @Override
-    public String getPackageName() {
+    public @Nullable String getPackageName() {
       return myPackageName;
     }
 
-    @NotNull
     @Override
-    public Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
+    public @NotNull Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public List<String> getModuleNames() {
+    public @NotNull List<String> getModuleNames() {
       return Collections.emptyList();
     }
 
@@ -235,16 +218,9 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     }
   }
 
-  /** @deprecated method scope was extended, use {@link #findModule} instead */
+  /** @deprecated caching problems; please consider using {@code JavaModuleGraphUtil} methods instead */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
-    LightJavaModule module = findModule(manager, root);
-    assert module != null : root;
-    return module;
-  }
-
-  /** The method is expected to be called on roots obtained from JavaAutoModuleNameIndex/JavaSourceModuleNameIndex */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
     PsiElement directory = manager.findDirectory(root);
     if (directory == null) return null;
@@ -270,8 +246,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     }
   }
 
-  @NotNull
-  public static String moduleName(@NotNull VirtualFile jarRoot) {
+  public static @NotNull String moduleName(@NotNull VirtualFile jarRoot) {
     VirtualFile manifest = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
     if (manifest != null) {
       String claimed = claimedModuleName(manifest);
@@ -281,8 +256,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     return moduleName(jarRoot.getNameWithoutExtension());
   }
 
-  @Nullable
-  public static String claimedModuleName(@NotNull VirtualFile manifest) {
+  public static @Nullable String claimedModuleName(@NotNull VirtualFile manifest) {
     try (InputStream stream = manifest.getInputStream()) {
       return new Manifest(stream).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
     }
@@ -290,6 +264,14 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
       return null;
     }
+  }
+
+  /**
+   * The method should be called on roots obtained from JavaAutoModuleNameIndex/JavaSourceModuleNameIndex.
+   */
+  @ApiStatus.Internal
+  public static @NotNull LightJavaModule create(@NotNull PsiManager manager, @NotNull VirtualFile root, @NotNull String name) {
+    return new LightJavaModule(manager, root, name);
   }
 
   /**
@@ -301,8 +283,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
    * @param name a .jar file name without extension
    * @see <a href="http://docs.oracle.com/javase/9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
    */
-  @NotNull
-  public static String moduleName(@NotNull String name) {
+  public static @NotNull String moduleName(@NotNull String name) {
     // If the name matches the regular expression "-(\\d+(\\.|$))" then the module name will be derived from the sub-sequence
     // preceding the hyphen of the first occurrence.
     Matcher m = Patterns.VERSION.matcher(name);

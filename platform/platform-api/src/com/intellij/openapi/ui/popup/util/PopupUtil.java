@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.openapi.Disposable;
@@ -22,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -37,7 +24,7 @@ import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.lang.reflect.Method;
 
-public class PopupUtil {
+public final class PopupUtil {
   private static final Logger LOG = Logger.getInstance(PopupUtil.class);
 
   private PopupUtil() {
@@ -65,7 +52,10 @@ public class PopupUtil {
 
   public static JBPopup getPopupContainerFor(@Nullable Component c) {
     if (c == null) return null;
-
+    if (c instanceof JComponent) {
+      JBPopup popup = (JBPopup)((JComponent)c).getClientProperty(JBPopup.KEY);
+      if (popup != null) return popup;
+    }
     final Window wnd = SwingUtilities.getWindowAncestor(c);
     if (wnd instanceof JWindow) {
       final JRootPane root = ((JWindow)wnd).getRootPane();
@@ -73,7 +63,6 @@ public class PopupUtil {
     }
 
     return null;
-
   }
 
   public static void setPopupType(@NotNull final PopupFactory factory, final int type) {
@@ -114,12 +103,12 @@ public class PopupUtil {
     return JOptionPane.getRootFrame();
   }
 
-  public static void showBalloonForActiveFrame(@NotNull final String message, final MessageType type) {
+  public static void showBalloonForActiveFrame(@NotNull final @NlsContexts.PopupContent String message, final MessageType type) {
     final Runnable runnable = () -> {
       final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
       if (frame == null) {
         final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        final Project project = projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0];
+        final Project project = projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0];
         final JFrame jFrame = WindowManager.getInstance().getFrame(project);
         if (jFrame != null) {
           showBalloonForComponent(jFrame, message, type, true, project);
@@ -133,7 +122,7 @@ public class PopupUtil {
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public static void showBalloonForActiveComponent(@NotNull final String message, final MessageType type) {
+  public static void showBalloonForActiveComponent(@NotNull final @NlsContexts.PopupContent String message, final MessageType type) {
     Runnable runnable = () -> {
       Window[] windows = Window.getWindows();
       Window targetWindow = null;
@@ -148,28 +137,12 @@ public class PopupUtil {
         targetWindow = JOptionPane.getRootFrame();
       }
 
-      if (targetWindow == null) {
-        final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-        if (frame == null) {
-          final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-          final Project project = projects == null || projects.length == 0 ? ProjectManager.getInstance().getDefaultProject() : projects[0];
-          final JFrame jFrame = WindowManager.getInstance().getFrame(project);
-          if (jFrame != null) {
-            showBalloonForComponent(jFrame, message, type, true, project);
-          } else {
-            LOG.info("Can not get component to show message: " + message);
-          }
-          return;
-        }
-        showBalloonForComponent(frame.getComponent(), message, type, true, frame.getProject());
-      } else {
-        showBalloonForComponent(targetWindow, message, type, true, null);
-      }
+      showBalloonForComponent(targetWindow, message, type, true, null);
     };
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public static void showBalloonForComponent(@NotNull Component component, @NotNull final String message, final MessageType type,
+  public static void showBalloonForComponent(@NotNull Component component, @NotNull final @NlsContexts.PopupContent String message, final MessageType type,
                                              final boolean atTop, @Nullable final Disposable disposable) {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     if (popupFactory == null) return;

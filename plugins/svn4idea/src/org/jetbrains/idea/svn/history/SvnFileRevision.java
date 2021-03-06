@@ -25,7 +25,6 @@ import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.getFileContents;
-import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnFileRevision implements VcsFileRevision {
   private final static Logger LOG = Logger.getInstance(SvnFileRevision.class);
@@ -39,18 +38,6 @@ public class SvnFileRevision implements VcsFileRevision {
   private final Revision myPegRevision;
   private final String myCopyFromPath;
   @NotNull private final List<SvnFileRevision> myMergeSources = new ArrayList<>();
-
-  @Deprecated // Required for compatibility with external plugins.
-  public SvnFileRevision(@NotNull SvnVcs vcs,
-                         Revision pegRevision,
-                         @NotNull Revision revision,
-                         @NotNull String url,
-                         String author,
-                         Date date,
-                         String commitMessage,
-                         String copyFromPath) {
-    this(vcs, pegRevision, revision, parseUrl(url, false), author, date, commitMessage, copyFromPath);
-  }
 
   public SvnFileRevision(@NotNull SvnVcs vcs,
                          Revision pegRevision,

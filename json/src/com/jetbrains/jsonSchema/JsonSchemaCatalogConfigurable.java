@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.FormBuilder;
@@ -52,7 +53,7 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
     return wrap(builder.getPanel());
   }
 
-  private static void addWithComment(FormBuilder builder, JBCheckBox box, String s) {
+  private static void addWithComment(FormBuilder builder, JBCheckBox box, @DetailedDescription String s) {
     builder.addComponent(new ComponentPanelBuilder(box).withComment(s).createPanel());
   }
 
@@ -63,7 +64,7 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myCatalogCheckBox;
   }
 

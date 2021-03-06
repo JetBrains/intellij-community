@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -35,5 +35,19 @@ class C { C(int x, I i, String s) {} }
   @Test
   void 'argument of literal constructor'() {
     typingTest 'C c = [42, { <caret>it }, "hi"]', JAVA_LANG_STRING
+  }
+
+  @Test
+  void 'implicit return statement'() {
+    typingTest '''I bar() {
+  { it -> <caret>it }
+}''', JAVA_LANG_STRING
+  }
+
+  @Test
+  void 'explicit return statement'() {
+    typingTest '''I bar() {
+  return { it -> <caret>it }
+}''', JAVA_LANG_STRING
   }
 }

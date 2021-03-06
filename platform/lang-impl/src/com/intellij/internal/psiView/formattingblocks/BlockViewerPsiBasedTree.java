@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView.formattingblocks;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.formatting.ASTBlock;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.internal.psiView.PsiViewerDialog;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
@@ -190,7 +187,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       parents.add((SimpleNode)root.getUserObject());
     }
 
-    return new TreeVisitor.ByComponent<BlockTreeNode, BlockTreeNode>(currentBlockNode, converter) {
+    return new TreeVisitor.ByComponent<>(currentBlockNode, converter) {
 
       @Override
       protected boolean contains(@NotNull BlockTreeNode pathComponent, @NotNull BlockTreeNode thisComponent) {
@@ -286,7 +283,8 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     FormattingModelBuilder formattingModelBuilder = LanguageFormatting.INSTANCE.forContext(rootElement);
     CodeStyleSettings settings = CodeStyle.getSettings(rootElement.getContainingFile());
     if (formattingModelBuilder != null) {
-      FormattingModel formattingModel = formattingModelBuilder.createModel(rootElement, settings);
+      FormattingModel formattingModel = formattingModelBuilder.createModel(
+        FormattingContext.create(rootElement, settings));
       return formattingModel.getRootBlock();
     }
     else {

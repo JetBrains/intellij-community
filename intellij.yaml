@@ -1,0 +1,13 @@
+
+compiler:
+  parallelCompilation: true
+
+versionControl:
+  git:
+    updateMethod: rebase
+    gcAuto: "50000"
+    coreLongpaths: "true"
+
+sharedIndex:
+  project:
+    - url: https://index-cdn.jetbrains.com/v2/project/intellij-community

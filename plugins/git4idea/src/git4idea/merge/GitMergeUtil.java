@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -21,17 +20,14 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
-import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitConflict;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitFileUtils;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +40,7 @@ import static git4idea.GitUtil.MERGE_HEAD;
 /**
  * Utilities for merge
  */
-public class GitMergeUtil {
+public final class GitMergeUtil {
   private static final Logger LOG = Logger.getInstance(GitMergeUtil.class);
 
   static final int ORIGINAL_REVISION_NUM = 1; // common parent
@@ -55,55 +51,6 @@ public class GitMergeUtil {
    * A private constructor for utility class
    */
   private GitMergeUtil() {
-  }
-
-
-  /**
-   * Get a list of merge strategies for the specified branch count
-   *
-   * @param branchCount a number of branches to merge
-   * @return an array of strategy names
-   */
-  @NonNls
-  public static String[] getMergeStrategies(int branchCount) {
-    if (branchCount < 0) {
-      throw new IllegalArgumentException("Branch count must be non-negative: " + branchCount);
-    }
-    switch (branchCount) {
-      case 0:
-        return new String[]{getDefaultStrategy()};
-      case 1:
-        return new String[]{getDefaultStrategy(), "resolve", "recursive", "octopus", "ours", "subtree"};
-      default:
-        return new String[]{getDefaultStrategy(), "octopus", "ours"};
-    }
-  }
-
-  /**
-   * Setup strategies combobox. The set of strategies changes according to amount of selected elements in branchChooser.
-   *
-   * @param branchChooser a branch chooser
-   * @param strategy      a strategy selector
-   */
-  public static void setupStrategies(final ElementsChooser<String> branchChooser, final JComboBox strategy) {
-    final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
-      private void updateStrategies(final List<String> elements) {
-        strategy.removeAllItems();
-        for (String s : getMergeStrategies(elements.size())) {
-          strategy.addItem(s);
-        }
-        strategy.setSelectedItem(getDefaultStrategy());
-      }
-
-      @Override
-      public void elementMarkChanged(final String element, final boolean isMarked) {
-        final List<String> elements = branchChooser.getMarkedElements();
-        strategy.setEnabled(!elements.isEmpty());
-        updateStrategies(elements);
-      }
-    };
-    listener.elementMarkChanged(null, true);
-    branchChooser.addElementsMarkListener(listener);
   }
 
   public static MergeData loadMergeData(@NotNull Project project,
@@ -439,9 +386,5 @@ public class GitMergeUtil {
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {
     return repository.getState().equals(GitRepository.State.REBASING);
-  }
-
-  public static String getDefaultStrategy() {
-    return GitBundle.getString("merge.default.strategy");
   }
 }

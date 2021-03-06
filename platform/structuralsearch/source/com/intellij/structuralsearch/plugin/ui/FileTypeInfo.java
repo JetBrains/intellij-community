@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.PatternContext;
+import com.intellij.structuralsearch.SSRBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +16,7 @@ import java.util.regex.Pattern;
 /**
  * @author Pavel.Dolgov
  */
-public class FileTypeInfo {
+class FileTypeInfo {
   public static final FileTypeInfo[] EMPTY_ARRAY = new FileTypeInfo[0];
 
   /** @see com.intellij.openapi.fileTypes.impl.FileTypeRenderer */
@@ -26,7 +28,7 @@ public class FileTypeInfo {
   private final boolean myNested;
   private final String myDescription;
 
-  public FileTypeInfo(@NotNull LanguageFileType fileType, @NotNull Language dialect, @Nullable PatternContext context, boolean nested) {
+  FileTypeInfo(@NotNull LanguageFileType fileType, @NotNull Language dialect, @Nullable PatternContext context, boolean nested) {
     myFileType = fileType;
     myDialect = dialect;
     myContext = context;
@@ -49,14 +51,13 @@ public class FileTypeInfo {
     return myContext;
   }
 
-  @NotNull
-  public String getText() {
+  public @NlsSafe @NotNull String getText() {
     if (myNested) {
       if (myDialect != null && myDialect != myFileType.getLanguage()) {
         return myDialect.getDisplayName();
       }
       if (myContext != null) {
-        return myDescription + " - " + myContext.getDisplayName();
+        return SSRBundle.message("file.type.pattern.context", myDescription, myContext.getDisplayName());
       }
     }
     return myDescription;

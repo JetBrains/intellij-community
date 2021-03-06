@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="RUNTIME" name="studio-grpc" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="studio-proto" level="project" />
+    <orderEntry type="module" module-name="intellij.android.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.jpsBuildPlugin.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.android.jpsBuildPlugin" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="KotlinPlugin" level="project" />
+  </component>
+</module>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.project.Project;
@@ -36,18 +22,19 @@ public class TypeSelector {
   private final MyComboBoxModel myComboBoxModel;
   private final Project myProject;
 
-  public TypeSelector(PsiType type, Project project) {
+  public TypeSelector(PsiType type, @NotNull Project project) {
     myType = type;
     myProject = project;
     myComponent = new JLabel(myType.getPresentableText());
     myComboBoxModel = null;
   }
 
-  public TypeSelector(Project project) {
+  public TypeSelector(@NotNull Project project) {
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
-    myComponent = new ComboBox();
-    ((ComboBox) myComponent).setModel(myComboBoxModel);
+    ComboBox<PsiTypeItem> itemSelector = new ComboBox<>();
+    itemSelector.setModel(myComboBoxModel);
+    myComponent = itemSelector;
     myType = null;
   }
 
@@ -64,25 +51,25 @@ public class TypeSelector {
       for (int i = 0; i < types.length; i++) {
         PsiType type = types[i];
         if(type.equals(oldType)) {
-          ((JComboBox) myComponent).setSelectedIndex(i);
+          ((JComboBox<?>) myComponent).setSelectedIndex(i);
           return;
         }
       }
     }
     if (types.length > 0) {
-      ((JComboBox) myComponent).setSelectedIndex(0);
+      ((JComboBox<?>) myComponent).setSelectedIndex(0);
     }
   }
 
   public PsiType[] getTypes() {
-    final PsiType[] types = PsiType.createArray(myComboBoxModel.mySuggestions.length);
+    PsiType[] types = PsiType.createArray(myComboBoxModel.mySuggestions.length);
     for (int i = 0; i < types.length; i++) {
       types[i] = myComboBoxModel.mySuggestions[i].getType();
     }
     return types;
   }
 
-  private static PsiTypeItem[] wrapToItems(final PsiType[] types, Project project) {
+  private static PsiTypeItem[] wrapToItems(PsiType @NotNull [] types, @NotNull Project project) {
     PsiTypeItem[] result = new PsiTypeItem[types.length];
     for (int i = 0; i < result.length; i++) {
       result [i] = new PsiTypeItem(types [i], project);
@@ -93,19 +80,19 @@ public class TypeSelector {
 
   public void addItemListener(ItemListener aListener) {
     if(myComponent instanceof JComboBox) {
-      ((JComboBox) myComponent).addItemListener(aListener);
+      ((JComboBox<?>) myComponent).addItemListener(aListener);
     }
   }
 
   public void removeItemListener(ItemListener aListener) {
     if (myComponent instanceof JComboBox) {
-      ((JComboBox) myComponent).removeItemListener(aListener);
+      ((JComboBox<?>) myComponent).removeItemListener(aListener);
     }
   }
 
   public ItemListener[] getItemListeners() {
     if (myComponent instanceof JComboBox) {
-      return ((JComboBox) myComponent).getItemListeners();
+      return ((JComboBox<?>) myComponent).getItemListeners();
     } else {
       return new ItemListener[0];
     }
@@ -127,34 +114,31 @@ public class TypeSelector {
   public PsiType getSelectedType() {
     if (myComponent instanceof JLabel) {
       return myType;
-    } else {
-      final PsiTypeItem selItem = (PsiTypeItem)((JComboBox)myComponent).getSelectedItem();
-      return selItem == null ? null : selItem.getType();
     }
+    PsiTypeItem selItem = (PsiTypeItem)((JComboBox<?>)myComponent).getSelectedItem();
+    return selItem == null ? null : selItem.getType();
   }
 
   public void selectType(@NotNull PsiType type) {
     if (myComponent instanceof JComboBox) {
-      ((JComboBox)myComponent).setSelectedItem(new PsiTypeItem(type, myProject));
+      ((JComboBox<?>)myComponent).setSelectedItem(new PsiTypeItem(type, myProject));
     }
   }
 
-  private static class MyComboBoxModel extends DefaultComboBoxModel {
+  private static class MyComboBoxModel extends DefaultComboBoxModel<PsiTypeItem> {
     private PsiTypeItem[] mySuggestions;
 
     MyComboBoxModel() {
       mySuggestions = new PsiTypeItem[0];
     }
 
-    // implements javax.swing.ListModel
     @Override
     public int getSize() {
       return mySuggestions.length;
     }
 
-    // implements javax.swing.ListModel
     @Override
-    public Object getElementAt(int index) {
+    public PsiTypeItem getElementAt(int index) {
       return mySuggestions[index];
     }
 
@@ -165,11 +149,11 @@ public class TypeSelector {
     }
   }
 
-  private static class PsiTypeItem {
+  private static final class PsiTypeItem {
     private final PsiType myType;
     private final SmartTypePointer myTypePointer;
 
-    private PsiTypeItem(final PsiType type, Project project) {
+    private PsiTypeItem(@NotNull PsiType type, @NotNull Project project) {
       myType = type;
       myTypePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(type);
     }

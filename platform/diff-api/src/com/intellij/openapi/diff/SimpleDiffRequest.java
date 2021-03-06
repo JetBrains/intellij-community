@@ -17,6 +17,7 @@ package com.intellij.openapi.diff;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,9 +27,9 @@ import org.jetbrains.annotations.NotNull;
 public class SimpleDiffRequest extends DiffRequest {
   private final DiffContent[] myContents = new DiffContent[2];
   private final String[] myContentTitles = new String[2];
-  private String myWindowTitle;
+  private @Nls String myWindowTitle;
 
-  public SimpleDiffRequest(Project project, String windowTitle) {
+  public SimpleDiffRequest(Project project, @Nls String windowTitle) {
     super(project);
     myWindowTitle = windowTitle;
   }
@@ -39,6 +40,7 @@ public class SimpleDiffRequest extends DiffRequest {
   @Override
   public String[] getContentTitles() { return myContentTitles; }
 
+  @Nls
   @Override
   public String getWindowTitle() { return myWindowTitle; }
 
@@ -47,16 +49,16 @@ public class SimpleDiffRequest extends DiffRequest {
     myContents[1] = content2;
   }
 
-  public void setContentTitles(String title1, String title2) {
+  public void setContentTitles(@Nls String title1, @Nls String title2) {
     myContentTitles[0] = title1;
     myContentTitles[1] = title2;
   }
 
-  public void setWindowTitle(String windowTitle) {
+  public void setWindowTitle(@Nls String windowTitle) {
     myWindowTitle = windowTitle;
   }
 
-  public static SimpleDiffRequest compareFiles(VirtualFile file1, VirtualFile file2, Project project, String title) {
+  public static SimpleDiffRequest compareFiles(VirtualFile file1, VirtualFile file2, Project project, @Nls String title) {
     FileDiffRequest result = new FileDiffRequest(project, title);
     result.myVirtualFiles[0] = file1;
     result.myVirtualFiles[1] = file2;
@@ -74,7 +76,7 @@ public class SimpleDiffRequest extends DiffRequest {
     private final String[] myContentTitles = new String[2];
     private final VirtualFile[] myVirtualFiles = new VirtualFile[2];
 
-    FileDiffRequest(Project project, String title) {
+    FileDiffRequest(Project project, @Nls String title) {
       super(project, title);
     }
 

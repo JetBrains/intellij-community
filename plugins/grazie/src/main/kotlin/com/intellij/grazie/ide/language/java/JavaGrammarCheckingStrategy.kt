@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType.LITERAL_EXPRESSION
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 
 class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
@@ -33,9 +34,8 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
 
   override fun isAbsorb(element: PsiElement) = isTag(element) && (!isCommentData(element) || isCodeTag(element))
 
-  override fun isStealth(element: PsiElement) = element is LeafPsiElement
-                                                && element.elementType in listOf(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS,
-                                                                                 DOC_COMMENT_END)
+  private val STEALTH_TYPES = setOf(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END)
+  override fun isStealth(element: PsiElement) = element is LeafPsiElement && element.elementType in STEALTH_TYPES
 
   override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement) = when {
     root is PsiLiteralExpression -> RuleGroup.LITERALS
@@ -46,5 +46,17 @@ class JavaGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   override fun getStealthyRanges(root: PsiElement, text: CharSequence) = when (root) {
     is PsiCommentImpl -> StrategyUtils.indentIndexes(text, setOf(' ', '\t', '*', '/'))
     else -> StrategyUtils.indentIndexes(text, setOf(' ', '\t'))
+  }
+
+  private fun IElementType?.isSingleLineCommentType() = when (this) {
+    END_OF_LINE_COMMENT, C_STYLE_COMMENT -> true
+    else -> false
+  }
+
+  override fun getRootsChain(root: PsiElement): List<PsiElement> {
+    return if (root.elementType.isSingleLineCommentType()) {
+      StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root) { type -> type.isSingleLineCommentType() }.toList()
+    }
+    else super.getRootsChain(root)
   }
 }

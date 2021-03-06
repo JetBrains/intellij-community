@@ -1,0 +1,121 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file1.txt')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiElement(word)('/dev/null')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file2.txt')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(<<<)('<<<')
+          PsiElement(word)('stdin')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file.txt')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('cat')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('-')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(<<<)('<<<')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('stdin')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file.txt')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# equivalent redirects')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(>&)('>&')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('out')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(>&)('>&')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('out')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(&>)('&>')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('out')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(&>)('&>')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('out')
+  PsiElement(\n)('\n')
+  PsiComment(Comment)('# at eof')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiElement(word)('out')

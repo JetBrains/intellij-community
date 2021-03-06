@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ public final class KeyProcessorContext {
   private boolean myHasSecondStroke;
 
   private DataContext myDataContext;
+  private Project myProject;
   private boolean isModalContext;
   private WeakReference<Component> myFocusOwner;
   private KeyEvent myInputEvent;
@@ -50,8 +52,16 @@ public final class KeyProcessorContext {
     return myDataContext;
   }
 
-  public void setDataContext(DataContext dataContext) {
+  public void setDataContext(@NotNull DataContext dataContext) {
     myDataContext = dataContext;
+  }
+
+  public Project getProject() {
+    return myProject;
+  }
+
+  public void setProject(@Nullable Project project) {
+    myProject = project;
   }
 
   public boolean isModalContext() {
@@ -84,5 +94,6 @@ public final class KeyProcessorContext {
     myActions.clear();
     myFocusOwner = null;
     myDataContext = null;
+    myProject = null;
   }
 }

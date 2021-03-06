@@ -8,6 +8,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -33,7 +35,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   private volatile boolean myFinished;
   private volatile ProgressIndicator myIndicator;
 
-  public BackgroundUpdaterTaskBase(@Nullable Project project, @NotNull String title, @Nullable Comparator<T> comparator) {
+  public BackgroundUpdaterTaskBase(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super T> comparator) {
     super(project, title);
     myData = comparator == null ? new SmartList<>() : new TreeSet<>(comparator);
   }
@@ -49,7 +51,8 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myUsageView = usageView;
   }
 
-  public abstract String getCaption(int size);
+  @Nullable
+  public abstract @PopupTitle String getCaption(int size);
 
   @Nullable
   protected abstract Usage createUsage(T element);
@@ -136,7 +139,10 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       data = new ArrayList<>(myData);
     }
     replaceModel(data);
-    myPopup.setCaption(getCaption(getCurrentSize()));
+    String caption = getCaption(getCurrentSize());
+    if (caption != null) {
+      myPopup.setCaption(caption);
+    }
     myPopup.pack(true, true);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -14,7 +14,7 @@ import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
-public class ChainSearchTarget {
+public final class ChainSearchTarget {
   private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
 
   private final String myClassQName;

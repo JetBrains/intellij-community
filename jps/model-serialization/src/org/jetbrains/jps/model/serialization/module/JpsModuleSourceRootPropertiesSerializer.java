@@ -20,7 +20,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+/**
+ * Override this class and return the implementation from {@link JpsModelSerializerExtension#getModuleSourceRootPropertiesSerializers()}
+ * to support loading and saving custom source root types. The JAR file which contains the implementation must be added directly to 'lib'
+ * directory of the plugin distribution to ensure that it's available inside the IDE process. Also if the plugin doesn't participate in the
+ * build process (and therefore the JAR name isn't specified in 'compileServer.plugin' extension) a marker extension 'jps.plugin' must be added to plugin.xml:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;jps.plugin /&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ */
 public abstract class JpsModuleSourceRootPropertiesSerializer<P extends JpsElement> extends JpsElementPropertiesSerializer<P, JpsModuleSourceRootType<P>> {
   public JpsModuleSourceRootPropertiesSerializer(JpsModuleSourceRootType<P> type, String typeId) {
     super(type, typeId);

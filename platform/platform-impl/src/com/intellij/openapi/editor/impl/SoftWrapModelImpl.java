@@ -15,11 +15,17 @@ import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -65,7 +71,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private final SoftWrapsStorage                   myStorage;
   private       SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
-  private       EditorTextRepresentationHelper     myEditorTextRepresentationHelper;
 
   @NotNull
   private final EditorImpl myEditor;
@@ -106,7 +111,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myEditor = editor;
     myStorage = new SoftWrapsStorage();
     myPainter = new CompositeSoftWrapPainter(editor);
-    myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
     myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
     myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
 
@@ -118,6 +122,11 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
         }
       }
     });
+
+    if (!editor.getSettings().isUseSoftWraps() && shouldSoftWrapsBeForced()) {
+      forceSoftWraps();
+    }
+
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
 
@@ -125,6 +134,39 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
     myApplianceManager.addListener(myDataMapper);
     myEditor.getInlayModel().addListener(this, this);
+  }
+
+  private void forceSoftWraps() {
+    ((SettingsImpl)myEditor.getSettings()).setUseSoftWrapsQuiet();
+    myEditor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, Boolean.TRUE);
+    myUseSoftWraps = areSoftWrapsEnabledInEditor();
+    Project project = myEditor.getProject();
+    VirtualFile file = myEditor.getVirtualFile();
+    if (project != null && file != null) {
+      EditorNotifications.getInstance(project).updateNotifications(file);
+    }
+  }
+
+  public boolean shouldSoftWrapsBeForced() {
+    return shouldSoftWrapsBeForced(null);
+  }
+
+  private boolean shouldSoftWrapsBeForced(@Nullable DocumentEvent event) {
+    Project project = myEditor.getProject();
+    Document document = myEditor.getDocument();
+    if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
+      // Disable checking for files in intermediate states - e.g. for files during refactoring.
+      return false;
+    }
+    int lineWidthLimit = Registry.intValue("editor.soft.wrap.force.limit");
+    int startLine = event == null ? 0 : document.getLineNumber(event.getOffset());
+    int endLine = event == null ? document.getLineCount() - 1 : document.getLineNumber(event.getOffset() + event.getNewLength());
+    for (int i = startLine; i <= endLine; i++) {
+      if (document.getLineEndOffset(i) - document.getLineStartOffset(i) > lineWidthLimit) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
@@ -142,11 +184,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myTabWidth = EditorUtil.getTabSize(myEditor);
 
     boolean fontsChanged = false;
-    if (!myFontPreferences.equals(myEditor.getColorsScheme().getFontPreferences())
-        && myEditorTextRepresentationHelper instanceof DefaultEditorTextRepresentationHelper) {
+    if (!myFontPreferences.equals(myEditor.getColorsScheme().getFontPreferences())) {
       fontsChanged = true;
       myEditor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
-      ((DefaultEditorTextRepresentationHelper)myEditorTextRepresentationHelper).clearSymbolWidthCache();
       myPainter.reinit();
     }
 
@@ -418,6 +458,14 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     myUpdateInProgress = false;
     if (!isSoftWrappingEnabled()) {
+      if (shouldSoftWrapsBeForced(event)) {
+        forceSoftWraps();
+        if (isSoftWrappingEnabled()) {
+          myDirty = false;
+          myApplianceManager.recalculateAll();
+          return;
+        }
+      }
       myDirty = true;
       return;
     }
@@ -438,6 +486,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   void onBulkDocumentUpdateFinished() {
     myBulkUpdateInProgress = false;
+    if (!myUseSoftWraps && shouldSoftWrapsBeForced()) {
+      forceSoftWraps();
+    }
     recalculate();
   }
 
@@ -532,6 +583,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       myDirty = true;
       return;
     }
+    myDirty = false;
     myApplianceManager.reset();
     myStorage.removeAll();
     myDeferredFoldRegions.clear();
@@ -548,25 +600,15 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myApplianceManager.setSoftWrapPainter(painter);
   }
 
-  @Override
-  public EditorTextRepresentationHelper getEditorTextRepresentationHelper() {
-    return myEditorTextRepresentationHelper;
-  }
-
-  @TestOnly
-  public void setEditorTextRepresentationHelper(EditorTextRepresentationHelper editorTextRepresentationHelper) {
-    myEditorTextRepresentationHelper = editorTextRepresentationHelper;
-    myApplianceManager.reset();
-  }
-
   @NotNull
+  @NonNls
   @Override
   public String dumpState() {
     return String.format("\nuse soft wraps: %b, tab width: %d, additional columns: %b, " +
                          "update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s" +
                          "\nappliance manager state: %s\nsoft wraps mapping info: %s\nsoft wraps: %s",
                          myUseSoftWraps, myTabWidth, myForceAdditionalColumns, myUpdateInProgress, myBulkUpdateInProgress,
-                         myDirty, myDeferredFoldRegions.toString(),
+                         myDirty, myDeferredFoldRegions,
                          myApplianceManager.dumpState(), myDataMapper.dumpState(), myStorage.dumpState());
   }
 

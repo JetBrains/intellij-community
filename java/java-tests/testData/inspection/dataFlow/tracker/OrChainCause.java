@@ -1,8 +1,8 @@
 /*
 Value is always true (x || (a+b)+(c+d)==10; line#22)
   One of the following happens:
-    Operand #1 of ||-chain is true (x; line#22)
-    or operand #2 of ||-chain is true ((a+b)+(c+d)==10; line#22)
+    Operand #1 of or-chain is true (x; line#22)
+    or operand #2 of or-chain is true ((a+b)+(c+d)==10; line#22)
       Result of '+' is 10 ((a+b)+(c+d); line#22)
         Result of '+' is 3 (a+b; line#22)
           Left operand is 1 (a; line#22)

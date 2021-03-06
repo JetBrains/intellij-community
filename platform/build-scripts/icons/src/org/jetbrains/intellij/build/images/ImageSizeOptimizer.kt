@@ -1,22 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jetbrains.jps.model.module.JpsModule
 import java.awt.image.BufferedImage
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.ImageIO
 
-class ImageSizeOptimizer(private val projectHome: File) {
+class ImageSizeOptimizer(private val projectHome: Path) {
   private val optimizedTotal = AtomicLong(0)
   private val totalFiles = AtomicLong(0)
 
-  fun optimizeIcons(module: JpsModule) {
-    val icons = ImageCollector(projectHome.toPath()).collect(module)
+  fun optimizeIcons(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
+    val icons = ImageCollector(projectHome, moduleConfig = moduleConfig).collect(module)
     icons.parallelStream().forEach { icon ->
       icon.files.parallelStream().forEach {
         tryToReduceSize(it)

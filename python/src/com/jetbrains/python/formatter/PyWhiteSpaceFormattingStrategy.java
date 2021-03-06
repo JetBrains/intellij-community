@@ -1,36 +1,18 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.StaticSymbolWhiteSpaceDefinitionStrategy;
 import com.jetbrains.python.editor.PythonEnterHandler;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
-/**
- * @author yole
- */
 public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefinitionStrategy {
-
   public PyWhiteSpaceFormattingStrategy() {
     super('\\');
   }
@@ -42,7 +24,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                                   int endOffset,
                                                   CodeStyleSettings codeStyleSettings) {
     CharSequence whiteSpace =  super.adjustWhiteSpaceIfNecessary(whiteSpaceText, startElement, startOffset, endOffset, codeStyleSettings);
-    if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !StringUtil.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
+    if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !Strings.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
         PythonEnterHandler.needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
       return addBackslashPrefix(whiteSpace, codeStyleSettings);
     }
@@ -74,10 +56,9 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                                   @NotNull CharSequence text,
                                                   int startOffset,
                                                   int endOffset,
-                                                  CodeStyleSettings codeStyleSettings, ASTNode nodeAfter)
-  {
-    // The general idea is that '\' symbol before line feed should be preserved.
-    TIntIntHashMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
+                                                  CodeStyleSettings codeStyleSettings, ASTNode nodeAfter) {
+    // the general idea is that '\' symbol before line feed should be preserved
+    Int2IntMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
     if (initialBackSlashes.isEmpty()) {
       if (nodeAfter != null && whiteSpaceText.length() > 0 && whiteSpaceText.charAt(0) == '\n' &&
         PythonEnterHandler.needInsertBackslash(nodeAfter, false)) {
@@ -86,16 +67,16 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
       return whiteSpaceText;
     }
 
-    final TIntIntHashMap newBackSlashes = countBackSlashes(whiteSpaceText, 0, whiteSpaceText.length());
-    final AtomicBoolean continueProcessing = new AtomicBoolean();
-    initialBackSlashes.forEachKey(key -> {
-      if (!newBackSlashes.containsKey(key)) {
-        continueProcessing.set(true);
-        return false;
+    Int2IntMap newBackSlashes = countBackSlashes(whiteSpaceText, 0, whiteSpaceText.length());
+    boolean continueProcessing = false;
+    IntIterator iterator = initialBackSlashes.keySet().iterator();
+    while (iterator.hasNext()) {
+      if (!newBackSlashes.containsKey(iterator.nextInt())) {
+        continueProcessing = true;
+        break;
       }
-      return true;
-    });
-    if (!continueProcessing.get()) {
+    }
+    if (!continueProcessing) {
       return whiteSpaceText;
     }
 
@@ -108,8 +89,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
         result.append(c);
         continue;
       }
-      if (!newBackSlashes.contains(line++)) {
-        if ((i == 0 || (i > 0 && whiteSpaceText.charAt(i - 1) != ' ')) && settings.SPACE_BEFORE_BACKSLASH) {
+      if (!newBackSlashes.containsKey(line++)) {
+        if ((i == 0 || whiteSpaceText.charAt(i - 1) != ' ') && settings.SPACE_BEFORE_BACKSLASH) {
           result.append(' ');
         }
         result.append('\\');
@@ -127,8 +108,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
    * @param end       end offset to use with the given text (exclusive)
    * @return          map that holds '{@code line number -> number of back slashes}' mapping for the target text
    */
-  static TIntIntHashMap countBackSlashes(CharSequence text, int start, int end) {
-    TIntIntHashMap result = new TIntIntHashMap();
+  static @NotNull Int2IntMap countBackSlashes(CharSequence text, int start, int end) {
+    Int2IntMap result=new Int2IntOpenHashMap();
     int line = 0;
     if (end > text.length()) {
       end = text.length();
@@ -136,8 +117,12 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {
-        case '\n': line++; break;
-        case '\\': result.put(line, 1); break;
+        case '\n':
+          line++;
+          break;
+        case '\\':
+          result.put(line, 1);
+          break;
       }
     }
     return result;

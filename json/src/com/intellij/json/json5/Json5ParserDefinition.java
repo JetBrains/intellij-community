@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.json5;
 
 import com.intellij.json.JsonParserDefinition;
@@ -20,12 +20,12 @@ public class Json5ParserDefinition extends JsonParserDefinition {
   }
 
   @Override
-  public PsiFile createFile(FileViewProvider fileViewProvider) {
+  public @NotNull PsiFile createFile(@NotNull FileViewProvider fileViewProvider) {
     return new JsonFileImpl(fileViewProvider, Json5Language.INSTANCE);
   }
 
   @Override
-  public IFileElementType getFileNodeType() {
+  public @NotNull IFileElementType getFileNodeType() {
     return FILE;
   }
 }

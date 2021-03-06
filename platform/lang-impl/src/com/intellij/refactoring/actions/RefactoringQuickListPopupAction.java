@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.actions;
 
 import com.intellij.ide.actions.CopyElementAction;
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -32,14 +19,14 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
   }
 
   @Override
-  protected void fillActions(@Nullable final Project project,
+  public void fillActions(@Nullable final Project project,
                              @NotNull final DefaultActionGroup group,
                              @NotNull final DataContext dataContext) {
     if (project == null) {
       return;
     }
 
-    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionManagerImpl actionManager = (ActionManagerImpl) ActionManager.getInstance();
     final AnAction action = actionManager.getAction(IdeActions.GROUP_REFACTOR);
     collectEnabledChildren(action, group, dataContext, actionManager, false);
   }
@@ -47,7 +34,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
   private static void collectEnabledChildren(AnAction action,
                                              @NotNull DefaultActionGroup destinationGroup,
                                              @NotNull DataContext dataContext,
-                                             @NotNull ActionManager actionManager,
+                                             @NotNull ActionManagerImpl actionManager,
                                              boolean popup) {
     if (action instanceof DefaultActionGroup) {
       final AnAction[] children = ((DefaultActionGroup)action).getChildren(null);
@@ -65,8 +52,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
           destinationGroup.add(child);
         }
         else {
-          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext) ||
-              child instanceof CopyElementAction) {
+          if (isRefactoringAction(child, dataContext, actionManager)) {
             final Presentation presentation = new Presentation();
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.REFACTORING_QUICKLIST, presentation, actionManager, 0);
             event.setInjectedContext(child.isInInjectedContext());
@@ -78,6 +64,19 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
         }
       }
     }
+  }
+
+  private static boolean isRefactoringAction(AnAction child, DataContext dataContext, ActionManagerImpl actionManager) {
+    if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext) ||
+        child instanceof RenameElementAction && ((RenameElementAction)child).isAvailable(dataContext) ||
+        child instanceof CopyElementAction) {
+      return true;
+    }
+
+    return child instanceof OverridingAction &&
+           (actionManager.getBaseAction((OverridingAction)child) instanceof BaseRefactoringAction ||
+            actionManager.getBaseAction((OverridingAction)child) instanceof RenameElementAction ||
+            actionManager.getBaseAction((OverridingAction)child) instanceof CopyElementAction);
   }
 
 

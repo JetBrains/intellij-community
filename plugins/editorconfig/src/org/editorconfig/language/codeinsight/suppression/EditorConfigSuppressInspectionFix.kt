@@ -6,10 +6,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.jetbrains.annotations.Nls
 
 class EditorConfigSuppressInspectionFix(
   id: String,
-  text: String,
+  @Nls text: String,
   private val target: Class<out PsiElement>
 ) : AbstractBatchSuppressByNoInspectionCommentFix(id, false) {
   init {

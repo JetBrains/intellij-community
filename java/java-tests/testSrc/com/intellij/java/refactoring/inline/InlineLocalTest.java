@@ -220,6 +220,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   public void testCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
   public void testNoCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
   public void testNoCastWithVar() { doTest(true, LanguageLevel.JDK_10); }
+  public void testDiamondInAnonymousClass() { doTest(true, LanguageLevel.JDK_11); }
 
   public void testUncheckedCast() {
     doTest(true);
@@ -332,6 +333,10 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testEolComment() {
+    doTest(false);
+  }
+  
   private void doTest(final boolean inlineDef, String conflictMessage) {
     try {
       doTest(inlineDef);

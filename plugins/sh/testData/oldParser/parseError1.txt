@@ -4,8 +4,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(word)('a')
-        PsiElement(word)(';')
+        PsiElement(word)('a;')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST

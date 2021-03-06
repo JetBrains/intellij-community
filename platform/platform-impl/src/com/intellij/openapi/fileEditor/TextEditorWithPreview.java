@@ -1,27 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PREVIEW;
 
@@ -31,7 +38,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PR
  *
  * @author Konstantin Bulenkov
  */
-public class TextEditorWithPreview extends UserDataHolderBase implements FileEditor {
+public class TextEditorWithPreview extends UserDataHolderBase implements TextEditor {
   protected final TextEditor myEditor;
   protected final FileEditor myPreview;
   @NotNull
@@ -40,12 +47,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   private Layout myLayout;
   private JComponent myComponent;
   private SplitEditorToolbar myToolbarWrapper;
-  private final String myName;
+  private final @Nls String myName;
   public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
 
   public TextEditorWithPreview(@NotNull TextEditor editor,
                                @NotNull FileEditor preview,
-                               @NotNull String editorName,
+                               @NotNull @Nls String editorName,
                                @NotNull Layout defaultLayout) {
     myEditor = editor;
     myPreview = preview;
@@ -53,7 +60,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     myDefaultLayout = defaultLayout;
   }
 
-  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName) {
+  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
     this(editor, preview, editorName, Layout.SHOW_EDITOR_AND_PREVIEW);
   }
 
@@ -111,7 +118,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
-        myLayout = Layout.fromName(lastUsed, myDefaultLayout);
+        myLayout = Layout.fromId(lastUsed, myDefaultLayout);
       }
       adjustEditorsVisibility();
 
@@ -163,7 +170,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     myComponent.repaint();
 
     final JComponent focusComponent = getPreferredFocusedComponent();
-    if (focusComponent != null) {
+    Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+    if (focusComponent != null && focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, getComponent())) {
       IdeFocusManager.findInstanceByComponent(focusComponent).requestFocus(focusComponent, true);
     }
   }
@@ -183,7 +191,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
       case SHOW_PREVIEW:
         return myPreview.getPreferredFocusedComponent();
       default:
-        throw new IllegalStateException(myLayout.myName);
+        throw new IllegalStateException(myLayout.myId);
     }
   }
 
@@ -230,12 +238,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     return myLayout;
   }
 
-  static class MyFileEditorState implements FileEditorState {
+  public static class MyFileEditorState implements FileEditorState {
     private final Layout mySplitLayout;
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
 
-    MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
       mySplitLayout = layout;
       myFirstState = firstState;
       mySecondState = secondState;
@@ -257,7 +265,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     }
 
     @Override
-    public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+    public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
       return otherState instanceof MyFileEditorState
              && (myFirstState == null || myFirstState.canBeMergedWith(((MyFileEditorState)otherState).myFirstState, level))
              && (mySecondState == null || mySecondState.canBeMergedWith(((MyFileEditorState)otherState).mySecondState, level));
@@ -274,7 +282,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     return myEditor.isValid() && myPreview.isValid();
   }
 
-  private class DoublingEventListenerDelegate implements PropertyChangeListener {
+  private final class DoublingEventListenerDelegate implements PropertyChangeListener {
     @NotNull
     private final PropertyChangeListener myDelegate;
 
@@ -378,29 +386,31 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   }
 
   public enum Layout {
-    SHOW_EDITOR("Editor only", AllIcons.General.LayoutEditorOnly),
-    SHOW_PREVIEW("Preview only", AllIcons.General.LayoutPreviewOnly),
-    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", AllIcons.General.LayoutEditorPreview);
+    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only"), AllIcons.General.LayoutEditorOnly),
+    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only"), AllIcons.General.LayoutPreviewOnly),
+    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"), AllIcons.General.LayoutEditorPreview);
 
-    private final String myName;
+    private final @NotNull Supplier<@Nls String> myName;
     private final Icon myIcon;
+    private final String myId;
 
-    Layout(String name, Icon icon) {
+    Layout(String id, @NotNull Supplier<String> name, Icon icon) {
+      myId = id;
       myName = name;
       myIcon = icon;
     }
 
-    public static Layout fromName(String name, Layout defaultValue) {
+    public static Layout fromId(String id, Layout defaultValue) {
       for (Layout layout : Layout.values()) {
-        if (layout.myName.equals(name)) {
+        if (layout.myId.equals(id)) {
           return layout;
         }
       }
       return defaultValue;
     }
 
-    public String getName() {
-      return myName;
+    public @Nls String getName() {
+      return myName.get();
     }
 
     public Icon getIcon() {
@@ -425,7 +435,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myLayout = myActionLayout;
-        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, myDefaultLayout.myName);
+        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
         adjustEditorsVisibility();
       }
     }
@@ -434,5 +444,25 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   @NotNull
   private String getLayoutPropertyName() {
     return myName + "Layout";
+  }
+
+  @Override
+  public @Nullable VirtualFile getFile() {
+    return getTextEditor().getFile();
+  }
+
+  @Override
+  public @NotNull Editor getEditor() {
+    return getTextEditor().getEditor();
+  }
+
+  @Override
+  public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+    return getTextEditor().canNavigateTo(navigatable);
+  }
+
+  @Override
+  public void navigateTo(@NotNull Navigatable navigatable) {
+    getTextEditor().navigateTo(navigatable);
   }
 }

@@ -1,11 +1,13 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA with Python plugin" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="BUNDLED" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <log_file alias="idea.log" path="$PROJECT_DIR$/system/idea-py/log/idea.log" />
     <log_file alias="build.log" path="$PROJECT_DIR$/system/idea-py/log/build-log/build.log" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <module name="intellij.python.community.plugin.main" />
-    <shortenClasspath name="CLASSPATH_FILE" />
-    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=240m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -XX:CICompilerCount=2 -ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Djdk.attach.allowAttachSelf -Dfus.internal.test.mode=true -Dkotlinx.coroutines.debug=off -Djdk.module.illegalAccess.silent=true -Didea.config.path=../config/idea-py -Didea.system.path=../system/idea-py -Didea.initially.ask.config=true" />
+    <shortenClasspath name="ARGS_FILE" />
+    <option name="VM_PARAMETERS" value="-Xmx512m -XX:ReservedCodeCacheSize=240m -XX:+UseG1GC -XX:SoftRefLRUPolicyMSPerMB=50 -XX:MaxJavaStackTraceDepth=10000 -XX:CICompilerCount=2 -ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.jre.check=true -Didea.is.internal=true -Didea.debug.mode=true -Djdk.attach.allowAttachSelf -Dfus.internal.test.mode=true -Dkotlinx.coroutines.debug=off -Djdk.module.illegalAccess.silent=true -Didea.config.path=../config/idea-py -Didea.system.path=../system/idea-py -Didea.initially.ask.config=true" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin" />
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="" />

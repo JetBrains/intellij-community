@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl
 
-import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.util.lazyPub
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -12,6 +14,12 @@ import kotlin.coroutines.CoroutineContext
  */
 class CoroutineExceptionHandlerImpl : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
   override fun handleException(context: CoroutineContext, exception: Throwable) {
-    StartupAbortedException.processException(exception)
+    if (exception is ProcessCanceledException) return
+
+    kotlin.runCatching { LOG.error("Unhandled exception in $context", exception) }
+  }
+
+  companion object {
+    private val LOG: Logger by lazyPub { Logger.getInstance(CoroutineExceptionHandlerImpl::class.java) }
   }
 }

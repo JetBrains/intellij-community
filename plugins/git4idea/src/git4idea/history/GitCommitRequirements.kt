@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.util.registry.Registry
 
-class GitCommitRequirements(private val includeRootChanges: Boolean = true,
-                            val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GIT_CONFIG,
-                            val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
+data class GitCommitRequirements(private val includeRootChanges: Boolean = true,
+                                 val diffRenameLimit: DiffRenameLimit = DiffRenameLimit.GIT_CONFIG,
+                                 val diffInMergeCommits: DiffInMergeCommits = DiffInMergeCommits.COMBINED_DIFF) {
 
   fun configParameters(): List<String> {
     val result = mutableListOf<String>()

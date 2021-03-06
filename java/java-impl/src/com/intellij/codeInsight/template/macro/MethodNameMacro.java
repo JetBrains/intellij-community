@@ -31,11 +31,6 @@ public class MethodNameMacro extends Macro {
   }
 
   @Override
-  public String getPresentableName() {
-    return JavaBundle.message("macro.methodname");
-  }
-
-  @Override
   @NotNull
   public String getDefaultValue() {
     return "a";

@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsContext;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +17,7 @@ import javax.swing.*;
  * @author alex
  * @author Konstantin Bulenkov
  */
-public class DialogUtil{
+public final class DialogUtil{
 
   private DialogUtil() {}
 
@@ -40,13 +29,14 @@ public class DialogUtil{
     setTextWithMnemonic(button, button.getText(), mn);
   }
 
-  public static void setTextWithMnemonic(@NotNull AbstractButton button, String text) {
+  public static void setTextWithMnemonic(@NotNull AbstractButton button, @NlsContexts.Button String text) {
     setTextWithMnemonic(button, text, UIUtil.MNEMONIC);
   }
 
-  public static void setTextWithMnemonic(@NotNull AbstractButton button, String text, char mn) {
+  public static void setTextWithMnemonic(@NotNull AbstractButton button, @NlsContexts.Button String text, char mn) {
     if (text != null) {
-      final StringBuilder realText = new StringBuilder();
+      @Nls
+      StringBuilder realText = new StringBuilder();
       char mnemonic = '\0';
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
@@ -85,7 +75,8 @@ public class DialogUtil{
   public static void registerMnemonic(JLabel label, @Nullable JComponent target, char mn) {
     String text = label.getText();
     if (text != null) {
-      final StringBuilder realText = new StringBuilder(text.length());
+      @Nls
+      StringBuilder realText = new StringBuilder(text.length());
       char mnemonic = '\0';
       int index = -1;
       for (int i = 0; i < text.length(); i++) {

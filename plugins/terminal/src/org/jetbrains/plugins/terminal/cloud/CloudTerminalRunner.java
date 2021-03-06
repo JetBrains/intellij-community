@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.cloud;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.terminal.JBTerminalWidget;
@@ -19,12 +20,12 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
-  private final String myPipeName;
+  private final @NlsSafe String myPipeName;
   private final CloudTerminalProcess myProcess;
   private final TtyResizeHandler myTtyResizeHandler;
   private final boolean myDeferSessionUntilFirstShown;
 
-  public CloudTerminalRunner(@NotNull Project project, String pipeName, CloudTerminalProcess process,
+  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process,
                              @Nullable TtyResizeHandler resizeHandler,
                              boolean deferSessionUntilFirstShown) {
     super(project);
@@ -34,7 +35,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     myDeferSessionUntilFirstShown = deferSessionUntilFirstShown;
   }
 
-  public CloudTerminalRunner(@NotNull Project project, String pipeName, CloudTerminalProcess process) {
+  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process) {
     this(project, pipeName, process, null, false);
   }
 
@@ -45,7 +46,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   }
 
   @Override
-  protected CloudTerminalProcess createProcess(@Nullable String directory) {
+  public CloudTerminalProcess createProcess(@Nullable String directory) {
     return myProcess;
   }
 

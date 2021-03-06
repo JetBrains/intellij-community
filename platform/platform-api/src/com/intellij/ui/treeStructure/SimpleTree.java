@@ -1,20 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.ui.TreeUIHelper;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +38,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   private boolean myIgnoreSelectionChange;
 
   private int myMinHeightInRows = 5;
-
-  private Icon myExpandedHandle;
-  private Icon myCollapsedHandle;
-  private Icon myEmptyHandle;
 
   public SimpleTree() {
     setModel(new DefaultTreeModel(new PatchedDefaultMutableTreeNode()));
@@ -81,9 +72,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
         }
       }
     });
-    if (SystemInfo.isWindows && !SystemInfo.isWinVistaOrNewer) {
-      setUI(new BasicTreeUI());   // In WindowsXP UI handles are not shown :(
-    }
 
     setOpaque(false);
   }
@@ -405,10 +393,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   protected void invokeContextMenu(final MouseEvent e) {
-    SwingUtilities.invokeLater(() -> {
-      final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
-      menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
-    });
+    SwingUtilities.invokeLater(() -> JBPopupMenu.showByEvent(e, myPlace, myPopupGroup));
   }
 
   private class MyMouseListener extends MouseAdapter {
@@ -508,15 +493,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   @Override
-  public final int getToggleClickCount() {
-    SimpleNode node = getSelectedNode();
-    if (node != null) {
-      if (!node.expandOnDoubleClick()) return -1;
-    }
-    return super.getToggleClickCount();
-  }
-
-  @Override
   public void processKeyEvent(final KeyEvent e) {
     super.processKeyEvent(e);
   }
@@ -550,58 +526,5 @@ public class SimpleTree extends Tree implements CellEditorListener {
   @Override
   public void updateUI() {
     super.updateUI();
-
-    myExpandedHandle = null;
-    myCollapsedHandle = null;
-    myEmptyHandle = null;
   }
-
-  /**
-   * @deprecated old way to configure tree icons
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public Icon getHandleIcon(DefaultMutableTreeNode node, TreePath path) {
-    if (node.getChildCount() == 0) return getEmptyHandle();
-    return isExpanded(path) ? getExpandedHandle() : getCollapsedHandle();
-
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getTreeExpandedIcon} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public Icon getExpandedHandle() {
-    if (myExpandedHandle == null) {
-      myExpandedHandle = UIUtil.getTreeExpandedIcon();
-    }
-    return myExpandedHandle;
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getTreeCollapsedIcon} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public Icon getCollapsedHandle() {
-    if (myCollapsedHandle == null) {
-      myCollapsedHandle = UIUtil.getTreeCollapsedIcon();
-    }
-    return myCollapsedHandle;
-  }
-
-  /**
-   * @deprecated use {@link EmptyIcon#create} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public Icon getEmptyHandle() {
-    if (myEmptyHandle == null) {
-      final Icon expand = getExpandedHandle();
-      myEmptyHandle = expand != null ? EmptyIcon.create(expand) : EmptyIcon.create(0);
-    }
-    return myEmptyHandle;
-  }
-
 }

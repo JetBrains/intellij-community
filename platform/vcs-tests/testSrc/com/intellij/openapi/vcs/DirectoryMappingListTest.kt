@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.startup.impl.StartupManagerImpl
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
@@ -18,13 +15,12 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.junit.Assume
 import java.io.File
-import java.nio.file.Paths
+import java.io.IOException
+import java.nio.file.FileSystemException
+import java.nio.file.Files
 
 class DirectoryMappingListTest : HeavyPlatformTestCase() {
   private val BASE_PATH = "/vcs/directoryMappings/"
@@ -34,7 +30,9 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
   private lateinit var mappings: NewMappings
   private lateinit var projectRoot: VirtualFile
-  private lateinit var rootPath: String
+
+  private val rootPath: String
+    get() = projectRoot.path
 
   private lateinit var vcsManager: ProjectLevelVcsManagerImpl
 
@@ -48,12 +46,9 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
                                          "#" + VcsInitialization::class.java.name)
 
     val root = FileUtil.toSystemIndependentName(VcsTestUtil.getTestDataPath() + BASE_PATH)
+    projectRoot = createTestProjectStructure(null, root, false, tempDir)
 
-    projectRoot = PsiTestUtil.createTestProjectStructure(getTestName(true), null, root, myFilesToDelete, false)
-    rootPath = projectRoot.path
-
-    myProject = ProjectManagerEx.getInstanceEx().loadProject(Paths.get("$rootPath/directoryMappings.ipr"))
-    ProjectManagerEx.getInstanceEx().openTestProject(myProject)
+    myProject = PlatformTestUtil.loadAndOpenProject(projectRoot.toNioPath().resolve("directoryMappings.ipr"), testRootDisposable)
 
     vcsMock = MockAbstractVcs(myProject, MOCK)
     vcsMock2 = MockAbstractVcs(myProject, MOCK2)
@@ -66,13 +61,9 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
 
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     mappings = NewMappings(myProject, vcsManager)
-    mappings.activateActiveVcses()
     Disposer.register(testRootDisposable, mappings)
-
-    UIUtil.dispatchAllInvocationEvents()
-    val startupManager = StartupManager.getInstance(myProject) as StartupManagerImpl
-    startupManager.runStartupActivities()
-    startupManager.runPostStartupActivitiesRegisteredDynamically()
+    mappings.activateActiveVcses()
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     vcsManager.waitForInitialized()
   }
 
@@ -267,7 +258,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingCaseSensitive() {
-    Assume.assumeTrue(SystemInfo.isFileSystemCaseSensitive)
+    IoTestUtil.assumeCaseSensitiveFS()
 
     val roots = listOf(
       "$rootPath/parent/Child",
@@ -300,7 +291,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
   }
 
   fun testRootMappingCaseInsensitive() {
-    Assume.assumeTrue(!SystemInfo.isFileSystemCaseSensitive)
+    IoTestUtil.assumeCaseInsensitiveFS()
 
     val roots = listOf(
       "$rootPath/parent/Child",
@@ -469,7 +460,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(50),
       "$rootPath/parent/" + "dir/".repeat(150) + "some/other/dirs",
       "$rootPath/parent/" + "dir/".repeat(180),
-      "$rootPath/parent/" + "dir/".repeat(220)
+      "$rootPath/parent/" + "dir/".repeat(200)
     ))
 
     PlatformTestUtil.startPerformanceTest("NewMappings nested roots VirtualFiles", 500) {
@@ -481,28 +472,30 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     }.assertTiming()
   }
 
-
   private fun createDirectories(paths: List<String>): List<VirtualFile> {
-    return paths.map { createDirectory(it) }
+    return paths.map { createFile(it, isDirectory = true) }
   }
 
-  private fun createDirectory(path: String): VirtualFile {
-    return createFile(path, true)
-  }
-
-  private fun createFile(path: String, isDirectory: Boolean = false): VirtualFile {
-    val file = File(FileUtil.toSystemDependentName(path))
-    if (isDirectory) {
-      val created = file.exists() && file.isDirectory || file.mkdirs()
-      assertTrue("Can't create directory: $file", created)
+  private fun createFile(filePath: String, isDirectory: Boolean = false): VirtualFile {
+    // passed path contains backslash - that's why toSystemDependentName is used here
+    val file = File(FileUtil.toSystemDependentName(filePath)).toPath()
+    try {
+      if (isDirectory) {
+        Files.createDirectories(file)
+      }
+      else if (!Files.exists(file)) {
+        Files.createDirectories(file.parent)
+        Files.createFile(file)
+      }
     }
-    else {
-      createDirectory(file.parent)
-      val created = file.exists() && file.isFile || file.createNewFile()
-      assertTrue("Can't create file: $file", created)
+    catch (e: FileSystemException) {
+      throw IOException("Cannot create $filePath", e)
     }
-    myFilesToDelete.add(file)
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+    if (filePath != "/" && file.parent != null && !FileUtil.isAncestor(FileUtil.getTempDirectory(), file.toString(), false)) {
+      tempDir.scheduleDelete(file)
+    }
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
+           ?: throw IllegalStateException("Cannot find virtual file: $file")
   }
 
   private fun getVcsFor(file: VirtualFile): String? {

@@ -1,11 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeWithMe
 
+import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.Processor
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.jvm.JvmStatic
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -26,7 +31,11 @@ data class ClientId(val value: String) {
     }
 
     companion object {
-        private val defaultLocalId = ClientId("Host")
+
+        /**
+         * Default client id for local application
+         */
+        val defaultLocalId = ClientId("Host")
 
         /**
          * Specifies behavior for ClientId.current
@@ -44,7 +53,6 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         var localId = defaultLocalId
-            get
             private set
 
         /**
@@ -69,15 +77,14 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         val currentOrNull: ClientId?
-            get() = ClientIdValueStoreService.tryGetInstance()?.value?.let(::ClientId)
+            get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
 
         /**
          * Overrides the ID that is considered to be local to this process. Can be only invoked once.
          */
         @JvmStatic
         fun overrideLocalId(newId: ClientId) {
-            require(
-                localId == defaultLocalId)
+            require(localId == defaultLocalId)
             localId = newId
         }
 
@@ -96,6 +103,32 @@ data class ClientId(val value: String) {
             get() = this == null || this == localId
 
         /**
+         * Returns true if the given ID is local or a client is still in the session.
+         * Consider subscribing to a proper lifetime instead of this check.
+         */
+        @JvmStatic
+        fun isValidId(clientId: ClientId?): Boolean {
+            return clientId.isValid
+        }
+
+        /**
+         * Is true if the given ID is local or a client is still in the session.
+         * Consider subscribing to a proper lifetime instead of this check
+         */
+        @JvmStatic
+        val ClientId?.isValid: Boolean
+            get() = ClientIdService.tryGetInstance()?.isValid(this) ?: true
+
+        /**
+         * Returns a disposable object associated with the given ID.
+         * Consider using a lifetime that is usually passed along with the ID
+         */
+        @JvmStatic
+        fun ClientId?.toDisposable(): Disposable {
+            return ClientIdService.tryGetInstance()?.toDisposable(this) ?: Disposer.newDisposable()
+        }
+
+        /**
          * Invokes a runnable under the given ClientId
          */
         @JvmStatic
@@ -112,21 +145,43 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-            val clientIdStore = ClientIdValueStoreService.tryGetInstance() ?: return action()
-            val old = clientIdStore.value
+            val clientIdService = ClientIdService.tryGetInstance() ?: return action()
+
+            if (!clientIdService.isValid(clientId)) {
+                Logger.getInstance(ClientId::class.java).warn("Invalid clientId: $clientId", Throwable())
+            }
+
+            val foreignMainThreadActivity = clientIdService.checkLongActivity &&
+                                            ApplicationManager.getApplication().isDispatchThread &&
+                                            !clientId.isLocal
+            val old = clientIdService.clientIdValue
             try {
-                clientIdStore.value = clientId?.value
-                return action()
+                clientIdService.clientIdValue = clientId?.value
+                if (foreignMainThreadActivity) {
+                    val beforeActionTime = System.currentTimeMillis()
+                    val result = action()
+                    val delta = System.currentTimeMillis() - beforeActionTime
+                    if (delta > 1000) {
+                        Logger.getInstance(ClientId::class.java).warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
+                    }
+                    return result
+                } else
+                    return action()
             } finally {
-                clientIdStore.value = old
+                clientIdService.clientIdValue = old
             }
         }
 
         @JvmStatic
-        fun decorateRunnable(runnable: java.lang.Runnable) : java.lang.Runnable {
-            if (!propagateAcrossThreads) return runnable
+        fun decorateRunnable(runnable: Runnable) : Runnable {
+            if (!propagateAcrossThreads) {
+                return runnable
+            }
+
             val currentId = currentOrNull
-            return Runnable { withClientId(currentId, runnable) }
+            return Runnable {
+                withClientId(currentId) { runnable.run() }
+            }
         }
 
         @JvmStatic
@@ -156,5 +211,32 @@ data class ClientId(val value: String) {
             val currentId = currentOrNull
             return Processor { withClientId(currentId) { processor.process(it) } }
         }
+
+        /** Sets current ClientId.
+         * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no another ways.
+         * In most cases it's convenient and preferable to use [withClientId].
+         */
+        @JvmStatic
+        fun trySetCurrentClientId(clientId: ClientId?) {
+            val clientIdService = ClientIdService.tryGetInstance()
+            if (clientIdService != null) {
+                clientIdService.clientIdValue = clientId?.value
+            }
+        }
+
     }
+}
+
+fun isForeignClientOnServer(): Boolean {
+    return !ClientId.isCurrentlyUnderLocalId && ClientId.localId == ClientId.defaultLocalId
+}
+
+fun getStackTrace(): String {
+    val builder = StringBuilder()
+    val trace = Thread.currentThread().stackTrace
+    for (element in trace) {
+        with(builder) { append("\tat $element\n") }
+    }
+
+    return builder.toString()
 }

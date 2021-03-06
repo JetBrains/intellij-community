@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -26,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.MethodSignature;
@@ -57,12 +57,20 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   public void testSimple() { doTest(true); }
   public void testAnnotation() { doTest(true); }
   public void testTransformJBAnnotations() {
+    doCustomNotNullAnnotations();
+  }
+
+  public void testDoNotTransformJBAnnotationsWhenNewNonAvailable() {
+    doCustomNotNullAnnotations();
+  }
+  
+  private void doCustomNotNullAnnotations() {
     NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(getProject());
     String defaultNotNull = nullableNotNullManager.getDefaultNotNull();
     List<String> notNulls = nullableNotNullManager.getNotNulls();
     String defaultNullable = nullableNotNullManager.getDefaultNullable();
     List<String> nullables = nullableNotNullManager.getNullables();
-    
+
     try {
       nullableNotNullManager.setNotNulls(ArrayUtil.append(ArrayUtil.toStringArray(notNulls),"p.NN"));
       nullableNotNullManager.setDefaultNotNull("p.NN");
@@ -79,6 +87,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
       nullableNotNullManager.setNullables(ArrayUtil.toStringArray(nullables));
     }
   }
+
   public void testJavadocForChangedParamName() { doTest(true); }
   public void testThrowsListFromMethodHierarchy() { doTest(true); }
   public void testThrowsListUnrelatedMethods() { doTest(true); }
@@ -101,7 +110,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   public void testVoidNameSuggestion() { doTest(false); }
 
   public void testLongFinalParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.RIGHT_MARGIN = 80;
     javaSettings.KEEP_LINE_BREAKS = true;
@@ -116,7 +125,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   }
 
   public void testLongParameterList() {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.RIGHT_MARGIN = 80;
     javaSettings.KEEP_LINE_BREAKS = false;

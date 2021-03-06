@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
@@ -30,7 +31,7 @@ internal fun hasNeededDependenciesToRunConsole(module: Module): Boolean {
   return sdkVersion != null && hasNeededDependenciesToRunConsole(module, sdkVersion)
 }
 
-internal fun sdkVersionIfHasNeededDependenciesToRunConsole(module: Module): String? {
+internal fun sdkVersionIfHasNeededDependenciesToRunConsole(module: Module): @NlsSafe String? {
   val sdkVersion = getSdkVersion(module)
   return sdkVersion?.takeIf {
     hasNeededDependenciesToRunConsole(module, it)

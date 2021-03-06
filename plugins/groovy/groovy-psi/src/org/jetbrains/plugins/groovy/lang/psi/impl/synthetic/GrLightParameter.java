@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiFile;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -30,7 +32,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   private final GrTypeElement myTypeElement;
   private final PsiType myTypeGroovy;
 
-  public GrLightParameter(@NotNull String name, @Nullable PsiType type, @NotNull PsiElement scope) {
+  public GrLightParameter(@NlsSafe @NotNull String name, @Nullable PsiType type, @NotNull PsiElement scope) {
     super(scope.getManager(), name, getTypeNotNull(type, scope), GroovyLanguage.INSTANCE);
     myScope = scope;
     myModifierList = new GrLightModifierList(this);
@@ -158,7 +160,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   @Override
-  public GrLightParameter setModifiers(String... modifiers) {
+  public GrLightParameter setModifiers(@GrModifierConstant String... modifiers) {
     GrLightModifierList modifiersList = new GrLightModifierList(getContext());
     modifiersList.setModifiers(modifiers);
     myModifierList = modifiersList;

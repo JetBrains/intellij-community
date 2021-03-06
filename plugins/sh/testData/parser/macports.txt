@@ -1,5 +1,6 @@
 SHELL_SCRIPT
-  PsiComment(shebang)('#!/bin/bash\n')
+  PsiComment(shebang)('#!/bin/bash')
+  PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
       GENERIC_COMMAND_DIRECTIVE
@@ -68,7 +69,8 @@ SHELL_SCRIPT
               PsiWhiteSpace(' ')
               SIMPLE_COMMAND_ELEMENT
                 REDIRECTION
-                  PsiElement(<<<)('<<< ')
+                  PsiElement(<<<)('<<<')
+                  PsiWhiteSpace(' ')
                   VARIABLE
                     PsiElement(var)('$MACPORTS')
           PsiElement(CLOSE_BACKQUOTE)('`')

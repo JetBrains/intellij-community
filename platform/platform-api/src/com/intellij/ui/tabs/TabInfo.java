@@ -13,8 +13,13 @@ import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
-import java.awt.Color;
-import java.awt.Component;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
@@ -22,12 +27,10 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public final class TabInfo implements Queryable, PlaceProvider<String> {
+import static com.intellij.ui.tabs.impl.JBTabsImpl.PINNED;
+
+public final class TabInfo implements Queryable, PlaceProvider {
 
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";
@@ -49,7 +52,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
 
   private Icon myIcon;
-  private String myPlace;
+  private @NonNls String myPlace;
   private Object myObject;
   private JComponent mySideComponent;
   private Reference<JComponent> myLastFocusOwner;
@@ -66,12 +69,11 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private JComponent myActionsContextComponent;
 
   private final SimpleColoredText myText = new SimpleColoredText();
-  private String myTooltipText;
+  private @NlsContexts.Tooltip String myTooltipText;
 
   private int myDefaultStyle = -1;
   private Color myDefaultForeground;
-  private Color myDefaultWaveColor;
-
+  private TextAttributes editorAttributes;
   private SimpleTextAttributes myDefaultAttributes;
   private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
 
@@ -98,26 +100,32 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setText(@NotNull String text) {
+  public TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
     TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
-    TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
-    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
+    SimpleTextAttributes defaultAttributes = getDefaultAttributes();
+    if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes.toTextAttributes())) {
       clearText(false);
-      append(text, getDefaultAttributes());
+      append(text, defaultAttributes);
     }
     return this;
   }
 
   @NotNull
   private SimpleTextAttributes getDefaultAttributes() {
-    SimpleTextAttributes attributes = myDefaultAttributes;
-    if (attributes == null) {
-      myDefaultAttributes = attributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
-                                                     myDefaultForeground, myDefaultWaveColor);
-
+    if (myDefaultAttributes == null) {
+      int style = (myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN)
+                  | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR;
+      if (editorAttributes != null) {
+        SimpleTextAttributes attr = SimpleTextAttributes.fromTextAttributes(editorAttributes);
+        attr = SimpleTextAttributes.merge(new SimpleTextAttributes(style, myDefaultForeground), attr);
+        myDefaultAttributes = attr;
+      }
+      else {
+        myDefaultAttributes = new SimpleTextAttributes(style, myDefaultForeground);
+      }
     }
-    return attributes;
+    return myDefaultAttributes;
   }
 
   @NotNull
@@ -131,7 +139,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+  public TabInfo append(@NotNull @NlsContexts.Label String fragment, @NotNull SimpleTextAttributes attributes) {
     final String old = myText.toString();
     myText.append(fragment, attributes);
     myChangeSupport.firePropertyChange(TEXT, old, myText.toString());
@@ -166,8 +174,12 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return myComponent;
   }
 
+  public boolean isPinned() {
+    return UIUtil.isClientPropertyTrue(getComponent(), PINNED);
+  }
+
   @NotNull
-  public String getText() {
+  public @NlsContexts.TabTitle String getText() {
     return myText.toString();
   }
 
@@ -196,7 +208,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setActions(ActionGroup group, String place) {
+  public TabInfo setActions(ActionGroup group, @NonNls String place) {
     ActionGroup old = myGroup;
     myGroup = group;
     myPlace = place;
@@ -345,8 +357,8 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @NotNull
-  public TabInfo setDefaultWaveColor(final Color waveColor) {
-    myDefaultWaveColor = waveColor;
+  public TabInfo setDefaultAttributes(@Nullable TextAttributes attributes) {
+    editorAttributes = attributes;
     myDefaultAttributes = null;
     update();
     return this;
@@ -372,7 +384,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return this;
   }
 
-  public String getTooltipText() {
+  public @NlsContexts.Tooltip String getTooltipText() {
     return myTooltipText;
   }
 
@@ -397,7 +409,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   }
 
   @Override
-  public void putInfo(@NotNull Map<String, String> info) {
+  public void putInfo(@NotNull Map<? super String, ? super String> info) {
     if (myQueryable != null) {
       myQueryable.putInfo(info);
     }

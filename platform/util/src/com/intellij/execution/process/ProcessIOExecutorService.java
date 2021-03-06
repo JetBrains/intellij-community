@@ -2,6 +2,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.util.concurrency.CountingThreadFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -13,8 +14,8 @@ import java.util.concurrent.*;
  *
  * @author peter
  */
-public class ProcessIOExecutorService extends ThreadPoolExecutor {
-  public static final String POOLED_THREAD_PREFIX = "I/O pool ";
+public final class ProcessIOExecutorService extends ThreadPoolExecutor {
+  public static final @NonNls String POOLED_THREAD_PREFIX = "I/O pool ";
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
 
   private ProcessIOExecutorService() {
@@ -26,7 +27,7 @@ public class ProcessIOExecutorService extends ThreadPoolExecutor {
     return ((CountingThreadFactory)getThreadFactory()).getCount();
   }
 
-  private static class MyCountingThreadFactory extends CountingThreadFactory {
+  private static final class MyCountingThreadFactory extends CountingThreadFactory {
     // Ensure that we don't keep the classloader of the plugin which caused this thread to be created
     // in Thread.inheritedAccessControlContext
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();

@@ -3,3 +3,4 @@ class C:
         pass
 
 c = C()
+print(C)

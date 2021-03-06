@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -232,7 +233,7 @@ public final class NavigationUtil {
       if (!((MarkupModelEx)model).processRangeHighlightersOverlappingWith(range.getStartOffset(), range.getEndOffset(),
                                                                           highlighter -> {
                                                                             if (highlighter.isValid() && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
-                                                                              TextAttributes textAttributes = highlighter.getTextAttributes();
+                                                                              TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
                                                                               if (textAttributes != null) {
                                                                                 Color color = textAttributes.getBackgroundColor();
                                                                                 return !(color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128);
@@ -288,7 +289,7 @@ public final class NavigationUtil {
   }
 
   private static JBPopup getPsiElementPopup(final List<Object> elements, final Map<PsiElement, GotoRelatedItem> itemsMap,
-                                           final String title, final boolean showContainingModules, final Processor<Object> processor) {
+                                            final @PopupTitle String title, final boolean showContainingModules, final Processor<Object> processor) {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
@@ -368,8 +369,9 @@ public final class NavigationUtil {
         return component;
       }
     };
-    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<Object>(title, elements) {
+    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<>(title, elements) {
       final Map<Object, ListSeparator> separators = new HashMap<>();
+
       {
         String current = null;
         boolean hasTitle = false;
@@ -377,7 +379,9 @@ public final class NavigationUtil {
           final GotoRelatedItem item = itemsMap.get(element);
           if (item != null && !StringUtil.equals(current, item.getGroup())) {
             current = item.getGroup();
-            separators.put(element, new ListSeparator(hasTitle && StringUtil.isEmpty(current) ? "Other" : current));
+            separators.put(element, new ListSeparator(
+              hasTitle && StringUtil.isEmpty(current) ? CodeInsightBundle.message("goto.related.items.separator.other") : current)
+            );
             if (!hasTitle && !StringUtil.isEmpty(current)) {
               hasTitle = true;
             }
@@ -417,7 +421,7 @@ public final class NavigationUtil {
       }
     }) {
     };
-    popup.getList().setCellRenderer(new PopupListElementRenderer<Object>(popup) {
+    popup.getList().setCellRenderer(new PopupListElementRenderer<>(popup) {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -429,7 +433,7 @@ public final class NavigationUtil {
             @Override
             protected void paintComponent(Graphics g) {
               g.setColor(new JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
-              g.fillRect(0,0,getWidth(), getHeight());
+              g.fillRect(0, 0, getWidth(), getHeight());
               super.paintComponent(g);
             }
           };

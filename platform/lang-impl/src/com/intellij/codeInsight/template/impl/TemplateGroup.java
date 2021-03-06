@@ -16,7 +16,9 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.options.CompoundScheme;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,20 +35,20 @@ public class TemplateGroup extends CompoundScheme<TemplateImpl> {
     isModified = modified;
   }
 
-  public TemplateGroup(final String name) {
+  public TemplateGroup(final @NlsSafe String name) {
     this(name, null);
   }
 
-  public TemplateGroup(String name, @Nullable String replace) {
+  public TemplateGroup(@NlsSafe String name, @NlsSafe @Nullable String replace) {
     super(name);
     myReplace = replace;
   }
 
-  public String getReplace() {
+  public @NlsSafe String getReplace() {
     return myReplace;
   }
 
-  public boolean containsTemplate(@NotNull final String key, @Nullable final String id) {
+  public boolean containsTemplate(@NotNull @NlsSafe final String key, @Nullable @NonNls final String id) {
     return ContainerUtil.or(getElements(), template -> key.equals(template.getKey()) || id != null && id.equals(template.getId()));
   }
 

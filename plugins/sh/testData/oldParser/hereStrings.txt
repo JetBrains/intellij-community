@@ -7,7 +7,8 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
-          PsiElement(<<<)('<<< ')
+          PsiElement(<<<)('<<<')
+          PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
             PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
@@ -53,7 +54,8 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
-          PsiElement(<<<)('<<< ')
+          PsiElement(<<<)('<<<')
+          PsiWhiteSpace(' ')
           STRING
             PsiElement(RAW_STRING)(''CREATE DATABASE dev'')
     PsiWhiteSpace(' ')
@@ -97,7 +99,8 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
-          PsiElement(<<<)('<<< ')
+          PsiElement(<<<)('<<<')
+          PsiWhiteSpace(' ')
           STRING
             PsiElement(OPEN_QUOTE)('"')
             PsiElement(STRING_CONTENT)('CREATE DATABASE dev')
@@ -130,7 +133,8 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
               REDIRECTION
-                PsiElement(<<<)('<<< ')
+                PsiElement(<<<)('<<<')
+                PsiWhiteSpace(' ')
                 PsiElement(word)('[[{')
                 VARIABLE
                   PsiElement(var)('$op')
@@ -141,8 +145,9 @@ SHELL_SCRIPT
                   PsiElement(word)('branch')
                   PsiElement(})('}')
                 PsiElement(word)('\\<<<]]+={}')
-                PsiWhiteSpace('   ')
-                PsiElement(word)('sdfsdfsd')
+            PsiWhiteSpace('   ')
+            LITERAL
+              PsiElement(word)('sdfsdfsd')
         PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -161,7 +166,8 @@ SHELL_SCRIPT
             PsiWhiteSpace('  ')
             SIMPLE_COMMAND_ELEMENT
               REDIRECTION
-                PsiElement(<<<)('<<< ')
+                PsiElement(<<<)('<<<')
+                PsiWhiteSpace(' ')
                 PsiElement(word)('[[{')
                 VARIABLE
                   PsiElement(var)('$op')
@@ -193,7 +199,8 @@ SHELL_SCRIPT
             PsiWhiteSpace('  ')
             SIMPLE_COMMAND_ELEMENT
               REDIRECTION
-                PsiElement(<<<)('<<< ')
+                PsiElement(<<<)('<<<')
+                PsiWhiteSpace(' ')
                 STRING
                   PsiElement(RAW_STRING)(''[[8+8]][[${branch}\\)]$\&\&]+={}    p'')
         PsiWhiteSpace('  ')
@@ -216,7 +223,8 @@ SHELL_SCRIPT
             PsiWhiteSpace(' ')
             SIMPLE_COMMAND_ELEMENT
               REDIRECTION
-                PsiElement(<<<)('<<< ')
+                PsiElement(<<<)('<<<')
+                PsiWhiteSpace(' ')
                 STRING
                   PsiElement(OPEN_QUOTE)('"')
                   PsiElement(STRING_CONTENT)('[[8+8]][[')

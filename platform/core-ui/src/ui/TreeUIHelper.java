@@ -1,21 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 public abstract class TreeUIHelper {
   public static TreeUIHelper getInstance() {
-    return ServiceManager.getService(TreeUIHelper.class);
+    return ApplicationManager.getApplication().getService(TreeUIHelper.class);
   }
 
   /**
    * @deprecated use JBTree class instead, it will automatically configure tool tips
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void installToolTipHandler(JTree tree);
 
   public abstract void installEditSourceOnDoubleClick(JTree tree);

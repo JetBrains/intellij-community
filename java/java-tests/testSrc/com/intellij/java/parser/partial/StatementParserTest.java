@@ -33,6 +33,10 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testYieldIncomplete0() { doParserTest("yield "); }
   public void testYieldIncomplete1() { doParserTest("yield x"); }
   public void testYieldCall() { doParserTest("foo.yield();"); }
+  public void testYieldDecrement() { doParserTest("yield ++yield;"); }
+  public void testYieldCallNonQualified() { doParserTest("yield();"); }
+  public void testYieldCallNonQualifiedWithLambda() { doParserTest("yield(() -> {});"); }
+  public void testYieldLambda() { doParserTest("yield () -> {};"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
@@ -187,6 +191,8 @@ public class StatementParserTest extends JavaParsingTestCase {
 
   public void testConstructorRef() { doParserTest("Foo::new"); }
   public void testConstructorWithTypeParamsRef() { doParserTest("Foo<Integer>::new"); }
+
+  public void testVarLabel() { doParserTest("var: foo();"); }
 
   private void doBlockParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true));

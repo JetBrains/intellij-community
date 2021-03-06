@@ -182,7 +182,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
 
     private static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String name = methodExpression.getReferenceName();
+      @NonNls final String name = methodExpression.getReferenceName();
       if (!regexMethodNames.contains(name)) {
         return false;
       }

@@ -1,24 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
+import java.util.function.Supplier
+import java.util.stream.Collectors
 
 @CompileStatic
-class BuildContextImpl extends BuildContext {
+final class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final CompilationContextImpl compilationContext
+
+  // thread-safe - forkForParallelTask pass it to child context
+  private final ConcurrentLinkedQueue<Pair<Path, String>> distFiles
 
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
@@ -28,27 +42,27 @@ class BuildContextImpl extends BuildContext {
 
     def compilationContext = CompilationContextImpl.create(communityHome, projectHome,
                                                            createBuildOutputRootEvaluator(projectHome, productProperties), options)
-    def context = new BuildContextImpl(compilationContext, productProperties,
-                                       windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                       proprietaryBuildTools)
-    return context
+    return new BuildContextImpl(compilationContext, productProperties,
+                                windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                proprietaryBuildTools, new ConcurrentLinkedQueue<>())
   }
 
   private BuildContextImpl(CompilationContextImpl compilationContext, ProductProperties productProperties,
                            WindowsDistributionCustomizer windowsDistributionCustomizer,
                            LinuxDistributionCustomizer linuxDistributionCustomizer,
                            MacDistributionCustomizer macDistributionCustomizer,
-                           ProprietaryBuildTools proprietaryBuildTools) {
+                           ProprietaryBuildTools proprietaryBuildTools,
+                           @NotNull ConcurrentLinkedQueue<Pair<Path, String>> distFiles) {
     this.compilationContext = compilationContext
     this.global = compilationContext.global
     this.productProperties = productProperties
+    this.distFiles = distFiles
     this.proprietaryBuildTools = proprietaryBuildTools == null ? ProprietaryBuildTools.DUMMY : proprietaryBuildTools
     this.windowsDistributionCustomizer = windowsDistributionCustomizer
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
-    def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
-    applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+    applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
     if (productProperties.customProductCode != null) {
       applicationInfo.productCode = productProperties.customProductCode
     }
@@ -58,29 +72,41 @@ class BuildContextImpl extends BuildContext {
     else if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
-    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
+
+    bundledJreManager = new BundledJreManager(this)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
-    systemSelector = productProperties.getSystemSelector(applicationInfo)
+    systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-    bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
+    bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar")
+    dependenciesProperties = new DependenciesProperties(this)
+    messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
+  }
+
+  @Override
+  void addDistFile(@NotNull Pair<Path, String> file) {
+    messages.debug("$file requested to be added to app resources")
+    distFiles.add(file)
+  }
+
+  @NotNull Collection<Pair<Path, String>> getDistFiles() {
+    return List.copyOf(distFiles)
   }
 
   private String readSnapshotBuildNumber() {
-    new File(paths.communityHome, "build.txt").text.trim()
+    return Files.readString(paths.communityHomeDir.resolve("build.txt")).trim()
   }
 
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
                                                                                               ProductProperties productProperties) {
     return { JpsProject project, BuildMessages messages ->
-      def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
-      def applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
       return "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     } as BiFunction<JpsProject, BuildMessages, String>
   }
 
-  static File findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
+  static @NotNull Path findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
     JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
     if (module == null) {
       messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
@@ -89,8 +115,9 @@ class BuildContextImpl extends BuildContext {
     def appInfoFile = module.sourceRoots.collect { new File(it.file, appInfoRelativePath) }.find { it.exists() }
     if (appInfoFile == null) {
       messages.error("Cannot find $appInfoRelativePath in '$module.name' module")
+      return null
     }
-    return appInfoFile
+    return appInfoFile.toPath()
   }
 
   @Override
@@ -173,29 +200,54 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  File findFileInModuleSources(String moduleName, String relativePath) {
-    getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
-      new File(it.first, StringUtil.trimStart(relativePath, it.second))
-    }.find { it.exists() }
+  void notifyArtifactBuilt(Path artifactPath) {
+    compilationContext.notifyArtifactWasBuilt(artifactPath)
   }
 
-  @SuppressWarnings(["GrUnresolvedAccess", "GroovyInArgumentCheck"])
-  @CompileDynamic
-  private static List<Pair<File, String>> getSourceRootsWithPrefixes(JpsModule module) {
-    module.sourceRoots.findAll { it.rootType in JavaModuleSourceRootTypes.PRODUCTION }.collect {
-      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") :
-                      it.properties.relativeOutputPath
-      if (!prefix.endsWith("/")) prefix += "/"
-      Pair.create(it.file, StringUtil.trimStart(prefix, "/"))
+  @Override
+  void notifyArtifactWasBuilt(Path artifactPath) {
+    compilationContext.notifyArtifactWasBuilt(artifactPath)
+  }
+
+  @Override
+  @Nullable Path findFileInModuleSources(String moduleName, String relativePath) {
+    for (Pair<Path, String> info : getSourceRootsWithPrefixes(findRequiredModule(moduleName)) ) {
+      Path result = info.first.resolve(StringUtil.trimStart(StringUtil.trimStart(relativePath, info.second), "/"))
+      if (Files.exists(result)) {
+        return result
+      }
     }
+    return null
+  }
+
+  private static @NotNull List<Pair<Path, String>> getSourceRootsWithPrefixes(JpsModule module) {
+    return module.sourceRoots
+      .stream()
+      .filter({ JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) })
+      .map({ JpsModuleSourceRoot moduleSourceRoot ->
+        String prefix
+        JpsElement properties = moduleSourceRoot.properties
+        if (properties instanceof JavaSourceRootProperties) {
+          prefix = ((JavaSourceRootProperties)properties).packagePrefix.replace(".", "/")
+        }
+        else {
+          prefix = ((JavaResourceRootProperties)properties).relativeOutputPath
+        }
+        if (!prefix.endsWith("/")) {
+          prefix += "/"
+        }
+        return new Pair<>(Paths.get(JpsPathUtil.urlToPath(moduleSourceRoot.getUrl())), StringUtil.trimStart(prefix, "/"))
+      })
+      .collect(Collectors.toList())
   }
 
   @Override
   void signExeFile(String path) {
     if (proprietaryBuildTools.signTool != null) {
-      messages.progress("Signing $path")
-      proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signed $path")
+      executeStep("Signing $path", BuildOptions.WIN_SIGN_STEP) {
+        proprietaryBuildTools.signTool.signExeFile(path, this)
+        messages.info("Signed $path")
+      }
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
@@ -203,13 +255,20 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  boolean executeStep(String stepMessage, String stepId, Closure step) {
+  boolean executeStep(String stepMessage, String stepId, Runnable step) {
     if (options.buildStepsToSkip.contains(stepId)) {
       messages.info("Skipping '$stepMessage'")
     }
     else {
-      messages.block(stepMessage, step)
+      messages.block(stepMessage, new Supplier<Void>() {
+        @Override
+        Void get() {
+          step.run()
+          return null
+        }
+      })
     }
+    return true
   }
 
   @Override
@@ -226,14 +285,13 @@ class BuildContextImpl extends BuildContext {
   BuildContext forkForParallelTask(String taskName) {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
-    def compilationContextCopy = compilationContext.
-      createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
-    def child = new BuildContextImpl(compilationContextCopy, productProperties,
-                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                     proprietaryBuildTools)
-    child.paths.artifacts = paths.artifacts
-    child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
-    return child
+    def compilationContextCopy =
+      compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
+    def copy = new BuildContextImpl(compilationContextCopy, productProperties,
+                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                    proprietaryBuildTools, distFiles)
+    copy.paths.artifacts = paths.artifacts
+    return copy
   }
 
   @Override
@@ -248,9 +306,8 @@ class BuildContextImpl extends BuildContext {
       compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                    proprietaryBuildTools)
+                                    proprietaryBuildTools, new ConcurrentLinkedQueue<>())
     copy.paths.artifacts = paths.artifacts
-    copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     copy.compilationContext.prepareForBuild()
     return copy
   }
@@ -260,22 +317,14 @@ class BuildContextImpl extends BuildContext {
     return isJavaSupportedInProduct()
   }
 
-  @Override
-  boolean shouldIDECopyJarsByDefault() {
-    return isJavaSupportedInProduct()
-  }
-
   private boolean isJavaSupportedInProduct() {
     return productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
   }
 
-  @CompileDynamic
   @Override
-  void patchInspectScript(String path) {
+  void patchInspectScript(@NotNull Path path) {
     //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
-    ant.replace(file: path) {
-      replacefilter(token: " inspect ", value: " ${productProperties.inspectCommandName} ")
-    }
+    Files.writeString(path, Files.readString(path).replaceAll(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
   @Override

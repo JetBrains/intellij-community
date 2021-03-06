@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class HgExecutableManager {
+public final class HgExecutableManager {
   public static HgExecutableManager getInstance() {
-    return ServiceManager.getService(HgExecutableManager.class);
+    return ApplicationManager.getApplication().getService(HgExecutableManager.class);
   }
 
   @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {
@@ -33,10 +32,10 @@ public class HgExecutableManager {
   @NonNls private static final String DEFAULT_WINDOWS_HG = "hg.exe";
   @NonNls private static final String DEFAULT_UNIX_HG = "hg";
 
-  @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
+  @NotNull private final NotNullLazyValue<String> myDetectedExecutable;
 
   public HgExecutableManager() {
-    myDetectedExecutable = AtomicNotNullLazyValue.createValue(HgExecutableManager::identifyDefaultHgExecutable);
+    myDetectedExecutable = NotNullLazyValue.atomicLazy(HgExecutableManager::identifyDefaultHgExecutable);
   }
 
   @NotNull

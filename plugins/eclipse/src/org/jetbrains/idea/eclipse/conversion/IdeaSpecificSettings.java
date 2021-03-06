@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -39,15 +39,15 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSam
  * Read/write .eml
  */
 public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<ModifiableRootModel, ContentEntry, Sdk> {
-  @NonNls private static final String RELATIVE_MODULE_SRC = "relative-module-src";
-  @NonNls private static final String RELATIVE_MODULE_CLS = "relative-module-cls";
-  @NonNls private static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
-  @NonNls private static final String PROJECT_RELATED = "project-related";
+  @NonNls public static final String RELATIVE_MODULE_SRC = "relative-module-src";
+  @NonNls public static final String RELATIVE_MODULE_CLS = "relative-module-cls";
+  @NonNls public static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
+  @NonNls public static final String PROJECT_RELATED = "project-related";
 
-  @NonNls private static final String SRCROOT_ATTR = "srcroot";
-  @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
+  @NonNls public static final String SRCROOT_ATTR = "srcroot";
+  @NonNls public static final String SRCROOT_BIND_ATTR = "bind";
   private static final Logger LOG = Logger.getInstance(IdeaSpecificSettings.class);
-  @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
+  @NonNls public static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 
   @Override
@@ -302,7 +302,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
             root.setAttribute(INHERIT_JDK, "true");
           }
           else {
-            root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
+            String jdkName = ((JdkOrderEntry)entry).getJdkName();
+            if (jdkName != null) {
+              root.setAttribute("jdk", jdkName);
+            }
             if (jdk != null) {
               root.setAttribute("jdk_type", jdk.getSdkType().getName());
             }

@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -15,11 +16,17 @@ import java.util.Set;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addBoolIfDiffers;
 import static com.intellij.internal.statistic.beans.MetricEventUtilKt.addMetricIfDiffers;
 
+@NonNls
 public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public String getGroupId() {
     return "java.refactoring.settings";
+  }
+
+  @Override
+  public int getVersion() {
+    return 2;
   }
 
   @NotNull
@@ -75,8 +82,10 @@ public class JavaRefactoringUsageCollector extends ApplicationUsagesCollector {
                        javadoc -> new MetricEvent("introduce.constant.visibility", new FeatureUsageData().addData("visibility", javadoc)));
 
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_METHOD_THIS, "inline.method.this.only.choice");
+    addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_METHOD_KEEP, "inline.method.all.and.keep.choice");
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_SUPER_CLASS_THIS, "inline.super.class.this.only.choice");
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_FIELD_THIS, "inline.field.this.only.choice");
+    addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_FIELD_KEEP, "inline.field.all.and.keep.choice");
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INLINE_LOCAL_THIS, "inline.local.this.only.choice");
 
     addBoolIfDiffers(result, settings, defaultSettings, s -> s.INHERITANCE_TO_DELEGATION_DELEGATE_OTHER, "inheritance.to.delegation.delegate.other");

@@ -48,7 +48,7 @@ interface UCallExpression : UExpression, UResolvable {
   /**
    * Returns the value argument count.
    *
-   * Retrieving the argument count could be faster than getting the [valueArguments.size],
+   * Retrieving the argument count could be faster than getting the [valueArguments] size,
    *    because there is no need to create actual [UExpression] instances.
    */
   val valueArgumentCount: Int

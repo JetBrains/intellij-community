@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.plugins.groovy.byteCodeViewer">
   <extensions defaultExtensionNs="ByteCodeViewer">
     <classSearcher implementation="org.jetbrains.plugins.groovy.byteCodeViewer.GroovyScriptClassSearcher"/>
   </extensions>

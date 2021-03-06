@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +13,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -33,19 +31,17 @@ import java.util.stream.IntStream;
 
 import static com.jetbrains.python.debugger.PyDebugValueGroupsKt.addGroupValues;
 
-
 public class PyStackFrame extends XStackFrame {
-
   private static final Logger LOG = Logger.getInstance(PyStackFrame.class);
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
-  @NotNull @NonNls public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
+  @NotNull @NonNls public static final Set<String> HIDE_TYPES = Set.of("function", "type", "classobj", "module");
   public static final int DUNDER_VALUES_IND = 0;
   public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
   public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
   public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
-  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = ImmutableSet.of("<genexpr>", "<listcomp>", "<dictcomp>",
+  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = Set.of("<genexpr>", "<listcomp>", "<dictcomp>",
                                                                                          "<setcomp>");
   private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
@@ -83,7 +79,7 @@ public class PyStackFrame extends XStackFrame {
     component.setIcon(AllIcons.Debugger.Frame);
 
     if (myPosition == null) {
-      component.append("<frame not available>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      component.append(PyBundle.message("debugger.stack.frame.frame.not.available"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       return;
     }
 
@@ -117,18 +113,18 @@ public class PyStackFrame extends XStackFrame {
     myDebugProcess.setCurrentRootNode(node);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        boolean cached = myDebugProcess.isCurrentFrameCached();
-        XValueChildrenList values = myDebugProcess.loadFrame();
+        boolean cached = myDebugProcess.isFrameCached(this);
+        XValueChildrenList values = myDebugProcess.loadFrame(this);
         if (!node.isObsolete()) {
           addChildren(node, values);
         }
         if (values != null && !cached) {
-          PyDebugValue.getAsyncValues(myDebugProcess, values);
+          PyDebugValue.getAsyncValues(this, myDebugProcess, values);
         }
       }
       catch (PyDebuggerException e) {
         if (!node.isObsolete()) {
-          node.setErrorMessage("Unable to display frame variables");
+          node.setErrorMessage(PyBundle.message("debugger.stack.frame.unable.to.display.frame.variables"));
         }
         LOG.warn(e);
       }

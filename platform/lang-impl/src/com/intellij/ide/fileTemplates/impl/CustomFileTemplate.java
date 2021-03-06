@@ -38,6 +38,7 @@ public final class CustomFileTemplate extends FileTemplateBase {
   @Override
   public void setName(@NotNull String name) {
     myName = name;
+    updateChildrenNames();
   }
 
   @Override
@@ -49,6 +50,7 @@ public final class CustomFileTemplate extends FileTemplateBase {
   @Override
   public void setExtension(@NotNull String extension) {
     myExtension = extension;
+    updateChildrenNames();
   }
 
   @Override

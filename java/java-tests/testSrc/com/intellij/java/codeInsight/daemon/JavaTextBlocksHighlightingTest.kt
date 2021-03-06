@@ -6,11 +6,12 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_14
+  override fun getProjectDescriptor() = JAVA_15
   override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
 
   fun testTextBlocks() = doTest()
   fun testUnclosedTextBlock() = doTest()
+  fun testUnclosedTextBlock2() = doTest()
 
   fun testTextBlockOpeningSpaces() {
     myFixture.configureByText("${getTestName(false)}.java", "class C {\n  String spaces = \"\"\" \t \u000C \n    \"\"\";\n}")

@@ -11,7 +11,6 @@ public interface JsonArray extends JsonContainer {
   @NotNull
   List<JsonValue> getValueList();
 
-  @Nullable
-  ItemPresentation getPresentation();
+  @Nullable ItemPresentation getPresentation();
 
 }

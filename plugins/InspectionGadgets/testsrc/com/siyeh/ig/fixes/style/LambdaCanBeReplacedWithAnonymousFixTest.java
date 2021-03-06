@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -121,7 +121,7 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
 
   @Override
   protected void doTest() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     boolean oldSetting = javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE;
     try {

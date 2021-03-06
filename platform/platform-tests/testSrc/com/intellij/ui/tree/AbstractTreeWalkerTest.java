@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +154,7 @@ public class AbstractTreeWalkerTest {
   }
 
   private static TreeVisitor createFinder(TreeNode node) {
-    return new TreeVisitor.ByComponent<TreeNode, Object>(node, o -> o) {
+    return new TreeVisitor.ByComponent<>(node, o -> o) {
       @Override
       protected boolean contains(@NotNull Object pathComponent, @NotNull TreeNode thisComponent) {
         while (pathComponent != thisComponent && thisComponent != null) thisComponent = thisComponent.getParent();
@@ -458,7 +458,7 @@ public class AbstractTreeWalkerTest {
   }
 
 
-  private static class Wrapper implements TreeVisitor {
+  private static final class Wrapper implements TreeVisitor {
     @SuppressWarnings("unused")
     private int count; // reflection
     private final TreeVisitor visitor;

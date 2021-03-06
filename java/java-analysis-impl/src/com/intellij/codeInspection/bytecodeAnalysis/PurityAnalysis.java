@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  * Scala source at https://github.com/ilya-klyuchnikov/faba
  * Algorithm: https://github.com/ilya-klyuchnikov/faba/blob/ef1c15b4758517652e939f67099bbec0260e9e68/notes/purity.md
  */
-public class PurityAnalysis {
+public final class PurityAnalysis {
   static final int UN_ANALYZABLE_FLAG = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_INTERFACE;
 
   /**
@@ -51,7 +51,7 @@ public class PurityAnalysis {
     }
     EffectQuantum[] quanta = dataInterpreter.effects;
     DataValue returnValue = dataInterpreter.returnValue == null ? DataValue.UnknownDataValue1 : dataInterpreter.returnValue;
-    Set<EffectQuantum> effects = new HashSet<>();
+    List<EffectQuantum> effects = new ArrayList<>();
     for (EffectQuantum effectQuantum : quanta) {
       if (effectQuantum != null) {
         if (effectQuantum == EffectQuantum.TopEffectQuantum) {
@@ -60,7 +60,7 @@ public class PurityAnalysis {
         effects.add(effectQuantum);
       }
     }
-    return new Equation(key, new Effects(returnValue, effects));
+    return new Equation(key, new Effects(returnValue, Set.copyOf(effects)));
   }
 }
 
@@ -120,7 +120,7 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     }
   };
 
-  static class ParameterDataValue extends DataValue {
+  static final class ParameterDataValue extends DataValue {
     static final ParameterDataValue PARAM0 = new ParameterDataValue(0);
     static final ParameterDataValue PARAM1 = new ParameterDataValue(1);
     static final ParameterDataValue PARAM2 = new ParameterDataValue(2);
@@ -713,7 +713,7 @@ final class PuritySolver {
     return solved;
   }
 
-  public void addPlainFieldEquations(Predicate<MemberDescriptor> plainByDefault) {
+  public void addPlainFieldEquations(Predicate<? super MemberDescriptor> plainByDefault) {
     for (EKey key : dependencies.keySet()) {
       if (key.getDirection() == Direction.Volatile && plainByDefault.test(key.member)) {
         // Absent fields are considered non-volatile

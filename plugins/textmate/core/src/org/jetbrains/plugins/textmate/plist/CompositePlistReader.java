@@ -17,6 +17,11 @@ public class CompositePlistReader implements PlistReader {
   public Plist read(@NotNull InputStream inputStream) throws IOException {
     inputStream.mark(256);
     int symbol = inputStream.read();
+    int tries = 0;
+    while (symbol > 0 && Character.isWhitespace(symbol) && tries < 255) {
+      symbol = inputStream.read();
+      tries++;
+    }
     inputStream.reset();
     if (symbol == '{') {
       return myJsonReader.read(inputStream);

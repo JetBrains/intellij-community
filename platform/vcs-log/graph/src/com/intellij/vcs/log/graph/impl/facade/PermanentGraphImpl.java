@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.impl.facade;
 
@@ -17,15 +17,17 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
+public final class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
   @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
   @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
@@ -36,11 +38,11 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
   @NotNull private final ReachableNodes myReachableNodes;
 
-  public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
-                            @NotNull GraphLayoutImpl permanentGraphLayout,
-                            @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
-                            @NotNull GraphColorManager<CommitId> graphColorManager,
-                            @NotNull Set<? extends CommitId> branchesCommitId) {
+  private PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
+                             @NotNull GraphLayoutImpl permanentGraphLayout,
+                             @NotNull PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo,
+                             @NotNull GraphColorManager<CommitId> graphColorManager,
+                             @NotNull Set<? extends CommitId> branchesCommitId) {
     myPermanentGraphLayout = permanentGraphLayout;
     myPermanentCommitsInfo = permanentCommitsInfo;
     myPermanentLinearGraph = permanentLinearGraph;
@@ -134,7 +136,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   @Override
   public List<GraphCommit<CommitId>> getAllCommits() {
-    return new AbstractList<GraphCommit<CommitId>>() {
+    return new AbstractList<>() {
       @Override
       public GraphCommit<CommitId> get(int index) {
         CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
@@ -169,8 +171,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public Condition<CommitId> getContainedInBranchCondition(@NotNull final Collection<? extends CommitId> heads) {
     List<Integer> headIds = ContainerUtil.map(heads, head -> myPermanentCommitsInfo.getNodeId(head));
     if (!heads.isEmpty() && ContainerUtil.getFirstItem(heads) instanceof Integer) {
-      final TIntHashSet branchNodes = new TIntHashSet();
-      myReachableNodes.walkDown(headIds, node -> branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node)));
+      IntSet branchNodes = new IntOpenHashSet();
+      myReachableNodes.walkDown(headIds, node -> branchNodes.add(((Integer)myPermanentCommitsInfo.getCommitId(node)).intValue()));
       return new IntContainedInBranchCondition<>(branchNodes);
     }
     else {
@@ -205,7 +207,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   private static class NotLoadedCommitsIdsGenerator<CommitId> implements NotNullFunction<CommitId, Integer> {
-    @NotNull private final TIntObjectHashMap<CommitId> myNotLoadedCommits = new TIntObjectHashMap<>();
+    @NotNull private final Int2ObjectMap<CommitId> myNotLoadedCommits = new Int2ObjectOpenHashMap<>();
 
     @NotNull
     @Override
@@ -215,22 +217,21 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       return nodeId;
     }
 
-    @NotNull
-    TIntObjectHashMap<CommitId> getNotLoadedCommits() {
+    @NotNull Int2ObjectMap<CommitId> getNotLoadedCommits() {
       return myNotLoadedCommits;
     }
   }
 
   private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
-    private final TIntHashSet myBranchNodes;
+    private final IntSet myBranchNodes;
 
-    IntContainedInBranchCondition(TIntHashSet branchNodes) {
+    IntContainedInBranchCondition(IntSet branchNodes) {
       myBranchNodes = branchNodes;
     }
 
     @Override
     public boolean value(CommitId commitId) {
-      return myBranchNodes.contains((Integer)commitId);
+      return myBranchNodes.contains(((Integer)commitId).intValue());
     }
   }
 

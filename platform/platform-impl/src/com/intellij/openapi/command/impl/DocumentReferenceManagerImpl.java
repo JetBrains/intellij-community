@@ -79,7 +79,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     }, ApplicationManager.getApplication());
   }
 
-  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> files) {
+  private static void collectDeletedFiles(@NotNull VirtualFile f, @NotNull List<? super VirtualFile> files) {
     if (!(f instanceof NewVirtualFile)) return;
 
     ProgressManager.checkCanceled();
@@ -99,7 +99,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
     assertIsWriteThread();
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file == null ? createFromDocument(document) : create(file);
+    return file == null || !file.isValid() ? createFromDocument(document) : create(file);
   }
 
   @NotNull

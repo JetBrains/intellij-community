@@ -8,8 +8,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -19,20 +22,27 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitDisposable;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.CalledInBackground;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static git4idea.GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT;
+import static git4idea.GitNotificationIdsHolder.CONFLICT_RESOLVING_ERROR;
 
 /**
  * The class is highly customizable, since the procedure of resolving conflicts is very common in Git operations.
@@ -53,15 +63,16 @@ public class GitConflictResolver {
    */
   public static class Params {
     private boolean reverse;
-    private String myErrorNotificationTitle = "";
-    private String myErrorNotificationAdditionalDescription = "";
+    private @NotificationTitle String myErrorNotificationTitle = "";
+    private @NotificationContent String myErrorNotificationAdditionalDescription = "";
     private String myMergeDescription = "";
     private MergeDialogCustomizer myMergeDialogCustomizer;
 
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
         @NotNull
-        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        @Override
+        public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           return myMergeDescription;
         }
       };
@@ -87,12 +98,12 @@ public class GitConflictResolver {
       return this;
     }
 
-    public Params setErrorNotificationTitle(@Nls String errorNotificationTitle) {
+    public Params setErrorNotificationTitle(@NotificationTitle String errorNotificationTitle) {
       myErrorNotificationTitle = errorNotificationTitle;
       return this;
     }
 
-    public Params setErrorNotificationAdditionalDescription(@Nls String errorNotificationAdditionalDescription) {
+    public Params setErrorNotificationAdditionalDescription(@NotificationContent String errorNotificationAdditionalDescription) {
       myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
       return this;
     }
@@ -108,7 +119,11 @@ public class GitConflictResolver {
     }
   }
 
+  /**
+   * @deprecated use {@link #GitConflictResolver(Project, Collection, Params)} instead
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {
     this(project, roots, params);
   }
@@ -156,17 +171,27 @@ public class GitConflictResolver {
    * In the basic implementation no action is performed, {@code true} is returned.
    * @return Return value is returned from {@link #merge()}
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected boolean proceedAfterAllMerged() throws VcsException {
     return true;
   }
 
   /**
    * Invoke the merge dialog, but execute nothing after merge is completed.
-   * @return true if all changes were merged, false if unresolved merges remain.
    */
-  public final boolean mergeNoProceed() {
-    return merge(true);
+  @RequiresBackgroundThread
+  public final void mergeNoProceed() {
+    merge(true);
+  }
+
+  @RequiresEdt
+  public final void mergeNoProceedInBackground() {
+    new Task.Backgroundable(myProject, GitBundle.message("apply.changes.resolving.conflicts.progress.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        mergeNoProceed();
+      }
+    }.queue();
   }
 
   /**
@@ -187,11 +212,12 @@ public class GitConflictResolver {
                   myParams.myErrorNotificationAdditionalDescription);
   }
 
-  protected void notifyWarning(@NotNull String title, @NotNull String content) {
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
+  protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null,
+                                                                                CANNOT_RESOLVE_CONFLICT);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
-      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> mergeNoProceed());
+      BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> mergeNoProceed());
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
   }
@@ -201,7 +227,7 @@ public class GitConflictResolver {
       final Collection<VirtualFile> initiallyUnmergedFiles = getUnmergedFiles(myRoots);
       if (initiallyUnmergedFiles.isEmpty()) {
         LOG.info("merge: no unmerged files");
-        return mergeDialogInvokedFromNotification ? true : proceedIfNothingToMerge();
+        return mergeDialogInvokedFromNotification || proceedIfNothingToMerge();
       }
       else {
         showMergeDialog(initiallyUnmergedFiles);
@@ -209,7 +235,7 @@ public class GitConflictResolver {
         final Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myRoots);
         if (unmergedFilesAfterResolve.isEmpty()) {
           LOG.info("merge no more unmerged files");
-          return mergeDialogInvokedFromNotification ? true : proceedAfterAllMerged();
+          return mergeDialogInvokedFromNotification || proceedAfterAllMerged();
         } else {
           LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
           if (mergeDialogInvokedFromNotification) {
@@ -236,10 +262,14 @@ public class GitConflictResolver {
 
   private void notifyException(@NotNull VcsException e) {
     LOG.info("mergeFiles ", e);
-    final String description = GitBundle.getString("conflict.resolver.unmerged.files.check.error.notification.description.text");
-    VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
-                                                   description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                   e.getLocalizedMessage());
+    final String description = GitBundle.message(
+      "conflict.resolver.unmerged.files.check.error.notification.description.text",
+      myParams.myErrorNotificationAdditionalDescription
+    );
+    VcsNotifier.getInstance(myProject).notifyError(
+      CONFLICT_RESOLVING_ERROR, myParams.myErrorNotificationTitle,
+      new HtmlBuilder().appendRaw(description).br().appendRaw(e.getLocalizedMessage()).toString()
+    );
   }
 
   /**

@@ -1,20 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
@@ -166,6 +167,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
@@ -186,6 +188,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @deprecated use {@link #run(Task)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
                                                             @NotNull @ProgressTitle String progressTitle,
                                                             @NotNull Runnable process,
@@ -236,7 +239,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
     Set<ProgressIndicator> wrappedParents = null;
     for (ProgressIndicator i = original; i instanceof WrappedProgressIndicator; i = ((WrappedProgressIndicator)i).getOriginalProgressIndicator()) {
-      if (wrappedParents == null) wrappedParents = new THashSet<>();
+      if (wrappedParents == null) {
+        wrappedParents = new HashSet<>();
+      }
       if (!wrappedParents.add(i)) {
         throw new IllegalArgumentException(i + " wraps itself");
       }

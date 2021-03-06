@@ -31,6 +31,7 @@ public class EditMavenPropertyDialog extends DialogWrapper {
     fillAvailableProperties();
 
     if (value != null) {
+      //noinspection HardCodedStringLiteral
       myNameBox.getEditor().setItem(value.getFirst());
       myValueField.setText(value.getSecond());
     }

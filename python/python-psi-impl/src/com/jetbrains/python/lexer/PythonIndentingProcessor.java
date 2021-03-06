@@ -21,11 +21,11 @@ import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
-import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +33,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PythonIndentingProcessor extends MergingLexerAdapter {
-  protected final TIntStack myIndentStack = new TIntStack();
+  protected final IntStack myIndentStack = new IntStack();
   protected int myBraceLevel;
   protected boolean myLineHasSignificantTokens;
   protected int myLastNewLineIndent = -1;
   private int myCurrentNewLineIndent = 0;
-  
+
   protected List<PendingToken> myTokenQueue = new ArrayList<>();
   private int myLineBreakBeforeFirstCommentIndex = -1;
   protected boolean myProcessSpecialTokensPending = false;

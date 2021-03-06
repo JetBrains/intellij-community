@@ -7,11 +7,11 @@ import com.intellij.openapi.command.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +22,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   private static class CommandDescriptor implements CommandToken {
     public final @NotNull Runnable myCommand;
     public final Project myProject;
-    public String myName;
+    public @NlsContexts.Command String myName;
     public Object myGroupId;
     public final Document myDocument;
     final @NotNull UndoConfirmationPolicy myUndoConfirmationPolicy;
@@ -30,7 +30,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
     CommandDescriptor(@NotNull Runnable command,
                       Project project,
-                      String name,
+                      @NlsContexts.Command String name,
                       Object groupId,
                       @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                       boolean shouldRecordActionForActiveDocument,
@@ -144,11 +144,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   @Override
-  public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
-    executeCommand(null, runnable, name, groupId);
-  }
-
-  @Override
   public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId) {
     executeCommand(project, runnable, name, groupId, UndoConfirmationPolicy.DEFAULT);
   }
@@ -163,8 +158,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              final @NotNull Runnable command,
                              final String name,
                              final Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy) {
-    executeCommand(project, command, name, groupId, confirmationPolicy, null);
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, null);
   }
 
   @Override
@@ -172,9 +167,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              final @NotNull Runnable command,
                              final String name,
                              final Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                              Document document) {
-    executeCommand(project, command, name, groupId, confirmationPolicy, true, document);
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, true, document);
   }
 
   @Override
@@ -182,16 +177,17 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                              @NotNull Runnable command,
                              @Nullable String name,
                              @Nullable Object groupId,
-                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                              boolean shouldRecordCommandForActiveDocument) {
-    executeCommand(project, command, name, groupId, confirmationPolicy, shouldRecordCommandForActiveDocument, null);
+    executeCommand(project, command, name, groupId, undoConfirmationPolicy, shouldRecordCommandForActiveDocument, null);
   }
 
-  private void executeCommand(@Nullable Project project,
+  @Override
+  public void executeCommand(@Nullable Project project,
                               @NotNull Runnable command,
-                              @Nullable String name,
+                              @Nullable @NlsContexts.Command String name,
                               @Nullable Object groupId,
-                              @NotNull UndoConfirmationPolicy confirmationPolicy,
+                              @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
                               boolean shouldRecordCommandForActiveDocument,
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
@@ -212,7 +208,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       return;
     }
     Throwable throwable = null;
-    CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, confirmationPolicy,
+    CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy,
                                                          shouldRecordCommandForActiveDocument, document);
     try {
       myCurrentCommand = descriptor;
@@ -229,7 +225,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public @Nullable CommandToken startCommand(final @Nullable Project project,
-                                             final @Nls String name,
+                                             final String name,
                                              final @Nullable Object groupId,
                                              final @NotNull UndoConfirmationPolicy undoConfirmationPolicy) {
     ApplicationManager.getApplication().assertIsWriteThread();

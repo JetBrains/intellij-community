@@ -78,9 +78,8 @@ public class FindInEditorTest extends LightJavaCodeInsightTestCase {
   }
 
   @Override
-  // disabling execution of tests in command/write action
-  protected void runTest() throws Throwable {
-    doRunTest();
+  protected boolean isRunInCommand() {
+    return false;
   }
 
   private void initFind() {

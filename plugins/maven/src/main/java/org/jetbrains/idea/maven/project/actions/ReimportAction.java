@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 public class ReimportAction extends MavenProjectsManagerAction {
@@ -29,7 +30,9 @@ public class ReimportAction extends MavenProjectsManagerAction {
 
   @Override
   protected void perform(@NotNull MavenProjectsManager manager) {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    if (MavenUtil.isProjectTrustedEnoughToImport(manager.getProject(), true)) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+    }
   }
 }

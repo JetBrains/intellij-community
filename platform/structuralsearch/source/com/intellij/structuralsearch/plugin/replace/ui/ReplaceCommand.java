@@ -7,17 +7,18 @@ import com.intellij.structuralsearch.plugin.ui.SearchCommand;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usages.Usage;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceCommand extends SearchCommand {
 
   private ReplaceUsageViewContext myReplaceUsageViewContext;
 
-  public ReplaceCommand(Configuration configuration, SearchContext searchContext) {
+  public ReplaceCommand(@NotNull Configuration configuration, @NotNull SearchContext searchContext) {
     super(configuration, searchContext);
   }
 
   @Override
-  protected UsageViewContext createUsageViewContext() {
+  protected @NotNull UsageViewContext createUsageViewContext() {
     final Runnable searchStarter = () -> new ReplaceCommand(myConfiguration, mySearchContext).startSearching();
     myReplaceUsageViewContext = new ReplaceUsageViewContext(mySearchContext, myConfiguration, searchStarter);
     return myReplaceUsageViewContext;

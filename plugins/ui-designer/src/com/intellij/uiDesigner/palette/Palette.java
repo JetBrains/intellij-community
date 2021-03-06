@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.uiDesigner.Properties;
 import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -27,9 +29,7 @@ import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.propertyInspector.renderers.IntEnumRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,17 +41,15 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-@State(name = "Palette2", defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
-public final class Palette implements PersistentStateComponent<Element> {
+@State(name = "Palette2",defaultStateAsResource = true, storages = @Storage("uiDesigner.xml"))
+public final class Palette implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(Palette.class);
 
   private final Map<Class<?>, IntrospectedProperty<?>[]> myClass2Properties;
@@ -110,8 +108,12 @@ public final class Palette implements PersistentStateComponent<Element> {
       mySpecialGroup.setReadOnly(true);
       mySpecialGroup.addItem(ComponentItem.createAnyComponentItem(project));
 
-      ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(LafManagerListener.TOPIC, new MyLafManagerListener());
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, new MyLafManagerListener());
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -154,8 +156,8 @@ public final class Palette implements PersistentStateComponent<Element> {
   private void upgradePalette() {
     // load new components from the predefined Palette2.xml
     try {
-      Document document = new SAXBuilder().build(getClass().getResourceAsStream("/idea/Palette2.xml"));
-      for (Element groupElement : document.getRootElement().getChildren(ELEMENT_GROUP)) {
+      Element rootElement = JDOMUtil.load(getClass().getClassLoader().getResourceAsStream("Palette2.xml"));
+      for (Element groupElement : Objects.requireNonNull(rootElement).getChildren(ELEMENT_GROUP)) {
         for (GroupItem group : myGroups) {
           if (group.getName().equals(groupElement.getAttributeValue(ATTRIBUTE_NAME))) {
             upgradeGroup(group, groupElement);
@@ -345,8 +347,7 @@ public final class Palette implements PersistentStateComponent<Element> {
     {
       final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
       if (initialValues != null) {
-        for (final Object o : initialValues.getChildren(ELEMENT_PROPERTY)) {
-          final Element e = (Element)o;
+        for (final Element e : initialValues.getChildren(ELEMENT_PROPERTY)) {
           final String name = LwXmlReader.getRequiredString(e, ATTRIBUTE_NAME);
           // TODO[all] currently all initial values are strings
           final StringDescriptor value = StringDescriptor.create(LwXmlReader.getRequiredString(e, ATTRIBUTE_VALUE));

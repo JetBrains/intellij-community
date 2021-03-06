@@ -41,10 +41,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -155,26 +152,37 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
       if (parent instanceof PsiAssignmentExpression) {
         expression = (PsiExpression)parent;
-        PsiVariable variable = getAppendedVariable(expression);
+
+        PsiReferenceExpression lhs = getAppendedExpression(expression);
+        if (lhs == null) return false;
+        PsiVariable variable = ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
 
         if (variable != null) {
           PsiLoopStatement commonLoop = getOutermostCommonLoop(expression, variable);
           return commonLoop != null &&
                  !ControlFlowUtils.isExecutedOnceInLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop) &&
-                 !isUsedCompletely(variable, commonLoop);
+                 !isUsedCompletely(variable, commonLoop) && checkQualifier(lhs, commonLoop);
         }
       }
       return false;
     }
 
+    private static boolean checkQualifier(PsiReferenceExpression lhs, PsiLoopStatement commonLoop) {
+      while (true) {
+        PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(lhs.getQualifierExpression());
+        if (qualifierExpression == null || qualifierExpression instanceof PsiQualifiedExpression) return true;
+        PsiReferenceExpression ref = ObjectUtils.tryCast(qualifierExpression, PsiReferenceExpression.class);
+        if (ref == null) return false;
+        PsiVariable varRef = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+        if (varRef == null) return false;
+        if (PsiTreeUtil.isAncestor(commonLoop, varRef, true) || VariableAccessUtils.variableIsAssigned(varRef, commonLoop)) return false;
+        lhs = ref;
+      }
+    }
+
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      return ReferencesSearch.search(variable, new LocalSearchScope(loop)).anyMatch(ref -> {
-        PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-        if (expression == null) return false;
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-        while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
-          parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-        }
+      return VariableAccessUtils.getVariableReferences(variable, loop).stream().anyMatch(expression -> {
+        PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
         if (parent instanceof PsiExpressionList ||
             parent instanceof PsiAssignmentExpression &&
             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
@@ -268,19 +276,21 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   @Contract("null -> null")
   @Nullable
   private static PsiVariable getAppendedVariable(PsiExpression expression) {
+    PsiReferenceExpression lhs = getAppendedExpression(expression);
+    if (lhs == null) return null;
+    return ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiReferenceExpression getAppendedExpression(PsiExpression expression) {
     PsiElement parent = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
       parent = parent.getParent();
     }
-    if (!(parent instanceof PsiAssignmentExpression)) {
-      return null;
-    }
-    PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
-    if (!(lhs instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiElement element = ((PsiReferenceExpression)lhs).resolve();
-    return element instanceof PsiVariable ? (PsiVariable)element : null;
+    if (!(parent instanceof PsiAssignmentExpression)) return null;
+    return ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression()),
+                               PsiReferenceExpression.class);
   }
 
   @Override
@@ -333,24 +343,20 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return ReferencesSearch.search(var).anyMatch(isPossiblyNullableWrite);
   }
 
-  abstract static class AbstractStringBuilderFix extends InspectionGadgetsFix {
+  private static class StringBuilderReplacer {
     static final Pattern PRINT_OR_PRINTLN = Pattern.compile("print|println");
 
-    final String myName;
+    Set<PsiExpression> myNullables = Collections.emptySet();
     final String myTargetType;
     final boolean myNullSafe;
-    Set<PsiExpression> myNullables = Collections.emptySet();
 
-    AbstractStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
-      myName = variable.getName();
-      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
-                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
-      myNullSafe = nullSafe;
+    private StringBuilderReplacer(String type, boolean safe) {
+      myTargetType = type;
+      myNullSafe = safe;
     }
 
-    @NotNull
-    String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
-      if(ExpressionUtils.isNullLiteral(initializer)) {
+    @NonNls @NotNull String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
+      if (ExpressionUtils.isNullLiteral(initializer)) {
         return ct.text(initializer);
       }
       String text = initializer == null || ExpressionUtils.isLiteral(initializer, "") ? "" : ct.text(initializer);
@@ -464,7 +470,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
         if (operands.length > 1 && operands[0] == ref && TypeUtils.isJavaLangString(operands[1].getType())) return;
       }
-      String text = builderVariable.getName() + ".toString()";
+      @NonNls String text = builderVariable.getName() + ".toString()";
       if (myNullables.contains(ref) && !isNotNullContext(ref)) {
         text = builderVariable.getName() + "==null?null:" + text;
         if (parent instanceof PsiExpression) {
@@ -501,7 +507,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        String name = method.getName();
+        @NonNls String name = method.getName();
         switch(name) {
           case "length":
           case "chars":
@@ -630,9 +636,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  static class IntroduceStringBuilderFix extends AbstractStringBuilderFix {
+  static class IntroduceStringBuilderFix extends InspectionGadgetsFix {
+    final String myName;
+    final String myTargetType;
+    final boolean myNullSafe;
+
     IntroduceStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
-      super(variable, nullSafe);
+      myName = variable.getName();
+      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
+                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
+      myNullSafe = nullSafe;
     }
 
     @Override
@@ -660,8 +673,10 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiVariable builderVariable = (PsiVariable)declaration.getDeclaredElements()[0];
       PsiExpression builderInitializer = Objects.requireNonNull(builderVariable.getInitializer());
       CommentTracker ct = new CommentTracker();
-      replaceAll(variable, builderVariable, loop, ct);
-      String toString = variable.getName() + " = " + newName + ".toString();";
+      StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
+      replacer.replaceAll(variable, builderVariable, loop, ct);
+      String convertToString = myNullSafe ? CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + newName + ")" : newName + ".toString()";
+      @NonNls String toString = variable.getName() + " = " + convertToString + ";";
 
       PsiExpression initializer = variable.getInitializer();
       switch (status) {
@@ -669,8 +684,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           // Put original variable declaration after the loop and use its original initializer in StringBuilder constructor
           PsiTypeElement typeElement = variable.getTypeElement();
           if (typeElement != null && initializer != null) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
-            ct.replace(initializer, newName + ".toString()");
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(initializer, ct)));
+            ct.replace(initializer, convertToString);
             toString = variable.getText();
             ct.delete(variable);
           }
@@ -678,21 +693,22 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         case AT_WANTED_PLACE_ONLY:
           // Move original initializer to the StringBuilder constructor
           if (initializer != null) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(initializer, ct)));
             initializer.delete();
           }
           break;
         case AT_WANTED_PLACE:
           // Copy original initializer to the StringBuilder constructor if possible
           if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(initializer, ct)));
           }
           break;
         case UNKNOWN:
           PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(declaration);
           PsiExpression prevAssignment = ExpressionUtils.getAssignmentTo(prevStatement, variable);
           if (prevAssignment != null) {
-            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(prevAssignment, ct)));
+            javaCodeStyleManager
+              .shortenClassReferences(ct.replace(builderInitializer, replacer.generateNewStringBuilder(prevAssignment, ct)));
             ct.delete(prevStatement);
           }
           break;
@@ -705,8 +721,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, StringUtil.getShortName(myTargetType))
-             + (myNullSafe ? " (null-safe)" : "");
+      final String introduce = StringUtil.getShortName(myTargetType);
+      if (myNullSafe) {
+        return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name.null.safe", myName, introduce);
+      } else {
+        return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, introduce);
+      }
     }
 
     @Nls
@@ -717,9 +737,16 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
   }
 
-  static class ReplaceWithStringBuilderFix extends AbstractStringBuilderFix {
+  static class ReplaceWithStringBuilderFix extends InspectionGadgetsFix {
+    final String myName;
+    final String myTargetType;
+    final boolean myNullSafe;
+
     ReplaceWithStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
-      super(variable, nullSafe);
+      myName = variable.getName();
+      myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
+                     CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
+      myNullSafe = nullSafe;
     }
 
     @Override
@@ -732,12 +759,13 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null) return;
       CommentTracker ct = new CommentTracker();
-      replaceAll(variable, variable, null, ct);
+      StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
+      replacer.replaceAll(variable, variable, null, ct);
       ct.replace(typeElement, myTargetType);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
         JavaCodeStyleManager.getInstance(project)
-          .shortenClassReferences(ct.replace(initializer, generateNewStringBuilder(initializer, ct)));
+          .shortenClassReferences(ct.replace(initializer, replacer.generateNewStringBuilder(initializer, ct)));
       }
       PsiStatement commentPlace = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
       ct.insertCommentsBefore(commentPlace == null ? variable : commentPlace);
@@ -747,8 +775,12 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, StringUtil.getShortName(myTargetType))
-             + (myNullSafe ? " (null-safe)" : "");
+      final String introduce = StringUtil.getShortName(myTargetType);
+      if (myNullSafe) {
+        return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name.null.safe", myName, introduce);
+      } else {
+        return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, introduce);
+      }
     }
 
     @Nls

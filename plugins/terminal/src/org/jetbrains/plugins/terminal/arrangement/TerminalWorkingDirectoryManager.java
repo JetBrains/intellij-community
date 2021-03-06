@@ -19,6 +19,7 @@ import com.intellij.util.TimeoutUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalView;
 
 import java.awt.event.KeyAdapter;
@@ -106,7 +107,7 @@ public class TerminalWorkingDirectoryManager {
 
   @Nullable
   public static String getWorkingDirectory(@NotNull JBTerminalWidget widget, @Nullable String name) {
-    ProcessTtyConnector connector = ObjectUtils.tryCast(widget.getTtyConnector(), ProcessTtyConnector.class);
+    ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
     if (connector == null) return null;
     try {
       long startNano = System.nanoTime();
@@ -159,7 +160,11 @@ public class TerminalWorkingDirectoryManager {
     content.putUserData(INITIAL_CWD_KEY, dir != null ? FileUtil.toSystemDependentName(dir.getPath()) : null);
   }
 
-  private static class Data {
+  public static void setInitialWorkingDirectory(@NotNull Content content, @Nullable String directory) {
+    content.putUserData(INITIAL_CWD_KEY, directory);
+  }
+
+  private static final class Data {
     private final KeyListener myKeyListener;
     private final String myContentName;
     private volatile String myWorkingDirectory;

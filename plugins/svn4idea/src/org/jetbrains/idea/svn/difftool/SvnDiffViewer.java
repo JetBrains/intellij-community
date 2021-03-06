@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool;
 
 import com.intellij.diff.DiffContext;
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
@@ -47,6 +48,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
 import java.util.*;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnDiffViewer implements DiffViewer {
   private static final Logger LOG = Logger.getInstance(SvnDiffViewer.class);
@@ -84,7 +87,7 @@ public class SvnDiffViewer implements DiffViewer {
 
     mySettings = initSettings(context);
 
-    mySplitter = new MySplitter("Property Changes");
+    mySplitter = new MySplitter(message("separator.property.changes"));
     mySplitter.setProportion(mySettings.getSplitterProportion());
     mySplitter.setFirstComponent(myContentViewer.getComponent());
 
@@ -169,11 +172,11 @@ public class SvnDiffViewer implements DiffViewer {
     if (before.isEmpty() && after.isEmpty()) return null;
 
     if (!before.keySet().equals(after.keySet())) {
-      return createNotification("SVN Properties changed");
+      return createNotification(message("label.svn.properties.changed"));
     }
 
     for (String key : before.keySet()) {
-      if (!Comparing.equal(before.get(key), after.get(key))) return createNotification("SVN Properties changed");
+      if (!Comparing.equal(before.get(key), after.get(key))) return createNotification(message("label.svn.properties.changed"));
     }
 
     return null;
@@ -196,7 +199,7 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   @NotNull
-  private static JPanel createNotification(@NotNull String text) {
+  private static JPanel createNotification(@NlsContexts.Label @NotNull String text) {
     return new EditorNotificationPanel().text(text);
   }
 
@@ -351,9 +354,9 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   private static class MySplitter extends Splitter {
-    @NotNull private final String myLabelText;
+    private final @NlsContexts.Separator @NotNull String myLabelText;
 
-    MySplitter(@NotNull String text) {
+    MySplitter(@NlsContexts.Separator @NotNull String text) {
       super(true);
       myLabelText = text;
     }

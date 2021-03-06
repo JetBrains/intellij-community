@@ -4,7 +4,6 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementAction;
-import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -43,13 +42,13 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
 
   @Override
   public PopupStep onChosen(LookupElementAction selectedValue, boolean finalChoice) {
-    UIEventLogger.logUIEvent(UIEventId.LookupExecuteElementAction);
+    UIEventLogger.LookupExecuteElementAction.log(myLookup.getProject());
 
     final LookupElementAction.Result result = selectedValue.performLookupAction();
     if (result == LookupElementAction.Result.HIDE_LOOKUP) {
       myLookup.hideLookup(true);
     } else if (result == LookupElementAction.Result.REFRESH_ITEM) {
-      myLookup.updateLookupWidth(myLookupElement);
+      myLookup.updateLookupWidth();
       myLookup.requestResize();
       myLookup.refreshUi(false, true);
     } else if (result instanceof LookupElementAction.Result.ChooseItem) {

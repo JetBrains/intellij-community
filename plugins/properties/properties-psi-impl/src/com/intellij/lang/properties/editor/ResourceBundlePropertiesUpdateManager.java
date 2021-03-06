@@ -4,7 +4,6 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +17,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.graph.*;
-import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +86,7 @@ public final class ResourceBundlePropertiesUpdateManager {
       }
       final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
       myCodeStyleManager.reformat(
-        propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : (Property)propertyAndPosition.getFirst())
+        propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : propertyAndPosition.getFirst())
           .getPsiElement());
     }
     else {
@@ -158,7 +157,7 @@ public final class ResourceBundlePropertiesUpdateManager {
       ContainerUtil.map(resourceBundle.getPropertiesFiles(), PropertiesOrder::new);
 
     final boolean[] isAlphaSorted = new boolean[]{true};
-    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
+    final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<String> getNodes() {
@@ -214,12 +213,12 @@ public final class ResourceBundlePropertiesUpdateManager {
 
   private static class PropertiesOrder {
     List<String> myKeys;
-    Map<String, IntArrayList> myKeyIndices;
+    Map<String, IntList> myKeyIndices;
 
     PropertiesOrder(@NotNull PropertiesFile file) {
       final List<IProperty> properties = file.getProperties();
       myKeys = new ArrayList<>(properties.size());
-      myKeyIndices = FactoryMap.createMap(k->new IntArrayList(1),()->new THashMap<>(properties.size()));
+      myKeyIndices = FactoryMap.createMap(k -> new IntArrayList(1), () -> new HashMap<>(properties.size()));
 
       int index = 0;
       for (IProperty property : properties) {
@@ -236,7 +235,7 @@ public final class ResourceBundlePropertiesUpdateManager {
     public List<String> getNext(@NotNull String key) {
       List<String> nextProperties = null;
       if (myKeyIndices.containsKey(key)) {
-        final IntArrayList indices = myKeyIndices.get(key);
+        final IntList indices = myKeyIndices.get(key);
         for (int i = 0; i < indices.size(); i++) {
           final int searchIdx = indices.getInt(i) + 1;
           if (searchIdx < myKeys.size()) {

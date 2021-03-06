@@ -17,6 +17,7 @@ package com.intellij.tasks;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.CancellableRunnable;
 import com.intellij.util.Function;
@@ -97,8 +98,8 @@ public abstract class TaskRepository {
   /**
    * @return name of this repository, that will be shown in settings
    */
-  public String getPresentableName() {
-    return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
+  public @NlsContexts.Label String getPresentableName() {
+    return StringUtil.isEmpty(getUrl()) ? TaskApiBundle.message("label.undefined") : getUrl(); //NON-NLS
   }
 
   public Icon getIcon() {
@@ -109,6 +110,7 @@ public abstract class TaskRepository {
    * @deprecated use #createCancellableConnection()
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void testConnection() throws Exception {
   }
 
@@ -229,6 +231,7 @@ public abstract class TaskRepository {
    * @deprecated Use {@link #setTaskState(Task, CustomTaskState)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
     throw new UnsupportedOperationException("Setting task to state " + state + " is not supported");
   }

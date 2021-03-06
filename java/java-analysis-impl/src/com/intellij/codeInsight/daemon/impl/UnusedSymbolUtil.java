@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -9,9 +10,12 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.impl.source.PsiClassImpl;
@@ -24,12 +28,15 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class UnusedSymbolUtil {
+public final class UnusedSymbolUtil {
 
   public static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
@@ -75,11 +82,33 @@ public class UnusedSymbolUtil {
     return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
+  /**
+   * @deprecated pass inspection's shortName to provide correct inspection description
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Nullable
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
-                                                     @NotNull String message,
+                                                     @NotNull @NlsContexts.DetailedDescription String message,
                                                      @NotNull final HighlightInfoType highlightInfoType) {
-    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).group(
+    return createUnusedSymbolInfo(element, message, highlightInfoType, null);
+  }
+
+  @Nullable
+  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
+                                                     @NotNull @NlsContexts.DetailedDescription String message,
+                                                     @NotNull final HighlightInfoType highlightInfoType,
+                                                     @Nullable String shortName) {
+    String tooltip;
+    if (shortName != null) {
+      tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, "(" + KeymapUtil.getShortcutsText(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION).getShortcuts()) + ")", true);
+    }
+    else {
+      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
+    }
+
+    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element)
+      .description(message).escapedToolTip(tooltip).group(
       GeneralHighlightingPass.POST_UPDATE_ALL).create();
     if (info == null) {
       return null; //filtered out
@@ -178,7 +207,7 @@ public class UnusedSymbolUtil {
     return sure;
   }
 
-  private static void log(String s) {
+  private static void log(@NonNls String s) {
     //System.out.println(s);
   }
 
@@ -194,7 +223,7 @@ public class UnusedSymbolUtil {
       log("* "+member.getName()+" no name; false");
       return false;
     }
-    SearchScope useScope = member.getUseScope();
+    SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
     if (useScope instanceof GlobalSearchScope) {
       // some classes may have references from within XML outside dependent modules, e.g. our actions

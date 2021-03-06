@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("HardCodedStringLiteral")
+
 package org.jetbrains.builtInWebServer
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.net.InetAddresses
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -23,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.*
+import com.intellij.util.io.DigestUtil.randomToken
 import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
@@ -33,11 +37,10 @@ import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.orInSafeMode
+import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
-import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Files
 import java.nio.file.Path
@@ -49,9 +52,6 @@ import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
 internal val LOG = logger<BuiltInWebServer>()
-
-// name is duplicated in the ConfigImportHelper
-private const val IDE_TOKEN_FILE = "user.web.token"
 
 private val notificationManager by lazy {
   SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
@@ -66,7 +66,7 @@ class BuiltInWebServer : HttpRequestHandler() {
   override fun isSupported(request: FullHttpRequest): Boolean = super.isSupported(request) || request.method() == HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
-    var hostName = request.hostName ?: return false
+    var hostName = getHostName(request) ?: return false
     val projectName: String?
     val isIpv6 = hostName[0] == '[' && hostName.length > 2 && hostName[hostName.length - 1] == ']'
     if (isIpv6) {
@@ -100,7 +100,7 @@ const val TOKEN_HEADER_NAME = "x-ijt"
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
   val configPath = PathManager.getConfigPath()
-  val file = Paths.get(configPath, IDE_TOKEN_FILE)
+  val file = Paths.get(configPath, USER_WEB_TOKEN)
   var token: String? = null
   if (file.exists()) {
     try {
@@ -127,7 +127,7 @@ private val STANDARD_COOKIE by lazy {
 }
 
 // expire after access because we reuse tokens
-private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
+private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
@@ -136,11 +136,6 @@ fun acquireToken(): String {
     tokens.put(token, java.lang.Boolean.TRUE)
   }
   return token
-}
-
-// http://stackoverflow.com/a/41156 - shorter than UUID, but secure
-private fun randomToken(): String {
-  return BigInteger(130, DigestUtil.random).toString(32)
 }
 
 private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
@@ -268,7 +263,7 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
           .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
           .icon(Messages.getWarningIcon())
           .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
-          .show() == Messages.YES) {
+          .guessWindowAndAsk()) {
         CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
       }
     }

@@ -1,53 +1,47 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors;
 
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * @author gregsh
  */
 public abstract class AbstractKeyDescriptor<T> {
+  protected static class StaticSupplier implements Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> {
+    private final String myKey;
 
-  private final String myDisplayName;
+    protected StaticSupplier(@Nls(capitalization = Nls.Capitalization.Sentence) String key) {
+      myKey = key;
+    }
+
+    @Override
+    public String get() {
+      return myKey;
+    }
+  }
+
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myDisplayName;
   private final T myKey;
 
-  protected AbstractKeyDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String displayName, @NotNull T key) {
+  protected AbstractKeyDescriptor(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> displayName, @NotNull T key) {
     myKey = key;
     myDisplayName = displayName;
   }
 
   /**
    * Returns the name of the attribute shown in the colors settings page.
-   *
-   * @return the name of the attribute.
    */
-  @NotNull
-  public String getDisplayName() {
-    return myDisplayName;
+  public @NotNull String getDisplayName() {
+    return myDisplayName.get();
   }
 
   /**
    * Returns the text attributes or color key for which the colors are specified.
-   *
-   * @return the attributes key.
    */
-  @NotNull
-  public T getKey() {
+  public @NotNull T getKey() {
     return myKey;
   }
 }

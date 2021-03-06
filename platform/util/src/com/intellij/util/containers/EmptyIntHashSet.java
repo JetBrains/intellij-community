@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
@@ -9,9 +9,9 @@ import gnu.trove.TIntProcedure;
 
 import java.util.NoSuchElementException;
 
-public class EmptyIntHashSet extends TIntHashSet {
+public final class EmptyIntHashSet extends TIntHashSet {
   public static final TIntHashSet INSTANCE = new EmptyIntHashSet();
-  public static final TIntIterator EMPTY_INT_ITERATOR = new TIntIterator(INSTANCE) {
+  private static final TIntIterator EMPTY_INT_ITERATOR = new TIntIterator(INSTANCE) {
     @Override
     public int next() {
       throw new NoSuchElementException();

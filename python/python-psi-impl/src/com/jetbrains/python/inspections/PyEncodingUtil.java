@@ -18,7 +18,7 @@ package com.jetbrains.python.inspections;
 /**
  * User : catherine
  */
-public class PyEncodingUtil {
+public final class PyEncodingUtil {
 
   private PyEncodingUtil() {
   }

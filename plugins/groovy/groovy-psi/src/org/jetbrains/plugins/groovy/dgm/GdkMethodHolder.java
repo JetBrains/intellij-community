@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -14,6 +13,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Max Medvedev
  */
-public class GdkMethodHolder {
+public final class GdkMethodHolder {
   private static final Key<CachedValue<GdkMethodHolder>> CACHED_NON_STATIC = Key.create("Cached instance gdk method holder");
   private static final Key<CachedValue<GdkMethodHolder>> CACHED_STATIC = Key.create("Cached static gdk method holder");
 
@@ -51,7 +51,7 @@ public class GdkMethodHolder {
       }
       byName.putValue(m.getName(), m);
     }
-    myOriginalMethodByType = VolatileNotNullLazyValue.createValue(() -> groupByType(byName.values()));
+    myOriginalMethodByType = NotNullLazyValue.volatileLazy(() -> groupByType(byName.values()));
     myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name -> groupByType(byName.get(name)));
   }
 
@@ -108,11 +108,12 @@ public class GdkMethodHolder {
         return CachedValueProvider.Result.create(result, rootManager);
       }
 
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, rootManager);
     }, false);
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "GDK Method Holder for " + myClassName;
   }

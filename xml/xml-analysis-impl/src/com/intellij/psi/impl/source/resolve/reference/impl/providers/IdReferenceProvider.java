@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
@@ -24,26 +10,27 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author peter
  */
-public class IdReferenceProvider extends PsiReferenceProvider {
+public final class IdReferenceProvider extends PsiReferenceProvider {
   @NonNls public static final String FOR_ATTR_NAME = "for";
   @NonNls public static final String ID_ATTR_NAME = "id";
   @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
   @NonNls public static final String NAME_ATTR_NAME = "name";
 
-  private static final THashSet<String> ourNamespacesWithoutNameReference = new THashSet<>();
+  private static final Set<String> ourNamespacesWithoutNameReference = new HashSet<>();
   static {
     ourNamespacesWithoutNameReference.add( XmlUtil.JSP_URI );
     ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_BEAN_URI );
@@ -109,7 +96,7 @@ public class IdReferenceProvider extends PsiReferenceProvider {
       }
       else {
         final boolean allowReferences = !ourNamespacesWithoutNameReference.contains(ns);
-        
+
         if (ID_ATTR_NAME.equals(name) && allowReferences ||
              STYLE_ID_ATTR_NAME.equals(name) ||
              NAME_ATTR_NAME.equals(name) && allowReferences

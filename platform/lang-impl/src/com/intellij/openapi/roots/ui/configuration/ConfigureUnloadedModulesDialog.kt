@@ -30,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredTreeCellRenderer
@@ -160,8 +161,9 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
 
   private fun includeMissingModules(selected: List<ModuleDescription>, availableTargetModules: List<ModuleDescription>,
                                     dependenciesGraph: Graph<ModuleDescription>,
-                                    dialogTitle: String, dialogMessage: (Int, Int, String) -> String, yesButtonText: String,
-                                    noButtonText: String): Collection<ModuleDescription> {
+                                    @NlsContexts.DialogTitle dialogTitle: String, dialogMessage: (Int, Int, String) -> String,
+                                    @NlsContexts.Button yesButtonText: String,
+                                    @NlsContexts.Button noButtonText: String): Collection<ModuleDescription> {
     val additional = computeDependenciesToMove(selected, availableTargetModules, dependenciesGraph)
     if (additional.isNotEmpty()) {
       val answer = Messages.showYesNoCancelDialog(project, dialogMessage(selected.size, additional.size, additional.first().name),

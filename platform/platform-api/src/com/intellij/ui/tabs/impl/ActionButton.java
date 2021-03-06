@@ -113,7 +113,7 @@ class ActionButton extends IconButton implements ActionListener {
   public void actionPerformed(final ActionEvent e) {
     AnActionEvent event = createAnEvent(e);
     if (ActionUtil.lastUpdateAndCheckDumb(myAction, event, true)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
+      ActionUtil.performActionDumbAwareWithCallbacks(myAction, event);
     }
   }
 

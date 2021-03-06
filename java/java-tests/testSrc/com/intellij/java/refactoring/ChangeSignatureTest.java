@@ -12,12 +12,11 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
 /**
  * @author dsl
@@ -25,7 +24,7 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 
   private CommonCodeStyleSettings getJavaSettings() {
@@ -78,6 +77,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testNoConflictForSuperCallDelegation() {
+    doTest(null, new ParameterInfoImpl[0], false);
   }
 
   public void testGenericTypes() {

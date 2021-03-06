@@ -2,7 +2,8 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -133,12 +134,13 @@ public final class SyntaxMatchUtils {
     return matchFirstUncached(syntaxNodeDescriptor, string, byteOffset, priority, currentScope);
   }
 
-  public static List<CaptureMatchData> matchCaptures(@NotNull TIntObjectHashMap<CharSequence> captures,
+  public static List<CaptureMatchData> matchCaptures(@NotNull Int2ObjectMap<CharSequence> captures,
                                                      @NotNull MatchData matchData,
                                                      @NotNull StringWithId string,
                                                      @NotNull String s) {
     List<CaptureMatchData> result = new ArrayList<>();
-    for (int index : captures.keys()) {
+    for (IntIterator iterator = captures.keySet().iterator(); iterator.hasNext(); ) {
+      int index = iterator.nextInt();
       TextMateRange range = index < matchData.count() ? matchData.charRange(s, string.bytes, index) : TextMateRange.EMPTY_RANGE;
       result.add(new CaptureMatchData(range, index, captures.get(index)));
     }
@@ -207,23 +209,14 @@ public final class SyntaxMatchUtils {
 
   @NotNull
   public static String selectorsToScope(@NotNull Collection<CharSequence> selectors) {
-    return MY_SCOPES_INTERNER.computeIfAbsent(new ArrayList<>(selectors), SyntaxMatchUtils::joinSelectors);
+    return MY_SCOPES_INTERNER.computeIfAbsent(ContainerUtil.skipNulls(selectors), SyntaxMatchUtils::joinSelectors);
   }
 
   private static String joinSelectors(@NotNull List<CharSequence> selectors) {
-    StringBuilder result = new StringBuilder();
-    for (CharSequence selector : selectors) {
-      if (selector != null) {
-        result.append(selector).append(" ");
-      }
-    }
-    if (result.length() > 0) {
-      result.setLength(result.length() - 1);
-    }
-    return result.toString();
+    return StringUtil.join(selectors, " ");
   }
 
-  private static class MatchKey {
+  private static final class MatchKey {
     final SyntaxNodeDescriptor descriptor;
     final StringWithId string;
     final int byteOffset;

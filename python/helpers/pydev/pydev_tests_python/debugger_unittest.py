@@ -450,6 +450,30 @@ class DebuggerRunner(object):
             "\n\n===========================\nLog:\n" + '\n'.join(getattr(writerThread, 'log', [])))
 
 
+# noinspection PyProtectedMember
+def _create_socket(port=None):
+    if hasattr(_create_socket, '_used_ports'):
+        assert port not in _create_socket._used_ports, 'Socket already initialized.'
+    else:
+        _create_socket._used_ports = set()
+
+    if port is not None:
+        _create_socket._used_ports.add(port)
+
+    from _pydev_bundle.pydev_localhost import get_socket_name
+    if SHOW_WRITES_AND_READS:
+        print('start_socket')
+
+    if port is None:
+        socket_name = get_socket_name(close=True)
+    else:
+        socket_name = (pydev_localhost.get_localhost(), port)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(socket_name)
+    return sock
+
+
 #=======================================================================================================================
 # AbstractWriterThread
 #=======================================================================================================================
@@ -485,7 +509,8 @@ class AbstractWriterThread(threading.Thread):
             'warning: Debugger speedups',
             'pydev debugger: New process is launching',
             'pydev debugger: To debug that process',
-            )):
+            'pydev debugger: process'
+        )):
             return True
 
         if re.match(r'^(\d+)\t(\d)+', line):
@@ -592,20 +617,9 @@ class AbstractWriterThread(threading.Thread):
         return self.reader_thread.get_next_message(context_message, timeout=timeout)
 
     def start_socket(self, port=None):
-        assert not hasattr(self, 'port'), 'Socket already initialized.'
-        from _pydev_bundle.pydev_localhost import get_socket_name
-        if SHOW_WRITES_AND_READS:
-            print('start_socket')
-
         self._sequence = -1
-        if port is None:
-            socket_name = get_socket_name(close=True)
-        else:
-            socket_name = (pydev_localhost.get_localhost(), port)
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind(socket_name)
-        self.port = socket_name[1]
+        server_socket = _create_socket(port)
+        self.port = server_socket.getsockname()[1]
         server_socket.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
@@ -1048,6 +1062,38 @@ class AbstractWriterThread(threading.Thread):
             return 'Found stack: %s' % (self.get_frame_names(main_thread_id),)
 
         wait_for_condition(condition, msg, timeout=5, sleep=.5)
+
+
+class AbstractDispatcherThread(AbstractWriterThread):
+    """For using with the ``--multiproc`` option. Allocates new writers and dispatches breakpoints to them."""
+    def __init__(self):
+        super(AbstractDispatcherThread, self).__init__()
+        self.writers = []
+        self._sequence = -1
+        self._breakpoints = []
+
+    def run(self):
+        server_socket = _create_socket()
+        server_socket.listen(1)
+        self.port = server_socket.getsockname()[1]
+        self.finished_initialization = True
+
+        while True:
+            self.sock, addr = server_socket.accept()
+            new_writer = AbstractWriterThread()
+            new_writer.TEST_FILE = self.TEST_FILE
+            new_writer.start()
+            wait_for_condition(lambda: hasattr(new_writer, 'port'))
+            self.write('99\t-1\t%d' % new_writer.port)
+            wait_for_condition(lambda: new_writer.finished_initialization)
+
+            for args, kwargs in self._breakpoints:
+                new_writer.write_add_breakpoint(*args, **kwargs)
+
+            self.writers.append(new_writer)
+
+    def write_add_breakpoint(self, *args, **kwargs):
+        self._breakpoints.append((args, kwargs))
 
 
 def _get_debugger_test_file(filename):

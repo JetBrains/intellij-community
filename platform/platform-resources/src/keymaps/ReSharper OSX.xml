@@ -165,6 +165,10 @@
     <keyboard-shortcut first-keystroke="meta 3"/>
     <keyboard-shortcut first-keystroke="meta alt U"/>
   </action>
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="meta DOWN"/>
+  </action>
   <action id="EditorToggleShowWhitespaces"/>
   <action id="EditorToggleUseSoftWraps"/>
   <action id="Refresh"/>
@@ -174,12 +178,22 @@
   <action id="VcsShowNextChangeMarker"/>
   <action id="VcsShowPrevChangeMarker"/>
   <action id="CallHierarchy"/>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="control meta O"/>
+  </action>
+  <action id="ShowBookmarks">
+    <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
+  </action>
 
   <!--  Rider-specific actions-->
 
   <action id="ActivateInspectionResultsToolWindow">
     <keyboard-shortcut first-keystroke="meta control 4"/>
     <keyboard-shortcut first-keystroke="meta alt COMMA"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
 
 </keymap>

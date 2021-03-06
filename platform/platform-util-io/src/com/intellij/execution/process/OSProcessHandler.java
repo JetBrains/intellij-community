@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
@@ -19,14 +19,15 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.Set;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
@@ -160,7 +161,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
       return;
     }
-    String message = null;
+    @NonNls String message = null;
     if (application.isDispatchThread()) {
       message = "Synchronous execution on EDT: ";
     }
@@ -168,7 +169,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       message = "Synchronous execution under ReadAction: ";
     }
     if (message != null && REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
-      LOG.error(message + processHandler);
+      LOG.error(message + processHandler + ", see com.intellij.execution.process.OSProcessHandler#checkEdtAndReadAction() Javadoc for resolutions");
     }
   }
 
@@ -267,6 +268,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
+  public boolean hasPty() {
+    return myHasPty;
+  }
+
   /**
    * <p>In case of PTY this process handler will use blocking read because {@link InputStream#available()} doesn't work for Pty4j, and there
    * is no reason to "disconnect" leaving PTY alive. See {@link BaseDataReader.SleepingPolicy} for more info.</p>
@@ -297,7 +302,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   public static void deleteFileOnTermination(@NotNull GeneralCommandLine commandLine, @NotNull File fileToDelete) {
     Set<File> set = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
     if (set == null) {
-      set = new THashSet<>();
+      set = new HashSet<>();
       commandLine.putUserData(DELETE_FILES_ON_TERMINATION, set);
     }
     set.add(fileToDelete);

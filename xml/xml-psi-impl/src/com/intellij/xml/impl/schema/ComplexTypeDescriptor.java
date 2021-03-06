@@ -10,12 +10,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -23,65 +18,58 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public class ComplexTypeDescriptor extends TypeDescriptor {
   protected final XmlNSDescriptorImpl myDocumentDescriptor;
 
   private static final FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement> myElementDescriptorsCache =
-    new FieldCache<XmlElementDescriptor[],ComplexTypeDescriptor,Object, XmlElement>() {
+    new FieldCache<>() {
 
-    @Override
-    protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
-      return complexTypeDescriptor.doCollectElements(context);
-    }
+      @Override
+      protected XmlElementDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, final XmlElement context) {
+        return complexTypeDescriptor.doCollectElements(context);
+      }
 
-    @Override
-    protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      return complexTypeDescriptor.myElementDescriptors;
-    }
+      @Override
+      protected XmlElementDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        return complexTypeDescriptor.myElementDescriptors;
+      }
 
-    @Override
-    protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
-    }
-  };
+      @Override
+      protected void putValue(final XmlElementDescriptor[] xmlElementDescriptors,
+                              final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        complexTypeDescriptor.myElementDescriptors = xmlElementDescriptors;
+      }
+    };
 
   private static final FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement> myAttributeDescriptorsCache =
-    new FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement>() {
-    @Override
-    protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
-      return complexTypeDescriptor.doCollectAttributes();
-    }
+    new FieldCache<>() {
+      @Override
+      protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
+        return complexTypeDescriptor.doCollectAttributes();
+      }
 
-    @Override
-    protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
-      return complexTypeDescriptor.myAttributeDescriptors;
-    }
+      @Override
+      protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
+        return complexTypeDescriptor.myAttributeDescriptors;
+      }
 
-    @Override
-    protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
-                            final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
-      complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
-    }
-  };
+      @Override
+      protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
+                                    final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+        complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
+      }
+    };
 
   private final Map<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache =
     ConcurrentFactoryMap.createMap(key -> CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
-      THashSet<Object> dependencies = new THashSet<>();
-      CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<>(), dependencies);
+      Set<Object> dependencies = new HashSet<>();
+      CanContainAttributeType type = _canContainAttribute(key, myTag, null, new HashSet<>(), dependencies);
       if (dependencies.isEmpty()) {
         dependencies.add(myTag.getContainingFile());
       }
@@ -248,7 +236,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
             removeAttributeDescriptor(result, name, null);
           }
           else {
-            XmlAttributeDescriptorImpl descriptor = myDocumentDescriptor.createAttributeDescriptor(tag);
+            XmlAttributeDescriptorImpl descriptor = new XmlAttributeDescriptorImpl(tag);
             descriptor.myUse = use;
             if (ref != null) {
               descriptor.myReferenceName = ref.getAttributeValue(REF_ATTR_NAME);
@@ -402,7 +390,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     if (qName == null) {
       return myAnyAttributeCache.get(namespace).getValue();
     }
-    return _canContainAttribute(namespace, myTag, qName, new THashSet<>(), null);
+    return _canContainAttribute(namespace, myTag, qName, new HashSet<>(), null);
   }
 
   enum CanContainAttributeType {

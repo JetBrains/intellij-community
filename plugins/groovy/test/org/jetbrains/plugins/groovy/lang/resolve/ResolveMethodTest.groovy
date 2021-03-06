@@ -2648,4 +2648,35 @@ f<caret>oo(null)
 ''', GrMethod
     assert method.getParameters()[0].type.canonicalText == "java.lang.Object..."
   }
+
+  @Test
+  void 'resolve calls inside closure'() {
+    resolveTest '''
+def f() {
+  def x = 'q'
+  1.with {
+    print(x.is<caret>Empty())
+  }
+}''', PsiMethod
+  }
+
+  @Test
+  void 'resolve calls inside closure with CompileStatic'() {
+    resolveTest '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def test() {
+    1.with { r -> def x = 1; r.ti<caret>mes { x.byteValue() } }
+}''', PsiMethod
+  }
+
+  @Test
+  void 'resolve calls inside nested closure'() {
+    resolveTest '''
+def test() {
+    1.with { def x = 1; it.times { x.byt<caret>eValue() } }
+}''', PsiMethod
+  }
+
 }

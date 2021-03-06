@@ -42,6 +42,7 @@ class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfig
                           item: Sdk?,
                           module: Module) {
     facet.configuration.sdk = item
+    FacetManager.getInstance(module).facetConfigurationChanged(facet)
     PythonFacetUtil.updateLibrary(module, facet.configuration)
   }
 

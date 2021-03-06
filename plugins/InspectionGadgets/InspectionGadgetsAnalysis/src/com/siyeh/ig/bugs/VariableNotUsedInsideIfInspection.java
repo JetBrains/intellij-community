@@ -22,7 +22,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +74,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      final PsiExpression condition = ParenthesesUtils.stripParentheses(statement.getCondition());
+      final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
       if (!(condition instanceof PsiBinaryExpression)) {
         return;
       }
@@ -113,11 +112,11 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     }
 
     private static PsiReferenceExpression extractVariableReference(PsiBinaryExpression expression) {
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       if (lhs == null) {
         return null;
       }
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       if (rhs == null) {
         return null;
       }

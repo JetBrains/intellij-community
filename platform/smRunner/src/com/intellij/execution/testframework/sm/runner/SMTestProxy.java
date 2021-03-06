@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -12,24 +13,32 @@ import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
+import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -148,12 +157,13 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }
 
-  @Nullable
-  public String getStacktrace() {
+  @Override
+  public @Nullable @NlsSafe String getStacktrace() {
     return myStacktrace;
   }
 
-  public String getErrorMessage() {
+  @Override
+  public @Nullable @NlsSafe String getErrorMessage() {
     return myErrorMessage;
   }
 
@@ -172,7 +182,7 @@ public class SMTestProxy extends AbstractTestProxy {
       return myHasPassedTests;
     }
     boolean hasPassedTests = calcPassedTests();
-    boolean canCache = !myState.isInProgress();
+    boolean canCache = !myState.isInProgress() && myState.wasLaunched();
     if (canCache) {
       myHasPassedTests = hasPassedTests;
       myHasPassedTestsCached = true;
@@ -268,7 +278,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
     if (myLocationMapCachedValue == null) {
       myLocationMapCachedValue = CachedValuesManager.getManager(project).createCachedValue(() -> {
-        Map<GlobalSearchScope, Ref<Location>> value = ContainerUtil.newConcurrentMap(1);
+        Map<GlobalSearchScope, Ref<Location>> value = new ConcurrentHashMap<>(1);
         // In some implementations calling `SMTestLocator.getLocation` might update the `ModificationTracker` from
         // `SMTestLocator.getLocationCacheModificationTracker` call.
         // Thus, calculate the first result in advance to cache with the updated modification tracker.
@@ -315,7 +325,7 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
 
-    return location.getOpenFileDescriptor();
+    return location.getNavigatable();
   }
 
   public boolean isSuite() {
@@ -408,11 +418,11 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private String getDurationString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDuration(duration.longValue(), "\u2009") : null;
+    return duration != null ? NlsMessages.formatDurationApproximateNarrow(duration.longValue()) : null;
   }
   private String getDurationPaddedString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDurationPadded(duration.longValue(), "\u2009") : null;
+    return duration != null ? NlsMessages.formatDurationPadded(duration.longValue()) : null;
   }
 
   @Override
@@ -485,24 +495,24 @@ public class SMTestProxy extends AbstractTestProxy {
   public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
-    if (myState instanceof TestComparisionFailedState) {
-      CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
-      states.addFailure((TestFailedState)myState);
-      states.addFailure(failedState);
-      fireOnNewPrintable(failedState);
-      myState = states;
-    }
-    else if (myState instanceof CompoundTestFailedState) {
+    TestFailedState failedState = testError ? new TestErrorState(localizedMessage, stackTrace) 
+                                            : new TestFailedState(localizedMessage, stackTrace);
+    updateFailedState(failedState);
+    fireOnNewPrintable(failedState);
+  }
+
+  public void updateFailedState(TestFailedState failedState) {
+    if (myState instanceof CompoundTestFailedState) {
       ((CompoundTestFailedState)myState).addFailure(failedState);
-      fireOnNewPrintable(failedState);
     }
     else if (myState instanceof TestFailedState) {
-      ((TestFailedState)myState).addError(localizedMessage, stackTrace, myPrinter);
+      CompoundTestFailedState states = new CompoundTestFailedState();
+      states.addFailure((TestFailedState)myState);
+      states.addFailure(failedState);
+      myState = states;
     }
     else {
-      myState = testError ? new TestErrorState(localizedMessage, stackTrace) : failedState;
-      fireOnNewPrintable(myState);
+      myState = failedState;
     }
   }
 
@@ -543,18 +553,7 @@ public class SMTestProxy extends AbstractTestProxy {
       hyperlink.setTestProxyName(getName());
     }
 
-    if (myState instanceof CompoundTestFailedState) {
-      ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);
-    }
-    else if (myState instanceof TestFailedState) {
-      final CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
-      states.addFailure((TestFailedState)myState);
-      states.addFailure(comparisionFailedState);
-      myState = states;
-    }
-    else {
-      myState = comparisionFailedState;
-    }
+    updateFailedState(comparisionFailedState);
     fireOnNewPrintable(comparisionFailedState);
     return comparisionFailedState;
   }
@@ -676,14 +675,6 @@ public class SMTestProxy extends AbstractTestProxy {
     });
   }
 
-  /**
-   * @deprecated use {@link #addOutput(String, Key)}
-   */
-  @Deprecated
-  public void addStdOutput(final String output, final Key outputType) {
-    addOutput(output, outputType);
-  }
-
   public final void addStdOutput(@NotNull String output) {
     addOutput(output, ProcessOutputTypes.STDOUT);
   }
@@ -715,10 +706,7 @@ public class SMTestProxy extends AbstractTestProxy {
     addAfterLastPassed(new Printable() {
       @Override
       public void printOn(final Printer printer) {
-        String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
-        if (errorText != null) {
-          TestFailedState.printError(printer, Collections.singletonList(errorText));
-        }
+        new TestFailedState(output, stackTrace).printOn(printer);
       }
     });
   }
@@ -733,7 +721,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @NotNull
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     if (myPresentableName == null) {
       if (myPreservePresentableName) {
         myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
@@ -752,7 +740,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
 
     if (myState instanceof CompoundTestFailedState) {
-      return ((CompoundTestFailedState)myState).getHyperlinks().get(0);
+      return ContainerUtil.getFirstItem(((CompoundTestFailedState)myState).getHyperlinks());
     }
 
     return null;
@@ -954,6 +942,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public static class SMRootTestProxy extends SMTestProxy implements TestProxyRoot {
+    private final JComponent myConsole;
     private boolean myTestsReporterAttached; // false by default
 
     private String myPresentation;
@@ -961,15 +950,18 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myRootLocationUrl;
     private ProcessHandler myHandler;
     private boolean myShouldPrintOwnContentOnly = false;
+    private long myExecutionId = -1;
     @NotNull
     private TestDurationStrategy myDurationStrategy = TestDurationStrategy.AUTOMATIC;
+    private TestConsoleProperties myTestConsoleProperties;
 
     public SMRootTestProxy() {
-      this(false);
+      this(false, null);
     }
 
-    public SMRootTestProxy(boolean preservePresentableName) {
+    public SMRootTestProxy(boolean preservePresentableName, @Nullable JComponent console) {
       super("[root]", true, null, preservePresentableName);
+      myConsole = console;
     }
 
     public void setTestsReporterAttached() {
@@ -1003,8 +995,33 @@ public class SMTestProxy extends AbstractTestProxy {
       myComment = comment;
     }
 
+    @RequiresEdt
+    public long getExecutionId() {
+      long result = myExecutionId;
+      if (result == -1) {
+        ExecutionEnvironment executionEnvironment = null;
+        if (myConsole != null) {
+          DataContext consoleContext = DataManager.getInstance().getDataContext(myConsole);
+          executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
+          if (executionEnvironment == null) {
+            ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(consoleContext);
+            if (viewContext != null) {
+              JComponent tabsComponent = viewContext.getContentManager().getComponent();
+              executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
+            }
+          }
+        }
+        myExecutionId = result = executionEnvironment != null ? executionEnvironment.getExecutionId() : 0;
+      }
+      return result;
+    }
+
+    public void setExecutionId(long id) {
+      myExecutionId = id;
+    }
+
     @Override
-    public String getComment() {
+    public @NlsSafe String getComment() {
       return myComment;
     }
 
@@ -1059,6 +1076,14 @@ public class SMTestProxy extends AbstractTestProxy {
       else {
         super.printOn(printer);
       }
+    }
+
+    public void setTestConsoleProperties(TestConsoleProperties properties) {
+      myTestConsoleProperties = properties;
+    }
+
+    public TestConsoleProperties getTestConsoleProperties() {
+      return myTestConsoleProperties;
     }
   }
 }

@@ -187,7 +187,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     return result;
   }
 
-  private class MyRange extends RangeMarkerWithGetterImpl implements IntSupplier {
+  private class MyRange extends RangeMarkerImpl implements IntSupplier {
     private int myValue;
 
     MyRange(int offset, int value) {
@@ -195,7 +195,7 @@ public class MarkerTreeWithPartialSumsTest extends AbstractEditorTest {
     }
 
     MyRange(int offset, int value, boolean stickToRight) {
-      super(myDocument, offset, offset, false);
+      super(myDocument, offset, offset, false, true);
       myValue = value;
       myTree.addInterval(this, offset, offset, false, false, stickToRight, 0);
     }

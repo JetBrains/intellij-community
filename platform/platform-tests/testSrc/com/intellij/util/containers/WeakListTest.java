@@ -52,6 +52,7 @@ public class WeakListTest {
     assertSame(HARD_REFERENCED, myWeakList.iterator().next());
   }
 
+  @SuppressWarnings("RedundantOperationOnEmptyContainer")
   @Test
   public void testClear() {
     fillWithObjects(20);
@@ -70,6 +71,7 @@ public class WeakListTest {
     Iterator<?> iterator = myWeakList.iterator();
     for (int i = 0; i < N; i++) {
       assertTrue(iterator.hasNext());
+      //noinspection ConstantConditions
       assertTrue(iterator.hasNext());
       int element = (Integer)iterator.next();
       assertEquals(i, element);

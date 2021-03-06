@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VarExprent extends Exprent {
-
   public static final int STACK_BASE = 10000;
   public static final String VAR_NAMELESS_ENCLOSURE = "<VAR_NAMELESS_ENCLOSURE>";
 
@@ -122,7 +121,7 @@ public class VarExprent extends Exprent {
       Integer origIndex = processor.getVarOriginalIndex(index);
       if (origIndex != null) {
         String name = attr.getName(origIndex, visibleOffset);
-        if (name != null && TextUtil.isValidIdentifier(name, method.getClassStruct().getBytecodeVersion())) {
+        if (name != null && TextUtil.isValidIdentifier(name, method.getBytecodeVersion())) {
           return name;
         }
       }

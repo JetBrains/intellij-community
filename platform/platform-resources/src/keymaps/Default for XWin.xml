@@ -27,4 +27,6 @@
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="control alt 5"/>
   </action>
+  <action id="ActivateUnitTestsToolWindow"/>
+  <action id="ActivateNuGetToolWindow"/>
 </keymap>

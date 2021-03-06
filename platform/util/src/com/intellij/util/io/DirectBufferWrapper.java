@@ -1,78 +1,95 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
-abstract class DirectBufferWrapper extends ByteBufferWrapper {
-  // Fixes IDEA-222358 Linux native memory leak. Please do not replace to BoundedTaskExecutor
-  private static final ExecutorService ourAllocator =
-    SystemInfo.isLinux && SystemProperties.getBooleanProperty("idea.limit.paged.storage.allocators", true)
-    ? ConcurrencyUtil.newSingleThreadExecutor("DirectBufferWrapper allocation thread")
-    : null;
+@ApiStatus.Internal
+public final class DirectBufferWrapper {
+  private final @NotNull PagedFileStorage myFile;
+  private final long myPosition;
+  private final int myLength;
+  private final boolean myReadOnly;
 
   private volatile ByteBuffer myBuffer;
+  private volatile boolean myDirty;
 
-  DirectBufferWrapper(Path file, long offset, long length) {
-    super(file, offset, length);
+  DirectBufferWrapper(@NotNull PagedFileStorage file, long offset, int length, boolean readOnly) {
+    myFile = file;
+    myPosition = offset;
+    myLength = length;
+    myReadOnly = readOnly;
   }
 
-  @Override
+  void markDirty() throws IOException {
+    if (myReadOnly) {
+      throw new IOException("Read-only byte buffer can't be modified. File: " + myFile);
+    }
+    if (!myDirty) myDirty = true;
+  }
+
+  final boolean isDirty() {
+    return myDirty;
+  }
+
   public ByteBuffer getCachedBuffer() {
     return myBuffer;
   }
 
-  @Override
-  public ByteBuffer getBuffer() throws IOException {
+  ByteBuffer getBuffer() throws IOException {
     ByteBuffer buffer = myBuffer;
     if (buffer == null) {
-      myBuffer = buffer = doCreate();
+      myBuffer = buffer = DirectByteBufferAllocator.allocate(() -> create());
     }
     return buffer;
   }
 
-  private ByteBuffer doCreate() throws IOException {
-    if (ourAllocator != null) {
-      // Fixes IDEA-222358 Linux native memory leak
-      try {
-        return ourAllocator.submit(this::create).get();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof IOException) {
-          throw (IOException)cause;
-        }
-        else if (cause instanceof OutOfMemoryError) {
-          throw (OutOfMemoryError)cause; // OutOfMemoryError should be propagated (handled above)
-        }
-        else {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-    else {
-      return create();
-    }
+  private ByteBuffer create() throws IOException {
+    return myFile.useChannel(ch -> {
+      ByteBuffer buffer = ByteBuffer.allocateDirect(myLength);
+      ch.read(buffer, myPosition);
+      return buffer;
+    }, myReadOnly);
   }
 
-  protected abstract ByteBuffer create() throws IOException;
-
-  @Override
-  public void unmap() {
-    if (isDirty()) flush();
+  void release() throws IOException {
+    if (isDirty()) force();
     if (myBuffer != null) {
       ByteBufferUtil.cleanBuffer(myBuffer);
       myBuffer = null;
     }
+  }
+
+  void force() throws IOException {
+    assert !myReadOnly;
+    ByteBuffer buffer = getCachedBuffer();
+    if (buffer != null && isDirty()) {
+      myFile.useChannel(ch -> {
+        buffer.rewind();
+        ch.write(buffer, myPosition);
+        myDirty = false;
+        return null;
+      }, myReadOnly);
+    }
+  }
+
+  int getLength() {
+    return myLength;
+  }
+
+  @Override
+  public String toString() {
+    return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myLength;
+  }
+
+  public static DirectBufferWrapper readWriteDirect(PagedFileStorage file, long offset, int length) {
+    return new DirectBufferWrapper(file, offset, length, false);
+  }
+
+  public static DirectBufferWrapper readOnlyDirect(PagedFileStorage file, long offset, int length) {
+    return new DirectBufferWrapper(file, offset, length, true);
   }
 }

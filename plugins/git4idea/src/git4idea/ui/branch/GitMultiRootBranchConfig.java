@@ -16,6 +16,7 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsMultiRootBranchConfig;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -54,6 +55,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
    * returns the name of this remote branch. Otherwise returns null. <br/>
    * For one repository just returns the tracked branch or null if there is no tracked branch.
    */
+  @NlsSafe
   @Nullable
   public String getTrackedBranch(@NotNull String branch) {
     String trackedName = null;

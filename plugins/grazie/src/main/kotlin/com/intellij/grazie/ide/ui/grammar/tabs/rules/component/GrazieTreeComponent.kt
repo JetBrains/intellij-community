@@ -16,18 +16,18 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.components.service
 import com.intellij.ui.*
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.BorderLayout
-import java.util.*
 import javax.swing.ScrollPaneConstants
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
+internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTree(GrazieRulesTreeCellRenderer(), GrazieRulesTreeNode()),
                                                                      GrazieStateLifecycle, Disposable, GrazieUIComponent {
-  private val state = HashMap<String, RuleWithLang>()
+  private val state = CollectionFactory.createSmallMemoryFootprintMap<String, RuleWithLang>()
   private val filterComponent: GrazieRulesTreeFilter = GrazieRulesTreeFilter(this)
 
   private lateinit var myConnection: MessageBusConnection
@@ -58,7 +58,7 @@ class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : CheckboxTre
     TreeSpeedSearch(this) {
       when (val node = TreeUtil.getLastUserObject(it)) {
         is RuleWithLang -> node.rule.description
-        is ComparableCategory -> node.category.getName(node.lang.jLanguage)
+        is ComparableCategory -> node.category.name
         is Lang -> node.nativeName
         else -> ""
       }

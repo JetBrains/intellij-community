@@ -16,7 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @author Maxim.Medvedev
@@ -90,8 +89,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   public String isOKTest(String varName, boolean allOccurences) {
     MultiMap<PsiElement, String> list = isOKImpl(varName, allOccurences);
     String result = "";
-    final String[] strings = ArrayUtilRt.toStringArray((Collection<String>)list.values());
-    Arrays.sort(strings, (o1, o2) -> o1.compareTo(o2));
+    final String[] strings = ArrayUtilRt.toStringArray(list.values());
+    Arrays.sort(strings);
 
     for (String s : strings) {
       result = result + s.replaceAll("<b><code>", "").replaceAll("</code></b>", "") + "\n";

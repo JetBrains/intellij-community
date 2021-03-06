@@ -74,3 +74,12 @@ public class ExternalizableWithoutPublicNoArgConstructor implements Externalizab
   }
 }
 
+record R(int a, int b) implements Externalizable {
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+  }
+}

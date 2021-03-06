@@ -5,7 +5,8 @@ import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.MathUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public class ThreeDiffSplitter extends JPanel {
     resetProportions();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setPainter(@Nullable Painter painter, @NotNull Side side) {
     getDivider(side).setPainter(painter);
   }
@@ -68,7 +69,7 @@ public class ThreeDiffSplitter extends JPanel {
   }
 
   private void setProportion(float proportion, @NotNull Side side) {
-    proportion = Math.min(1f, Math.max(0f, proportion));
+    proportion = MathUtil.clamp(proportion, 0f, 1f);
     float otherProportion = side.select(myProportion2, myProportion1);
     otherProportion = Math.min(otherProportion, 1f - proportion);
 
@@ -150,7 +151,7 @@ public class ThreeDiffSplitter extends JPanel {
       if (myPainter != null) myPainter.paint(g, this);
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void setPainter(@Nullable Painter painter) {
       myPainter = painter;
     }

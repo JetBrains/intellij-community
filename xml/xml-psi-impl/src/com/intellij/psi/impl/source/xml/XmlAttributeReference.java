@@ -13,12 +13,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.XmlAttributeDescriptorEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlAttributeReference implements PsiPolyVariantReference {
-  private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<XmlAttributeDescriptor>() {
+  private final NullableLazyValue<XmlAttributeDescriptor> myDescriptor = new NullableLazyValue<>() {
     @Override
     protected XmlAttributeDescriptor compute() {
       return myAttribute.getDescriptor();
@@ -27,12 +26,6 @@ public class XmlAttributeReference implements PsiPolyVariantReference {
   private final XmlAttribute myAttribute;
 
   public XmlAttributeReference(@NotNull XmlAttribute attribute) {
-    myAttribute = attribute;
-  }
-  
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public XmlAttributeReference(@NotNull XmlAttributeImpl attribute) {
     myAttribute = attribute;
   }
 

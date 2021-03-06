@@ -19,7 +19,6 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -32,10 +31,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
 
 /**
  * Implements reference expression PSI.
@@ -239,7 +237,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return descriptorType.get();
     }
 
-    final PyType callableType = getCallableType(context);
+    final PyType callableType = getCallableType(context, key);
     if (callableType != null) {
       return callableType;
     }
@@ -248,32 +246,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  private PyType getCallableType(@NotNull TypeEvalContext context) {
+  private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      List<PyCallableType> callableTypes = new ArrayList<>();
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-
-      for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(this, resolveContext)) {
-        for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(callExpression, resolveResult, resolveContext)) {
-          final PyCallableType callableType = markResolveResult(clarifiedResolveResult, context, 0);
-          if (callableType == null) continue;
-
-          callableTypes.add(callableType);
-        }
-      }
-
-      PyType resolvedType =
-        PyUnionType.union(forEveryScopeTakeOverloadsOtherwiseImplementations(callableTypes, PyCallableType::getCallable, context)
-                            .collect(Collectors.toList())
-        );
-
-      if (PyTypeUtil
-            .toStream(resolvedType)
-            .noneMatch(type -> type instanceof PyCallableType && ((PyCallableType)type).getCallable() == null) &&
-          resolvedType != null) {
-        return resolvedType;
-      }
+      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context));
     }
     return null;
   }
@@ -282,17 +258,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private Ref<PyType> getDescriptorType(@Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
     if (!isQualified()) return null;
     final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
-    if (targetType == null) return null;
+    if (targetType == null || targetType.isDefinition()) return null;
     final PyResolveContext resolveContext = PyResolveContext.noProperties().withTypeEvalContext(context);
     final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
                                                                                 resolveContext);
     if (members == null || members.isEmpty()) return null;
-    final List<PyType> types = StreamEx.of(members)
-      .map((result) -> result.getElement())
+    final PyType type = StreamEx.of(members)
+      .map(RatedResolveResult::getElement)
       .select(PyCallable.class)
-      .map((callable) -> context.getReturnType(callable))
-      .toList();
-    final PyType type = PyUnionType.union(types);
+      .map(context::getReturnType)
+      .collect(PyTypeUtil.toUnion());
     return Ref.create(type);
   }
 
@@ -427,12 +402,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     if (context.maySwitchToAST(anchor)) {
       final PyExpression qualifier = anchor.getQualifier();
-      if (qualifier != null && PyTypeChecker.hasGenerics(type, context)) {
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
-        if (!ContainerUtil.isEmpty(substitutions)) {
-          final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
-          if (substituted != null) {
-            return substituted;
+      if (qualifier != null) {
+        PyType qualifierType = context.getType(qualifier);
+        boolean possiblyParameterizedQualifier = !(qualifierType instanceof PyModuleType || qualifierType instanceof PyImportedModuleType);
+        if (possiblyParameterizedQualifier && PyTypeChecker.hasGenerics(type, context)) {
+          final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
+          if (!ContainerUtil.isEmpty(substitutions)) {
+            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
+            if (substituted != null) {
+              return substituted;
+            }
           }
         }
       }
@@ -545,18 +524,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public static Ref<PyType> getReferenceTypeFromOverridingProviders(@NotNull PsiElement target,
-                                                                    @NotNull TypeEvalContext context,
-                                                                    @Nullable PsiElement anchor) {
-    return StreamEx
-      .of(PyTypeProvider.EP_NAME.getExtensionList())
-      .select(PyOverridingTypeProvider.class)
-      .map(provider -> provider.getReferenceType(target, context, anchor))
-      .findFirst(Objects::nonNull)
-      .orElse(null);
-  }
-
-  @Nullable
   public static Ref<PyType> getReferenceTypeFromProviders(@NotNull PsiElement target,
                                                           @NotNull TypeEvalContext context,
                                                           @Nullable PsiElement anchor) {
@@ -576,7 +543,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     myQualifiedName = null;
   }
 
-  private static class MultiFollowQueueNode {
+  private static final class MultiFollowQueueNode {
 
     @NotNull
     private final PyReferenceExpression myReferenceExpression;

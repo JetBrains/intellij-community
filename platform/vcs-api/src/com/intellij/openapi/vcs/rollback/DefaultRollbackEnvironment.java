@@ -36,7 +36,7 @@ public abstract class DefaultRollbackEnvironment implements RollbackEnvironment 
   }
 
   @Override
-  public void rollbackModifiedWithoutCheckout(final List<VirtualFile> files, final List<VcsException> exceptions,
+  public void rollbackModifiedWithoutCheckout(final List<? extends VirtualFile> files, final List<? super VcsException> exceptions,
                                               final RollbackProgressListener listener) {
     throw new UnsupportedOperationException();
   }

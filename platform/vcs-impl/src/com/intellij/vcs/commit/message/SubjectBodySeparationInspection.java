@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -31,7 +31,7 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
                                                      boolean isOnTheFly) {
     ProblemDescriptor descriptor = document.getLineCount() > 1
                                    ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
-                                                      "Missing blank line between subject and body", new AddBlankLineQuickFix(),
+                                                      VcsBundle.message("commit.message.missing.blank.line.between.subject.and.body"), new AddBlankLineQuickFix(),
                                                       new ReformatCommitMessageQuickFix())
                                    : null;
 
@@ -51,7 +51,7 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
   protected static class AddBlankLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return VcsBundle.getString("settings.commit.message.body.add.blank.line.fix");
+      return VcsBundle.message("settings.commit.message.body.add.blank.line.fix");
     }
 
     @Override

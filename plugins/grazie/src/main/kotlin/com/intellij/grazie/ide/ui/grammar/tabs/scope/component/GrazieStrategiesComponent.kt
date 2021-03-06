@@ -10,6 +10,7 @@ import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.util.containers.CollectionFactory
 
 class GrazieStrategiesComponent : CheckBoxListListener, GrazieUIComponent {
   override val component by lazy { ScrollPaneFactory.createScrollPane(list) }
@@ -20,8 +21,8 @@ class GrazieStrategiesComponent : CheckBoxListListener, GrazieUIComponent {
     }
   }
 
-  private val myEnabledStrategyIDs = HashSet<String>()
-  private val myDisabledStrategyIDs = HashSet<String>()
+  private val myEnabledStrategyIDs = CollectionFactory.createSmallMemoryFootprintSet<String>()
+  private val myDisabledStrategyIDs = CollectionFactory.createSmallMemoryFootprintSet<String>()
 
   override fun checkBoxSelectionChanged(index: Int, selected: Boolean) {
     val strategy = list.getItemAt(index) ?: return
@@ -49,7 +50,7 @@ class GrazieStrategiesComponent : CheckBoxListListener, GrazieUIComponent {
     myDisabledStrategyIDs.clear()
     myDisabledStrategyIDs.addAll(disabledStrategiesIDs)
 
-    val strategies = LanguageGrammarChecking.getLanguageExtensionPoints().map { it.instance }.sortedBy { it.getName() }
+    val strategies = LanguageGrammarChecking.getStrategies()
 
     list.clear()
     for (strategy in strategies) {

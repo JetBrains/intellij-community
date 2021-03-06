@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.codeInsight.daemon.GutterName;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -18,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -65,11 +66,10 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     return Contract.class.getName().equals(anno.getAnnotationQualifiedName());
   }
 
-  private final String myName;
+  private final @GutterName String myName;
   private final LineMarkerType myLineMarkerType;
 
-  protected NonCodeAnnotationsLineMarkerProvider(String name,
-                                                 LineMarkerType lineMarkerType) {
+  protected NonCodeAnnotationsLineMarkerProvider(@GutterName String name, LineMarkerType lineMarkerType) {
     myName = name;
     myLineMarkerType = lineMarkerType;
   }
@@ -90,7 +90,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     }
 
     String tooltip = XmlStringUtil.wrapInHtml(
-      NonCodeAnnotationGenerator.getNonCodeHeader(nonCodeAnnotations) + " available. Full signature:<p>\n" +
+      NonCodeAnnotationGenerator.getNonCodeHeaderAvalable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
       JavaDocInfoGenerator.generateSignature(owner));
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
@@ -150,9 +150,8 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
 
       if (!actions.isEmpty()) {
         final DefaultActionGroup group = new DefaultActionGroup(actions);
-        final DataContext context = SimpleDataContext.getProjectContext(null);
         return JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
+          .createActionGroupPopup(null, group, DataContext.EMPTY_CONTEXT, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
       }
 
       return null;

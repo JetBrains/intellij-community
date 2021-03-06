@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Dmitry Avdeev
- */
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
@@ -263,7 +260,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
              : getClass();
   }
 
-  private static class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
+  private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
     private Comparator<Configurable> myComparator;

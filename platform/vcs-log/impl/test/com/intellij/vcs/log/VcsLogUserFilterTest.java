@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -193,8 +194,9 @@ public abstract class VcsLogUserFilterTest {
 
     MultiMap<VcsUser, String> commits = generateHistory(users);
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
-    VcsLogUserFilter filter =
-      VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME), singletonMap(myProject.getBaseDir(), petrov), new HashSet<>(users));
+    VcsLogUserFilter filter = VcsLogFilterObject.fromUserNames(singleton(VcsLogFilterObject.ME),
+                                                               singletonMap(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), petrov),
+                                                               new HashSet<>(users));
 
     StringBuilder builder = new StringBuilder();
     checkFilter(filter, "me", commits.get(petrov), metadata, builder);
@@ -236,7 +238,7 @@ public abstract class VcsLogUserFilterTest {
   @NotNull
   private List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
     VcsLogFilterCollection filters = VcsLogFilterObject.collection(filter);
-    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProject.getBaseDir(), filters, -1);
+    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), filters, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
@@ -252,7 +254,7 @@ public abstract class VcsLogUserFilterTest {
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
         result.add(myObjectsFactory.createCommitMetadata(HashImpl.build(commit), emptyList(), System.currentTimeMillis(),
-                                                         myProject.getBaseDir(), "subject " + Math.random(), user.getName(),
+                                                         PlatformTestUtil.getOrCreateProjectBaseDir(myProject), "subject " + Math.random(), user.getName(),
                                                          user.getEmail(), "message " + Math.random(), user.getName(), user.getEmail(),
                                                          System.currentTimeMillis()));
       }
@@ -281,7 +283,7 @@ public abstract class VcsLogUserFilterTest {
       recordCommit(commits, user);
     }
 
-    VfsUtil.markDirtyAndRefresh(false, true, false, myProject.getBaseDir());
+    VfsUtil.markDirtyAndRefresh(false, true, false, PlatformTestUtil.getOrCreateProjectBaseDir(myProject));
     return commits;
   }
 

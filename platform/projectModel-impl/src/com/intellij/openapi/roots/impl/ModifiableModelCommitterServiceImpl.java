@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterService {
+class ModifiableModelCommitterServiceImpl implements ModifiableModelCommitterService {
   private static final Logger LOG = Logger.getInstance(ModifiableModelCommitter.class);
 
   @Override
@@ -85,7 +85,7 @@ public class ModifiableModelCommitterServiceImpl implements ModifiableModelCommi
     }
 
     final Collection<RootModelImpl> allRootModels = nameToModel.values();
-    InboundSemiGraph<RootModelImpl> graph = new InboundSemiGraph<RootModelImpl>() {
+    InboundSemiGraph<RootModelImpl> graph = new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<RootModelImpl> getNodes() {

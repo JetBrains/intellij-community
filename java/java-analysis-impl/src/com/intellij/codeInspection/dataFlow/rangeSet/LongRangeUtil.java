@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
 import com.intellij.util.ThreeState;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Helper methods for LongRangeSet implementation
  */
-class LongRangeUtil {
+final class LongRangeUtil {
   /**
    * Calculates greatest common divisor for two non-negative numbers
    * @param x x
@@ -25,7 +25,7 @@ class LongRangeUtil {
   }
 
   /**
-   * Clears given bit in value 
+   * Clears given bit in value
    * @param value value to clear bit at
    * @param bitNumber number of bit to clear (0 = least significant; 63 = most significant)
    * @return updated value
@@ -35,7 +35,7 @@ class LongRangeUtil {
   }
 
   /**
-   * Sets given bit in value 
+   * Sets given bit in value
    * @param value value to set bit at
    * @param bitNumber number of bit to set (0 = least significant; 63 = most significant)
    * @return updated value
@@ -68,9 +68,9 @@ class LongRangeUtil {
 
   /**
    * Returns the remainder. Unlike Java % operation this returns positive remainder for negative numbers (e.g. remainder(-1, 5) = -4).
-   * Strictly speaking the return value is the difference between dividend and 
+   * Strictly speaking the return value is the difference between dividend and
    * the greatest number x so that {@code x * dividend <= divisor}.
-   * 
+   *
    * @param dividend dividend
    * @param divisor divisor, assumed positive
    * @return the remainder.
@@ -83,7 +83,7 @@ class LongRangeUtil {
   /**
    * Rotates bits in the remainder bit mask to the right
    * @param bits remainder bit mask
-   * @param mod divisor (<=64; no set bits greater than mod) 
+   * @param mod divisor (<=64; no set bits greater than mod)
    * @param amount number of bits to rotate by
    * @return result of rotation
    */
@@ -99,7 +99,7 @@ class LongRangeUtil {
      * Totally unknown value: any bit may have any value
      */
     static final BitString UNSURE = new BitString(0, 0);
-    
+
     final long myBits;
     final long myMask;
 
@@ -115,7 +115,7 @@ class LongRangeUtil {
 
     /**
      * Unites (joins) this BitString with other
-     * 
+     *
      * @param other a BitString to join
      * @return resulting BitString
      */
@@ -126,7 +126,7 @@ class LongRangeUtil {
 
     /**
      * Intersects this BitString with other
-     * 
+     *
      * @param other a BitString to intersect with
      * @return resulting BitString, null if intersection is empty
      */
@@ -139,7 +139,7 @@ class LongRangeUtil {
     /**
      * Returns given bit
      * @param bit a bit number (0 = LSB)
-     * @return YES for set bit, NO for clear bit, UNSURE for unknown bit  
+     * @return YES for set bit, NO for clear bit, UNSURE for unknown bit
      */
     @NotNull ThreeState get(int bit) {
       return isSet(myMask, bit) ? ThreeState.fromBoolean(isSet(myBits, bit)) : ThreeState.UNSURE;
@@ -199,7 +199,7 @@ class LongRangeUtil {
      *
      * @param from lower bound, inclusive
      * @param to upper bound, inclusive
-     * @return a BitString which covers at least all the values between from and to (may also cover some more values)  
+     * @return a BitString which covers at least all the values between from and to (may also cover some more values)
      */
     static @NotNull BitString fromRange(long from, long to) {
       if (from == to) {

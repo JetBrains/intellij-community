@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
+import org.jetbrains.annotations.ApiStatus;
+
 public interface ToolWindowId {
   String COMMANDER = "Commander";
   String MESSAGES_WINDOW = "Messages";
@@ -15,14 +17,21 @@ public interface ToolWindowId {
    * @deprecated Use {@link com.intellij.build.BuildContentManager#getOrCreateToolWindow()}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   String BUILD = "Build";
+
+  /**
+   * @deprecated Use {@link com.intellij.analysis.problemsView.toolWindow.ProblemsView}
+   */
+  @Deprecated
+  String INSPECTION = "Inspection Results";
 
   String FIND = "Find";
   String HIERARCHY = "Hierarchy";
-  String INSPECTION = "Inspection Results";
   String TODO_VIEW = "TODO";
   String DEPENDENCIES = "Dependency Viewer";
   String VCS = "Version Control";
+  String COMMIT = "Commit";
   String MODULES_DEPENDENCIES = "Module Dependencies";
   String DUPLICATES = "Duplicates";
   String EXTRACT_METHOD = "Extract Method";

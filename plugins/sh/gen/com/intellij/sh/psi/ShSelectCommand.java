@@ -37,6 +37,9 @@ public interface ShSelectCommand extends ShCommand {
   @NotNull
   List<ShVariable> getVariableList();
 
+  @Nullable
+  PsiElement getIn();
+
   @NotNull
   PsiElement getSelect();
 

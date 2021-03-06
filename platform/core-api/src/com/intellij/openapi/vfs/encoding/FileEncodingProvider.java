@@ -4,17 +4,27 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.nio.charset.Charset;
 
 /**
- * Allows to overwrite project level encoding settings for a specific virtual file.
+ * Implement this interface to override encoding specified in {@link EncodingRegistry} for an arbitrary virtual file
+ * and define an extension in {@code plugin.xml}, for example:
+ * <pre><code>
+ *   &lt;fileEncodingProvider implementation="com.acme.example.MyFileEncodingProvider"/&gt;
+ * </code></pre>
+ * <b>Note:</b> The provider doesn't affect files defining their own encoding via {@code LanguageFileType.getCharset()}.
  */
 public interface FileEncodingProvider {
-  ExtensionPointName<FileEncodingProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileEncodingProvider");
+  ExtensionPointName<FileEncodingProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileEncodingProvider");
 
   /**
-   * @param file The file to check.
-   * @return true if BOM should be added for UTF-8-encoded file.
-   * @see EncodingManager#shouldAddBOMForNewUtf8File()
+   * @param virtualFile The virtual file to override encoding for.
+   * @return The encoding to be used for the given virtual file. <b>It should not depend on the current project. Otherwise it may
+   * cause index inconsistencies.</b>
    */
-  boolean shouldAddBOMForNewUtf8File(@NotNull VirtualFile file);
+  @Nullable
+  Charset getEncoding(@NotNull VirtualFile virtualFile);
+
 }

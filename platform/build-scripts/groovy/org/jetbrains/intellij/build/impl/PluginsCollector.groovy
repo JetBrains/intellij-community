@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.util.xmlb.JDOMXIncluder
 import groovy.json.JsonSlurper
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
@@ -14,8 +13,10 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 
+import java.nio.file.Path
+
 @CompileStatic
-class PluginsCollector {
+final class PluginsCollector {
   private final String myProvidedModulesFilePath
   private final BuildContext myBuildContext
 
@@ -56,49 +57,42 @@ class PluginsCollector {
     return true
   }
 
-  @CompileDynamic
-  private Map<String, PluginDescriptor> collectPluginDescriptors() {
+  private @NotNull Map<String, PluginDescriptor> collectPluginDescriptors() {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
     def allBundledPlugins = productLayout.bundledPluginModules as Set<String>
-    myBuildContext.project.modules.each {
-      if (allBundledPlugins.contains(it.name)) {
-        return
-      }
-      if (productLayout.compatiblePluginsToIgnore.contains(it.name)) {
-        return
-      }
-      PluginLayout pluginLayout = nonTrivialPlugins[it.name]?.first()
-      if (pluginLayout == null) {
-        pluginLayout = PluginLayout.plugin(it.name)
+    for (JpsModule  jpsModule : myBuildContext.project.modules) {
+      if (allBundledPlugins.contains(jpsModule.name) || productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
+        continue
       }
 
-      def pluginXml = myBuildContext.findFileInModuleSources(it.name, "META-INF/plugin.xml")
+      PluginLayout pluginLayout = nonTrivialPlugins[jpsModule.name]?.first()
+      if (pluginLayout == null) {
+        pluginLayout = PluginLayout.plugin(jpsModule.name)
+      }
+
+      Path pluginXml = myBuildContext.findFileInModuleSources(jpsModule.name, "META-INF/plugin.xml")
       if (pluginXml == null) {
-        return
+        continue
       }
 
       Element xml = JDOMUtil.load(pluginXml)
-      if (JDOMUtil.isEmpty(xml)) {
-        return
-      }
-
-      if (xml.getAttributeValue('implementation-detail') == 'true') {
-        return
+      if (JDOMUtil.isEmpty(xml) || xml.getAttributeValue('implementation-detail') == 'true') {
+        continue
       }
 
       String id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
-      if (!id) {
-        return
+      if (id == null || id.isEmpty()) {
+        continue
       }
 
-      JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml.toURI().toURL(), true, new SourcesBasedXIncludeResolver(it))
+      JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml.toUri().toURL(), true, new SourcesBasedXIncludeResolver(jpsModule))
       def declaredModules = new HashSet<String>()
-      for (module in xml.getChildren('module')) {
-        def value = module.getAttributeValue('value')
+      for (moduleElement in xml.getChildren('module')) {
+        def value = moduleElement.getAttributeValue('value')
         if (value) {
-          declaredModules += value
+          declaredModules.add(value)
         }
       }
       def requiredDependencies = new HashSet<String>()
@@ -117,7 +111,7 @@ class PluginsCollector {
     return pluginDescriptors
   }
 
-  private class PluginDescriptor {
+  private static final class PluginDescriptor {
     private final String id
     private final Set<String> declaredModules
     private final Set<String> requiredDependencies
@@ -131,7 +125,7 @@ class PluginsCollector {
     }
   }
 
-  private class SourcesBasedXIncludeResolver implements JDOMXIncluder.PathResolver {
+  private static final class SourcesBasedXIncludeResolver implements JDOMXIncluder.PathResolver {
     private final JpsModule myMainModule
 
     SourcesBasedXIncludeResolver(@NotNull JpsModule mainModule) {

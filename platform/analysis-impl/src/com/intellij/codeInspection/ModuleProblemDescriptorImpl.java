@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 public class ModuleProblemDescriptorImpl extends CommonProblemDescriptorImpl implements ModuleProblemDescriptor {
   private final Module myModule;
 
-  public ModuleProblemDescriptorImpl(QuickFix[] fixes, @NotNull String descriptionTemplate, @NotNull Module module) {
+  public ModuleProblemDescriptorImpl(QuickFix[] fixes, @NotNull @InspectionMessage String descriptionTemplate, @NotNull Module module) {
     super(fixes, descriptionTemplate);
     myModule = module;
   }

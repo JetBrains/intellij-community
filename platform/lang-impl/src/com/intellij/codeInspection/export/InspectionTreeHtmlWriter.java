@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -49,7 +49,7 @@ public final class InspectionTreeHtmlWriter {
     HTMLExportUtil.writeFile(myOutputDir, "index.html", myTree.getContext().getProject(), w -> {
       appendHeader(w);
       w.append("<div style=\"width:100%;\"><div style=\"float:left; width:50%;\"><h4>Inspection tree:</h4>");
-      InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<IOException>(myTree.getContext()) {
+      InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<>(myTree.getContext()) {
         @Override
         protected void appendText(String text, SimpleTextAttributes attributes) throws IOException {
           w.append(escapeNonBreakingSymbols(text));
@@ -130,7 +130,7 @@ public final class InspectionTreeHtmlWriter {
         else if (HighlightDisplayLevel.WARNING.equals(level)) {
           color = WARNING_COLOR;
         }
-        warningLevelName = level.getName();
+        warningLevelName = StringUtil.toUpperCase(level.getSeverity().getDisplayName());
       }
 
       final StringBuilder sb = new StringBuilder();

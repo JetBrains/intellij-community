@@ -11,17 +11,17 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import gnu.trove.THashMap
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtilRt
 import org.jdom.Element
-import java.util.*
+import java.util.function.BiConsumer
 
 private val LOG = logger<DefaultKeymap>()
 
 open class DefaultKeymap {
   internal val keymaps = ArrayList<Keymap>()
 
-  private val nameToScheme = THashMap<String, Keymap>()
+  private val nameToScheme = HashMap<String, Keymap>()
 
   companion object {
     @JvmStatic
@@ -30,45 +30,46 @@ open class DefaultKeymap {
 
     @JvmStatic
     fun isBundledKeymapHidden(keymapName: String?): Boolean {
-      return ((SystemInfo.isWindows || SystemInfo.isMac) && isKnownLinuxKeymap(keymapName)) || (!SystemInfo.isMac && isKnownMacOSKeymap(keymapName))
+      return ((SystemInfoRt.isWindows || SystemInfoRt.isMac) && isKnownLinuxKeymap(keymapName)) || (!SystemInfoRt.isMac && isKnownMacOSKeymap(keymapName))
     }
   }
 
   init {
     val filterKeymaps = !ApplicationManager.getApplication().isHeadlessEnvironment
-                        //&& Registry.`is`("keymap.current.os.only")
-    val filteredBeans = mutableListOf<BundledKeymapBean>()
+                        && System.getProperty("keymap.current.os.only", "true").toBoolean()
+    val filteredBeans = mutableListOf<Pair<BundledKeymapBean, PluginDescriptor>>()
 
     var macosParentKeymapFound = false
-    val macosBeans = if (SystemInfo.isMac) null else mutableListOf<BundledKeymapBean>()
+    val macosBeans = if (SystemInfoRt.isMac) null else mutableListOf<Pair<BundledKeymapBean, PluginDescriptor>>()
 
-    for (bean in BundledKeymapBean.EP_NAME.extensionList) {
-      val plugin = bean.pluginDescriptor ?: continue
+    BundledKeymapBean.EP_NAME.processWithPluginDescriptor(BiConsumer { bean, pluginDescriptor ->
       val keymapName = bean.keymapName
       // filter out bundled keymaps for other systems, but allow them via non-bundled plugins
       // on non-macOS add non-bundled known macOS keymaps if the default macOS keymap is present
-      if (filterKeymaps && plugin.isBundled && isBundledKeymapHidden(keymapName)) continue
-      if (filterKeymaps && macosBeans != null && !plugin.isBundled && isKnownMacOSKeymap(keymapName)) {
+      if (filterKeymaps && pluginDescriptor.isBundled && isBundledKeymapHidden(keymapName)) {
+        return@BiConsumer
+      }
+      if (filterKeymaps && macosBeans != null && !pluginDescriptor.isBundled && isKnownMacOSKeymap(keymapName)) {
         macosParentKeymapFound = macosParentKeymapFound || keymapName == KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
-        macosBeans.add(bean)
+        macosBeans.add(Pair(bean, pluginDescriptor))
       }
       else {
-        filteredBeans.add(bean)
+        filteredBeans.add(Pair(bean, pluginDescriptor))
       }
-    }
+    })
     if (macosParentKeymapFound && macosBeans != null) {
       filteredBeans.addAll(macosBeans)
     }
 
-    for (bean in filteredBeans) {
+    for ((bean, pluginDescriptor) in filteredBeans) {
       LOG.runAndLogException {
         loadKeymap(bean.keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
-            return bean.pluginDescriptor.pluginClassLoader.getResourceAsStream(bean.effectiveFile).use {
+            return pluginDescriptor.pluginClassLoader.getResourceAsStream(bean.effectiveFile).use {
               JDOMUtil.load(it)
             }
           }
-        }, bean.pluginDescriptor)
+        }, pluginDescriptor)
       }
     }
   }
@@ -99,7 +100,7 @@ open class DefaultKeymap {
 
   open val defaultKeymapName: String
     get() = when {
-      SystemInfo.isMac -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
+      SystemInfoRt.isMac -> KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP
       SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
       SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
       SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
@@ -113,7 +114,7 @@ open class DefaultKeymap {
       KeymapManager.GNOME_KEYMAP -> "GNOME"
       KeymapManager.KDE_KEYMAP -> "KDE"
       KeymapManager.X_WINDOW_KEYMAP -> "XWin"
-      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfo.isMac) "" else " (macOS)")
+      KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
       "NetBeans 6.5" -> "NetBeans"
       else -> {
         val newName = name
@@ -133,7 +134,7 @@ internal val BundledKeymapBean.effectiveFile: String
   get() = "keymaps/${file.replace("\$OS\$", osName())}"
 
 internal val BundledKeymapBean.keymapName: String
-  get() = FileUtil.getNameWithoutExtension(file).removePrefix("\$OS\$/")
+  get() = FileUtilRt.getNameWithoutExtension(file).removePrefix("\$OS\$/")
 
 private fun osName(): String = when {
   SystemInfo.isMac -> "macos"
@@ -148,7 +149,8 @@ private fun isKnownLinuxKeymap(keymapName: String?) = when (keymapName) {
 }
 
 private fun isKnownMacOSKeymap(keymapName: String?) = when (keymapName) {
-  KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP,
-  "Eclipse (Mac OS X)", "Sublime Text (Mac OS X)", "Xcode", "ReSharper OSX" -> true
+  KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP, "macOS System Shortcuts",
+  "Eclipse (Mac OS X)", "Sublime Text (Mac OS X)", "Xcode", "ReSharper OSX",
+  "Visual Studio OSX", "Visual Assist OSX", "Visual Studio for Mac", "VSCode OSX", "QtCreator (Mac OS X)" -> true
   else -> false
 }

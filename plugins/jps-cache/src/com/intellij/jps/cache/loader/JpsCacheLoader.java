@@ -1,6 +1,7 @@
 package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.model.JpsLoaderContext;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
@@ -54,8 +55,8 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
       // Start extracting after download
       SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = extractIndicatorManager.createSubTaskIndicator();
       extractIndicatorManager.getProgressIndicator().checkCanceled();
-      extractIndicatorManager.setText(this, "Extracting downloaded results...");
-      subTaskIndicator.setText2("Extracting project caches");
+      extractIndicatorManager.setText(this, JpsCacheBundle.message("progress.text.extracting.downloaded.results"));
+      subTaskIndicator.setText2(JpsCacheBundle.message("progress.details.extracting.project.caches"));
       long start = System.currentTimeMillis();
 
       ZipUtil.extract(zipFile, tmpFolder, null);
@@ -94,10 +95,10 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
 
     File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
-    indicatorManager.setText(this, "Applying changes...");
+    indicatorManager.setText(this, JpsCacheBundle.message("progress.text.applying.jps.caches"));
     if (currentDirForBuildCache != null) {
       SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = indicatorManager.createSubTaskIndicator();
-      subTaskIndicator.setText2("Applying downloaded caches");
+      subTaskIndicator.setText2(JpsCacheBundle.message("progress.details.applying.downloaded.caches"));
       // Copy timestamp old folder to new cache dir
       File timestamps = new File(currentDirForBuildCache, TIMESTAMPS_FOLDER_NAME);
       if (timestamps.exists()) {

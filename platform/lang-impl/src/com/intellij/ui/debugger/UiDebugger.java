@@ -4,6 +4,7 @@ package com.intellij.ui.debugger;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -30,7 +31,7 @@ public class UiDebugger extends JPanel implements Disposable {
   private final List<UiDebuggerExtension> myExtensions;
 
   public UiDebugger() {
-    Disposer.register(Disposer.get("ui"), this);
+    Disposer.register(ApplicationManager.getApplication(), this);
 
     myTabs = JBTabsFactory.createTabs(null, this);
     myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setPaintBorder(1, 0, 0, 0).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
@@ -95,7 +96,7 @@ public class UiDebugger extends JPanel implements Disposable {
 
       @Override
       protected Action @NotNull [] createActions() {
-        return new Action[] {new AbstractAction("Close") {
+        return new Action[] {new AbstractAction(LangBundle.message("button.close")) {
           @Override
           public void actionPerformed(ActionEvent e) {
             doOKAction();

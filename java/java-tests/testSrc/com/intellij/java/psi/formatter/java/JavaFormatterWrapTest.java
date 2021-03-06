@@ -21,11 +21,9 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
- *
- * @author Denis Zhdanov
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
-  @SuppressWarnings("SpellCheckingInspection")
   public void testWrappingAnnotationArrayParameters() {
     getSettings().RIGHT_MARGIN = 80;
     getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -931,6 +929,130 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "     * @param args\n" +
       "     */\n" +
       "    public static void main(String[] args) {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testBuilderMethods() {
+    getSettings().BUILDER_METHODS = "flowPanel,widget,wrap,builder,end";
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+
+    doTextTest(
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\").flowPanel(\"sidebar-offset\").widget(myReviewHints).flowPanel(\"island\").flowPanel(\"pane-toolbar pane-toolbar_island clearfix\").flowPanel(\"pane-toolbar__left pane-toolbar__left_header\").widget(reviewStateLabel(reviewDescriptorSignal)).widget(reviewIdLabel(reviewDescriptorSignal)).builder(reviewTitle(projectDescriptor, reviewDescriptorSignal)).end().end().flowPanel(\"revision-files-standalone\").widget(myChangesListView).end().end().widget(myReviewFeedView).end();\n" +
+      "    }\n" +
+      "}",
+
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        PanelBuilder.wrap(getCenterPanel(), \"review-view\")\n" +
+      "                .flowPanel(\"sidebar-offset\")\n" +
+      "                .widget(myReviewHints)\n" +
+      "                .flowPanel(\"island\")\n" +
+      "                .flowPanel(\"pane-toolbar pane-toolbar_island clearfix\")\n" +
+      "                .flowPanel(\"pane-toolbar__left pane-toolbar__left_header\")\n" +
+      "                .widget(reviewStateLabel(reviewDescriptorSignal))\n" +
+      "                .widget(reviewIdLabel(reviewDescriptorSignal))\n" +
+      "                .builder(reviewTitle(projectDescriptor, reviewDescriptorSignal))\n" +
+      "                .end()\n" +
+      "                .end()\n" +
+      "                .flowPanel(\"revision-files-standalone\")\n" +
+      "                .widget(myChangesListView)\n" +
+      "                .end()\n" +
+      "                .end()\n" +
+      "                .widget(myReviewFeedView)\n" +
+      "                .end();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea248594() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+
+    doTextTest(
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        String zozo = List.<String>of(\"titi\", \"toto\", \"tutu\").stream().filter(it -> it.contains(\"i\"))\n" +
+      "                .findAny().<String>map(it -> it.replaceFirst(\"t\", \"l\")).orElse(\"zozoggrezgzee\");\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    void foo() {\n" +
+      "        String zozo = List.<String>of(\"titi\", \"toto\", \"tutu\")\n" +
+      "                .stream()\n" +
+      "                .filter(it -> it.contains(\"i\"))\n" +
+      "                .findAny()\n" +
+      "                .<String>map(it -> it.replaceFirst(\"t\", \"l\"))\n" +
+      "                .orElse(\"zozoggrezgzee\");\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testWrapMixedBuilderAndNonBuilderChainedCalls() {
+    getSettings().BUILDER_METHODS = "start,addInt,addText,end";
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+
+    doTextTest(
+      "public class Test {\n" +
+      "\n" +
+      "    void foo() {\n" +
+      "        String result = this.nonBuilder().start().addInt().addText().end().toString();\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "\n" +
+      "    void foo() {\n" +
+      "        String result = this.nonBuilder()\n" +
+      "                .start()\n" +
+      "                .addInt()\n" +
+      "                .addText()\n" +
+      "                .end().toString();\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+
+  public void testIdea189817_noWrap() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+
+    doTextTest(
+      "public class Cls {\n" +
+      " public void foo () {\n" +
+      " int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
+      "  }\n" +
+      "}",
+
+      "public class Cls {\n" +
+      "    public void foo() {\n" +
+      "        int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testIdea189817_wrapAfterUrl() {
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().RIGHT_MARGIN = 40;
+
+    doTextTest(
+      "public class Cls {\n" +
+      " public void foo () {\n" +
+      " int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0 and other sources\n" +
+      "  }\n" +
+      "}",
+
+      "public class Cls {\n" +
+      "    public void foo() {\n" +
+      "        int x = 0; // See https://youtrack.jetbrains.com/issue/IDEA-189817#focus=Comments-27-2841120.0-0\n" +
+      "        // and other sources\n" +
       "    }\n" +
       "}"
     );

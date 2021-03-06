@@ -17,6 +17,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class IntroduceFunctionalVariableAction extends IntroduceActionBase {
     return provider.getIntroduceFunctionalVariableHandler();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("introduce.functional.variable.title");
   }
 }

@@ -19,6 +19,7 @@
 package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -113,6 +114,19 @@ fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   return null
 }
 
+fun <T : UElement> PsiElement?.findAnyContaining(vararg types: Class<out T>): T? = findAnyContaining(Int.Companion.MAX_VALUE, *types)
+
+fun <T : UElement> PsiElement?.findAnyContaining(depthLimit: Int, vararg types: Class<out T>): T? {
+  var element = this
+  var i = 0
+  while (i < depthLimit && element != null && element !is PsiFileSystemItem) {
+    element.toUElementOfExpectedTypes(*types)?.let { return it }
+    element = element.parent
+    i++
+  }
+  return null
+}
+
 fun isPsiAncestor(ancestor: UElement, child: UElement): Boolean {
   val ancestorPsi = ancestor.sourcePsi ?: return false
   val childPsi = child.sourcePsi ?: return false
@@ -171,6 +185,7 @@ fun skipParenthesizedExprUp(elem: UElement?): UElement? {
 fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualToIoFile(it) }
 
 @Deprecated("use UastFacade", ReplaceWith("UastFacade"))
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Suppress("Deprecation")
 tailrec fun UElement.getUastContext(): UastContext {
   val psi = this.sourcePsi
@@ -231,12 +246,27 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
   }
 
 fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
-  if (sourcePsi == null) return null
   val annotation : UAnnotation? = getParentOfType(UAnnotation::class.java, true)
   val fqn = annotation?.qualifiedName ?: return null
-  val psiClass = JavaPsiFacade.getInstance(sourcePsi!!.project).findClass(fqn, sourcePsi!!.resolveScope)
+  val annotationSrc = annotation.sourcePsi
+  if (annotationSrc == null) return null
+  val psiClass = JavaPsiFacade.getInstance(annotationSrc.project).findClass(fqn, annotationSrc.resolveScope)
   if (psiClass != null && psiClass.isAnnotationType) {
     return ArrayUtil.getFirstElement(psiClass.findMethodsByName(this.name ?: "value", false))
   }
   return null
+}
+
+val UElement.textRange: TextRange?
+  get() = sourcePsi?.textRange
+
+/**
+ * A helper function for getting [UMethod] for element for LineMarker.
+ * It handles cases, when [getUParentForIdentifier] returns same `parent` for more than one `identifier`.
+ * Such situations cause multiple LineMarkers for same declaration.
+ */
+inline fun <reified T : UDeclaration> getUParentForDeclarationLineMarkerElement(lineMarkerElement: PsiElement): T? {
+  val parent = getUParentForIdentifier(lineMarkerElement) as? T ?: return null
+  if (parent.uastAnchor.sourcePsiElement != lineMarkerElement) return null
+  return parent
 }

@@ -18,19 +18,16 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
-
-/** 
- * @author cdr
- */
 
 public class EmptyPane {
   private JPanel myPanel;
   private JLabel myLabel;
 
-  public EmptyPane(String text) {
+  public EmptyPane(@Nls String text) {
     myLabel.setForeground(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());
     myLabel.setText(text);
     myPanel.setBackground(new Tree().getBackground());
@@ -40,11 +37,11 @@ public class EmptyPane {
     return myPanel;
   }
 
-  public void setText(String text) {
+  public void setText(@Nls String text) {
     myLabel.setText(text);
   }
 
-  public static void addToPanel(JPanel panel, String text) {
+  public static void addToPanel(JPanel panel, @Nls String text) {
     final EmptyPane emptyPane = new EmptyPane(text);
     panel.setLayout(new BorderLayout());
     panel.add(emptyPane.getComponent(), BorderLayout.CENTER);

@@ -18,7 +18,8 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @see NonTrivialActionGroup
  * @author yole
  */
-public class SmartPopupActionGroup extends DefaultActionGroup {
+public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAware, UpdateInBackground {
 
   private boolean myCachedIsPopup = true;
 
@@ -39,9 +40,9 @@ public class SmartPopupActionGroup extends DefaultActionGroup {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    int size = ActionGroupUtil.activeActionTraverser(this, e, LaterInvocator.isInModalContext()).traverse().take(2).size();
+    int size = ActionGroupUtil.getActiveActions(this, e).take(3).size();
     e.getPresentation().setEnabledAndVisible(size > 0);
-    myCachedIsPopup = size > 1;
+    myCachedIsPopup = size > 2;
   }
 
   @Override

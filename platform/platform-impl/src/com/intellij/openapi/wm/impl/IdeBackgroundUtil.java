@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -142,7 +142,7 @@ public final class IdeBackgroundUtil {
     //}
 
     painters.addPainter(new AbstractPainter() {
-      final EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
+      final EditorEmptyTextPainter p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
 
       @Override
       public boolean needsRepaint() {
@@ -182,15 +182,19 @@ public final class IdeBackgroundUtil {
     PaintersHelper paintersHelper = new PaintersHelper(root);
     paintersHelper.addPainter(PaintersHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
     Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) return v;
+      if (!UIUtil.isAncestor(root, t)) {
+        return v;
+      }
       return MyGraphics.wrap(v, paintersHelper, t);
     }));
   }
 
   public static @NotNull String getBackgroundSpec(@Nullable Project project, @NotNull String propertyName) {
     String spec = project == null || project.isDisposed() ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
-    if (spec == null) spec = PropertiesComponent.getInstance().getValue(propertyName);
-    return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
+    if (spec == null) {
+      spec = PropertiesComponent.getInstance().getValue(propertyName);
+    }
+    return spec == null ? System.getProperty(propertyName, "") : spec;
   }
 
   public static boolean isEditorBackgroundImageSet(@Nullable Project project) {
@@ -214,7 +218,7 @@ public final class IdeBackgroundUtil {
   private static final class MyGraphics extends Graphics2DDelegate {
     final PaintersHelper helper;
     final PaintersHelper.Offsets offsets;
-    Predicate<Color> preserved;
+    Predicate<? super Color> preserved;
 
     static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
       MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
@@ -225,7 +229,7 @@ public final class IdeBackgroundUtil {
       return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Predicate<Color> preserved) {
+    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Predicate<? super Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;

@@ -37,8 +37,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -52,12 +51,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
+import java.util.*;
 
-public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
-
+public final class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
   LanguagePanel myLanguagePanel;  // read by reflection
   AdvancedPanel myAdvancedPanel;
 
@@ -69,7 +65,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private final ReferenceEditorWithBrowseButton myClassField;
   private DefaultMutableTreeNode myRootNode;
 
-  private final THashMap<PsiMethod, MethodParameterInjection.MethodInfo> myData = new THashMap<>();
+  private final Map<PsiMethod, MethodParameterInjection.MethodInfo> myData = new HashMap<>();
 
   public MethodParameterPanel(MethodParameterInjection injection, final Project project) {
     super(injection, project);
@@ -87,6 +83,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       return document;
     }, "");
     myClassPanel.add(myClassField, BorderLayout.CENTER);
+    myParamsTable.setTableHeader(null);
     myParamsTable.getTree().setShowsRootHandles(true);
     myParamsTable.getTree().setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -181,7 +178,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       final PsiClass[] classes = classType instanceof PsiClassType? JavaPsiFacade.getInstance(myProject).
         findClasses(classType.getCanonicalText(), GlobalSearchScope.allScope(myProject)) : PsiClass.EMPTY_ARRAY;
       if (classes.length == 0) return;
-      final THashSet<String> visitedSignatures = new THashSet<>();
+      final Set<String> visitedSignatures = new HashSet<>();
       for (PsiClass psiClass : classes) {
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiModifierList modifiers = method.getModifierList();
@@ -201,11 +198,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   private void refreshTreeStructure() {
     myRootNode.removeAllChildren();
     final ArrayList<PsiMethod> methods = new ArrayList<>(myData.keySet());
-    methods.sort((o1, o2) -> {
-      final int names = o1.getName().compareTo(o2.getName());
-      if (names != 0) return names;
-      return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
-    });
+    methods.sort(Comparator.comparing(PsiMethod::getName).thenComparingInt(o -> o.getParameterList().getParametersCount()));
     for (PsiMethod method : methods) {
       final PsiParameter[] params = method.getParameterList().getParameters();
       final DefaultMutableTreeNode methodNode = new DefaultMutableTreeNode(method, true);
@@ -245,7 +238,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     setPsiClass(myOrigInjection.getClassName());
 
     rebuildTreeModel();
-    final THashMap<String, MethodParameterInjection.MethodInfo> map = new THashMap<>();
+    final Map<String, MethodParameterInjection.MethodInfo> map = new HashMap<>();
     for (PsiMethod method : myData.keySet()) {
       final MethodParameterInjection.MethodInfo methodInfo = myData.get(method);
       map.put(methodInfo.getMethodSignature(), methodInfo);
@@ -370,7 +363,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     @Override
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-      final TreeClassChooser chooser = factory.createAllProjectScopeChooser("Select Class");
+      final TreeClassChooser chooser = factory.createAllProjectScopeChooser(IntelliLangBundle.message("dialog.title.select.class"));
       chooser.showDialog();
       final PsiClass psiClass = chooser.getSelected();
       if (psiClass != null) {
@@ -381,20 +374,19 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
-  private static class MyView extends TreeTableView implements TypeSafeDataProvider {
+  private static class MyView extends TreeTableView implements DataProvider {
     MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }
 
+    @Nullable
     @Override
-    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
-      if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
-        final Collection selection = getSelection();
-        if (!selection.isEmpty()) {
-          final Object o = ((DefaultMutableTreeNode)selection.iterator().next()).getUserObject();
-          if (o instanceof PsiElement) sink.put(CommonDataKeys.PSI_ELEMENT, (PsiElement)o);
-        }
+    public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        Object userObject = TreeUtil.getUserObject(ContainerUtil.getFirstItem(getSelection()));
+        return userObject instanceof PsiElement ? userObject : null;
       }
+      return null;
     }
   }
 

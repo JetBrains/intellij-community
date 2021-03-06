@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -31,12 +32,12 @@ import java.util.function.Function;
 public class ChainIterable<T> implements Iterable<T> {
 
   @NotNull
-  private final LinkedList<Iterable<T>> myData = new LinkedList<>();
+  private final List<Iterable<? extends T>> myData = new LinkedList<>();
 
   public ChainIterable() {
   }
 
-  public ChainIterable(@NotNull Iterable<T> iterable) {
+  public ChainIterable(@NotNull Iterable<? extends T> iterable) {
     myData.add(iterable);
   }
 
@@ -45,13 +46,13 @@ public class ChainIterable<T> implements Iterable<T> {
   }
 
   @NotNull
-  public ChainIterable<T> add(@NotNull Iterable<T> iterable) {
+  public ChainIterable<T> add(@NotNull Iterable<? extends T> iterable) {
     myData.add(iterable);
     return this;
   }
 
   @NotNull
-  public ChainIterable<T> addWith(@NotNull Function<Iterable<T>, Iterable<T>> mapper, @NotNull Iterable<T> iterable) {
+  public ChainIterable<T> addWith(@NotNull Function<? super Iterable<T>, ? extends Iterable<T>> mapper, @NotNull Iterable<T> iterable) {
     return add(mapper.apply(iterable));
   }
 

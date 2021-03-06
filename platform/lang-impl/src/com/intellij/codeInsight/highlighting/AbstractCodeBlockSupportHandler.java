@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.util.TextRange;
@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,6 @@ import java.util.List;
  * This implementation collects specific direct children of top level elements and specific direct children of specific composite elements.
  */
 public abstract class AbstractCodeBlockSupportHandler implements CodeBlockSupportHandler {
-
   /**
    * @return All element types which don't have a parent, e.g. {@code IF_STATEMENT}.
    * {@link #getDirectChildrenElementTypes} should never return these element types
@@ -82,12 +80,11 @@ public abstract class AbstractCodeBlockSupportHandler implements CodeBlockSuppor
     return computeMarkersRanges(rootElement, keywordElementTypes);
   }
 
-  @NotNull
   @Override
-  public TextRange getCodeBlockRange(@NotNull PsiElement elementAtCursor) {
-    return ObjectUtils.notNull(
-      ObjectUtils.doIfNotNull(getParentByTokenSet(elementAtCursor, getBlockElementTypes()), PsiElement::getTextRange),
-      TextRange.EMPTY_RANGE);
+  public @NotNull TextRange getCodeBlockRange(@NotNull PsiElement elementAtCursor) {
+    PsiElement obj = getParentByTokenSet(elementAtCursor, getBlockElementTypes());
+    TextRange value = obj == null ? null : obj.getTextRange();
+    return value == null ? TextRange.EMPTY_RANGE : value;
   }
 
   @NotNull

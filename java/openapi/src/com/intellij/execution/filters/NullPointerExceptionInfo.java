@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class NullPointerExceptionInfo extends ExceptionInfo {
   // See JEP 358 Helpful NullPointerExceptions for details
-  private static final Pattern NPE_MESSAGE = Pattern.compile("Cannot (?:invoke \"(?<invoke>.+)\\(\\)\"|" +
+  private static final Pattern NPE_MESSAGE = Pattern.compile("Cannot (?:invoke \"(?<invoke>.+)\\(.*\\)\"|" +
                                                              "assign field \"(?<putfield>.+)\"|" +
                                                              "read field \"(?<getfield>.+)\"|" +
                                                              "store to (?<xastore>[a-z]+) array|" +
@@ -25,17 +26,15 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
                                                              "read the array (?<arraylength>length)|" +
                                                              "enter (?<monitor>synchronized) block|" +
                                                              "throw (?<athrow>exception))(?: because .+)?");
-  private static final Map<String, PsiPrimitiveType> UNBOXING_METHODS =
-    ContainerUtil.<String, PsiPrimitiveType>immutableMapBuilder()
-      .put("booleanValue", PsiType.BOOLEAN)
-      .put("byteValue", PsiType.BYTE)
-      .put("charValue", PsiType.CHAR)
-      .put("shortValue", PsiType.SHORT)
-      .put("intValue", PsiType.INT)
-      .put("longValue", PsiType.LONG)
-      .put("floatValue", PsiType.FLOAT)
-      .put("doubleValue", PsiType.DOUBLE)
-      .build();
+  private static final Map<String, PsiPrimitiveType> UNBOXING_METHODS = Map.of(
+      "booleanValue", PsiType.BOOLEAN,
+      "byteValue", PsiType.BYTE,
+      "charValue", PsiType.CHAR,
+      "shortValue", PsiType.SHORT,
+      "intValue", PsiType.INT,
+      "longValue", PsiType.LONG,
+      "floatValue", PsiType.FLOAT,
+      "doubleValue", PsiType.DOUBLE);
   private final @NotNull UnaryOperator<PsiElement> myExtractor;
   
   NullPointerExceptionInfo(int offset, String message) {
@@ -126,7 +125,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     return null;
   }
 
-  private static UnaryOperator<PsiElement> getJep358Extractor(String message) {
+  private static UnaryOperator<PsiElement> getJep358Extractor(@NonNls String message) {
     if (!message.startsWith("Cannot ")) return null;
     Matcher matcher = NPE_MESSAGE.matcher(message);
     if (!matcher.matches()) return null;
@@ -166,7 +165,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     if (method != null) {
       int dotPos = method.lastIndexOf('.');
       if (dotPos != -1) {
-        String methodName = method.substring(dotPos + 1);
+        @NonNls String methodName = method.substring(dotPos + 1);
         PsiPrimitiveType type = UNBOXING_METHODS.get(methodName);
         return e -> {
           if (methodName.equals("getClass") || methodName.equals("ordinal")) {

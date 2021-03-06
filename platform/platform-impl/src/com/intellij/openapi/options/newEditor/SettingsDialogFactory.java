@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
@@ -13,9 +13,10 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
+// extended externally
 public class SettingsDialogFactory {
   public static SettingsDialogFactory getInstance() {
-    return ServiceManager.getService(SettingsDialogFactory.class);
+    return ApplicationManager.getApplication().getService(SettingsDialogFactory.class);
   }
 
   @NotNull

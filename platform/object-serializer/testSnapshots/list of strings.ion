@@ -1,10 +1,10 @@
 {
-  '@id':0,
-  bean:null,
-  list:[
+  '@id': 0,
+  bean: null,
+  list: [
     foo,
     bar
   ],
-  children:[
+  children: [
   ]
 }

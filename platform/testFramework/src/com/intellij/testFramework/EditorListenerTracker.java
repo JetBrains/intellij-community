@@ -15,9 +15,6 @@ import java.util.EventListener;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author cdr
- */
 @TestOnly
 public final class EditorListenerTracker {
   private final Map<Class<? extends EventListener>, List<? extends EventListener>> before;
@@ -49,6 +46,7 @@ public final class EditorListenerTracker {
           // app level listener
           String name = listener.getClass().getName();
           return name.startsWith("com.intellij.copyright.CopyrightManagerDocumentListener$") ||
+                 name.startsWith("com.intellij.model.BranchServiceImpl$") ||
                  name.startsWith("com.jetbrains.liveEdit.highlighting.ElementHighlighterCaretListener");
         });
         if (!afterList.isEmpty()) {

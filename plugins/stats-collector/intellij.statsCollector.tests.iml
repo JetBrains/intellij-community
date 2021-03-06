@@ -12,8 +12,20 @@
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="commons-codec" level="project" />
-    <orderEntry type="module" module-name="intellij.statsCollector.logEvents" scope="TEST" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.statsCollector.completionRanker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.completionMlRanking" scope="TEST" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="completion-log-events" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-log-events:0.0.3" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.3/completion-log-events-0.0.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-log-events/0.0.3/completion-log-events-0.0.3-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

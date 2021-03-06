@@ -17,6 +17,7 @@
 package com.intellij.ide.wizard;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
   }
 
   @Nullable
-  private String myTitle;
+  private @NlsContexts.DialogTitle String myTitle;
 
   public interface Listener extends StepListener {
     void doNextAction();
@@ -39,7 +40,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
-  public AbstractWizardStepEx(@Nullable final String title) {
+  public AbstractWizardStepEx(@Nullable final @NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
@@ -60,7 +61,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     myEventDispatcher.addListener(listener);
   }
 
-  protected void setTitle(@Nullable final String title) {
+  protected void setTitle(@Nullable final @NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
@@ -91,7 +92,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
   public abstract void commit(CommitType commitType) throws CommitStepException;
 
   @Nullable
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myTitle;
   }
 

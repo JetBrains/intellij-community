@@ -28,7 +28,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   }
 
   public void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
-    Assert.assertNull(ProjectViewTestUtil.getNodeForElement(element, pane));
+    Assert.assertNull(ProjectViewTestUtil.getVisiblePath(element, pane));
     pane.select(element, virtualFile, true);
     PlatformTestUtil.waitWhileBusy(pane.getTree());
     Assert.assertTrue(ProjectViewTestUtil.isExpanded(element, pane));

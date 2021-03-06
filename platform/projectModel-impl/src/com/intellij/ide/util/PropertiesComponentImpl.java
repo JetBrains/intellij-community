@@ -13,12 +13,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(PropertiesComponentImpl.class);
 
-  private final Map<String, String> myMap = new ConcurrentHashMap<>();
+  private final Map<@NonNls String, @NonNls String> myMap = new ConcurrentHashMap<>();
 
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
@@ -144,5 +145,9 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     else {
       setValue(name, StringUtil.join(values, "\n"));
     }
+  }
+
+  public Set<String> getKeys() {
+    return myMap.keySet();
   }
 }

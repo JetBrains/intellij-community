@@ -57,7 +57,7 @@ public class OpenTaskDialog extends DialogWrapper {
     myTaskStateCombo.setProject(myProject);
     myTaskStateCombo.setTask(myTask);
 
-    setTitle("Open Task");
+    setTitle(TaskBundle.message("dialog.title.open.task"));
     myNameField.setText(TaskUtil.getTrimmedSummary(task));
     myNameField.setEnabled(!task.isIssue());
 
@@ -132,7 +132,7 @@ public class OpenTaskDialog extends DialogWrapper {
           repository.setPreferredOpenTaskState(taskState);
         }
         catch (Exception ex) {
-          Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
+          Messages.showErrorDialog(myProject, ex.getMessage(), TaskBundle.message("dialog.title.cannot.set.state.for.issue"));
           LOG.warn(ex);
         }
       }
@@ -179,7 +179,7 @@ public class OpenTaskDialog extends DialogWrapper {
   protected ValidationInfo doValidate() {
     String taskName = myNameField.getText().trim();
     if (taskName.isEmpty()) {
-      return new ValidationInfo("Task name should not be empty", myNameField);
+      return new ValidationInfo(TaskBundle.message("dialog.message.task.name.should.not.be.empty"), myNameField);
     }
     for (TaskDialogPanel panel : myPanels) {
       ValidationInfo validate = panel.validate();

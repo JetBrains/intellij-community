@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MethodCandidatesProcessor extends MethodsProcessor{
@@ -84,6 +85,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
+  @NotNull
   protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                     final boolean staticProblem, final boolean accessible, final boolean varargs) {
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
@@ -123,10 +125,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   public CandidateInfo @NotNull [] getCandidates() {
     final JavaResolveResult[] resolveResult = getResult();
     if (resolveResult.length == 0) return CandidateInfo.EMPTY_ARRAY;
-    final CandidateInfo[] infos = new CandidateInfo[resolveResult.length];
-    //noinspection SuspiciousSystemArraycopy
-    System.arraycopy(resolveResult, 0, infos, 0, resolveResult.length);
-    return infos;
+    return Arrays.copyOf(resolveResult, resolveResult.length, CandidateInfo[].class);
   }
 
   private static class VarargsAwareMethodCandidateInfo extends MethodCandidateInfo {

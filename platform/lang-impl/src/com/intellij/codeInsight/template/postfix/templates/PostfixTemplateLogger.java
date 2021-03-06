@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -13,15 +13,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PostfixTemplateLogger {
-  private static final String USAGE_GROUP = "completion.postfix";
-  private static final String CUSTOM = "custom";
-  private static final String NO_PROVIDER = "no.provider";
-  private static final String TEMPLATE_FIELD = "template";
-  private static final String PROVIDER_FIELD = "provider";
+public final class PostfixTemplateLogger {
+  private static final @NonNls String USAGE_GROUP = "completion.postfix";
+  private static final @NonNls String CUSTOM = "custom";
+  private static final @NonNls String NO_PROVIDER = "no.provider";
+  private static final @NonNls String TEMPLATE_FIELD = "template";
+  private static final @NonNls String PROVIDER_FIELD = "provider";
 
   static void log(@NotNull final PostfixTemplate template, @NotNull final PsiElement context) {
     final Project project = context.getProject();
@@ -37,7 +38,7 @@ public class PostfixTemplateLogger {
     FUCounterUsageLogger.getInstance().logEvent(project, USAGE_GROUP, "expanded", data);
   }
 
-  public static class PostfixTemplateValidator extends CustomWhiteListRule {
+  public static class PostfixTemplateValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -62,7 +63,7 @@ public class PostfixTemplateLogger {
       if (result.getFirst() != null && result.getSecond() != null) {
         final PluginInfo templateInfo = PluginInfoDetectorKt.getPluginInfo(result.getFirst().getClass());
         final PluginInfo providerInfo = PluginInfoDetectorKt.getPluginInfo(result.getSecond().getClass());
-        context.setPluginInfo(templateInfo);
+        context.setPayload(PLUGIN_INFO, templateInfo);
         return templateInfo.isDevelopedByJetBrains() && providerInfo.isDevelopedByJetBrains() ?
                ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
       }

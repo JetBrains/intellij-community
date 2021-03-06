@@ -2,7 +2,7 @@
 
 <migrationMap>
   <name value="Swing (1.0.3 -&gt; 1.1)" />
-  <description value="This map is for transferring the old com.sun.java.swing packages to the new javax.swing ones." />
+  <description value="For transferring old com.sun.java.swing imports to the new javax.swing ones." />
   <entry oldName="com.sun.java.swing" newName="javax.swing" type="package" recursive="false" />
   <entry oldName="com.sun.java.swing.plaf.metal" newName="javax.swing.plaf.metal" type="package" recursive="true" />
   <entry oldName="com.sun.java.swing.plaf.basic" newName="javax.swing.plaf.basic" type="package" recursive="true" />
